@@ -5,6 +5,7 @@ import fastapi
 import pydantic
 import shutil
 import os
+import urdhva_base
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types
@@ -80,6 +81,10 @@ class LocationMasterGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Locationmaster_Upload_MasterfileParams(pydantic.BaseModel):
+    pass
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
@@ -144,6 +149,10 @@ class RoleMasterGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Rolemaster_Upload_MasterfileParams(pydantic.BaseModel):
+    pass
+
+
 class AssetMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'asset_master'
     
@@ -206,3 +215,8 @@ class AssetMasterGetResp(pydantic.BaseModel):
     data: typing.List[AssetMaster]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Assetmaster_Upload_MasterfileParams(pydantic.BaseModel):
+    pass
+    

@@ -5,6 +5,7 @@ import fastapi
 import pydantic
 import shutil
 import os
+import urdhva_base
 import urdhva_base.postgresmodel
 import urdhva_base.queryparams
 import urdhva_base.types

@@ -1,3 +1,4 @@
+import urdhva_base
 from data_ingest_enum import *
 from data_ingest_model import *
 import fastapi
@@ -7,8 +8,7 @@ router = fastapi.APIRouter(prefix='/va')
 
 # Action ingest_data
 @router.post('/ingest_data', tags=['VA'])
-async def va_ingest_data(data: Va_Ingest_DataParams, vendor: str = fastapi.Header(description="Specifies the vendor name, e.g., 'hpcl_va'"),
-    ceg_auth_token: str = fastapi.Header(description="Authentication token for the API call")):
+async def va_ingest_data(data: Va_Ingest_DataParams):
     """
     Endpoint to ingest VA data.
 

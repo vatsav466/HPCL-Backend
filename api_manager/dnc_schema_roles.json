@@ -24,6 +24,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "upload_masterfile"
                 }
             ]
         },
@@ -63,6 +66,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "upload_masterfile"
                 }
             ]
         },
@@ -87,6 +93,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "upload_masterfile"
                 }
             ]
         },
@@ -126,6 +135,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "upload_masterfile"
                 }
             ]
         },
@@ -150,6 +162,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "upload_masterfile"
                 }
             ]
         },
@@ -189,6 +204,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "upload_masterfile"
                 }
             ]
         }
@@ -268,6 +286,18 @@
         {
             "name": "delete",
             "displayName": "delete"
+        },
+        {
+            "name": "upload_masterfile",
+            "displayName": "upload_masterfile"
+        },
+        {
+            "name": "upload_masterfile",
+            "displayName": "upload_masterfile"
+        },
+        {
+            "name": "upload_masterfile",
+            "displayName": "upload_masterfile"
         }
     ]
 }

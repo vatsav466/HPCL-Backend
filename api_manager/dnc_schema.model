@@ -22,9 +22,11 @@ Model LocationMaster {
     latitude optional str
     longitude optional str
 
+    Action=> upload_masterFile{
+    }
+
     Config=> {
         crud_operations='read'
-        fileupload
     }
 }
 
@@ -41,9 +43,11 @@ Model RoleMaster {
     inchargeRole optional str
     notificationLevel optional str
 
+    Action=> upload_masterFile{
+    }
+
     Config=> {
         crud_operations='read'
-        fileupload
     }
 }
 
@@ -60,8 +64,10 @@ Model AssetMaster {
     state optional str
     city optional str
 
+    Action=> upload_masterFile{
+    }
+
     Config=> {
         crud_operations='read'
-        fileupload
     }
 }
