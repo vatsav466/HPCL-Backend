@@ -1,0 +1,67 @@
+Enum LocationType str {
+    RO='RO'
+    TAS='TAS'
+    LPG='LPG'
+}
+
+Enum NotificationLevel str {
+    IntialNotification='IntialNotification'
+    IntialEscalation='IntialEscalation'
+}
+
+Model LocationMaster {
+    sapId str
+    bu str
+    locationName str
+    region optional str
+    state optional str
+    district optional str
+    zone optional str
+    pinCode optional str
+    localAutomationVendor optional str
+    latitude optional str
+    longitude optional str
+
+    Config=> {
+        crud_operations='read'
+        fileupload
+    }
+}
+
+Model RoleMaster {
+    bu str
+    buId str
+    siteName str
+    region optional str
+    state optional str
+    city optional str
+    inchargeName optional str
+    inchargeEmail optional str
+    inchargePhone optional str
+    inchargeRole optional str
+    notificationLevel optional str
+
+    Config=> {
+        crud_operations='read'
+        fileupload
+    }
+}
+
+Model AssetMaster {
+    sapId str	
+    localBayID optional int
+    localMPDID optional int		
+    localTankID optional int 	
+    localNozzleID optional int	
+    globalNozzleID optional int  
+    locationDeviceId optional int
+    siteName optional str
+    region optional str
+    state optional str
+    city optional str
+
+    Config=> {
+        crud_operations='read'
+        fileupload
+    }
+}
