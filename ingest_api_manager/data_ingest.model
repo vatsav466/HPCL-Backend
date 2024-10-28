@@ -15,8 +15,6 @@ Model vtsData internal {
 Model VTS crud_disable {
 
     Action=> ingest_data {
-        vendor str
-        ceg_auth_token str
         vendor_id str
         location_id str
         location_type str
@@ -34,8 +32,6 @@ Model vaData internal {
 Model VA crud_disable {
 
     Action=> ingest_data {
-        vendor str
-        ceg_auth_token str
         vendor_id str
         location_id str
         location_type str
@@ -53,8 +49,6 @@ Model crisData internal {
 Model CRIS crud_disable {
     
     Action=> ingest_data {
-        vendor str
-        ceg_auth_token str
         vendor_id str
         location_id str
         data optional list crisData

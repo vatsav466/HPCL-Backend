@@ -7,7 +7,8 @@ router = fastapi.APIRouter(prefix='/vts')
 
 # Action ingest_data
 @router.post('/ingest_data', tags=['VTS'])
-async def vts_ingest_data(data: Vts_Ingest_DataParams):
+async def vts_ingest_data(data: Vts_Ingest_DataParams, vendor: str = fastapi.Header(description="Specifies the vendor name, e.g., 'hpcl_va'"),
+    ceg_auth_token: str = fastapi.Header(description="Authentication token for the API call")):
     """
     Endpoint to ingest VTS data.
 
