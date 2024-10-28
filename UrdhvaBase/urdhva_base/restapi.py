@@ -1,0 +1,408 @@
+import os
+import re
+import json
+import glob
+import uuid
+import httpx
+import typing
+import base64
+import random
+import fastapi
+import datetime
+import traceback
+import importlib
+import contextvars
+import fastapi.security
+import urdhva_base.entity
+import urdhva_base.context
+import urdhva_base.settings
+import urdhva_base.redispool
+import urdhva_base.elasticmodel
+from pydantic.fields import Field
+from cryptography.fernet import Fernet
+from mangum import Mangum
+from starlette.responses import RedirectResponse
+
+logger = urdhva_base.Logger.getInstance("urdhva_api")
+
+app = fastapi.FastAPI()
+cookie_name = urdhva_base.settings.cookie_name
+
+
+# This function will give keycloak auth redirection url based on realm name given
+async def get_customer_authentication_extension(realm):
+    return "auth"
+
+
+@app.on_event("startup")
+def onStart():
+    for filename in glob.glob("**/*.py", recursive=True):
+        if filename.startswith("_"):
+            continue
+        modname = os.path.splitext(filename)[0].replace(os.sep, '.')
+        # print("Loading:",modname)
+        mod = importlib.import_module(modname)
+
+        # If a variable by name "roter" is defined load that directly
+        # Else go through the module and if any of the variable is a router load that...
+        symbol = getattr(mod, 'router', None)
+        if isinstance(symbol, fastapi.APIRouter):
+            app.include_router(symbol, prefix="/api")
+        else:
+            for attr in dir(mod):
+                if not attr.startswith("_"):
+                    symbol = getattr(mod, attr)
+                    if isinstance(symbol, fastapi.APIRouter):
+                        # print("Loading module:", modname, " Route:",attr, [(x.path, x.name)  for x in symbol.routes])
+                        app.include_router(symbol, prefix="/api")
+    # print("Loaded modules:")
+    # for route in app.routes:
+    #     print(route.path, route.name)
+
+
+# Api to push data to redis server
+async def createInternalErrorMessage(errFormat):
+    logger.error(f"internalerror_{urdhva_base.ctx['entity_id']} {errFormat}")
+    try:
+        id = str(uuid.uuid4()).replace("-", "")
+        conn = await urdhva_base.redispool.get_redis_connection()
+        await conn.setex("internalerror_" + id, 60, errFormat)
+        return True, id
+    except:
+        return False, ""
+
+
+async def get_baseurl(request: fastapi.Request, redirect_type="RedirectionUrl", entity_id=""):
+    return os.environ.get(redirect_type, request.base_url.hostname)
+
+
+async def get_permission():
+    rpt = urdhva_base.context.context.get('rpt', {})
+    data = {"me": ['read'], "logout": ["read"]}
+    data.update({permission['rsname'].lower().split("_")[0]: permission.get('scopes', []) for permission in
+                 rpt.get('authorization', {}).get('permissions', [])})
+    data['includes'] = rpt.get('includes', '')
+    data['excludes'] = rpt.get('excludes', '')
+    return data
+
+
+async def get_resource_operation(method, path):
+    path_params = path.split('/')
+    resource = path_params[2].lower()
+    operation = {'post': 'create', 'put': 'update', 'get': 'read', 'delete': 'delete'}.get(method.lower())
+    if path_params[-1] == "":
+        path_params = path_params[:-1]
+    if method.lower() == 'post' and len(path_params) == 4 and path_params[3]:
+        operation = path_params[3].lower()
+    elif method.lower() == 'post' and len(path_params) == 5:
+        operation = path_params[4].lower()
+    elif method.lower() == 'get' and len(path_params) == 5:
+        operation = path_params[4].lower()
+    elif method.lower() == 'get' and len(path_params) == 6:
+        operation = path_params[5].lower()
+    return resource, operation
+
+
+async def has_permission(method: str, path: str):
+    return True
+    permissions = await get_permission()
+    resource, operation = await get_resource_operation(method, path)
+    return True if resource in permissions and operation in permissions[resource] else False
+
+
+@app.middleware('http')
+async def authMiddleware(request: fastapi.Request, call_next):
+    response = fastapi.Response(None, 403)
+    if request.url.path in ['/docs', '/openapi.json', '/api/login'] + urdhva_base.settings.noauth_urls or \
+            re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
+            or re.match(r"/api/[\S\s\w]*authorize", request.url.path):
+        return await call_next(request)
+    rpt = urdhva_base.context.context.get('rpt', {})
+    cookie = request.cookies.get(cookie_name, None)
+    if not cookie and not rpt:
+        base_url = urdhva_base.ctx["base_url"]
+        if not base_url:
+            response = fastapi.responses.JSONResponse("Provided entity is Invalid", 403)
+            return response
+        org_extension = await get_customer_authentication_extension(urdhva_base.ctx["entity_id"])
+        redirect_url = f'https://{base_url}/{org_extension}/realms/{urdhva_base.ctx["entity_id"]}/protocol/' \
+                       f'openid-connect/auth?client_id={urdhva_base.ctx["entity_id"]}_client&' \
+                       f'response_type=code&redirect_uri={urdhva_base.ctx["oauth_redirect"]}&scope=email openid&state=123'
+        redis_client = await urdhva_base.redispool.get_redis_connection()
+        data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
+        if data:
+            temp_url = json.loads(data)["base_url"]
+            redirect_url = f'https://{temp_url}/{org_extension}/realms/{urdhva_base.ctx["entity_id"]}/protocol/' \
+                           f'openid-connect/auth?client_id={urdhva_base.ctx["entity_id"]}_client&' \
+                           f'response_type=code&redirect_uri={urdhva_base.ctx["oauth_redirect"]}' \
+                           f'&scope=email openid&state=123'
+        resp_dict = {"url": redirect_url}
+        response = fastapi.responses.JSONResponse(resp_dict, 401)
+    elif cookie or rpt:
+        if await has_permission(request.method, request.scope['path']):
+            response: fastapi.responses.Response = await call_next(request)
+            if response.status_code == 307:
+                for index, header in enumerate(response.raw_headers):
+                    if header[0].decode() == 'location' and header[1].decode().startswith('http://'):
+                        url = header[1].decode().replace('http://', 'https://')
+                        response.raw_headers[index] = ('location'.encode(), url.encode())
+    return response
+
+
+@app.middleware('http')
+async def contextMiddleware(request: fastapi.Request, call_next):
+    data = {}
+    cookie_id = request.cookies.get(cookie_name, None)
+    redis_client = await urdhva_base.redispool.get_redis_connection()
+    entity_id = ""
+    if cookie_id:
+        try:
+            f = Fernet(urdhva_base.settings.fernet_key)
+            d = json.loads(f.decrypt(cookie_id.encode()).decode())
+            entity_id = d["entity_id"]
+            data['base_url'] = d.get("base_url", '')
+            cookie_id = d["cookie_id"]
+        except:
+            pass
+    if not entity_id:
+        if request.headers.get("entity_id", ""):
+            entity_id = request.headers.get("entity_id", "")
+        elif not urdhva_base.settings.multi_tenant_support:
+            entity_id = request.base_url.hostname.split('.')[0]
+
+    data['domain'] = request.base_url
+    data['entity_obj'] = urdhva_base.entity.Entity()
+    data['entity_id'] = entity_id
+    if cookie_id:
+        rkey = f"{entity_id}_SessionData_{cookie_id}"
+        cookie = await redis_client.get(rkey)
+        if cookie:
+            if isinstance(cookie, bytes):
+                cookie = cookie.decode()
+            cookie = cookie.split("$$_##_##_$$")
+            data['rpt'] = json.loads(base64.urlsafe_b64decode(cookie[0].split('.')[1] + '=====').decode())
+            data['id_auth_token'] = cookie[1] if len(cookie) > 1 else ""
+        else:
+            data["base_url"] = await get_baseurl(request, "OAUTH_RedirectUrl", entity_id)
+            data['oauth_redirect'] = f'https://{data["base_url"]}/api/{entity_id}/login'
+    else:
+        data["base_url"] = await get_baseurl(request, "OAUTH_RedirectUrl", entity_id)
+        data['oauth_redirect'] = f'https://{data["base_url"]}/api/{entity_id}/login'
+    if data.get('rpt'):
+        data['rpt']['includes'] = ",".join([v for k, v in data['rpt'].items() if k.startswith("includes")])
+        data['rpt']['excludes'] = ",".join([v for k, v in data['rpt'].items() if k.startswith("excludes")])
+
+    _starlette_context_token: contextvars.Token = urdhva_base.context._request_scope_context_storage.set(data)
+    try:
+        resp = await call_next(request)
+    except Exception as error:
+        print(error)
+        """
+        Exception error
+        """
+        err_format = '''Error:
+        Stack Trace:
+        %s
+        ''' % (traceback.format_exc())
+        print(err_format)
+        status, id = await createInternalErrorMessage(traceback.format_exc())
+        resp_message = "Internal Error"
+        if status:
+            resp_message += ":- %s" % id
+        response = fastapi.responses.JSONResponse(resp_message, 500)
+        return response
+    urdhva_base.context._request_scope_context_storage.reset(_starlette_context_token)
+    return resp
+
+
+@app.get("/api/login")
+async def login_old(request: fastapi.Request, code: typing.Optional[str] = None):
+    return await login(request, code, urdhva_base.ctx["entity_id"])
+
+
+@app.get("/api/{entity_id}/login")
+async def login(request: fastapi.Request, code: typing.Optional[str] = None,
+                entity_id: typing.Optional[str] = ""):
+    base_url = ""
+    if not entity_id:
+        entity_id = urdhva_base.ctx["entity_id"]
+    auth = await get_customer_authentication_extension(entity_id)
+    if code:
+        # Connect to Keycloak and get the client secret
+        # 1. Connect to master realm and get access token (Login)
+        # 2. Get the Id of the client
+        # 3. With the Id get the client secret
+        resp = None
+        async with httpx.AsyncClient(verify=False, timeout=90) as client:
+            login_data = {
+                "client_id": "admin-cli",
+                "username": urdhva_base.settings.keycloak_admin,
+                "password": urdhva_base.settings.keycloak_password,
+                "grant_type": "password"
+            }
+            login_url = (f'{urdhva_base.settings.keycloak_internal_url}/{auth}/'
+                         f'realms/master/protocol/openid-connect/token')
+            master_login_resp = await client.post(login_url, data=login_data)
+            # print('Keycloak Login response:', master_login_resp.text)
+            auth_resp = master_login_resp.json()
+
+            client_id_url = f'{urdhva_base.settings.keycloak_internal_url}/{auth}/admin/realms/{entity_id}/' \
+                          f'clients?clientId={entity_id}_client'
+            headers = {
+                "Authorization": f'Bearer {auth_resp["access_token"]}'
+            }
+            client_id_resp = await client.get(client_id_url, headers=headers)
+            if client_id_resp.status_code // 100 != 2:
+                print(f"URL:- {client_id_url}, StatusCode:- {client_id_resp.status_code}, Resp:- {client_id_resp.text}")
+            client_id_resp = client_id_resp.json()
+
+            client_secret_url = f'{urdhva_base.settings.keycloak_internal_url}/{auth}/admin/realms/{entity_id}/' \
+                              f'clients/{client_id_resp[0]["id"]}/client-secret'
+            # print("Client Secret Url: %s" % clientSecretUrl)
+            client_secret_resp = await client.get(client_secret_url, headers=headers)
+            if client_secret_resp.status_code // 100 != 2:
+                print(
+                    f"URL:- {client_secret_url}, StatusCode:- {client_secret_resp.status_code}, "
+                    f"Resp:- {client_secret_resp.text}")
+            client_secret_resp = client_secret_resp.json()
+            # print("Client Secret Url Resp: %s" % clientsecret_resp)
+
+            # Get Access token for the loggedin user
+            url = f'{urdhva_base.settings.keycloak_internal_url}/{auth}/realms/{entity_id}/protocol/openid-connect/token'
+            base_url = await get_baseurl(request, "OAUTH_RedirectUrl", entity_id)
+            oauth_redirect_url = f'https://{base_url}/api/{entity_id}/login'
+            data = {
+                'grant_type': 'authorization_code',
+                'client_id': f'{entity_id}_client',
+                'client_secret': client_secret_resp['value'],
+                'redirect_uri': oauth_redirect_url,
+                'code': code
+            }
+            resp = await client.post(url, data=data)
+            if resp.status_code // 100 != 2:
+                print(f"Validate Token Output url: {url}")
+                print("Token:", resp.status_code, resp.text)
+            resp = resp.json()
+            id_auth_token = resp.get("id_token", "")
+
+            # Using the access token obtained above, get the RPT token
+            data = {
+                "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
+                "audience": f'{entity_id}_client',
+            }
+            headers = {"Authorization": f'Bearer {resp["access_token"]}'}
+            resp = await client.post(url, data=data, headers=headers)
+            if resp.status_code // 100 != 2:
+                print("RPT Token:", resp.status_code, resp.text)
+    else:
+        response = fastapi.responses.JSONResponse({"status": "Invalid parameters"}, 403)
+        return response
+
+    if not code:
+        response = fastapi.responses.JSONResponse({"status": "Logged in Successfully"}, 200)
+    else:
+        redirect_url = "/"
+        response = fastapi.responses.RedirectResponse(redirect_url)
+    if resp and resp.status_code / 100 == 2:
+        # Writing cookie details to redis for reducing cookie size
+        cookie_id = str(uuid.uuid4())
+        redis_client = await urdhva_base.redispool.get_redis_connection()
+        rkey = f"{entity_id}_SessionData_{cookie_id}"
+        f = Fernet(urdhva_base.settings.fernet_key)
+        d = {"entity_id": entity_id, "cookie_id": cookie_id, "base_url": base_url}
+        cookie_key = f.encrypt(json.dumps(d).encode()).decode()
+        time = 3 * 60 * 60 if not code else 24 * 60 * 60
+        # ID Auth Hint Adding with separator `$$_##_##_$$`
+        if not id_auth_token:
+            await redis_client.setex(rkey, time, resp.json()["access_token"])
+        else:
+            await redis_client.setex(rkey, time, resp.json()["access_token"] + "$$_##_##_$$" + id_auth_token)
+        response.set_cookie(cookie_name, cookie_key, httponly=urdhva_base.settings.session_httponly,
+                            secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
+    else:
+        if not code:
+            response = fastapi.responses.JSONResponse({"status": "Invalid Credentials"}, 401)
+    return response
+
+
+@app.get("/api/logout")
+async def logout(request: fastapi.Request):
+    org_extension = await get_customer_authentication_extension(urdhva_base.ctx['entity_id'])
+    redis_client = await urdhva_base.redispool.get_redis_connection()
+    if await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname):
+        data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
+        url = json.loads(data)["base_url"]
+        redirect_url = f"https://{url}/{org_extension}/realms/{urdhva_base.ctx['entity_id']}" \
+                       f"/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F" \
+                       f"{request.base_url.hostname}%2F"
+    else:
+        redirect_url = f"https://{await get_baseurl(request)}/{org_extension}/realms/" \
+                       f"{urdhva_base.ctx['entity_id']}/protocol/openid-connect/" \
+                       f"logout?post_logout_redirect_uri=https%3A%2F%2F{request.base_url.hostname}%2F"
+    id_auth_token = urdhva_base.context.context.get('id_auth_token', "")
+    if id_auth_token:
+        redirect_url += f"&id_token_hint={id_auth_token}"
+    response = fastapi.responses.JSONResponse({'url': redirect_url}, 401)
+    cookie_id = request.cookies.get(cookie_name, None)
+    if cookie_id:
+        try:
+            f = Fernet(urdhva_base.settings.fernet_key)
+            d = json.loads(f.decrypt(cookie_id.encode()).decode())
+            # print(d)
+            entity_id = d["entity_id"]
+            cookie_id = d["cookie_id"]
+        except:
+            entity_id = request.base_url.hostname.split('.')[0]
+        redis_client = await urdhva_base.redispool.get_redis_connection()
+        rkey = f"{entity_id}_SessionData_{cookie_id}"
+        await redis_client.delete(rkey)
+    response.delete_cookie(cookie_name)
+    # todo:- Need to clear dashboard sessions
+    return response
+
+
+@app.get("/api/{entity_id}/authorize")
+async def authorize(request: fastapi.Request, entity_id: str):
+    base_url = await get_baseurl(request, "OAUTH_RedirectUrl", entity_id)
+    redis_client = await urdhva_base.redispool.get_redis_connection()
+    oauth_redirect_url = f'https://{base_url}/api/{entity_id}/login'
+    if await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname):
+        data = await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname)
+        url = json.loads(data)["base_url"]
+        oauth_redirect_url = f'https://{request.base_url.hostname}/api/{entity_id}/login'
+    redirect_url = f'https://{base_url}/{await get_customer_authentication_extension(entity_id)}' \
+                   f'/realms/{entity_id}/protocol/openid-connect/auth?client_id={entity_id}' \
+                   f'_client&response_type=code&redirect_uri={oauth_redirect_url}&scope=email openid&state=123'
+    return RedirectResponse(url=redirect_url)
+
+
+@app.get("/api/session/me")
+async def me(request: fastapi.Request):
+    rpt = urdhva_base.context.context.get('rpt', {})
+    resp = {'permissions': await get_permission(), 'given_name': rpt.get('given_name', '-'),
+            'family_name': rpt.get('family_name', '-'), 'email': rpt.get('email', '-'),
+            'entity_id': urdhva_base.ctx["entity_id"] if urdhva_base.ctx.exists() else '',
+            "base_url": "", "fqdn_ipaddress": "", "is_poc_user": False, "organizations_permitted": "",
+            "organizations_prohibited": "", "credentials_permitted": "", "credentials_prohibited": ""}
+    redis_client = await urdhva_base.redispool.get_redis_connection()
+    resp.update({"dateFormat": await redis_client.hget("dateformat_mapping", urdhva_base.ctx["entity_id"])})
+    if rpt.get('email') and await redis_client.hexists(f"access_restrictions_{urdhva_base.ctx['entity_id']}", rpt['email']):
+        data = json.loads(await redis_client.hget(f"access_restrictions_{urdhva_base.ctx['entity_id']}",
+                                                  rpt['email']))
+        for key in ["organizations_permitted", "organizations_prohibited", "credentials_permitted",
+                    "credentials_prohibited", "is_poc_user"]:
+            if key in data:
+                resp[key] = data[key]
+    return resp
+
+
+def convert_role_dict(role_data):
+    role_dict = {}
+    if "authorization" in role_data and "permissions" in role_data['authorization']:
+        for roleScop in role_data['authorization']['permissions']:
+            if roleScop['rsname'].lower() not in role_dict:
+                role_dict[roleScop['rsname'].lower()] = roleScop['scopes']
+    return role_dict
+
+
+handler = Mangum(app)
