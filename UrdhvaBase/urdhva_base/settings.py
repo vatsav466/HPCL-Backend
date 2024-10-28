@@ -14,8 +14,7 @@ Db_Urls_Base = {
             "https://admin:password@localhost:9200"
         ],
         "postgres_async": [
-            # "postgresql+asyncpg://localhost/dataflow?user=postgres&password=password"
-            "postgresql+asyncpg://15.206.23.238/recon?user=santosh&password=7yUy9T5UGMBh"
+            "postgresql+asyncpg://localhost/dataflow?user=postgres&password=password"
         ],
         "redis": [
             "redis://localhost:6379"
@@ -44,6 +43,9 @@ class Settings(pydantic_settings.BaseSettings):
     cookie_name: str = "urdhva_data_fusion"
     default_index: str = "urdhva_data_fusion"
     multi_tenant_support: bool = True
+
+    # Header based authentication Enabled or Not
+    enable_header_auth: bool = False
 
     # Keycloak Auth Server
     keycloak_external_url: pydantic.AnyHttpUrl = 'https://localhost:8443'

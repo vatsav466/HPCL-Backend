@@ -110,8 +110,50 @@ async def has_permission(method: str, path: str):
     return True if resource in permissions and operation in permissions[resource] else False
 
 
+async def validate_header_based_authentication(request: fastapi.Request):
+    """
+        Validates the authentication of an incoming HTTP request based on headers.
+
+        Args:
+            request (fastapi.Request): The incoming HTTP request object.
+
+        Steps:
+        1. Extract the Authorization header from the request.
+        2. Check if the Authorization header is missing or malformed.
+        3. Validate the token (e.g., a JWT) from the Authorization header.
+        4. Return an appropriate response if the authentication fails.
+        5. If authentication is successful, allow the request to proceed.
+
+        Returns:
+            True, None: If the authentication is valid, the function does not return anything, and the request proceeds.
+            False, 403: If the authentication fails, an HTTP exception is raised with the appropriate status code and message.
+            False, None: If header based authentication not enabled or auth token not available in headers
+        """
+    if not urdhva_base.settings.enable_header_auth:
+        return False, None
+    headers = request.headers
+    if headers.get("ceg_auth_token"):
+        access_key = headers.get("ceg_auth_token")
+        vendor = headers.get("vendor")
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        # Validate Access key
+        if await redis_ins.hexists("vendor_auth", f"{vendor}_access_key"):
+            db_access_key = await redis_ins.hget("vendor_auth", f"{vendor}_access_key")
+            if db_access_key and isinstance(db_access_key, bytes):
+                db_access_key = db_access_key.decode()
+            if db_access_key == access_key:
+                return True, None
+            return False, fastapi.responses.JSONResponse("Invalid token", 403)
+    return False, None
+
+
 @app.middleware('http')
 async def authMiddleware(request: fastapi.Request, call_next):
+    status, resp = await validate_header_based_authentication(request)
+    if status:
+        return await call_next(request)
+    elif not status and resp:
+        return resp
     response = fastapi.Response(None, 403)
     if request.url.path in ['/docs', '/openapi.json', '/api/login'] + urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
@@ -370,6 +412,10 @@ async def authorize(request: fastapi.Request, entity_id: str):
         data = await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname)
         url = json.loads(data)["base_url"]
         oauth_redirect_url = f'https://{request.base_url.hostname}/api/{entity_id}/login'
+    redis_client = await urdhva_base.redispool.get_redis_connection()
+    data = await redis_client.hget(f"{entity_id}_domainMapping", request.base_url.hostname)
+    if data:
+        base_url = json.loads(data)["base_url"]
     redirect_url = f'https://{base_url}/{await get_customer_authentication_extension(entity_id)}' \
                    f'/realms/{entity_id}/protocol/openid-connect/auth?client_id={entity_id}' \
                    f'_client&response_type=code&redirect_uri={oauth_redirect_url}&scope=email openid&state=123'
@@ -394,6 +440,11 @@ async def me(request: fastapi.Request):
             if key in data:
                 resp[key] = data[key]
     return resp
+
+
+@app.get("/api/ping")
+async def ping():
+    return "pong"
 
 
 def convert_role_dict(role_data):

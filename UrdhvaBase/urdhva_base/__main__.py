@@ -14,7 +14,7 @@ args = parser.parse_args()
 if __name__ == "__main__":
     log_level: str = None
     reload: bool = False
-    port: int = int(os.environ.get("PORT", 9001))
+    port: int = int(os.environ.get("PORT", 9000))
     # print(os.getcwd(), sys.path)
     if args.config:
         print(urdhva_base.settings.json(indent=2))

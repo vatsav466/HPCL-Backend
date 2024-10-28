@@ -39,7 +39,6 @@ class Secret(str):
             password = urdhva_base.ctx['entity_id'] if urdhva_base.ctx.exists() else "urdhva_secret"
         else:
             password = domain
-        print(password)
         return base64.urlsafe_b64encode(hkdf.derive(password.encode()))
 
     @classmethod
