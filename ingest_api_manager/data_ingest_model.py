@@ -31,8 +31,6 @@ class vtsDataCreate(pydantic.BaseModel):
 
 
 class Vts_Ingest_DataParams(pydantic.BaseModel):
-    vendor: str
-    ceg_auth_token: str
     vendor_id: str
     location_id: str
     location_type: str
@@ -47,8 +45,6 @@ class vaDataCreate(pydantic.BaseModel):
 
 
 class Va_Ingest_DataParams(pydantic.BaseModel):
-    vendor: str
-    ceg_auth_token: str
     vendor_id: str
     location_id: str
     location_type: str
@@ -63,8 +59,6 @@ class crisDataCreate(pydantic.BaseModel):
 
 
 class Cris_Ingest_DataParams(pydantic.BaseModel):
-    vendor: str
-    ceg_auth_token: str
     vendor_id: str
     location_id: str
     data: typing.Optional[typing.List[crisDataCreate]] | None = None
