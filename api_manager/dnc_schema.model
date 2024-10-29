@@ -1,0 +1,144 @@
+Enum LocationType str {
+    RO='RO'
+    TAS='TAS'
+    LPG='LPG'
+}
+
+Enum NotificationLevel str {
+    IntialNotification='IntialNotification'
+    IntialEscalation='IntialEscalation'
+}
+
+Enum Alerts str {
+    Open='Open'
+    Close='Close'
+}
+
+Enum Priority str {
+    Low='Low'
+    Medium='Medium'
+    High='High'
+    Critical='Critical'
+}
+
+Model LocationMaster {
+    sap_id str
+    sop_id optional str
+    bu optional LocationType
+    location_name str
+    region optional str
+    state optional str
+    district optional str
+    zone optional str
+    pinCode optional str
+    local_automation_vendor optional str
+    latitude optional str
+    longitude optional str
+
+    Action=> upload_masterFile{
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model RoleMaster {
+    bu optional LocationType
+    bu_id str
+    site_name str
+    region optional str
+    state optional str
+    city optional str
+    incharge_name optional str
+    incharge_email optional str
+    incharge_phone optional str
+    incharge_role optional str
+    notification_level optional NotificationLevel
+
+    Action=> upload_masterFile{
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model AssetMaster {
+    sap_id str	
+    local_bay_id optional int
+    local_mpd_id optional int		
+    local_tank_id optional int 	
+    local_nozzle_id optional int	
+    global_nozzle_id optional int  
+    location_device_id optional int
+    site_name optional str
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_masterFile{
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model assetData {
+    ro_id str
+    local_tank_id optional int
+    local_nozzle_id optional int
+    local_mpd_id optional int
+    local_bay_id optional int
+    alert_status optional Alerts
+}
+
+Model assetDetails internal {
+    asset_id str
+    data optional assetData
+} 
+
+Model Alert_History internal {
+    alert_created_time optional datetime
+    local_tank_id optional int
+    local_mpd_id optional int
+    local_bay_id optional int
+    local_nozzle_id optional int
+    entered_queue_at optional datetime
+    processed_at optional datetime
+    active optional str
+    mail_sent_to optional str
+    date optional datetime
+}
+
+Model Alerts {
+    _id str
+    sap_id str
+    sop_id str
+    asset_id optional assetDetails
+    alert_type optional str
+    alert_status optional Alerts
+    alert_message optional str
+    interlock_name optional str
+    location_name optional str	
+    device_name optional str
+    device_type optional str
+    location_device_id optional str
+    priority optional str
+    district optional str
+    region optional str
+    state optional str
+    city optional str
+    alert_history optional list Alert_History 
+    closed optional bool
+    closed_time optional datetime
+    incharge_role optional str
+    sales_area optional str
+    mail_sent_to optional str
+    sms_sent_to optional str
+
+    Config=> {
+        crud_operations='read'
+    }
+}

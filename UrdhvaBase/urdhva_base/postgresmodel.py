@@ -172,6 +172,19 @@ class BasePostgresModel(pydantic.BaseModel):
         return total
 
     @classmethod
+    async def update_by_query(cls, query, entity_id=None):
+        session = await manager.get_session()
+        try:
+            result = await session.execute(text(query))
+            print(f"Rows committed {result.rowcount}")
+            await session.commit()
+        except Exception as e:
+            print(f"Exception while running update by query {e}")
+            raise f"Exception while running update by query {e}"
+        finally:
+            await asyncio.shield(session.close())
+
+    @classmethod
     async def get_aggr_data(cls, query, limit=100, skip=0, skip_total=True):
         """
         @Description: For getting aggregated data, Join queries
@@ -351,7 +364,7 @@ class BasePostgresModel(pydantic.BaseModel):
                 session.add(schema_class)
                 await session.commit()
                 await session.refresh(schema_class)
-                return schema_class
+                return {"id": schema_class.id, **{key: value for key, value in schema_class.__dict__.items() if not key.startswith("_")}}
             else:
                 ins_resp = insert(self.Config.schema_class).values([{**json.loads(self.model_dump_json()),
                                                                      "entity_id": entity_id}])
@@ -359,7 +372,9 @@ class BasePostgresModel(pydantic.BaseModel):
                 ins_resp = ins_resp.on_conflict_do_update(
                     index_elements=self.Config.upsert_keys, set_=conflict_dict
                 )
-                await session.execute(ins_resp)
+                resp = await session.execute(ins_resp)
+                id = resp.scalar()
+                return {"id": id, **{key: value for key, value in resp.__dict__.items() if not key.startswith("_")}}
         except Exception as e:
             print(f"Exception in {'create' if not upsert else 'upsert'} {e}")
             return None
