@@ -10,6 +10,15 @@ router = fastapi.APIRouter(prefix='/assetmaster')
 # Action upload_masterFile
 @router.post('/upload_masterFile', tags=['AssetMaster'])
 async def assetmaster_upload_masterfile(uploadfile: fastapi.UploadFile = fastapi.File(None)):
+    """
+    Uploads a master file and returns the file path and the first few rows of the data as a sample.
+
+    Args:
+        uploadfile (fastapi.UploadFile): The file to be uploaded
+
+    Returns:
+        A dictionary containing the file path and the first few rows of the data as a sample.
+    """
     upload_dir = urdhva_base.settings.mft_path
     os.makedirs(upload_dir, exist_ok=True)
     
