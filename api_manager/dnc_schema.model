@@ -9,7 +9,7 @@ Enum NotificationLevel str {
     IntialEscalation='IntialEscalation'
 }
 
-Enum Alerts str {
+Enum AlertStatus str {
     Open='Open'
     Close='Close'
 }
@@ -91,7 +91,7 @@ Model assetData {
     local_nozzle_id optional int
     local_mpd_id optional int
     local_bay_id optional int
-    alert_status optional Alerts
+    alert_status optional AlertStatus
 }
 
 Model assetDetails internal {
@@ -112,13 +112,25 @@ Model Alert_History internal {
     date optional datetime
 }
 
+Model tags internal {
+    isAtrUploaded optional bool
+    isMaintenanceException optional bool
+    isRevocation optional bool
+    noException optional bool
+}
+
+Model override internal {
+    days optional int
+    msg optional str
+}
+
 Model Alerts {
     _id str
     sap_id str
     sop_id str
     asset_id optional assetDetails
     alert_type optional str
-    alert_status optional Alerts
+    alert_status optional AlertStatus
     alert_message optional str
     interlock_name optional str
     location_name optional str	
@@ -138,7 +150,93 @@ Model Alerts {
     mail_sent_to optional str
     sms_sent_to optional str
 
+
+    Action=> justification{
+        alert_id str
+        alert_msg optional str
+        days optional int
+        justificationType optional str
+        event_tags optional tags
+
+    }
+
+    Action=> reject{
+        alertid optional str
+        alertmsg optional str
+        days optional int
+
+    }
+
+    Action=> approve{
+        alertid optional str
+        alertmsg optional str
+        days optional int
+    }
+
+    Action=> override{
+        alertid str
+        overridemsg optional override
+    }
+
     Config=> {
         crud_operations='read'
     }
+}
+
+Model vtsData internal {
+    tl_number str
+    report_duration str
+    total_trips optional int
+    stoppage_violations_count optional int
+    route_deviation_count optional int
+    speed_violation_count optional int
+    main_supply_removal_count optional int
+    night_driving_count optional int
+    no_halt_zone_count optional int
+    device_offline_count optional int
+    device_tamper_count optional int
+}
+
+Model VTS crud_disable {
+
+    Action=> ingest_data {
+        vendor_id str
+        location_id str
+        location_type str
+        data optional vtsData
+    }
+}
+
+Model vaData internal {
+    alert_type str
+    alert_description optional str
+    device_id str
+    video_url optional str
+}
+
+Model VA crud_disable {
+
+    Action=> ingest_data {
+        vendor_id str
+        location_id str
+        location_type str
+        data optional list vaData
+    }
+}
+
+Model crisData internal {
+    interlock_type str
+    interlock_description optional str
+    device_id str
+    device_value optional str
+}
+
+Model CRIS crud_disable {
+    
+    Action=> ingest_data {
+        vendor_id str
+        location_id str
+        data optional list crisData
+    }
+
 }

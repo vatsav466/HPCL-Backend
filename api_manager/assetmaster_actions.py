@@ -27,3 +27,9 @@ async def assetmaster_upload_masterfile(uploadfile: fastapi.UploadFile = fastapi
         raise HTTPException(status_code=500, detail="File upload failed.") from e
     except Exception as e:
         raise HTTPException(status_code=400, detail="Failed to process CSV file.") from e
+
+
+# Action upload_masterFile
+@router.post('/upload_masterFile', tags=['AssetMaster'])
+async def assetmaster_upload_masterfile(data: Assetmaster_Upload_MasterfileParams):
+    ...

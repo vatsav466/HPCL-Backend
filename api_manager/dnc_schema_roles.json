@@ -209,6 +209,363 @@
                     "name": "upload_masterfile"
                 }
             ]
+        },
+        {
+            "name": "assetdata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "assetData",
+            "attributes": {},
+            "uris": [
+                "/api/assetdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "assetdata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "assetData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/assetdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "assetdata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "assetData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/assetdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "alerts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Alerts",
+            "attributes": {},
+            "uris": [
+                "/api/alerts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "justification"
+                },
+                {
+                    "name": "reject"
+                },
+                {
+                    "name": "approve"
+                },
+                {
+                    "name": "override"
+                }
+            ]
+        },
+        {
+            "name": "alerts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Alerts_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/alerts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "alerts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Alerts_admin",
+            "attributes": {},
+            "uris": [
+                "/api/alerts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "justification"
+                },
+                {
+                    "name": "reject"
+                },
+                {
+                    "name": "approve"
+                },
+                {
+                    "name": "override"
+                }
+            ]
+        },
+        {
+            "name": "vts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VTS",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "vts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VTS_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VTS_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "va",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VA",
+            "attributes": {},
+            "uris": [
+                "/api/va/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "va_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VA_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/va/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "va_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VA_admin",
+            "attributes": {},
+            "uris": [
+                "/api/va/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "cris",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CRIS",
+            "attributes": {},
+            "uris": [
+                "/api/cris/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
+        },
+        {
+            "name": "cris_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CRIS_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/cris/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "cris_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CRIS_admin",
+            "attributes": {},
+            "uris": [
+                "/api/cris/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "ingest_data"
+                }
+            ]
         }
     ],
     "policies": [
@@ -298,6 +655,34 @@
         {
             "name": "upload_masterfile",
             "displayName": "upload_masterfile"
+        },
+        {
+            "name": "justification",
+            "displayName": "justification"
+        },
+        {
+            "name": "reject",
+            "displayName": "reject"
+        },
+        {
+            "name": "approve",
+            "displayName": "approve"
+        },
+        {
+            "name": "override",
+            "displayName": "override"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
+        },
+        {
+            "name": "ingest_data",
+            "displayName": "ingest_data"
         }
     ]
 }
