@@ -1,0 +1,37 @@
+import urdhva_base
+import json
+import msgpack
+import urdhva_base.redispool
+import api_manager.dnc_schema_enum as dnc_schema_enum
+import api_manager.dnc_schema_model as dnc_schema_model
+
+
+async def get_queue_ins(worker_queue_name):
+    return urdhva_base.redispool.RedisQueue(worker_queue_name)
+
+
+
+async def location_master():
+    """
+    Location Master, Will collect all location of RO plant, post to queue which will collect location data
+    :return: No Return
+    """
+    queue_ins = await get_queue_ins("location_master_processing")
+    locations = await dnc_schema_model.LocationMaster.get_all()
+    for location in locations:
+        input_data = {"location_master": location}
+        msg_data = msgpack.packb(input_data)
+        await queue_ins.put(msg_data, skip_on_exists=True)
+
+
+async def location_device():
+    """
+    Location Device, Will collect all location of RO plant, post to queue which will collect location data
+    :return: No Return
+    """
+    queue_ins = await get_queue_ins("location_device_processing")
+    locations = await dnc_schema_model.LocationDevice.get_all()
+    for location in locations:
+        input_data = {"location_device": location}
+        msg_data = msgpack.packb(input_data)
+        await queue_ins.put(msg_data, skip_on_exists=True)

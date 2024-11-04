@@ -566,6 +566,81 @@
                     "name": "ingest_data"
                 }
             ]
+        },
+        {
+            "name": "locationdevice",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LocationDevice",
+            "attributes": {},
+            "uris": [
+                "/api/locationdevice/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_device_masterfile"
+                },
+                {
+                    "name": "read_location_device_data"
+                }
+            ]
+        },
+        {
+            "name": "locationdevice_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LocationDevice_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/locationdevice/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "locationdevice_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LocationDevice_admin",
+            "attributes": {},
+            "uris": [
+                "/api/locationdevice/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_device_masterfile"
+                },
+                {
+                    "name": "read_location_device_data"
+                }
+            ]
         }
     ],
     "policies": [
@@ -683,6 +758,14 @@
         {
             "name": "ingest_data",
             "displayName": "ingest_data"
+        },
+        {
+            "name": "upload_device_masterfile",
+            "displayName": "upload_device_masterfile"
+        },
+        {
+            "name": "read_location_device_data",
+            "displayName": "read_location_device_data"
         }
     ]
 }

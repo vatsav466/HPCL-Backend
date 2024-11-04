@@ -72,14 +72,12 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await Alerts.get_all(params, skip_secrets=True)
 
 
+@router.get('/locationdevice/{id}', response_model=LocationDevice, tags=['LocationDevice'])
+async def get(id: str):
+    return await LocationDevice.get(id, skip_secrets=True)
 
 
-
-
-
-
-
-
-
-
+@router.get('/locationdevice', response_model=LocationDeviceGetResp, tags=['LocationDevice'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LocationDevice.get_all(params, skip_secrets=True)
 

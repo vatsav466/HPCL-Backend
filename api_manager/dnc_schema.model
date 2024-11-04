@@ -149,8 +149,8 @@ Model Alerts {
     sales_area optional str
     mail_sent_to optional str
     sms_sent_to optional str
-
-
+    acted_by optional str
+ 
     Action=> justification{
         alert_id str
         alert_msg optional str
@@ -161,21 +161,21 @@ Model Alerts {
     }
 
     Action=> reject{
-        alertid optional str
-        alertmsg optional str
+        alert_id optional str
+        alert_msg optional str
         days optional int
 
     }
 
     Action=> approve{
-        alertid optional str
-        alertmsg optional str
+        alert_id optional str
+        alert_msg optional str
         days optional int
     }
 
     Action=> override{
-        alertid str
-        overridemsg optional override
+        alert_id str
+        override_msg optional override
     }
 
     Config=> {
@@ -202,7 +202,7 @@ Model VTS crud_disable {
     Action=> ingest_data {
         vendor_id str
         location_id str
-        location_type str
+        location_type optional LocationType
         data optional vtsData
     }
 }
@@ -219,7 +219,7 @@ Model VA crud_disable {
     Action=> ingest_data {
         vendor_id str
         location_id str
-        location_type str
+        location_type optional LocationType
         data optional list vaData
     }
 }
@@ -236,7 +236,34 @@ Model CRIS crud_disable {
     Action=> ingest_data {
         vendor_id str
         location_id str
+        location_type optional LocationType
         data optional list crisData
     }
 
+}
+
+Model LocationDevice {
+    sap_id str
+    sop_id optional str
+    bu optional LocationType
+    location_name str
+    region optional str
+    state optional str
+    district optional str
+    zone optional str
+    pinCode optional str
+    local_automation_vendor optional str
+    location_device_id str
+    location_device_name str
+
+    Action=> upload_device_masterFile{
+    }
+
+    Action=> read_location_device_data{
+        location_id str
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
 }
