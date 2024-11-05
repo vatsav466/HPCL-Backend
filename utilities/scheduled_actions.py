@@ -35,3 +35,20 @@ async def location_device():
         input_data = {"location_device": location}
         msg_data = msgpack.packb(input_data)
         await queue_ins.put(msg_data, skip_on_exists=True)
+
+
+async def role_master():
+    queue_ins = await get_queue_ins("role_master_processing")
+    roles = await dnc_schema_model.RoleMaster.get_all()
+    for role in roles:
+        input_data = {"roles": role}
+        msg_data = msgpack.packb(input_data)
+        await queue_ins.put(msg_data, skip_on_exists=True)
+
+async def asset_master():
+    queue_ins = await get_queue_ins("asset_master_processing")
+    assets = await dnc_schema_model.AssetMaster.get_all()
+    for asset in assets:
+        input_data = {"assets": asset}
+        msg_data = msgpack.packb(input_data)
+        await queue_ins.put(msg_data, skip_on_exists=True)

@@ -148,6 +148,14 @@ async def scheduler_configuration():
     status, resp2 = await ins.add_scheduler("location_device", worker_action, cron_data={"hour": "*/6"},
                                             args=["a", "b"], trigger_args={"action": "location_device"})
     print(status, resp2)
+
+    status, resp3 = await ins.add_scheduler("role_master", worker_action, cron_data={"hour": "*/6"},
+                                            args=["a", "b"], trigger_args={"action": "role_master"})
+    print(status, resp3)
+
+    status, resp4 = await ins.add_scheduler("asset_master", worker_action, cron_data={"hour": "*/6"},
+                                            args=["a", "b"], trigger_args={"action": "asset_master"})
+    print(status, resp4)
     await ins.schedule_runner()
 
 if __name__ == "__main__":
