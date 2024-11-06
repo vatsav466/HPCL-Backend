@@ -1,8 +1,8 @@
 import urdhva_base
 import json
 import datetime
+import orchestrator.alerting.alert_helper as alert_helper
 from api_manager import hpcl_cng_model, hpcl_cng_enum
-
 logger = urdhva_base.logger.Logger.getInstance("Alerts_Processing")
 
 
@@ -52,15 +52,11 @@ class AlertManager:
             loc_dt = {}
             # query to get the location data from locaiton table
             if bu_location_type.upper() in [bu.value for bu in hpcl_cng_enum.BusinessUnit] and sopid not in data['sopid']:
-                redis_key = f"{bu_location_type.upper()}_{sapid}"
                 try:
-                    # Get the Redis client
-                    redis_client = await urdhva_base.redispool.get_redis_connection()
-                    # Check if location data exists in Redis using HGET
-                    redis_data = await redis_client.hget(f"{bu_location_type.lower()}_master", redis_key)
-                    if redis_data:
+                    # Getting location details from redis
+                    status, location_data = await alert_helper.get_location_details(bu_location_type, sapid)
+                    if status:
                         # If data is found in Redis, parse the JSON
-                        location_data = json.loads(redis_data)
                         loc_dt = {
                             "state": location_data.get('state', ''),
                             "region": location_data.get('region', ''),

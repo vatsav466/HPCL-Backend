@@ -8,6 +8,8 @@ import fastapi
 import constants
 import traceback
 import polars as pl
+import urdhva_base.redispool
+import orchestrator.alerting.alert_helper as alert_helper
 
 router = fastapi.APIRouter(prefix='/locationmaster')
 
@@ -39,28 +41,23 @@ async def locationmaster_upload_location_master(uploadfile: fastapi.UploadFile =
     
     # Define the file path
     file_path = os.path.join(upload_dir, uploadfile.filename)
-    
-    # Save the uploaded file
     try:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(uploadfile.file, buffer)
         data = pl.read_csv(file_path).with_columns(pl.all().cast(pl.Utf8,strict=False))
         # Iterate through the rows of the CSV and extract `bu` and `sapid`
         data = data.rename(constants.Location)
-        for row in data.to_dicts():
-            bu = row["bu"]  # Assuming 'bu' column exists in the CSV
-            sapid = row["sap_id"]  # Assuming 'sapid' column exists in the CSV
-            
-            # Create a Redis key using the format bu_sapid
-            redis_key = f"{bu.upper()}_{sapid}"
-            
-            # Set the key in Redis with the value being the data row
-            await redis_client.hset("location_master", redis_key, json.dumps(row)) 
-        
+    except Exception as e:
+        print(traceback.format_exc())
+        raise fastapi.HTTPException(status_code=400, detail="Failed to process CSV file.") from e
+
+    # Save the uploaded file
+    try:
         data = data.to_dicts()
         for data_dump in data:
             data_obj = LocationMasterCreate(**data_dump)
             print(await data_obj.create())
+            await alert_helper.set_location_details(data_dump["bu"], data_dump["sap_id"], data_dump)
 
         # Display data or perform further processing as needed
         return {"filename": file_path, "data": data}  # Returns the first few rows as a sample

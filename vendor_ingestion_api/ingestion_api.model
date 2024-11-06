@@ -6,6 +6,11 @@ Enum BusinessUnit str {
     CP='CP'
 }
 
+Enum AlertStatus str {
+    Open='Open'
+    Close='Close'
+}
+
 Model vtsData internal {
     tl_number str
     report_duration str
@@ -50,6 +55,8 @@ Model crisData internal {
     interlock_description optional str
     device_id str
     device_value optional str
+    alert_id str
+    alert_status AlertStatus
 }
 
 Model CRIS crud_disable {
