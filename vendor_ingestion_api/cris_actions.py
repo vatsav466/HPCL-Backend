@@ -25,33 +25,34 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
     Returns:
     - dict: Status message indicating the success of the data submission.
     """
+    logger.info(f"Received CRIS data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
 
-    try:
-        header = {"Content-Type": "application/json", "Accept": "application/json"}
+    # try:
+    #     header = {"Content-Type": "application/json", "Accept": "application/json"}
 
-        tagmap = dict()
-        alertid = ""
+    #     tagmap = dict()
+    #     alertid = ""
         
-        for _data in data.data:
-            if isinstance(_data, dict):
-                _data = _data.__dict__
+    #     for _data in data.data:
+    #         if isinstance(_data, dict):
+    #             _data = _data.__dict__
         
-            cris_interlock = {"businessKey": alertid,
-                    "variables": {"vendor_id": {"value": data.vendor_id, "type": "String"},
-                                    "location_id": {"value": data.location_id, "type": "String"},
-                                    "location_type": {"value": data.location_type, "type": "String"},
-                                    "interlock_type": {"value": _data['interlock_type'], "type": "String"},
-                                    "interlock_description": {"value": _data['interlock_description'], "type": "String"},
-                                    "device_id": {"value": _data['device_id'], "type": "String"},
-                                    "device_value": {"value": _data['device_value'], "type": "String"}
-                                    }}
-            camundaurl = urdhva_base.settings.camundaurl + "/engine-rest/process-definition/key/" + tagmap[alertname] + "/start"
-            r = requests.post(camundaurl, headers=headers, data=json.dumps(cris_interlock))
-            logger.info("Justify for:%s Data:%s Camunda Resp:%s" % (businesskey, body, r.status_code))
-        return {
-            "status": True, "message": "Justification Submitted", "data": []
-        }
+    #         cris_interlock = {"businessKey": alertid,
+    #                 "variables": {"vendor_id": {"value": data.vendor_id, "type": "String"},
+    #                                 "location_id": {"value": data.location_id, "type": "String"},
+    #                                 "location_type": {"value": data.location_type, "type": "String"},
+    #                                 "interlock_type": {"value": _data['interlock_type'], "type": "String"},
+    #                                 "interlock_description": {"value": _data['interlock_description'], "type": "String"},
+    #                                 "device_id": {"value": _data['device_id'], "type": "String"},
+    #                                 "device_value": {"value": _data['device_value'], "type": "String"}
+    #                                 }}
+    #         camundaurl = urdhva_base.settings.camundaurl + "/engine-rest/process-definition/key/" + tagmap[alertname] + "/start"
+    #         r = requests.post(camundaurl, headers=headers, data=json.dumps(cris_interlock))
+    #         logger.info("Justify for:%s Data:%s Camunda Resp:%s" % (businesskey, body, r.status_code))
+    #     return {
+    #         "status": True, "message": "Justification Submitted", "data": []
+    #     }
         
-    except Exception as e:
-        logger.error(e)
-        return {"status": False, "message": str(e), "data": []}
+    # except Exception as e:
+    #     logger.error(e)
+    #     return {"status": False, "message": str(e), "data": []}
