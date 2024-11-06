@@ -1,0 +1,229 @@
+Enum BusinessUnit str {
+    RO='RO'
+    TAS='TAS'
+    LPG='LPG'
+    RDI='RDI'
+    CP='CP'
+}
+
+Enum NotificationLevel str {
+    InitialNotification='InitialNotification'
+    InitialEscalation='InitialEscalation'
+}
+
+Enum AlertStatus str {
+    Open='Open'
+    Close='Close'
+}
+
+Enum Priority str {
+    Low='Low'
+    Medium='Medium'
+    High='High'
+    Critical='Critical'
+}
+
+Enum LocationHealth str {
+    Normal='Normal'
+    Failed='Failed'
+    Deactivated='Deactivated'
+}
+
+Enum AlertActionType str {
+    Justification='Justification'
+    Rejected='Rejected'
+    Approved='Approved'
+    Override='Override'
+}
+
+Model LocationMaster {
+    bu BusinessUnit
+    sap_id str
+    bu_id optional str
+    name str
+    is_active optional bool
+    activation_date optional datetime
+    activation_notes optional str
+    activated_by optional str
+    deactivated_by optional str
+    deactivation_notes optional str
+    health_status optional LocationHealth
+    health_notes optional str
+    scada_vendor optional str
+    scada_version optional str
+    scada_conn_status optional bool
+    scada_conn_notes optional str
+    city optional str
+    district optional str
+    region optional str
+    state optional str
+    zone optional str
+    address optional str
+    pincode optional str
+    local_automation_vendor optional str
+    latitude optional str
+    longitude optional str
+
+    Action=> upload_location_master {
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model RoleMaster {
+    bu BusinessUnit
+    sap_id str
+    location_name str
+    role str
+    email str
+    phone_no str
+    city optional str
+    district optional str
+    region optional str
+    state optional str
+    escalation_level optional NotificationLevel
+
+    Action=> upload_role_master {
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model ROAssetMaster {
+    bu BusinessUnit
+    sap_id str
+    location_name str
+    bay_id int
+    mpd_id int
+    tank_id int
+    nozzle_id int
+    global_nozzle_id int
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_ro_asset_master{
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model TASAssetMaster {
+    bu BusinessUnit
+    sap_id str
+    location_name str
+    device_type str
+    device_desc str
+    device_tag str
+    device_id str
+    device_key str
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_tas_asset_master{
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model LPGAssetMaster {
+    bu BusinessUnit
+    sap_id str
+    location_name str
+    device_type str
+    device_desc str
+    device_tag str
+    device_id str
+    device_key str
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_lpg_asset_master{
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model assetData {
+    ro_id str
+    local_tank_id optional int
+    local_nozzle_id optional int
+    local_mpd_id optional int
+    local_bay_id optional int
+    alert_status optional AlertStatus
+}
+
+Model assetDetails internal {
+    asset_id str
+    data optional assetData
+} 
+
+Model Alert_History internal {
+    alert_created_time optional datetime
+    local_tank_id optional int
+    local_mpd_id optional int
+    local_bay_id optional int
+    local_nozzle_id optional int
+    entered_queue_at optional datetime
+    processed_at optional datetime
+    active optional str
+    mail_sent_to optional str
+    date optional datetime
+}
+
+Model tags internal {
+    isAtrUploaded optional bool
+    isMaintenanceException optional bool
+    isRevocation optional bool
+    noException optional bool
+}
+
+Model Alerts {
+    sap_id str
+    sop_id optional str
+    asset_id optional assetDetails
+    alert_type optional str
+    alert_status optional AlertStatus
+    alert_message optional str
+    interlock_name optional str
+    location_name optional str	
+    device_name optional str
+    device_type optional str
+    location_device_id optional str
+    priority optional str
+    district optional str
+    region optional str
+    state optional str
+    city optional str
+    alert_history optional list Alert_History 
+    closed optional bool
+    closed_time optional datetime
+    mail_sent_to optional str
+    sms_sent_to optional str
+    acted_by optional str
+
+    Action=> alert_action {
+        action_type AlertActionType
+        alert_id int
+        action_msg optional str
+        days optional int
+        justificationType optional str
+        event_tags optional tags
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}

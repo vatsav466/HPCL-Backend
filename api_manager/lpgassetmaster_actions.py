@@ -1,27 +1,26 @@
 import urdhva_base
 from hpcl_cng_enum import *
 from hpcl_cng_model import *
-import fastapi
 import os
 import shutil
 import fastapi
 import polars as pl
 
-router = fastapi.APIRouter(prefix='/rolemaster')
+router = fastapi.APIRouter(prefix='/lpgassetmaster')
 
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
-# Action upload_role_master
-@router.post('/upload_role_master', tags=['RoleMaster'])
-async def rolemaster_upload_role_master(upload_file: fastapi.UploadFile = fastapi.File(None)):
+# Action upload_tas_asset_master
+@router.post('/upload_tas_asset_master', tags=['LPGAssetMaster'])
+async def lpgassetmaster_upload_tas_asset_master(uploadfile: fastapi.UploadFile = fastapi.File(None)):
     """
-    Upload Role Master file.
+    Upload TAS Asset Master file.
 
     This API endpoint accepts a CSV file and saves it to the MFT path.
     It then reads the CSV file and returns the data as a JSON response.
 
     Args:
-        upload_file (fastapi.UploadFile): The CSV file to be uploaded.
+        data (Lpgassetmaster_Upload_Tas_Asset_MasterParams): The CSV file to be uploaded.
 
     Returns:
         Dict[str, Any]: A JSON response containing the filename and data.
@@ -47,4 +46,3 @@ async def rolemaster_upload_role_master(upload_file: fastapi.UploadFile = fastap
         raise fastapi.HTTPException(status_code=500, detail="File upload failed.") from e
     except Exception as e:
         raise fastapi.HTTPException(status_code=400, detail="Failed to process CSV file.") from e
-

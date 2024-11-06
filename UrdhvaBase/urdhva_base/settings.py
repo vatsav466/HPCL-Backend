@@ -39,9 +39,9 @@ def configure_db_urls(db_urls):
 class Settings(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict(env_file=EnvConfigFile, extra='ignore')
     # Domain defaults
-    app_name: str = "dataFusion"
-    cookie_name: str = "urdhva_data_fusion"
-    default_index: str = "urdhva_data_fusion"
+    app_name: str = "hpcl_cng"
+    cookie_name: str = "hpcl_cng"
+    default_index: str = "hpcl_cng"
     multi_tenant_support: bool = True
 
     # Header based authentication Enabled or Not
@@ -58,7 +58,7 @@ class Settings(pydantic_settings.BaseSettings):
     roles_directories: typing.List[str] = []
 
     # For Logger
-    log_base_dir: str = "/var/log/c2o_logs"
+    log_base_dir: str = "/var/log/cng_logs"
     log_max_size: int = 10000000
     log_max_count: int = 5
 

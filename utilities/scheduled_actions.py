@@ -10,7 +10,6 @@ async def get_queue_ins(worker_queue_name):
     return urdhva_base.redispool.RedisQueue(worker_queue_name)
 
 
-
 async def location_master():
     """
     Location Master, Will collect all location of RO plant, post to queue which will collect location data

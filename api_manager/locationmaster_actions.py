@@ -1,23 +1,33 @@
 import urdhva_base
-from dnc_schema_enum import *
-from dnc_schema_model import *
+from hpcl_cng_enum import *
+from hpcl_cng_model import *
+import os
+import shutil
 import fastapi
 import polars as pl
 
 router = fastapi.APIRouter(prefix='/locationmaster')
 
+logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
-# Action upload_masterFile
-@router.post('/upload_masterFile', tags=['LocationMaster'])
-async def locationmaster_upload_masterfile(uploadfile: fastapi.UploadFile = fastapi.File(None)):
+# Action upload_location_master
+@router.post('/upload_location_master', tags=['LocationMaster'])
+async def locationmaster_upload_location_master(uploadfile: fastapi.UploadFile = fastapi.File(None)):
     """
-    Uploads a master file and returns the file path and the first few rows of the data as a sample.
+    Upload Location Master file.
+
+    This API endpoint accepts a CSV file and saves it to the MFT path.
+    It then reads the CSV file and returns the data as a JSON response.
 
     Args:
-        uploadfile (fastapi.UploadFile): The file to be uploaded
+        data (Locationmaster_Upload_Location_MasterParams): The CSV file to be uploaded.
 
     Returns:
-        A dictionary containing the file path and the first few rows of the data as a sample.
+        Dict[str, Any]: A JSON response containing the filename and data.
+
+    Raises:
+        HTTPException: If there is an error uploading the file.
+        HTTPException: If there is an error processing the CSV file.
     """
     upload_dir = urdhva_base.settings.mft_path
     os.makedirs(upload_dir, exist_ok=True)
@@ -33,6 +43,6 @@ async def locationmaster_upload_masterfile(uploadfile: fastapi.UploadFile = fast
         # Display data or perform further processing as needed
         return {"filename": file_path, "data": data.to_dicts()}  # Returns the first few rows as a sample
     except Exception as e:
-        raise HTTPException(status_code=500, detail="File upload failed.") from e
+        raise fastapi.HTTPException(status_code=500, detail="File upload failed.") from e
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Failed to process CSV file.") from e
+        raise fastapi.HTTPException(status_code=400, detail="Failed to process CSV file.") from e

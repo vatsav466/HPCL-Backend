@@ -26,7 +26,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_masterfile"
+                    "name": "upload_location_master"
                 }
             ]
         },
@@ -68,7 +68,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_masterfile"
+                    "name": "upload_location_master"
                 }
             ]
         },
@@ -95,7 +95,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_masterfile"
+                    "name": "upload_role_master"
                 }
             ]
         },
@@ -137,18 +137,18 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_masterfile"
+                    "name": "upload_role_master"
                 }
             ]
         },
         {
-            "name": "assetmaster",
+            "name": "roassetmaster",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "AssetMaster",
+            "displayName": "ROAssetMaster",
             "attributes": {},
             "uris": [
-                "/api/assetmaster/*"
+                "/api/roassetmaster/*"
             ],
             "scopes": [
                 {
@@ -164,18 +164,18 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_masterfile"
+                    "name": "upload_ro_asset_master"
                 }
             ]
         },
         {
-            "name": "assetmaster_readOnly",
+            "name": "roassetmaster_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "AssetMaster_readOnly",
+            "displayName": "ROAssetMaster_readOnly",
             "attributes": {},
             "uris": [
-                "/api/assetmaster/*"
+                "/api/roassetmaster/*"
             ],
             "scopes": [
                 {
@@ -184,13 +184,13 @@
             ]
         },
         {
-            "name": "assetmaster_admin",
+            "name": "roassetmaster_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "AssetMaster_admin",
+            "displayName": "ROAssetMaster_admin",
             "attributes": {},
             "uris": [
-                "/api/assetmaster/*"
+                "/api/roassetmaster/*"
             ],
             "scopes": [
                 {
@@ -206,7 +206,145 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_masterfile"
+                    "name": "upload_ro_asset_master"
+                }
+            ]
+        },
+        {
+            "name": "tasassetmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TASAssetMaster",
+            "attributes": {},
+            "uris": [
+                "/api/tasassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_tas_asset_master"
+                }
+            ]
+        },
+        {
+            "name": "tasassetmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TASAssetMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasassetmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TASAssetMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_tas_asset_master"
+                }
+            ]
+        },
+        {
+            "name": "lpgassetmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LPGAssetMaster",
+            "attributes": {},
+            "uris": [
+                "/api/lpgassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_tas_asset_master"
+                }
+            ]
+        },
+        {
+            "name": "lpgassetmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LPGAssetMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgassetmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LPGAssetMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_tas_asset_master"
                 }
             ]
         },
@@ -296,16 +434,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "justification"
-                },
-                {
-                    "name": "reject"
-                },
-                {
-                    "name": "approve"
-                },
-                {
-                    "name": "override"
+                    "name": "alert_action"
                 }
             ]
         },
@@ -347,223 +476,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "justification"
-                },
-                {
-                    "name": "reject"
-                },
-                {
-                    "name": "approve"
-                },
-                {
-                    "name": "override"
-                }
-            ]
-        },
-        {
-            "name": "vts",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "VTS",
-            "attributes": {},
-            "uris": [
-                "/api/vts/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "ingest_data"
-                }
-            ]
-        },
-        {
-            "name": "vts_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "VTS_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/vts/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "vts_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "VTS_admin",
-            "attributes": {},
-            "uris": [
-                "/api/vts/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "ingest_data"
-                }
-            ]
-        },
-        {
-            "name": "va",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "VA",
-            "attributes": {},
-            "uris": [
-                "/api/va/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "ingest_data"
-                }
-            ]
-        },
-        {
-            "name": "va_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "VA_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/va/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "va_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "VA_admin",
-            "attributes": {},
-            "uris": [
-                "/api/va/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "ingest_data"
-                }
-            ]
-        },
-        {
-            "name": "cris",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "CRIS",
-            "attributes": {},
-            "uris": [
-                "/api/cris/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "ingest_data"
-                }
-            ]
-        },
-        {
-            "name": "cris_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "CRIS_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/cris/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "cris_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "CRIS_admin",
-            "attributes": {},
-            "uris": [
-                "/api/cris/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                },
-                {
-                    "name": "ingest_data"
+                    "name": "alert_action"
                 }
             ]
         },
@@ -720,44 +633,28 @@
             "displayName": "delete"
         },
         {
-            "name": "upload_masterfile",
-            "displayName": "upload_masterfile"
+            "name": "upload_location_master",
+            "displayName": "upload_location_master"
         },
         {
-            "name": "upload_masterfile",
-            "displayName": "upload_masterfile"
+            "name": "upload_role_master",
+            "displayName": "upload_role_master"
         },
         {
-            "name": "upload_masterfile",
-            "displayName": "upload_masterfile"
+            "name": "upload_ro_asset_master",
+            "displayName": "upload_ro_asset_master"
         },
         {
-            "name": "justification",
-            "displayName": "justification"
+            "name": "upload_tas_asset_master",
+            "displayName": "upload_tas_asset_master"
         },
         {
-            "name": "reject",
-            "displayName": "reject"
+            "name": "upload_tas_asset_master",
+            "displayName": "upload_tas_asset_master"
         },
         {
-            "name": "approve",
-            "displayName": "approve"
-        },
-        {
-            "name": "override",
-            "displayName": "override"
-        },
-        {
-            "name": "ingest_data",
-            "displayName": "ingest_data"
-        },
-        {
-            "name": "ingest_data",
-            "displayName": "ingest_data"
-        },
-        {
-            "name": "ingest_data",
-            "displayName": "ingest_data"
+            "name": "alert_action",
+            "displayName": "alert_action"
         },
         {
             "name": "upload_device_masterfile",

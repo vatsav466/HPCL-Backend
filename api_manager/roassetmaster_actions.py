@@ -7,21 +7,21 @@ import shutil
 import fastapi
 import polars as pl
 
-router = fastapi.APIRouter(prefix='/rolemaster')
+router = fastapi.APIRouter(prefix='/roassetmaster')
 
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
-# Action upload_role_master
-@router.post('/upload_role_master', tags=['RoleMaster'])
-async def rolemaster_upload_role_master(upload_file: fastapi.UploadFile = fastapi.File(None)):
+# Action upload_ro_asset_master
+@router.post('/upload_ro_asset_master', tags=['ROAssetMaster'])
+async def roassetmaster_upload_ro_asset_master(uploadfile: fastapi.UploadFile = fastapi.File(None)):
     """
-    Upload Role Master file.
+    Upload RO Asset Master file.
 
     This API endpoint accepts a CSV file and saves it to the MFT path.
     It then reads the CSV file and returns the data as a JSON response.
 
     Args:
-        upload_file (fastapi.UploadFile): The CSV file to be uploaded.
+        data (Roassetmaster_Upload_Ro_Asset_MasterParams): The CSV file to be uploaded.
 
     Returns:
         Dict[str, Any]: A JSON response containing the filename and data.
@@ -47,4 +47,3 @@ async def rolemaster_upload_role_master(upload_file: fastapi.UploadFile = fastap
         raise fastapi.HTTPException(status_code=500, detail="File upload failed.") from e
     except Exception as e:
         raise fastapi.HTTPException(status_code=400, detail="Failed to process CSV file.") from e
-
