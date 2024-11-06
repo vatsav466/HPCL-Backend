@@ -26,6 +26,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     is_active: Mapped[typing.Optional[bool]] = mapped_column("is_active", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     activation_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("activation_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     activation_notes: Mapped[typing.Optional[str]] = mapped_column("activation_notes", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    activated_by: Mapped[typing.Optional[str]] = mapped_column("activated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     deactivated_by: Mapped[typing.Optional[str]] = mapped_column("deactivated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     deactivation_notes: Mapped[typing.Optional[str]] = mapped_column("deactivation_notes", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     health_status: Mapped[typing.Optional[typing.Any]] = mapped_column("health_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -56,6 +57,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     is_active: typing.Optional[bool] = pydantic.Field(False, )
     activation_date: typing.Optional[datetime.datetime] | None = None
     activation_notes: typing.Optional[str] = pydantic.Field("", **{})
+    activated_by: typing.Optional[str] = pydantic.Field("", **{})
     deactivated_by: typing.Optional[str] = pydantic.Field("", **{})
     deactivation_notes: typing.Optional[str] = pydantic.Field("", **{})
     health_status: typing.Optional[hpcl_cng_enum.LocationHealth] | None = None
@@ -91,6 +93,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     is_active: typing.Optional[bool] = pydantic.Field(False, )
     activation_date: typing.Optional[datetime.datetime] | None = None
     activation_notes: typing.Optional[str] = pydantic.Field("", **{})
+    activated_by: typing.Optional[str] = pydantic.Field("", **{})
     deactivated_by: typing.Optional[str] = pydantic.Field("", **{})
     deactivation_notes: typing.Optional[str] = pydantic.Field("", **{})
     health_status: typing.Optional[hpcl_cng_enum.LocationHealth] | None = None
@@ -205,7 +208,6 @@ class ROAssetMasterSchema(UrdhvaPostgresBase):
     tank_id: Mapped[int] = mapped_column("tank_id", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
     nozzle_id: Mapped[int] = mapped_column("nozzle_id", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
     global_nozzle_id: Mapped[int] = mapped_column("global_nozzle_id", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    tank_id: Mapped[int] = mapped_column("tank_id", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -222,7 +224,6 @@ class ROAssetMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     tank_id: int
     nozzle_id: int
     global_nozzle_id: int
-    tank_id: int
     region: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     city: typing.Optional[str] = pydantic.Field("", **{})
@@ -244,7 +245,6 @@ class ROAssetMaster(urdhva_base.postgresmodel.PostgresModel):
     tank_id: typing.Optional[int] | None = None
     nozzle_id: typing.Optional[int] | None = None
     global_nozzle_id: typing.Optional[int] | None = None
-    tank_id: typing.Optional[int] | None = None
     region: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     city: typing.Optional[str] = pydantic.Field("", **{})
@@ -397,7 +397,7 @@ class LPGAssetMasterGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
-class Lpgassetmaster_Upload_Tas_Asset_MasterParams(pydantic.BaseModel):
+class Lpgassetmaster_Upload_Lpg_Asset_MasterParams(pydantic.BaseModel):
     pass
 
 
@@ -475,6 +475,73 @@ class tagsCreate(pydantic.BaseModel):
     no_exception: typing.Optional[bool] = pydantic.Field(False, )
 
 
+class InterlockSchema(UrdhvaPostgresBase):
+    __tablename__ = 'interlock'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sop_id: Mapped[str] = mapped_column("sop_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    interlock_name: Mapped[typing.Optional[str]] = mapped_column("interlock_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_name: Mapped[typing.Optional[str]] = mapped_column("device_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    interlock_status: Mapped[typing.Optional[typing.Any]] = mapped_column("interlock_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class InterlockCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'interlock'
+    
+    bu: str
+    sap_id: str
+    sop_id: str
+    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_status: typing.Optional[hpcl_cng_enum.AlertStatus] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = InterlockSchema
+        upsert_keys = []
+
+
+class Interlock(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'interlock'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    sop_id: typing.Optional[str] | None = None
+    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_status: typing.Optional[hpcl_cng_enum.AlertStatus] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = InterlockSchema
+        upsert_keys = []
+
+
+class InterlockGetResp(pydantic.BaseModel):
+    data: typing.List[Interlock]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class AlertsSchema(UrdhvaPostgresBase):
     __tablename__ = 'alerts'
     
@@ -482,14 +549,16 @@ class AlertsSchema(UrdhvaPostgresBase):
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     asset_id: Mapped[typing.Optional[typing.Any]] = mapped_column("asset_id", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
     alert_type: Mapped[typing.Optional[str]] = mapped_column("alert_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_status: Mapped[typing.Optional[typing.Any]] = mapped_column("alert_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     alert_message: Mapped[typing.Optional[str]] = mapped_column("alert_message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     interlock_name: Mapped[typing.Optional[str]] = mapped_column("interlock_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    interlock_id: Mapped[typing.Optional[str]] = mapped_column("interlock_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_name: Mapped[typing.Optional[str]] = mapped_column("device_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_device_id: Mapped[typing.Optional[str]] = mapped_column("location_device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    priority: Mapped[typing.Optional[str]] = mapped_column("priority", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    priority: Mapped[typing.Optional[typing.Any]] = mapped_column("priority", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -500,6 +569,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     mail_sent_to: Mapped[typing.Optional[str]] = mapped_column("mail_sent_to", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sms_sent_to: Mapped[typing.Optional[str]] = mapped_column("sms_sent_to", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     acted_by: Mapped[typing.Optional[str]] = mapped_column("acted_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -509,14 +579,16 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     asset_id: typing.Optional[assetDetailsCreate] | None = None
     alert_type: typing.Optional[str] = pydantic.Field("", **{})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     alert_status: typing.Optional[hpcl_cng_enum.AlertStatus] | None = None
     alert_message: typing.Optional[str] = pydantic.Field("", **{})
     interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     device_name: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
     location_device_id: typing.Optional[str] = pydantic.Field("", **{})
-    priority: typing.Optional[str] = pydantic.Field("", **{})
+    priority: typing.Optional[hpcl_cng_enum.Priority] | None = None
     district: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
@@ -527,6 +599,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
     sms_sent_to: typing.Optional[str] = pydantic.Field("", **{})
     acted_by: typing.Optional[str] = pydantic.Field("", **{})
+    assigned_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -541,14 +614,16 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     asset_id: typing.Optional[assetDetailsCreate] | None = None
     alert_type: typing.Optional[str] = pydantic.Field("", **{})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     alert_status: typing.Optional[hpcl_cng_enum.AlertStatus] | None = None
     alert_message: typing.Optional[str] = pydantic.Field("", **{})
     interlock_name: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     device_name: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
     location_device_id: typing.Optional[str] = pydantic.Field("", **{})
-    priority: typing.Optional[str] = pydantic.Field("", **{})
+    priority: typing.Optional[hpcl_cng_enum.Priority] | None = None
     district: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
@@ -559,6 +634,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
     sms_sent_to: typing.Optional[str] = pydantic.Field("", **{})
     acted_by: typing.Optional[str] = pydantic.Field("", **{})
+    assigned_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -581,75 +657,142 @@ class Alerts_Alert_ActionParams(pydantic.BaseModel):
     event_tags: typing.Optional[tagsCreate] | None = None
 
 
-class LocationDeviceSchema(UrdhvaPostgresBase):
-    __tablename__ = 'location_device'
-    
-    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    pin_code: Mapped[typing.Optional[str]] = mapped_column("pin_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    local_automation_vendor: Mapped[typing.Optional[str]] = mapped_column("local_automation_vendor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_device_id: Mapped[str] = mapped_column("location_device_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    location_device_name: Mapped[str] = mapped_column("location_device_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+class ui_interface_dataCreate(pydantic.BaseModel):
+    ui_component: typing.Optional[str] = pydantic.Field("", **{})
+    is_component_display: typing.Optional[bool] = pydantic.Field(False, )
 
 
-class LocationDeviceCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'location_device'
+class api_task_dataCreate(pydantic.BaseModel):
+    api_display_name: typing.Optional[str] = pydantic.Field("", **{})
+    api_name: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class DNCRoleMasterSchema(UrdhvaPostgresBase):
+    __tablename__ = 'dnc_role_master'
     
-    sap_id: str
-    bu: hpcl_cng_enum.BusinessUnit
-    location_name: str
-    region: typing.Optional[str] = pydantic.Field("", **{})
-    state: typing.Optional[str] = pydantic.Field("", **{})
-    district: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[str] = pydantic.Field("", **{})
-    pin_code: typing.Optional[str] = pydantic.Field("", **{})
-    local_automation_vendor: typing.Optional[str] = pydantic.Field("", **{})
-    location_device_id: str
-    location_device_name: str
+    role_id: Mapped[str] = mapped_column("role_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    role_name: Mapped[str] = mapped_column("role_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    source_system: Mapped[typing.List[str]] = mapped_column("source_system", ARRAY(String), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    parent_ui_interface: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("parent_ui_interface", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    child_ui_interface: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("child_ui_interface", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    tasks: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("tasks", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    conditions: Mapped[typing.Optional[dict]] = mapped_column("conditions", JSONB, index=False, nullable=True, default={}, primary_key=False, unique=False)
+
+
+class DNCRoleMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'dnc_role_master'
+    
+    role_id: str
+    role_name: str
+    source_system: typing.List[str]
+    parent_ui_interface: typing.Optional[typing.List[ui_interface_dataCreate]] | None = None
+    child_ui_interface: typing.Optional[typing.List[ui_interface_dataCreate]] | None = None
+    tasks: typing.Optional[typing.List[api_task_dataCreate]] | None = None
+    conditions: typing.Optional[dict] = pydantic.Field({}, )
 
     class Config:
         collection_name = 'data_flow'
-        schema_class = LocationDeviceSchema
+        schema_class = DNCRoleMasterSchema
         upsert_keys = []
 
 
-class LocationDevice(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'location_device'
+class DNCRoleMaster(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'dnc_role_master'
     
-    sap_id: typing.Optional[str] | None = None
-    bu: typing.Optional[hpcl_cng_enum.BusinessUnit] | None = None
-    location_name: typing.Optional[str] | None = None
-    region: typing.Optional[str] = pydantic.Field("", **{})
-    state: typing.Optional[str] = pydantic.Field("", **{})
-    district: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[str] = pydantic.Field("", **{})
-    pin_code: typing.Optional[str] = pydantic.Field("", **{})
-    local_automation_vendor: typing.Optional[str] = pydantic.Field("", **{})
-    location_device_id: typing.Optional[str] | None = None
-    location_device_name: typing.Optional[str] | None = None
+    role_id: typing.Optional[str] | None = None
+    role_name: typing.Optional[str] | None = None
+    source_system: typing.Optional[typing.List[str]] | None = None
+    parent_ui_interface: typing.Optional[typing.List[ui_interface_dataCreate]] | None = None
+    child_ui_interface: typing.Optional[typing.List[ui_interface_dataCreate]] | None = None
+    tasks: typing.Optional[typing.List[api_task_dataCreate]] | None = None
+    conditions: typing.Optional[dict] = pydantic.Field({}, )
 
     class Config:
         collection_name = 'data_flow'
-        schema_class = LocationDeviceSchema
+        schema_class = DNCRoleMasterSchema
         upsert_keys = []
 
 
-class LocationDeviceGetResp(pydantic.BaseModel):
-    data: typing.List[LocationDevice]
+class DNCRoleMasterGetResp(pydantic.BaseModel):
+    data: typing.List[DNCRoleMaster]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 
 
-class Locationdevice_Upload_Device_MasterfileParams(pydantic.BaseModel):
+class Dncrolemaster_Get_Dnc_Role_MasterParams(pydantic.BaseModel):
+    role_id: str
+    source_system: str
+
+
+class Dncrolemaster_Download_Dnc_Role_MasterParams(pydantic.BaseModel):
+    condition: dict
+
+
+class Dncrolemaster_Upload_Dnc_Role_MasterParams(pydantic.BaseModel):
     pass
 
 
-class Locationdevice_Read_Location_Device_DataParams(pydantic.BaseModel):
-    location_id: str
+class CEGRoleMasterSchema(UrdhvaPostgresBase):
+    __tablename__ = 'ceg_role_master'
     
+    role_id: Mapped[str] = mapped_column("role_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    role_name: Mapped[str] = mapped_column("role_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    source_system: Mapped[typing.List[str]] = mapped_column("source_system", ARRAY(String), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    parent_ui_interface: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("parent_ui_interface", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    child_ui_interface: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("child_ui_interface", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    tasks: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("tasks", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    conditions: Mapped[typing.Optional[dict]] = mapped_column("conditions", JSONB, index=False, nullable=True, default={}, primary_key=False, unique=False)
+
+
+class CEGRoleMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'ceg_role_master'
+    
+    role_id: str
+    role_name: str
+    source_system: typing.List[str]
+    parent_ui_interface: typing.Optional[typing.List[ui_interface_dataCreate]] | None = None
+    child_ui_interface: typing.Optional[typing.List[ui_interface_dataCreate]] | None = None
+    tasks: typing.Optional[typing.List[api_task_dataCreate]] | None = None
+    conditions: typing.Optional[dict] = pydantic.Field({}, )
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CEGRoleMasterSchema
+        upsert_keys = []
+
+
+class CEGRoleMaster(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'ceg_role_master'
+    
+    role_id: typing.Optional[str] | None = None
+    role_name: typing.Optional[str] | None = None
+    source_system: typing.Optional[typing.List[str]] | None = None
+    parent_ui_interface: typing.Optional[typing.List[ui_interface_dataCreate]] | None = None
+    child_ui_interface: typing.Optional[typing.List[ui_interface_dataCreate]] | None = None
+    tasks: typing.Optional[typing.List[api_task_dataCreate]] | None = None
+    conditions: typing.Optional[dict] = pydantic.Field({}, )
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CEGRoleMasterSchema
+        upsert_keys = []
+
+
+class CEGRoleMasterGetResp(pydantic.BaseModel):
+    data: typing.List[CEGRoleMaster]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Cegrolemaster_Get_Ceg_Role_MasterParams(pydantic.BaseModel):
+    role_id: str
+    source_system: str
+
+
+class Cegrolemaster_Download_Ceg_Role_MasterParams(pydantic.BaseModel):
+    condition: dict
+
+
+class Cegrolemaster_Upload_Dnc_Role_MasterParams(pydantic.BaseModel):
+    pass
     

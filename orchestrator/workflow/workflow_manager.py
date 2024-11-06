@@ -5,7 +5,7 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import sys
-import config
+import config as config
 
 async def algo_external_task(task: ExternalTask) -> TaskResult:
     variables = task.get_variables()
@@ -15,8 +15,9 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     try:
         module = importlib.import_module(module_name)
         class_instance = getattr(module, class_name)()
+        req_variables = await class_instance.get_required_variables()
         function = getattr(class_instance, function_name)
-        status, data = await function(**variables)
+        status, data = await function(**{key: variables.get(key, None) for key in req_variables})
         if status:
             if data:
                 return task.complete(data)
@@ -35,7 +36,7 @@ def run_async_function(async_func, task):
 async def main():
     ENGINE_LOCAL_BASE_URL = config.camundaurl + "/engine-rest"
     # etw = ExternalTaskWorker(10, base_url=ENGINE_LOCAL_BASE_URL, config=default_config)
-    topics = ['WorkFlow_Consumer']
+    topics = ['workflow_consumer']
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=40)  # Adjust the number of workers as needed
     tasks = []

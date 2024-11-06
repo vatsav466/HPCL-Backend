@@ -10,6 +10,7 @@ router = fastapi.APIRouter(prefix='/locationmaster')
 
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
+
 # Action upload_location_master
 @router.post('/upload_location_master', tags=['LocationMaster'])
 async def locationmaster_upload_location_master(uploadfile: fastapi.UploadFile = fastapi.File(None)):
@@ -29,6 +30,7 @@ async def locationmaster_upload_location_master(uploadfile: fastapi.UploadFile =
         HTTPException: If there is an error uploading the file.
         HTTPException: If there is an error processing the CSV file.
     """
+    redis_client = await urdhva_base.redispool.get_redis_connection()
     upload_dir = urdhva_base.settings.mft_path
     os.makedirs(upload_dir, exist_ok=True)
     
@@ -40,6 +42,17 @@ async def locationmaster_upload_location_master(uploadfile: fastapi.UploadFile =
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(uploadfile.file, buffer)
         data = pl.read_csv(file_path)
+        # Iterate through the rows of the CSV and extract `bu` and `sapid`
+        for row in data.iter_rows(named=True):
+            bu = row["bu"]  # Assuming 'bu' column exists in the CSV
+            sapid = row["sapid"]  # Assuming 'sapid' column exists in the CSV
+            
+            # Create a Redis key using the format bu_sapid
+            redis_key = f"{bu.upper()}_{sapid}"
+            
+            # Set the key in Redis with the value being the data row
+            await redis_client.hset("location_master", redis_key, json.dumps(row)) 
+            
         # Display data or perform further processing as needed
         return {"filename": file_path, "data": data.to_dicts()}  # Returns the first few rows as a sample
     except Exception as e:

@@ -302,7 +302,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_tas_asset_master"
+                    "name": "upload_lpg_asset_master"
                 }
             ]
         },
@@ -344,7 +344,7 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_tas_asset_master"
+                    "name": "upload_lpg_asset_master"
                 }
             ]
         },
@@ -395,6 +395,69 @@
             "attributes": {},
             "uris": [
                 "/api/assetdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "interlock",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Interlock",
+            "attributes": {},
+            "uris": [
+                "/api/interlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "interlock_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Interlock_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/interlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "interlock_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Interlock_admin",
+            "attributes": {},
+            "uris": [
+                "/api/interlock/*"
             ],
             "scopes": [
                 {
@@ -481,13 +544,13 @@
             ]
         },
         {
-            "name": "locationdevice",
+            "name": "dncrolemaster",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "LocationDevice",
+            "displayName": "DNCRoleMaster",
             "attributes": {},
             "uris": [
-                "/api/locationdevice/*"
+                "/api/dncrolemaster/*"
             ],
             "scopes": [
                 {
@@ -503,36 +566,42 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_device_masterfile"
+                    "name": "get_dnc_role_master"
                 },
                 {
-                    "name": "read_location_device_data"
+                    "name": "download_dnc_role_master"
+                },
+                {
+                    "name": "upload_dnc_role_master"
                 }
             ]
         },
         {
-            "name": "locationdevice_readOnly",
+            "name": "dncrolemaster_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "LocationDevice_readOnly",
+            "displayName": "DNCRoleMaster_readOnly",
             "attributes": {},
             "uris": [
-                "/api/locationdevice/*"
+                "/api/dncrolemaster/*"
             ],
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_dnc_role_master"
                 }
             ]
         },
         {
-            "name": "locationdevice_admin",
+            "name": "dncrolemaster_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "LocationDevice_admin",
+            "displayName": "DNCRoleMaster_admin",
             "attributes": {},
             "uris": [
-                "/api/locationdevice/*"
+                "/api/dncrolemaster/*"
             ],
             "scopes": [
                 {
@@ -548,10 +617,97 @@
                     "name": "delete"
                 },
                 {
-                    "name": "upload_device_masterfile"
+                    "name": "get_dnc_role_master"
                 },
                 {
-                    "name": "read_location_device_data"
+                    "name": "download_dnc_role_master"
+                },
+                {
+                    "name": "upload_dnc_role_master"
+                }
+            ]
+        },
+        {
+            "name": "cegrolemaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CEGRoleMaster",
+            "attributes": {},
+            "uris": [
+                "/api/cegrolemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_ceg_role_master"
+                },
+                {
+                    "name": "download_ceg_role_master"
+                },
+                {
+                    "name": "upload_dnc_role_master"
+                }
+            ]
+        },
+        {
+            "name": "cegrolemaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CEGRoleMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/cegrolemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_ceg_role_master"
+                }
+            ]
+        },
+        {
+            "name": "cegrolemaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CEGRoleMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/cegrolemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_ceg_role_master"
+                },
+                {
+                    "name": "download_ceg_role_master"
+                },
+                {
+                    "name": "upload_dnc_role_master"
                 }
             ]
         }
@@ -649,20 +805,36 @@
             "displayName": "upload_tas_asset_master"
         },
         {
-            "name": "upload_tas_asset_master",
-            "displayName": "upload_tas_asset_master"
+            "name": "upload_lpg_asset_master",
+            "displayName": "upload_lpg_asset_master"
         },
         {
             "name": "alert_action",
             "displayName": "alert_action"
         },
         {
-            "name": "upload_device_masterfile",
-            "displayName": "upload_device_masterfile"
+            "name": "get_dnc_role_master",
+            "displayName": "get_dnc_role_master"
         },
         {
-            "name": "read_location_device_data",
-            "displayName": "read_location_device_data"
+            "name": "download_dnc_role_master",
+            "displayName": "download_dnc_role_master"
+        },
+        {
+            "name": "upload_dnc_role_master",
+            "displayName": "upload_dnc_role_master"
+        },
+        {
+            "name": "get_ceg_role_master",
+            "displayName": "get_ceg_role_master"
+        },
+        {
+            "name": "download_ceg_role_master",
+            "displayName": "download_ceg_role_master"
+        },
+        {
+            "name": "upload_dnc_role_master",
+            "displayName": "upload_dnc_role_master"
         }
     ]
 }
