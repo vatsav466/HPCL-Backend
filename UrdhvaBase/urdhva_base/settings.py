@@ -66,6 +66,7 @@ class Settings(pydantic_settings.BaseSettings):
     db_multi_tenancy_model: MultiTenancyMode = MultiTenancyMode.SingleServerSingleDb
     login_count: int = 5
     base_path: str = ""
+    mft_path: str = ""
     kibana_dashboard_header: str = 'osd-xsrf'
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
 
