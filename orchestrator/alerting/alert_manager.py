@@ -117,8 +117,8 @@ class AlertManager:
                 for key, value in static_data.items():
                     setattr(alert, key, value)
 
-            data_obj = await hpcl_cng_model.AlertsCreate(**alert)
-            await hpcl_cng_model.Alerts.create(data_obj)
+            data_obj = hpcl_cng_model.AlertsCreate(**alert)
+            await data_obj.create(data_obj)
             
             # Start workflow if applicable
             if interlockname:

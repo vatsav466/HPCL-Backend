@@ -1,36 +1,71 @@
 Location = {
-    "sapId": "LocationID",
-    "locationName": "LocationName", 
-    "bu": "LocationType",
-    "state": "LocationState",
-    "district": "LocationDistrict",
-    "region": "LocationRegion",
-    "zone": "LocationZone",
-    "pinCode": "LocationPinCode",
-    "latitude": "latitude",
-    "longitude": "latitude",
-    "localAutomationVendor": "LocalAutomationVendor"
+    "LocationID": "sap_id",
+    "LocationName": "name", 
+    "LocationType": "bu",
+    "LocationState": "state",
+    "LocationAddress": "address",
+    "LocationDistrict": "district",
+    "LocationRegion": "region",
+    "LocationCity": "city",
+    "LocationZone": "zone",
+    "LocationPinCode": "pinCode",
+    "Latitude": "latitude",
+    "Longitude": "longitude",
+    "LocalAutomationVendor":"localAutomationVendor"
+}
+
+LPG = {
+    "LocationID": "sap_id",
+    "LocationName": "location_name", 
+    "LocationType": "bu",
+    "LocationState": "state",
+    "LocationCity": "city",
+    "LocationRegion": "region",
+    "DeviceType": "device_type",
+    "DeviceDesc": "device_desc",
+    "DeviceTag": "device_tag",
+    "DeviceID": "device_id",
+    "DeviceKey": "device_key"
+}
+
+
+RO = {
+    "LocationID": "sap_id",
+    "LocationName": "location_name",
+    "LocationType": "bu",
+    "LocationState": "state",
+    "LocationCity": "city",
+    "LocationRegion": "region",
+    "BayID": "bay_id",
+    "MPDID": "mpd_id",
+    "TankID": "tank_id",
+    "NozzleID": "nozzle_id"
 }
 
 Role = {
-    "bu": "LocationType", 
-    "buId": "LocationID", 
-    "siteName": "LocationName", 
-    "region": "LocationRegion",  
-    "state": "LocationState",  
-    "city": "LocationCity",  
-    "inchargeName": "InchargeName", 
-    "inchargeEmail": "InchargeEmail",  
-    "inchargePhone": "InchargePhone", 
-    "inchargeRole": "InchargeRole", 
-    "notificationLevel": "NotificationLevel",  
+    "LocationID": "sap_id",
+    "LocationName": "name", 
+    "LocationType": "bu",
+    "LocationState": "state",
+    "LocationCity": "city",
+    "LocationRegion": "region",
+    "InchargeName": "inchargeName",
+    "InchargeEmail": "inchargeEmail",
+    "InchargePhone": "inchargePhone",
+    "InchargeRole": "inchargeRole",
+    "NotificationLevel": "notificationLevel"
 }
 
-Asset = {
-    "sapId": "", 	 
-    "locationDeviceId": "LocationDeviceID", 
-    "siteName": "LocationName", 
-    "region": "LocationRegion", 
-    "state": "LocationState", 
-    "city": "LocationCity" 
+TAS = {
+    "LocationID": "sap_id",
+    "LocationName": "location_name",
+    "LocationType": "bu",
+    "LocationState": "state",
+    "LocationCity": "city",
+    "LocationRegion": "region",
+    "DeviceType": "device_type",
+    "DeviceDesc": "device_desc",
+    "DeviceTag": "device_tag",
+    "DeviceID": "device_id",
+    "DeviceKey": "device_key"
 }

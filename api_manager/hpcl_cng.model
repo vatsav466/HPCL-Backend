@@ -156,7 +156,7 @@ Model LPGAssetMaster {
     }
 }
 
-Model assetData {
+Model assetData internal {
     ro_id str
     local_tank_id optional int
     local_nozzle_id optional int
@@ -247,61 +247,5 @@ Model Alerts {
 
     Config=> {
         crud_operations='read'
-    }
-}
-
-Model ui_interface_data internal {
-    ui_component optional str
-    is_component_display optional bool
-}
-
-Model api_task_data internal {
-    api_display_name optional str
-    api_name optional str
-}
-
-Model DNCRoleMaster {
-    role_id str
-    role_name str
-    source_system list str
-    parent_ui_interface optional list ui_interface_data
-    child_ui_interface optional list ui_interface_data
-    tasks optional list api_task_data
-    conditions optional dict
-
-    Action=> get_dnc_role_master {
-        role_id str
-        source_system str
-    }
-
-    Action=> download_dnc_role_master {
-        condition dict
-    }
-
-    Action=> upload_dnc_role_master {
-
-    }
-}
-
-Model CEGRoleMaster {
-    role_id str
-    role_name str
-    source_system list str
-    parent_ui_interface optional list ui_interface_data
-    child_ui_interface optional list ui_interface_data
-    tasks optional list api_task_data
-    conditions optional dict
-
-    Action=> get_ceg_role_master {
-        role_id str
-        source_system str
-    }
-
-    Action=> download_ceg_role_master {
-        condition dict
-    }
-
-    Action=> upload_dnc_role_master {
-
     }
 }
