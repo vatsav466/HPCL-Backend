@@ -112,16 +112,16 @@ async def rolemaster_download_role_master(data: Rolemaster_Download_Role_MasterP
             # Convert the records to a Polars DataFrame
             df = pl.DataFrame(records)
             
-            # Save the Polars DataFrame as a CSV file
-            output_path = urdhva_base.settings.download_path
-            file_path = os.path.join(output_path, "role_master.csv")
-            df.write_csv(file_path)  # Save directly to file
+            download_path = urdhva_base.settings.download_path
+            downloadpath = os.path.join(download_path, "downloads")
+            if not os.path.exists(downloadpath):
+                os.makedirs(downloadpath)
             
-            # Return the CSV file path or a success message
-            return {"status": True, "message": f"File saved successfully to path {file_path}", "data": df.to_dicts()}
-        
+            if not os.path.exists(f'{urdhva_base.settings.ui_path}/downloads'):
+                os.system(f'ln -s {downloadpath} {urdhva_base.settings.ui_path}')
+            df.write_csv(downloadpath + "role_master.csv")  # Save directly to file
+            return {"status": True, "message": "Success","data": os.path.join('/downloads', "role_master.csv")}        
         return {"status": False, "message": "No data found", "data": []}
-    
-    return {"status": False, "message": "No body in the response", "data": []}
+    return {"status": False, "message": "No response", "data": []}
 
 

@@ -14,7 +14,7 @@ Db_Urls_Base = {
             "https://admin:password@localhost:9200"
         ],
         "postgres_async": [
-            "postgresql+asyncpg://localhost/dataflow?user=postgres&password=password"
+            "postgresql+asyncpg://localhost:5432/hpcl_cng?user=postgres&password=1234"
         ],
         "redis": [
             "redis://localhost:6379"
@@ -67,6 +67,8 @@ class Settings(pydantic_settings.BaseSettings):
     login_count: int = 5
     base_path: str = ""
     mft_path: str = ""
+    ui_path: str = ""
+    download_path: str = ""
     kibana_dashboard_header: str = 'osd-xsrf'
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
 
