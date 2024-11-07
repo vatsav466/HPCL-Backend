@@ -18,6 +18,7 @@ from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 class LocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'location_master'
+    __table_args__ = {'extend_existing':True}
     
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -129,8 +130,13 @@ class Locationmaster_Upload_Location_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Locationmaster_Download_Location_MasterParams(pydantic.BaseModel):
+    pass
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
+    __table_args__ = {'extend_existing':True}
     
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -197,8 +203,13 @@ class Rolemaster_Upload_Role_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Rolemaster_Download_Role_MasterParams(pydantic.BaseModel):
+    pass
+
+
 class ROAssetMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'ro_asset_master'
+    __table_args__ = {'extend_existing':True}
     
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -265,8 +276,13 @@ class Roassetmaster_Upload_Ro_Asset_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Roassetmaster_Download_Ro_Asset_MasterParams(pydantic.BaseModel):
+    pass
+
+
 class TASAssetMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'tas_asset_master'
+    __table_args__ = {'extend_existing':True}
     
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -333,9 +349,14 @@ class Tasassetmaster_Upload_Tas_Asset_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Tasassetmaster_Download_Tas_Asset_MasterParams(pydantic.BaseModel):
+    pass
+
+
 class LPGAssetMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_asset_master'
-    
+    __table_args__ = {'extend_existing':True}
+
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -401,6 +422,10 @@ class Lpgassetmaster_Upload_Lpg_Asset_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Lpgassetmaster_Download_Lpg_Asset_MasterParams(pydantic.BaseModel):
+    pass
+
+
 class assetDataCreate(pydantic.BaseModel):
     ro_id: str
     local_tank_id: typing.Optional[int] = pydantic.Field(0, **{})
@@ -437,6 +462,7 @@ class tagsCreate(pydantic.BaseModel):
 
 class InterlockSchema(UrdhvaPostgresBase):
     __tablename__ = 'interlock'
+    __table_args__ = {'extend_existing':True}
     
     bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -504,6 +530,7 @@ class InterlockGetResp(pydantic.BaseModel):
 
 class AlertsSchema(UrdhvaPostgresBase):
     __tablename__ = 'alerts'
+    __table_args__ = {'extend_existing':True}
     
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)

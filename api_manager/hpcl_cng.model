@@ -67,6 +67,9 @@ Model LocationMaster {
     Action=> upload_location_master {
     }
 
+    Action=> download_location_master {
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -86,6 +89,9 @@ Model RoleMaster {
     escalation_level optional NotificationLevel
 
     Action=> upload_role_master {
+    }
+
+    Action=> download_role_master {
     }
 
     Config=> {
@@ -109,6 +115,9 @@ Model ROAssetMaster {
     Action=> upload_ro_asset_master{
     }
 
+    Action=> download_ro_asset_master{
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -130,6 +139,9 @@ Model TASAssetMaster {
     Action=> upload_tas_asset_master{
     }
 
+    Action=> download_tas_asset_master{
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -149,6 +161,9 @@ Model LPGAssetMaster {
     city optional str
 
     Action=> upload_lpg_asset_master{
+    }
+
+    Action=> download_lpg_asset_master{
     }
 
     Config=> {

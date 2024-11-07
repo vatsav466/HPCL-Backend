@@ -27,6 +27,9 @@
                 },
                 {
                     "name": "upload_location_master"
+                },
+                {
+                    "name": "download_location_master"
                 }
             ]
         },
@@ -69,6 +72,9 @@
                 },
                 {
                     "name": "upload_location_master"
+                },
+                {
+                    "name": "download_location_master"
                 }
             ]
         },
@@ -96,6 +102,9 @@
                 },
                 {
                     "name": "upload_role_master"
+                },
+                {
+                    "name": "download_role_master"
                 }
             ]
         },
@@ -138,6 +147,9 @@
                 },
                 {
                     "name": "upload_role_master"
+                },
+                {
+                    "name": "download_role_master"
                 }
             ]
         },
@@ -165,6 +177,9 @@
                 },
                 {
                     "name": "upload_ro_asset_master"
+                },
+                {
+                    "name": "download_ro_asset_master"
                 }
             ]
         },
@@ -207,6 +222,9 @@
                 },
                 {
                     "name": "upload_ro_asset_master"
+                },
+                {
+                    "name": "download_ro_asset_master"
                 }
             ]
         },
@@ -234,6 +252,9 @@
                 },
                 {
                     "name": "upload_tas_asset_master"
+                },
+                {
+                    "name": "download_tas_asset_master"
                 }
             ]
         },
@@ -276,6 +297,9 @@
                 },
                 {
                     "name": "upload_tas_asset_master"
+                },
+                {
+                    "name": "download_tas_asset_master"
                 }
             ]
         },
@@ -303,6 +327,9 @@
                 },
                 {
                     "name": "upload_lpg_asset_master"
+                },
+                {
+                    "name": "download_lpg_asset_master"
                 }
             ]
         },
@@ -345,6 +372,9 @@
                 },
                 {
                     "name": "upload_lpg_asset_master"
+                },
+                {
+                    "name": "download_lpg_asset_master"
                 }
             ]
         },
@@ -562,20 +592,40 @@
             "displayName": "upload_location_master"
         },
         {
+            "name": "download_location_master",
+            "displayName": "download_location_master"
+        },
+        {
             "name": "upload_role_master",
             "displayName": "upload_role_master"
+        },
+        {
+            "name": "download_role_master",
+            "displayName": "download_role_master"
         },
         {
             "name": "upload_ro_asset_master",
             "displayName": "upload_ro_asset_master"
         },
         {
+            "name": "download_ro_asset_master",
+            "displayName": "download_ro_asset_master"
+        },
+        {
             "name": "upload_tas_asset_master",
             "displayName": "upload_tas_asset_master"
         },
         {
+            "name": "download_tas_asset_master",
+            "displayName": "download_tas_asset_master"
+        },
+        {
             "name": "upload_lpg_asset_master",
             "displayName": "upload_lpg_asset_master"
+        },
+        {
+            "name": "download_lpg_asset_master",
+            "displayName": "download_lpg_asset_master"
         },
         {
             "name": "alert_action",
