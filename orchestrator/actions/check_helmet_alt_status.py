@@ -1,32 +1,53 @@
-from api_manager import dnc_schema_model
+import urdhva_base
+from api_manager import hpcl_cng_model
 
+logger = urdhva_base.logger.Logger("actions-processing-log")
 
 class CheckHelmetAltStatus:
-
     async def get_required_variables(self):
+        """
+        Returns a list of strings containing the required variables for this action.
+        
+        In this case, the action only requires the alertid variable.
+        """
         return ["alertid"]
     
     async def checkHelmetAltStatus(self, alert_id):
+        """
+        Checks the status of a helmet alert for a given alert ID.
 
+        This asynchronous function retrieves the alert data associated with the alert_id using 
+        hpcl_cng_model.Alerts.get(alert_id). It checks the alert history for the presence of "ATR" 
+        or "Justified by", and if found, sets startCounter and closeAlt to True. If startCounter 
+        is True and "http" is also found in the alert history, closeAlt is set to False. 
+        The function returns a tuple containing a boolean indicating success and a dictionary 
+        with the key "closeAlert" set to the value of closeAlt.
+
+        Args:
+            alert_id (str): The ID of the alert to check.
+
+        Returns:
+            tuple: A tuple containing a boolean indicating success, and a dictionary with the key 
+            "closeAlert" set to the value of closeAlt.
         """
-        This function checks the status of an alert with the given alert_id. It retrieves the alert data, 
-        examines its history for specific keywords ("ATR", "Justified by", and "http"), and returns a 
-        boolean indicating whether the alert should be closed (closeAlert).
-        """
+        try:
+            logger.info("CHECK HELMET ATR ALERTID:%s" % alert_id)
+            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+
+            alerthistory = alert_data.get('alertHistory', [])
+            startCounter = False
+            closeAlt = True
+            for item in alerthistory:
+                if "ATR" in item or "Justified by" in item:
+                    startCounter = True
+                    closeAlt = True
+                if startCounter and "http" in item:
+                    closeAlt = False
+            return True, {"closeAlert": closeAlt}
         
-        print("CHECK HELMET ATR ALERTID:%s" % alert_id)
-        alert_data = await dnc_schema_model.Alerts.get(alert_id)
-
-        if not isinstance(alert_data, dict):
-            alert_data = alert_data.__dict__
-
-        alerthistory = alert_data.get('alertHistory', [])
-        startCounter = False
-        closeAlt = True
-        for item in alerthistory:
-            if "ATR" in item or "Justified by" in item:
-                startCounter = True
-                closeAlt = True
-            if startCounter and "http" in item:
-                closeAlt = False
-        return True, {"closeAlert": closeAlt}
+        except Exception as e:
+            logger.error(e)
+            return False

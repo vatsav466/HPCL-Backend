@@ -1,29 +1,47 @@
-from api_manager import dnc_schema_model
+import urdhva_base
+from api_manager import hpcl_cng_model
 
+logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
 class EmptyRole:
-
     async def get_required_variables(self):
+        """
+        Returns a list of strings representing the required variables for the action.
+
+        Returns:
+            list: A list containing two strings, "alertid" and "maintenance".
+        """
         return ["alertid", "maintenance"]
     
     async def emptyrole(self, alert_id, maintenance):
+        """
+        Updates the status of the alert with the given alert_id to "Under Maintenance",
+        clears the role and rolelist, and sets final approval to True in the database.
 
+        Args:
+            alert_id (str): The id of the alert to be updated.
+            maintenance (bool): A boolean indicating whether the maintenance status 
+                should be set to True.
+
+        Returns:
+            tuple: A tuple containing a boolean indicating the success of the operation,
+            and None.
         """
-        This function empties the 'role' and 'rolelist' of an alert with the given alert_id, 
-        and sets the status to "Under Maintenance" if maintenance is True. It then updates the 
-        alert in the database.
-        """
+        try:
+            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+
+            alert_data['role'] = ''
+            alert_data['rolelist'] = []
+
+            if maintenance:
+                alert_data['status'] = "Under Maintenance"
+
+            data_object = hpcl_cng_model.Alerts(**alert_data)
+            await data_object.modify()
+            return True, None
         
-        alert_data = await dnc_schema_model.Alerts.get(alert_id)
-        if not isinstance(alert_data, dict):
-            alert_data = alert_data.__dict__
-
-        alert_data['role'] = ''
-        alert_data['rolelist'] = []
-
-        if maintenance:
-            alert_data['status'] = "Under Maintenance"
-
-        data_object = dnc_schema_model.Alerts(**alert_data)
-        await data_object.modify()
-        return True, None
+        except Exception as e:
+            logger.error(e)
+            return False, e

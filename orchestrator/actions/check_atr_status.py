@@ -1,30 +1,48 @@
-from api_manager import dnc_schema_model
+import urdhva_base
+from api_manager import hpcl_cng_model
+
+logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
 
 class CheckAtrStatus:
-
     async def get_required_variables(self):
+        """
+        Returns a list of strings representing the required variables for the action.
+        
+        Returns:
+            list: A list of strings representing the required variables.
+        """
         return ["alertid"]
     
     async def checkATRStatus(self, alert_id):
+        """
+        Checks if an ATR has been submitted for a given alert ID.
 
+        Retrieves the alert data associated with the alert_id using hpcl_cng_model.Alerts.get(alert_id), 
+        and then checks if the alert history contains the string "ATR" or "Justified by". 
+        If it does, the function sets atrSubmitted to True and returns a tuple containing True and a 
+        dictionary with the key "atrStatus" set to the value of atrSubmitted.
+
+        Args:
+            alert_id (str): The ID of the alert to check.
+
+        Returns:
+            tuple: A tuple containing a boolean indicating success, and a dictionary with the key "atrStatus" 
+            set to the value of atrSubmitted.
         """
-        This is an asynchronous function checkATRStatus that checks if an Alert To Resume (ATR) has been submitted 
-        for a given alert_id. It retrieves the alert data, checks the alert history for keywords "ATR" or 
-        "Justified by", and returns a tuple with a boolean indicating whether an ATR has been submitted.
-        """
+        try:
+            logger.info("Check ATR Status AlertId:%s" % alert_id)
+            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+            atrSubmitted = False
+            alerthistory = alert_data.get('alertHistory', [])
+            for item in alerthistory:
+                if "ATR" in item or "Justified by" in item:
+                    atrSubmitted = True
+                    break
+            return True, {"atrStatus": atrSubmitted}
         
-        print("Check ATR Status AlertId:%s" % alert_id)
-        alert_data = await dnc_schema_model.Alerts.get(alert_id)
-
-        if not isinstance(alert_data, dict):
-            alert_data = alert_data.__dict__
-
-        atrSubmitted = False
-
-        alerthistory = alert_data.get('alertHistory', [])
-        for item in alerthistory:
-            if "ATR" in item or "Justified by" in item:
-                atrSubmitted = True
-                break
-        return True, {"atrStatus": atrSubmitted}
+        except Exception as e:
+            logger.error(e)
+            return False, {"atrStatus": "False"}

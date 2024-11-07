@@ -1,27 +1,39 @@
-from api_manager import dnc_schema_model
+import urdhva_base
+from api_manager import hpcl_cng_model
+
+logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
 
 class CheckExcepStatus:
-
     async def get_required_variables(self):
+        """
+        Returns a list of strings representing the required variables for the action.
+
+        Returns:
+            list: A list containing a single string, "alertid".
+        """
         return ["alertid"]
 
     async def checkExcepstatus(self, alert_id):
-        
         """
-        Checks the alert history for "Exception" to determine if the exception has been taken or not.
+        Checks if an exception has been taken for a given alert ID.
 
-        Retrieves the alert data using the given alert_id and checks the alert's history
-        for any items containing the string "Exception". If found, sets exceptaken to True.
+        Retrieves the alert data associated with the alert_id using hpcl_cng_model.Alerts.get(alert_id), 
+        and then checks if the alert history contains the string "Exception". 
+        If it does, the function sets exceptaken to True and returns a tuple containing True and a 
+        dictionary with the key "excepStatus" set to the value of exceptaken.
 
-        Returns a tuple containing True and a dictionary with the key "excepStatus" 
-        set to the value of exceptaken.
+        Args:
+            alert_id (str): The ID of the alert to check.
+
+        Returns:
+            tuple: A tuple containing a boolean indicating success, and a dictionary with the key "excepStatus" 
+            set to the value of exceptaken.
         """
-        
         exceptaken = False
         try:
             print("Check Exception request raised AlertId:%s" % alert_id)
-            alert_data = await dnc_schema_model.Alerts.get(alert_id)
+            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
@@ -31,6 +43,8 @@ class CheckExcepStatus:
                 if "Exception" in item:
                     exceptaken = True
                     break
+            return True, {"excepStatus": exceptaken}
+
         except Exception as e:
             print(e)
-        return True, {"excepStatus": exceptaken}
+            return False, {"excepStatus": "False"}

@@ -1,25 +1,50 @@
+import urdhva_base
 import ThingsBoardApi
 
+logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
 class CheckHlsHealth:
-
     async def get_required_variables(self):
+        """
+        Returns a list of strings containing the required variables for the action.
+        
+        Returns:
+            list: A list containing the strings "alertid", "deviceId", and "sapId".
+        """
         return ["alertid", "deviceId", "sapId"]
     
     async def checkhlshealth(self, alert_id, device_id, sap_id):
+        """
+        Checks if the HLS (High Level Shutdown) for a given device is down.
 
+        This asynchronous function takes an alert_id, device_id, and sap_id as parameters.
+        It then uses the provided sap_id to instantiate a ThingsBoardApi.TB object, and
+        calls the checkHLSDown method of this object, passing in the device_id. If the
+        HLS status is down, the function sets tankhlsstatus to True and returns a tuple
+        containing True and a dictionary with the key "triggerShutdown" set to the value
+        of tankhlsstatus. If the HLS status is not down, the function sets tankhlsstatus
+        to False and returns a tuple containing True and a dictionary with the key
+        "triggerShutdown" set to the value of tankhlsstatus. If an exception occurs during
+        the retrieval of the HLS status, it catches the error, sets tankhlsstatus to False,
+        logs the error, and returns a tuple containing False and a dictionary with the key
+        "triggerShutdown" set to the string "False".
+
+        Args:
+            alert_id (str): The ID of the alert to check.
+            device_id (str): The ID of the device to check.
+            sap_id (str): The ID of the SAP for the device.
+
+        Returns:
+            tuple: A tuple containing a boolean indicating success, and a dictionary with the key "triggerShutdown"
+            set to the value of tankhlsstatus.
         """
-        This function checks the HLS (Health, Life, Safety) status of a device with the given device_id 
-        using the ThingsBoard API. It returns True and a dictionary indicating whether a shutdown is 
-        triggered based on the HLS status. If an exception occurs during the API call, it catches the error, 
-        sets the shutdown trigger to False, and prints the error message.
-        """
-        
-        print("Check HLS Health Alertid:%s DeviceId:%s" % (alert_id, device_id))
+        logger.info("Check HLS Health Alertid:%s DeviceId:%s" % (alert_id, device_id))
         try:
             tb = ThingsBoardApi.TB('tas', sap_id)
-            tankhlsstatus = await tb.checkHLSDown(device_id) #thingsboard api connection
+            tankhlsstatus = await tb.checkHLSDown(device_id)
+            return True, {"triggerShutdown": tankhlsstatus}
+
         except Exception as e:
             tankhlsstatus = False
-            print("Exception in getting Current HLS Status : " + str(e))
-        return True, {"triggerShutdown": tankhlsstatus}
+            logger.error("Exception in getting Current HLS Status : " + str(e))
+            return False, {"triggerShutdown": tankhlsstatus}

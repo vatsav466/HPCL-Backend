@@ -1,25 +1,53 @@
-from api_manager import dnc_schema_model
+import urdhva_base
+from api_manager import hpcl_cng_model
+
+logger = urdhva_base.logger.Logger("actions-processing-log")
+
 
 class CheckDealerCounter:
-
     async def get_required_variables(self):
+        """
+        Returns a list of required variables for the CheckDealerCounter action.
+
+        This asynchronous function specifies the variables needed to perform the action, 
+        which in this case, is limited to the 'alertid' variable.
+
+        Returns:
+            list: A list containing a single string, "alertid".
+        """
         return ["alertid"]
     
     async def checkdealercounter(self, alert_id):
-        
         """
-        This function checks if a dealer counter has been submitted for a given alert ID. 
-        It retrieves the alert data,extracts the "Dealercount" value, and returns True along with a dictionary 
-        indicating whether the dealer counter has been submitted (atrStatus) if the count is 1.
+        Checks if the dealer counter for a given alert has reached 1.
+
+        This asynchronous function retrieves alert data using the provided alert_id,
+        and checks if the 'Dealercount' field in the retrieved data is equal to 1.
+        If it is, the function sets atrSubmitted to True, and returns a tuple containing
+        True and a dictionary with the key "atrStatus" set to the value of atrSubmitted.
+        If an exception occurs during the retrieval of the alert data, it catches the error,
+        sets atrSubmitted to False, logs the error, and returns a tuple containing False and
+        a dictionary with the key "atrStatus" set to the string "False".
+
+        Args:
+            alert_id (str): The ID of the alert to check.
+
+        Returns:
+            tuple: A tuple containing a boolean indicating success, and a dictionary with the key "atrStatus"
+            set to the value of atrSubmitted.
         """
+        try:
+            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
 
-        alert_data = await dnc_schema_model.Alerts.get(alert_id)
+            atrSubmitted = False
+            dealercount = alert_data.get("Dealercount", 0)
+            if dealercount == 1:
+                atrSubmitted = True
+            return True, {"atrStatus": atrSubmitted}
         
-        if not isinstance(alert_data, dict):
-            alert_data = alert_data.__dict__
-
-        atrSubmitted = False
-        dealercount = alert_data.get("Dealercount", 0)
-        if dealercount == 1:
-            atrSubmitted = True
-        return True, {"atrStatus": atrSubmitted}
+        except Exception as e:
+            logger.error(e)
+            return False, {"atrStatus": "False"}

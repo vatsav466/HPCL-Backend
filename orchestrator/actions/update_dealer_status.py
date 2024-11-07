@@ -1,28 +1,46 @@
-from api_manager import dnc_schema_model
+import urdhva_base
+from api_manager import hpcl_cng_model
 
+logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
 class UpdateDealerStatus:
-
     async def get_required_variables(self):
+        """
+        Returns a list of strings representing the required variables for the action.
+        
+        Returns:
+            list: A list containing a single string, "alertid".
+        """
         return ["alertid"]
     
-    async def updatedealerstatus(self, alert_id):
+    async def updatedealerstatus(self, alert_id): 
+        """
+        Updates the dealer and SO status for a given alert to False.
 
+        This asynchronous function retrieves alert data using the provided alert_id.
+        It ensures the data is in dictionary format, sets the 'Dealer' and 'SO' fields
+        to False, and updates the alert in the database.
+
+        Args:
+            alert_id: The ID of the alert to update.
+
+        Returns:
+            A tuple where the first element is a boolean indicating the success of
+            the operation, and the second element is None on success or an error
+            message on failure.
         """
-        This code snippet defines an asynchronous function called updatedealerstatus that updates 
-        the status of an alert. It retrieves the alert data using the dnc_schema_model.Alerts.get 
-        method and sets the 'Dealer' and 'SO' fields to False. It then creates a new Alerts object 
-        using the modified alert data and calls the modify method to update the alert in the database. 
-        Finally, it returns a tuple containing True and None.
-        """
+        try:
+            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+
+            alert_data['Dealer'] = False
+            alert_data['SO'] = False
+            data_object = hpcl_cng_model.Alerts(**alert_data)
+            await data_object.modify()
+            return True, None
         
-        alert_data = await dnc_schema_model.Alerts.get(alert_id)
-
-        if not isinstance(alert_data, dict):
-            alert_data = alert_data.__dict__
-
-        alert_data['Dealer'] = False
-        alert_data['SO'] = False
-        data_object = dnc_schema_model.Alerts(**alert_data)
-        await data_object.modify()
-        return True, None
+        except Exception as e:
+            logger.error(e)
+            return False, e
