@@ -56,6 +56,8 @@ class crisDataCreate(pydantic.BaseModel):
     interlock_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: str
     device_value: typing.Optional[str] = pydantic.Field("", **{})
+    alert_id: str
+    alert_status: ingestion_api_enum.AlertStatus
 
 
 class Cris_Ingest_DataParams(pydantic.BaseModel):
@@ -65,7 +67,13 @@ class Cris_Ingest_DataParams(pydantic.BaseModel):
     data: typing.Optional[typing.List[crisDataCreate]] | None = None
 
 
-class imsDataCreate(pydantic.BaseModel):
+class Ims_Ingest_DataParams(pydantic.BaseModel):
+    vendor_id: str
+    location_id: str
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+
+
+class emlockDataCreate(pydantic.BaseModel):
     vehicle_number: str
     violation_type: str
     initiated_date: str
@@ -73,10 +81,10 @@ class imsDataCreate(pydantic.BaseModel):
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
-class Ims_Ingest_DataParams(pydantic.BaseModel):
+class Emlock_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
-    data: typing.Optional[typing.List[imsDataCreate]] | None = None
+    data: typing.Optional[typing.List[emlockDataCreate]] | None = None
     
     

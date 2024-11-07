@@ -13,3 +13,13 @@ class BusinessUnit(str, enum.Enum):
 
 
 
+
+
+
+class AlertStatus(str, enum.Enum):
+    Open = 'Open'
+    Close = 'Close'
+
+
+
+

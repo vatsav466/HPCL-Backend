@@ -69,7 +69,15 @@ Model CRIS crud_disable {
 
 }
 
-Model imsData internal {
+Model IMS crud_disable {
+    Action=> ingest_data {
+        vendor_id str
+        location_id str
+        location_type optional BusinessUnit
+    }
+}
+
+Model emlockData internal {
     vehicle_number str
     violation_type str
     initiated_date str
@@ -77,12 +85,11 @@ Model imsData internal {
     approved_by optional str
 }
 
-Model IMS crud_disable {
+Model EMLock crud_disable {
     Action=> ingest_data {
         vendor_id str
         location_id str
         location_type optional BusinessUnit
-        data optional list imsData
+        data optional list emlockData
     }
-
 }
