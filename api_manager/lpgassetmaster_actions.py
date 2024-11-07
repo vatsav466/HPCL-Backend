@@ -5,9 +5,9 @@ import os
 import json
 import shutil
 import fastapi
-import constants
 import traceback
 import polars as pl
+import utilities.bu_key_mapping as bu_key_mapping
 
 router = fastapi.APIRouter(prefix='/lpgassetmaster')
 
@@ -46,7 +46,7 @@ async def lpgassetmaster_upload_tas_asset_master(uploadfile: fastapi.UploadFile 
             shutil.copyfileobj(uploadfile.file, buffer)
         data = pl.read_csv(file_path).with_columns(pl.all().cast(pl.Utf8,strict=False))
         # Iterate through the rows of the CSV and extract `bu` and `sapid`
-        data = data.rename(constants.LPG)
+        data = data.rename(bu_key_mapping.LPG)
         for row in data.to_dicts():
             bu = row["bu"]  # Assuming 'bu' column exists in the CSV
             sapid = row["sap_id"]  # Assuming 'sapid' column exists in the CSV

@@ -5,10 +5,10 @@ import os
 import json
 import shutil
 import fastapi
-import constants
 import traceback
 import polars as pl
 import urdhva_base.redispool
+import utilities.bu_key_mapping as bu_key_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 
 router = fastapi.APIRouter(prefix='/locationmaster')
@@ -46,7 +46,7 @@ async def locationmaster_upload_location_master(uploadfile: fastapi.UploadFile =
             shutil.copyfileobj(uploadfile.file, buffer)
         data = pl.read_csv(file_path).with_columns(pl.all().cast(pl.Utf8,strict=False))
         # Iterate through the rows of the CSV and extract `bu` and `sapid`
-        data = data.rename(constants.Location)
+        data = data.rename(bu_key_mapping.Location)
     except Exception as e:
         print(traceback.format_exc())
         raise fastapi.HTTPException(status_code=400, detail="Failed to process CSV file.") from e

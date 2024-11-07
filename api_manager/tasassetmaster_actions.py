@@ -5,9 +5,9 @@ import os
 import json
 import shutil
 import fastapi
-import constants
 import traceback
 import polars as pl
+import utilities.bu_key_mapping as bu_key_mapping
 
 router = fastapi.APIRouter(prefix='/tasassetmaster')
 
@@ -38,15 +38,15 @@ async def tasassetmaster_upload_tas_asset_master(upload_file: fastapi.UploadFile
     os.makedirs(upload_dir, exist_ok=True)
     
     # Define the file path
-    file_path = os.path.join(upload_dir, uploadfile.filename)
+    file_path = os.path.join(upload_dir, upload_file.filename)
     
     # Save the uploaded file
     try:
         with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(uploadfile.file, buffer)
+            shutil.copyfileobj(upload_file.file, buffer)
         data = pl.read_csv(file_path).with_columns(pl.all().cast(pl.Utf8,strict=False))
         # Iterate through the rows of the CSV and extract `bu` and `sapid`
-        data = data.rename(constants.TAS)
+        data = data.rename(bu_key_mapping.TAS)
         for row in data.to_dicts():
             bu = row["bu"]  # Assuming 'bu' column exists in the CSV
             sapid = row["sapid"]  # Assuming 'sapid' column exists in the CSV

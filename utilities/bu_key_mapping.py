@@ -1,6 +1,6 @@
 Location = {
     "LocationID": "sap_id",
-    "LocationName": "name", 
+    "LocationName": "name",
     "LocationType": "bu",
     "LocationState": "state",
     "LocationAddress": "address",
@@ -16,7 +16,7 @@ Location = {
 
 LPG = {
     "LocationID": "sap_id",
-    "LocationName": "location_name", 
+    "LocationName": "location_name",
     "LocationType": "bu",
     "LocationState": "state",
     "LocationCity": "city",
@@ -44,7 +44,7 @@ RO = {
 
 Role = {
     "LocationID": "sap_id",
-    "LocationName": "name", 
+    "LocationName": "name",
     "LocationType": "bu",
     "LocationState": "state",
     "LocationCity": "city",
