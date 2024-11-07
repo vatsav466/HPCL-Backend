@@ -1,7 +1,7 @@
 import urdhva_base
 import json
+import api_manager
 import urdhva_base.redispool
-from api_manager import hpcl_cng_model, hpcl_cng_enum
 
 
 async def get_location_details(bu, sap_id):
@@ -31,7 +31,7 @@ async def get_location_details(bu, sap_id):
     params.q = query
     params.sort = json.dumps({"updated": -1})
     # Fetching data from database
-    locdata = await hpcl_cng_model.LocationMaster.get_all(params)
+    locdata = await api_manager.hpcl_cng_model.LocationMaster.get_all(params)
     if locdata:
         location_data = locdata[0]
         await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data))
