@@ -97,7 +97,15 @@ class Settings(pydantic_settings.BaseSettings):
     superset_password: str = 'password'
 
     # camunda
-
+    camunda_url: str = 'http://localhost:8080'
+    camunda_default_config: typing.Dict[str, int] = {
+        "maxTasks": 1,
+        "lockDuration": 10000,
+        "asyncResponseTimeout": 5000,
+        "retries": 3,
+        "retryTimeout": 5000,
+        "sleepSeconds": 30
+    }
 
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \

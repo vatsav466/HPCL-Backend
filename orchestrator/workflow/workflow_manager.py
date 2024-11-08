@@ -1,9 +1,12 @@
 import asyncio
 import importlib
+import traceback
 import urdhva_base
 from concurrent.futures import ThreadPoolExecutor
 from camunda.external_task.external_task import ExternalTask, TaskResult
 from camunda.external_task.external_task_worker import ExternalTaskWorker
+
+logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
 
 
 async def algo_external_task(task: ExternalTask) -> TaskResult:
@@ -23,10 +26,13 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
             else:
                 return task.complete()
         if not status:
+            logger.error(f"Task failed: {data}")
             return task.failure(
                 error_message="task failed", error_details="failed task details", max_retries=3, retry_timeout=5000
             )
     except Exception as e:
+        logger.error(f"Task failed: {e}")
+        print(traceback.format_exc())
         return task.failure(error_message=str(e), error_details=str(e))
 
 
