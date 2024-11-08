@@ -22,4 +22,5 @@ async def emlock_ingest_data(data: Emlock_Ingest_DataParams):
     - dict: Status message indicating the success of the data submission.
     """
     logger.info(f"Received EMLock data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
+    return True, "Success"
 

@@ -25,6 +25,7 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
     - dict: Status message indicating the success of the data submission.
     """
     logger.info(f"Received VA data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
+    return True, "Success"
 
     # try:
         # header = {"Content-Type": "application/json", "Accept": "application/json"}

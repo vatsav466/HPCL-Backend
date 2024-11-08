@@ -132,8 +132,8 @@ async def validate_header_based_authentication(request: fastapi.Request):
     if not urdhva_base.settings.enable_header_auth:
         return False, None
     headers = request.headers
-    if headers.get("ceg_auth_token"):
-        access_key = headers.get("ceg_auth_token")
+    access_key = headers.get("ceg-auth-token")
+    if access_key:
         vendor = headers.get("vendor")
         redis_ins = await urdhva_base.redispool.get_redis_connection()
         # Validate Access key
