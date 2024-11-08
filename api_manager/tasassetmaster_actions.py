@@ -8,6 +8,7 @@ import fastapi
 import traceback
 import polars as pl
 import utilities.bu_key_mapping as bu_key_mapping
+import orchestrator.masterdata.tas_master_upload as tas_master_upload
 
 router = fastapi.APIRouter(prefix='/tasassetmaster')
 
@@ -33,45 +34,12 @@ async def tasassetmaster_upload_tas_asset_master(upload_file: fastapi.UploadFile
         HTTPException: If there is an error uploading the file.
         HTTPException: If there is an error processing the CSV file.
     """
-    redis_client = await urdhva_base.redispool.get_redis_connection()
-    upload_dir = urdhva_base.settings.mft_path
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    # Define the file path
-    file_path = os.path.join(upload_dir, upload_file.filename)
-    
-    # Save the uploaded file
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(upload_file.file, buffer)
-        data = pl.read_csv(file_path).with_columns(pl.all().cast(pl.Utf8,strict=False))
-        # Iterate through the rows of the CSV and extract `bu` and `sapid`
-        data = data.rename(bu_key_mapping.TAS)
-        for row in data.to_dicts():
-            bu = row["bu"]  # Assuming 'bu' column exists in the CSV
-            sapid = row["sapid"]  # Assuming 'sapid' column exists in the CSV
-            
-            # Create a Redis key using the format bu_sapid
-            redis_key = f"{bu.upper()}_{sapid}"
-            
-            # Set the key in Redis with the value being the data row
-            await redis_client.hset("tas_master", redis_key, json.dumps(row)) 
-            
-        data = data.to_dicts()
-        for data_dump in data:
-            data_obj = TASAssetMasterCreate(**data_dump)
-            print(await data_obj.create())
-
-        # Display data or perform further processing as needed
-        return {"filename": file_path, "data": data} 
-
+        df = pl.read_csv(uploadfile.file).with_columns(pl.all().cast(pl.Utf8, strict=False))
     except Exception as e:
-        print(traceback.format_exc())
-        raise fastapi.HTTPException(status_code=500, detail="File upload failed.") from e
-    except Exception as e:
-        print(traceback.format_exc())
-        raise fastapi.HTTPException(status_code=400, detail="Failed to process CSV file.") from e
-
+        print(f"Exception while reading CSV file, {e}")
+        return False, "Failed to process CSV file, Please reverify uploaded content and reverify"
+    return tas_master_upload.upload_tas_master_data(df)
 
 
 # Action download_tas_asset_master
