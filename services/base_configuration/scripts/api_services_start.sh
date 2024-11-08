@@ -8,6 +8,8 @@ if [ ! -f /etc/nginx/certs/privatekey.key ]; then
 fi
 
 mkdir -p /var/log/ceg_sys_logs/ | true
+mkdir -p /var/log/ceg_logs/ | true
+
 
 echo "Restarting All Base API Services"
 
@@ -39,3 +41,4 @@ do
   sleep 5
 done
 
+systemctl start nginx

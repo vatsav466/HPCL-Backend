@@ -8,8 +8,8 @@ import fastapi
 import traceback
 import polars as pl
 import urdhva_base.redispool
-import utilities.bu_key_mapping as bu_key_mapping
 import orchestrator.alerting.alert_helper as alert_helper
+import orchestrator.masterdata.location_master_upload as location_master_upload
 
 router = fastapi.APIRouter(prefix='/locationmaster')
 
@@ -35,38 +35,12 @@ async def locationmaster_upload_location_master(uploadfile: fastapi.UploadFile =
         HTTPException: If there is an error uploading the file.
         HTTPException: If there is an error processing the CSV file.
     """
-    redis_client = await urdhva_base.redispool.get_redis_connection()
-    upload_dir = urdhva_base.settings.mft_path
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    # Define the file path
-    file_path = os.path.join(upload_dir, uploadfile.filename)
     try:
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(uploadfile.file, buffer)
-        data = pl.read_csv(file_path).with_columns(pl.all().cast(pl.Utf8,strict=False))
-        # Iterate through the rows of the CSV and extract `bu` and `sapid`
-        data = data.rename(bu_key_mapping.Location)
+        df = pl.read_csv(uploadfile.file).with_columns(pl.all().cast(pl.Utf8, strict=False))
     except Exception as e:
-        print(traceback.format_exc())
-        raise fastapi.HTTPException(status_code=400, detail="Failed to process CSV file.") from e
-
-    # Save the uploaded file
-    try:
-        data = data.to_dicts()
-        for data_dump in data:
-            data_obj = LocationMasterCreate(**data_dump)
-            print(await data_obj.create())
-            await alert_helper.set_location_details(data_dump["bu"], data_dump["sap_id"], data_dump)
-
-        # Display data or perform further processing as needed
-        return {"filename": file_path, "data": data}  # Returns the first few rows as a sample
-    except Exception as e:
-        print(traceback.format_exc())
-        raise fastapi.HTTPException(status_code=500, detail="File upload failed.") from e
-    except Exception as e:
-        print(traceback.format_exc())
-        raise fastapi.HTTPException(status_code=400, detail="Failed to process CSV file.") from e
+        print(f"Exception while reading CSV file, {e}")
+        return False, "Failed to process CSV file, Please reverify uploaded content and reverify"
+    return location_master_upload.upload_location_master_data(df)
 
 
 # Action download_location_master

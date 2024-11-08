@@ -14,7 +14,7 @@ Db_Urls_Base = {
             "https://admin:password@localhost:9200"
         ],
         "postgres_async": [
-            "postgresql+asyncpg://localhost:5432/hpcl_cng?user=postgres&password=1234"
+            "postgresql+asyncpg://localhost:5432/hpcl_ceg?user=postgres&password=1234"
         ],
         "redis": [
             "redis://localhost:6379"
@@ -39,9 +39,9 @@ def configure_db_urls(db_urls):
 class Settings(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict(env_file=EnvConfigFile, extra='ignore')
     # Domain defaults
-    app_name: str = "hpcl_cng"
-    cookie_name: str = "hpcl_cng"
-    default_index: str = "hpcl_cng"
+    app_name: str = "hpcl_ceg"
+    cookie_name: str = "hpcl_ceg"
+    default_index: str = "hpcl_ceg"
     multi_tenant_support: bool = True
 
     # Header based authentication Enabled or Not
@@ -58,7 +58,7 @@ class Settings(pydantic_settings.BaseSettings):
     roles_directories: typing.List[str] = []
 
     # For Logger
-    log_base_dir: str = "/var/log/cng_logs"
+    log_base_dir: str = "/var/log/ceg_logs"
     log_max_size: int = 10000000
     log_max_count: int = 5
 

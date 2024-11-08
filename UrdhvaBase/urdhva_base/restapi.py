@@ -142,6 +142,9 @@ async def validate_header_based_authentication(request: fastapi.Request):
             if db_access_key and isinstance(db_access_key, bytes):
                 db_access_key = db_access_key.decode()
             if db_access_key == access_key:
+                allowed_apis = json.loads(await redis_ins.hget("vendor_auth", f"{vendor}_allowed_apis"))
+                if allowed_apis and request.url.path not in allowed_apis:
+                    return False, fastapi.responses.JSONResponse("Invalid permissions", 403)
                 return True, None
             return False, fastapi.responses.JSONResponse("Invalid token", 403)
     return False, None

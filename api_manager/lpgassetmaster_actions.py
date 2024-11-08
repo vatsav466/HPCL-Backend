@@ -14,8 +14,8 @@ router = fastapi.APIRouter(prefix='/lpgassetmaster')
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
 
-# Action upload_tas_asset_master
-@router.post('/upload_tas_asset_master', tags=['LPGAssetMaster'])
+# Action upload_lpg_asset_master
+@router.post('/upload_lpg_asset_master', tags=['LPGAssetMaster'])
 async def lpgassetmaster_upload_tas_asset_master(uploadfile: fastapi.UploadFile = fastapi.File(None)):
     """
     Upload TAS Asset Master file.
