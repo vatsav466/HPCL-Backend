@@ -63,3 +63,34 @@ async def set_location_details(bu, sap_id, location_data, redis_client=None):
         redis_client = await urdhva_base.redispool.get_redis_connection()
     await redis_client.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data))
     return True
+
+
+def pad_digits(number, padding_count=8):
+    """
+    Pads the given number with leading zeros to ensure it has a length of 8 digits.
+
+    Parameters:
+    number (int or str): The input number to pad.
+    padding_count (int): The desired length of the padded number, defaults to 10.
+
+    Returns:
+    str: The number as a string with leading zeros if needed.
+    """
+    # Convert the number to a string and pad with leading zeros
+    return str(number).zfill(padding_count)
+
+
+async def get_alert_unique_id(bu, sop_id):
+    """
+    Generate a unique ID for an alert based on the business unit and SOP ID.
+    Parameters:
+    bu (str): Business unit identifier.
+    sop_id (str): SOP ID.
+
+    Returns:
+    str: Unique ID.
+    """
+    redis_ins = await urdhva_base.redispool.get_redis_connection()
+    redis_key = f"{bu.upper()}_{sop_id.upper()}"
+    number = await redis_ins.incr(redis_key)
+    return f"{redis_key}_{pad_digits(number, 8)}"

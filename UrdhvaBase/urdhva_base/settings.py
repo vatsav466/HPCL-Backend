@@ -42,7 +42,7 @@ class Settings(pydantic_settings.BaseSettings):
     app_name: str = "hpcl_ceg"
     cookie_name: str = "hpcl_ceg"
     default_index: str = "hpcl_ceg"
-    multi_tenant_support: bool = True
+    multi_tenant_support: bool = False
 
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
@@ -55,6 +55,7 @@ class Settings(pydantic_settings.BaseSettings):
     keycloak_password: str = 'password'
     keycloak_db_password: str = 'admin'
     fernet_key: str = 'NjY5N2IwOWM5ZjE0MjMzN2M3YzA5Y2Y4ZDE4NTA2Mjk='
+    default_realm: str = 'hpcl'
     roles_directories: typing.List[str] = []
 
     # For Logger

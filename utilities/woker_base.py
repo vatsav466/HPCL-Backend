@@ -7,7 +7,6 @@ import traceback
 import dateutil.tz
 import urdhva_base.redispool
 from dateutil.tz import tzlocal
-import api_manager.dnc_schema_model as dnc_schema_model
 
 logger = urdhva_base.logger.Logger.getInstance("worker")
 

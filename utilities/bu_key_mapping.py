@@ -11,7 +11,7 @@ Location = {
     "LocationPinCode": "pinCode",
     "Latitude": "latitude",
     "Longitude": "longitude",
-    "LocalAutomationVendor":"localAutomationVendor"
+    "LocalAutomationVendor": "localAutomationVendor"
 }
 
 LPG = {

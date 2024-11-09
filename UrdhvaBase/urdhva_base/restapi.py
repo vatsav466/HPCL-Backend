@@ -214,6 +214,8 @@ async def contextMiddleware(request: fastapi.Request, call_next):
             entity_id = request.headers.get("entity_id", "")
         elif not urdhva_base.settings.multi_tenant_support:
             entity_id = request.base_url.hostname.split('.')[0]
+        elif urdhva_base.settings.default_realm:
+            entity_id = urdhva_base.settings.default_realm
 
     data['domain'] = request.base_url
     data['entity_obj'] = urdhva_base.entity.Entity()
