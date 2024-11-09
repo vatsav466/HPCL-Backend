@@ -10,10 +10,10 @@ def test_emlock_api():
     }
     data = {
         "vendor_id": "vendor001122337",
-        "location_id": "867152",
-        "location_type": "TAS",
         "data": [
             {
+                "location_id": "867152",
+                "location_type": "TAS",
                 "vehicle_number": "MH10ABC2367",
                 "violation_type": "decantation_issue",
                 "initiated_date": "10/12/24 10:00:00 AM",
