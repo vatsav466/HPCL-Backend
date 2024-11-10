@@ -3,19 +3,15 @@
 echo "Code Sync Started"
 InstallDir=`pwd`
 CodeDir='/opt/ceg/algo'
-for folder in UrdhvaBase api_manager ceg_role_master_api orchestrator utilities vendor_ingestion_api
+for folder in UrdhvaBase api_manager ceg_role_master_api orchestrator utilities vendor_ingestion_api authenticator
 do
   if [ ! -d $CodeDir/$folder ]; then
     mkdir -p $CodeDir/$folder
   fi
+  rsync -azSP $folder/ $CodeDir/$folder/ --exclude .alg_env
+
 done
 
-rsync -azSP UrdhvaBase/ $CodeDir/UrdhvaBase/ --exclude .alg_env
-rsync -azSP api_manager/  $CodeDir/api_manager/  --exclude .alg_env
-rsync -azSP ceg_role_master_api/  $CodeDir/ceg_role_master_api/  --exclude .alg_env
-rsync -azSP orchestrator/  $CodeDir/orchestrator/  --exclude .alg_env
-rsync -azSP utilities/  $CodeDir/utilities/  --exclude .alg_env
-rsync -azSP vendor_ingestion_api/  $CodeDir/vendor_ingestion_api/  --exclude .alg_env
 
 # Copying all service files
 rsync -aS "$InstallDir"/services/base_configuration/system_services/* /etc/systemd/system/
