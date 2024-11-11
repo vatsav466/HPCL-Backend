@@ -1,5 +1,5 @@
 from enum import Enum
 
 
-class TASInterlockMapping(Enum):
+class TASInterlockMapping(str, Enum):
     pass

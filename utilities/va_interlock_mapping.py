@@ -1,5 +1,5 @@
 from enum import Enum
 
 
-class VAInterlockMapping(Enum):
+class VAInterlockMapping(str, Enum):
     pass

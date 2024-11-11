@@ -1,5 +1,5 @@
 from enum import Enum
 
 
-class LPGInterlockMapping(Enum):
+class LPGInterlockMapping(str, Enum):
     pass
