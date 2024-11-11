@@ -2,4 +2,4 @@ from enum import Enum
 
 
 class TASInterlockMapping(str, Enum):
-    pass
+    sap123 = "HealthinessofFireWaterLevelsinTanks"

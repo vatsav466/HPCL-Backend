@@ -3,7 +3,8 @@ import traceback
 import urdhva_base
 from constants import *
 import send_tas_rq_message
-from api_manager import hpcl_cng_model
+from api_manager import hpcl_ceg_model
+from utilities.bu_key_mapping import tasSopcommands
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -41,7 +42,7 @@ class SendcommandTasSop1222:
         """
         try:
             logger.info('SENDING COMMAND TO TAS FOR AlertId:%s' % alert_id)
-            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
@@ -59,7 +60,7 @@ class SendcommandTasSop1222:
                 await send_tas_rq_message.sendTASRQMessage(sap_id, messageBody)
                 print("Recieved input for tripping the loading point %s" % str(sap_id))
                 alert_data['isTripped'] = True
-                data_object = hpcl_cng_model.Alerts(**alert_data)
+                data_object = hpcl_ceg_model.Alerts(**alert_data)
                 await data_object.modify()
             
             elif interuptName == "unterminateloading":
@@ -67,7 +68,7 @@ class SendcommandTasSop1222:
                 messageBody = {"tagsData": {tasSopcommands[sop_id].replace("ID", loadingPointId): 0}}
                 await send_tas_rq_message.sendTASRQMessage(sap_id, messageBody)
                 alert_data['isTripped'] = False
-                data_object = hpcl_cng_model.Alerts(**alert_data)
+                data_object = hpcl_ceg_model.Alerts(**alert_data)
                 await data_object.modify()
             else:
                 print("Unknown interrupt came")

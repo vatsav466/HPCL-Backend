@@ -3,7 +3,7 @@ Location = {
     "LocationName": "name",
     "LocationType": "bu",
     "LocationState": "state",
-    "LocationAddress": "address",
+    "Address": "address",
     "LocationDistrict": "district",
     "LocationRegion": "region",
     "LocationCity": "city",
@@ -68,4 +68,27 @@ TAS = {
     "DeviceTag": "device_tag",
     "DeviceID": "device_id",
     "DeviceKey": "device_key"
+}
+
+processcodemap = {
+    'RO': '1', 
+    'TAS': '2', 
+    'VTS': '3', 
+    'TAS_vehicle': '3', 
+    'LPG_vehicle': '4'
+    }
+
+
+tasSopcommands = {
+    "SOP012": "/ASSETS/OPC/TLF_PULSE_STP_LPID.OP",
+    "SOP013": "/ASSETS/OPC/TLF_KFACT_STP_LPID.OP",
+    "SOP014": "/ASSETS/OPC/TLF_NFLOW_STP_LPID.OP",
+    "SOP015": "/ASSETS/OPC/TLF_LFLOW_STP_LPID.OP",
+    "SOP016": "/ASSETS/OPC/TLF_HFLOW_STP_LPID.OP",
+    "SOP017": "/ASSETS/OPC/TLF_UFLOW_STP_LPID.OP",
+    "SOP018": "/ASSETS/OPC/TLF_ORUN_STP_LPID.OP",
+    "SOP019": "/ASSETS/OPC/TLF_BOVER_STP_LPID.OP",
+    "SOP020": "/ASSETS/OPC/TLF_BUNDER_STP_LPID.OP",
+    "SOP021": "/ASSETS/OPC/TLF_AOVER_STP_LPID.OP",
+    "SOP022": "/ASSETS/OPC/TLF_AUNDER_STP_LPID.OP",
 }

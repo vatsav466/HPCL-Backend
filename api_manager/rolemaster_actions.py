@@ -1,6 +1,6 @@
 import urdhva_base
-from hpcl_cng_enum import *
-from hpcl_cng_model import *
+from hpcl_ceg_enum import *
+from hpcl_ceg_model import *
 import os
 import json
 import shutil
@@ -36,11 +36,11 @@ async def rolemaster_upload_role_master(upload_file: fastapi.UploadFile = fastap
         HTTPException: If there is an error processing the CSV file.
     """
     try:
-        df = pl.read_csv(uploadfile.file).with_columns(pl.all().cast(pl.Utf8, strict=False))
+        df = pl.read_csv(upload_file.file).with_columns(pl.all().cast(pl.Utf8, strict=False))
     except Exception as e:
         print(f"Exception while reading CSV file, {e}")
         return False, "Failed to process CSV file, Please reverify uploaded content and reverify"
-    return role_master_upload.upload_role_master_data(df)
+    return await role_master_upload.upload_role_master_data(df)
 
 
 # Action download_role_master

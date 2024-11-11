@@ -1,6 +1,6 @@
 import datetime
 import urdhva_base
-from api_manager import hpcl_cng_model
+from api_manager import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -35,7 +35,7 @@ class CheckForUnblock:
         try:
             days = int(days)
 
-            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 

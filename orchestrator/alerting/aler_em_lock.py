@@ -19,7 +19,7 @@ async def emlock_create(data):
     params.fields = None
     params.q = query
     params.sort = json.dumps({"updated": -1})
-    status, existingdoc = await hpcl_cng_model.EMLock.get_all(params)
+    status, existingdoc = await hpcl_ceg_model.EMLock.get_all(params)
     
     if not status or not existingdoc['data']:
         createdoc = {
@@ -31,7 +31,7 @@ async def emlock_create(data):
             "violationHistory": [violation_msg],
             "DealerCode": data['data'][0]['Dealer_Code']
         }
-        return await hpcl_cng_model.EMLock.create(createdoc)
+        return await hpcl_ceg_model.EMLock.create(createdoc)
     else:
         existingdoc = existingdoc['data'][0]
         if (datetime.datetime.now() - dateutil.parser.parse(existingdoc["dateoffirstviolation"])).days > 15:
@@ -62,7 +62,7 @@ async def emlock_create(data):
                 existingdoc["count"] = 0
                 existingdoc["violationHistory"] = []
 
-                data_object = hpcl_cng_model.Emlock(**existingdoc)
+                data_object = hpcl_ceg_model.Emlock(**existingdoc)
                 await data_object.modify()
     
     

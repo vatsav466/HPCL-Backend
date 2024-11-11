@@ -1,6 +1,6 @@
 import urdhva_base
-from hpcl_cng_enum import *
-from hpcl_cng_model import *
+from hpcl_ceg_enum import *
+from hpcl_ceg_model import *
 import os
 import json
 import shutil
@@ -17,7 +17,7 @@ logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
 # Action upload_lpg_asset_master
 @router.post('/upload_lpg_asset_master', tags=['LPGAssetMaster'])
-async def lpgassetmaster_upload_tas_asset_master(uploadfile: fastapi.UploadFile = fastapi.File(None)):
+async def lpgassetmaster_upload_tas_asset_master(upload_file: fastapi.UploadFile = fastapi.File(None)):
     """
     Upload TAS Asset Master file.
 
@@ -35,11 +35,11 @@ async def lpgassetmaster_upload_tas_asset_master(uploadfile: fastapi.UploadFile 
         HTTPException: If there is an error processing the CSV file.
     """
     try:
-        df = pl.read_csv(uploadfile.file).with_columns(pl.all().cast(pl.Utf8, strict=False))
+        df = pl.read_csv(upload_file.file).with_columns(pl.all().cast(pl.Utf8, strict=False))
     except Exception as e:
         print(f"Exception while reading CSV file, {e}")
         return False, "Failed to process CSV file, Please reverify uploaded content and reverify"
-    return lpg_master_upload.upload_lpg_master_data(df)
+    return await lpg_master_upload.upload_lpg_master_data(df)
 
 
 # Action download_lpg_asset_master

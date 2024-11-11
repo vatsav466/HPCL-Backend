@@ -1,6 +1,7 @@
 import urdhva_base
 import traceback
 import api_manager
+import hpcl_ceg_model
 import urdhva_base.redispool
 import utilities.bu_key_mapping as bu_key_mapping
 import orchestrator.alerting.alert_helper as alert_helper
@@ -18,12 +19,10 @@ async def upload_ro_master_data(df):
     try:
         data = df.to_dicts()
         for data_dump in data:
-            data_obj = api_manager.hpcl_cng_model.ROAssetMasterCreate(**data_dump)
+            data_obj = hpcl_ceg_model.ROAssetMasterCreate(**data_dump)
             print(await data_obj.create())
             await alert_helper.set_location_details(data_dump["bu"], data_dump["sap_id"], data_dump, redis_client)
-            return True, "RO Master Uploaded Successfully"
-        # Display data or perform further processing as needed
-        return True, "Upload Successful"
+        return True, "RO Master Uploaded Successfully"
     except Exception as e:
         print(traceback.format_exc())
         return False, str(e)

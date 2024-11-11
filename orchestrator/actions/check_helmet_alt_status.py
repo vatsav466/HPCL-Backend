@@ -1,5 +1,5 @@
 import urdhva_base
-from api_manager import hpcl_cng_model
+from api_manager import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger("actions-processing-log")
 
@@ -17,7 +17,7 @@ class CheckHelmetAltStatus:
         Checks the status of a helmet alert for a given alert ID.
 
         This asynchronous function retrieves the alert data associated with the alert_id using 
-        hpcl_cng_model.Alerts.get(alert_id). It checks the alert history for the presence of "ATR" 
+        hpcl_ceg_model.Alerts.get(alert_id). It checks the alert history for the presence of "ATR" 
         or "Justified by", and if found, sets startCounter and closeAlt to True. If startCounter 
         is True and "http" is also found in the alert history, closeAlt is set to False. 
         The function returns a tuple containing a boolean indicating success and a dictionary 
@@ -32,7 +32,7 @@ class CheckHelmetAltStatus:
         """
         try:
             logger.info("CHECK HELMET ATR ALERTID:%s" % alert_id)
-            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__

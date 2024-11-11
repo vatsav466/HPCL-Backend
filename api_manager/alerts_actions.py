@@ -1,6 +1,6 @@
 import urdhva_base
-from hpcl_cng_enum import *
-from hpcl_cng_model import *
+from hpcl_ceg_enum import *
+from hpcl_ceg_model import *
 import fastapi
 import re
 import pytz

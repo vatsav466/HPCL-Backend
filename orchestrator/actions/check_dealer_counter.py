@@ -1,5 +1,5 @@
 import urdhva_base
-from api_manager import hpcl_cng_model
+from api_manager import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger("actions-processing-log")
 
@@ -37,7 +37,7 @@ class CheckDealerCounter:
             set to the value of atrSubmitted.
         """
         try:
-            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
             
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__

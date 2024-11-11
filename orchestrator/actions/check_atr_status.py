@@ -1,5 +1,5 @@
 import urdhva_base
-from api_manager import hpcl_cng_model
+from api_manager import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -18,7 +18,7 @@ class CheckAtrStatus:
         """
         Checks if an ATR has been submitted for a given alert ID.
 
-        Retrieves the alert data associated with the alert_id using hpcl_cng_model.Alerts.get(alert_id), 
+        Retrieves the alert data associated with the alert_id using hpcl_ceg_model.Alerts.get(alert_id), 
         and then checks if the alert history contains the string "ATR" or "Justified by". 
         If it does, the function sets atrSubmitted to True and returns a tuple containing True and a 
         dictionary with the key "atrStatus" set to the value of atrSubmitted.
@@ -32,7 +32,7 @@ class CheckAtrStatus:
         """
         try:
             logger.info("Check ATR Status AlertId:%s" % alert_id)
-            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
             atrSubmitted = False

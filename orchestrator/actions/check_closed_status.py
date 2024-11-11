@@ -1,5 +1,5 @@
 import urdhva_base
-from api_manager import hpcl_cng_model
+from api_manager import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -21,7 +21,7 @@ class CheckClosedStatus:
         """
         This asynchronous function checks if an alert has been closed.
 
-        It retrieves the alert data associated with the given alert_id using hpcl_cng_model.Alerts.get(alert_id), 
+        It retrieves the alert data associated with the given alert_id using hpcl_ceg_model.Alerts.get(alert_id), 
         and then checks if the alert history contains the string "CLOSED". If it does, the function sets closeSubmitted 
         to True and returns a tuple containing True and a dictionary with the key "closedStatus" set to the value of 
         closeSubmitted. If an exception occurs during the retrieval of the alert data, it catches the error, sets 
@@ -37,7 +37,7 @@ class CheckClosedStatus:
         """
         closeSubmitted = False
         try:
-            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
             
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__

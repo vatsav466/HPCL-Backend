@@ -1,5 +1,5 @@
 import urdhva_base
-from api_manager import hpcl_cng_model
+from api_manager import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -18,7 +18,7 @@ class CheckExcepStatus:
         """
         Checks if an exception has been taken for a given alert ID.
 
-        Retrieves the alert data associated with the alert_id using hpcl_cng_model.Alerts.get(alert_id), 
+        Retrieves the alert data associated with the alert_id using hpcl_ceg_model.Alerts.get(alert_id), 
         and then checks if the alert history contains the string "Exception". 
         If it does, the function sets exceptaken to True and returns a tuple containing True and a 
         dictionary with the key "excepStatus" set to the value of exceptaken.
@@ -33,7 +33,7 @@ class CheckExcepStatus:
         exceptaken = False
         try:
             print("Check Exception request raised AlertId:%s" % alert_id)
-            alert_data = await hpcl_cng_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
