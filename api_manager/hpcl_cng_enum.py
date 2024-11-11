@@ -36,7 +36,18 @@ class AlertStatus(str, enum.Enum):
 
 
 
-class Priority(str, enum.Enum):
+class AlertState(str, enum.Enum):
+    Notified = 'Notified'
+    Escalated = 'Escalated'
+    Resolved = 'Resolved'
+
+
+
+
+
+
+
+class Severity(str, enum.Enum):
     Low = 'Low'
     Medium = 'Medium'
     High = 'High'

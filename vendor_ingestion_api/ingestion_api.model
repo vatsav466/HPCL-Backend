@@ -78,6 +78,8 @@ Model IMS crud_disable {
 }
 
 Model emlockData internal {
+    location_id str
+    location_type optional BusinessUnit
     vehicle_number str
     violation_type str
     initiated_date str
@@ -88,8 +90,6 @@ Model emlockData internal {
 Model EMLock crud_disable {
     Action=> ingest_data {
         vendor_id str
-        location_id str
-        location_type optional BusinessUnit
         data optional list emlockData
     }
 }

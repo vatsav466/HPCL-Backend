@@ -26,7 +26,7 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
     Returns:
     - dict: Status message indicating the success of the data submission.
     """
-    logger.info(f"Received VTS data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
+    logger.info(f"Received VTS data ingestion from vendor {data.location_id}({data.location_type}) {data.dict()}")
     return True, "Success"
     # try:
     #     header = {"Content-Type": "application/json", "Accept": "application/json"}

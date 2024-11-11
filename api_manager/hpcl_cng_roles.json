@@ -30,6 +30,9 @@
                 },
                 {
                     "name": "download_location_master"
+                },
+                {
+                    "name": "fetch_global_stats"
                 }
             ]
         },
@@ -75,6 +78,9 @@
                 },
                 {
                     "name": "download_location_master"
+                },
+                {
+                    "name": "fetch_global_stats"
                 }
             ]
         },
@@ -594,6 +600,10 @@
         {
             "name": "download_location_master",
             "displayName": "download_location_master"
+        },
+        {
+            "name": "fetch_global_stats",
+            "displayName": "fetch_global_stats"
         },
         {
             "name": "upload_role_master",

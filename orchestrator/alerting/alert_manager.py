@@ -1,129 +1,46 @@
-import urdhva_base
-import json
-import datetime
-import orchestrator.alerting.alert_helper as alert_helper
-from api_manager import hpcl_cng_model, hpcl_cng_enum
-logger = urdhva_base.logger.Logger.getInstance("Alerts_Processing")
+import orchestrator.alerting.ro_alert as ro_alert
+import orchestrator.alerting.va_alert as va_alert
+import orchestrator.alerting.vts_alert as vts_alert
+import orchestrator.alerting.emlock_alert as emlock_alert
 
 
-class AlertManager:
+async def create_alert(alert_data):
+    """
+    Create alert based on input alert BU or Type for which type of alert
+    :param alert_data: raw alert data from API or Message Queue
+    :return:
+    """
+    if alert_data['alert_type'] == 'RO':
+        return await ro_alert.ROAlertManager().create_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'VA':
+        return await va_alert.VAAlertManager().create_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'VTS':
+        return await vts_alert.VTSAlertManager().create_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'EMLock':
+        return await emlock_alert.EMLockAlertManager().create_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'TAS':
+        return await vts_alert.VTSAlertManager().create_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'LPG':
+        return await vts_alert.VTSAlertManager().create_bu_alert(alert_data)
+    return None
 
-    @staticmethod
-    async def create_alert(self, data): 
-        try:
-            """
-            Create an alert based on the given data
-            
-            Parameters:
-                self (AlertManager): The instance of the class
-                data (dict): The data to create the alert, it should contain the following keys:
-                    - bu (str): Business unit
-                    - sapid (str): SAP ID
-                    - sopid (str): SOP ID
-                    - staticData (dict): Additional static data to be stored in the alert document
-                    - deviceId (str): Device ID
-                    - name (str): Interlock name
-                    - deviceType (str): Device type
-                    - deviceName (str): Device name
-                    - priority (str): Priority of the alert
-                    - message (str): Alert message
-                    - alertHistory (list): List of alert history messages
-            
-            Returns:
-                dict: A dictionary containing the status, message and the created alert document
-            """
-            logger.info(f"Data received to create alert {data}")
-            # alert_data = await hpcl_cng_model.Alerts.get_all()
-            bu_location_type = data['bu']
-            sapid = data['sapid']
-            sopid = data['sopid']
-            static_data = data.get('staticData', {}) 
-            ''' 
-            staticData': {'alertHistory': [alerthistorymessage],
-            'VehicleNumber': doc['TL_Number'],
-            'vendor': doc['Vendor_Code'],
-            "VendorName": doc['Vendor_Name'],
-            "vendormail": vendormail} 
-            '''
-            deviceid = data['deviceId']
-            interlockname = data['name']
-            
-            location = {}
-            loc_dt = {}
-            # query to get the location data from locaiton table
-            if bu_location_type.upper() in [bu.value for bu in hpcl_cng_enum.BusinessUnit] and sopid not in data['sopid']:
-                try:
-                    # Getting location details from redis
-                    status, location_data = await alert_helper.get_location_details(bu_location_type, sapid)
-                    if status:
-                        # If data is found in Redis, parse the JSON
-                        loc_dt = {
-                            "state": location_data.get('state', ''),
-                            "region": location_data.get('region', ''),
-                            "district": location_data.get('district', ''),
-                            "city": location_data.get('city', ''),
-                        }
-                    else:
-                        # If data is not in Redis, fall back to database query
-                        query = f"bu='%{bu_location_type.upper()}%' AND sap_id='%{sapid}%'"
-                        params = urdhva_base.queryparams.QueryParams()
-                        params.limit = 100
-                        params.fields = None
-                        params.q = query
-                        params.sort = json.dumps({"updated": -1})
-                        # Fetch from database
-                        locdata = await hpcl_cng_model.LocationMaster.get_all(params)
-                        if locdata:
-                            location = locdata[0]
-                            loc_dt = {
-                                "state": location.state,
-                                "region": location.region,
-                                "district": location.district,
-                                "city": location.city,
-                            }
-                        else:
-                            raise HTTPException(status_code=404, detail="Location data not found in both Redis and database.")
-                
-                except Exception as e:
-                    raise HTTPException(status_code=500, detail="Error fetching location data.") from e
 
-            # Generate alert data
-            alert = await hpcl_cng_model.Alerts(
-                sop_id=sopid,
-                sap_id=sapid,
-                alert_id=data['alert_id'],
-                interlock_name=interlockname,
-                location_name=doc['location_name'],
-                alert_type=bu.upper(),
-                priority=data['priority'].upper(),
-                location_device_id=deviceid,
-                alert_status="open",
-                device_type=data["deviceType"],
-                device_name=data['deviceName'],
-                role='',
-                district=loc_dt.get('district', ''),
-                city=loc_dt.get('city', ''),
-                alert_history=data.get('alertHistory', []),
-                interlock_id='',  
-                closed=False,
-                alert_message=data['message']
-            )
-            
-            if static_data:
-                for key, value in static_data.items():
-                    setattr(alert, key, value)
-
-            data_obj = hpcl_cng_model.AlertsCreate(**alert)
-            await data_obj.create(data_obj)
-            
-            # Start workflow if applicable
-            if interlockname:
-                await start_workflow(alert.alert_id, interlockname, alert.location_device_id, bu_location_type, sapid)
-            else:
-                logger.info(f"Unable to find Camunda workflow for interlock: {interlockname}, BU: {bu}")
-
-            return {"status": True, "message": "Alert Created Successfully", "data": alert}
-        
-        except Exception as e:
-            logger.exception(e)
-            return {"status": False, "message": str(e), "data": None}
+async def close_alert(alert_data):
+    """
+    Close alert based on input alert BU or Type for which type of alert
+    :param alert_data: raw alert data from API or Message Queue
+    :return:
+    """
+    if alert_data['alert_type'] == 'RO':
+        return await ro_alert.ROAlertManager().close_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'TAS':
+        return await vts_alert.VTSAlertManager().close_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'LPG':
+        return await vts_alert.VTSAlertManager().close_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'VA':
+        return await va_alert.VAAlertManager().close_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'VTS':
+        return await vts_alert.VTSAlertManager().close_bu_alert(alert_data)
+    elif alert_data['alert_type'] == 'EMLock':
+        return await emlock_alert.EMLockAlertManager().close_bu_alert(alert_data)
+    return None

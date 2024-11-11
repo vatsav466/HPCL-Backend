@@ -44,6 +44,7 @@ async def role_master():
         msg_data = msgpack.packb(input_data)
         await queue_ins.put(msg_data, skip_on_exists=True)
 
+
 async def asset_master():
     queue_ins = await get_queue_ins("asset_master_processing")
     assets = await dnc_schema_model.AssetMaster.get_all()

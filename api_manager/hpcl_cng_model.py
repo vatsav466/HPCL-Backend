@@ -133,6 +133,10 @@ class Locationmaster_Download_Location_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Locationmaster_Fetch_Global_StatsParams(pydantic.BaseModel):
+    bu: typing.Optional[typing.List[hpcl_cng_enum.BusinessUnit]] | None = None
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
@@ -436,16 +440,12 @@ class assetDetailsCreate(pydantic.BaseModel):
 
 
 class Alert_HistoryCreate(pydantic.BaseModel):
-    alert_created_time: typing.Optional[datetime.datetime] | None = None
-    local_tank_id: typing.Optional[int] = pydantic.Field(0, **{})
-    local_mpd_id: typing.Optional[int] = pydantic.Field(0, **{})
-    local_bay_id: typing.Optional[int] = pydantic.Field(0, **{})
-    local_nozzle_id: typing.Optional[int] = pydantic.Field(0, **{})
-    entered_queue_at: typing.Optional[datetime.datetime] | None = None
-    processed_at: typing.Optional[datetime.datetime] | None = None
-    active: typing.Optional[str] = pydantic.Field("", **{})
+    device_data: typing.Optional[str] = pydantic.Field("", **{})
+    allocated_time: typing.Optional[datetime.datetime] | None = None
+    processed_time: typing.Optional[datetime.datetime] | None = None
     mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
-    date: typing.Optional[datetime.datetime] | None = None
+    action_type: hpcl_cng_enum.AlertActionType
+    action_msg: str
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -525,61 +525,69 @@ class InterlockGetResp(pydantic.BaseModel):
 class AlertsSchema(UrdhvaPostgresBase):
     __tablename__ = 'alerts'
     
+    bu: Mapped[typing.Optional[typing.Any]] = mapped_column("bu", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    asset_id: Mapped[typing.Optional[typing.Any]] = mapped_column("asset_id", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    alert_type: Mapped[typing.Optional[str]] = mapped_column("alert_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    alert_status: Mapped[typing.Optional[typing.Any]] = mapped_column("alert_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    alert_message: Mapped[typing.Optional[str]] = mapped_column("alert_message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    severity: Mapped[typing.Any] = mapped_column("severity", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    alert_status: Mapped[typing.Any] = mapped_column("alert_status", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    alert_state: Mapped[typing.Any] = mapped_column("alert_state", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    unique_id: Mapped[str] = mapped_column("unique_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    alert_section: Mapped[str] = mapped_column("alert_section", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    external_id: Mapped[typing.Optional[str]] = mapped_column("external_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     interlock_name: Mapped[typing.Optional[str]] = mapped_column("interlock_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     interlock_id: Mapped[typing.Optional[str]] = mapped_column("interlock_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    device_name: Mapped[typing.Optional[str]] = mapped_column("device_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    location_device_id: Mapped[typing.Optional[str]] = mapped_column("location_device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    priority: Mapped[typing.Optional[typing.Any]] = mapped_column("priority", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    device_name: Mapped[typing.Optional[str]] = mapped_column("device_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_msg: Mapped[typing.Optional[str]] = mapped_column("device_msg", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("alert_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    last_sms_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_sms_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_mailed_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_mailed_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_escalated_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_escalated_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    last_notified_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_notified_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_to: Mapped[typing.Optional[str]] = mapped_column("assigned_to", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_to_role: Mapped[typing.Optional[str]] = mapped_column("assigned_to_role", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    alert_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("alert_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    closed: Mapped[typing.Optional[bool]] = mapped_column("closed", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
-    closed_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    mail_sent_to: Mapped[typing.Optional[str]] = mapped_column("mail_sent_to", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sms_sent_to: Mapped[typing.Optional[str]] = mapped_column("sms_sent_to", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    acted_by: Mapped[typing.Optional[str]] = mapped_column("acted_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    assigned_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    raw_data: Mapped[typing.Optional[dict]] = mapped_column("raw_data", JSONB, index=False, nullable=True, default=pydantic.Field(default_factory=dict), primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'alerts'
     
+    bu: typing.Optional[hpcl_cng_enum.BusinessUnit] | None = None
     sap_id: str
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
-    asset_id: typing.Optional[assetDetailsCreate] | None = None
-    alert_type: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: typing.Optional[str] = pydantic.Field("", **{})
-    alert_status: typing.Optional[hpcl_cng_enum.AlertStatus] | None = None
-    alert_message: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    severity: hpcl_cng_enum.Severity
+    alert_status: hpcl_cng_enum.AlertStatus
+    alert_state: hpcl_cng_enum.AlertState
+    unique_id: str
+    alert_section: str
+    external_id: typing.Optional[str] = pydantic.Field("", **{})
     interlock_name: typing.Optional[str] = pydantic.Field("", **{})
     interlock_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_name: typing.Optional[str] = pydantic.Field("", **{})
-    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
-    location_device_id: typing.Optional[str] = pydantic.Field("", **{})
-    priority: typing.Optional[hpcl_cng_enum.Priority] | None = None
+    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_msg: typing.Optional[str] = pydantic.Field("", **{})
+    alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
+    last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_escalated_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_notified_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assigned_to: typing.Optional[str] = pydantic.Field("", **{})
+    assigned_to_role: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     city: typing.Optional[str] = pydantic.Field("", **{})
-    alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
-    closed: typing.Optional[bool] = pydantic.Field(False, )
-    closed_time: typing.Optional[datetime.datetime] | None = None
-    mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
-    sms_sent_to: typing.Optional[str] = pydantic.Field("", **{})
-    acted_by: typing.Optional[str] = pydantic.Field("", **{})
-    assigned_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    raw_data: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
     class Config:
         collection_name = 'data_flow'
@@ -590,31 +598,35 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 class Alerts(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'alerts'
     
+    bu: typing.Optional[hpcl_cng_enum.BusinessUnit] | None = None
     sap_id: typing.Optional[str] | None = None
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
-    asset_id: typing.Optional[assetDetailsCreate] | None = None
-    alert_type: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    severity: typing.Optional[hpcl_cng_enum.Severity] | None = None
     alert_status: typing.Optional[hpcl_cng_enum.AlertStatus] | None = None
-    alert_message: typing.Optional[str] = pydantic.Field("", **{})
+    alert_state: typing.Optional[hpcl_cng_enum.AlertState] | None = None
+    unique_id: typing.Optional[str] | None = None
+    alert_section: typing.Optional[str] | None = None
+    external_id: typing.Optional[str] = pydantic.Field("", **{})
     interlock_name: typing.Optional[str] = pydantic.Field("", **{})
     interlock_id: typing.Optional[str] = pydantic.Field("", **{})
-    location_name: typing.Optional[str] = pydantic.Field("", **{})
-    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
-    location_device_id: typing.Optional[str] = pydantic.Field("", **{})
-    priority: typing.Optional[hpcl_cng_enum.Priority] | None = None
+    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_msg: typing.Optional[str] = pydantic.Field("", **{})
+    alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
+    last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_escalated_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    last_notified_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    assigned_to: typing.Optional[str] = pydantic.Field("", **{})
+    assigned_to_role: typing.Optional[str] = pydantic.Field("", **{})
     district: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     city: typing.Optional[str] = pydantic.Field("", **{})
-    alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
-    closed: typing.Optional[bool] = pydantic.Field(False, )
-    closed_time: typing.Optional[datetime.datetime] | None = None
-    mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
-    sms_sent_to: typing.Optional[str] = pydantic.Field("", **{})
-    acted_by: typing.Optional[str] = pydantic.Field("", **{})
-    assigned_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    raw_data: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
     class Config:
         collection_name = 'data_flow'

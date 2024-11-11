@@ -74,6 +74,8 @@ class Ims_Ingest_DataParams(pydantic.BaseModel):
 
 
 class emlockDataCreate(pydantic.BaseModel):
+    location_id: str
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     vehicle_number: str
     violation_type: str
     initiated_date: str
@@ -83,8 +85,6 @@ class emlockDataCreate(pydantic.BaseModel):
 
 class Emlock_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
-    location_id: str
-    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.Optional[typing.List[emlockDataCreate]] | None = None
     
     

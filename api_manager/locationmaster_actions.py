@@ -93,3 +93,9 @@ async def locationmaster_download_location_master(data: Locationmaster_Download_
             return {"status": True, "message": "Success","data": os.path.join('/downloads', "location_master.csv")}        
         return {"status": False, "message": "No data found", "data": []}
     return {"status": False, "message": "No response", "data": []}
+
+
+# Action fetch_global_stats
+@router.post('/fetch_global_stats', tags=['LocationMaster'])
+async def locationmaster_fetch_global_stats(data: Locationmaster_Fetch_Global_StatsParams):
+    ...
