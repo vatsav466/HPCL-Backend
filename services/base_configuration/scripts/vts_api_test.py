@@ -12,7 +12,7 @@ def test_vts_api():
         "vendor_id": "vendor001122337",
         "location_id": "867152",
         "location_type": "TAS",
-        "data": {
+        "data": [{
             "tl_number": "tl_123_890",
             "report_duration": "01-11-2022 00:00:00 To 15-11-2022 00:00:00",
             "total_trips": 10,
@@ -24,7 +24,7 @@ def test_vts_api():
             "no_halt_zone_count": 1,
             "device_offline_count": 1,
             "device_tamper_count": 1
-        }
+        }]
     }
 
     response = requests.post(url, headers=headers, json=data, verify=False)
