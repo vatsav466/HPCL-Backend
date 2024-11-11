@@ -56,7 +56,10 @@ class Settings(pydantic_settings.BaseSettings):
     keycloak_db_password: str = 'admin'
     fernet_key: str = 'NjY5N2IwOWM5ZjE0MjMzN2M3YzA5Y2Y4ZDE4NTA2Mjk='
     default_realm: str = 'hpcl'
+
+    # For RBAC
     roles_directories: typing.List[str] = []
+    rbac_keys: typing.List[str] = ['sap_id', 'bu', 'state', 'city', 'district', 'zone']
 
     # For Logger
     log_base_dir: str = "/var/log/ceg_logs"

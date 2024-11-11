@@ -15,7 +15,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     class_name = variables.pop('class_name', None)
     function_name = variables.pop('function_name', None)
     try:
-        module = importlib.import_module(module_name)
+        module = importlib.import_module(f"orchestrator.actions.{module_name}")
         class_instance = getattr(module, class_name)()
         req_variables = await class_instance.get_required_variables()
         function = getattr(class_instance, function_name)

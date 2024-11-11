@@ -133,6 +133,10 @@ class Locationmaster_Download_Location_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Locationmaster_Fetch_Global_StatsParams(pydantic.BaseModel):
+    bu: typing.Optional[typing.List[hpcl_cng_enum.BusinessUnit]] | None = None
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     

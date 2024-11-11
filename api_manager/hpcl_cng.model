@@ -76,6 +76,10 @@ Model LocationMaster {
     Action=> download_location_master {
     }
 
+    Action=> fetch_global_stats {
+        bu optional list BusinessUnit
+    }
+
     Config=> {
         crud_operations='read'
     }
