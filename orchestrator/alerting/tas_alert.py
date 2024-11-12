@@ -2,84 +2,13 @@ import json
 import urdhva_base
 from api_manager import hpcl_ceg_model
 import utilities.bu_key_mapping as bu_key_mapping
+import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
 logger = urdhva_base.logger.Logger.getInstance("tas_alert_processing")
 
 
 class TASAlertManager(alert_factory.AlertFactory):
-    @classmethod
-    async def _fetch_location_data(cls, alert_data):
-        """
-        Fetches location data based on the provided alert data, either from Redis cache
-        or from the database if not present in Redis.
-
-        Parameters:
-        alert_data (dict): A dictionary containing alert information with keys:
-            - 'BU' (str): Business unit type.
-            - 'sapid' (str): SAP ID for the location.
-
-        Returns:
-        dict: A dictionary containing location details with keys:
-            - 'state' (str): State of the location.
-            - 'region' (str): Region of the location.
-            - 'district' (str): District of the location.
-            - 'city' (str): City of the location.
-
-        Raises:
-        Exception: If location data is not found in both Redis and the database, or if
-        there is an error in fetching the data.
-        """
-        try:
-            bu_location_type = alert_data['bu']
-            sap_id = alert_data['sap_id']
-            loc_dt = {}
-
-            redis_key = f"{bu_location_type.upper()}_{sap_id}"
-            try:
-                # Get the Redis client
-                redis_client = await urdhva_base.redispool.get_redis_connection()
-                # Check if location data exists in Redis
-                redis_data = await redis_client.hget(f"{bu_location_type.lower()}_master", redis_key)
-                if redis_data:
-                    location_alert_data = json.loads(redis_data)
-                    loc_dt = {
-                        "state": location_alert_data.get('state', ''),
-                        "region": location_alert_data.get('region', ''),
-                        "district": location_alert_data.get('district', ''),
-                        "city": location_alert_data.get('city', ''),
-                    }
-                else:
-                    # Fallback to database query if not in Redis
-                    query = f"bu='%{bu_location_type.upper()}%' AND sap_id='%{sap_id}%'"
-                    params = urdhva_base.queryparams.QueryParams()
-                    params.limit = 100
-                    params.fields = None
-                    params.q = query
-                    params.sort = json.dumps({"updated": -1})
-                    
-                    # Fetch from database
-                    localert_data = await hpcl_ceg_model.LocationMaster.get_all(params)
-                    if localert_data:
-                        location = localert_data[0]
-                        loc_dt = {
-                            "state": location.state,
-                            "region": location.region,
-                            "district": location.district,
-                            "city": location.city,
-                        }
-                    else:
-                        raise Exception(status_code=404, detail="Location data not found in Redis or database.")
-                
-            except Exception as e:
-                raise Exception(status_code=500, detail="Error fetching location data.") from e
-
-            return loc_dt
-
-        except Exception as e:
-            logger.error(e)
-            raise e
-
     @classmethod
     async def create_bu_alert(cls, alert_data):
         """
@@ -118,7 +47,7 @@ class TASAlertManager(alert_factory.AlertFactory):
             interlockname = alert_data['name']
             
             # Retrieve necessary fields from the alert_data
-            loc_dt = cls._fetch_location_data(alert_data)
+            loc_dt = await alert_helper.get_location_details(bu=bu_location_type,sap_id=sap_id)
             alert_data['location_data'] = loc_dt
         
             return cls.create_alert(alert_data)

@@ -59,7 +59,7 @@ class AlertFactory:
                 location_name=bu,
                 severity=alert_data['severity'].capitalize(),
                 alert_status=hpcl_ceg_enum.AlertStatus.Open,
-                alert_state=hpcl_ceg_enum.AlertState.InProgess,
+                alert_state=hpcl_ceg_enum.AlertState.InProgress,
                 unique_id=uniqueId,
                 alert_section=bu,
                 external_id=alert_data.get('alert_id', ''),
@@ -69,18 +69,18 @@ class AlertFactory:
                 device_type=alert_data["deviceType"],
                 device_name=alert_data['deviceName'],
                 device_msg=alert_data['message'],
-                alert_history=alert_data['location_data'].get('alertHistory', []),
+                alert_history=alert_data['location_data'][1].get('alertHistory', []),
                 last_sms_to=[],
                 last_mailed_to=[],
                 last_escalated_to=[],
                 last_notified_to=[],
                 assigned_to='',
                 assigned_to_role='',
-                district=alert_data['location_data'].get('district', ''),
-                zone=alert_data['location_data'].get('zone', ''),
-                region=alert_data['location_data'].get('region', ''),
-                state=alert_data['location_data'].get('state', ''),
-                city=alert_data['location_data'].get('city', ''),
+                district=alert_data['location_data'][1].get('district', ''),
+                zone=alert_data['location_data'][1].get('zone', ''),
+                region=alert_data['location_data'][1].get('region', ''),
+                state=alert_data['location_data'][1].get('state', ''),
+                city=alert_data['location_data'][1].get('city', ''),
                 raw_data={}
             )
 
@@ -108,9 +108,9 @@ class AlertFactory:
                     device_name=alert_data['deviceName'],
                     device_type=alert_data["deviceType"],
                     device_id=alert_data['deviceId'],
-                    state=alert_data['location_data'].get('state', ''),
-                    city=alert_data['location_data'].get('city', ''),
-                    zone=alert_data['location_data'].get('zone', ''),
+                    state=alert_data['location_data'][1].get('state', ''),
+                    city=alert_data['location_data'][1].get('city', ''),
+                    zone=alert_data['location_data'][1].get('zone', ''),
                     interlock_status=hpcl_ceg_enum.AlertStatus.Open
                 )
                 await interlock.create()
