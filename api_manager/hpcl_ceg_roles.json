@@ -608,6 +608,150 @@
                     "name": "alert_action"
                 }
             ]
+        },
+        {
+            "name": "cemslocationmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSLocationMaster",
+            "attributes": {},
+            "uris": [
+                "/api/cemslocationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_cems_location_master"
+                },
+                {
+                    "name": "download_cems_location_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "cemslocationmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSLocationMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/cemslocationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "cemslocationmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSLocationMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/cemslocationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_cems_location_master"
+                },
+                {
+                    "name": "download_cems_location_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "cemsquantitymaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSQuantityMaster",
+            "attributes": {},
+            "uris": [
+                "/api/cemsquantitymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "cemsquantitymaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSQuantityMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/cemsquantitymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "cemsquantitymaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSQuantityMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/cemsquantitymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
@@ -753,6 +897,18 @@
         {
             "name": "alert_action",
             "displayName": "alert_action"
+        },
+        {
+            "name": "upload_cems_location_master",
+            "displayName": "upload_cems_location_master"
+        },
+        {
+            "name": "download_cems_location_master",
+            "displayName": "download_cems_location_master"
+        },
+        {
+            "name": "download_template",
+            "displayName": "download_template"
         }
     ]
 }

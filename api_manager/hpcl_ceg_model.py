@@ -725,5 +725,122 @@ class Alerts_Alert_ActionParams(pydantic.BaseModel):
     days: typing.Optional[int] = pydantic.Field(0, **{})
     justification_type: typing.Optional[str] = pydantic.Field("", **{})
     event_tags: typing.Optional[tagsCreate] | None = None
+
+
+class CEMSLocationMasterSchema(UrdhvaPostgresBase):
+    __tablename__ = 'cems_location_master'
     
+    bu_id: Mapped[str] = mapped_column("bu_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[typing.Any]] = mapped_column("bu", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
+    device_name: Mapped[str] = mapped_column("device_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_id: Mapped[str] = mapped_column("location_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    source_id: Mapped[str] = mapped_column("source_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zonal_id: Mapped[str] = mapped_column("zonal_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class CEMSLocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'cems_location_master'
     
+    bu_id: str
+    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
+    device_name: str
+    location_name: str
+    location_id: str
+    source_id: str
+    zonal_id: str
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CEMSLocationMasterSchema
+        upsert_keys = []
+
+
+class CEMSLocationMaster(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'cems_location_master'
+    
+    bu_id: typing.Optional[str] | None = None
+    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
+    device_name: typing.Optional[str] | None = None
+    location_name: typing.Optional[str] | None = None
+    location_id: typing.Optional[str] | None = None
+    source_id: typing.Optional[str] | None = None
+    zonal_id: typing.Optional[str] | None = None
+    district: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CEMSLocationMasterSchema
+        upsert_keys = []
+
+
+class CEMSLocationMasterGetResp(pydantic.BaseModel):
+    data: typing.List[CEMSLocationMaster]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Cemslocationmaster_Upload_Cems_Location_MasterParams(pydantic.BaseModel):
+    pass
+
+
+class Cemslocationmaster_Download_Cems_Location_MasterParams(pydantic.BaseModel):
+    pass
+
+
+class Cemslocationmaster_Download_TemplateParams(pydantic.BaseModel):
+    pass
+
+
+class CEMSQuantityMasterSchema(UrdhvaPostgresBase):
+    __tablename__ = 'cems_quantity_master'
+    
+    quantity_name: Mapped[str] = mapped_column("quantity_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    quantity_id: Mapped[str] = mapped_column("quantity_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    unit: Mapped[str] = mapped_column("unit", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class CEMSQuantityMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'cems_quantity_master'
+    
+    quantity_name: str
+    quantity_id: str
+    unit: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CEMSQuantityMasterSchema
+        upsert_keys = []
+
+
+class CEMSQuantityMaster(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'cems_quantity_master'
+    
+    quantity_name: typing.Optional[str] | None = None
+    quantity_id: typing.Optional[str] | None = None
+    unit: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CEMSQuantityMasterSchema
+        upsert_keys = []
+
+
+class CEMSQuantityMasterGetResp(pydantic.BaseModel):
+    data: typing.List[CEMSQuantityMaster]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

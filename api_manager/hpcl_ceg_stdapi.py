@@ -86,3 +86,52 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await Alerts.get_all(params, skip_secrets=True)
 
+
+@router.post('/cemslocationmaster', response_model=CEMSLocationMaster, tags=['CEMSLocationMaster'])
+async def create(inputObj: CEMSLocationMasterCreate):
+    return await inputObj.create()
+
+
+@router.put('/cemslocationmaster', response_model=CEMSLocationMaster, tags=['CEMSLocationMaster'])
+async def update(inputObj: CEMSLocationMaster):
+    return await inputObj.modify()
+
+
+@router.get('/cemslocationmaster/{id}', response_model=CEMSLocationMaster, tags=['CEMSLocationMaster'])
+async def get(id: str):
+    return await CEMSLocationMaster.get(id, skip_secrets=True)
+
+
+@router.get('/cemslocationmaster', response_model=CEMSLocationMasterGetResp, tags=['CEMSLocationMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CEMSLocationMaster.get_all(params, skip_secrets=True)
+
+
+@router.delete('/cemslocationmaster/{id}', tags=['CEMSLocationMaster'])
+async def delete(id: str):
+    return await CEMSLocationMaster.delete(id)
+
+
+@router.post('/cemsquantitymaster', response_model=CEMSQuantityMaster, tags=['CEMSQuantityMaster'])
+async def create(inputObj: CEMSQuantityMasterCreate):
+    return await inputObj.create()
+
+
+@router.put('/cemsquantitymaster', response_model=CEMSQuantityMaster, tags=['CEMSQuantityMaster'])
+async def update(inputObj: CEMSQuantityMaster):
+    return await inputObj.modify()
+
+
+@router.get('/cemsquantitymaster/{id}', response_model=CEMSQuantityMaster, tags=['CEMSQuantityMaster'])
+async def get(id: str):
+    return await CEMSQuantityMaster.get(id, skip_secrets=True)
+
+
+@router.get('/cemsquantitymaster', response_model=CEMSQuantityMasterGetResp, tags=['CEMSQuantityMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CEMSQuantityMaster.get_all(params, skip_secrets=True)
+
+
+@router.delete('/cemsquantitymaster/{id}', tags=['CEMSQuantityMaster'])
+async def delete(id: str):
+    return await CEMSQuantityMaster.delete(id)

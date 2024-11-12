@@ -92,3 +92,18 @@ tasSopcommands = {
     "SOP021": "/ASSETS/OPC/TLF_AOVER_STP_LPID.OP",
     "SOP022": "/ASSETS/OPC/TLF_AUNDER_STP_LPID.OP",
 }
+
+cems_location_master = {
+    "BUID": "bu_id",
+    "BU": "bu",
+    "DeviceName": "device_name",
+    "LocationName": "location_name",
+    "LocationID": "location_id",
+    "SourceID": "source_id",
+    "ZonalID": "zonal_id",
+    "District": "district",
+    "Zone": "zone",
+    "Region": "region",
+    "State": "state",
+    "City": "city"
+}

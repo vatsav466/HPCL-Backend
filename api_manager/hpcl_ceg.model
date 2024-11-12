@@ -312,3 +312,33 @@ Model Alerts {
         crud_operations='read'
     }
 }
+
+Model CEMSLocationMaster {
+    bu_id str
+    bu optional index_field BusinessUnit
+    device_name str
+    location_name str
+    location_id str
+    source_id str
+    zonal_id str
+    district optional str
+    zone optional str
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_cems_location_master{
+    }
+
+    Action=> download_cems_location_master{
+    }
+
+    Action=> download_template {
+    }
+}
+
+Model CEMSQuantityMaster {
+    quantity_name str
+    quantity_id str
+    unit str
+}
