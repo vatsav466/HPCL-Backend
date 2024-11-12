@@ -48,8 +48,9 @@ class LPGAlertManager(alert_factory.AlertFactory):
             interlockname = alert_data['interlockName']
             
             # Retrieve necessary fields from the alert_data
-            loc_dt = await alert_helper.get_location_details(bu=bu_location_type,sap_id=sap_id)
-            alert_data['location_data'] = loc_dt
+            status, loc_dt = await alert_helper.get_location_details(bu=bu_location_type,sap_id=sap_id)
+            if status:
+                alert_data['location_data'] = loc_dt
         
             return await cls.create_alert(alert_data)
 

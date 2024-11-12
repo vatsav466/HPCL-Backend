@@ -1,5 +1,6 @@
 import datetime
-import hpcl_ceg_model
+import urdhva_base
+import api_manager
 import urdhva_base.queryparams
 import dateutil.parser as dt_parser
 import orchestrator.alerting.alert_helper as alert_helper
@@ -29,7 +30,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
             query = (f"where sap_id={record['location_id']} and vehicle_number='{record['vehicle_number']}' "
                      f"and status='Open' and violation_type='{record['violation_type']}'")
 
-            data = await hpcl_ceg_model.EMLock.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
+            data = await api_manager.hpcl_ceg_model.EMLock.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
             if len(data['data']):
                 # Updating existing EM Lock record
                 em_lock_record = data['data'][0]
