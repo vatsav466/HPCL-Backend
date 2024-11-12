@@ -17,7 +17,7 @@ Enum AlertStatus str {
 }
 
 Enum AlertState str {
-    InProgess='InProgess'
+    InProgress='InProgress'
     Notified='Notified'
     Escalated='Escalated'
     Resolved='Resolved'

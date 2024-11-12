@@ -37,7 +37,7 @@ class AlertStatus(str, enum.Enum):
 
 
 class AlertState(str, enum.Enum):
-    InProgess = 'InProgess'
+    InProgress = 'InProgress'
     Notified = 'Notified'
     Escalated = 'Escalated'
     Resolved = 'Resolved'
