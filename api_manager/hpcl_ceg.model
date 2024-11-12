@@ -81,6 +81,9 @@ Model LocationMaster {
         bu optional list BusinessUnit
     }
 
+    Action=> download_template {
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -103,6 +106,9 @@ Model RoleMaster {
     }
 
     Action=> download_role_master {
+    }
+
+    Action=> download_template {
     }
 
     Config=> {
@@ -129,6 +135,9 @@ Model ROAssetMaster {
     Action=> download_ro_asset_master{
     }
 
+    Action=> download_template {
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -153,6 +162,9 @@ Model TASAssetMaster {
     Action=> download_tas_asset_master{
     }
 
+    Action=> download_template {
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -175,6 +187,9 @@ Model LPGAssetMaster {
     }
 
     Action=> download_lpg_asset_master{
+    }
+
+    Action=> download_template {
     }
 
     Config=> {

@@ -137,6 +137,10 @@ class Locationmaster_Fetch_Global_StatsParams(pydantic.BaseModel):
     bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
 
 
+class Locationmaster_Download_TemplateParams(pydantic.BaseModel):
+    pass
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
@@ -206,6 +210,10 @@ class Rolemaster_Upload_Role_MasterParams(pydantic.BaseModel):
 
 
 class Rolemaster_Download_Role_MasterParams(pydantic.BaseModel):
+    pass
+
+
+class Rolemaster_Download_TemplateParams(pydantic.BaseModel):
     pass
 
 
@@ -281,6 +289,10 @@ class Roassetmaster_Download_Ro_Asset_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Roassetmaster_Download_TemplateParams(pydantic.BaseModel):
+    pass
+
+
 class TASAssetMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'tas_asset_master'
     
@@ -353,6 +365,10 @@ class Tasassetmaster_Download_Tas_Asset_MasterParams(pydantic.BaseModel):
     pass
 
 
+class Tasassetmaster_Download_TemplateParams(pydantic.BaseModel):
+    pass
+
+
 class LPGAssetMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_asset_master'
     
@@ -422,6 +438,10 @@ class Lpgassetmaster_Upload_Lpg_Asset_MasterParams(pydantic.BaseModel):
 
 
 class Lpgassetmaster_Download_Lpg_Asset_MasterParams(pydantic.BaseModel):
+    pass
+
+
+class Lpgassetmaster_Download_TemplateParams(pydantic.BaseModel):
     pass
 
 

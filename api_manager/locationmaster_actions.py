@@ -8,6 +8,7 @@ import fastapi
 import traceback
 import polars as pl
 import urdhva_base.redispool
+from fastapi.responses import FileResponse
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.masterdata.location_master_upload as location_master_upload
 
@@ -99,3 +100,42 @@ async def locationmaster_download_location_master(data: Locationmaster_Download_
 @router.post('/fetch_global_stats', tags=['LocationMaster'])
 async def locationmaster_fetch_global_stats(data: Locationmaster_Fetch_Global_StatsParams):
     ...
+
+
+# Action download_template
+@router.post('/download_template', tags=['LocationMaster'])
+async def locationmaster_download_template(data: Locationmaster_Download_TemplateParams):
+    """
+    Download Location Master Template.
+
+    This API endpoint creates a template CSV file for the Location Master data
+    with the same columns as the existing location master CSV, but without any data.
+    The template file is then served for download.
+
+    Args:
+        data (Locationmaster_Download_TemplateParams): The parameters for the 
+        download template request.
+
+    Returns:
+        FileResponse: A response that serves the template CSV file for download.
+
+    Raises:
+        HTTPException: If there is an error creating or serving the CSV template.
+    """
+    download_path = urdhva_base.settings.download_path
+    downloadpath = os.path.join(download_path, "downloads")
+    template_file_path = os.path.join(download_path, "location_master_template.csv")
+
+    df = pl.read_csv(f"{downloadpath}/location_master.csv")
+    # Create a new empty DataFrame with the same columns
+    template_df = pl.DataFrame({col: [] for col in df.columns})
+    
+    # Save the empty DataFrame as a template CSV
+    template_df.write_csv(template_file_path)
+
+    # Serve the template file for download
+    return FileResponse(
+        path=template_file_path,
+        media_type="application/octet-stream",
+        filename="location_master_template.csv"
+    )

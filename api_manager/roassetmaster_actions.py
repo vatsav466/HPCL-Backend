@@ -7,6 +7,7 @@ import shutil
 import fastapi
 import traceback
 import polars as pl
+from fastapi.responses import FileResponse
 import utilities.bu_key_mapping as bu_key_mapping
 import orchestrator.masterdata.ro_master_upload as ro_master_upload
 
@@ -92,3 +93,41 @@ async def roassetmaster_download_ro_asset_master(data: Roassetmaster_Download_Ro
         return {"status": False, "message": "No data found", "data": []}
     return {"status": False, "message": "No response", "data": []}
 
+
+# Action download_template
+@router.post('/download_template', tags=['ROAssetMaster'])
+async def roassetmaster_download_template(data: Roassetmaster_Download_TemplateParams):
+    """
+    Download RO Asset Master Template.
+
+    This API endpoint creates a template CSV file for the RO Asset Master data
+    with the same columns as the existing location master CSV, but without any data.
+    The template file is then served for download.
+
+    Args:
+        data (Roassetmaster_Download_TemplateParams): The parameters for the 
+        download template request.
+
+    Returns:
+        FileResponse: A response that serves the template CSV file for download.
+
+    Raises:
+        HTTPException: If there is an error creating or serving the CSV template.
+    """
+    download_path = urdhva_base.settings.download_path
+    downloadpath = os.path.join(download_path, "downloads")
+    template_file_path = os.path.join(download_path, "ro_master_template.csv")
+
+    df = pl.read_csv(f"{downloadpath}/ro_master.csv")
+    # Create a new empty DataFrame with the same columns
+    template_df = pl.DataFrame({col: [] for col in df.columns})
+    
+    # Save the empty DataFrame as a template CSV
+    template_df.write_csv(template_file_path)
+
+    # Serve the template file for download
+    return FileResponse(
+        path=template_file_path,
+        media_type="application/octet-stream",
+        filename="ro_master_template.csv"
+    )

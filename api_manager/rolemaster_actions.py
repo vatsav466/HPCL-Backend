@@ -8,6 +8,7 @@ import fastapi
 import traceback
 import polars as pl
 import urdhva_base.redispool
+from fastapi.responses import FileResponse
 import utilities.bu_key_mapping as bu_key_mapping
 import orchestrator.masterdata.role_master_upload as role_master_upload
 
@@ -93,3 +94,40 @@ async def rolemaster_download_role_master(data: Rolemaster_Download_Role_MasterP
     return {"status": False, "message": "No response", "data": []}
 
 
+# Action download_template
+@router.post('/download_template', tags=['RoleMaster'])
+async def rolemaster_download_template(data: Rolemaster_Download_TemplateParams):
+    """
+    Download Role Master Template.
+
+    This API endpoint creates a template CSV file for the Role Master data
+    with the same columns as the existing location master CSV, but without any data.
+    The template file is then served for download.
+
+    Args:
+        data (Rolemaster_Download_TemplateParams): The parameters for the 
+        download template request.
+
+    Returns:
+        FileResponse: A response that serves the template CSV file for download.
+
+    Raises:
+        HTTPException: If there is an error creating or serving the CSV template.
+    """
+    download_path = urdhva_base.settings.download_path
+    downloadpath = os.path.join(download_path, "downloads")
+    template_file_path = os.path.join(download_path, "lrole_master_template.csv")
+
+    df = pl.read_csv(f"{downloadpath}/role_master.csv")
+    # Create a new empty DataFrame with the same columns
+    template_df = pl.DataFrame({col: [] for col in df.columns})
+    
+    # Save the empty DataFrame as a template CSV
+    template_df.write_csv(template_file_path)
+
+    # Serve the template file for download
+    return FileResponse(
+        path=template_file_path,
+        media_type="application/octet-stream",
+        filename="role_master_template.csv"
+    )
