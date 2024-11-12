@@ -77,32 +77,7 @@ class TASAlertManager(alert_factory.AlertFactory):
         """
         try:
             logger.info(f"Alert data received to close alert: {alert_data}")
-            
-            # Retrieve necessary fields from the alert_data
-            bu_location_type = alert_data['bu']
-            sap_id = alert_data['sap_id']
-            sop_id = alert_data['sop_id']
-            alert_id = alert_data['alert_id']
-
-            # Query Redis or the alert database to locate the alert
-            
-            query = f"sop_id='%{sop_id}%' AND sap_id='%{sap_id}%' AND alert_id='%{alert_id}%'"
-            params = urdhva_base.queryparams.QueryParams()
-            params.q = query
-            existing_alerts = await hpcl_ceg_model.Alerts.get_all(params)
-            
-            if existing_alerts:
-                alert = existing_alerts[0]
-                alert['alert_status'] = 'closed'
-                # alert.closed = True
-                # alert.close_reason = close_reason
-                data_obj = hpcl_ceg_model.Alerts(**alert)
-                await data_obj.modify()
-                logger.info(f"Alert {alert_id} closed successfully in database.")
-            else:
-                raise Exception(status_code=404, detail="Alert not found in both Redis and alert database.")
-
-                return {"status": True, "message": "Alert closed successfully", "alert_data": alert}
+            return await cls.close_alert(alert_data)
             
         except Exception as e:
             raise Exception(status_code=500, detail="Error closing alert.") from e

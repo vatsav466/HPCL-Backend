@@ -42,6 +42,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                 if em_lock_record['violation_count'] > 10:
                     # Create Alert record and class create_alert
                     em_lock_record['violation_count'] = 0
+                    return await cls.create_alert[em_lock_record]
             else:
                 # Creating EM Lock record
                 em_lock_record = {"bu": record['location_type'], "sap_id": record['location_id'],
@@ -52,4 +53,25 @@ class EMLockAlertManager(alert_factory.AlertFactory):
 
     @classmethod
     def close_bu_alert(cls, alert_data):
-        ...
+        """
+        Close a BU level alert asynchronously.
+
+        Parameters:
+            alert_data (dict): A dictionary containing the data to close the alert
+                - bu (str): Business unit
+                - sap_id (str): SAP ID
+                - sop_id (str): SOP ID
+                - alert_id (str): Unique alert ID
+
+        Returns:
+            dict: A dictionary containing the status, message, and the closed alert document.
+
+        Raises:
+            Exception: If the alert is not found or there's an error in closing the alert.
+        """
+        try:
+            logger.info(f"Alert data received to close alert: {alert_data}")
+            return cls.close_alert(alert_data)
+
+        except Exception as e:
+            raise Exception(status_code=500, detail="Error closing alert.") from e

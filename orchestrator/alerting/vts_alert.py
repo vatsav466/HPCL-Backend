@@ -31,24 +31,27 @@ class VTSAlertManager(alert_factory.AlertFactory):
         """
         try:
             logger.info(f"alert_data received to create alert {alert_data}")
-            # alert_alert_data = await hpcl_ceg_model.Alerts.get_all()
-            bu_location_type = alert_data['bu']
-            sap_id = alert_data['sap_id']
-            sop_id = alert_data['sop_id']
-            static_alert_data = alert_data.get('staticalert_data', {}) 
-            ''' 
-            staticalert_data': {'alertHistory': [alerthistorymessage],
-            'VehicleNumber': doc['TL_Number'],
-            'vendor': doc['Vendor_Code'],
-            "VendorName": doc['Vendor_Name'],
-            "vendormail": vendormail} 
-            '''
-            deviceid = alert_data['deviceId']
-            interlockname = alert_data['name']
-            
-            # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=bu_location_type,sap_id=sap_id)
-            if status:
+            for record in alert_data['data']:
+                # Retrieve necessary fields from the alert_data
+                status, loc_dt = await alert_helper.get_location_details(bu=record['BU'],sap_id=record['sap_id'])
+                if not status:
+                    logger.info(f"Error in finding location {record['location_id']} "
+                                f"for bu {record['location_type']} - {location_details}")
+                    continue
+                exception_msg = (f"TL Number - {record['tl_number']}, Report Duration - {record['report_duration']}"
+                            f", Total Trips - {record['total_trips']}, Stoppage Violations Count - {record['stoppage_violations_count']}" 
+                            f", Route Deviation Count - {record['route_deviation_count']}, Speed Violation Count - {record['speed_violation_count']}"
+                            f", Main Supply Removal Count - {record['main_supply_removal_count']}, Night Driving Count - {record['night_driving_count']}"
+                            f", Device Offline Count - {record['device_offline_count']}, Device Tamper Count - {record['device_tamper_count']}")
+                
+                query = (f"where sap_id={record['location_id']} and tl_number='{record['tl_number']}' "
+                     f"and status='Open' and violation_type='{record['violation_type']}'")
+
+                data = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
+                if len(data['data']):
+                    # Updating existing EM Lock record
+                    vts_record = data['data'][0]
+                    vts_record['violation_history'].append(exception_msg)
                 alert_data['location_data'] = loc_dt
         
             return cls.create_alert(alert_data)
@@ -77,32 +80,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
         """
         try:
             logger.info(f"Alert data received to close alert: {alert_data}")
-            
-            # Retrieve necessary fields from the alert_data
-            bu_location_type = alert_data['bu']
-            sap_id = alert_data['sap_id']
-            sop_id = alert_data['sop_id']
-            alert_id = alert_data['alert_id']
-
-            # Query Redis or the alert database to locate the alert
-            
-            query = f"sop_id='%{sop_id}%' AND sap_id='%{sap_id}%' AND alert_id='%{alert_id}%'"
-            params = urdhva_base.queryparams.QueryParams()
-            params.q = query
-            existing_alerts = await hpcl_ceg_model.Alerts.get_all(params)
-            
-            if existing_alerts:
-                alert = existing_alerts[0]
-                alert['alert_status'] = 'closed'
-                # alert.closed = True
-                # alert.close_reason = close_reason
-                data_obj = hpcl_ceg_model.Alerts(**alert)
-                await data_obj.modify()
-                logger.info(f"Alert {alert_id} closed successfully in database.")
-            else:
-                raise Exception(status_code=404, detail="Alert not found in both Redis and alert database.")
-
-                return {"status": True, "message": "Alert closed successfully", "alert_data": alert}
+            return await cls.close_alert(alert_data)
             
         except Exception as e:
             raise Exception(status_code=500, detail="Error closing alert.") from e
