@@ -1,6 +1,7 @@
 from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
+import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/emlock')
 logger = urdhva_base.logger.Logger.getInstance("emlock_data_ingestion")
@@ -22,5 +23,6 @@ async def emlock_ingest_data(data: Emlock_Ingest_DataParams):
     - dict: Status message indicating the success of the data submission.
     """
     logger.info(f"Received EMLock data ingestion from vendor {data.vendor_id} {data.dict()}")
+    await alert_manager.create_alert({**data.dict(), "alert_type": "EMLock"})
     return True, "Success"
 

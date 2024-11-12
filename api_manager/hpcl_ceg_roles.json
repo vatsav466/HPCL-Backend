@@ -478,6 +478,69 @@
             ]
         },
         {
+            "name": "emlock",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "emlock_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "emlock_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock_admin",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "alerts",
             "type": "all",
             "ownerManagedAccess": false,

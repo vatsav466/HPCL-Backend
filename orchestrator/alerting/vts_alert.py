@@ -81,7 +81,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             raise e
 
     @classmethod
-    def create_bu_alert(cls, alert_data):
+    async def create_bu_alert(cls, alert_data):
         """
         Create a business unit level alert
 
@@ -128,7 +128,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             return {"status": False, "message": str(e), "alert_data": None}
 
     @classmethod
-    def close_bu_alert(cls, alert_data):
+    async def close_bu_alert(cls, alert_data):
         """
         Close a BU level alert asynchronously.
 

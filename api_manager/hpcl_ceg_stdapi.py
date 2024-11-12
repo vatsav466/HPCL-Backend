@@ -67,6 +67,16 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await Interlock.get_all(params, skip_secrets=True)
 
 
+@router.get('/emlock/{id}', response_model=EMLock, tags=['EMLock'])
+async def get(id: str):
+    return await EMLock.get(id, skip_secrets=True)
+
+
+@router.get('/emlock', response_model=EMLockGetResp, tags=['EMLock'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await EMLock.get_all(params, skip_secrets=True)
+
+
 @router.get('/alerts/{id}', response_model=Alerts, tags=['Alerts'])
 async def get(id: str):
     return await Alerts.get(id, skip_secrets=True)
