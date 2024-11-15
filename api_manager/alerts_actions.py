@@ -13,6 +13,7 @@ router = fastapi.APIRouter(prefix='/alerts')
 
 logger = urdhva_base.logger.Logger.getInstance("api_manager")
 
+
 # Action alert_action
 @router.post('/alert_action', tags=['Alerts'])
 async def alerts_alert_action(data: Alerts_Alert_ActionParams):
