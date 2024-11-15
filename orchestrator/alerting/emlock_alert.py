@@ -42,7 +42,9 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                 if em_lock_record['violation_count'] > 10:
                     # Create Alert record and class create_alert
                     em_lock_record['violation_count'] = 0
-                    return await cls.create_alert[em_lock_record]
+                    await cls.create_alert[em_lock_record]
+                # Modifying EmLock record data
+                await api_manager.hpcl_ceg_model.EMLock(**em_lock_record).modify()
             else:
                 # Creating EM Lock record
                 em_lock_record = {"bu": record['location_type'], "sap_id": record['location_id'],
@@ -50,6 +52,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                                   "violation_type": record['violation_type'],
                                   "violation_count": 1, "status": 'Open', "violation_history": [exception_msg],
                                   "violation_start_date": recv_time}
+                await api_manager.hpcl_ceg_model.EMLock(**em_lock_record).create()
 
     @classmethod
     def close_bu_alert(cls, alert_data):
