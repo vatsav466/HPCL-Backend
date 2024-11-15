@@ -12,7 +12,7 @@ logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
 class SendCommandLpg:
     async def get_required_variables(self):
-        return ["alertid", "interrupt"]
+        return ["alert_id", "interrupt"]
     
     # async def sendRQMessage(queuename, messageBody):
     #     credentials = pika.PlainCredentials(config.rabbitMqUsername, config.rabbitMqPassword)
@@ -96,7 +96,7 @@ class SendCommandLpg:
 
 
     async def sendcommand_lpg(self, alert_id, interuptName):
-        print('SENDING COMMAND TO LPG alertId:%s' % alert_id)
+        print('SENDING COMMAND TO LPG alert_id:%s' % alert_id)
         try:
             redis_client = await zolix_base.redispool.get_redis_connection()
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)

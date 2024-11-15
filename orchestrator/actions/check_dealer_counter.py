@@ -10,12 +10,12 @@ class CheckDealerCounter:
         Returns a list of required variables for the CheckDealerCounter action.
 
         This asynchronous function specifies the variables needed to perform the action, 
-        which in this case, is limited to the 'alertid' variable.
+        which in this case, is limited to the 'alert_id' variable.
 
         Returns:
-            list: A list containing a single string, "alertid".
+            list: A list containing a single string, "alert_id".
         """
-        return ["alertid"]
+        return ["alert_id"]
     
     async def checkdealercounter(self, alert_id):
         """

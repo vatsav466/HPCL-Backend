@@ -10,9 +10,9 @@ class UpdateStatusRevocation:
         Returns a list of required variables for the UpdateStatusRevocation action.
 
         Returns:
-            list: A list containing a single string, "alertid".
+            list: A list containing a single string, "alert_id".
         """
-        return ["alertid"]
+        return ["alert_id"]
 
     async def updatestatusrevocation(self, alert_id):  
         """

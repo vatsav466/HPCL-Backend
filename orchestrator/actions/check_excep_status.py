@@ -10,9 +10,9 @@ class CheckExcepStatus:
         Returns a list of strings representing the required variables for the action.
 
         Returns:
-            list: A list containing a single string, "alertid".
+            list: A list containing a single string, "alert_id".
         """
-        return ["alertid"]
+        return ["alert_id"]
 
     async def checkExcepstatus(self, alert_id):
         """
@@ -32,7 +32,7 @@ class CheckExcepStatus:
         """
         exceptaken = False
         try:
-            print("Check Exception request raised AlertId:%s" % alert_id)
+            print("Check Exception request raised alert_id:%s" % alert_id)
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):

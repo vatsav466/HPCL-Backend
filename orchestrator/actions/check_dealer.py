@@ -12,7 +12,7 @@ class CheckDealer:
         Returns:
             list: A list of strings representing the required variables.
         """
-        return ["alertid"]
+        return ["alert_id"]
     
     async def checkdealer(self, alert_id):
         """
@@ -34,7 +34,7 @@ class CheckDealer:
             set to the value of atrSubmitted.
         """
         try:
-            logger.info("checkdealer in k-factor Status AlertId:%s" % alert_id)
+            logger.info("checkdealer in k-factor Status alert_id:%s" % alert_id)
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):

@@ -12,7 +12,7 @@ class UpdateStatus:
         Returns:
             list: A list of strings representing the required variables.
         """
-        return ["alertid"]
+        return ["alert_id"]
     
     async def updatestatus(self, alert_id): 
         """

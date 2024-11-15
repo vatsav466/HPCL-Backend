@@ -9,9 +9,9 @@ class EmptyRole:
         Returns a list of strings representing the required variables for the action.
 
         Returns:
-            list: A list containing two strings, "alertid" and "maintenance".
+            list: A list containing two strings, "alert_id" and "maintenance".
         """
-        return ["alertid", "maintenance"]
+        return ["alert_id", "maintenance"]
     
     async def emptyrole(self, alert_id, maintenance):
         """
