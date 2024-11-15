@@ -8,9 +8,9 @@ class CheckHelmetAltStatus:
         """
         Returns a list of strings containing the required variables for this action.
         
-        In this case, the action only requires the alertid variable.
+        In this case, the action only requires the alert_id variable.
         """
-        return ["alertid"]
+        return ["alert_id"]
     
     async def checkHelmetAltStatus(self, alert_id):
         """
@@ -31,7 +31,7 @@ class CheckHelmetAltStatus:
             "closeAlert" set to the value of closeAlt.
         """
         try:
-            logger.info("CHECK HELMET ATR ALERTID:%s" % alert_id)
+            logger.info("CHECK HELMET ATR alert_id:%s" % alert_id)
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):

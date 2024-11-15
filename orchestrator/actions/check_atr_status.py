@@ -12,7 +12,7 @@ class CheckAtrStatus:
         Returns:
             list: A list of strings representing the required variables.
         """
-        return ["alertid"]
+        return ["alert_id"]
     
     async def checkATRStatus(self, alert_id):
         """
@@ -31,7 +31,7 @@ class CheckAtrStatus:
             set to the value of atrSubmitted.
         """
         try:
-            logger.info("Check ATR Status AlertId:%s" % alert_id)
+            logger.info("Check ATR Status alert_id:%s" % alert_id)
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__

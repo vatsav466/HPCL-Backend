@@ -10,9 +10,9 @@ class Update_Status_Exception:
         Returns a list of required variables for the Update_Status_Exception action.
 
         Returns:
-            list: A list containing a single string, "alertid".
+            list: A list containing a single string, "alert_id".
         """
-        return ["alertid"]
+        return ["alert_id"]
 
     async def updatestatusexception(self, alert_id):        
         """

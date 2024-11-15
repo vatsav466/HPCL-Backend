@@ -9,9 +9,9 @@ class CheckHlsHealth:
         Returns a list of strings containing the required variables for the action.
         
         Returns:
-            list: A list containing the strings "alertid", "deviceId", and "sapId".
+            list: A list containing the strings "alert_id", "deviceId", and "sapId".
         """
-        return ["alertid", "deviceId", "sapId"]
+        return ["alert_id", "deviceId", "sapId"]
     
     async def checkhlshealth(self, alert_id, device_id, sap_id):
         """
@@ -38,7 +38,7 @@ class CheckHlsHealth:
             tuple: A tuple containing a boolean indicating success, and a dictionary with the key "triggerShutdown"
             set to the value of tankhlsstatus.
         """
-        logger.info("Check HLS Health Alertid:%s DeviceId:%s" % (alert_id, device_id))
+        logger.info("Check HLS Health alert_id:%s DeviceId:%s" % (alert_id, device_id))
         try:
             tb = ThingsBoardApi.TB('tas', sap_id)
             tankhlsstatus = await tb.checkHLSDown(device_id)

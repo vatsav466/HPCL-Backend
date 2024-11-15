@@ -86,14 +86,22 @@ class AlertFactory:
 
             await alert.create()
             
-            # Payload for camunda flow
-            payload = {
-                "alert_id" : alert.external_id,
-                "interlock_name": alert.interlock_name, 
-                "location_device_id": alert.device_id, 
-                "location_type": alert.bu, 
-                "sapid": alert.sap_id
-            }
+            # # Payload for camunda flow
+            # payload = {
+            #     "alert_id" : alert.external_id,
+            #     "interlock_name": alert.interlock_name, 
+            #     "location_device_id": alert.device_id, 
+            #     "location_type": alert.bu, 
+            #     "sapid": alert.sap_id
+            # }
+
+            payload = {"businessKey": alert.external_id,
+                "variables": {"alert_id": {"value": alert.external_id, "type": "String"},
+                              "interlock_name": {"value": alert.interlock_name, "type": "String"},
+                              "location_device_id": {"value": alert.device_id, "type": "String"},
+                              "location_type": {"value": alert.bu, "type": "String"},
+                              "sapid": {"value": alert.sap_id, "type": "String"}
+                              }}
 
             # Create Interlock
             # Start workflow after creating the interlock

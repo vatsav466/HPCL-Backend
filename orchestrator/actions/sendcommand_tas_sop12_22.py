@@ -15,12 +15,12 @@ class SendcommandTasSop1222:
         Returns a list of strings representing the required variables for the SendcommandTasSop1222 action.
         
         This asynchronous function specifies the variables needed to perform the action, 
-        which in this case, are the alertid and interrupt variables.
+        which in this case, are the alert_id and interrupt variables.
         
         Returns:
-            list: A list containing two strings, "alertid" and "interrupt".
+            list: A list containing two strings, "alert_id" and "interrupt".
         """
-        return ["alertid", "interrupt"]
+        return ["alert_id", "interrupt"]
     
     async def sendcommand_tas(self, alert_id, interuptName):
         """
@@ -41,7 +41,7 @@ class SendcommandTasSop1222:
             set to True if the command was sent successfully, or False if an exception occurred.
         """
         try:
-            logger.info('SENDING COMMAND TO TAS FOR AlertId:%s' % alert_id)
+            logger.info('SENDING COMMAND TO TAS FOR alert_id:%s' % alert_id)
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
 
             if not isinstance(alert_data, dict):

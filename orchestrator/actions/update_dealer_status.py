@@ -9,9 +9,9 @@ class UpdateDealerStatus:
         Returns a list of strings representing the required variables for the action.
         
         Returns:
-            list: A list containing a single string, "alertid".
+            list: A list containing a single string, "alert_id".
         """
-        return ["alertid"]
+        return ["alert_id"]
     
     async def updatedealerstatus(self, alert_id): 
         """
