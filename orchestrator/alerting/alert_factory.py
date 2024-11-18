@@ -89,22 +89,14 @@ class AlertFactory:
             )
 
             resp = await alert.create()
-            
-            # # Payload for camunda flow
-            # payload = {
-            #     "alert_id" : alert.external_id,
-            #     "interlock_name": alert.interlock_name, 
-            #     "location_device_id": alert.device_id, 
-            #     "location_type": alert.bu, 
-            #     "sapid": alert.sap_id
-            # }
 
             payload = {"businessKey": alert.external_id,
                 "variables": {"alert_id": {"value": resp['id'], "type": "String"},
                               "interlock_name": {"value": alert.interlock_name, "type": "String"},
                               "location_device_id": {"value": alert.device_id, "type": "String"},
                               "location_type": {"value": alert.bu, "type": "String"},
-                              "sap_id": {"value": alert.sap_id, "type": "String"}
+                              "sap_id": {"value": alert.sap_id, "type": "String"},
+                              "sop_id": {"value": alert.sop_id, "type": "String"}
                               }}
 
             # Create Interlock
@@ -155,33 +147,45 @@ class AlertFactory:
             dict: A dictionary containing the status, message and the closed alert document
         """
         try:
-            bu = alert_data['bu']
+            bu = alert_data['BU']
             sop_id = alert_data['sop_id']
             sap_id = alert_data['sap_id']
 
             # Close Interlock
-            query = f"bu='%{bu}%' AND sop_id='%{sop_id}%' AND sap_id='%{sap_id}%'"
+            query = f"bu='{bu}' AND sop_id='{sop_id}' AND sap_id='{sap_id}'"
+
             params = urdhva_base.queryparams.QueryParams()
+            params.limit = 1
             params.q = query
-            interlock = await hpcl_ceg_model.Interlock.get_all(params)
-            if interlock.get('data', ''):
-                il_data = interlock[0]
+            interlock = await hpcl_ceg_model.InterlockCreate.get_all(params)
+            resp = interlock.__dict__
+            print("resp --> ", resp)
+            if resp.get('body'):
+                # Decode the byte string to a normal string
+                body_str = resp['body'].decode('utf-8')
+                interlock = json.loads(body_str)          
+                print("interlock --> ", interlock)  
+                il_data = interlock["data"][0]
                 il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close
-                data_obj = hpcl_ceg_model.Interlock(**interlock)
+                data_obj = hpcl_ceg_model.Interlock(**il_data)
                 await data_obj.modify()
 
             # Close Alert
-            query = f"sop_id='%{sop_id}%' AND sap_id='%{sap_id}%'"
+            query = f"bu='{bu}' AND sop_id='{sop_id}' AND sap_id='{sap_id}'"
             params = urdhva_base.queryparams.QueryParams()
             params.q = query
-            alert = await hpcl_ceg_model.Alerts.get_all(params)
-            if alert.get('data', ''):
-                al_data = alert[0]
+            alert = await hpcl_ceg_model.AlertsCreate.get_all(params)
+            resp = alert.__dict__
+            if resp.get('body'):
+                # Decode the byte string to a normal string
+                body_str = resp['body'].decode('utf-8')
+                alert = json.loads(body_str)            
+                al_data = alert["data"][0]
                 al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close
-                data_obj = hpcl_ceg_model.Alerts(**alert)
+                data_obj = hpcl_ceg_model.Alerts(**al_data)
                 await data_obj.modify()
 
-            return {"status": True, "message": "Alert and Interlock Closed Successfully", "alert_data": alert}
+            return True, {"message":"Alert Closed"}
         
         except Exception as e:
             logger.error(e)

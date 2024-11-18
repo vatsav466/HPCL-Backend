@@ -33,8 +33,7 @@ class SendNotification:
         self.body = ""
         self.sms = ""
 
-    @staticmethod
-    async def get_required_variables():
+    async def get_required_variables(self):
         """
         Returns a list of strings representing the required variables for the action.
 
@@ -54,8 +53,8 @@ class SendNotification:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
                 
-            if self._should_skip_notification():
-                return True, {"msg": "Notification skipped"}
+            # if self._should_skip_notification():
+            #     return True, {"msg": "Notification skipped"}
                 
             await self._prepare_base_alert_data()
             await self._process_roles_and_users()
@@ -73,6 +72,7 @@ class SendNotification:
     async def _load_and_validate_alert(self) -> bool:
         """Load alert data and validate its existence"""
         alert_id = self.params.get("alert_id")
+        print("alert_id --> ", alert_id)
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         
         if alert_data:
@@ -86,11 +86,11 @@ class SendNotification:
         sap_id = self.alert_data.get("plant_id", "")
         message_type = self.params.get("message_type")
         
-        # Get roles based on business unit and message type
-        roles = await self._get_roles(bu, sap_id)
-        # Prepare recipients and message content
-        await self._prepare_recipients(roles)
-        await self._prepare_message_content(bu, message_type)
+#         # Get roles based on business unit and message type
+#         roles = await self._get_roles(bu, sap_id)
+#         # Prepare recipients and message content
+#         await self._prepare_recipients(roles)
+#         await self._prepare_message_content(bu, message_type)
 
     async def _get_roles(self, bu: str, sap_id: str) -> List[Dict]:
         """Get users based on dynamically generated Redis key using BU, sap_id, and role"""
@@ -98,30 +98,30 @@ class SendNotification:
         redis_client = await urdhva_base.redispool.get_redis_connection()
         all_roles_data = await redis_client.hgetall(roles_key)
         
-        # Filter users based on the dynamic key format
-        matching_users = []
-        for role_key, role_data in all_roles_data.items():
-            # Generate the expected key format
-            expected_key = f"{bu}_{sap_id}"
-            if role_key.startswith(expected_key):
-                user_data = eval(role_data)  # Convert stored JSON string to dictionary if needed
-                matching_users.append({
-                    "email": user_data.get("email"),
-                    "phone": user_data.get("phone")
-                })
+#         # Filter users based on the dynamic key format
+#         matching_users = []
+#         for role_key, role_data in all_roles_data.items():
+#             # Generate the expected key format
+#             expected_key = f"{bu}_{sap_id}"
+#             if role_key.startswith(expected_key):
+#                 user_data = eval(role_data)  # Convert stored JSON string to dictionary if needed
+#                 matching_users.append({
+#                     "email": user_data.get("email"),
+#                     "phone": user_data.get("phone")
+#                 })
         
-        return matching_users
+#         return matching_users
 
-    async def _prepare_recipients(self, users: List[Dict]):
-        """Prepare email and SMS recipients"""
-        for user in users:
-            if user.get("email"):
-                self.mail_recipients.append(user["email"])
-            if user.get("phone"):
-                self.sms_recipients.append(user["phone"])
+#     async def _prepare_recipients(self, users: List[Dict]):
+#         """Prepare email and SMS recipients"""
+#         for user in users:
+#             if user.get("email"):
+#                 self.mail_recipients.append(user["email"])
+#             if user.get("phone"):
+#                 self.sms_recipients.append(user["phone"])
                 
-        self.mail_recipients = list(dict.fromkeys(self.mail_recipients))
-        self.sms_recipients = list(dict.fromkeys(self.sms_recipients))
+#         self.mail_recipients = list(dict.fromkeys(self.mail_recipients))
+#         self.sms_recipients = list(dict.fromkeys(self.sms_recipients))
 
     async def _prepare_message_content(self, bu: str, message_type: str):
         """Prepare message content (subject, body, and SMS)"""
@@ -137,10 +137,10 @@ class SendNotification:
         # Load templates based on message type and business unit
         templates = await self._load_message_templates(template_data['template'])
         
-        # Render templates
-        self.subject = Template(templates["subject"]).render(**template_data)
-        self.body = Template(templates["body"]).render(**template_data)
-        self.sms = Template(templates["sms"]).render(**template_data)
+#         # Render templates
+#         self.subject = Template(templates["subject"]).render(**template_data)
+#         self.body = Template(templates["body"]).render(**template_data)
+#         self.sms = Template(templates["sms"]).render(**template_data)
 
     async def _load_message_templates(self, template_name: str) -> Dict[str, str]:
         """Load message templates from configuration or database"""
@@ -221,6 +221,11 @@ class SendNotification:
         """Handle active type notifications"""
         self.base_alert_data["action_msg"] = "ACTIVE"
 
+    # async def _process_active(self):
+    #     """Handle notify type notifications"""
+    #     justify = self.params.get("justify", False)
+    #     await self._process_approval("REQUEST", justify)
+
     async def _process_notify(self):
         """Handle notify type notifications"""
         justify = self.params.get("justify", False)
@@ -260,7 +265,7 @@ class SendNotification:
         bu = self.params.get("BU").upper()
         sop_id = self.alert_data.get('sop_id')
         
-        await self._send_notifications_with_sms(bu)
+#         await self._send_notifications_with_sms(bu)
 
     async def _send_notifications_with_sms(self, bu: str):
         """Send notifications with SMS based on business unit"""

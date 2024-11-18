@@ -31,27 +31,12 @@ class TASAlertManager(alert_factory.AlertFactory):
         """
         try:
             logger.info(f"alert_data received to create alert {alert_data}")
-            # alert_alert_data = await hpcl_ceg_model.Alerts.get_all()
-            bu_location_type = alert_data['bu']
-            sap_id = alert_data['sap_id']
-            sop_id = alert_data['sop_id']
-            static_alert_data = alert_data.get('staticalert_data', {}) 
-            ''' 
-            staticalert_data': {'alertHistory': [alerthistorymessage],
-            'VehicleNumber': doc['TL_Number'],
-            'vendor': doc['Vendor_Code'],
-            "VendorName": doc['Vendor_Name'],
-            "vendormail": vendormail} 
-            '''
-            deviceid = alert_data['deviceId']
-            interlockname = alert_data['name']
-            
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=bu_location_type,sap_id=sap_id)
+            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['BU'],sap_id=alert_data['sapid'])
             if status:
                 alert_data['location_data'] = loc_dt
         
-            return cls.create_alert(alert_data)
+            return await cls.create_alert(alert_data)
 
         except Exception as e:
             logger.error(e)
