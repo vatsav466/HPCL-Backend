@@ -2,4 +2,4 @@ from enum import Enum
 
 
 class LPGInterlockMapping(str, Enum):
-    pass
+    sap123 = "send_notification_test"

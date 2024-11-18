@@ -5,6 +5,10 @@ from api_manager import hpcl_ceg_model, hpcl_ceg_enum
 from orchestrator.workflow.workflow_process import Camunda
 from orchestrator.alerting.alert_helper import get_alert_unique_id
 from utilities.tas_interlock_mapping import TASInterlockMapping
+from utilities.lpg_interlock_mapping import LPGInterlockMapping
+from utilities.va_interlock_mapping import VAInterlockMapping
+from utilities.vts_interlock_mapping import VTSInterlockMapping
+from utilities.cris_interlock_mapping import CRISInterlockMapping
 
 logger = urdhva_base.logger.Logger.getInstance('alert_factory_log')
 
@@ -84,7 +88,7 @@ class AlertFactory:
                 raw_data={}
             )
 
-            await alert.create()
+            resp = await alert.create()
             
             # # Payload for camunda flow
             # payload = {
@@ -96,11 +100,11 @@ class AlertFactory:
             # }
 
             payload = {"businessKey": alert.external_id,
-                "variables": {"alert_id": {"value": alert.external_id, "type": "String"},
+                "variables": {"alert_id": {"value": resp['id'], "type": "String"},
                               "interlock_name": {"value": alert.interlock_name, "type": "String"},
                               "location_device_id": {"value": alert.device_id, "type": "String"},
                               "location_type": {"value": alert.bu, "type": "String"},
-                              "sapid": {"value": alert.sap_id, "type": "String"}
+                              "sap_id": {"value": alert.sap_id, "type": "String"}
                               }}
 
             # Create Interlock
@@ -123,7 +127,7 @@ class AlertFactory:
                 )
                 await interlock.create()
 
-                workflowId = eval(f"TASInterlockMapping.{sap_id}.value")
+                workflowId = eval(f"{bu}InterlockMapping.{sap_id}.value")
                 await Camunda().start_workflow(payload=payload, workflowId=workflowId)
             else:
                 logger.info(f"Unable to find Camunda workflow for interlock: {workflowId}, BU: {bu}")

@@ -2,6 +2,7 @@ import json
 import api_manager
 import urdhva_base
 import urdhva_base.redispool
+import urdhva_base.utilities as utils
 
 
 async def get_location_details(bu, sap_id):
@@ -24,17 +25,21 @@ async def get_location_details(bu, sap_id):
         return True, location_data
 
     # Verifying the same available in database or not
-    query = f"'bu='%{bu.upper()}%' AND sap_id='%{sap_id}%'"
+    query = f"bu = '{bu.upper()}' AND sap_id = '{sap_id}'"
     params = urdhva_base.queryparams.QueryParams()
     params.limit = 100
     params.fields = None
     params.q = query
-    params.sort = json.dumps({"updated": -1})
+    params.sort = None
     # Fetching data from database
-    locdata = await api_manager.hpcl_ceg_model.LocationMaster.get_all(params)
-    if locdata:
-        location_data = locdata[0]
-        await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data))
+    locdata = await api_manager.hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+    print(locdata)
+    if locdata.get('data', []):
+        location_data = locdata.get('data')[0]
+        print("location_data: ", location_data)
+        if not isinstance(location_data, dict):
+            location_data = location_data.__dict__
+        await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data, default=utils.datetime_serializer))
         return True, location_data
     return False, "Data not available"
 

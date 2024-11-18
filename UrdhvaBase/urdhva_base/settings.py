@@ -73,6 +73,7 @@ class Settings(pydantic_settings.BaseSettings):
     mft_path: str = ""
     ui_path: str = ""
     download_path: str = ""
+    template_path: str = "/Users/appleair/PycharmProjects/hpcl_project/dnc_backend_v2/orchestrator/notification_templates"
     kibana_dashboard_header: str = 'osd-xsrf'
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
 

@@ -41,6 +41,7 @@ class LPGAlertManager(alert_factory.AlertFactory):
 
         except Exception as e:
             logger.error(e)
+            print(traceback.format_exc())
             print("error -> ", e)
             return {"status": False, "message": str(e), "alert_data": None}
 

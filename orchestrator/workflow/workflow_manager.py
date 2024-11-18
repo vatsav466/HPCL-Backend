@@ -19,6 +19,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     It also handles the failure scenario and returns the appropriate task result.
     """
     variables = task.get_variables()
+    print("variables --> ", variables)
     module_name = variables.pop('module_name', None)
     class_name = variables.pop('class_name', None)
     function_name = variables.pop('function_name', None)
@@ -29,20 +30,22 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         function = getattr(class_instance, function_name)
         print("req_variables --> ", req_variables)
         print("variables --> ", variables)
-        status, data = await function(**{key: variables.get(key, None) for key in req_variables})
+        status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
+        print("status: ", status)
+        print("data: ", data)
         if status:
             if data:
                 return task.complete(data)
             else:
-                return task.complete()
+                return task.complete({})
         if not status:
             logger.error(f"Task failed: {data}")
             return task.failure(
-                error_message="task failed", error_details="failed task details", max_retries=3, retry_timeout=5000
+                error_message="task failed", error_details=data, max_retries=3, retry_timeout=5000
             )
     except Exception as e:
         logger.error(f"Task failed: {e}")
-        print(traceback.format_exc())
+        logger.error(traceback.format_exc())
         return task.failure(error_message=str(e), error_details=str(e), max_retries=3, retry_timeout=5000)
 
 

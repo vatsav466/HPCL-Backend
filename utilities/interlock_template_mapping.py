@@ -6,3 +6,7 @@ class InterlockTemplateMapping(str, Enum):
     INTERLOCK_ALERT_CLOSURE = "interlock_alert_closure.html"
     INTERLOCK_ESCALATE = "interlock_escalate.html"
     INTERLOCK_EXCEPTION = "interlock_exception.html"
+
+
+class TemplateMapping(str, Enum):
+    ACTIVE = "INTERLOCK_ALERT"
