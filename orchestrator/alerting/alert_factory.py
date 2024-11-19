@@ -93,6 +93,7 @@ class AlertFactory:
             payload = {"businessKey": alert.external_id,
                 "variables": {"alert_id": {"value": resp['id'], "type": "String"},
                               "interlock_name": {"value": alert.interlock_name, "type": "String"},
+                              "interlock_id": {"value": "", "type": "String"},
                               "location_device_id": {"value": alert.device_id, "type": "String"},
                               "location_type": {"value": alert.bu, "type": "String"},
                               "sap_id": {"value": alert.sap_id, "type": "String"},
@@ -117,12 +118,13 @@ class AlertFactory:
                     zone=alert_data['location_data'].get('zone', ''),
                     interlock_status=hpcl_ceg_enum.AlertStatus.Open
                 )
-                await interlock.create()
+                resp = await interlock.create()
+                payload["variables"]["interlock_id"] = {"value": resp['id'], "type": "String"}
 
                 workflowId = eval(f"{bu}InterlockMapping.{sap_id}.value")
                 await Camunda().start_workflow(payload=payload, workflowId=workflowId)
             else:
-                logger.info(f"Unable to find Camunda workflow for interlock: {workflowId}, BU: {bu}")
+                logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
 
             return {"status": True, "message": "Alert and Interlock Created Successfully", "alert_data": alert}
 
@@ -152,40 +154,48 @@ class AlertFactory:
             sap_id = alert_data['sap_id']
 
             # Close Interlock
-            query = f"bu='{bu}' AND sop_id='{sop_id}' AND sap_id='{sap_id}'"
-
-            params = urdhva_base.queryparams.QueryParams()
-            params.limit = 1
-            params.q = query
-            interlock = await hpcl_ceg_model.InterlockCreate.get_all(params)
-            resp = interlock.__dict__
-            print("resp --> ", resp)
-            if resp.get('body'):
-                # Decode the byte string to a normal string
-                body_str = resp['body'].decode('utf-8')
-                interlock = json.loads(body_str)          
-                print("interlock --> ", interlock)  
-                il_data = interlock["data"][0]
-                il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close
-                data_obj = hpcl_ceg_model.Interlock(**il_data)
-                await data_obj.modify()
+            # query = f"bu='{bu}' AND sop_id='{sop_id}' AND sap_id='{sap_id}'"
+            #
+            # params = urdhva_base.queryparams.QueryParams()
+            # params.limit = 1
+            # params.q = query
+            # resp = await hpcl_ceg_model.Interlock.get_all(params)
+            il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
+            if not isinstance(il_data, dict):
+                il_data = il_data.__dict__
+            il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+            data_obj = hpcl_ceg_model.Interlock(**il_data)
+            await data_obj.modify()
+            # if resp.get('body'):
+            #     # Decode the byte string to a normal string
+            #     body_str = resp['body'].decode('utf-8')
+            #     interlock = json.loads(body_str)
+            #     il_data = interlock["data"][0]
+            #     il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+            #     data_obj = hpcl_ceg_model.Interlock(**il_data)
+            #     await data_obj.modify()
 
             # Close Alert
-            query = f"bu='{bu}' AND sop_id='{sop_id}' AND sap_id='{sap_id}'"
-            params = urdhva_base.queryparams.QueryParams()
-            params.q = query
-            alert = await hpcl_ceg_model.AlertsCreate.get_all(params)
-            resp = alert.__dict__
-            if resp.get('body'):
-                # Decode the byte string to a normal string
-                body_str = resp['body'].decode('utf-8')
-                alert = json.loads(body_str)            
-                al_data = alert["data"][0]
-                al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close
-                data_obj = hpcl_ceg_model.Alerts(**al_data)
-                await data_obj.modify()
+            # query = f"bu='{bu}' AND sop_id='{sop_id}' AND sap_id='{sap_id}'"
+            # params = urdhva_base.queryparams.QueryParams()
+            # params.q = query
+            # resp = await hpcl_ceg_model.AlertsCreate.get_all(params)
+            al_data = await hpcl_ceg_model.AlertsCreate.get(alert_data['alert_id'])
+            if not isinstance(al_data, dict):
+                al_data = al_data.__dict__
+            al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+            data_obj = hpcl_ceg_model.Alerts(**al_data)
+            await data_obj.modify()
+            # if resp.get('body'):
+            #     # Decode the byte string to a normal string
+            #     body_str = resp['body'].decode('utf-8')
+            #     alert = json.loads(body_str)
+            #     al_data = alert["data"][0]
+            #     al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close
+            #     data_obj = hpcl_ceg_model.Alerts(**al_data)
+            #     await data_obj.modify()
 
-            return True, {"message":"Alert Closed"}
+            return True, {"message": "Alert Closed"}
         
         except Exception as e:
             logger.error(e)
