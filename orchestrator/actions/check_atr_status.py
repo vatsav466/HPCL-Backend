@@ -14,7 +14,7 @@ class CheckAtrStatus:
         """
         return ["alert_id"]
     
-    async def checkATRStatus(self, alert_id):
+    async def checkATRStatus(self, params):
         """
         Checks if an ATR has been submitted for a given alert ID.
 
@@ -31,8 +31,8 @@ class CheckAtrStatus:
             set to the value of atrSubmitted.
         """
         try:
-            logger.info("Check ATR Status alert_id:%s" % alert_id)
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            logger.info("Check ATR Status alert_id:%s" % params.get('alert_id'))
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
             atrSubmitted = False

@@ -17,7 +17,7 @@ class CheckClosedStatus:
         """
         return ["alert_id"]
     
-    async def checkClosedstatus(self, alert_id):
+    async def checkClosedstatus(self, params):
         """
         This asynchronous function checks if an alert has been closed.
 
@@ -37,7 +37,7 @@ class CheckClosedStatus:
         """
         closeSubmitted = False
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__

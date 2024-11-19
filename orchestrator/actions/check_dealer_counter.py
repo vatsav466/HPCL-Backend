@@ -17,7 +17,7 @@ class CheckDealerCounter:
         """
         return ["alert_id"]
     
-    async def checkdealercounter(self, alert_id):
+    async def checkdealercounter(self, params):
         """
         Checks if the dealer counter for a given alert has reached 1.
 
@@ -37,7 +37,7 @@ class CheckDealerCounter:
             set to the value of atrSubmitted.
         """
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
