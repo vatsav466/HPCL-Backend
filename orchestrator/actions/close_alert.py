@@ -12,7 +12,7 @@ class CloseAlert:
         Returns:
             list: A list of strings representing the required variables.
         """
-        return ["alert_id", "sap_id", "sop_id", "BU", "close"]
+        return ["alert_id", "sap_id", "sop_id", "BU", "close", "interlock_id"]
     
     async def closealert(self, params):
         print("params --> ", params)
