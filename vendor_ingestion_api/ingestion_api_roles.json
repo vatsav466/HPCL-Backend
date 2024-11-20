@@ -347,6 +347,78 @@
                     "name": "ingest_data"
                 }
             ]
+        },
+        {
+            "name": "taslistener",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasListener",
+            "attributes": {},
+            "uris": [
+                "/api/taslistener/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_data"
+                }
+            ]
+        },
+        {
+            "name": "taslistener_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasListener_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/taslistener/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_data"
+                }
+            ]
+        },
+        {
+            "name": "taslistener_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasListener_admin",
+            "attributes": {},
+            "uris": [
+                "/api/taslistener/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_data"
+                }
+            ]
         }
     ],
     "policies": [
@@ -444,6 +516,10 @@
         {
             "name": "ingest_data",
             "displayName": "ingest_data"
+        },
+        {
+            "name": "get_data",
+            "displayName": "get_data"
         }
     ]
 }

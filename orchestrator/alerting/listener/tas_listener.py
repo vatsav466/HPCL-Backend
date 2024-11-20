@@ -1,71 +1,13 @@
-import sys
+import urdhva_base
 import json
 # import pika
 import asyncio
-sys.path.append("/Users/appleair/PycharmProjects/hpcl_project/dnc_backend_v2")
+import traceback
 from orchestrator.alerting.alert_manager import create_alert, close_alert
 
 
-async def tas_listener():
-    rmsg = {
-                'id': {
-                    'entityType': 'ALARM',
-                    'id': '59358eaa-e63c-4bb7-a6cb-9d93f3aa5fe4'
-                },
-                'createdTime': 1731158003250,
-                'tenantId': {
-                    'entityType': 'TENANT',
-                    'id': '63047880-9e7e-11ef-b675-7b97434ac894'
-                },
-                'customerId': {
-                    'entityType': 'CUSTOMER',
-                    'id': '04dd5bb0-9e9b-11ef-b5e6-6160ba8389b4'
-                },
-                'type': 'Tank2Lowlevel',
-                'originator': {
-                    'entityType': 'DEVICE',
-                    'id': 'd5c6bff0-9e96-11ef-b5e6-6160ba8389b4'
-                },
-                'severity': 'CRITICAL',
-                'acknowledged': False,
-                'cleared': False,
-                'assigneeId': None,
-                'startTs': 1731158003205,
-                'endTs': 1731158003205,
-                'ackTs': 0,
-                'clearTs': 0,
-                'assignTs': 0,
-                'propagate': False,
-                'propagateToOwner': False,
-                'propagateToTenant': False,
-                'propagateRelationTypes': [
-                    
-                ],
-                'originatorName': 'FireWaterlevel1',
-                'originatorLabel': 'FireWaterlevel1',
-                'assignee': None,
-                'name': 'Tank2Lowlevel',
-                'status': 'ACTIVE_UNACK',
-                'details': {
-                    'additionalInfo': {
-                        'gateway': False,
-                        'overwriteActivityTime': False,
-                        'description': '',
-                        'interlockName': 'HealthinessofFireWaterLevelsinTanks',
-                        'message': 'WatervolumeintheTank2isbelowthreshold',
-                        'unitName': 'FireWaterlevel1',
-                        'plantlocation': 'bng',
-                        'plantlocationid': '11bng',
-                        'BU': 'LPG',
-                        'sapid': 'sap123',
-                        'sopid': 'SOP004',
-                        'deviceId': 'd5c6bff0-9e96-11ef-b5e6-6160ba8389b4',
-                        'deviceName': 'Tank2-FireWaterlevel1',
-                        'deviceType': 'FireWaterTank'
-                    }
-                }
-            }
-    # rmsg = json.loads(alert_body)
+async def tas_listener(rmsg):
+    print(rmsg)
     try:
         print('-' * 12)
         if rmsg['status'] == 'ACTIVE_UNACK':
@@ -83,12 +25,13 @@ async def tas_listener():
             await close_alert(alertdata)
         else:
             print("Invalid message received:%s" % rmsg)
-        # ch.basic_ack(delivery_tag=method.delivery_tag)
+        return True
     except Exception as e:
+        print(traceback.format_exc())
         print("Exception in processing RQ message:%s" % e)
 
 
-# def RabbitConsume():
+# async def RabbitConsume():
 #     qname = 'AlertManager'
 #     credentials = pika.PlainCredentials(config.rabbitMqUsername, config.rabbitMqPassword)
 #     parameters = pika.ConnectionParameters(config.rabbitMqIp, 5672, '/', credentials)
@@ -99,5 +42,5 @@ async def tas_listener():
 #     channel.start_consuming()
 
 
-if __name__ == "__main__":
-    asyncio.run(tas_listener())
+# if __name__ == "__main__":
+#     asyncio.run(tas_listener())

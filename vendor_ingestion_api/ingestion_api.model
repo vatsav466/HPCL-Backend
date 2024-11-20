@@ -92,3 +92,9 @@ Model EMLock crud_disable {
         data optional list emlockData
     }
 }
+
+Model TasListener crud_disable {
+    Action=> get_data {
+        input_data dict
+    }
+}
