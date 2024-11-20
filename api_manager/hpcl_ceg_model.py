@@ -144,32 +144,36 @@ class Locationmaster_Download_TemplateParams(pydantic.BaseModel):
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
-    bu: Mapped[typing.Any] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    user_name: Mapped[typing.Optional[str]] = mapped_column("user_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     role: Mapped[str] = mapped_column("role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     email: Mapped[str] = mapped_column("email", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     phone_no: Mapped[str] = mapped_column("phone_no", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    city: Mapped[typing.List[str]] = mapped_column("city", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.List[str]] = mapped_column("state", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[typing.List[str]] = mapped_column("zone", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     escalation_level: Mapped[typing.Optional[typing.Any]] = mapped_column("escalation_level", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class RoleMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'role_master'
     
-    bu: hpcl_ceg_enum.BusinessUnit
-    sap_id: str
+    bu: typing.List[hpcl_ceg_enum.BusinessUnit]
+    sap_id: typing.List[str]
     location_name: str
+    user_name: typing.Optional[str] = pydantic.Field("", **{})
     role: str
     email: str
     phone_no: str
-    city: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.List[str]
     district: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
-    state: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.List[str]
+    zone: typing.List[str]
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
 
     class Config:
@@ -181,16 +185,18 @@ class RoleMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 class RoleMaster(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'role_master'
     
-    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
-    sap_id: typing.Optional[str] | None = None
+    bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
+    sap_id: typing.Optional[typing.List[str]] | None = None
     location_name: typing.Optional[str] | None = None
+    user_name: typing.Optional[str] = pydantic.Field("", **{})
     role: typing.Optional[str] | None = None
     email: typing.Optional[str] | None = None
     phone_no: typing.Optional[str] | None = None
-    city: typing.Optional[str] = pydantic.Field("", **{})
+    city: typing.Optional[typing.List[str]] | None = None
     district: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
-    state: typing.Optional[str] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] | None = None
+    zone: typing.Optional[typing.List[str]] | None = None
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
 
     class Config:

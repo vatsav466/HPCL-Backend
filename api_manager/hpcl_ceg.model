@@ -90,16 +90,18 @@ Model LocationMaster {
 }
 
 Model RoleMaster {
-    bu index_field BusinessUnit
-    sap_id index_field str
+    bu index_field list BusinessUnit
+    sap_id index_field list str
     location_name str
+    user_name optional str
     role index_field str
     email str
     phone_no str
-    city optional str
+    city index_field list str
     district optional str
     region optional str
-    state optional str
+    state index_field list str
+    zone index_field list str
     escalation_level optional NotificationLevel
 
     Action=> upload_role_master {

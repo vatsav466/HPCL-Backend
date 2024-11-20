@@ -44,16 +44,18 @@ RO = {
 
 Role = {
     "LocationID": "sap_id",
-    "LocationName": "name",
+    "LocationName": "location_name",
     "LocationType": "bu",
     "LocationState": "state",
     "LocationCity": "city",
+    "LocationDistrict": "district",
     "LocationRegion": "region",
-    "InchargeName": "inchargeName",
-    "InchargeEmail": "inchargeEmail",
-    "InchargePhone": "inchargePhone",
-    "InchargeRole": "inchargeRole",
-    "NotificationLevel": "notificationLevel"
+    "InchargeName": "user_name",
+    "InchargeEmail": "email",
+    "InchargePhone": "phone_no",
+    "InchargeRole": "role",
+    "NotificationLevel": "escalation_level",
+    "LocationZone": "zone"
 }
 
 TAS = {
