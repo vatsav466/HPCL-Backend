@@ -18,7 +18,20 @@ class SendCommand:
 
 
     async def sendcommand(self, params):
-
+        """
+        This function sends a command to the respective device based on the parameters passed.
+        Command can be either to shutdown or start the device.
+        Parameters:
+        - alert_id: The alert id for which the command is to be sent.
+        - type: The type of command to be sent. It can be either 'product', 'pumps', 'rosov', 'mov'.
+        - shutdownPump: A boolean indicating whether to shutdown the pump or not.
+        - interrupt: A string indicating the type of interrupt. It can be either 'shutdown' or 'start'.
+        - inlet: A boolean indicating whether to open or close the inlet valve.
+        - outlet: A boolean indicating whether to open or close the outlet valve.
+        - tanks: A string indicating the tanks to which the command is to be sent. It can be either 'all' or a comma separated list of tank ids.
+        Returns:
+        - A tuple containing a boolean indicating success and a dictionary containing the key 'pendingTanks', 'completedTanks' and 'taskstatus'.
+        """
         alert_id = params.get("alert_id")
         try:
 

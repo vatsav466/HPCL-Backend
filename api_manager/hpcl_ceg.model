@@ -301,7 +301,7 @@ Model Alerts {
 
     Action=> alert_action {
         action_type AlertActionType
-        alert_id int
+        alert_id str
         action_msg optional str
         days optional int
         justificationType optional str

@@ -720,7 +720,7 @@ class AlertsGetResp(pydantic.BaseModel):
 
 class Alerts_Alert_ActionParams(pydantic.BaseModel):
     action_type: hpcl_ceg_enum.AlertActionType
-    alert_id: int
+    alert_id: str
     action_msg: typing.Optional[str] = pydantic.Field("", **{})
     days: typing.Optional[int] = pydantic.Field(0, **{})
     justification_type: typing.Optional[str] = pydantic.Field("", **{})
