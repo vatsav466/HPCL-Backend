@@ -55,7 +55,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                 await api_manager.hpcl_ceg_model.EMLock(**em_lock_record).create()
 
     @classmethod
-    def close_bu_alert(cls, alert_data):
+    async def close_bu_alert(cls, alert_data):
         """
         Close a BU level alert asynchronously.
 
