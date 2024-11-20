@@ -15,7 +15,7 @@ async def upload_role_master_data(df):
     """
     redis_client = await urdhva_base.redispool.get_redis_connection()
     # Iterate through the rows of the CSV and extract `bu` and `sapid`
-    df = df.rename(bu_key_mapping.Location)
+    df = df.rename(bu_key_mapping.Role)
     try:
         data = df.to_dicts()
         for data_dump in data:
