@@ -1,21 +1,5 @@
 InchargeName,InchargeRole,LocationID,InchargeEmail,LocationName,LocationType,LocationState,LocationCity,LocationDistrict,LocationRegion,InchargePhone,NotificationLevel,LocationZone
-31917610,MM_PURHD_USRAPRVR,1999,venu@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567899,InitialNotification,SouthWest
-31944540,PS_PROJ_CHSR,1999,shrihari.b@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567900,InitialNotification,SouthWest
-31948480,PS_PROJ_CHSR,1999,santoshkumar.s@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567901,InitialNotification,SouthWest
-31939460,PS_PROJ_CHSR,1999,sreedhar.maddipati@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567902,InitialNotification,SouthWest
-31939740,PS_PROJ_CHSR,1999,yesu.p@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567903,InitialNotification,SouthWest
-35326060,IL_DEPOT_ASST,1999,manohar.v@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567904,InitialNotification,SouthWest
 30078010,IL_DEPOT_ASST,1999,keerthesrep@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567905,InitialNotification,SouthWest
-31917610,PS_PROJ_HEAD,1999,venu@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567906,InitialNotification,SouthWest
-31982790,MM_PURCH_OFFCERUSR,1999,shrihari.b@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567907,InitialNotification,SouthWest
-31969780,MM_PURCH_OFFCERUSR,1999,santoshkumar.s@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567908,InitialNotification,SouthWest
-31939520,MM_PURCH_OFFCERUSR,1999,sreedhar.maddipati@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567909,InitialNotification,SouthWest
-35325230,MM_PURCH_OFFCERUSR,1999,yesu.p@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567910,InitialNotification,SouthWest
-31939460,MM_PURMNGR_USRAPRVR,1999,manohar.v@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567911,InitialNotification,SouthWest
-31944540,MM_PURMNGR_USRAPRVR,1999,keerthesrep@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567912,InitialNotification,SouthWest
-31939740,MM_PURMNGR_USRAPRVR,1999,venu@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567913,InitialNotification,SouthWest
-31948480,MM_PURMNGR_USRAPRVR,1999,shrihari.b@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567914,InitialNotification,SouthWest
-35326060,MM_PURCH_CLERKUSR,1999,santoshkumar.s@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567915,InitialNotification,SouthWest
 31969780,PM_MAINT_OFFICER,1999,sreedhar.maddipati@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567916,InitialNotification,SouthWest
 31939460,PM_MAINT_OFFICER,1999,yesu.p@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567917,InitialNotification,SouthWest
 31939740,PM_MAINT_OFFICER,1999,manohar.v@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567918,InitialNotification,SouthWest
@@ -29,10 +13,6 @@ InchargeName,InchargeRole,LocationID,InchargeEmail,LocationName,LocationType,Loc
 31942770,RE_NONHR_REVWR,1999,keerthesrep@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567926,InitialNotification,SouthWest
 31942760,RE_NONHR_REVWR,1999,venu@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567927,InitialNotification,SouthWest
 31986720,RE_NONHR_REVWR,1999,shrihari.b@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567928,InitialNotification,SouthWest
-35325230,PS_PROJ_MNGR,1999,santoshkumar.s@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567929,InitialNotification,SouthWest
-31939520,PS_PROJ_MNGR,1999,sreedhar.maddipati@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567930,InitialNotification,SouthWest
-31969780,PS_PROJ_ENGR,1999,yesu.p@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567931,InitialNotification,SouthWest
-31982790,PS_PROJ_ENGR,1999,manohar.v@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567932,InitialNotification,SouthWest
 35327530,MM_PRUSR_WOINV,1999,keerthesrep@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567933,InitialNotification,SouthWest
 31939520,PM_SAFETY_OFFICER,1999,venu@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567934,InitialNotification,SouthWest
 31948480,PM_SAFETY_OFFICER,1999,shrihari.b@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567935,InitialNotification,SouthWest
@@ -42,7 +22,6 @@ InchargeName,InchargeRole,LocationID,InchargeEmail,LocationName,LocationType,Loc
 35325230,PM_SAFETY_OFFICER,1999,manohar.v@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567939,InitialNotification,SouthWest
 31969780,PM_SAFETY_OFFICER,1999,keerthesrep@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567940,InitialNotification,SouthWest
 31939460,PM_SAFETY_OFFICER,1999,venu@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567941,InitialNotification,SouthWest
-31917610,PM_LOCN_INCHRG,1999,shrihari.b@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567942,InitialNotification,SouthWest
 31939460,IL_PLANING_OFFCER,1999,santoshkumar.s@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567943,InitialNotification,SouthWest
 31969780,IL_PLANING_OFFCER,1999,sreedhar.maddipati@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567944,InitialNotification,SouthWest
 31939520,IL_PLANING_OFFCER,1999,yesu.p@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567945,InitialNotification,SouthWest
@@ -53,5 +32,4 @@ InchargeName,InchargeRole,LocationID,InchargeEmail,LocationName,LocationType,Loc
 35325230,IL_PLANING_OFFCER,1999,santoshkumar.s@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567950,InitialNotification,SouthWest
 11999V1K,QM_QLTCTRL_ANALYST,1999,sreedhar.maddipati@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567951,InitialNotification,SouthWest
 35327530,QM_QLTCTRL_OFFCER,1999,yesu.p@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567952,InitialNotification,SouthWest
-35326060,PS_PROJ_ASST,1999,manohar.v@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567953,InitialNotification,SouthWest
 31917610,IL_PLANT_INCHARG,1999,keerthesrep@algofusiontech.com,Dharmapuri,TAS,TamilNadu,Dharmapuri,Dharmapuri,South,1234567954,InitialNotification,SouthWest
