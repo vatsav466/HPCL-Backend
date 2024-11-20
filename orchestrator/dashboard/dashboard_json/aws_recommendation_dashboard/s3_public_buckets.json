@@ -1,0 +1,54 @@
+{
+    "database": "4",
+    "schema": "public",
+    "table": "s3_public_buckets",
+    "visualization_name": "table",
+    "name": "S3 Public Buckets",
+    "description": "",
+    "params": {
+      "queries": [
+        {
+          "filters": [
+            {
+              "col": "resource_id",
+              "op": "!=",
+              "val": null
+            }
+          ],
+          "columns": [],
+          "metrics": [],
+          "orderby": [],
+          "row_limit": 100000,
+          "series_columns": [],
+          "series_limit": 0,
+          "order_descending": true
+        }
+      ],
+      "form_data": {
+        "x_axis": {},
+        "metrics": [],
+        "groupby": [
+          {
+            "name":"resource_name",
+            "label":"Bucket Name"
+          },
+          {
+            "name":"region",
+            "label":"Region"
+          },
+          {
+            "name":"is_public_policy",
+            "label":"Public Policy"
+          },
+          {
+            "name":"is_public_acls",
+            "label":"Public ACLS"
+          }
+        ],
+        "query_mode":"raw",
+        "order_descending": false,
+        "row_limit": 0,
+        "show_legend": false
+      }
+    }
+  }
