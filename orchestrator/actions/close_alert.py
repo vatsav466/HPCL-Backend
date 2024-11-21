@@ -4,6 +4,7 @@ from orchestrator.alerting.alert_factory import AlertFactory
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
+
 class CloseAlert:
     async def get_required_variables(self):
         """
@@ -12,7 +13,7 @@ class CloseAlert:
         Returns:
             list: A list of strings representing the required variables.
         """
-        return ["alert_id", "sap_id", "sop_id", "BU", "close", "interlock_id"]
+        return ["alert_id", "sap_id", "sop_id", "BU", "close", "interlock_name", "interlock_id"]
     
     async def closealert(self, params):
         print("params --> ", params)

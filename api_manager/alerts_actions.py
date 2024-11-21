@@ -7,6 +7,7 @@ import pytz
 import json
 import datetime
 import requests
+import traceback
 import urdhva_base
 
 router = fastapi.APIRouter(prefix='/alerts')
@@ -30,7 +31,7 @@ async def alerts_alert_action(data: Alerts_Alert_ActionParams):
     try:
         
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        alert_data = Alerts.get(data.alert_id)
+        alert_data = await Alerts.get(data.alert_id)
         
         if alert_data:
             if not isinstance(alert_data, dict):
@@ -39,8 +40,8 @@ async def alerts_alert_action(data: Alerts_Alert_ActionParams):
         else:
             return {"status": False, "message": "Alert not available", "data": []}
         
-        if not alert_data.get("role", ""):
-            return {"status": False, "message": "User has no permission for this action", "data": []}
+        # if not alert_data.get("role", ""):
+        #     return {"status": False, "message": "User has no permission for this action", "data": []}
 
         condition = re.compile('<.*?>')
         alertmsg = re.sub(condition, '', data.action_msg or "")
@@ -64,27 +65,25 @@ async def alerts_alert_action(data: Alerts_Alert_ActionParams):
         elif data.action_type == AlertActionType.Rejected:
             alerthistory.append(action_text)
             isjustify = False
-        
-        updatedoc = {
-            'alertHistory': alerthistory,
-            "isMaintenanceException": isMaintenanceException,
-            "dealer_justify_type": data.justification_type if data.action_type == AlertActionType.Justification else "",
-            "isRevocation": isRevocation,
-        }
+
+        alert_data['alertHistory'] = alerthistory
+        alert_data['isMaintenanceException'] = isMaintenanceException
+        alert_data['dealer_justify_type'] = data.justification_type if data.action_type == AlertActionType.Justification else ""
+        alert_data['isRevocation'] = isRevocation
 
         if data.days:
-            updatedoc['days'] = data.days
+            alert_data['days'] = data.days
 
-        _alerts = Alerts(**updatedoc)
-        _alerts.modify()
+        _alerts = Alerts(**alert_data)
+        await _alerts.modify()
 
-        businesskey = data.alert_id
+        businesskey = alert_data['external_id']
         body = {
-            'messageName': 'justification' if data.action_type == AlertActionType.Justification else 'message',
+            'messageName': eval(f"AlertActionType.{data.action_type}.value") if eval(f"AlertActionType.{data.action_type}.value") else 'Justification',
             'businessKey': businesskey,
             'processVariables': {
                 'msg': {'type': 'String', 'value': alertmsg},
-                'user': {'type': 'String', 'value': user},
+                'user': {'type': 'String', 'value': user if user else "santoshkumar.s@algofusiontech.com"},
                 'action_type': {'type': 'String', 'value': data.action_type.value},
                 'isMaintenanceException': {'type': 'Boolean', 'value': isMaintenanceException},
                 'isRevocation': {'type': 'Boolean', 'value': isRevocation},
@@ -92,14 +91,21 @@ async def alerts_alert_action(data: Alerts_Alert_ActionParams):
                 'overridedays': {'type': 'String', 'value': str(data.days)}
             }
         }
-
-        camundaurl = urdhva_base.settings.camundaurl + "/engine-rest/message"
-        response = requests.post(camundaurl, headers=headers, data=json.dumps(body))
+        print("body1: ", body)
+        logger.info(f"body: {body}")
+        camunda_url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+        print("camunda_url: ", camunda_url)
+        logger.info(f"camunda_url: {camunda_url}")
+        response = requests.post(url=camunda_url, headers=headers, data=json.dumps(body), verify=False)
+        print("response: ", response)
         logger.info(f"{data.action_type.capitalize()} for:{businesskey} Data:{body} Camunda Resp:{response.status_code}")
 
         return {"status": True, "message": f"{data.action_type.capitalize()} Submitted Successfully", "data": []}
     
     except Exception as e:
         logger.error(e)
+        print(traceback.format_exc())
+        logger.info(f"Error: {str(e)}")
+        logger.info(f"Error: {traceback.format_exc()}")
         return {"status": False, "message": str(e), "data": []}
         

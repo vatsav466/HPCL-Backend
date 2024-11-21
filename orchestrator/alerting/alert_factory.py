@@ -150,8 +150,8 @@ class AlertFactory:
         """
         try:
             bu = alert_data['BU']
-            sop_id = alert_data['sop_id']
-            sap_id = alert_data['sap_id']
+            # sop_id = alert_data['sop_id']
+            # sap_id = alert_data['sap_id']
 
             # Close Interlock
             # query = f"bu='{bu}' AND sop_id='{sop_id}' AND sap_id='{sap_id}'"
@@ -160,12 +160,15 @@ class AlertFactory:
             # params.limit = 1
             # params.q = query
             # resp = await hpcl_ceg_model.Interlock.get_all(params)
-            il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
-            if not isinstance(il_data, dict):
-                il_data = il_data.__dict__
-            il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-            data_obj = hpcl_ceg_model.Interlock(**il_data)
-            await data_obj.modify()
+            if 'interlock_id' in alert_data.keys() and alert_data['interlock_id']:
+                il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
+                if not isinstance(il_data, dict):
+                    il_data = il_data.__dict__
+                il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+                data_obj = hpcl_ceg_model.Interlock(**il_data)
+                await data_obj.modify()
+            else:
+                logger.info(f"Unable to find Interlock: {alert_data['interlock_name']}, BU: {bu}")
             # if resp.get('body'):
             #     # Decode the byte string to a normal string
             #     body_str = resp['body'].decode('utf-8')
@@ -184,6 +187,7 @@ class AlertFactory:
             if not isinstance(al_data, dict):
                 al_data = al_data.__dict__
             al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+            al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
             data_obj = hpcl_ceg_model.Alerts(**al_data)
             await data_obj.modify()
             # if resp.get('body'):

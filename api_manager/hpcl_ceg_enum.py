@@ -76,6 +76,8 @@ class AlertActionType(str, enum.Enum):
     Rejected = 'Rejected'
     Approved = 'Approved'
     Override = 'Override'
+    interLockOk = 'interLockOk'
+    Message = 'Message'
 
 
 
