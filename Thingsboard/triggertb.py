@@ -1,8 +1,6 @@
+import urdhva_base
 import json
 import requests
-
-# ThingsBoard API URL (replace placeholder with your actual server URL)
-THINGSBOARD_URL = "http://140.245.238.142:8080"
 
 def load_site_data(site_id):
     """
@@ -10,7 +8,7 @@ def load_site_data(site_id):
     """
     try:
         file_name = f"{site_id}.json"  # JSON file name derived from site_id
-        with open(file_name, "r") as file:
+        with open("/opt/ceg/algo/Thingsboard/tags/" + file_name, "r") as file:
             return json.load(file)
     except FileNotFoundError:
         print(f"File {site_id}.json not found.")
@@ -27,7 +25,7 @@ def post_telemetry(device_key, sensor_type, tag_value):
     telemetry_data = {
         sensor_type:tag_value
     }
-    url = f"{THINGSBOARD_URL}/api/v1/{device_key}/telemetry"  # Using deviceKey as the token
+    url = f"{urdhva_base.settings.THINGSBOARD_URL}/api/v1/{device_key}/telemetry"  # Using deviceKey as the token
     
     try:
         response = requests.post(url, json=telemetry_data)
