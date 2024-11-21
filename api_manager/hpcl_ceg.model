@@ -41,6 +41,8 @@ Enum AlertActionType str {
     Rejected='Rejected'
     Approved='Approved'
     Override='Override'
+    interLockOk='interLockOk'
+    Message='Message'
 }
 
 Model LocationMaster {

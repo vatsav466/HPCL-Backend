@@ -41,7 +41,7 @@ class SendNotification:
             list: A list of strings representing the required variables.
         """
         return [
-            "alert_id", "BU", "interlock_name", "message_type",
+            "alert_id", "BU", "interlock_name", "interlock_id", "message_type",
             "mq_of_role", "location_type", "location_device_id",
             "role_mail_to", "alert_id", "escalation_time_in_mail", "sap_id"
         ]
@@ -53,8 +53,8 @@ class SendNotification:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
                 
-            # if self._should_skip_notification():
-            #     return True, {"msg": "Notification skipped"}
+            if self._should_skip_notification():
+                return True, {"msg": "Notification skipped"}
                 
             await self._prepare_base_alert_data()
             await self._process_roles_and_users()
@@ -193,8 +193,9 @@ class SendNotification:
 
     async def _get_interlock_name(self) -> str:
         """Get interlock name from alert data"""
-        return self.alert_data.get('sopName', 
-            self.alert_data.get("interlock_name", self.alert_data.get('msg', '')))
+        return self.alert_data.get('sopName',
+                                   self.alert_data.get("interlock_name", self.alert_data.get('msg', ''))
+                                   )
 
     async def _process_message_type(self):
         """Process notification based on message type"""
