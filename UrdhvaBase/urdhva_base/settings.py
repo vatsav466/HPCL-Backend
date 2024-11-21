@@ -112,6 +112,19 @@ class Settings(pydantic_settings.BaseSettings):
         "sleepSeconds": 30
     }
 
+    # RabbitMQ
+    rabbitmq_enabled: bool = False
+    rabbitmq_host: str = "10.90.38.167"
+    rabbitmq_port: int = 5672
+    rabbitmq_username: str = "hpcl_ceg"
+    rabbitmq_password: str = "algo#ceg@4321"
+    rabbitmq_vhost: str = "hpcl_ceg"
+    rabbitmq_queue: str = "tagsdata"
+    rabbitmq_auto_ack: bool = True
+
+    #Thingsboard
+    THINGSBOARD_URL: str = "http://10.90.38.165:8080"
+    
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \
                 self.db_multi_tenancy_model == MultiTenancyMode.SingleServerMultiDb:
