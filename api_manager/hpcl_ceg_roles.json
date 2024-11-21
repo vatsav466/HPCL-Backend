@@ -1,0 +1,914 @@
+{
+    "allowRemoteResourceManagement": true,
+    "policyEnforcementMode": "ENFORCING",
+    "decisionStrategy": "AFFIRMATIVE",
+    "resources": [
+        {
+            "name": "locationmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LocationMaster",
+            "attributes": {},
+            "uris": [
+                "/api/locationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_location_master"
+                },
+                {
+                    "name": "download_location_master"
+                },
+                {
+                    "name": "fetch_global_stats"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "locationmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LocationMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/locationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "locationmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LocationMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/locationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_location_master"
+                },
+                {
+                    "name": "download_location_master"
+                },
+                {
+                    "name": "fetch_global_stats"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "rolemaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "RoleMaster",
+            "attributes": {},
+            "uris": [
+                "/api/rolemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_role_master"
+                },
+                {
+                    "name": "download_role_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "rolemaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "RoleMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/rolemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "rolemaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "RoleMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/rolemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_role_master"
+                },
+                {
+                    "name": "download_role_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "roassetmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "ROAssetMaster",
+            "attributes": {},
+            "uris": [
+                "/api/roassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_ro_asset_master"
+                },
+                {
+                    "name": "download_ro_asset_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "roassetmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "ROAssetMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/roassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "roassetmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "ROAssetMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/roassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_ro_asset_master"
+                },
+                {
+                    "name": "download_ro_asset_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "tasassetmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TASAssetMaster",
+            "attributes": {},
+            "uris": [
+                "/api/tasassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_tas_asset_master"
+                },
+                {
+                    "name": "download_tas_asset_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "tasassetmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TASAssetMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasassetmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TASAssetMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_tas_asset_master"
+                },
+                {
+                    "name": "download_tas_asset_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "lpgassetmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LPGAssetMaster",
+            "attributes": {},
+            "uris": [
+                "/api/lpgassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_lpg_asset_master"
+                },
+                {
+                    "name": "download_lpg_asset_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "lpgassetmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LPGAssetMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgassetmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LPGAssetMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgassetmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_lpg_asset_master"
+                },
+                {
+                    "name": "download_lpg_asset_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "interlock",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Interlock",
+            "attributes": {},
+            "uris": [
+                "/api/interlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "interlock_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Interlock_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/interlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "interlock_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Interlock_admin",
+            "attributes": {},
+            "uris": [
+                "/api/interlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "emlock",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "emlock_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "emlock_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "EMLock_admin",
+            "attributes": {},
+            "uris": [
+                "/api/emlock/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "alerts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Alerts",
+            "attributes": {},
+            "uris": [
+                "/api/alerts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "alert_action"
+                }
+            ]
+        },
+        {
+            "name": "alerts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Alerts_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/alerts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "alerts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Alerts_admin",
+            "attributes": {},
+            "uris": [
+                "/api/alerts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "alert_action"
+                }
+            ]
+        },
+        {
+            "name": "cemslocationmaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSLocationMaster",
+            "attributes": {},
+            "uris": [
+                "/api/cemslocationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_cems_location_master"
+                },
+                {
+                    "name": "download_cems_location_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "cemslocationmaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSLocationMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/cemslocationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "cemslocationmaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSLocationMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/cemslocationmaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_cems_location_master"
+                },
+                {
+                    "name": "download_cems_location_master"
+                },
+                {
+                    "name": "download_template"
+                }
+            ]
+        },
+        {
+            "name": "cemsquantitymaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSQuantityMaster",
+            "attributes": {},
+            "uris": [
+                "/api/cemsquantitymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "cemsquantitymaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSQuantityMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/cemsquantitymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "cemsquantitymaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CEMSQuantityMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/cemsquantitymaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        }
+    ],
+    "policies": [
+        {
+            "name": "superAdminPolicy",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "roles": "[{\"id\":\"superAdmin\",\"required\":false}]"
+            }
+        },
+        {
+            "name": "superAdminPermission",
+            "type": "resource",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "defaultResourceType": "all",
+                "applyPolicies": "[\"superAdminPolicy\"]"
+            }
+        },
+        {
+            "name": "readOnlyPolicy",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "roles": "[{\"id\":\"readOnly\",\"required\":false}]"
+            }
+        },
+        {
+            "name": "readOnlyPermission",
+            "type": "resource",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "defaultResourceType": "readOnly",
+                "applyPolicies": "[\"readOnlyPolicy\"]"
+            }
+        },
+        {
+            "name": "adminPolicy",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "roles": "[{\"id\":\"admin\",\"required\":false}]"
+            }
+        },
+        {
+            "name": "adminPermission",
+            "type": "resource",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+                "defaultResourceType": "admin",
+                "applyPolicies": "[\"adminPolicy\"]"
+            }
+        }
+    ],
+    "scopes": [
+        {
+            "name": "create",
+            "displayName": "create"
+        },
+        {
+            "name": "update",
+            "displayName": "update"
+        },
+        {
+            "name": "read",
+            "displayName": "read"
+        },
+        {
+            "name": "delete",
+            "displayName": "delete"
+        },
+        {
+            "name": "upload_location_master",
+            "displayName": "upload_location_master"
+        },
+        {
+            "name": "download_location_master",
+            "displayName": "download_location_master"
+        },
+        {
+            "name": "fetch_global_stats",
+            "displayName": "fetch_global_stats"
+        },
+        {
+            "name": "download_template",
+            "displayName": "download_template"
+        },
+        {
+            "name": "upload_role_master",
+            "displayName": "upload_role_master"
+        },
+        {
+            "name": "download_role_master",
+            "displayName": "download_role_master"
+        },
+        {
+            "name": "download_template",
+            "displayName": "download_template"
+        },
+        {
+            "name": "upload_ro_asset_master",
+            "displayName": "upload_ro_asset_master"
+        },
+        {
+            "name": "download_ro_asset_master",
+            "displayName": "download_ro_asset_master"
+        },
+        {
+            "name": "download_template",
+            "displayName": "download_template"
+        },
+        {
+            "name": "upload_tas_asset_master",
+            "displayName": "upload_tas_asset_master"
+        },
+        {
+            "name": "download_tas_asset_master",
+            "displayName": "download_tas_asset_master"
+        },
+        {
+            "name": "download_template",
+            "displayName": "download_template"
+        },
+        {
+            "name": "upload_lpg_asset_master",
+            "displayName": "upload_lpg_asset_master"
+        },
+        {
+            "name": "download_lpg_asset_master",
+            "displayName": "download_lpg_asset_master"
+        },
+        {
+            "name": "download_template",
+            "displayName": "download_template"
+        },
+        {
+            "name": "alert_action",
+            "displayName": "alert_action"
+        },
+        {
+            "name": "upload_cems_location_master",
+            "displayName": "upload_cems_location_master"
+        },
+        {
+            "name": "download_cems_location_master",
+            "displayName": "download_cems_location_master"
+        },
+        {
+            "name": "download_template",
+            "displayName": "download_template"
+        }
+    ]
+}

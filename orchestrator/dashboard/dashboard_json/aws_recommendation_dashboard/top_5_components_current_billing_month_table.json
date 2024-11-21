@@ -1,0 +1,62 @@
+{
+    "database": "4",
+    "schema": "public",
+    "table": "aws_resource_clearpier_cost",
+    "visualization_name": "table",
+    "name": "Top 5 Components in the current billing month",
+    "description": "",
+    "params": {
+      "queries": [
+        {
+          "filters": [
+            {
+              "col": "start",
+              "op": "TEMPORAL_RANGE",
+              "val": "2024-07-01 : 2024-07-30"
+            }
+          ],
+          "columns": [],
+          "metrics": [
+            {
+              "expression_type": "SIMPLE",
+              "column": {
+                "column_name": "amount",
+                "type": "FLOAT"
+              },
+              "aggregate": "SUM",
+              "label": "Amount"
+            }
+          ],
+          "orderby": [
+            {
+              "order_by": false,
+              "expression_type": "SIMPLE",
+              "column": {
+                "column_name": "amount",
+                "type": "FLOAT"
+              },
+              "aggregate": "SUM",
+              "label": "Amount"
+            }
+          ],
+          "row_limit": 5,
+          "series_columns": [],
+          "series_limit": 0,
+          "order_descending": true
+        }
+      ],
+      "form_data": {
+        "x_axis": {},
+        "metrics": [],
+        "groupby": [
+          {
+            "name":"component",
+            "label":"Component"
+          }],
+        "query_mode":"aggregate",
+        "order_descending": false,
+        "row_limit": 0,
+        "show_legend": false
+      }
+    }
+  }

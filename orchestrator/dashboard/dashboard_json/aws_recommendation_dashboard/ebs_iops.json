@@ -1,0 +1,80 @@
+{
+    "database": "2",
+    "schema": "public",
+    "table": "all_instances_new",
+    "visualization_name": "area",
+    "name": "EBS IOPS",
+    "description": "",
+    "params": {
+      "queries": [
+        {
+          "filters": [
+            {
+                "col": "time_stamp",
+                "op": "TEMPORAL_RANGE",
+                "val": "2024-06-07 : 2024-07-17"
+            },
+            {
+                "col": "metric_type",
+                "op": "IN",
+                "val": ["EBSReadOps","EBSWriteOps"]
+            },
+            {
+                "col": "instance_id",
+                "op": "IN",
+                "val": ["i-0004a156905a0f2af"]
+            }
+              
+          ],
+          "columns": ["time_stamp"],
+          "metrics": [
+            {
+              "expression_type": "SIMPLE",
+              "column": {
+                "column_name": "average",
+                "type": "DOUBLE PRECISION"
+              },
+              "aggregate": "AVG",
+              "label": "Average"
+            }
+          ],
+          "orderby": [
+            {
+              "order_by": false,
+              "expression_type": "SIMPLE",
+              "column": {
+                "column_name": "average",
+                "type": "DOUBLE PRECISION"
+              },
+              "aggregate": "AVG",
+              "label": "Average"
+            }
+          ],
+          "row_limit": 1000,
+          "series_columns": [],
+          "series_limit": 0,
+          "order_descending": true
+        }
+      ],
+      "form_data": {
+        "x_axis": {
+          "column_name": "time_stamp",
+          "sort_ascending": false
+        },
+        "metrics": [],
+        "groupby": [
+          {
+            "name": "instance_id",
+            "label": "Instance ID"
+          },
+          {
+            "name": "metric_type",
+            "label": "Metric Type"
+          }
+        ],
+        "order_descending": false,
+        "row_limit": 0,
+        "show_legend": false
+      }
+    }
+  }

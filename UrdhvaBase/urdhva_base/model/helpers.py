@@ -95,7 +95,7 @@ class Attr(Base):
             elif isinstance(self.simpletype, BoolSpec):
                 self.default = False
             elif isinstance(self.simpletype, DictSpec):
-                self.default = {}
+                self.default = "pydantic.Field(default_factory=dict)"
             elif isinstance(self.simpletype, StrSpec):
                 self.default = '""'
 

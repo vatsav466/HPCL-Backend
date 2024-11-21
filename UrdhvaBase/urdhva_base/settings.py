@@ -14,7 +14,7 @@ Db_Urls_Base = {
             "https://admin:password@localhost:9200"
         ],
         "postgres_async": [
-            "postgresql+asyncpg://localhost/dataflow?user=postgres&password=password"
+            "postgresql+asyncpg://localhost:5432/hpcl_ceg?user=postgres&password=1234"
         ],
         "redis": [
             "redis://localhost:6379"
@@ -39,9 +39,9 @@ def configure_db_urls(db_urls):
 class Settings(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict(env_file=EnvConfigFile, extra='ignore')
     # Domain defaults
-    app_name: str = "dataFusion"
-    cookie_name: str = "urdhva_data_fusion"
-    default_index: str = "urdhva_data_fusion"
+    app_name: str = "hpcl_ceg"
+    cookie_name: str = "hpcl_ceg"
+    default_index: str = "hpcl_ceg"
     multi_tenant_support: bool = True
 
     # Header based authentication Enabled or Not
@@ -55,10 +55,14 @@ class Settings(pydantic_settings.BaseSettings):
     keycloak_password: str = 'password'
     keycloak_db_password: str = 'admin'
     fernet_key: str = 'NjY5N2IwOWM5ZjE0MjMzN2M3YzA5Y2Y4ZDE4NTA2Mjk='
+    default_realm: str = 'hpcl'
+
+    # For RBAC
     roles_directories: typing.List[str] = []
+    rbac_keys: typing.List[str] = ['sap_id', 'bu', 'state', 'city', 'district', 'zone']
 
     # For Logger
-    log_base_dir: str = "/var/log/c2o_logs"
+    log_base_dir: str = "/var/log/ceg_logs"
     log_max_size: int = 10000000
     log_max_count: int = 5
 
@@ -66,6 +70,10 @@ class Settings(pydantic_settings.BaseSettings):
     db_multi_tenancy_model: MultiTenancyMode = MultiTenancyMode.SingleServerSingleDb
     login_count: int = 5
     base_path: str = ""
+    mft_path: str = ""
+    ui_path: str = ""
+    download_path: str = ""
+    template_path: str = "/Users/appleair/PycharmProjects/hpcl_project/dnc_backend_v2/orchestrator/notification_templates"
     kibana_dashboard_header: str = 'osd-xsrf'
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
 
@@ -92,6 +100,17 @@ class Settings(pydantic_settings.BaseSettings):
     superset_external_url: str = 'http://localhost:8088'
     superset_user: str = "admin"
     superset_password: str = 'password'
+
+    # camunda
+    camunda_url: str = 'http://localhost:8080'
+    camunda_default_config: typing.Dict[str, int] = {
+        "maxTasks": 1,
+        "lockDuration": 10000,
+        "asyncResponseTimeout": 5000,
+        "retries": 3,
+        "retryTimeout": 5000,
+        "sleepSeconds": 30
+    }
 
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \

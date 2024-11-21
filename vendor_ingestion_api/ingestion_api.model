@@ -1,0 +1,100 @@
+Enum BusinessUnit str {
+    RO='RO'
+    TAS='TAS'
+    LPG='LPG'
+    RDI='RDI'
+    CP='CP'
+}
+
+Enum AlertStatus str {
+    Open='Open'
+    Close='Close'
+}
+
+Model vtsData internal {
+    tl_number str
+    report_duration str
+    total_trips optional int
+    stoppage_violations_count optional int
+    route_deviation_count optional int
+    speed_violation_count optional int
+    main_supply_removal_count optional int
+    night_driving_count optional int
+    device_offline_count optional int
+    device_tamper_count optional int
+}
+
+Model VTS crud_disable {
+    Action=> ingest_data {
+        vendor_id str
+        location_id str
+        location_type optional BusinessUnit
+        data list vtsData
+    }
+}
+
+Model vaData internal {
+    alert_type str
+    alert_description optional str
+    device_id str
+    video_url optional str
+}
+
+Model VA crud_disable {
+    Action=> ingest_data {
+        vendor_id str
+        location_id str
+        location_type optional BusinessUnit
+        data optional list vaData
+    }
+}
+
+Model crisData internal {
+    interlock_type str
+    interlock_description optional str
+    device_id str
+    device_value optional str
+    alert_id str
+    alert_status AlertStatus
+}
+
+Model CRIS crud_disable {
+    Action=> ingest_data {
+        vendor_id str
+        location_id str
+        location_type optional BusinessUnit
+        data optional list crisData
+    }
+
+}
+
+Model IMS crud_disable {
+    Action=> ingest_data {
+        vendor_id str
+        location_id str
+        location_type optional BusinessUnit
+    }
+}
+
+Model emlockData internal {
+    location_id str
+    location_type optional BusinessUnit
+    vehicle_number str
+    violation_type str
+    initiated_date str
+    approved_date optional str
+    approved_by optional str
+}
+
+Model EMLock crud_disable {
+    Action=> ingest_data {
+        vendor_id str
+        data optional list emlockData
+    }
+}
+
+Model TasListener crud_disable {
+    Action=> get_data {
+        input_data dict
+    }
+}

@@ -132,8 +132,8 @@ async def validate_header_based_authentication(request: fastapi.Request):
     if not urdhva_base.settings.enable_header_auth:
         return False, None
     headers = request.headers
-    if headers.get("ceg_auth_token"):
-        access_key = headers.get("ceg_auth_token")
+    access_key = headers.get("ceg-auth-token")
+    if access_key:
         vendor = headers.get("vendor")
         redis_ins = await urdhva_base.redispool.get_redis_connection()
         # Validate Access key
@@ -142,6 +142,9 @@ async def validate_header_based_authentication(request: fastapi.Request):
             if db_access_key and isinstance(db_access_key, bytes):
                 db_access_key = db_access_key.decode()
             if db_access_key == access_key:
+                allowed_apis = json.loads(await redis_ins.hget("vendor_auth", f"{vendor}_allowed_apis"))
+                if allowed_apis and request.url.path not in allowed_apis:
+                    return False, fastapi.responses.JSONResponse("Invalid permissions", 403)
                 return True, None
             return False, fastapi.responses.JSONResponse("Invalid token", 403)
     return False, None
@@ -211,6 +214,8 @@ async def contextMiddleware(request: fastapi.Request, call_next):
             entity_id = request.headers.get("entity_id", "")
         elif not urdhva_base.settings.multi_tenant_support:
             entity_id = request.base_url.hostname.split('.')[0]
+        elif urdhva_base.settings.default_realm:
+            entity_id = urdhva_base.settings.default_realm
 
     data['domain'] = request.base_url
     data['entity_obj'] = urdhva_base.entity.Entity()

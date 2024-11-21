@@ -1,0 +1,5 @@
+.idea
+*.pyc
+/UrdhvaBase
+.DS_Store
+.alg_env

@@ -1,0 +1,346 @@
+Enum BusinessUnit str {
+    RO='RO'
+    TAS='TAS'
+    LPG='LPG'
+    RDI='RDI'
+    CP='CP'
+}
+
+Enum NotificationLevel str {
+    InitialNotification='InitialNotification'
+    InitialEscalation='InitialEscalation'
+}
+
+Enum AlertStatus str {
+    Open='Open'
+    Close='Close'
+}
+
+Enum AlertState str {
+    InProgress='InProgress'
+    Notified='Notified'
+    Escalated='Escalated'
+    Resolved='Resolved'
+}
+
+Enum Severity str {
+    Low='Low'
+    Medium='Medium'
+    High='High'
+    Critical='Critical'
+}
+
+Enum LocationHealth str {
+    Normal='Normal'
+    Failed='Failed'
+    Deactivated='Deactivated'
+}
+
+Enum AlertActionType str {
+    Justification='Justification'
+    Rejected='Rejected'
+    Approved='Approved'
+    Override='Override'
+}
+
+Model LocationMaster {
+    bu index_field BusinessUnit
+    sap_id index_field str
+    bu_id optional str
+    name index_field str
+    is_active optional bool
+    activation_date optional datetime
+    activation_notes optional str
+    activated_by optional str
+    deactivated_by optional str
+    deactivation_notes optional str
+    health_status optional LocationHealth
+    health_notes optional str
+    scada_vendor optional str
+    scada_version optional str
+    scada_conn_status optional bool
+    scada_conn_notes optional str
+    city optional str
+    district optional index_field str
+    region optional index_field str
+    state optional index_field str
+    zone optional index_field str
+    address optional str
+    pincode optional str
+    local_automation_vendor optional str
+    latitude optional str
+    longitude optional str
+
+    Action=> upload_location_master {
+    }
+
+    Action=> download_location_master {
+    }
+
+    Action=> fetch_global_stats {
+        bu optional list BusinessUnit
+    }
+
+    Action=> download_template {
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model RoleMaster {
+    bu index_field BusinessUnit
+    sap_id index_field str
+    location_name str
+    user_name optional str
+    role index_field str
+    email str
+    phone_no str
+    city index_field str
+    district optional str
+    region optional str
+    state index_field str
+    zone index_field str
+    escalation_level optional NotificationLevel
+
+    Action=> upload_role_master {
+    }
+
+    Action=> download_role_master {
+    }
+
+    Action=> download_template {
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model ROAssetMaster {
+    bu index_field BusinessUnit
+    sap_id index_field str
+    location_name str
+    bay_id int
+    mpd_id int
+    tank_id int
+    nozzle_id int
+    global_nozzle_id int
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_ro_asset_master{
+    }
+
+    Action=> download_ro_asset_master{
+    }
+
+    Action=> download_template {
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model TASAssetMaster {
+    bu index_field BusinessUnit
+    sap_id index_field str
+    location_name str
+    device_type str
+    device_desc str
+    device_tag str
+    device_id str
+    device_key str
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_tas_asset_master{
+    }
+
+    Action=> download_tas_asset_master{
+    }
+
+    Action=> download_template {
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model LPGAssetMaster {
+    bu index_field BusinessUnit
+    sap_id index_field str
+    location_name str
+    device_type str
+    device_desc str
+    device_tag str
+    device_id str
+    device_key str
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_lpg_asset_master{
+    }
+
+    Action=> download_lpg_asset_master{
+    }
+
+    Action=> download_template {
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model assetData internal {
+    ro_id str
+    local_tank_id optional int
+    local_nozzle_id optional int
+    local_mpd_id optional int
+    local_bay_id optional int
+    alert_status optional AlertStatus
+}
+
+Model assetDetails internal {
+    asset_id str
+    data optional assetData
+} 
+
+Model Alert_History internal {
+    device_data optional str
+    allocated_time optional datetime
+    processed_time optional datetime
+    mail_sent_to optional str
+    action_type AlertActionType
+    action_msg str
+}
+
+Model tags internal {
+    isAtrUploaded optional bool
+    isMaintenanceException optional bool
+    isRevocation optional bool
+    noException optional bool
+}
+
+Model Interlock {
+    bu index_field str
+    sap_id index_field str
+    sop_id index_field str
+    interlock_name optional index_field str
+    location_name optional str	
+    device_name optional str
+    device_type optional str
+    device_id optional str
+    state optional index_field str
+    city optional index_field str
+    zone optional index_field str
+    interlock_status optional AlertStatus
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model EMLock {
+    bu index_field str
+    sap_id index_field str
+    location_name str
+    vehicle_number index_field str
+    violation_type index_field str
+    violation_count int
+    violation_start_date datetime
+    violation_history optional list str
+    status AlertStatus
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model Alerts {
+    bu optional index_field BusinessUnit
+    sap_id index_field str
+    sop_id optional index_field str
+    location_name optional str
+    severity index_field Severity
+    alert_status index_field AlertStatus
+    alert_state AlertState                  // Notification or Escalation
+    unique_id str                           // System Generated ID Based on <BU>_<INC Number>_<SOP>
+    alert_section str                       // For what we are creating alert RO/TAS/VTS/VA/...
+    external_id optional str                // AlertId generated by the vendor
+    interlock_name optional str
+    interlock_id optional str
+    device_id optional str
+    device_type optional str
+    device_name optional str
+    device_msg optional str                 // Message received from the device
+
+    // Notification Details
+    alert_history optional list Alert_History
+    last_sms_to optional list str           // List of users to whom sms sent to
+    last_mailed_to optional list str        // List of users to whom email sent to
+    last_escalated_to optional list str     // List of users to whom alert escalated to
+    last_notified_to optional list str      // List of users to whom alert notified to
+    assigned_to optional str                // User email for whom alert is assigned to
+    assigned_to_role optional str           // User Role for whom alert is assigned to
+
+    // Location Details
+    district optional str
+    zone optional str
+    region optional str
+    state optional str
+    city optional str
+
+    // Device Raw Details
+    raw_data optional dict
+
+    Action=> alert_action {
+        action_type AlertActionType
+        alert_id str
+        action_msg optional str
+        days optional int
+        justificationType optional str
+        event_tags optional tags
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model CEMSLocationMaster {
+    bu_id str
+    bu optional index_field BusinessUnit
+    device_name str
+    location_name str
+    location_id str
+    source_id str
+    zonal_id str
+    district optional str
+    zone optional str
+    region optional str
+    state optional str
+    city optional str
+
+    Action=> upload_cems_location_master{
+    }
+
+    Action=> download_cems_location_master{
+    }
+
+    Action=> download_template {
+    }
+}
+
+Model CEMSQuantityMaster {
+    quantity_name str
+    quantity_id str
+    unit str
+}

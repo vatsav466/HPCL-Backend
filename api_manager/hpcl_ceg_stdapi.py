@@ -1,0 +1,137 @@
+import urdhva_base.postgresmodel
+import urdhva_base.queryparams
+import urdhva_base.types
+from hpcl_ceg_enum import *
+from hpcl_ceg_model import *
+import fastapi
+router = fastapi.APIRouter()
+
+
+@router.get('/locationmaster/{id}', response_model=LocationMaster, tags=['LocationMaster'])
+async def get(id: str):
+    return await LocationMaster.get(id, skip_secrets=True)
+
+
+@router.get('/locationmaster', response_model=LocationMasterGetResp, tags=['LocationMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LocationMaster.get_all(params, skip_secrets=True)
+
+
+@router.get('/rolemaster/{id}', response_model=RoleMaster, tags=['RoleMaster'])
+async def get(id: str):
+    return await RoleMaster.get(id, skip_secrets=True)
+
+
+@router.get('/rolemaster', response_model=RoleMasterGetResp, tags=['RoleMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await RoleMaster.get_all(params, skip_secrets=True)
+
+
+@router.get('/roassetmaster/{id}', response_model=ROAssetMaster, tags=['ROAssetMaster'])
+async def get(id: str):
+    return await ROAssetMaster.get(id, skip_secrets=True)
+
+
+@router.get('/roassetmaster', response_model=ROAssetMasterGetResp, tags=['ROAssetMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ROAssetMaster.get_all(params, skip_secrets=True)
+
+
+@router.get('/tasassetmaster/{id}', response_model=TASAssetMaster, tags=['TASAssetMaster'])
+async def get(id: str):
+    return await TASAssetMaster.get(id, skip_secrets=True)
+
+
+@router.get('/tasassetmaster', response_model=TASAssetMasterGetResp, tags=['TASAssetMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TASAssetMaster.get_all(params, skip_secrets=True)
+
+
+@router.get('/lpgassetmaster/{id}', response_model=LPGAssetMaster, tags=['LPGAssetMaster'])
+async def get(id: str):
+    return await LPGAssetMaster.get(id, skip_secrets=True)
+
+
+@router.get('/lpgassetmaster', response_model=LPGAssetMasterGetResp, tags=['LPGAssetMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LPGAssetMaster.get_all(params, skip_secrets=True)
+
+
+@router.get('/interlock/{id}', response_model=Interlock, tags=['Interlock'])
+async def get(id: str):
+    return await Interlock.get(id, skip_secrets=True)
+
+
+@router.get('/interlock', response_model=InterlockGetResp, tags=['Interlock'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await Interlock.get_all(params, skip_secrets=True)
+
+
+@router.get('/emlock/{id}', response_model=EMLock, tags=['EMLock'])
+async def get(id: str):
+    return await EMLock.get(id, skip_secrets=True)
+
+
+@router.get('/emlock', response_model=EMLockGetResp, tags=['EMLock'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await EMLock.get_all(params, skip_secrets=True)
+
+
+@router.get('/alerts/{id}', response_model=Alerts, tags=['Alerts'])
+async def get(id: str):
+    return await Alerts.get(id, skip_secrets=True)
+
+
+@router.get('/alerts', response_model=AlertsGetResp, tags=['Alerts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await Alerts.get_all(params, skip_secrets=True)
+
+
+@router.post('/cemslocationmaster', response_model=CEMSLocationMaster, tags=['CEMSLocationMaster'])
+async def create(inputObj: CEMSLocationMasterCreate):
+    return await inputObj.create()
+
+
+@router.put('/cemslocationmaster', response_model=CEMSLocationMaster, tags=['CEMSLocationMaster'])
+async def update(inputObj: CEMSLocationMaster):
+    return await inputObj.modify()
+
+
+@router.get('/cemslocationmaster/{id}', response_model=CEMSLocationMaster, tags=['CEMSLocationMaster'])
+async def get(id: str):
+    return await CEMSLocationMaster.get(id, skip_secrets=True)
+
+
+@router.get('/cemslocationmaster', response_model=CEMSLocationMasterGetResp, tags=['CEMSLocationMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CEMSLocationMaster.get_all(params, skip_secrets=True)
+
+
+@router.delete('/cemslocationmaster/{id}', tags=['CEMSLocationMaster'])
+async def delete(id: str):
+    return await CEMSLocationMaster.delete(id)
+
+
+@router.post('/cemsquantitymaster', response_model=CEMSQuantityMaster, tags=['CEMSQuantityMaster'])
+async def create(inputObj: CEMSQuantityMasterCreate):
+    return await inputObj.create()
+
+
+@router.put('/cemsquantitymaster', response_model=CEMSQuantityMaster, tags=['CEMSQuantityMaster'])
+async def update(inputObj: CEMSQuantityMaster):
+    return await inputObj.modify()
+
+
+@router.get('/cemsquantitymaster/{id}', response_model=CEMSQuantityMaster, tags=['CEMSQuantityMaster'])
+async def get(id: str):
+    return await CEMSQuantityMaster.get(id, skip_secrets=True)
+
+
+@router.get('/cemsquantitymaster', response_model=CEMSQuantityMasterGetResp, tags=['CEMSQuantityMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CEMSQuantityMaster.get_all(params, skip_secrets=True)
+
+
+@router.delete('/cemsquantitymaster/{id}', tags=['CEMSQuantityMaster'])
+async def delete(id: str):
+    return await CEMSQuantityMaster.delete(id)

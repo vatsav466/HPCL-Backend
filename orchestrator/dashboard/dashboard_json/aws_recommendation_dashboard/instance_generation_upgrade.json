@@ -1,0 +1,74 @@
+{
+    "database": "4",
+    "schema": "public",
+    "table": "clearpier_recommendations",
+    "visualization_name": "pivot",
+    "name": "Instance Generation Upgrade",
+    "description": "",
+    "params": {
+      "queries": [
+        {
+          "filters": [
+            {
+              "col": "generation_upgrade",
+              "op": "IN",
+              "val": [
+               true
+              ]
+            }
+          ],
+          "columns": [],
+          "metrics": [
+            {
+              "expression_type": "SIMPLE",
+              "column": {
+                "column_name": "Monthly Savings ",
+                "type": "DOUBLE PRECISION"
+              },
+              "aggregate": "SUM",
+              "label": "Monthly Savings"
+            },
+            {
+              "expression_type": "SIMPLE",
+              "column": {
+                "column_name": "instance_id",
+                "type": "TEXT"
+              },
+              "aggregate": "COUNT",
+              "label": "Resource Count"
+            }
+          ],
+          "orderby": [
+            {
+              "order_by": false,
+              "expression_type": "SIMPLE",
+              "column": {
+                "column_name": "Monthly Savings ",
+                "type": "DOUBLE PRECISION"
+              },
+              "aggregate": "SUM",
+              "label": "Monthly Savings"
+            }
+          ],
+          "row_limit": 100000,
+          "series_columns": [],
+          "series_limit": 0,
+          "order_descending": true
+        }
+      ],
+      "form_data": {
+        "x_axis": {},
+        "metrics": [],
+        "groupby": [
+          {
+          "name":"region",
+          "label":"Region"
+        }
+        ],
+        "query_mode":"aggregate",
+        "order_descending": false,
+        "row_limit": 0,
+        "show_legend": false
+      }
+    }
+  }
