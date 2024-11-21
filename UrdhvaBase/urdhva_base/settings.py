@@ -14,7 +14,7 @@ Db_Urls_Base = {
             "https://admin:password@localhost:9200"
         ],
         "postgres_async": [
-            "postgresql+asyncpg://localhost:5432/hpcl_ceg?user=postgres&password=1234"
+            "postgresql+asyncpg://10.90.38.162:5432/hpcl_ceg?user=ceg_user&password=TTNqetkiJLPM50jC"
         ],
         "redis": [
             "redis://localhost:6379"
@@ -73,7 +73,7 @@ class Settings(pydantic_settings.BaseSettings):
     mft_path: str = ""
     ui_path: str = ""
     download_path: str = ""
-    template_path: str = "/Users/appleair/PycharmProjects/hpcl_project/dnc_backend_v2/orchestrator/notification_templates"
+    template_path: str = "/opt/ceg/algo/orchestrator/notification_templates"
     kibana_dashboard_header: str = 'osd-xsrf'
     db_urls: typing.Dict[str, typing.List[pydantic.AnyUrl]] = Db_Urls_Base
 
@@ -102,7 +102,7 @@ class Settings(pydantic_settings.BaseSettings):
     superset_password: str = 'password'
 
     # camunda
-    camunda_url: str = 'http://localhost:8080'
+    camunda_url: str = 'http://10.90.38.166:8080'
     camunda_default_config: typing.Dict[str, int] = {
         "maxTasks": 1,
         "lockDuration": 10000,
@@ -112,6 +112,19 @@ class Settings(pydantic_settings.BaseSettings):
         "sleepSeconds": 30
     }
 
+    # RabbitMQ
+    rabbitmq_enabled: bool = False
+    rabbitmq_host: str = "10.90.38.167"
+    rabbitmq_port: int = 5672
+    rabbitmq_username: str = "hpcl_ceg"
+    rabbitmq_password: str = "algo#ceg@4321"
+    rabbitmq_vhost: str = "hpcl_ceg"
+    rabbitmq_queue: str = "tagsdata"
+    rabbitmq_auto_ack: bool = True
+
+    #Thingsboard
+    THINGSBOARD_URL: str = "http://10.90.38.165:8080"
+    
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \
                 self.db_multi_tenancy_model == MultiTenancyMode.SingleServerMultiDb:
