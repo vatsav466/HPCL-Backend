@@ -26,11 +26,11 @@ async def consume_message():
     try:
         # Connect to RabbitMQ server
         connection = await aio_pika.connect_robust(
-            host=urdhva_base.settings.rabbitmq_host["host"],
-            port=urdhva_base.settings.rabbitmq_port["port"],
-            login=urdhva_base.settings.rabbitmq_username["username"],
-            password=urdhva_base.settings.rabbitmq_password["password"],
-            virtualhost=urdhva_base.settings.rabbitmq_vhost["vhost"],
+            host=urdhva_base.settings.rabbitmq_host,
+            port=urdhva_base.settings.rabbitmq_port,
+            login=urdhva_base.settings.rabbitmq_username,
+            password=urdhva_base.settings.rabbitmq_password,
+            virtualhost=urdhva_base.settings.rabbitmq_vhost,
         )
 
         async with connection:
@@ -40,13 +40,13 @@ async def consume_message():
 
             # Declare the queue (idempotent)
             queue = await channel.declare_queue(
-                name=urdhva_base.settings.rabbitmq_queue["queue"],
+                name=urdhva_base.settings.rabbitmq_queue,
                 durable=True,
             )
 
             # Start consuming messages
-            print(f"Waiting for messages in queue: '{urdhva_base.settings.rabbitmq_queue['queue']}'")
-            await queue.consume(on_message, no_ack=urdhva_base.settings.rabbitmq_auto_ack["auto_ack"])
+            print(f"Waiting for messages in queue: '{urdhva_base.settings.rabbitmq_queue}'")
+            await queue.consume(on_message, no_ack=urdhva_base.settings.rabbitmq_auto_ack)
 
             # Keep the consumer running
             await asyncio.Future()  # Runs indefinitely until interrupted
