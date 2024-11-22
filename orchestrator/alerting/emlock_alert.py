@@ -27,7 +27,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
             exception_msg = (f"Vehicle Number - {record['vehicle_number']}, Violation Type - {record['violation_type']}"
                              f", Approved By - {record['approved_by']}, "
                              f"Exception Date - {recv_time}")
-            query = (f"where sap_id={record['location_id']} and vehicle_number='{record['vehicle_number']}' "
+            query = (f"sap_id={record['location_id']} and vehicle_number='{record['vehicle_number']}' "
                      f"and status='Open' and violation_type='{record['violation_type']}'")
 
             data = await api_manager.hpcl_ceg_model.EMLock.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
