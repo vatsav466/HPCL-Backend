@@ -19,7 +19,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         """
         recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
         for record in alert_data['data']:
-            status, location_details = alert_helper.get_location_details(record['location_type'], record['location_id'])
+            status, location_details = await alert_helper.get_location_details(record['location_type'], record['location_id'])
             if not status:
                 logger.info(f"Error in finding location {record['location_id']} "
                             f"for bu {record['location_type']} - {location_details}")
