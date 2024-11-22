@@ -116,7 +116,7 @@ async def rolemaster_download_template(data: Rolemaster_Download_TemplateParams)
     """
     download_path = urdhva_base.settings.download_path
     downloadpath = os.path.join(download_path, "downloads")
-    template_file_path = os.path.join(download_path, "lrole_master_template.csv")
+    template_file_path = os.path.join(download_path, "role_master_template.csv")
 
     df = pl.read_csv(f"{downloadpath}/role_master.csv")
     # Create a new empty DataFrame with the same columns
