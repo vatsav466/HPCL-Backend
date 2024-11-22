@@ -115,13 +115,17 @@ async def rolemaster_download_template(data: Rolemaster_Download_TemplateParams)
         HTTPException: If there is an error creating or serving the CSV template.
     """
     download_path = urdhva_base.settings.download_path
-    downloadpath = os.path.join(download_path, "downloads")
-    template_file_path = os.path.join(download_path, "role_master_template.csv")
+    template_file_path = os.path.join(download_path, "templates", "role_master_template.csv")
 
-    df = pl.read_csv(f"{downloadpath}/role_master.csv")
-    # Create a new empty DataFrame with the same columns
-    template_df = pl.DataFrame({col: [] for col in df.columns})
-    
+    # Read the CSV file into a DataFrame
+    df = pl.read_csv(f"{download_path}/role_master.csv")
+
+    # Create a new empty DataFrame with the same columns as the original
+    template_df = pl.DataFrame({col: pl.Series(name=col, values=[]) for col in df.columns})
+
+    # Ensure the "templates" directory exists
+    os.makedirs(os.path.dirname(template_file_path), exist_ok=True)
+
     # Save the empty DataFrame as a template CSV
     template_df.write_csv(template_file_path)
 

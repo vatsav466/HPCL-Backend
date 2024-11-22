@@ -123,13 +123,17 @@ async def locationmaster_download_template(data: Locationmaster_Download_Templat
         HTTPException: If there is an error creating or serving the CSV template.
     """
     download_path = urdhva_base.settings.download_path
-    downloadpath = os.path.join(download_path, "downloads")
-    template_file_path = os.path.join(download_path, "location_master_template.csv")
+    template_file_path = os.path.join(download_path, "templates", "location_master_template.csv")
 
-    df = pl.read_csv(f"{downloadpath}/location_master.csv")
-    # Create a new empty DataFrame with the same columns
-    template_df = pl.DataFrame({col: [] for col in df.columns})
-    
+    # Read the CSV file into a DataFrame
+    df = pl.read_csv(f"{download_path}/location_master.csv")
+
+    # Create a new empty DataFrame with the same columns as the original
+    template_df = pl.DataFrame({col: pl.Series(name=col, values=[]) for col in df.columns})
+
+    # Ensure the "templates" directory exists
+    os.makedirs(os.path.dirname(template_file_path), exist_ok=True)
+
     # Save the empty DataFrame as a template CSV
     template_df.write_csv(template_file_path)
 
