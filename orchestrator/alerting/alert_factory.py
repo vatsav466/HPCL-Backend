@@ -72,7 +72,7 @@ class AlertFactory:
                 device_id=alert_data['deviceId'],
                 device_type=alert_data["deviceType"],
                 device_name=alert_data['deviceName'],
-                device_msg=alert_data['message'],
+                device_msg=alert_data.get('message', ''),
                 alert_history=alert_data['location_data'].get('alertHistory', []),
                 last_sms_to=[],
                 last_mailed_to=[],
