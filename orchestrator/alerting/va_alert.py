@@ -1,6 +1,6 @@
-import json
 import urdhva_base
-from api_manager import hpcl_ceg_model
+import json
+import hpcl_ceg_model
 import utilities.bu_key_mapping as bu_key_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory

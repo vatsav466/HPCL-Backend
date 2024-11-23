@@ -9,19 +9,20 @@ def test_emlock_api():
         "content-type": "application/json"
     }
     data = {
-        "vendor_id": "vendor001122337",
-        "data": [
-            {
-                "location_id": "867152",
-                "location_type": "TAS",
-                "vehicle_number": "MH10ABC2367",
-                "violation_type": "decantation_issue",
-                "initiated_date": "10/12/24 10:00:00 AM",
-                "approved_date": "11/12/24 10:00:00 AM",
-                "approved_by": "venu@algofusiontech.com"
-            }
-        ]
-    }
+        "vendor_id": "50041589",
+        "data":
+            [
+                {
+                    "location_id": "1856",
+                    "location_type": "RO",
+                    "vehicle_number": "TN40C6151",
+                    "violation_type": "VTSOFFLINE",
+                    "initiated_date": "10/11/2024 10:20:00 PM",
+                    "approved_date": "10/11/2024 10:25:00 PM",
+                    "approved_by": "sedhu"
+                }
+            ]
+        }
 
     response = requests.post(url, headers=headers, json=data, verify=False)
     print(response.status_code, "  ", response.text)
