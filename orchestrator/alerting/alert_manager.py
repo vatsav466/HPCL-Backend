@@ -21,19 +21,8 @@ async def create_alert(alert_data):
     Returns:
         dict: A dictionary containing the status, message and the created alert document.
     """
-    if alert_data['alert_type'] == 'RO':
-        return await ro_alert.ROAlertManager().create_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'VA':
-        return await va_alert.VAAlertManager().create_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'VTS':
-        return await vts_alert.VTSAlertManager().create_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'EMLock':
-        return await emlock_alert.EMLockAlertManager().create_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'TAS':
-        return await tas_alert.TASAlertManager().create_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'LPG':
-        return await lpg_alert.LPGAlertManager().create_bu_alert(alert_data)
-    return None
+    alert_type = alert_data['alert_type']
+    return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").create_bu_alert(alert_data)
 
 
 async def close_alert(alert_data):
@@ -46,19 +35,8 @@ async def close_alert(alert_data):
     Returns:
         dict: A dictionary containing the status, message and the closed alert document.
     """
-    if alert_data['alert_type'] == 'RO':
-        return await ro_alert.ROAlertManager().close_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'TAS':
-        return await vts_alert.VTSAlertManager().close_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'LPG':
-        return await vts_alert.VTSAlertManager().close_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'VA':
-        return await va_alert.VAAlertManager().close_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'VTS':
-        return await vts_alert.VTSAlertManager().close_bu_alert(alert_data)
-    elif alert_data['alert_type'] == 'EMLock':
-        return await emlock_alert.EMLockAlertManager().close_bu_alert(alert_data)
-    return None
+    alert_type = alert_data['alert_type']
+    return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").close_bu_alert(alert_data)
 
 
 class AlertAction:
