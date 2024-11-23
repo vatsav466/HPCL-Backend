@@ -850,3 +850,88 @@ class CEMSQuantityMasterGetResp(pydantic.BaseModel):
     data: typing.List[CEMSQuantityMaster]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class TagsCreate(pydantic.BaseModel):
+    name: str
+    value: str
+
+
+class CredentialDataCreate(pydantic.BaseModel):
+    host: typing.Optional[str] = pydantic.Field("", **{})
+    port: typing.Optional[str] = pydantic.Field("", **{})
+    access_key: typing.Optional[str] = pydantic.Field("", **{})
+    secret_key: typing.Optional[urdhva_base.types.Secret] | None = None
+    user_name: typing.Optional[str] = pydantic.Field("", **{})
+    password: typing.Optional[urdhva_base.types.Secret] | None = None
+    fingerprint: typing.Optional[str] = pydantic.Field("", **{})
+    tenancy: typing.Optional[str] = pydantic.Field("", **{})
+    key_file: typing.Optional[str] = pydantic.Field("", **{})
+    key_content: typing.Optional[str] = pydantic.Field("", **{})
+    client_id: typing.Optional[str] = pydantic.Field("", **{})
+    client_secret: typing.Optional[urdhva_base.types.Secret] | None = None
+    tenant_id: typing.Optional[str] = pydantic.Field("", **{})
+    private_pass: typing.Optional[urdhva_base.types.Secret] | None = None
+    private_key_pass: typing.Optional[urdhva_base.types.Secret] | None = None
+    source_path: typing.Optional[str] = pydantic.Field("", **{})
+    dest_path: typing.Optional[str] = pydantic.Field("", **{})
+    api_key: typing.Optional[urdhva_base.types.Secret] | None = None
+    database_name: typing.Optional[str] = pydantic.Field("", **{})
+    other_details: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class CredsModelSchema(UrdhvaPostgresBase):
+    __tablename__ = 'creds_model'
+    
+    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cred_model: Mapped[str] = mapped_column("cred_model", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cred_type: Mapped[str] = mapped_column("cred_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    credentials: Mapped[typing.Any] = mapped_column("credentials", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class CredsModelCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'creds_model'
+    
+    name: str
+    cred_model: str
+    cred_type: str
+    credentials: CredentialDataCreate
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CredsModelSchema
+        upsert_keys = []
+
+
+class CredsModel(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'creds_model'
+    
+    name: typing.Optional[str] | None = None
+    cred_model: typing.Optional[str] | None = None
+    cred_type: typing.Optional[str] | None = None
+    credentials: typing.Optional[CredentialDataCreate] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CredsModelSchema
+        upsert_keys = []
+
+
+class CredsModelGetResp(pydantic.BaseModel):
+    data: typing.List[CredsModel]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Credsmodel_Create_CredentialParams(pydantic.BaseModel):
+    record_id: typing.Optional[int] = pydantic.Field(0, **{})
+    name: str
+    cred_model: str
+    cred_type: str
+    tags: typing.Optional[typing.List[TagsCreate]] | None = None
+    credentials: CredentialDataCreate
+
+
+class Credsmodel_Load_CredsParams(pydantic.BaseModel):
+    pass
+    

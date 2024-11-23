@@ -350,3 +350,51 @@ Model CEMSQuantityMaster {
     quantity_id str
     unit str
 }
+
+Model Tags internal {
+    name str
+    value str
+}
+
+Model CredentialData internal {
+    host optional str
+    port optional str
+    access_key optional str
+    secret_key optional secret
+    user_name optional str
+    password optional secret
+    fingerprint optional str
+    tenancy optional str
+    key_file optional str
+    key_content optional str
+    client_id optional str
+    client_secret optional secret
+    tenant_id optional str
+    private_pass optional secret
+    private_key_pass optional secret
+    source_path optional str
+    dest_path optional str
+    api_key optional secret
+    database_name optional str
+    other_details optional str
+}
+
+Model CredsModel {
+    name str
+    cred_model str
+    cred_type str
+    credentials CredentialData
+
+   Action=> create_credential {
+         record_id optional int
+         name str
+         cred_model str
+         cred_type str
+         tags optional list Tags
+         credentials CredentialData
+   }
+
+   Action=> load_creds {
+   }
+
+}

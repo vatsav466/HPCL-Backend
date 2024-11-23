@@ -135,3 +135,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/cemsquantitymaster/{id}', tags=['CEMSQuantityMaster'])
 async def delete(id: str):
     return await CEMSQuantityMaster.delete(id)
+
+
+@router.post('/credsmodel', response_model=CredsModel, tags=['CredsModel'])
+async def create(inputObj: CredsModelCreate):
+    return await inputObj.create()
+
+
+@router.put('/credsmodel', response_model=CredsModel, tags=['CredsModel'])
+async def update(inputObj: CredsModel):
+    return await inputObj.modify()
+
+
+@router.get('/credsmodel/{id}', response_model=CredsModel, tags=['CredsModel'])
+async def get(id: str):
+    return await CredsModel.get(id, skip_secrets=True)
+
+
+@router.get('/credsmodel', response_model=CredsModelGetResp, tags=['CredsModel'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CredsModel.get_all(params, skip_secrets=True)
+
+
+@router.delete('/credsmodel/{id}', tags=['CredsModel'])
+async def delete(id: str):
+    return await CredsModel.delete(id)
