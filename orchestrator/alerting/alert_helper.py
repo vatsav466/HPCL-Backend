@@ -85,17 +85,22 @@ def pad_digits(number, padding_count=8):
     return str(number).zfill(padding_count)
 
 
-async def get_alert_unique_id(bu, sop_id):
+async def get_alert_unique_id(bu, sap_id, sop_id, device_id=None):
     """
     Generate a unique ID for an alert based on the business unit and SOP ID.
     Parameters:
     bu (str): Business unit identifier.
+    sap_id (str): SAP ID / LocationId.
     sop_id (str): SOP ID.
+    device_id (str): SOP ID.
 
     Returns:
     str: Unique ID.
     """
     redis_ins = await urdhva_base.redispool.get_redis_connection()
-    redis_key = f"{bu.upper()}_{sop_id.upper()}"
-    number = await redis_ins.incr(redis_key)
-    return f"{redis_key}_{pad_digits(number, 8)}"
+    redis_key = [f"{bu.upper()}", f"{sap_id.upper()}", f"{sop_id.upper()}"]
+    if device_id:
+        redis_key.append(f"_{device_id.upper()}")
+    number = await redis_ins.incr("_".join(redis_key))
+    redis_key.append(f"{pad_digits(number, 8)}")
+    return "_".join(redis_key)

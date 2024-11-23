@@ -222,6 +222,10 @@ Model Alert_History internal {
     mail_sent_to optional str
     action_type AlertActionType
     action_msg str
+    atr_uploaded optional bool
+    maintenance_exception optional bool
+    revocation optional bool
+    no_exception optional bool
 }
 
 Model tags internal {

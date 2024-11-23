@@ -35,7 +35,7 @@ class AlertFactory:
 
         Parameters:
             alert_data (dict): A dictionary containing the data to create the alert
-                - BU (str): Business unit
+                - bu (str): Business unit
                 - sopid (str): SOP ID
                 - sapid (str): SAP ID
                 - interlockName (str): Interlock name
@@ -48,13 +48,13 @@ class AlertFactory:
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
-            bu = alert_data['BU']
-            sop_id = alert_data['sopid']
-            sap_id = alert_data['sapid']
-            interlock_name = alert_data['interlockName']
+            bu = alert_data['bu']
+            sop_id = alert_data['sop_id']
+            sap_id = alert_data['sap_id']
+            interlock_name = alert_data['interlock_name']
 
             # Create Alert
-            uniqueId = await get_alert_unique_id(bu, sop_id)
+            unique_id = await get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
             # Generate alert alert_data
             alert = hpcl_ceg_model.AlertsCreate(
                 bu=bu,
@@ -64,7 +64,7 @@ class AlertFactory:
                 severity=alert_data['severity'].capitalize(),
                 alert_status=hpcl_ceg_enum.AlertStatus.Open,
                 alert_state=hpcl_ceg_enum.AlertState.InProgress,
-                unique_id=uniqueId,
+                unique_id=unique_id,
                 alert_section=bu,
                 external_id=alert_data.get('alert_id', ''),
                 interlock_name=interlock_name,
@@ -72,7 +72,7 @@ class AlertFactory:
                 device_id=alert_data['deviceId'],
                 device_type=alert_data["deviceType"],
                 device_name=alert_data['deviceName'],
-                device_msg=alert_data.get('message', ''),
+                device_msg=alert_data['message'],
                 alert_history=alert_data['location_data'].get('alertHistory', []),
                 last_sms_to=[],
                 last_mailed_to=[],
@@ -91,14 +91,14 @@ class AlertFactory:
             resp = await alert.create()
 
             payload = {"businessKey": alert.external_id,
-                "variables": {"alert_id": {"value": resp['id'], "type": "String"},
-                              "interlock_name": {"value": alert.interlock_name, "type": "String"},
-                              "interlock_id": {"value": "", "type": "String"},
-                              "location_device_id": {"value": alert.device_id, "type": "String"},
-                              "location_type": {"value": alert.bu, "type": "String"},
-                              "sap_id": {"value": alert.sap_id, "type": "String"},
-                              "sop_id": {"value": alert.sop_id, "type": "String"}
-                              }}
+                       "variables": {"alert_id": {"value": resp['id'], "type": "String"},
+                                     "interlock_name": {"value": alert.interlock_name, "type": "String"},
+                                     "interlock_id": {"value": "", "type": "String"},
+                                     "location_device_id": {"value": alert.device_id, "type": "String"},
+                                     "location_type": {"value": alert.bu, "type": "String"},
+                                     "sap_id": {"value": alert.sap_id, "type": "String"},
+                                     "sop_id": {"value": alert.sop_id, "type": "String"}
+                                     }}
 
             # Create Interlock
             # Start workflow after creating the interlock

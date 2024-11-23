@@ -1,3 +1,8 @@
+import urdhva_base
+import re
+import httpx
+import datetime
+import hpcl_ceg_model
 import orchestrator.alerting.ro_alert as ro_alert
 import orchestrator.alerting.va_alert as va_alert
 import orchestrator.alerting.vts_alert as vts_alert
@@ -58,62 +63,163 @@ async def close_alert(alert_data):
 
 class AlertAction:
     @classmethod
-    async def update_alert_data(cls, alert_data):
+    async def update_alert_data(cls, input_data):
         """
         Function to update alert data, Either reject or approve or justify or override
-        :param alert_data:
+        :param input_data:
         :return:
         """
-        function_map = {"Justification": "justify_alert", "Rejected": "reject_alert",
-                        "Approved": "approve_alert", "Override": "override_alert"}
+        function_map = {"Justification": "justify_alert", "Rejected": "reject_alert", "Approved": "approve_alert",
+                        "Override": "override_alert", "interLockOk": "interlock_ok_alert",
+                        "Message": "send_notification"}
+        alert_id = input_data['alert_id']
+        try:
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+        except Exception as e:
+            print("Exception in getting alert data:%s" % e)
+            return False, "Provided alert id is not valid"
+
+        # Validating whether user has access permissions for the provided action
+        status, resp, email = await cls.verify_user_access_permissions(alert_data['bu'], alert_data['sapId'],
+                                                                       input_data['alert_action'])
+        if not status:
+            return status, resp
+
+        # This creates a regular expression pattern to match anything within < and >,
+        # which includes HTML tags like <div>, <span>, <br>, etc.
+        # The .*? ensures a non-greedy match, meaning it will stop at the first closing >
+        # rather than consuming everything until the last >
+        condition = re.compile('<.*?>')
+        input_data["action_msg"] = re.sub(condition, '', input_data["action_msg"])
 
         # get the function name
-        function_name = function_map.get(alert_data['alert_action'], None)
+        function_name = function_map.get(input_data['alert_action'], None)
         if function_name:
+            await cls.update_alert_history(input_data, alert_data)
             # call the function
-            return await getattr(cls, function_name)(alert_data)
-        return None
+            return await getattr(cls, function_name)(input_data, alert_data)
+        return False, "Alert action is not valid"
 
     @classmethod
-    async def base_functionality(cls, alert_data):
+    async def update_alert_history(cls, input_data, alert_data):
         """
         Function to update alert data, Either reject or approve or justify or override
+        :param input_data:
         :param alert_data:
         :return:
         """
         # Todo:- here we have to write all the generic functionality like updating the alert data,
         #  history, fetching users, roles, ...
+        alert_history = alert_data.get('alert_history', [])
+        allocated_time = alert_data["updated"]
+        if alert_history and alert_history[-1].get("processed_time"):
+            allocated_time = alert_history[-1]["processed_time"]
+        processed_time = datetime.datetime.now(datetime.timezone.utc)
+        event_tags = input_data.get("event_tags", {})
+        if not event_tags:
+            event_tags = {}
+        alert_history.append({"allocated_time": allocated_time, "processed_time": processed_time,
+                              "action_type": input_data["alert_action"], "action_msg": input_data["action_msg"],
+                              "mail_sent_to": "", "atr_uploaded": event_tags.get("is_atr_uploaded", False),
+                              "maintenance_exception": event_tags.get("is_maintenance_exception", False),
+                              "revocation": event_tags.get("is_revocation", False),
+                              "no_exception": event_tags.get("no_exception", False)})
+        await hpcl_ceg_model.Alerts(**{"id": alert_data["id"], "alert_history": alert_history}).modify()
 
     @classmethod
-    async def reject_alert(cls, alert_data):
+    def get_exception_message(cls, exception):
+        """
+        Function to get the exception message
+        :param exception:
+        :return:
+        """
+        exception_msg = {}
+        if not exception:
+            return exception_msg
+        key_map = {"is_maintenance_exception": {"name": "isMaintenanceException", "type": "Boolean"},
+                   "is_atr_uploaded": {"name": "isAtrUploaded", "type": "Boolean"},
+                   "is_revocation": {"name": "isRevocation", "type": "Boolean"},
+                   "no_exception": {"name": "noException", "type": "Boolean"}
+                   }
+        return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
+                for key, value in key_map.items()}
+
+    @classmethod
+    async def publish_to_camunda(cls, input_data, alert_data, action_type, msg):
+        """
+        Function to generate camunda message
+        :param input_data:
+        :param alert_data:
+        :param action_type:
+        :param msg:
+        :return:
+        """
+        process_variables = cls.get_exception_message(input_data.get("event_tags", {}))
+        process_variables.update({"override_days": {"type": "String", "value": input_data.get('days', '')},
+                                  "msg": {"type": "String", "value": msg},
+                                  "action_type": {"type": "String", "value": action_type}})
+        messaged_data = {
+            "messageName": action_type,
+            "unique_key": alert_data["unique_id"],
+            "processVariables": process_variables
+        }
+
+        # Posting data to camunda
+        url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+        r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
+        if r.status_code / 100 != 2:
+            print("Error while sending message to camunda:%s -  %s" % r.status_code, r.text)
+        else:
+            print("Message sent to camunda")
+        return True, "Successfully sent message to camunda"
+
+    @classmethod
+    async def verify_user_access_permissions(cls, bu, sap_id, action_type):
+        """
+        Function to verify whether the user has access for the provided action
+        :return: <bool> <string>
+        """
+        session_details = urdhva_base.context.context.get("rpt", {})
+        email = session_details.get('email', '')
+        # todo:- Need to update whether user has access or not for this particular BU, sapId and ActionType
+        return True, "", email
+
+    @classmethod
+    async def reject_alert(cls, input_data, alert_data):
         """
         Function to reject an alert
+        :param input_data:
         :param alert_data:
         :return:
         """
+        return await cls.publish_to_camunda(input_data, alert_data, "Reject")
 
     @classmethod
-    async def approve_alert(cls, alert_data):
+    async def approve_alert(cls, input_data, alert_data):
         """
         Function to approve an alert
+        :param input_data:
         :param alert_data:
         :return:
         """
+        return await cls.publish_to_camunda(input_data, alert_data, "Approved")
 
     @classmethod
-    async def justify_alert(cls, alert_data):
+    async def justify_alert(cls, input_data, alert_data):
         """
         Function to justify an alert
+        :param input_data:
         :param alert_data:
         :return:
         """
+        return await cls.publish_to_camunda(input_data, alert_data, "Justification")
 
     @classmethod
-    async def override_alert(cls, alert_data):
+    async def override_alert(cls, input_data, alert_data):
         """
         Function to override an alert
+        :param input_data:
         :param alert_data:
         :return:
         """
-
-
+        return await cls.publish_to_camunda(input_data, alert_data, "Override")

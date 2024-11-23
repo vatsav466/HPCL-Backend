@@ -9,7 +9,6 @@ import orchestrator.alerting.alert_factory as alert_factory
 logger = urdhva_base.logger.Logger.getInstance("ro_alert_processing")
 
 
-
 class ROAlertManager(alert_factory.AlertFactory):
     @classmethod
     async def create_bu_alert(cls, alert_data):

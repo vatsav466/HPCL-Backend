@@ -27,22 +27,29 @@ class EMLockAlertManager(alert_factory.AlertFactory):
             exception_msg = (f"Vehicle Number - {record['vehicle_number']}, Violation Type - {record['violation_type']}"
                              f", Approved By - {record['approved_by']}, "
                              f"Exception Date - {recv_time}")
-            query = (f"sap_id={record['location_id']} and vehicle_number='{record['vehicle_number']}' "
+            query = (f"sap_id='{record['location_id']}' and vehicle_number='{record['vehicle_number']}' "
                      f"and status='Open' and violation_type='{record['violation_type']}'")
 
-            data = await api_manager.hpcl_ceg_model.EMLock.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
+            data = await api_manager.hpcl_ceg_model.EMLock.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1)
+                                                                   , resp_type='plain')
             if len(data['data']):
                 # Updating existing EM Lock record
                 em_lock_record = data['data'][0]
                 em_lock_record['violation_history'].append(exception_msg)
-                if (recv_time - dt_parser.parse(em_lock_record['violation_start_date'])).days > 15:
+                violation_start_date = em_lock_record['violation_start_date']
+                if isinstance(violation_start_date, str):
+                    violation_start_date = dt_parser.parse(violation_start_date)
+                time_period = (recv_time - violation_start_date).days
+                if time_period > 15:
                     em_lock_record['violation_count'] = 0
                 else:
                     em_lock_record['violation_count'] += 1
                 if em_lock_record['violation_count'] > 10:
                     # Create Alert record and class create_alert
                     em_lock_record['violation_count'] = 0
-                    await cls.create_alert[em_lock_record]
+                    em_lock_record['sop_id'] = ''
+                    em_lock_record['interlock_name'] = ''
+                    await cls.create_alert(em_lock_record)
                 # Modifying EmLock record data
                 await api_manager.hpcl_ceg_model.EMLock(**em_lock_record).modify()
             else:
@@ -52,7 +59,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                                   "violation_type": record['violation_type'],
                                   "violation_count": 1, "status": 'Open', "violation_history": [exception_msg],
                                   "violation_start_date": recv_time}
-                await api_manager.hpcl_ceg_model.EMLock(**em_lock_record).create()
+                await api_manager.hpcl_ceg_model.EMLockCreate(**em_lock_record).create()
 
     @classmethod
     async def close_bu_alert(cls, alert_data):

@@ -45,7 +45,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             f", Main Supply Removal Count - {record['main_supply_removal_count']}, Night Driving Count - {record['night_driving_count']}"
                             f", Device Offline Count - {record['device_offline_count']}, Device Tamper Count - {record['device_tamper_count']}")
                 
-                query = (f"where sap_id={record['location_id']} and tl_number='{record['tl_number']}' "
+                query = (f"sap_id={record['location_id']} and tl_number='{record['tl_number']}' "
                      f"and status='Open' and violation_type='{record['violation_type']}'")
 
                 data = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
