@@ -1,7 +1,8 @@
 import json
 import traceback
 import urdhva_base
-from api_manager import hpcl_ceg_model, hpcl_ceg_enum
+import hpcl_ceg_enum
+import hpcl_ceg_model
 from orchestrator.workflow.workflow_process import Camunda
 from orchestrator.alerting.alert_helper import get_alert_unique_id
 from utilities.tas_interlock_mapping import TASInterlockMapping
