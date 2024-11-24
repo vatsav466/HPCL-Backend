@@ -752,6 +752,81 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "credsmodel",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CredsModel",
+            "attributes": {},
+            "uris": [
+                "/api/credsmodel/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_credential"
+                },
+                {
+                    "name": "load_creds"
+                }
+            ]
+        },
+        {
+            "name": "credsmodel_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CredsModel_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/credsmodel/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "credsmodel_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CredsModel_admin",
+            "attributes": {},
+            "uris": [
+                "/api/credsmodel/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_credential"
+                },
+                {
+                    "name": "load_creds"
+                }
+            ]
         }
     ],
     "policies": [
@@ -909,6 +984,14 @@
         {
             "name": "download_template",
             "displayName": "download_template"
+        },
+        {
+            "name": "create_credential",
+            "displayName": "create_credential"
+        },
+        {
+            "name": "load_creds",
+            "displayName": "load_creds"
         }
     ]
 }

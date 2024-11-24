@@ -5,6 +5,7 @@ import fastapi
 import json
 import httpx
 import base64
+import importlib
 import traceback
 import hpcl_ceg_model
 import urdhva_base.redispool
@@ -25,7 +26,7 @@ async def charts_get_tables(data: Charts_Get_TablesParams):
         Retrieves the tables from the given database and schema
     Input:
         {
-            "database": "zolix_c2o",
+            "database": "hpcl_ceg",
             "schema": "public"
         }
     Returns: 
@@ -33,15 +34,10 @@ async def charts_get_tables(data: Charts_Get_TablesParams):
     Output:
         ["organization","credential_vault","billing_cost","cloud_accounts","recommendations","metrics"]
     '''
-    async_session = await charts_functions.check_db(data.database)
-    session = async_session()
-    try:
-        tables_list = await charts_functions.getTables(session, data.schema)
-        return {"status": True, "message": "success", "data": tables_list}
-    except Exception as e:
-        return {"status": False, "message": str(e), "data": []}
-    finally:
-        await session.close()
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'table_name'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    return await function(schema_name=data.schema)
 
 
 # Action get_columns
@@ -52,7 +48,7 @@ async def charts_get_columns(data: Charts_Get_ColumnsParams):
         Retrieves the column names from the given table, schema and database
     Input:
         {
-            "database": "zolix_c2o",
+            "database": "hpcl_ceg",
             "schema": "public",
             "table": "recommendations"
         }
@@ -61,25 +57,14 @@ async def charts_get_columns(data: Charts_Get_ColumnsParams):
     Output:
         ["resource_type","cloud_account_id","cloud_account_name","tenant_id"]
     '''
-
-    async_session = await charts_functions.check_db(data.database)
-    if not async_session:
-        return {"status": False, "message": "check the database name", "data": []}
-    session = async_session()
-    try:
-        columns_list = await charts_functions.getColumns(session, data.schema, data.table)
-        if not columns_list:
-            return {"status": False, "message": "check the table or schema name", "data": []}
-        columns_mapping_list = [{"name": col[0],"display_name": col[0].replace("_", " ").title() ,"type": col[1]} for col in columns_list]
-        return {"status": True, "message": "success", "data": columns_mapping_list}
-    except Exception as e:
-        return {"status": False, "message": str(e), "data": []}
-    finally:
-        await session.close()
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'column_names'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    return await function(schema_name=data.schema, table_name=data.table)
 
 
 @router.post('/get_databases', tags=['Charts'])
-async def get_databases():
+async def get_databases(connection_id: str):
     """
     Description:
         Retrieves the available databases
@@ -88,10 +73,10 @@ async def get_databases():
     Output:
         ["database1","database2","database3 "]
     """
-    database_list = await charts_functions.get_dbs()
-    if not database_list:
-        return {"status": False, "message": "Failed to get databases", "data": []}
-    return {"status": True, "message": "success", "data": database_list}
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'get_databases'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    return await function()
 
 
 # Action get_unique_values
@@ -102,7 +87,7 @@ async def charts_get_unique_values(data: Charts_Get_Unique_ValuesParams):
         Retrives unique values of the given column names
     Input:
         {
-            "database": "zolix_c2o",
+            "database": "hpcl_ceg",
             "schema": "public",
             "table": "recommendations",
             "column": ["resource_type"]
@@ -112,20 +97,10 @@ async def charts_get_unique_values(data: Charts_Get_Unique_ValuesParams):
     Output:
         {"jobStatus":["Success","Failed","Running","RolledBack"]}
     '''
-
-    async_session = await charts_functions.check_db(data.database)
-    if not async_session:
-        return {"status": False, "message": "check the database name", "data": []}
-    session = async_session()
-    try:
-        columns_mapping = await charts_functions.getUniqueValues(session, data.schema, data.table, data.column)
-        if not columns_mapping:
-            return {"status": False, "message": "check the table or column name", "data": []}
-        return {"status": True, "message": "success", "data": columns_mapping}
-    except Exception as e:
-        return {"status": False, "message": str(e), "data": []}
-    finally:
-        await session.close()
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'get_distinct_values'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    return await function(schema_name=data.schema, table_name=data.table, column_name=data.column)
 
 
 # Action create_charts
@@ -144,7 +119,7 @@ async def create_charts(data: ChartsCreate):
 
     viztype = data.visualization_name
     if not data.table:
-        data.table = "zolix_c2o"
+        data.table = "hpcl_ceg"
     if not data.schema:
         data.schema = "public"
     chart_data_str = await charts_functions.retrieve_data(viztype, data)
@@ -222,7 +197,7 @@ async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
         Retrives unique values of the given column names
     Input:
         {
-            "database": "zolix_c2o",
+            "database": "hpcl_ceg",
             "schema": "public",
             "table": "recommendations",
             "column": ["resource_type"]
@@ -232,20 +207,12 @@ async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
     Output:
         {"jobStatus":["Success","Failed","Running","RolledBack"]}
     """
-
-    async_session = await charts_functions.check_db(urdhva_base.settings.db_urls['postgres_async'][0].path[1:])
-    if not async_session:
-        return {"status": False, "message": "check the database name", "data": []}
-    session = async_session()
-    try:
-        columns_mapping = await charts_functions.getUniqueValues(session, "public", data.table, data.column, data.where_cond)
-        if not columns_mapping:
-            return {"status": False, "message": "check the table or column name", "data": []}
-        return {"status": True, "message": "success", "data": columns_mapping}
-    except Exception as e:
-        return {"status": False, "message": str(e), "data": []}
-    finally:
-        await session.close()
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'get_distinct_values'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    return await function(
+        schema_name=data.schema, table_name=data.table, column_name=data.column, where_clause=data.where_cond
+    )
 
 
 # Action drill_down_data
@@ -330,6 +297,7 @@ async def charts_generate_dynamic_chart_query(data: Charts_Generate_Dynamic_Char
         print(f"Exception while running openai api {e}, Traceback: {traceback.format_exc()}")
         return False, f"Error: Request failed due to {str(e)}"
 
+
 # Action save_charts
 @router.post('/save_charts', tags=['Charts'])
 async def charts_save_charts(data: Charts_Save_ChartsParams):
@@ -348,7 +316,7 @@ async def charts_save_charts(data: Charts_Save_ChartsParams):
     else:
         rpt = {}
     created_by = rpt.get('email', 'system')
-    created_user = rpt.get('given_name', 'Zolix') +' '+ rpt.get('family_name', 'Engine')
+    created_user = rpt.get('given_name', 'hpcl_ceg') +' '+ rpt.get('family_name', 'Engine')
     data.created_by = created_by
     data.created_user = created_user
     fields_included_in_hash = ['database', 'schema', 'table', 'visualization_name', 'type', 'created_by']
@@ -360,7 +328,7 @@ async def charts_save_charts(data: Charts_Save_ChartsParams):
     if data.group_id == 0:
         grp_data = GroupsCreate(**{"name": data.group_name, "created_by": data.created_by,
                                    "created_user": data.created_user, "organization_id": data.organization_id})
-        collected  = await grp_data.create()
+        collected = await grp_data.create()
         print("collected create: ", collected)
         print("Groups created")
         data.group_id = collected['id'] if isinstance(collected, dict) else collected.id
@@ -388,6 +356,7 @@ async def charts_save_charts(data: Charts_Save_ChartsParams):
         message = "Chart Data Created"
 
     return {"status": True, "message": message}
+
 
 # Action get_time_range
 @router.post('/get_time_range', tags=['Charts'])
@@ -449,3 +418,31 @@ async def charts_get_auto_complete_text(data: Charts_Get_Auto_Complete_TextParam
       ]
    """
     return await charts_functions.generate_auto_complete_text(data.prompt)
+
+
+# Action connection_vault_routing
+@router.post('/connection_vault_routing', tags=['Charts'])
+async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingParams):
+    Charts_Get_Creds_DetailsParams.connection_id = data.connection_id
+    creds_details = await charts_get_creds_details(Charts_Get_Creds_DetailsParams)
+    module_path = f"orchestrator.connection_vault." \
+                  f"{creds_details['cred_model'].lower()}.{creds_details['cred_type'].lower()}"
+    name = creds_details['cred_type']
+    module = importlib.import_module(module_path)
+    klass = getattr(module, name.title().replace("_", ""))
+    klass = klass({"connection_name": data.connection_id})
+    function = getattr(klass, data.action)
+    return function
+
+
+# Action get_creds_details
+@router.post('/get_creds_details', tags=['Charts'])
+async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
+    try:
+        creds_details = await CredsModel.get(data.connection_id)
+        if isinstance(creds_details, dict):
+            creds_details = creds_details.__dict__
+        return {"creds_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
+    except Exception as e:
+        raise ValueError(e)
+        # return {"status": False, "message": "Failed to get credentials", "data": {}}

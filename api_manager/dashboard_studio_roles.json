@@ -57,6 +57,12 @@
                 },
                 {
                     "name": "get_auto_complete_text"
+                },
+                {
+                    "name": "connection_vault_routing"
+                },
+                {
+                    "name": "get_creds_details"
                 }
             ]
         },
@@ -93,6 +99,9 @@
                 },
                 {
                     "name": "get_auto_complete_text"
+                },
+                {
+                    "name": "get_creds_details"
                 }
             ]
         },
@@ -150,6 +159,12 @@
                 },
                 {
                     "name": "get_auto_complete_text"
+                },
+                {
+                    "name": "connection_vault_routing"
+                },
+                {
+                    "name": "get_creds_details"
                 }
             ]
         },
@@ -561,6 +576,14 @@
         {
             "name": "get_auto_complete_text",
             "displayName": "get_auto_complete_text"
+        },
+        {
+            "name": "connection_vault_routing",
+            "displayName": "connection_vault_routing"
+        },
+        {
+            "name": "get_creds_details",
+            "displayName": "get_creds_details"
         },
         {
             "name": "save_dashboards",
