@@ -1,8 +1,8 @@
+import urdhva_base
 import json
 import traceback
-import urdhva_base
 import hpcl_ceg_enum
-import hpcl_ceg_model
+from api_manager import hpcl_ceg_model
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 
