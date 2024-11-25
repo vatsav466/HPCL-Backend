@@ -1,8 +1,9 @@
 import urdhva_base
 import re
+import json
 import httpx
 import datetime
-import api_manager
+import hpcl_ceg_model
 import orchestrator.alerting.ro_alert as ro_alert
 import orchestrator.alerting.va_alert as va_alert
 import orchestrator.alerting.vts_alert as vts_alert
@@ -36,6 +37,7 @@ async def close_alert(alert_data):
     Returns:
         dict: A dictionary containing the status, message and the closed alert document.
     """
+    print("alert_data for close alert", alert_data)
     alert_type = alert_data['alert_type']
     return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").close_bu_alert(alert_data)
 
@@ -53,14 +55,14 @@ class AlertAction:
                         "Message": "send_notification"}
         alert_id = input_data['alert_id']
         try:
-            alert_data = await api_manager.hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         except Exception as e:
             print("Exception in getting alert data:%s" % e)
             return False, "Provided alert id is not valid"
 
         # Validating whether user has access permissions for the provided action
-        status, resp, email = await cls.verify_user_access_permissions(alert_data.bu, alert_data.sapId,
-                                                                       input_data['alert_action'])
+        status, resp, email = await cls.verify_user_access_permissions(alert_data.bu, alert_data.sap_id,
+                                                                       input_data['action_type'])
         if not status:
             return status, resp
 
@@ -72,7 +74,7 @@ class AlertAction:
         input_data["action_msg"] = re.sub(condition, '', input_data["action_msg"])
 
         # get the function name
-        function_name = function_map.get(input_data['alert_action'], None)
+        function_name = function_map.get(input_data['action_type'], None)
         if function_name:
             await cls.update_alert_history(input_data, alert_data)
             # call the function
@@ -89,21 +91,25 @@ class AlertAction:
         """
         # Todo:- here we have to write all the generic functionality like updating the alert data,
         #  history, fetching users, roles, ...
-        alert_history = alert_data.get('alert_history', [])
-        allocated_time = alert_data["updated"]
+        alert_history = alert_data.alert_history
+        allocated_time = alert_data.updated_at
         if alert_history and alert_history[-1].get("processed_time"):
             allocated_time = alert_history[-1]["processed_time"]
         processed_time = datetime.datetime.now(datetime.timezone.utc)
         event_tags = input_data.get("event_tags", {})
         if not event_tags:
             event_tags = {}
-        alert_history.append({"allocated_time": allocated_time, "processed_time": processed_time,
-                              "action_type": input_data["alert_action"], "action_msg": input_data["action_msg"],
-                              "mail_sent_to": "", "atr_uploaded": event_tags.get("is_atr_uploaded", False),
-                              "maintenance_exception": event_tags.get("is_maintenance_exception", False),
-                              "revocation": event_tags.get("is_revocation", False),
-                              "no_exception": event_tags.get("no_exception", False)})
-        await api_manager.hpcl_ceg_model.Alerts(**{"id": alert_data["id"], "alert_history": alert_history}).modify()
+        # Append the updated alert history with the converted datetime strings
+        alert_history.append({"allocated_time": allocated_time.isoformat() if isinstance(allocated_time, datetime.datetime) else allocated_time,
+                            "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],
+                            "action_msg": input_data["action_msg"], "mail_sent_to": "", 
+                            "atr_uploaded": event_tags.get("is_atr_uploaded", False),
+                            "maintenance_exception": event_tags.get("is_maintenance_exception", False), 
+                            "revocation": event_tags.get("is_revocation", False),
+                            "no_exception": event_tags.get("no_exception", False)
+        })
+        # Modify the alert with the updated alert_history
+        await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
 
     @classmethod
     def get_exception_message(cls, exception):
@@ -124,7 +130,7 @@ class AlertAction:
                 for key, value in key_map.items()}
 
     @classmethod
-    async def publish_to_camunda(cls, input_data, alert_data, action_type, msg):
+    async def publish_to_camunda(cls, input_data, alert_data, action_type, msg=None):
         """
         Function to generate camunda message
         :param input_data:
@@ -139,18 +145,18 @@ class AlertAction:
                                   "action_type": {"type": "String", "value": action_type}})
         messaged_data = {
             "messageName": action_type,
-            "unique_key": alert_data["unique_id"],
+            "unique_key": alert_data.unique_id,
             "processVariables": process_variables
         }
-
         # Posting data to camunda
         url = urdhva_base.settings.camunda_url + "/engine-rest/message"
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
         if r.status_code / 100 != 2:
-            print("Error while sending message to camunda:%s -  %s" % r.status_code, r.text)
+            print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
         else:
             print("Message sent to camunda")
         return True, "Successfully sent message to camunda"
+
 
     @classmethod
     async def verify_user_access_permissions(cls, bu, sap_id, action_type):
