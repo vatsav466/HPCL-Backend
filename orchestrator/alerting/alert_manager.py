@@ -2,7 +2,7 @@ import urdhva_base
 import re
 import httpx
 import datetime
-import hpcl_ceg_model
+from api_manager import hpcl_ceg_model
 import orchestrator.alerting.ro_alert as ro_alert
 import orchestrator.alerting.va_alert as va_alert
 import orchestrator.alerting.vts_alert as vts_alert
