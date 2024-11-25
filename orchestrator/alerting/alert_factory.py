@@ -82,7 +82,7 @@ class AlertFactory:
                                                         'assigned_to_role': '',
                                                         'raw_data': {}}).create()
             print("resp ---> ", resp)
-            payload = {"businessKey": alert_data.get('alert_id', ''),
+            payload = {"businessKey": alert_data.get('alert_id', alert_id),
                        "variables": {"alert_id": {"value": resp['id'], "type": "String"},
                                      "interlock_name": {"value": interlock_name, "type": "String"},
                                      "interlock_id": {"value": "", "type": "String"},

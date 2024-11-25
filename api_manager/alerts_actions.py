@@ -31,6 +31,7 @@ async def alerts_alert_action(data: Alerts_Alert_ActionParams):
         logger.info(f"Alert data received to perform action: {data}")
         return await alert_manager.AlertAction().update_alert_data(data.dict())
     except Exception as e:
+        print(traceback.format_exc())
         logger.error(f"Error in performing action on alert: {e}, InputData {data.dict()}, Traceback: {traceback.format_exc()}")
         return False, "Error in performing action on alert"
         

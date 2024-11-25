@@ -233,6 +233,7 @@ Model tags internal {
     isMaintenanceException optional bool
     isRevocation optional bool
     noException optional bool
+    isApproved optional bool
 }
 
 Model Interlock {

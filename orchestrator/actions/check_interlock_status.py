@@ -28,7 +28,7 @@ class InterlockStatus:
             # tb = ThingsBoardApi.TB(bu, sap_id)
             try:
                 # tbAltStatus = await tb.getTbAlertStatus(tbAlertId)
-                tbAltStatus = True
+                tbAltStatus = False
             except Exception as e:
                 print("Exception in getting current Alert status in thingsboard %s" % (e))
-        return True, {"interlockcleared": "interLockOk"}
+        return True, {"interlockcleared": tbAltStatus}

@@ -35,7 +35,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         print("data: ", data)
         if status:
             if data:
-                return task.complete(data)
+                return task.complete(global_variables=data)
             else:
                 return task.complete({})
         if not status:

@@ -52,7 +52,7 @@ class AlertAction:
         """
         function_map = {"Justification": "justify_alert", "Rejected": "reject_alert", "Approved": "approve_alert",
                         "Override": "override_alert", "interLockOk": "interlock_ok_alert",
-                        "Message": "send_notification"}
+                        "Message": "message_alert"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -124,7 +124,8 @@ class AlertAction:
         key_map = {"is_maintenance_exception": {"name": "isMaintenanceException", "type": "Boolean"},
                    "is_atr_uploaded": {"name": "isAtrUploaded", "type": "Boolean"},
                    "is_revocation": {"name": "isRevocation", "type": "Boolean"},
-                   "no_exception": {"name": "noException", "type": "Boolean"}
+                   "no_exception": {"name": "noException", "type": "Boolean"},
+                   "is_approved": {"name": "approved", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -145,13 +146,14 @@ class AlertAction:
                                   "action_type": {"type": "String", "value": action_type}})
         messaged_data = {
             "messageName": action_type,
-            "unique_key": alert_data.unique_id,
+            "businessKey": alert_data.external_id,
             "processVariables": process_variables
         }
+        print("messaged_data: ", messaged_data)
         # Posting data to camunda
         url = urdhva_base.settings.camunda_url + "/engine-rest/message"
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
-        if r.status_code / 100 != 2:
+        if int(r.status_code / 100) != 2:
             print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
         else:
             print("Message sent to camunda")
@@ -208,3 +210,13 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "Override")
+
+    @classmethod
+    async def message_alert(cls, input_data, alert_data):
+        """
+        Function to override an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Message")

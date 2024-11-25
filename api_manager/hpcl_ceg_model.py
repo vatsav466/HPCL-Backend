@@ -483,6 +483,7 @@ class tagsCreate(pydantic.BaseModel):
     is_maintenance_exception: typing.Optional[bool] = pydantic.Field(False, )
     is_revocation: typing.Optional[bool] = pydantic.Field(False, )
     no_exception: typing.Optional[bool] = pydantic.Field(False, )
+    is_approved: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):

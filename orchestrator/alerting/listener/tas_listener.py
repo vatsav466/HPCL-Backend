@@ -13,14 +13,14 @@ async def tas_listener(rmsg):
         if rmsg['status'] == 'ACTIVE_UNACK':
             alertdata = rmsg['details']['additionalInfo']
             alertdata['severity'] = rmsg['severity']
-            alertdata['alert_type'] = rmsg['details']['additionalInfo']['BU']
+            alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
-            print("Create Alert BU:%s SAPID:%s for:%s " % (alertdata.get('BU', ''), alertdata.get('sapid', ''),
+            print("Create Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
                                                         rmsg['type']))
             await create_alert(alertdata)
         elif rmsg['status'] == 'CLEARED_UNACK':
             alertdata = rmsg['details']['additionalInfo']
-            print("Close Alert BU:%s SAPID:%s for:%s " % (alertdata.get('BU', ''), alertdata.get('sapid', ''),
+            print("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
                                                         rmsg['type']))
             await close_alert(alertdata)
         else:
