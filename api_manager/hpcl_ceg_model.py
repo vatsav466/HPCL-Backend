@@ -980,7 +980,7 @@ class ScreensCreate(urdhva_base.postgresmodel.BasePostgresModel):
     groups_data: typing.List[GroupsDataCreate]
 
     class Config:
-        collection_name = 'screens'
+        collection_name = 'data_flow'
         schema_class = ScreensSchema
         upsert_keys = []
 
@@ -997,7 +997,7 @@ class Screens(urdhva_base.postgresmodel.PostgresModel):
     groups_data: typing.Optional[typing.List[GroupsDataCreate]] | None = None
 
     class Config:
-        collection_name = 'screens'
+        collection_name = 'data_flow'
         schema_class = ScreensSchema
         upsert_keys = []
 
