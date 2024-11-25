@@ -1,8 +1,9 @@
 import datetime
 import urdhva_base
-import api_manager
+import hpcl_ceg_model
 import urdhva_base.queryparams
 import dateutil.parser as dt_parser
+import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -19,7 +20,8 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         """
         recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
         for record in alert_data['data']:
-            status, location_details = await alert_helper.get_location_details(record['location_type'], record['location_id'])
+            status, location_details = await alert_helper.get_location_details(record['location_type'],
+                                                                               record['location_id'])
             if not status:
                 logger.info(f"Error in finding location {record['location_id']} "
                             f"for bu {record['location_type']} - {location_details}")
@@ -30,7 +32,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
             query = (f"sap_id='{record['location_id']}' and vehicle_number='{record['vehicle_number']}' "
                      f"and status='Open' and violation_type='{record['violation_type']}'")
 
-            data = await api_manager.hpcl_ceg_model.EMLock.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1)
+            data = await hpcl_ceg_model.EMLock.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1)
                                                                    , resp_type='plain')
             if len(data['data']):
                 # Updating existing EM Lock record
@@ -49,9 +51,13 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                     em_lock_record['violation_count'] = 0
                     em_lock_record['sop_id'] = ''
                     em_lock_record['interlock_name'] = ''
+                    # Interlock name should be respective of voilation type
+                    em_lock_record.update(interlock_mapping.get_interlock_name(em_lock_record['bu'],
+                                                                               "", ""))
+
                     await cls.create_alert(em_lock_record)
                 # Modifying EmLock record data
-                await api_manager.hpcl_ceg_model.EMLock(**em_lock_record).modify()
+                await hpcl_ceg_model.EMLock(**em_lock_record).modify()
             else:
                 # Creating EM Lock record
                 em_lock_record = {"bu": record['location_type'], "sap_id": record['location_id'],
@@ -59,7 +65,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                                   "violation_type": record['violation_type'],
                                   "violation_count": 1, "status": 'Open', "violation_history": [exception_msg],
                                   "violation_start_date": recv_time}
-                await api_manager.hpcl_ceg_model.EMLockCreate(**em_lock_record).create()
+                await hpcl_ceg_model.EMLockCreate(**em_lock_record).create()
 
     @classmethod
     async def close_bu_alert(cls, alert_data):

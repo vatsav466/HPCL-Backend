@@ -3,6 +3,7 @@ import traceback
 import urdhva_base
 import hpcl_ceg_enum
 import hpcl_ceg_model
+import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 
@@ -57,7 +58,8 @@ class AlertFactory:
                               "location_name": location_data.get('name', '')})
 
             # Create Alert
-            unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
+            alert_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
+            unique_id = await alert_helper.get_alert_unique_id(bu, sop_id)
 
             # Generate alert alert_data
             resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
@@ -65,7 +67,7 @@ class AlertFactory:
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': bu,
-                                                        'external_id': alert_data.get('alert_id', unique_id),
+                                                        'external_id': alert_data.get('alert_id', alert_id),
                                                         'interlock_name': interlock_name,
                                                         'interlock_id': interlock_name,
                                                         'alert_history': [],
@@ -95,6 +97,7 @@ class AlertFactory:
                                                                  ).create()
                 payload["variables"]["interlock_id"] = {"value": resp['id'], "type": "String"}
 
+                # Todo:- Need to add interlock mapping
                 work_flow_id = eval(f"{bu}InterlockMapping.{sap_id}.value")
                 await Camunda().start_workflow(payload=payload, workflowId=work_flow_id)
             else:
