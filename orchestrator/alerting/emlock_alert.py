@@ -3,6 +3,7 @@ import datetime
 import urdhva_base.queryparams
 import dateutil.parser as dt_parser
 from api_manager import hpcl_ceg_model
+import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -20,7 +21,8 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         print("alert_data -->", alert_data)
         recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
         for record in alert_data['data']:
-            status, location_details = await alert_helper.get_location_details(record['location_type'], record['location_id'])
+            status, location_details = await alert_helper.get_location_details(record['location_type'],
+                                                                               record['location_id'])
             if not status:
                 logger.info(f"Error in finding location {record['location_id']} "
                             f"for bu {record['location_type']} - {location_details}")
@@ -50,6 +52,10 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                     em_lock_record['violation_count'] = 0
                     em_lock_record['sop_id'] = ''
                     em_lock_record['interlock_name'] = ''
+                    # Interlock name should be respective of voilation type
+                    em_lock_record.update(interlock_mapping.get_interlock_name(em_lock_record['bu'],
+                                                                               "", ""))
+
                     await cls.create_alert(em_lock_record)
                 # Modifying EmLock record data
                 await hpcl_ceg_model.EMLock(**em_lock_record).modify()

@@ -85,7 +85,7 @@ def pad_digits(number, padding_count=8):
     return str(number).zfill(padding_count)
 
 
-async def get_alert_unique_id(bu, sap_id, sop_id, device_id=None):
+async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
     """
     Generate a unique ID for an alert based on the business unit and SOP ID.
     Parameters:

@@ -1,23 +1,144 @@
-# Interlock name and sop mapping for EMLock Alerts
-em_lock_interlock_mapping = {
+import urdhva_base.utilities
 
-}
-
-# Interlock name and sop mapping for VA Alerts
-vts_interlock_mapping = {
-
-}
-
-# Interlock name and sop mapping for VA Alerts
-va_interlock_mapping = {
-
-}
 
 # Interlock name and sop mapping for TAS Alerts
-tas_interlock_mapping = {
+tas_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation_SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "VTS Offline SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "VTS PowerDisconnect", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "VTS Offline FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "Tank overfill prevention(ROSV)"},
+                         {"sop_id": "SOP001", "interlock_name": "Night Driving FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "VTS Device Tampering", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "Night Driving SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "Speed Violation FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "Night Driving ThirdTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "Speed Violation SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "Speed Violation ThirdTime", "model": "VTS"},
+                         {"sop_id": "SOP001", "interlock_name": "EM Locks : VTS Offline - Lorry", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception SecondTime",
+                          "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "VTS Offline Exception SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception SecondTime",
+                          "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception FirstTime",
+                          "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "VTS PowerDisconnect Exception", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "VTS offline Exception FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "VTS device Tampering Exception", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "NoHalt zone Exception FirstTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception ThirdTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "NoHalt Zone Exception SecondTime", "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception SecondTime",
+                          "model": "VTS"},
+                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception ThirdTime", "model": "VTS"},
+                         {"sop_id": "SOP002", "interlock_name": "Plant ESD(closure of tank ROSOVs)"},
+                         {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS"},
+                         {"sop_id": "SOP003", "interlock_name": "Plant ESD(Power shutdown)"},
+                         {"sop_id": "SOP004", "interlock_name": "Rim seal fire protection system"},
+                         {"sop_id": "SOP005", "interlock_name": "HCDS(Audio visual alarm in control room)"},
+                         {"sop_id": "SOP007", "interlock_name": "Tank overfill prevention(MOV)"},
+                         {"sop_id": "SOP009", "interlock_name": "Plant ESD(Closure of tank MOVS)"},
+                         {"sop_id": "SOP011", "interlock_name": "Dyke drain valve position indication"},
+                         {"sop_id": "SOP012", "interlock_name": "Pulse Security Alarm"},
+                         {"sop_id": "SOP013", "interlock_name": "K factors"},
+                         {"sop_id": "SOP014", "interlock_name": "No flow alarm"},
+                         {"sop_id": "SOP015", "interlock_name": "Low flow alarm"},
+                         {"sop_id": "SOP016", "interlock_name": "High flow alarm"},
+                         {"sop_id": "SOP017", "interlock_name": "Un-Authorized Flow alarm"},
+                         {"sop_id": "SOP018", "interlock_name": "Meter Overrun Alarm"},
+                         {"sop_id": "SOP019", "interlock_name": "Blend Overdose Alarm"},
+                         {"sop_id": "SOP020", "interlock_name": "Blend Under-dose Alarm"},
+                         {"sop_id": "SOP021", "interlock_name": "Additive Overdose Alarm"},
+                         {"sop_id": "SOP022", "interlock_name": "Additive Under-dose Alarm"},
+                         {"sop_id": "SOP023", "interlock_name": "Operability Index"},
+                         {"sop_id": "SOP024", "interlock_name": "Intrusion Detection", "model": "VA"},
+                         {"sop_id": "SOP025", "interlock_name": "Non-wearing of Safety Belt at Height", "model": "VA"},
+                         {"sop_id": "SOP026", "interlock_name": "Non-Wearing of Safety Helmet", "model": "VA"},
+                         {"sop_id": "SOP027", "interlock_name": "Person not wearing Safety Helmet", "model": "VA"},
+                         {"sop_id": "SOP028", "interlock_name": "Person not wearing Safety Harness/Belt",
+                          "model": "VA"},
+                         {"sop_id": "SOP029", "interlock_name": "Fire Extinguisher is not available", "model": "VA"},
+                         {"sop_id": "SOP030", "interlock_name": "Fire Hose is not available", "model": "VA"},
+                         {"sop_id": "SOP031", "interlock_name": "Person not wearing Protective Clothing",
+                          "model": "VA"},
+                         {"sop_id": "SOP032", "interlock_name": "Camera is offline", "model": "VA"},
+                         {"sop_id": "SOP033", "interlock_name": "Work Beyond time", "model": "VA"},
+                         {"sop_id": "SOP034", "interlock_name": "Tas Loss of communication VA", "model": "VA"}]
 
-}
+# Interlock name and sop mapping for RO Alerts
+ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlock"},
+                        {"sop_id": "SOP001", "interlock_name": "Auto RSP Interlock"},
+                        {"sop_id": "SOP002", "interlock_name": "Auto RSP Mismatch Interlock"},
+                        {"sop_id": "SOP003", "interlock_name": "Testing Interlock"},
+                        {"sop_id": "SOP005", "interlock_name": "k-Factor Interlock"},
+                        {"sop_id": "SOP006", "interlock_name": "Tank Low Level  Interlock"},
+                        {"sop_id": "SOP007", "interlock_name": "Water Level High Interlock"},
+                        {"sop_id": "SOP008", "interlock_name": "Safety Violations during decantation(VA)",
+                         "model": "VA"},
+                        {"sop_id": "SOP009", "interlock_name": "Vehicle count / Queue management(VA)", "model": "VA"},
+                        {"sop_id": "SOP010", "interlock_name": "ATG Communication Failure Interlock"},
+                        {"sop_id": "SOP011", "interlock_name": "TT Decantation Interlock"},
+                        {"sop_id": "SOP012", "interlock_name": "FCC Offline"},
+                        {"sop_id": "SOP013", "interlock_name": "High level ( ATG) interlock"},
+                        {"sop_id": "SOP018", "interlock_name": "Nozzle"},
+                        {"sop_id": "SOP999", "interlock_name": "Nozzle Interlock"},
+                        {"sop_id": "SOP999", "interlock_name": "Bay Interlock"}]
+
+# Interlock name and sop mapping for LPG Alerts
+lpg_interlock_mapping = [
+    {"sop_id": "SOP001", "interlock_name": "Healthy Status of High level alarm interlock loops for vessels"},
+    {"sop_id": "SOP002", "interlock_name": "Health status of Plant ESD level Interlock loops"},
+    {"sop_id": "SOP003", "interlock_name": "Health status of Plant MCP level Interlock loops"},
+    {"sop_id": "SOP004", "interlock_name": "Health status of Fire Water Level in Tanks"},
+    {"sop_id": "SOP005", "interlock_name": "Fire Fighting Water line is under Pressure"},
+    {"sop_id": "SOP006", "interlock_name": "Filling Operation  Interlock"},
+    {"sop_id": "SOP007", "interlock_name": "OLD Bypass"},
+    {"sop_id": "SOP007A", "interlock_name": "Loss of Communication"},
+    {"sop_id": "SOP008", "interlock_name": "Checking of OLD"},
+    {"sop_id": "SOP009", "interlock_name": "Quality of Cylinders in OLD Machine"},
+    {"sop_id": "SOP010", "interlock_name": "VLD Bypass"},
+    {"sop_id": "SOP011", "interlock_name": "Checking of VLD"},
+    {"sop_id": "SOP012", "interlock_name": "Quality of Cylinders in VLD Machine"},
+    {"sop_id": "SOP013", "interlock_name": "Quality of Cylinders in Water bath"},
+    {"sop_id": "SOP013A", "interlock_name": "TestBath communication loss"},
+    {"sop_id": "SOP014", "interlock_name": "Intrusion Detection", "model": "VA"},
+    {"sop_id": "SOP015", "interlock_name": "Non-wearing of Helmet", "model": "VA"},
+    {"sop_id": "SOP016", "interlock_name": "Non-wearing of Safety Belt at Height", "model": "VA"},
+    {"sop_id": "SOP017", "interlock_name": "LPG Leakage/Fire in Plant", "model": "VA"},
+    {"sop_id": "SOP018", "interlock_name": "Loss of communication(VA)", "model": "VA"},
+    {"sop_id": "SOP021", "interlock_name": "Person not wearing Safety Helmet", "model": "VA"},
+    {"sop_id": "SOP022", "interlock_name": "Person not wearing Safety Harness/Belt", "model": "VA"},
+    {"sop_id": "SOP023", "interlock_name": "Fire Extinguisher is not available", "model": "VA"},
+    {"sop_id": "SOP024", "interlock_name": "Fire Hose is not available", "model": "VA"},
+    {"sop_id": "SOP025", "interlock_name": "Person not wearing Protective Clothing", "model": "VA"},
+    {"sop_id": "SOP026", "interlock_name": "Camera is offline", "model": "VA"},
+    {"sop_id": "SOP027", "interlock_name": "Work Beyond time", "model": "VA"},
+    {"sop_id": "SOP029", "interlock_name": "Healthiness of Pump Operations"},
+    {"sop_id": "SOP033", "interlock_name": "Healthiness of Fire Engine"},
+    {"sop_id": "SOP034", "interlock_name": "Healthiness of Deluge Valve"}]
+
+rdi_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Product Quality Density"},
+                         {"sop_id": "SOP002", "interlock_name": "Product Quality Water"},
+                         {"sop_id": "SOP003", "interlock_name": "Unauthorized Decantation RDI"}]
 
 
-def get_interlock_name(sop_id):
-    ...
+def get_interlock_name(bu, interlock_name=None, sop_id=None):
+    # Fetch interlock details from configuration
+    if not bu or (not interlock_name and not sop_id):
+        return {}
+    mapping = eval(f'{urdhva_base.utilities.snake_case(bu)}_interlock_mapping')
+    filtered_data = []
+    if sop_id:
+        filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower(), mapping))
+    elif interlock_name:
+        filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
+    return filtered_data[0] if filtered_data else {}

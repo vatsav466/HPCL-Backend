@@ -13,7 +13,8 @@ import orchestrator.alerting.emlock_alert as emlock_alert
 
 async def create_alert(alert_data):
     """
-    Create an alert based on input alert data. This function delegates the actual creation of the alert to the specific alert manager (e.g. ROAlertManager, VAAlertManager, etc.) based on the 'alert_type' field in the input alert data.
+    Create an alert based on input alert data. This function delegates the actual creation of the alert to the specific
+    alert manager (e.g. ROAlertManager, VAAlertManager, etc.) based on the 'alert_type' field in the input alert data.
 
     Parameters:
         alert_data (dict): A dictionary containing the data to create the alert.
