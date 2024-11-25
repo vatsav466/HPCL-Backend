@@ -18,23 +18,28 @@ Enum DashboardStatus str {
 }
 
 Model currencyFormatInternal internal {
-    symbolPosition str
-    symbol str
+    symbolPosition optional str
+    symbol optional str
 }
 
 Model ColumnConfig internal {
-    columnName str
+    columnName optional str
     d3NumberFormat optional str
     currencyFormat optional currencyFormatInternal
 }
 Model Tags internal {
-    name str
-    value str
+    name optional str
+    value optional str
+}
+
+Model columnInternalM internal {
+    column_name str
+    type str
 }
 
 Model columnInternal internal {
-    column_name str
-    type str
+    column_name optional str
+    type optional str
 }
 
 Model filtersInternal internal {
@@ -52,7 +57,7 @@ Model columnsInternal internal {
 
 Model metricsInternal internal {
     expressionType optional str
-    column columnInternal
+    column columnInternalM
     aggregate str
     label optional str
 }
@@ -60,13 +65,13 @@ Model metricsInternal internal {
 Model orderbyInternal internal {
     order_by optional bool
     expressionType optional str
-    column columnInternal
+    column columnInternalM
     aggregate str
     label optional str
 }
 
 Model groupbyInternal internal {
-    name str
+    name optional str
     label optional str
 }
 
@@ -221,22 +226,22 @@ Model DashboardOrderInternal internal {
 }
 
 Model CurrencyformInternal internal {
-    symbolPosition str
-    symbol str
+    symbolPosition optional str
+    symbol optional str
 }
 
 Model ColumnConfigInternal internal {
-    columnName str
+    columnName optional str
     d3NumberFormat optional str
     currencyFormat optional CurrencyformInternal
 }
 
 Model TagsInternal internal {
-    name str
-    value str
+    name optional str
+    value optional str
 }
 
-Model dashboard_filter internal {
+Model dashboard_filter_internal internal {
 	column optional str
 	op optional str
 	val optional str
@@ -257,15 +262,15 @@ Model chart_layout internal {
 Model OrderByInternal internal {
     order_by optional bool
     expressionType optional str
-    column columnInternal
-    aggregate str
+    column optional columnInternal
+    aggregate optional str
     label optional str
 }
 
 Model FiltersInternal internal {
-    col str
-    op str
-    val list str
+    col optional str
+    op optional str
+    val optional list str
 }
 
 Model ColumnInternal internal {
@@ -274,9 +279,9 @@ Model ColumnInternal internal {
 }
 
 Model MetricsInternal internal {
-    expression_type str
-    column ColumnInternal
-    aggregate str
+    expression_type optional str
+    column optional ColumnInternal
+    aggregate optional str
     label optional str
 }
 
@@ -306,7 +311,7 @@ Model QueriesInternal internal {
     row_limit optional int
     series_columns optional list str
     series_limit optional int
-    order_descending bool
+    order_descending optional bool
 }
 
 Model ParamsInternal internal {
@@ -315,11 +320,11 @@ Model ParamsInternal internal {
 }
 
 Model chartRequestInternal internal {
-    connection_id str
+    connection_id optional str
     database optional str
     schema optional str
     table optional str
-    organization_id int
+    organization_id optional int
     visualization_name optional str
     name optional str
     description optional str
@@ -376,7 +381,7 @@ Model DashBoards {
 	layout optional list chart_layout
 	assigned_to optional list str
 	roles optional list str
-	dashboard_filter optional list dashboard_filter
+	dashboard_filter optional list dashboard_filter_internal
 	dashboard_status optional DashboardStatus
 	group_id optional list int
 	group_name optional list str
@@ -393,7 +398,7 @@ Model DashBoards {
         layout optional list chart_layout
         assigned_to optional list str
         roles optional list str
-        dashboard_filter optional list dashboard_filter
+        dashboard_filter optional list dashboard_filter_internal
         dashboard_status optional DashboardStatus
         organization_id int
         group_id optional list int
@@ -435,8 +440,8 @@ Model GroupOrder internal {
 }
 
 Model DashboardOrder internal {
-    dashboard_id int
-    display_name str
+    dashboard_id optional int
+    display_name optional str
 }
 
 Model DashboardGroups {

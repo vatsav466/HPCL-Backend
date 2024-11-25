@@ -17,24 +17,29 @@ from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
 class currencyFormatInternalCreate(pydantic.BaseModel):
-    symbol_position: str
-    symbol: str
+    symbol_position: typing.Optional[str] = pydantic.Field("", **{})
+    symbol: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class ColumnConfigCreate(pydantic.BaseModel):
-    column_name: str
+    column_name: typing.Optional[str] = pydantic.Field("", **{})
     d3_number_format: typing.Optional[str] = pydantic.Field("", **{})
     currency_format: typing.Optional[currencyFormatInternalCreate] | None = None
 
 
 class TagsCreate(pydantic.BaseModel):
-    name: str
-    value: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    value: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class columnInternalMCreate(pydantic.BaseModel):
+    column_name: str
+    type: str
 
 
 class columnInternalCreate(pydantic.BaseModel):
-    column_name: str
-    type: str
+    column_name: typing.Optional[str] = pydantic.Field("", **{})
+    type: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class filtersInternalCreate(pydantic.BaseModel):
@@ -52,7 +57,7 @@ class columnsInternalCreate(pydantic.BaseModel):
 
 class metricsInternalCreate(pydantic.BaseModel):
     expression_type: typing.Optional[str] = pydantic.Field("", **{})
-    column: columnInternalCreate
+    column: columnInternalMCreate
     aggregate: str
     label: typing.Optional[str] = pydantic.Field("", **{})
 
@@ -60,13 +65,13 @@ class metricsInternalCreate(pydantic.BaseModel):
 class orderbyInternalCreate(pydantic.BaseModel):
     order_by: typing.Optional[bool] = pydantic.Field(False, )
     expression_type: typing.Optional[str] = pydantic.Field("", **{})
-    column: columnInternalCreate
+    column: columnInternalMCreate
     aggregate: str
     label: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class groupbyInternalCreate(pydantic.BaseModel):
-    name: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
     label: typing.Optional[str] = pydantic.Field("", **{})
 
 
@@ -286,22 +291,22 @@ class DashboardOrderInternalCreate(pydantic.BaseModel):
 
 
 class CurrencyformInternalCreate(pydantic.BaseModel):
-    symbol_position: str
-    symbol: str
+    symbol_position: typing.Optional[str] = pydantic.Field("", **{})
+    symbol: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class ColumnConfigInternalCreate(pydantic.BaseModel):
-    column_name: str
+    column_name: typing.Optional[str] = pydantic.Field("", **{})
     d3_number_format: typing.Optional[str] = pydantic.Field("", **{})
     currency_format: typing.Optional[CurrencyformInternalCreate] | None = None
 
 
 class TagsInternalCreate(pydantic.BaseModel):
-    name: str
-    value: str
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    value: typing.Optional[str] = pydantic.Field("", **{})
 
 
-class dashboard_filterCreate(pydantic.BaseModel):
+class dashboard_filter_internalCreate(pydantic.BaseModel):
     column: typing.Optional[str] = pydantic.Field("", **{})
     op: typing.Optional[str] = pydantic.Field("", **{})
     val: typing.Optional[str] = pydantic.Field("", **{})
@@ -321,15 +326,15 @@ class chart_layoutCreate(pydantic.BaseModel):
 class OrderByInternalCreate(pydantic.BaseModel):
     order_by: typing.Optional[bool] = pydantic.Field(False, )
     expression_type: typing.Optional[str] = pydantic.Field("", **{})
-    column: columnInternalCreate
-    aggregate: str
+    column: typing.Optional[columnInternalCreate] | None = None
+    aggregate: typing.Optional[str] = pydantic.Field("", **{})
     label: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class FiltersInternalCreate(pydantic.BaseModel):
-    col: str
-    op: str
-    val: typing.List[str]
+    col: typing.Optional[str] = pydantic.Field("", **{})
+    op: typing.Optional[str] = pydantic.Field("", **{})
+    val: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
 
 class ColumnInternalCreate(pydantic.BaseModel):
@@ -338,9 +343,9 @@ class ColumnInternalCreate(pydantic.BaseModel):
 
 
 class MetricsInternalCreate(pydantic.BaseModel):
-    expression_type: str
-    column: ColumnInternalCreate
-    aggregate: str
+    expression_type: typing.Optional[str] = pydantic.Field("", **{})
+    column: typing.Optional[ColumnInternalCreate] | None = None
+    aggregate: typing.Optional[str] = pydantic.Field("", **{})
     label: typing.Optional[str] = pydantic.Field("", **{})
 
 
@@ -370,7 +375,7 @@ class QueriesInternalCreate(pydantic.BaseModel):
     row_limit: typing.Optional[int] = pydantic.Field(0, **{})
     series_columns: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     series_limit: typing.Optional[int] = pydantic.Field(0, **{})
-    order_descending: bool
+    order_descending: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class ParamsInternalCreate(pydantic.BaseModel):
@@ -379,11 +384,11 @@ class ParamsInternalCreate(pydantic.BaseModel):
 
 
 class chartRequestInternalCreate(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: typing.Optional[str] = pydantic.Field("", **{})
     schema: typing.Optional[str] = pydantic.Field("", **{})
     table: typing.Optional[str] = pydantic.Field("", **{})
-    organization_id: int
+    organization_id: typing.Optional[int] = pydantic.Field(0, **{})
     visualization_name: typing.Optional[str] = pydantic.Field("", **{})
     name: typing.Optional[str] = pydantic.Field("", **{})
     description: typing.Optional[str] = pydantic.Field("", **{})
@@ -462,7 +467,7 @@ class DashBoardsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     layout: typing.Optional[typing.List[chart_layoutCreate]] | None = None
     assigned_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     roles: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    dashboard_filter: typing.Optional[typing.List[dashboard_filterCreate]] | None = None
+    dashboard_filter: typing.Optional[typing.List[dashboard_filter_internalCreate]] | None = None
     dashboard_status: typing.Optional[dashboard_studio_enum.DashboardStatus] | None = None
     group_id: typing.Optional[typing.List[int]] = pydantic.Field(0, **{})
     group_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -487,7 +492,7 @@ class DashBoards(urdhva_base.postgresmodel.PostgresModel):
     layout: typing.Optional[typing.List[chart_layoutCreate]] | None = None
     assigned_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     roles: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    dashboard_filter: typing.Optional[typing.List[dashboard_filterCreate]] | None = None
+    dashboard_filter: typing.Optional[typing.List[dashboard_filter_internalCreate]] | None = None
     dashboard_status: typing.Optional[dashboard_studio_enum.DashboardStatus] | None = None
     group_id: typing.Optional[typing.List[int]] = pydantic.Field(0, **{})
     group_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -516,7 +521,7 @@ class Dashboards_Save_DashboardsParams(pydantic.BaseModel):
     layout: typing.Optional[typing.List[chart_layoutCreate]] | None = None
     assigned_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     roles: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    dashboard_filter: typing.Optional[typing.List[dashboard_filterCreate]] | None = None
+    dashboard_filter: typing.Optional[typing.List[dashboard_filter_internalCreate]] | None = None
     dashboard_status: typing.Optional[dashboard_studio_enum.DashboardStatus] | None = None
     organization_id: int
     group_id: typing.Optional[typing.List[int]] = pydantic.Field(0, **{})
@@ -587,8 +592,8 @@ class GroupOrderCreate(pydantic.BaseModel):
 
 
 class DashboardOrderCreate(pydantic.BaseModel):
-    dashboard_id: int
-    display_name: str
+    dashboard_id: typing.Optional[int] = pydantic.Field(0, **{})
+    display_name: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class DashboardGroupsSchema(UrdhvaPostgresBase):
