@@ -162,16 +162,6 @@ async def delete(id: str):
     return await CredsModel.delete(id)
 
 
-@router.post('/screens', response_model=Screens, tags=['Screens'])
-async def create(inputObj: ScreensCreate):
-    return await inputObj.create()
-
-
-@router.put('/screens', response_model=Screens, tags=['Screens'])
-async def update(inputObj: Screens):
-    return await inputObj.modify()
-
-
 @router.get('/screens/{id}', response_model=Screens, tags=['Screens'])
 async def get(id: str):
     return await Screens.get(id, skip_secrets=True)
@@ -181,7 +171,3 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await Screens.get_all(params, skip_secrets=True)
 
-
-@router.delete('/screens/{id}', tags=['Screens'])
-async def delete(id: str):
-    return await Screens.delete(id)

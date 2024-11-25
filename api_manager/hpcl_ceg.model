@@ -425,6 +425,6 @@ Model Screens{
    groups_data list GroupsData
 
    Config=> {
-        collection_name=screens
+        crud_operations='read'
     }
 }
