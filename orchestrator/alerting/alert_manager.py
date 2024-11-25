@@ -2,7 +2,7 @@ import urdhva_base
 import re
 import httpx
 import datetime
-from api_manager import hpcl_ceg_model
+import api_manager
 import orchestrator.alerting.ro_alert as ro_alert
 import orchestrator.alerting.va_alert as va_alert
 import orchestrator.alerting.vts_alert as vts_alert
@@ -53,13 +53,13 @@ class AlertAction:
                         "Message": "send_notification"}
         alert_id = input_data['alert_id']
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await api_manager.hpcl_ceg_model.Alerts.get(alert_id)
         except Exception as e:
             print("Exception in getting alert data:%s" % e)
             return False, "Provided alert id is not valid"
 
         # Validating whether user has access permissions for the provided action
-        status, resp, email = await cls.verify_user_access_permissions(alert_data['bu'], alert_data['sapId'],
+        status, resp, email = await cls.verify_user_access_permissions(alert_data.bu, alert_data.sapId,
                                                                        input_data['alert_action'])
         if not status:
             return status, resp
@@ -103,7 +103,7 @@ class AlertAction:
                               "maintenance_exception": event_tags.get("is_maintenance_exception", False),
                               "revocation": event_tags.get("is_revocation", False),
                               "no_exception": event_tags.get("no_exception", False)})
-        await hpcl_ceg_model.Alerts(**{"id": alert_data["id"], "alert_history": alert_history}).modify()
+        await api_manager.hpcl_ceg_model.Alerts(**{"id": alert_data["id"], "alert_history": alert_history}).modify()
 
     @classmethod
     def get_exception_message(cls, exception):

@@ -2,7 +2,7 @@ import urdhva_base
 import json
 import traceback
 import hpcl_ceg_enum
-from api_manager import hpcl_ceg_model
+import api_manager
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
@@ -62,7 +62,7 @@ class AlertFactory:
             unique_id = await alert_helper.get_alert_unique_id(bu, sop_id)
 
             # Generate alert alert_data
-            resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
+            resp = await api_manager.hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity', "Critical").capitalize(),
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
@@ -92,7 +92,7 @@ class AlertFactory:
             # Start workflow after creating the interlock
             if interlock_name:
                 # Create Interlock
-                interlock = await hpcl_ceg_model.InterlockCreate(**{**base_data,
+                interlock = await api_manager.hpcl_ceg_model.InterlockCreate(**{**base_data,
                                                                     'interlock_status': hpcl_ceg_enum.AlertStatus.Open}
                                                                  ).create()
                 payload["variables"]["interlock_id"] = {"value": resp['id'], "type": "String"}
@@ -126,21 +126,21 @@ class AlertFactory:
         try:
             bu = alert_data['BU']
             if 'interlock_id' in alert_data.keys() and alert_data['interlock_id']:
-                il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
+                il_data = await api_manager.hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
                 if not isinstance(il_data, dict):
                     il_data = il_data.__dict__
                 il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-                data_obj = hpcl_ceg_model.Interlock(**il_data)
+                data_obj = api_manager.hpcl_ceg_model.Interlock(**il_data)
                 await data_obj.modify()
             else:
                 logger.info(f"Unable to find Interlock: {alert_data['interlock_name']}, BU: {bu}")
 
-            al_data = await hpcl_ceg_model.AlertsCreate.get(alert_data['alert_id'])
+            al_data = await api_manager.hpcl_ceg_model.AlertsCreate.get(alert_data['alert_id'])
             if not isinstance(al_data, dict):
                 al_data = al_data.__dict__
             al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
             al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
-            data_obj = hpcl_ceg_model.Alerts(**al_data)
+            data_obj = api_manager.hpcl_ceg_model.Alerts(**al_data)
             await data_obj.modify()
 
             return True, "Alert Closed"
