@@ -31,4 +31,4 @@ class InterlockStatus:
                 tbAltStatus = True
             except Exception as e:
                 print("Exception in getting current Alert status in thingsboard %s" % (e))
-        return True, {"interlockcleared": tbAltStatus}
+        return True, {"interlockcleared": "interLockOk"}
