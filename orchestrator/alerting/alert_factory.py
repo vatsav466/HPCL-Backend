@@ -136,9 +136,6 @@ class AlertFactory:
             dict: A dictionary containing the status, message and the closed alert document
         """
         try:
-            print(
-                'into try'
-            )
             bu = alert_data['BU']
             if 'interlock_id' in alert_data.keys() and alert_data['interlock_id']:
                 il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
@@ -158,7 +155,7 @@ class AlertFactory:
             data_obj = hpcl_ceg_model.Alerts(**al_data)
             await data_obj.modify()
 
-            return True, "Alert Closed"
+            return True, {"status": "Alert Closed"}
         
         except Exception as e:
             print(e)
