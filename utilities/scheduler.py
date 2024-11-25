@@ -6,8 +6,7 @@ import urdhva_base.redispool
 from woker_base import Worker
 from apscheduler.triggers.cron import CronTrigger
 import apscheduler.triggers.interval as apinterval
-import api_manager.dnc_schema_enum as dnc_schema_enum
-import api_manager.dnc_schema_model as dnc_schema_model
+import hpcl_ceg_model
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.schedulers.asyncio import AsyncIOScheduler

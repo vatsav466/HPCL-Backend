@@ -1,6 +1,6 @@
 import urdhva_base
 import json
-import api_manager
+import hpcl_ceg_model
 import urdhva_base.redispool
 import urdhva_base.utilities as utils
 
@@ -32,7 +32,7 @@ async def get_location_details(bu, sap_id):
     params.q = query
     params.sort = None
     # Fetching data from database
-    locdata = await api_manager.hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+    locdata = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
     print(locdata)
     if locdata.get('data', []):
         location_data = locdata.get('data')[0]

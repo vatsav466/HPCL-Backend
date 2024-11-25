@@ -1,7 +1,7 @@
 import urdhva_base
 import json
 import datetime
-import api_manager
+import hpcl_ceg_model
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -47,7 +47,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                 query = (f"sap_id={record['location_id']} and tl_number='{record['tl_number']}' "
                      f"and status='Open' and violation_type='{record['violation_type']}'")
 
-                data = await api_manager.hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
+                data = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
                 if len(data['data']):
                     # Updating existing EM Lock record
                     vts_record = data['data'][0]
