@@ -1,8 +1,8 @@
-import datetime
 import urdhva_base
-import hpcl_ceg_model
+import datetime
 import urdhva_base.queryparams
 import dateutil.parser as dt_parser
+from api_manager import hpcl_ceg_model
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
@@ -18,6 +18,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         :param alert_data:
         :return:
         """
+        print("alert_data -->", alert_data)
         recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
         for record in alert_data['data']:
             status, location_details = await alert_helper.get_location_details(record['location_type'],
