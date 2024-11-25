@@ -398,3 +398,33 @@ Model CredsModel {
    }
 
 }
+
+Model DashboardOrder internal {
+    dashboard_id int
+    display_name str
+}
+
+Model GroupsData internal {
+    group_id int
+    name str
+    description optional str
+    created_by optional str
+    created_user optional str
+    dashboard_order optional list DashboardOrder
+    group_order optional int
+    organization_id int
+}
+
+Model Screens{
+   screen_title str
+   groups optional list int
+   changed_by optional str
+   created_by str
+   created_user optional str
+   organization_id int
+   groups_data list GroupsData
+
+   Config=> {
+        collection_name=screens
+    }
+}
