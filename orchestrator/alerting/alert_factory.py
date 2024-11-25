@@ -2,7 +2,8 @@ import urdhva_base
 import json
 import traceback
 import hpcl_ceg_enum
-from api_manager import hpcl_ceg_model
+import hpcl_ceg_model
+import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 
@@ -44,11 +45,15 @@ class AlertFactory:
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
+            print(" into create alert func")
             bu = alert_data['bu']
             sop_id = alert_data['sop_id']
             sap_id = alert_data['sap_id']
             interlock_name = alert_data['interlock_name']
+            print("sop_id --> ", sop_id)
             status, location_data = await alert_helper.get_location_details(bu, sap_id)
+            print("status --> ", status)
+            print("location_data --> ", location_data)
             if not status:
                 return False, location_data
             base_data = {key: location_data.get(key) for key in ['state', 'city', 'zone', 'region', 'district']}
@@ -57,7 +62,8 @@ class AlertFactory:
                               "location_name": location_data.get('name', '')})
 
             # Create Alert
-            unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
+            alert_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
+            unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
             # Generate alert alert_data
             resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
@@ -65,7 +71,7 @@ class AlertFactory:
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': bu,
-                                                        'external_id': alert_data.get('alert_id', unique_id),
+                                                        'external_id': alert_data.get('alert_id', alert_id),
                                                         'interlock_name': interlock_name,
                                                         'interlock_id': interlock_name,
                                                         'alert_history': [],
@@ -75,8 +81,8 @@ class AlertFactory:
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
                                                         'raw_data': {}}).create()
-
-            payload = {"businessKey": alert_data.get('alert_id', ''),
+            print("resp ---> ", resp)
+            payload = {"businessKey": alert_data.get('alert_id', alert_id),
                        "variables": {"alert_id": {"value": resp['id'], "type": "String"},
                                      "interlock_name": {"value": interlock_name, "type": "String"},
                                      "interlock_id": {"value": "", "type": "String"},
@@ -94,15 +100,24 @@ class AlertFactory:
                                                                     'interlock_status': hpcl_ceg_enum.AlertStatus.Open}
                                                                  ).create()
                 payload["variables"]["interlock_id"] = {"value": resp['id'], "type": "String"}
-
-                work_flow_id = eval(f"{bu}InterlockMapping.{sap_id}.value")
-                await Camunda().start_workflow(payload=payload, workflowId=work_flow_id)
+                # Todo:- Need to add interlock mapping
+                # work_flow_id = eval(f"{bu}InterlockMapping.{sap_id}.value")
+                # Dynamically access the attribute for the given 'bu' value
+                attribute_name = f"{bu.lower()}_interlock_mapping"
+                # Use getattr() to fetch the value of the dynamically named attribute
+                interlock_list = getattr(interlock_mapping, attribute_name)
+                print("interlock_list -->", interlock_list)
+                matching_item = next((item for item in interlock_list if item["sop_id"] == sop_id), None)
+                workflow_id = matching_item["interlock_name"]
+                print("workflow_id ", workflow_id)
+                await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
             else:
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
 
             return True, "Alert Created"
 
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(f"Error in alert creation {e}, traceback {traceback.format_exc()}")
             return False, f"Error in alert creation {e}"
 
@@ -140,7 +155,7 @@ class AlertFactory:
             data_obj = hpcl_ceg_model.Alerts(**al_data)
             await data_obj.modify()
 
-            return True, "Alert Closed"
+            return True, {"status": "Alert Closed"}
         
         except Exception as e:
             print(e)

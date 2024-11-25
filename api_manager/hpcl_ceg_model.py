@@ -467,11 +467,15 @@ class assetDetailsCreate(pydantic.BaseModel):
 
 class Alert_HistoryCreate(pydantic.BaseModel):
     device_data: typing.Optional[str] = pydantic.Field("", **{})
-    allocated_time: typing.Optional[datetime.datetime] | None = None
-    processed_time: typing.Optional[datetime.datetime] | None = None
+    allocated_time: typing.Optional[str] = pydantic.Field("", **{})
+    processed_time: typing.Optional[str] = pydantic.Field("", **{})
     mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
     action_type: hpcl_ceg_enum.AlertActionType
     action_msg: str
+    atr_uploaded: typing.Optional[bool] = pydantic.Field(False, )
+    maintenance_exception: typing.Optional[bool] = pydantic.Field(False, )
+    revocation: typing.Optional[bool] = pydantic.Field(False, )
+    no_exception: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -479,6 +483,7 @@ class tagsCreate(pydantic.BaseModel):
     is_maintenance_exception: typing.Optional[bool] = pydantic.Field(False, )
     is_revocation: typing.Optional[bool] = pydantic.Field(False, )
     no_exception: typing.Optional[bool] = pydantic.Field(False, )
+    is_approved: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):
@@ -934,4 +939,71 @@ class Credsmodel_Create_CredentialParams(pydantic.BaseModel):
 
 class Credsmodel_Load_CredsParams(pydantic.BaseModel):
     pass
+
+
+class DashboardOrderCreate(pydantic.BaseModel):
+    dashboard_id: int
+    display_name: str
+
+
+class GroupsDataCreate(pydantic.BaseModel):
+    group_id: int
+    name: str
+    description: typing.Optional[str] = pydantic.Field("", **{})
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
+    created_user: typing.Optional[str] = pydantic.Field("", **{})
+    dashboard_order: typing.Optional[typing.List[DashboardOrderCreate]] | None = None
+    group_order: typing.Optional[int] = pydantic.Field(0, **{})
+    organization_id: int
+
+
+class ScreensSchema(UrdhvaPostgresBase):
+    __tablename__ = 'screens'
     
+    screen_title: Mapped[str] = mapped_column("screen_title", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    groups: Mapped[typing.Optional[typing.List[int]]] = mapped_column("groups", ARRAY(Integer), index=False, nullable=True, default=0, primary_key=False, unique=False)
+    changed_by: Mapped[typing.Optional[str]] = mapped_column("changed_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_by: Mapped[str] = mapped_column("created_by", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    created_user: Mapped[typing.Optional[str]] = mapped_column("created_user", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    organization_id: Mapped[int] = mapped_column("organization_id", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    groups_data: Mapped[typing.List[typing.Any]] = mapped_column("groups_data", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class ScreensCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'screens'
+    
+    screen_title: str
+    groups: typing.Optional[typing.List[int]] = pydantic.Field(0, **{})
+    changed_by: typing.Optional[str] = pydantic.Field("", **{})
+    created_by: str
+    created_user: typing.Optional[str] = pydantic.Field("", **{})
+    organization_id: int
+    groups_data: typing.List[GroupsDataCreate]
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = ScreensSchema
+        upsert_keys = []
+
+
+class Screens(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'screens'
+    
+    screen_title: typing.Optional[str] | None = None
+    groups: typing.Optional[typing.List[int]] = pydantic.Field(0, **{})
+    changed_by: typing.Optional[str] = pydantic.Field("", **{})
+    created_by: typing.Optional[str] | None = None
+    created_user: typing.Optional[str] = pydantic.Field("", **{})
+    organization_id: typing.Optional[int] | None = None
+    groups_data: typing.Optional[typing.List[GroupsDataCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = ScreensSchema
+        upsert_keys = []
+
+
+class ScreensGetResp(pydantic.BaseModel):
+    data: typing.List[Screens]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

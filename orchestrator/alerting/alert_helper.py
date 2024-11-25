@@ -1,6 +1,6 @@
 import urdhva_base
 import json
-import api_manager
+import hpcl_ceg_model
 import urdhva_base.redispool
 import urdhva_base.utilities as utils
 
@@ -32,7 +32,7 @@ async def get_location_details(bu, sap_id):
     params.q = query
     params.sort = None
     # Fetching data from database
-    locdata = await api_manager.hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+    locdata = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
     print(locdata)
     if locdata.get('data', []):
         location_data = locdata.get('data')[0]
@@ -85,7 +85,7 @@ def pad_digits(number, padding_count=8):
     return str(number).zfill(padding_count)
 
 
-async def get_alert_unique_id(bu, sap_id, sop_id, device_id=None):
+async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
     """
     Generate a unique ID for an alert based on the business unit and SOP ID.
     Parameters:

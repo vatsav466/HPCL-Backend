@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import traceback
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -30,13 +31,13 @@ class TASAlertManager(alert_factory.AlertFactory):
         try:
             logger.info(f"alert_data received to create alert {alert_data}")
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['BU'],sap_id=alert_data['sapid'])
+            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['bu'],sap_id=alert_data['sap_id'])
             if status:
                 alert_data['location_data'] = loc_dt
-        
             return await cls.create_alert(alert_data)
 
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(e)
             return {"status": False, "message": str(e), "alert_data": None}
 

@@ -1,7 +1,7 @@
+import urdhva_base
 import asyncio
 import importlib
 import traceback
-import urdhva_base
 import orchestrator
 from concurrent.futures import ThreadPoolExecutor
 from camunda.external_task.external_task import ExternalTask, TaskResult
@@ -35,7 +35,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         print("data: ", data)
         if status:
             if data:
-                return task.complete(data)
+                return task.complete(global_variables=data)
             else:
                 return task.complete({})
         if not status:

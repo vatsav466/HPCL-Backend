@@ -1,6 +1,5 @@
 import urdhva_base
 import traceback
-import api_manager
 import hpcl_ceg_model
 import urdhva_base.redispool
 import utilities.bu_key_mapping as bu_key_mapping
