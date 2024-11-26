@@ -114,7 +114,7 @@ Model filtered_keys internal {
 }
 
 Model Charts {
-    connection_id str
+    connection_id optional str
     database optional str
     schema optional str
     table str
@@ -134,25 +134,25 @@ Model Charts {
     hashed_value optional str
 
     Action=> get_tables {
-        connection_id str
+        connection_id optional str
         database str
         schema str
     }
     Action=> get_columns {
-        connection_id str
+        connection_id optional str
         database str
         schema str
         table str
     }
     Action=> get_unique_values {
-        connection_id str
+        connection_id optional str
         database str
         schema str
         table str
         column list str
     }
     Action=> drill_down_data {
-        connection_id str
+        connection_id optional str
         database str
         schema str
         table str
@@ -166,7 +166,7 @@ Model Charts {
     }
 
     Action=> get_distinct_values {
-        connection_id str
+        connection_id optional str
         table str
         column list str
         where_cond optional dict
@@ -177,7 +177,7 @@ Model Charts {
     }
 
     Action=> save_charts {
-        connection_id str
+        connection_id optional str
         record_id optional int
         database optional str
         schema optional str
@@ -207,12 +207,12 @@ Model Charts {
     }
 
     Action=> connection_vault_routing {
-        connection_id str
+        connection_id optional str
         action str
     }
 
     Action=> get_creds_details {
-        connection_id str
+        connection_id optional str
     }
 
     Config=> {

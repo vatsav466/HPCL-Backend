@@ -440,9 +440,9 @@ async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingP
 async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
     try:
         creds_details = await CredsModel.get(data.connection_id)
-        if isinstance(creds_details, dict):
+        if not isinstance(creds_details, dict):
             creds_details = creds_details.__dict__
-        return {"creds_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
+        return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
     except Exception as e:
         raise ValueError(e)
         # return {"status": False, "message": "Failed to get credentials", "data": {}}

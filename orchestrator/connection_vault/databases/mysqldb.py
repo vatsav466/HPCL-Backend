@@ -1,3 +1,4 @@
+import urdhva_base
 import os
 import sys
 import typing
@@ -5,8 +6,8 @@ import traceback
 import pandas as pd
 import polars as pl
 import mysql.connector
+import hpcl_ceg_model
 from sshtunnel import SSHTunnelForwarder
-from api_manager.hpcl_ceg_model import CredsModel
 
 
 dtype_map = {
