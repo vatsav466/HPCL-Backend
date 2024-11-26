@@ -222,11 +222,14 @@ Model Alert_History internal {
     processed_time optional str
     mail_sent_to optional str
     action_type AlertActionType
+    alert_status optional AlertStatus
     action_msg str
     atr_uploaded optional bool
     maintenance_exception optional bool
     revocation optional bool
     no_exception optional bool
+    is_approved optional bool
+    is_exc_approval_time_exp optional bool
 }
 
 Model tags internal {

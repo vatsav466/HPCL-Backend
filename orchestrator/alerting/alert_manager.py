@@ -106,7 +106,9 @@ class AlertAction:
                             "atr_uploaded": event_tags.get("is_atr_uploaded", False),
                             "maintenance_exception": event_tags.get("is_maintenance_exception", False), 
                             "revocation": event_tags.get("is_revocation", False),
-                            "no_exception": event_tags.get("no_exception", False)
+                            "no_exception": event_tags.get("no_exception", False),
+                            "is_approved": event_tags.get("is_approved", False),
+                            "is_exc_approval_time_exp": event_tags.get("is_exc_approval_time_exp", False)
         })
         # Modify the alert with the updated alert_history
         await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()

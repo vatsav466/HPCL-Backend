@@ -471,11 +471,14 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     processed_time: typing.Optional[str] = pydantic.Field("", **{})
     mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
     action_type: hpcl_ceg_enum.AlertActionType
+    alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
     action_msg: str
     atr_uploaded: typing.Optional[bool] = pydantic.Field(False, )
     maintenance_exception: typing.Optional[bool] = pydantic.Field(False, )
     revocation: typing.Optional[bool] = pydantic.Field(False, )
     no_exception: typing.Optional[bool] = pydantic.Field(False, )
+    is_approved: typing.Optional[bool] = pydantic.Field(False, )
+    is_exc_approval_time_exp: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
