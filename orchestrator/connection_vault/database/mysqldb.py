@@ -60,6 +60,9 @@ class Mysqldb(BaseAction):
         )
         return connection
 
+    async def get_default_schema(self):
+        return None
+
     async def close_connection(self, connection):
         if connection:
             connection.close()
@@ -408,3 +411,24 @@ class Mysqldb(BaseAction):
             return {
                 "status": False, "message": f"Not able to fetch data {err}", "data": []
             }
+
+    async def execute_query(self, query, debug=False, **kwargs):
+        """
+        @description:
+        :param query:
+        :param debug:
+        :return:
+        """
+        try:
+            connection = await self.get_connection()
+            cursor = connection.cursor()
+            cursor.execute(query)
+            records = cursor.fetchall()
+            column_names = [desc[0] for desc in cursor.description]
+            records = {column: [record[i] for record in records] for i, column in enumerate(column_names)}
+            await self.close_connection(connection)
+            return records
+        except Exception as err:
+            print(err)
+            traceback.print_exc(file=sys.stdout)
+            raise mysql.connector.Error
