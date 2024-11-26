@@ -43,6 +43,7 @@ Enum AlertActionType str {
     Override='Override'
     interLockOk='interLockOk'
     Message='Message'
+    excApprovalTimeExp='excApprovalTimeExp'
 }
 
 Model LocationMaster {
@@ -234,6 +235,7 @@ Model tags internal {
     isRevocation optional bool
     noException optional bool
     isApproved optional bool
+    isExcApprovalTimeExp optional bool
 }
 
 Model Interlock {

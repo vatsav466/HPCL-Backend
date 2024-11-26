@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import urdhva_base
+import traceback
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -16,7 +17,7 @@ class CheckMaintenanceTime:
         """
         return ["alert_id"]
     
-    async def checkMaintenancetime(self, alert_id):
+    async def checkMaintenancetime(self, params):
         """
         This function checks if the given alert is ready to be unblocked. 
         It retrieves the alert's creation time and the number of days it should wait, 
@@ -33,14 +34,20 @@ class CheckMaintenanceTime:
             "waitTime" set to the value of the calculated wait time.
         """
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
-            createdTime = alert_data['created']
+            print("alert_data --> ", alert_data)
+            createdTime = alert_data['created_at']
             days = int(alert_data.get('days', 0))
             currentTime = int(datetime.datetime.now().timestamp())
+
+            # Convert createdTime to timestamp if it's a datetime object
+            if isinstance(createdTime, datetime.datetime):
+                createdTime = int(createdTime.timestamp())
+
             timeDiff = int((currentTime - createdTime) / 60)
             waitTime = 1
             if timeDiff < (days * 24 * 60):
@@ -50,5 +57,6 @@ class CheckMaintenanceTime:
             return True, {"waitTime": totalWaitTime}
         
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(e)
             return False

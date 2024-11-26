@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -13,7 +14,7 @@ class UpdateDealerStatus:
         """
         return ["alert_id"]
     
-    async def updatedealerstatus(self, alert_id): 
+    async def updatedealerstatus(self, params): 
         """
         Updates the dealer and SO status for a given alert to False.
 
@@ -30,7 +31,7 @@ class UpdateDealerStatus:
             message on failure.
         """
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
@@ -42,5 +43,6 @@ class UpdateDealerStatus:
             return True, None
         
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(e)
             return False, e

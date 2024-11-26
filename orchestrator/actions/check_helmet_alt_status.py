@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger("actions-processing-log")
@@ -49,5 +50,6 @@ class CheckHelmetAltStatus:
             return True, {"closeAlert": closeAlt}
         
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(e)
             return False

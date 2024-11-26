@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -14,7 +15,7 @@ class Update_Status_Exception:
         """
         return ["alert_id"]
 
-    async def updatestatusexception(self, alert_id):        
+    async def updatestatusexception(self, params):        
         """
         Updates the status of the alert with the given alert_id to "Exception Approved",
         sets the role and rolelist to empty string and list, and sets the finalapproval to True.
@@ -27,7 +28,7 @@ class Update_Status_Exception:
             and a dictionary with the updated alert data.
         """
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
@@ -42,5 +43,6 @@ class Update_Status_Exception:
             return True, None
         
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(e)
             return False, e

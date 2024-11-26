@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger("actions-processing-log")
@@ -49,5 +50,6 @@ class CheckDealerCounter:
             return True, {"atrStatus": atrSubmitted}
         
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(e)
             return False, {"atrStatus": "False"}

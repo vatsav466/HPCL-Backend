@@ -1,5 +1,6 @@
-import datetime
 import urdhva_base
+import datetime
+import traceback
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -49,5 +50,6 @@ class CheckForUnblock:
             return True, {"waitTime": totalWaitTime}
 
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(e)
             return False

@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -46,5 +47,6 @@ class CheckExcepStatus:
             return True, {"excepStatus": exceptaken}
 
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
+            logger.error(e)
             return False, {"excepStatus": "False"}

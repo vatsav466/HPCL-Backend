@@ -51,8 +51,8 @@ class AlertAction:
         :return:
         """
         function_map = {"Justification": "justify_alert", "Rejected": "reject_alert", "Approved": "approve_alert",
-                        "Override": "override_alert", "interLockOk": "interlock_ok_alert",
-                        "Message": "message_alert"}
+                        "Override": "override_alert", "interLockOk": "interlock_ok_alert", 
+                        "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -125,7 +125,8 @@ class AlertAction:
                    "is_atr_uploaded": {"name": "isAtrUploaded", "type": "Boolean"},
                    "is_revocation": {"name": "isRevocation", "type": "Boolean"},
                    "no_exception": {"name": "noException", "type": "Boolean"},
-                   "is_approved": {"name": "approved", "type": "Boolean"}
+                   "is_approved": {"name": "approved", "type": "Boolean"},
+                   "is_exc_approval_time_exp": {"name": "isExcApprovalTimeExp", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -230,3 +231,13 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "interLockOk")
+    
+    @classmethod
+    async def exc_approval_time_exp_alert(cls, input_data, alert_data):
+        """
+        Function to override an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "excApprovalTimeExp")

@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 # import ThingsBoardApi
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -51,5 +52,6 @@ class CheckHlsHealth:
 
         except Exception as e:
             tankhlsstatus = False
+            print(traceback.format_exc())
             logger.error("Exception in getting Current HLS Status : " + str(e))
             return False, {"triggerShutdown": tankhlsstatus}

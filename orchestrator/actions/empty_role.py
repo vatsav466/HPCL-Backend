@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -13,7 +14,7 @@ class EmptyRole:
         """
         return ["alert_id", "maintenance"]
     
-    async def emptyrole(self, alert_id, maintenance):
+    async def emptyrole(self, params):
         """
         Updates the status of the alert with the given alert_id to "Under Maintenance",
         clears the role and rolelist, and sets final approval to True in the database.
@@ -28,14 +29,14 @@ class EmptyRole:
             and None.
         """
         try:
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
             alert_data['role'] = ''
             alert_data['rolelist'] = []
 
-            if maintenance:
+            if params.get('maintenance'):
                 alert_data['status'] = "Under Maintenance"
 
             data_object = hpcl_ceg_model.Alerts(**alert_data)
@@ -43,5 +44,6 @@ class EmptyRole:
             return True, None
         
         except Exception as e:
+            print(traceback.format_exc())
             logger.error(e)
             return False, e

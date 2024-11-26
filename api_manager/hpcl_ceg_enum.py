@@ -78,6 +78,7 @@ class AlertActionType(str, enum.Enum):
     Override = 'Override'
     interLockOk = 'interLockOk'
     Message = 'Message'
+    excApprovalTimeExp = 'excApprovalTimeExp'
 
 
 

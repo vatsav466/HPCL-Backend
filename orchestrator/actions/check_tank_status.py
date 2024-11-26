@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 # import ThingsBoardApi
 import hpcl_ceg_model
 
@@ -46,4 +47,5 @@ class CheckTankStatus:
             # tankhstatus, pumpStatus = tb.checkTankHLevel(deviceid)
         except:
             tankhstatus, pumpStatus = True, True
+        print(traceback.format_exc())
         return True, {"shutdownReady": True, "shutdownPump": True}
