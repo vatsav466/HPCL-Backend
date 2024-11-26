@@ -217,8 +217,8 @@ Model assetDetails internal {
 
 Model Alert_History internal {
     device_data optional str
-    allocated_time optional str
-    processed_time optional str
+    allocated_time optional datetime
+    processed_time optional datetime
     mail_sent_to optional str
     action_type AlertActionType
     action_msg str
@@ -233,7 +233,6 @@ Model tags internal {
     isMaintenanceException optional bool
     isRevocation optional bool
     noException optional bool
-    isApproved optional bool
 }
 
 Model Interlock {

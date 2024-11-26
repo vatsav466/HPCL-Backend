@@ -467,15 +467,11 @@ class assetDetailsCreate(pydantic.BaseModel):
 
 class Alert_HistoryCreate(pydantic.BaseModel):
     device_data: typing.Optional[str] = pydantic.Field("", **{})
-    allocated_time: typing.Optional[str] = pydantic.Field("", **{})
-    processed_time: typing.Optional[str] = pydantic.Field("", **{})
+    allocated_time: typing.Optional[datetime.datetime] | None = None
+    processed_time: typing.Optional[datetime.datetime] | None = None
     mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
     action_type: hpcl_ceg_enum.AlertActionType
     action_msg: str
-    atr_uploaded: typing.Optional[bool] = pydantic.Field(False, )
-    maintenance_exception: typing.Optional[bool] = pydantic.Field(False, )
-    revocation: typing.Optional[bool] = pydantic.Field(False, )
-    no_exception: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -483,7 +479,6 @@ class tagsCreate(pydantic.BaseModel):
     is_maintenance_exception: typing.Optional[bool] = pydantic.Field(False, )
     is_revocation: typing.Optional[bool] = pydantic.Field(False, )
     no_exception: typing.Optional[bool] = pydantic.Field(False, )
-    is_approved: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):
@@ -1009,3 +1004,4 @@ class ScreensGetResp(pydantic.BaseModel):
     data: typing.List[Screens]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
