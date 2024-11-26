@@ -220,3 +220,13 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "Message")
+
+    @classmethod
+    async def interlock_ok_alert(cls, input_data, alert_data):
+        """
+        Function to override an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "interLockOk")
