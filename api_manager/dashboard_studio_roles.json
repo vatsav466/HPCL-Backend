@@ -198,6 +198,9 @@
                 },
                 {
                     "name": "get_dashboard_groups"
+                },
+                {
+                    "name": "get_dashboard_uri"
                 }
             ]
         },
@@ -219,6 +222,9 @@
                 },
                 {
                     "name": "get_dashboard_groups"
+                },
+                {
+                    "name": "get_dashboard_uri"
                 }
             ]
         },
@@ -252,6 +258,9 @@
                 },
                 {
                     "name": "get_dashboard_groups"
+                },
+                {
+                    "name": "get_dashboard_uri"
                 }
             ]
         },
@@ -596,6 +605,10 @@
         {
             "name": "get_dashboard_groups",
             "displayName": "get_dashboard_groups"
+        },
+        {
+            "name": "get_dashboard_uri",
+            "displayName": "get_dashboard_uri"
         },
         {
             "name": "update_dashboard_groups",
