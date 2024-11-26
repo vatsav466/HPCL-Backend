@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import urdhva_base
-from api_manager import hpcl_ceg_model
+import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 

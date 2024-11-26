@@ -2,7 +2,7 @@ import urdhva_base
 import traceback
 # import ThingsBoardApi
 from utilities import bu_key_mapping
-from api_manager import hpcl_ceg_model
+import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
 

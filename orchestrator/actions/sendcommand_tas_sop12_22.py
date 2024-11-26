@@ -2,7 +2,7 @@ import traceback
 import urdhva_base
 # from constants import *
 # import send_tas_rq_message
-from api_manager import hpcl_ceg_model
+import hpcl_ceg_model
 from utilities.bu_key_mapping import tasSopcommands
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")

@@ -6,7 +6,7 @@ import traceback
 import urdhva_base
 from jinja2 import Template
 from typing import Dict, List
-from api_manager import hpcl_ceg_model
+import hpcl_ceg_model
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
     TemplateMapping

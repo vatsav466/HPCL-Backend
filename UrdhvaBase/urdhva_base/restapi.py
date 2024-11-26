@@ -157,6 +157,7 @@ async def authMiddleware(request: fastapi.Request, call_next):
         return await call_next(request)
     elif not status and resp:
         return resp
+    return await call_next(request)
     response = fastapi.Response(None, 403)
     if request.url.path in ['/docs', '/openapi.json', '/api/login'] + urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \

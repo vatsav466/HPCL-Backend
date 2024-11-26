@@ -1,7 +1,7 @@
 import urdhva_base
 import json
 import traceback
-from api_manager import hpcl_ceg_model
+import hpcl_ceg_model
 
 class IsEsdShutdown:
     async def get_required_variables(self):

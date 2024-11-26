@@ -5,7 +5,7 @@ import traceback
 import json
 import ast
 import UrdhvaBase
-from api_manager import hpcl_ceg_model
+import hpcl_ceg_model
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
