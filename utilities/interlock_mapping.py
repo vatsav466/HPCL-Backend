@@ -156,4 +156,12 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower(), mapping))
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-    return filtered_data[0] if filtered_data else {}
+    if filtered_data:
+        result = filtered_data[0]
+        # Remove unwanted characters from interlock_name
+        result['interlock_name'] = ''.join(
+            char for char in result['interlock_name'] if char not in ' :()-/'
+        )
+        return result
+    else:
+        return {}

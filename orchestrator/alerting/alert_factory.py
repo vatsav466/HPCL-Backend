@@ -100,15 +100,8 @@ class AlertFactory:
                                                                     'interlock_status': hpcl_ceg_enum.AlertStatus.Open}
                                                                  ).create()
                 payload["variables"]["interlock_id"] = {"value": resp['id'], "type": "String"}
-                # Todo:- Need to add interlock mapping
-                # work_flow_id = eval(f"{bu}InterlockMapping.{sap_id}.value")
-                # Dynamically access the attribute for the given 'bu' value
-                attribute_name = f"{bu.lower()}_interlock_mapping"
-                # Use getattr() to fetch the value of the dynamically named attribute
-                interlock_list = getattr(interlock_mapping, attribute_name)
-                print("interlock_list -->", interlock_list)
-                matching_item = next((item for item in interlock_list if item["sop_id"] == sop_id), None)
-                workflow_id = matching_item["interlock_name"]
+                interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
+                workflow_id =interlock_name.get("interlock_name", "")
                 print("workflow_id ", workflow_id)
                 await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
             else:
