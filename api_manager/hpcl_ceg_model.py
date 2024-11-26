@@ -928,6 +928,7 @@ class CredsModelGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+
 class Credsmodel_Create_CredentialParams(pydantic.BaseModel):
     record_id: typing.Optional[int] = pydantic.Field(0, **{})
     name: str
@@ -935,6 +936,7 @@ class Credsmodel_Create_CredentialParams(pydantic.BaseModel):
     cred_type: str
     tags: typing.Optional[typing.List[TagsCreate]] | None = None
     credentials: CredentialDataCreate
+
 
 
 class Credsmodel_Load_CredsParams(pydantic.BaseModel):
