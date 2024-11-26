@@ -123,7 +123,10 @@ class Settings(pydantic_settings.BaseSettings):
     rabbitmq_auto_ack: bool = True
 
     #Thingsboard
-    THINGSBOARD_URL: str = "http://localhost:8080"
+    things_board_url: str = "http://localhost:8080"
+    things_board_username: str = "admin"
+    things_board_password: str = "password"
+
     
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \
