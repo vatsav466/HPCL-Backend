@@ -43,6 +43,9 @@ class S4Hana(BaseAction):
         )
         return connection
 
+    async def get_default_schema(self):
+        return None
+
     async def test_connection(self):
         try:
             connection = self.get_connection()
@@ -334,3 +337,25 @@ class S4Hana(BaseAction):
             return {
                 "status": False, "message": f"Not able to fetch data {err}", "data": []
             }
+
+    async def execute_query(self, query, debug=False, **kwargs):
+        """
+        @description:
+        Args:
+            query:
+            debug:
+            **kwargs:
+
+        Returns:
+
+        """
+        try:
+            connection = await self.get_connection()
+            current_batch = connection.sql(query)
+            df = current_batch.collect()
+            connection.close()
+            return df.to_dict(orient='records')
+        except Exception as err:
+            print(err)
+            traceback.print_exc(file=sys.stdout)
+            raise err

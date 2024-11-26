@@ -35,8 +35,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -98,7 +98,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -179,8 +179,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -242,7 +242,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -354,8 +354,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -417,7 +417,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -475,7 +475,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -659,8 +659,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -722,7 +722,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -803,8 +803,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -866,7 +866,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -978,8 +978,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -1041,7 +1041,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -1099,7 +1099,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -1290,8 +1290,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -1353,7 +1353,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -1434,8 +1434,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -1497,7 +1497,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -1609,8 +1609,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -1672,7 +1672,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -1730,7 +1730,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -1918,8 +1918,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -1981,7 +1981,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -2096,8 +2096,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -2159,7 +2159,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -2240,8 +2240,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -2303,7 +2303,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -2415,8 +2415,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -2478,7 +2478,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -2536,7 +2536,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -2719,8 +2719,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -2782,7 +2782,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -2897,8 +2897,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -2960,7 +2960,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -3041,8 +3041,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -3104,7 +3104,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -3216,8 +3216,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -3279,7 +3279,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -3337,7 +3337,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -3520,8 +3520,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -3583,7 +3583,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -3698,8 +3698,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -3761,7 +3761,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -3842,8 +3842,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -3905,7 +3905,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -4017,8 +4017,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -4080,7 +4080,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -4138,7 +4138,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -4321,8 +4321,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -4384,7 +4384,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -4499,8 +4499,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -4562,7 +4562,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -4643,8 +4643,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -4706,7 +4706,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -4818,8 +4818,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -4881,7 +4881,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -4939,7 +4939,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -5122,8 +5122,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -5185,7 +5185,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -5300,8 +5300,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -5363,7 +5363,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -5444,8 +5444,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -5507,7 +5507,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -5619,8 +5619,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -5682,7 +5682,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -5740,7 +5740,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -5923,8 +5923,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -5986,7 +5986,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -6101,8 +6101,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -6164,7 +6164,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -6245,8 +6245,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -6308,7 +6308,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -6420,8 +6420,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -6483,7 +6483,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -6541,7 +6541,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -6730,8 +6730,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -6793,7 +6793,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -6905,8 +6905,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -6968,7 +6968,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -7026,7 +7026,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -7182,8 +7182,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -7245,7 +7245,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -7328,8 +7328,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -7391,7 +7391,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -7474,8 +7474,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -7537,7 +7537,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -7651,8 +7651,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -7714,7 +7714,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -7828,8 +7828,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -7891,7 +7891,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -7949,7 +7949,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
@@ -8075,8 +8075,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -8138,7 +8138,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -8218,8 +8218,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -8281,7 +8281,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -8363,8 +8363,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -8426,7 +8426,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -8567,8 +8567,8 @@
                       "action": "",
                       "params": {
                         "data": {
-                          "database": "zolix_c2o",
-                          "schema": "public",
+                          "database": "",
+                          "schema": "",
                           "table": ""
                         }
                       }
@@ -8630,7 +8630,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Columns",
@@ -8688,7 +8688,7 @@
                     "query": {
                       "q": ""
                     },
-                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "zolix_c2o", "schema": "public", "table": "", "column": ""}}},
+                    "request_body": {"name": "", "action": "", "params": {"data":  {"database": "", "schema": "", "table": "", "column": ""}}},
                     "parameters": ""
                   },
                   "display_value": "Value",
