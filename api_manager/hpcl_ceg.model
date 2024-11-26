@@ -217,8 +217,8 @@ Model assetDetails internal {
 
 Model Alert_History internal {
     device_data optional str
-    allocated_time optional str
-    processed_time optional str
+    allocated_time optional datetime
+    processed_time optional datetime
     mail_sent_to optional str
     action_type AlertActionType
     action_msg str
@@ -233,7 +233,6 @@ Model tags internal {
     isMaintenanceException optional bool
     isRevocation optional bool
     noException optional bool
-    isApproved optional bool
 }
 
 Model Interlock {
@@ -350,82 +349,4 @@ Model CEMSQuantityMaster {
     quantity_name str
     quantity_id str
     unit str
-}
-
-Model Tags internal {
-    name str
-    value str
-}
-
-Model CredentialData internal {
-    host optional str
-    port optional str
-    access_key optional str
-    secret_key optional secret
-    user_name optional str
-    password optional secret
-    fingerprint optional str
-    tenancy optional str
-    key_file optional str
-    key_content optional str
-    client_id optional str
-    client_secret optional secret
-    tenant_id optional str
-    private_pass optional secret
-    private_key_pass optional secret
-    source_path optional str
-    dest_path optional str
-    api_key optional secret
-    database_name optional str
-    other_details optional str
-}
-
-Model CredsModel {
-    name str
-    cred_model str
-    cred_type str
-    credentials CredentialData
-
-   Action=> create_credential {
-         record_id optional int
-         name str
-         cred_model str
-         cred_type str
-         tags optional list Tags
-         credentials CredentialData
-   }
-
-   Action=> load_creds {
-   }
-
-}
-
-Model DashboardOrder internal {
-    dashboard_id int
-    display_name str
-}
-
-Model GroupsData internal {
-    group_id int
-    name str
-    description optional str
-    created_by optional str
-    created_user optional str
-    dashboard_order optional list DashboardOrder
-    group_order optional int
-    organization_id int
-}
-
-Model Screens{
-   screen_title str
-   groups optional list int
-   changed_by optional str
-   created_by str
-   created_user optional str
-   organization_id int
-   groups_data list GroupsData
-
-   Config=> {
-        crud_operations='read'
-    }
 }

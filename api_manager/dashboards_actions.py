@@ -108,3 +108,9 @@ async def dashboards_get_dashboard_groups(data: Dashboards_Get_Dashboard_GroupsP
             ]
     """
     return await charts_functions.fetch_dashboard_group_details(data.organization_id, data.group_id)
+
+
+# Action get_dashboard_uri
+@router.post('/get_dashboard_uri', tags=['DashBoards'])
+async def dashboards_get_dashboard_uri(data: Dashboards_Get_Dashboard_UriParams):
+    ...

@@ -412,6 +412,10 @@ Model DashBoards {
         group_id optional int
     }
 
+    Action=> get_dashboard_uri {
+        dashboard_name str
+    }
+
 	Config=> {
 	    collection_name=dashboards
 	}

@@ -535,6 +535,10 @@ class Dashboards_Get_Dashboard_GroupsParams(pydantic.BaseModel):
     group_id: typing.Optional[int] = pydantic.Field(0, **{})
 
 
+class Dashboards_Get_Dashboard_UriParams(pydantic.BaseModel):
+    dashboard_name: str
+
+
 class GroupsSchema(UrdhvaPostgresBase):
     __tablename__ = 'groups'
     
