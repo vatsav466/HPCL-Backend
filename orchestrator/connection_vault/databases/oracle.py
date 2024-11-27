@@ -1,11 +1,12 @@
+import urdhva_base
 import sys
 import typing
 import cx_Oracle
 import traceback
 import pandas as pd
 import polars as pl
+import hpcl_ceg_model
 from sshtunnel import SSHTunnelForwarder
-from api_manager.hpcl_ceg_model import CredsModel
 
 
 dtype_map = {
@@ -33,7 +34,7 @@ class Oracle(BaseAction):
 
     async def get_connection(self):
         if 'connection_name' in self.params.keys():
-            self.params = await CredsModel.get(self.params['connection_name'])
+            self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
         if 'credentials' in self.params.keys():
             self.params = self.params['credentials']
 

@@ -1,3 +1,4 @@
+import urdhva_base
 import os
 import sys
 import typing
@@ -6,8 +7,8 @@ import datetime
 import traceback
 import pandas as pd
 import polars as pl
+import hpcl_ceg_model
 from sshtunnel import SSHTunnelForwarder
-from api_manager.hpcl_ceg_model import CredsModel
 
 
 dtype_map = {
@@ -33,7 +34,7 @@ class Mssql(BaseAction):
 
     async def get_connection(self):
         if 'connection_name' in self.params.keys():
-            self.params = await CredsModel.get(self.params['connection_name'])
+            self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
         if 'credentials' in self.params.keys():
             self.params = self.params['credentials']
         if self.params.get('is_ssh_tunnel', False):

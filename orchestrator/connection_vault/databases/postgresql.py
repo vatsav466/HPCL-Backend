@@ -1,0 +1,1015 @@
+import urdhva_base
+import re
+import os
+import sys
+import typing
+import asyncpg
+import traceback
+import pandas as pd
+import polars as pl
+import hpcl_ceg_model
+from sshtunnel import SSHTunnelForwarder
+from orchestrator.dashboard.chart_factory.query_operator import (
+    FilterStringOperator,
+    AggregationOperator,
+    JoinOperator
+)
+
+
+class BaseAction:
+    def __init__(self, params: typing.Dict):
+        self.params = params
+
+
+class Postgresql(BaseAction):
+    def __init__(self, params: typing.Dict):
+        super().__init__(params)
+
+    async def get_connection(self):
+        if 'connection_name' in self.params.keys():
+            self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+        if not isinstance(self.params, dict):
+            self.params = self.params.__dict__
+        if 'credentials' in self.params.keys():
+            self.params = self.params['credentials']
+        if self.params.get('is_ssh_tunnel', False):
+            tunnel = SSHTunnelForwarder(
+                (self.params['ssh_tunnel']['host'], self.params['ssh_tunnel']['port']),
+                ssh_username=self.params['ssh_tunnel']['user_name'],
+                ssh_pkey=self.params['ssh_tunnel']['private_key'] if 'private_key' in self.params['ssh_tunnel'].keys() else None,
+                ssh_password=self.params['ssh_tunnel']['password'] if 'password' in self.params['ssh_tunnel'].keys() else None,
+                remote_bind_address=(self.params['host'], self.params['port']),
+            )
+            tunnel.start()
+            self.params['host'] = tunnel.local_bind_host
+            self.params['port'] = tunnel.local_bind_port
+            self.params['tunnel'] = tunnel
+        connection = await asyncpg.connect(
+            host=self.params['host'],
+            port=self.params['port'],
+            user=self.params['user_name'],
+            password=self.params['password'],
+            database=self.params['database_name']
+        )
+        return connection
+
+    async def get_default_schema(self):
+        return "public"
+
+    async def close_connection(self, connection):
+        if connection:
+            await connection.close()
+        if 'tunnel' in self.params.keys():
+            self.params['tunnel'].stop()
+
+    async def test_connection(self):
+        """
+        @description:
+        :return:
+        """
+        try:
+
+            connection = await self.get_connection()
+            # await connection.close()
+            await self.close_connection(connection)
+            return {
+                "status": True, "message": "Connected to PostgresSQL",
+                "data": []
+            }
+        except asyncpg.PostgresConnectionError as err:
+            # logger.error(err)
+            traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": "Unable to connect to PostgresSQL",
+                "data": []
+            }
+
+    async def get_databases(self, debug=False, **kwargs):
+        """
+        @description:
+        :param debug:
+        :return:
+        """
+        try:
+            connection = await self.get_connection()
+            stmt = await connection.prepare("SELECT datname FROM pg_catalog.pg_database")
+            columns = [a.name for a in stmt.get_attributes()]
+            data = await stmt.fetch()
+            data = pd.DataFrame(data, columns=columns)
+            # await connection.close()
+            await self.close_connection(connection)
+            return {
+                "status": True, "message": "Connected to PostgresSQL",
+                "data": data['datname'].unique().tolist()
+            }
+        except asyncpg.PostgresConnectionError as err:
+            # logger.error(err)
+            traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": "Unable to connect to PostgresSQL",
+                "data": []
+            }
+
+    async def get_schema(self, debug=False, **kwargs):
+        """
+        @description:
+        :param debug:
+        :return:
+        """
+        try:
+            connection = await self.get_connection()
+            stmt = await connection.prepare("SELECT schema_name FROM information_schema.schemata")
+            columns = [a.name for a in stmt.get_attributes()]
+            data = await stmt.fetch()
+            data = pd.DataFrame(data, columns=columns)
+            # await connection.close()
+            await self.close_connection(connection)
+            return {
+                "status": True, "message": "Connected to PostgresSQL",
+                "data": data['schema_name'].unique().tolist()
+            }
+        except asyncpg.PostgresConnectionError as err:
+            # logger.error(err)
+            traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": "Unable to connect to PostgresSQL",
+                "data": []
+            }
+
+    async def table_name(self, schema_name, debug=False, **kwargs):
+        """
+        @description:
+        :param schema_name:
+        :param debug:
+        :return:
+        """
+        try:
+            connection = await self.get_connection()
+            stmt = await connection.prepare(
+                f"""SELECT table_name FROM information_schema.tables WHERE table_schema='{schema_name}'""")
+            columns = [a.name for a in stmt.get_attributes()]
+            data = await stmt.fetch()
+            data = pd.DataFrame(data, columns=columns)
+            # await connection.close()
+            await self.close_connection(connection)
+            return {
+                "status": True, "message": "Connected to PostgresSQL",
+                "data": data['table_name'].unique().tolist()
+            }
+        except asyncpg.PostgresConnectionError as err:
+            # logger.error(err)
+            traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": "Unable to connect to PostgresSQL",
+                "data": []
+            }
+
+    async def query_builder(self, schema_name, table_name, condition=None, columns=None, limit=None):
+        """
+        @description:
+        :param schema_name:
+        :param table_name:
+        :param condition:
+        :param columns:
+        :param limit:
+        :return:
+        """
+        query = f'''SELECT '''
+        if columns:
+            query += ", ".join(f'"{item["value"]}" AS "{item["label"]}"' for item in columns)
+        else:
+            query += '*'
+        if schema_name:
+            query += f' FROM {schema_name}."{table_name}"'
+        else:
+            query += f' FROM "{table_name}"'
+        if condition:
+            query += f' WHERE {condition}'
+        if limit:
+            query += f' LIMIT {limit}'
+        query = f"""{query};"""
+        return query
+
+    async def get_data(self, schema_name, table_name, query=None, columns=None, limit=None, debug=False, **kwargs):
+        """
+        @description:
+        :param schema_name:
+        :param table_name:
+        :param query:
+        :param columns:
+        :param limit:
+        :param debug:
+        :return:
+        """
+        try:
+            connection = await self.get_connection()
+            if query:
+                self.params['query'] = query
+            else:
+                query = await self.query_builder(
+                    schema_name=schema_name, table_name=table_name, columns=columns, limit=limit
+                )
+                # self.params['query'] = f'''select * from {schema_name}."{table_name}";'''
+                self.params['query'] = query
+
+            stmt = await connection.prepare(self.params['query'])
+            rows = await stmt.fetch()
+            column_names = [a.name for a in stmt.get_attributes()]
+            df = pd.DataFrame(rows, columns=column_names)
+            # await connection.close()
+            await self.close_connection(connection)
+
+            if df.empty:
+                df = pd.DataFrame(columns=column_names)
+            df = pl.from_pandas(df)
+            if debug:
+                return {
+                    "status": True, "message": "Success",
+                    "data": df.to_dicts()
+                }
+            return df
+        except Exception as err:
+            # logger.error(err)
+            traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": f"Not able to fetch data {err}", "data": []
+            }
+
+    async def primary_key(self, schema_name, table_name, debug=False, **kwargs):
+        """
+        @description:
+        :param schema_name:
+        :param table_name:
+        :return:
+        """
+        try:
+            connection = await self.get_connection()
+            stmt = await connection.prepare(
+                f"""SELECT column_name FROM information_schema.key_column_usage WHERE table_name = '{table_name}'""")
+            columns = [a.name for a in stmt.get_attributes()]
+            data = await stmt.fetch()
+            data = pd.DataFrame(data, columns=columns)
+            # await connection.close()
+            await self.close_connection(connection)
+            return {
+                "status": True, "message": "Connected to PostgresSQL",
+                "data": data['column_name'].unique().tolist()
+            }
+        except asyncpg.PostgresConnectionError as err:
+            # logger.error(err)
+            traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": "Unable to connect to PostgresSQL",
+                "data": []
+            }
+
+    async def column_names(self, schema_name, table_name, debug=False, **kwargs):
+        """
+        @description:
+        :param schema_name:
+        :param table_name:
+        :return:
+        """
+        try:
+            connection = await self.get_connection()
+            stmt = await connection.prepare(
+                f"""SELECT column_name FROM information_schema.columns WHERE table_schema = '{schema_name}' AND table_name = '{table_name}'""")
+            columns = [a.name for a in stmt.get_attributes()]
+            data = await stmt.fetch()
+            data = pd.DataFrame(data, columns=columns)
+            # await connection.close()
+            await self.close_connection(connection)
+            return {
+                "status": True, "message": "Connected to PostgresSQL",
+                "data": data['column_name'].unique().tolist()
+            }
+        except asyncpg.PostgresConnectionError as err:
+            # logger.error(err)
+            traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": "Unable to connect to PostgresSQL",
+                "data": []
+            }
+
+    async def create_table(self, schema_name, table_name, sample_records, debug=False, **kwargs):
+        if not isinstance(sample_records, pl.DataFrame):
+            sample_records = pl.DataFrame(sample_records)
+        connection = await self.get_connection()
+        table_create_sql = ''
+        dtype_dict = {'String': str('text'), 'Int64': str('text'), 'Int32': str('text'), 'Boolean': str('text'),
+                      'Float64': str('double precision'), 'Float32': str('double precision'),
+                      'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'),
+                      "Datetime(time_unit='us', time_zone=None)": str('timestamp')}
+        col_dtype = {col: sample_records[col].dtype for col in sample_records.columns}
+        print("col_dtype: ", col_dtype)
+        for col, dty in col_dtype.items():
+            dty = dtype_dict.get(str(dty))
+            if col == 'Json Data':
+                dty = str('jsonb')
+            if col == 'DC_AMOUNT':
+                dty = str('double precision')
+            table_create_sql += f'"{col}" {dty},'
+        table_create_sql = table_create_sql[:-1]
+
+        table_create_sql = '''CREATE TABLE IF NOT EXISTS "''' + table_name + '''" (''' + table_create_sql + ''')'''
+        await connection.execute(table_create_sql)
+        # await connection.commit()
+        return True
+
+    async def write_data_from_csv(self, records, create_table_name, schema_name='public', **kwargs):
+        """
+        @description:
+        :param records:
+        :param create_table_name:
+        :param schema_name:
+        :return:
+        """
+        connection = await self.get_connection()
+        if not isinstance(records, pl.DataFrame):
+            records = pl.DataFrame(records)
+        records.write_csv(f"/tmp/{create_table_name}.csv")
+        # cur = connection.cursor()
+        result = await self.create_table(schema_name, create_table_name, records.head(10))
+        await connection.copy_to_table(
+            table_name=create_table_name,
+            source=f'/tmp/{create_table_name}.csv',
+            schema_name=schema_name,
+            delimiter='~', header=False,
+        )
+        os.remove(f"/tmp/{create_table_name}.csv")
+        # await connection.close()
+        await self.close_connection(connection)
+        return {
+            "status": True, "message": "Data inserted Successfully", "data": []
+        }
+
+    async def write_data(self, records, schema_name, create_table_name, **kwargs):
+        """
+        @description:
+        :param records:
+        :param schema_name:
+        :param create_table_name:
+        :return:
+        """
+        connection = await self.get_connection()
+        if not isinstance(records, pl.DataFrame):
+            records = pd.DataFrame(records)
+            records = records.astype(str)
+
+        result = await self.create_table(schema_name, create_table_name, records.head(10))
+        tuples = [tuple(x) for x in records.values]
+        if not records.empty:
+            await connection.copy_records_to_table(
+                create_table_name,
+                schema_name=schema_name,
+                records=tuples,
+                columns=list(records.columns),
+                timeout=10
+            )
+        # await connection.close()
+        await self.close_connection(connection)
+        return {
+            "status": True, "message": "Data inserted Successfully", "data": []
+        }
+
+    async def get_distinct_values(self, schema_name, table_name, column_name, where_clause=None, debug=False, **kwargs):
+        """
+        @description:
+        :param schema_name:
+        :param table_name:
+        :param column_name:
+        :param where_clause:
+        :param debug:
+        :return:
+        """
+        try:
+            columns_mapping = dict()
+            connection = await self.get_connection()
+            for column in column_name:
+                query = f'''SELECT DISTINCT "{column}" FROM "{schema_name}"."{table_name}"'''
+                if where_clause:
+                    where_query = ''
+                    for key, value in where_clause.items():
+                        where_query += f'"{key}" = \'{value}\' AND '
+                    where_query = where_query[:-5]
+                    if where_query:
+                        query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
+                stmt = await connection.prepare(
+                    query
+                )
+                data = await stmt.fetch()
+                data = pd.DataFrame(data)
+                columns_mapping[column] = data[column].unique().tolist()
+            # await connection.close()
+            await self.close_connection(connection)
+            return {
+                "status": True, "message": "Connected to PostgresSQL",
+                "data": columns_mapping
+            }
+        except Exception as err:
+            print(err)
+            traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": "Unable to connect to PostgresSQL",
+                "data": []
+            }
+
+    async def execute_query(self, query, debug=False, **kwargs):
+        """
+        @description:
+        :param query:
+        :param debug:
+        :return:
+        """
+        try:
+            connection = await self.get_connection()
+            cursor = connection.cursor()
+            cursor.execute(query)
+            records = cursor.fetchall()
+            column_names = [desc[0] for desc in cursor.description]
+            records = {col: [row[i] for row in records] for i, col in enumerate(column_names)}
+            # await connection.close()
+            await self.close_connection(connection)
+            return records
+        except Exception as err:
+            print(err)
+            traceback.print_exc(file=sys.stdout)
+            raise asyncpg.RaiseError(err)
+
+
+class QueryBuilder:
+    def __init__(self):
+        pass
+
+    async def is_str_val(self, val) -> str:
+        """
+
+        Args:
+            val:
+
+        Returns:
+
+        """
+        query_val = ''
+        if isinstance(val, list):
+            query_val = ', '.join(f"'{v}'" for v in val)
+        else:
+            query_val = f"'{val}'"
+        return query_val
+
+    async def is_num_val(self, dtype, val) -> str:
+        """
+
+        Args:
+            dtype:
+            val:
+
+        Returns:
+
+        """
+        query_val = ''
+        if dtype in ["bigint", "integer"]:
+            if isinstance(val, list):
+                query_val = ', '.join(f"{v}" for v in val)
+            else:
+                query_val = val
+        else:
+            if isinstance(val, list):
+                query_val = ', '.join(f"'{v}'" for v in val)
+            else:
+                query_val = f"'{val}'"
+        return query_val
+
+    async def select_col(self, agg: str, col: str, table_alias: str) -> str:
+        """
+
+        Args:
+            agg:
+            col:
+            table_alias:
+
+        Returns:
+
+        """
+        if agg:
+            return f'''{agg.upper()}({table_alias}."{col}")'''
+        return f'''{table_alias}."{col}"'''
+
+    async def map_alias_name_to_table(
+            self, tables_list: typing.List[str]
+    ) -> typing.Dict[str, str]:
+        """
+        Args:
+            tables_list: a list of table
+
+        Returns: a dictionary of table as key and alias as value
+            Ex:
+                {
+                    "table1": "a",
+                    "table2": "b"
+                }
+
+        """
+        map_tables = dict()
+        ascii_num = 97
+        for table_name in tables_list:
+            if table_name:
+                map_tables[table_name] = chr(ascii_num)
+                ascii_num += 1
+
+        return map_tables
+
+    async def add_metric_to_col(
+            self,
+            columns_map: typing.Dict[str, typing.Any],
+            metrics: typing.List[typing.Dict],
+            join_conditions: typing.Dict,
+            table_mappings: typing.Dict
+    ) -> tuple[typing.Dict[str, typing.Any], typing.Dict[str, typing.Any]]:
+        """
+
+        Args:
+            columns_map:
+            metrics:
+            join_conditions:
+            table_mappings:
+
+        Returns:
+
+        """
+        map_columns = dict()
+        group_by_map = dict()
+
+        for table, columns in columns_map.items():
+            map_columns[table] = dict()
+            group_by_map[table] = []
+            for col, alias_col in columns.items():
+                map_columns[table].update({f'"{col}"': f'"{alias_col}"'})
+                group_by_map[table].append(f'"{col}"')
+            for metric in metrics:
+                alias_col = f'''"{metric['aggregate']}({metric['column']})"'''
+                agg_op = eval(f"AggregationOperator.{metric['aggregate']}.value")
+                agg_col = f'''{agg_op}("{table_mappings.get(table, "a")}"."{metric["column"]}")'''
+                map_columns[table].update({agg_col: alias_col})
+
+        for table, columns in join_conditions.items():
+            map_columns[table] = dict()
+            group_by_map[table] = []
+            for col, alias_col in columns['columns'].items():
+                map_columns[table].update({f'"{col}"': f'"{alias_col}"'})
+                group_by_map[table].append(f'"{col}"')
+        return map_columns, group_by_map
+
+    async def get_select_columns(
+            self,
+            columns_dicts: typing.Dict[str, typing.Any],
+            group_by_json: typing.List[typing.Dict[str, typing.Any]],
+            table_mapping: typing.Dict[str, str] = None
+    ) -> typing.Dict[str, typing.Any]:
+        """
+
+        Args:
+            table_mapping: a dictionary of table as key and alias as value
+                Ex:
+                    {
+                        "table1": "a",
+                        "table2": "b"
+                    }
+            columns_dicts: a dictionary of column as key and alias as value
+                Ex:
+                    {
+                        "table1": {
+                            "column1": "col1",
+                            "column2": "col2"
+                        },
+                        "table2": {
+                            "column3": "col3",
+                            "column4": "col4"
+                        }
+                    }
+            group_by_json: a list of dictionary of column as key and alias as value
+                Ex:
+                    [
+                        {
+                            "column": "",
+                            "agg": "",
+                        }
+                    ]
+        Returns: a dictionary of table as key and columns as value
+            Ex:
+                {
+                    "table1": '"a.column1" AS "col1", "a.column2" AS "col2"',
+                    "table2": '"b.column3" AS "col3", "b.column4" AS "col4"'
+                }
+
+        """
+        select_column_dict = dict()
+
+        if not table_mapping:
+            table_mapping = dict()
+
+        for table_name, columns_dict in columns_dicts.items():
+            query_columns = ", ".join(
+                f'{table_mapping.get(table_name, "a")}.{column} AS {alias_column}'
+                if column.split("(")[0] not in [op.value for op in AggregationOperator]
+                else f'{column} AS {alias_column}'
+                for column, alias_column
+                in columns_dict.items()
+            )
+            select_column_dict[table_name] = query_columns
+
+        return select_column_dict
+
+    async def from_clause(
+            self,
+            table: str,
+            table_mapping: typing.Dict
+    ) -> str:
+        """
+
+        Args:
+            table_mapping:
+            table:
+
+        Returns:
+
+        """
+        table_alias = table_mapping.get(table, "a")
+        return f'''FROM "{table}" AS {table_alias}'''
+
+    async def join_query_builder(
+            self,
+            join_query_json: typing.Dict[str, typing.Any],
+            table_mapping: typing.Dict[str, str]
+    ) -> str:
+        """
+
+        Args:
+            join_query_json:
+                "join_conditions": {
+                    "table1": {
+                        "join": "inner",
+                        "filters": [
+                            {
+                                "column": "",
+                                "dtype": "",
+                                "op": "",
+                                "val": "",
+                                "cond": "",
+                            }
+                        ],
+                        "cond": [{
+                            "from": {
+                                "table": "",
+                                "column": "",
+                                "vale": ""
+                            },
+                            "to": {
+                                "table": "",
+                                "column": "",
+                                "vale": ""
+                            },
+                        }]
+                        "columns": {}
+                    }
+                }
+            table_mapping:
+
+        Returns:
+
+        """
+        final_json_query = ""
+        for table, join_dict in join_query_json.items():
+            join_query = ""
+            join_cond = eval(f"JoinOperator.{join_dict['join']}.value")
+
+            join_where_clause = ""
+            count = 1
+            for filters in join_dict["filters"]:
+                filters = filters.copy()
+                filters['dtype'] = filters.get('dtype', 'character varying')
+                where_cond = await self.where_clause(filters, table, table_mapping)
+                operator = filters.get("cond", "AND")
+                if count == 1:
+                    join_where_clause += f' {where_cond} '
+                else:
+                    join_where_clause += f'{operator} {where_cond} '
+                count += 1
+
+            if join_where_clause:
+                join_cond += f' (SELECT * FROM "{table}" AS {table_mapping.get(table, "a")} WHERE {join_where_clause})'
+
+            for each_cond in join_dict["cond"]:
+                on_cond = f'{table_mapping.get(each_cond["from"]["table"], "a")}.{each_cond["from"]["column"]} = ' \
+                          f'{table_mapping.get(each_cond["to"]["table"], "a")}.{each_cond["to"]["column"]}'
+                # join_query += f'{join_cond} "{table}" AS {table_mapping.get(table, "a")} ON {on_cond} '
+                join_query += f'ON {on_cond} AND '
+            if join_query.endswith(" AND "):
+                join_query = join_query[:-4]
+
+            join_query = f'{join_cond} AS {table_mapping.get(table, "a")} {join_query}'
+            final_json_query += f'{join_query}\n'
+
+        return final_json_query
+
+    async def where_clause(
+            self,
+            filter_cond: typing.Dict,
+            table: str,
+            table_mapping: typing.Dict
+    ) -> str:
+        """
+
+        Args:
+            table_mapping:
+            table:
+            filter_cond:
+                {
+                    "column": "",
+                    "dtype": "",
+                    "op": "",
+                    "val": "",
+                    "cond": "",
+                }
+        Returns:
+
+        """
+        agg = filter_cond.get("agg", "")
+        op = filter_cond["op"]
+        val = filter_cond["val"]
+        col = filter_cond["column"]
+        dtype = filter_cond["dtype"]
+        table_alias = table_mapping.get(table, "a")
+        where_clause_cond: str = ""
+        select_column = await self.select_col(agg, col, table_alias)
+        if op == "TEMPORAL_RANGE":
+            match = re.match(r'datetime\("(.*?)"\) : datetime\("(.*?)"\)', val)
+            if match:
+                start_date, end_date = match.groups()
+                where_clause_cond += f'''{select_column} BETWEEN '{start_date}' AND '{end_date}' '''
+        elif op == FilterStringOperator.IN or op == FilterStringOperator.NOT_IN:
+            val_list = await self.is_num_val(dtype, val)
+            where_clause_cond += f'''{select_column} IN ({val_list}) '''
+        elif op == FilterStringOperator.IS_TRUE:
+            where_clause_cond += f'''{select_column} IS TRUE '''
+        elif op == FilterStringOperator.IS_FALSE:
+            where_clause_cond += f'''{select_column} IS FALSE '''
+        elif op == FilterStringOperator.NOT_EQUALS:
+            val = await self.is_num_val(dtype, val)
+            where_clause_cond += f'''{select_column} != {val} '''
+        elif op == FilterStringOperator.EQUALS:
+            val = await self.is_num_val(dtype, val)
+            where_clause_cond += f'''{select_column} = {val} '''
+        elif op == FilterStringOperator.GREATER_THAN:
+            val = await self.is_num_val(dtype, val)
+            where_clause_cond += f'''{select_column} > {val} '''
+        elif op == FilterStringOperator.LESS_THAN:
+            val = await self.is_num_val(dtype, val)
+            where_clause_cond += f'''{select_column} < {val} '''
+        elif op == FilterStringOperator.GREATER_THAN_OR_EQUALS:
+            val = await self.is_num_val(dtype, val)
+            where_clause_cond += f'''{select_column} >= {val} '''
+        elif op == FilterStringOperator.LESS_THAN_OR_EQUALS:
+            val = await self.is_num_val(dtype, val)
+            where_clause_cond += f'''{select_column} <= {val} '''
+        elif op == FilterStringOperator.LIKE:
+            where_clause_cond += f'''{select_column} LIKE '%{val}%' '''
+        elif op == FilterStringOperator.ILIKE:
+            where_clause_cond += f'''{select_column} ILIKE '%{val}%' '''
+        elif op == FilterStringOperator.IS_NULL:
+            where_clause_cond += f'''{select_column} IS NULL '''
+        elif op == FilterStringOperator.IS_NOT_NULL:
+            where_clause_cond += f'''{select_column} IS NOT NULL '''
+        return where_clause_cond
+
+    async def group_by_query_builder(
+            self,
+            group_by_json: typing.List[typing.Dict[str, typing.Any]],
+            table_mapping: typing.Dict[str, str],
+            table_name: str
+    ) -> str:
+        """
+
+        Args:
+            group_by_json:
+                [
+                    {
+                        "column": "",
+                        "agg": "",
+                        "label": "", # TO DO
+                    }
+                ]
+            table_mapping:
+            table_name:
+
+        Returns:
+
+        """
+        group_by_query = ""
+        for group in group_by_json:
+            select_column = await self.select_col("", group["column"], table_mapping.get(table_name, "a"))
+            group_by_query += f'{select_column}, '
+
+        if group_by_query.endswith(", "):
+            group_by_query = group_by_query[:-2]
+            group_by_query += " "
+        return group_by_query
+
+    async def having_query_builder(
+            self,
+            having_query_json: typing.List[typing.Dict[str, typing.Any]],
+            table_mapping: typing.Dict[str, str],
+            table_name: str
+    ) -> str:
+        """
+
+        Args:
+            having_query_json:
+                [
+                    {
+                        "column": "",
+                        "agg": "",
+                        "dtype": "",
+                        "op": "",
+                        "val": "",
+                        "cond": "",
+                    }
+                ]
+            table_mapping:
+            table_name:
+
+        Returns:
+
+        """
+        having_query = ""
+        count = 1
+        for filters in having_query_json:
+            filters = filters.copy()
+            filters['dtype'] = filters.get('dtype', 'character varying')
+            where_cond = await self.where_clause(filters, table=table_name, table_mapping=table_mapping)
+            if count == 1:
+                having_query += f' {where_cond} '
+            else:
+                having_query += f'{filters.get("cond", "AND")} {where_cond} '
+            count += 1
+
+        return having_query
+
+    async def order_by_query_builder(
+            self,
+            order_by_query_json: typing.List[typing.Dict[str, typing.Any]],
+            table_mapping: typing.Dict[str, str],
+            table_name: str
+    ) -> str:
+        """
+
+        Args:
+            order_by_query_json:
+                [
+                    {
+                        "column": "",
+                        "agg": "",
+                        "cond": "",
+                    }
+                ]
+            table_mapping:
+            table_name:
+
+        Returns:
+
+        """
+        order_by_query = ""
+        for filters in order_by_query_json:
+            select_column = await self.select_col(filters["agg"], filters["column"], table_mapping.get(table_name, "a"))
+            order_by_query += f'{select_column} {filters.get("cond", "ASC")}, '
+        if order_by_query.endswith(", "):
+            order_by_query = order_by_query[:-2]
+            order_by_query += " "
+        return order_by_query
+
+    async def limit_query_builder(
+            self,
+            limit: int
+    ) -> str:
+        """
+
+        Args:
+            limit:
+
+        Returns:
+
+        """
+        return f"LIMIT {limit}"
+
+    async def offset_query_builder(
+            self,
+            offset: int
+    ) -> str:
+        """
+
+        Args:
+            offset:
+
+        Returns:
+
+        """
+        return f"OFFSET {offset}"
+
+    async def generate_query(
+            self,
+            query_context: typing.Dict[str, typing.Any],
+    ) -> str:
+        """
+
+        Args:
+            query_context:
+
+        Returns:
+
+        """
+        query = ""
+
+        # getting mapping tables
+        table_mappings = await self.map_alias_name_to_table([query_context["table_name"]] + [query_context["join_table"]])
+
+        # including groupby columns to select columns
+        query_context["map_column"], group_by_map = await self.add_metric_to_col(
+            {query_context['table_name']: query_context.get("select_columns", {})},
+            query_context.get("metrics", []),
+            query_context.get("join_conditions", {}),
+            table_mappings
+        )
+
+        # Select Query
+        query = "SELECT "
+        if query_context.get("map_column", {}):
+            table_column_map = await self.get_select_columns(query_context["map_column"], [{}], table_mappings)
+            for table, column_str in table_column_map.items():
+                query += f'{column_str}'
+                query += ", "
+            query = query[:-2]
+            query += " "
+        else:
+            query += "* "
+
+        # From Query
+        query += await self.from_clause(query_context["table_name"], table_mappings)
+
+        # Join Query
+        if query_context.get("join_tables", []):
+            query += await self.join_query_builder(
+                query_context.get("join_conditions", {}),
+                table_mappings
+            )
+
+        # Where Query
+        if query_context.get("filters", []):
+            count = 1
+            operator = ""
+            for filters in query_context["filters"]:
+                filters = filters.copy()
+                filters['dtype'] = filters.get('dtype', 'character varying')
+                where_clause = await self.where_clause(
+                    filters, query_context['table'], table_mappings
+                )
+                if count == 1:
+                    query += "WHERE {}".format(where_clause)
+                else:
+                    query += "{} {}".format(operator, where_clause)
+                count += 1
+                operator = filters.get("cond", "AND")
+
+        # Group By Query
+        if query_context.get("metrics", []):
+            count = 1
+            for table, column in group_by_map.items():
+                for each_col in column:
+                    if count == 1:
+                        query += f'GROUP BY "{table_mappings.get(table, "a")}".{each_col} '
+                    else:
+                        query += f', "{table_mappings.get(table, "a")}".{each_col} '
+                    count += 1
+
+        # Having Query
+        # TO DO
+
+        # Order By Query
+        if query_context.get("order_by", {}):
+            query += "ORDER BY "
+            count = 1
+            for column, condition in query_context["order_by"].items():
+                if count == 1:
+                    query += f'"{column}" {condition} '
+                else:
+                    break
+                count += 1
+
+        # Limit Query
+        if query_context.get("limit", 0):
+            query += await self.limit_query_builder(query_context["limit"])
+
+        # Offset Query
+        if query_context.get("offset", 0):
+            query += await self.offset_query_builder(query_context["offset"])
+
+        return query.strip()
