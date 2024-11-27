@@ -116,7 +116,7 @@ class filtered_keysCreate(pydantic.BaseModel):
 class ChartsSchema(UrdhvaPostgresBase):
     __tablename__ = 'charts'
     
-    connection_id: Mapped[str] = mapped_column("connection_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    connection_id: Mapped[typing.Optional[str]] = mapped_column("connection_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     database: Mapped[typing.Optional[str]] = mapped_column("database", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     schema: Mapped[typing.Optional[str]] = mapped_column("schema", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     table: Mapped[str] = mapped_column("table", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -139,7 +139,7 @@ class ChartsSchema(UrdhvaPostgresBase):
 class ChartsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'charts'
     
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: typing.Optional[str] = pydantic.Field("", **{})
     schema: typing.Optional[str] = pydantic.Field("", **{})
     table: str
@@ -167,7 +167,7 @@ class ChartsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 class Charts(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'charts'
     
-    connection_id: typing.Optional[str] | None = None
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: typing.Optional[str] = pydantic.Field("", **{})
     schema: typing.Optional[str] = pydantic.Field("", **{})
     table: typing.Optional[str] | None = None
@@ -199,20 +199,20 @@ class ChartsGetResp(pydantic.BaseModel):
 
 
 class Charts_Get_TablesParams(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: str
     schema: str
 
 
 class Charts_Get_ColumnsParams(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: str
     schema: str
     table: str
 
 
 class Charts_Get_Unique_ValuesParams(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: str
     schema: str
     table: str
@@ -220,7 +220,7 @@ class Charts_Get_Unique_ValuesParams(pydantic.BaseModel):
 
 
 class Charts_Drill_Down_DataParams(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: str
     schema: str
     table: str
@@ -236,7 +236,7 @@ class Charts_Get_Dashboard_Chart_FormParams(pydantic.BaseModel):
 
 
 class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     table: str
     column: typing.List[str]
     where_cond: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
@@ -247,7 +247,7 @@ class Charts_Generate_Dynamic_Chart_QueryParams(pydantic.BaseModel):
 
 
 class Charts_Save_ChartsParams(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     record_id: typing.Optional[int] = pydantic.Field(0, **{})
     database: typing.Optional[str] = pydantic.Field("", **{})
     schema: typing.Optional[str] = pydantic.Field("", **{})
@@ -277,12 +277,12 @@ class Charts_Get_Auto_Complete_TextParams(pydantic.BaseModel):
 
 
 class Charts_Connection_Vault_RoutingParams(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
     action: str
 
 
 class Charts_Get_Creds_DetailsParams(pydantic.BaseModel):
-    connection_id: str
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class DashboardOrderInternalCreate(pydantic.BaseModel):
