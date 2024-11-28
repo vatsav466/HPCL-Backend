@@ -3,7 +3,7 @@
     "additionalInfo": {
       "description": ""
     },
-    "name": "OLD",
+    "name": "LPG OLD",
     "firstRuleNodeId": null,
     "root": false,
     "debugMode": false,
@@ -15,8 +15,8 @@
       {
         "additionalInfo": {
           "description": "",
-          "layoutX": 1132,
-          "layoutY": 355
+          "layoutX": 1590,
+          "layoutY": 524
         },
         "type": "org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode",
         "name": "CEG Alert Publisher",
@@ -27,7 +27,7 @@
           "messageProperties": "PERSISTENT_BASIC",
           "host": "localhost",
           "port": 5672,
-          "virtualHost": "/hpcl_ceg",
+          "virtualHost": "hpcl_ceg",
           "username": "hpcl_ceg",
           "password": "algo@4321",
           "automaticRecoveryEnabled": true,
@@ -50,10 +50,10 @@
           "clientAttributeNames": [],
           "sharedAttributeNames": [],
           "serverAttributeNames": [
-            "bu",
+            "BU",
             "plantlocation",
             "plantlocationid",
-            "sap_id"
+            "sapid"
           ],
           "latestTsKeyNames": [],
           "getLatestValueWithTs": false
@@ -69,7 +69,7 @@
         "name": "Create Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Quality Of Cylinders In OLD\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN009\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP009\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Quality Of Cylinders In OLD\";\ndetails[\"additionalInfo\"][\"unit_name\"] = \"TST-LPG-UCN009\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP009\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\nreturn details;",
           "useMessageAlarmData": false,
           "alarmType": "Quality Of Cylinders In OLD",
           "severity": "CRITICAL",
@@ -100,7 +100,7 @@
         "name": "Create Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"OLD Bypass\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN007\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP007\";\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlockName\"] = \"OLD Bypass\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN007\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"sopid\"] = \"SOP007\";\ndetails[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"deviceType\"]\nreturn details;",
           "useMessageAlarmData": false,
           "alarmType": "OLD Bypass",
           "severity": "CRITICAL",
@@ -118,7 +118,7 @@
         "name": "Create Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Checking Of OLD\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN008\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP008\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlockName\"] = \"Checking Of OLD\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN008\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sopid\"] = \"SOP008\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"deviceType\"]\nreturn details;",
           "useMessageAlarmData": false,
           "alarmType": "Checking Of OLD",
           "severity": "CRITICAL",
@@ -136,7 +136,7 @@
         "name": "Unity CHECK",
         "debugMode": true,
         "configuration": {
-          "jsScript": "if (metadata[\"device_type\"] == \"OLD_VLD\"){\n    return true\n}\nreturn false"
+          "jsScript": "if (metadata[\"deviceType\"] == \"OLD_VLD\"){\n    return true\n}\nreturn false"
         }
       },
       {
@@ -149,7 +149,7 @@
         "name": "Create Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Quality of Cylinders in VLD Machine\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN012\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP012\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlockName\"] = \"Quality of Cylinders in VLD Machine\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN012\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sopid\"] = \"SOP012\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"deviceType\"]\nreturn details;",
           "useMessageAlarmData": false,
           "alarmType": "Quality of Cylinders in VLD Machine",
           "severity": "CRITICAL",
@@ -167,7 +167,7 @@
         "name": "Create Alarm",
         "debugMode": false,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Checking of VLD\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN011\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP011\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlockName\"] = \"Checking of VLD\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN011\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sopid\"] = \"SOP011\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"deviceType\"]\nreturn details;",
           "useMessageAlarmData": false,
           "alarmType": "Checking of VLD",
           "severity": "CRITICAL",
@@ -185,7 +185,7 @@
         "name": "Clear Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Checking of VLD\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN011\";\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP011\";\n}\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Checking of VLD\";\n    details[\"additionalInfo\"][\"unit_name\"] = \"TST-LPG-UCN011\";\n    details[\"additionalInfo\"][\"sapi_d\"] = metadata[\"ss_sapid\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP011\";\n}\nreturn details;",
           "alarmType": "Checking of VLD"
         }
       },
@@ -212,7 +212,7 @@
         "name": "Clear Alarm",
         "debugMode": false,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Checking of VLD Bypass\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN010\";\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP010\";\n}\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlockName\"] = \"Checking of VLD Bypass\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN010\";\n    details[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\n    details[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\n    details[\"additionalInfo\"][\"staticData\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sopid\"] = \"SOP010\";\n}\nreturn details;",
           "alarmType": "Checking of VLD Bypass"
         }
       },
@@ -226,7 +226,7 @@
         "name": "clear alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"OLD Bypass\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN007\";\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP007\";\n}\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlockName\"] = \"OLD Bypass\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN007\";\n    details[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\n    details[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\n    details[\"additionalInfo\"][\"staticData\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sopid\"] = \"SOP007\";\n}\nreturn details;",
           "alarmType": "OLD Bypass"
         }
       },
@@ -240,7 +240,7 @@
         "name": "Clear Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Quality of Cylinders in VLD Machine\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN012\";\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP012\";\n}\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlockName\"] = \"Quality of Cylinders in VLD Machine\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN012\";\n    details[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\n    details[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\n    details[\"additionalInfo\"][\"staticData\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sopid\"] = \"SOP012\";\n}\nreturn details;",
           "alarmType": "Quality of Cylinders in VLD Machine"
         }
       },
@@ -285,7 +285,7 @@
         "name": "Create Alarm",
         "debugMode": false,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Checking of VLD Bypass\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN010\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"device_id\"]\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP010\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlockName\"] = \"Checking of VLD Bypass\";\ndetails[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN010\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"deviceId\"] = metadata[\"deviceId\"]\ndetails[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sopid\"] = \"SOP010\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"deviceType\"]\nreturn details;",
           "useMessageAlarmData": false,
           "alarmType": "Checking of VLD Bypass",
           "severity": "CRITICAL",
@@ -316,7 +316,7 @@
         "name": "Clear Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Quality Of Cylinders In OLD\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN009\";\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP009\";\n}\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlockName\"] = \"Quality Of Cylinders In OLD\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN009\";\n    details[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\n    details[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\n    details[\"additionalInfo\"][\"staticData\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sopid\"] = \"SOP009\";\n}\nreturn details;",
           "alarmType": "Quality Of Cylinders In OLD"
         }
       },
@@ -330,7 +330,7 @@
         "name": "Clear Alarm",
         "debugMode": false,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Checking Of OLD\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN008\";\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP008\";\n}\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlockName\"] = \"Checking Of OLD\";\n    details[\"additionalInfo\"][\"unitName\"] = \"TST-LPG-UCN008\";\n    details[\"additionalInfo\"][\"sapid\"] = metadata[\"ss_sapid\"];\n    details[\"additionalInfo\"][\"BU\"] = metadata[\"ss_BU\"];\n    details[\"additionalInfo\"][\"staticData\"] = {\"alertingModel\": \"fillingOperation\"};\n    details[\"additionalInfo\"][\"sopid\"] = \"SOP008\";\n}\nreturn details;",
           "alarmType": "Checking Of OLD"
         }
       },

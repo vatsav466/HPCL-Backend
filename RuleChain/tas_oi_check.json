@@ -38,8 +38,8 @@
       {
         "additionalInfo": {
           "description": "",
-          "layoutX": 1132,
-          "layoutY": 355
+          "layoutX": 1095,
+          "layoutY": 310
         },
         "type": "org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode",
         "name": "CEG Alert Publisher",
@@ -50,7 +50,7 @@
           "messageProperties": "PERSISTENT_BASIC",
           "host": "localhost",
           "port": 5672,
-          "virtualHost": "/hpcl_ceg",
+          "virtualHost": "hpcl_ceg",
           "username": "hpcl_ceg",
           "password": "algo@4321",
           "automaticRecoveryEnabled": true,
@@ -69,7 +69,7 @@
         "name": "OI Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unitName\"] = metadata[\"device_name\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Oi Alerts\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = \"TAS\";\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP023\";\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Oi Alerts\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = \"TAS\";\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP023\";\nreturn details;",
           "alarmType": "Dyke Alarm"
         }
       },
@@ -83,7 +83,7 @@
         "name": "OI Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\n\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unitName\"] = metadata[\"device_name\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Oi Alerts\";\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"device_id\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = \"TAS\";\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP023\";\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\n\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\n\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Oi Alerts\";\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = \"TAS\";\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP023\";\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\n\nreturn details;",
           "useMessageAlarmData": false,
           "alarmType": "OI Alarm",
           "severity": "CRITICAL",
@@ -133,7 +133,7 @@
         "name": "Check OI",
         "debugMode": true,
         "configuration": {
-          "jsScript": "if (metadata[\"device_type\"] == \"OI\"){\n    return true\n}\nreturn false"
+          "jsScript": "if (metadata[\"deviceType\"] == \"OI\"){\n    return true\n}\nreturn false"
         }
       }
     ],

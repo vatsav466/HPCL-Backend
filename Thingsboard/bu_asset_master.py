@@ -205,7 +205,7 @@ class ThingsBoardInterface:
         data = {
             "additionalInfo": additional_info,
             "customerId": {"id": bu_id, "entityType": "CUSTOMER"},
-            "label": f"Asset-{bu}",
+            "label": f"{bu.upper()}",
             "name": location_name,
             "type": "Location"
         }
@@ -245,7 +245,9 @@ class ThingsBoardInterface:
             "plantlocationid": f"{location_id}",
             "plantlocation": location_name,
             "bu_id": f"{bu_id}",
-            "bu": bu
+            "SAPID": f"{location_id}",
+            "BU": bu,
+            device_name: 1
         }
 
         # Check if the device already exists by querying the device info
@@ -263,24 +265,25 @@ class ThingsBoardInterface:
 
         # If the device does not exist, create a new device with the specified details
         data = {
-            "additionalInfo": device_scope,
+            "additionalInfo": {**device_scope, "deviceType": device_type, "deviceName": device_name,
+                               'sap_id': location_id},
             "name": device_name,
             "label": device_name,
+            "type": device_type,
             "customerId": {"entityType": "CUSTOMER", "id": bu_id}
         }
-        print("*" * 10)
-        print(data)
         device = self.api_handler("POST", "/api/device", {}, data)
-        print("#" * 10)
 
         if device:
             # Attach telemetry data to the newly created device
-            tele_device = self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{device['id']['id']}", {},
-                                           device_scope)
+            tele_device = self.api_handler("POST",
+                                           f"/api/plugins/telemetry/DEVICE/{device['id']['id']}/SERVER_SCOPE", {},
+                                           {**device_scope, "deviceType": device_type})
             if tele_device:
                 # Associate the device with the customer
                 data = {
-                    "additionalInfo": device_scope,
+                    "additionalInfo": {**device_scope, "deviceType": device_type, "deviceName": device_name,
+                               'sap_id': location_id},
                     "customerId": {
                         "entityType": "CUSTOMER",
                         "id": bu_id
@@ -290,9 +293,7 @@ class ThingsBoardInterface:
                         "id": device["id"]["id"]
                     }
                 }
-                print(data)
-                resp = self.api_handler("POST", f"/customer/{bu_id}/device/{device['id']['id']}", {}, data)
-                print(resp)
+                resp = self.api_handler("POST", f"/api/customer/{bu_id}/device/{device['id']['id']}", {}, data)
                 if resp:
                     return resp['id']['id']
 

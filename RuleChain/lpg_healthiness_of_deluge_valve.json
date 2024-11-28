@@ -22,7 +22,7 @@
         "name": "PLC Alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nvar msg_data = msg;\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nif (metadata[\"additionalInfo\"] != undefined) {\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nelse {\n    additionalinfo = {};\n}\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Healthiness_of_Deluge_Valve\";\ndetails[\"additionalInfo\"][\"unitName\"] = additionalinfo[\"PLC Name\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"PumpOperation\"};\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP034\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nvar msg_data = msg;\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nif (metadata[\"additionalInfo\"] != undefined) {\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nelse {\n    additionalinfo = {};\n}\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Healthiness_of_Deluge_Valve\";\ndetails[\"additionalInfo\"][\"unit_name\"] = additionalinfo[\"PLC Name\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"PumpOperation\"};\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP034\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
           "useMessageAlarmData": false,
           "alarmType": "General Alarm",
           "severity": "CRITICAL",
@@ -40,15 +40,15 @@
         "name": "PLA alarm",
         "debugMode": true,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Healthiness_of_Deluge_Valve\";\n    details[\"additionalInfo\"][\"unitName\"] = additionalinfo[\"PLC Name\"];\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"PumpOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP034\";\n}\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Healthiness_of_Deluge_Valve\";\n    details[\"additionalInfo\"][\"unit_name\"] = additionalinfo[\"PLC Name\"];\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"PumpOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP034\";\n}\nreturn details;",
           "alarmType": "General Alarm"
         }
       },
       {
         "additionalInfo": {
           "description": "",
-          "layoutX": 1132,
-          "layoutY": 355
+          "layoutX": 948,
+          "layoutY": 393
         },
         "type": "org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode",
         "name": "CEG Alert Publisher",
@@ -59,7 +59,7 @@
           "messageProperties": "PERSISTENT_BASIC",
           "host": "localhost",
           "port": 5672,
-          "virtualHost": "/hpcl_ceg",
+          "virtualHost": "hpcl_ceg",
           "username": "hpcl_ceg",
           "password": "algo@4321",
           "automaticRecoveryEnabled": true,
@@ -95,10 +95,10 @@
           "clientAttributeNames": [],
           "sharedAttributeNames": [],
           "serverAttributeNames": [
-            "bu",
+            "BU",
             "plantlocation",
             "plantlocationid",
-            "sap_id",
+            "sapid",
             "Deluge Valve Open"
           ],
           "latestTsKeyNames": [],
@@ -115,7 +115,7 @@
         "name": "Check device type",
         "debugMode": true,
         "configuration": {
-          "jsScript": "if (metadata[\"device_type\"] == \"Delugevalve\"){\n    return true\n}\nreturn false"
+          "jsScript": "if (metadata[\"deviceType\"] == \"Delugevalve\"){\n    return true\n}\nreturn false"
         }
       },
       {
