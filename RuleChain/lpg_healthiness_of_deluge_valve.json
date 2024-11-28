@@ -1,0 +1,180 @@
+{
+  "ruleChain": {
+    "additionalInfo": {
+      "description": "LPG-Healthiness of Deluge Valve"
+    },
+    "name": "LPG-Healthiness of Deluge Valve",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": true,
+    "configuration": null
+  },
+  "metadata": {
+    "firstNodeIndex": 6,
+    "nodes": [
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 657,
+          "layoutY": 306
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "PLC Alarm",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nvar msg_data = msg;\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nif (metadata[\"additionalInfo\"] != undefined) {\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nelse {\n    additionalinfo = {};\n}\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Healthiness_of_Deluge_Valve\";\ndetails[\"additionalInfo\"][\"unitName\"] = additionalinfo[\"PLC Name\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"PumpOperation\"};\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP034\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
+          "useMessageAlarmData": false,
+          "alarmType": "General Alarm",
+          "severity": "CRITICAL",
+          "propagate": false,
+          "relationTypes": []
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 643,
+          "layoutY": 450
+        },
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "PLA alarm",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nvar additionalinfo = {};\nif (metadata.additionalInfo){\n  additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\n}\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n    details[\"additionalInfo\"] = additionalinfo;\n    details[\"additionalInfo\"][\"interlock_name\"] = \"Healthiness_of_Deluge_Valve\";\n    details[\"additionalInfo\"][\"unitName\"] = additionalinfo[\"PLC Name\"];\n    details[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\n    details[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\n    details[\"additionalInfo\"][\"raw_data\"] = {\"alertingModel\": \"PumpOperation\"};\n    details[\"additionalInfo\"][\"sop_id\"] = \"SOP034\";\n}\nreturn details;",
+          "alarmType": "General Alarm"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1132,
+          "layoutY": 355
+        },
+        "type": "org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode",
+        "name": "CEG Alert Publisher",
+        "debugMode": true,
+        "configuration": {
+          "exchangeNamePattern": "",
+          "routingKeyPattern": "ceg_tb_listener",
+          "messageProperties": "PERSISTENT_BASIC",
+          "host": "localhost",
+          "port": 5672,
+          "virtualHost": "/hpcl_ceg",
+          "username": "hpcl_ceg",
+          "password": "algo@4321",
+          "automaticRecoveryEnabled": true,
+          "connectionTimeout": 60000,
+          "handshakeTimeout": 10000,
+          "clientProperties": {}
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 362,
+          "layoutY": 357
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "check PLC status",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if (msg[\"Deluge Valve Open\"] !=metadata[\"ss_Deluge Valve Open\"]) {\n    return true\n}\nreturn false"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 585,
+          "layoutY": 169
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Adding Server Scope Attributes",
+        "debugMode": true,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "bu",
+            "plantlocation",
+            "plantlocationid",
+            "sap_id",
+            "Deluge Valve Open"
+          ],
+          "latestTsKeyNames": [],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 117,
+          "layoutY": 353
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Check device type",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if (metadata[\"device_type\"] == \"Delugevalve\"){\n    return true\n}\nreturn false"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 319,
+          "layoutY": 163
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode",
+        "name": "add",
+        "debugMode": true,
+        "configuration": {
+          "fieldsMapping": {
+            "name": "originatorName",
+            "type": "originatorType",
+            "tenantId": "tenantId",
+            "additionalInfo": "additionalInfo",
+            "id": "deviceId"
+          }
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 0,
+        "toIndex": 2,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 2,
+        "type": "Cleared"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 0,
+        "type": "True"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 1,
+        "type": "False"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 5,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 3,
+        "type": "True"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 4,
+        "type": "Success"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}

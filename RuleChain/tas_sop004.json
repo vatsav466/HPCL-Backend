@@ -1,0 +1,204 @@
+{
+  "ruleChain": {
+    "additionalInfo": {
+      "description": ""
+    },
+    "name": "TAS - SOP004",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": false,
+    "configuration": null
+  },
+  "metadata": {
+    "firstNodeIndex": 4,
+    "nodes": [
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 295,
+          "layoutY": 290
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "transformTelimetry",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "msg['RIMSEAL FAULT ALARM'] = metadata['RIMSEAL FAULT ALARM']\nmsg['RIMSEAL FIRE ALARM'] = metadata['RIMSEAL FIRE ALARM']\nmsg['RIMSEAL MODULE_PRESSURE'] = metadata['RIMSEAL MODULE_PRESSURE']\n\n\nreturn {msg: msg, metadata: metadata, msgType: msgType};"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 571,
+          "layoutY": 87
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Check Tank",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "if (metadata[\"device_type\"] == \"Tank\"){\n    return true\n}\nreturn false"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 500,
+          "layoutY": 525
+        },
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Rimseal Alarm",
+        "debugMode": false,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Rim Seal Fire Protection\";\ndetails[\"additionalInfo\"][\"unitName\"] = metadata[\"device_name\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP004\";\nreturn details;",
+          "alarmType": "Rimseal Alarm"
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 498,
+          "layoutY": 380
+        },
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Rimseal Alarm",
+        "debugMode": true,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Rim Seal Fire Protection\";\ndetails[\"additionalInfo\"][\"unitName\"] = metadata[\"device_name\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"device_id\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sap_id\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_bu\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP004\";\ndetails['additionalInfo']['deviceId'] = metadata['deviceId']\ndetails['additionalInfo']['deviceName'] = metadata['originatorName']\ndetails['additionalInfo']['deviceType'] = metadata[\"device_type\"]\ndetails['additionalInfo']['customData'] = msg_data\n\nreturn details;",
+          "useMessageAlarmData": false,
+          "alarmType": "Rimseal Alarm",
+          "severity": "CRITICAL",
+          "propagate": false,
+          "relationTypes": []
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 272,
+          "layoutY": 65
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode",
+        "name": "Server Fields",
+        "debugMode": false,
+        "configuration": {
+          "fieldsMapping": {
+            "name": "originatorName",
+            "type": "originatorType",
+            "additionalInfo": "additionalInfo",
+            "id": "deviceId",
+            "tenantId": "tenantId"
+          }
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 488,
+          "layoutY": 178
+        },
+        "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
+        "name": "Server Scope Attributes",
+        "debugMode": false,
+        "configuration": {
+          "tellFailureIfAbsent": true,
+          "clientAttributeNames": [],
+          "sharedAttributeNames": [],
+          "serverAttributeNames": [
+            "bu",
+            "plantlocation",
+            "plantlocationid",
+            "sap_id",
+            "RIMSEAL FAULT ALARM",
+            "RIMSEAL FIRE ALARM",
+            "RIMSEAL MODULE_PRESSURE"
+          ],
+          "latestTsKeyNames": [
+            "RIMSEAL FAULT ALARM",
+            "RIMSEAL FIRE ALARM",
+            "RIMSEAL MODULE_PRESSURE"
+          ],
+          "getLatestValueWithTs": false
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 1132,
+          "layoutY": 355
+        },
+        "type": "org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode",
+        "name": "CEG Alert Publisher",
+        "debugMode": true,
+        "configuration": {
+          "exchangeNamePattern": "",
+          "routingKeyPattern": "ceg_tb_listener",
+          "messageProperties": "PERSISTENT_BASIC",
+          "host": "localhost",
+          "port": 5672,
+          "virtualHost": "/hpcl_ceg",
+          "username": "hpcl_ceg",
+          "password": "algo@4321",
+          "automaticRecoveryEnabled": true,
+          "connectionTimeout": 60000,
+          "handshakeTimeout": 10000,
+          "clientProperties": {}
+        }
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 227,
+          "layoutY": 454
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "RimSeal",
+        "debugMode": true,
+        "configuration": {
+          "jsScript": "if ((msg[\"RIMSEAL FIRE ALARM\"] != undefined && (msg[\"RIMSEAL FIRE ALARM\"] != metadata[\"ss_RIMSEAL FIRE ALARM\"])) ||\n    (msg[\"RIMSEAL FAULT ALARM\"] != undefined && (msg[\"RIMSEAL FAULT ALARM\"] != metadata[\"ss_RIMSEAL FAULT ALARM\"])) ||\n    (msg[\"RIMSEAL MODULE_PRESSURE\"] != undefined && (msg[\"RIMSEAL MODULE_PRESSURE\"] != metadata[\"ss_RIMSEAL MODULE_PRESSURE\"]))){\n    return true\n}\nreturn false"
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 0,
+        "toIndex": 7,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 5,
+        "type": "True"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 6,
+        "type": "Cleared"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 6,
+        "type": "Created"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 1,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 5,
+        "toIndex": 0,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 3,
+        "type": "True"
+      },
+      {
+        "fromIndex": 7,
+        "toIndex": 2,
+        "type": "False"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}

@@ -52,8 +52,10 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
             ]
 
             # Add the processed device data to the list
-            devices_data.append({"device_name": device_name, "device_id": "", "entity_id": "", "sensors": sensors,
-                                 "device_type": sheet_name})
+            devices_data.append({"device_name": device_name, "device_id": "", "device_type": sheet_name,
+                                 "device_key": "", "entity_id": "", "sensors": sensors})
+            # device['device_id'] = device_id
+            #                 device['device_key'] = self.get_device_cred_key(device_id)
     return {"data": devices_data, "location_id": location_id, "bu": bu, "location_name": location_name}
 
 
@@ -240,6 +242,8 @@ class ThingsBoardInterface:
         device_scope = {
             "location_id": f"{location_id}",
             "location_name": location_name,
+            "plantlocationid": f"{location_id}",
+            "plantlocation": location_name,
             "bu_id": f"{bu_id}",
             "bu": bu
         }
@@ -295,6 +299,12 @@ class ThingsBoardInterface:
         # Return None if the creation or association fails
         return None
 
+    def get_device_cred_key(self, device_id):
+        resp = self.api_handler("GET", f"/api/device/{device_id}/credentials", {}, {})
+        if resp:
+            return resp['credentialsId']
+        return ''
+
     def create_bu_devices(self, bu, location_id, location_name, file_path):
         """
         Creates multiple devices for a given business unit (BU) and location by reading details from a file.
@@ -327,23 +337,24 @@ class ThingsBoardInterface:
             if device_id:
                 # Update the device data with the created device ID
                 device['device_id'] = device_id
+                device['device_key'] = self.get_device_cred_key(device_id)
             # Add the location entity ID to the device data
             device['entity_id'] = entity_id
 
         # Save the updated device data to a JSON file
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
-        file_path = f"{self.data_path}/{location_id}"
-        with open(f"{file_path}.json", "w+") as f:
+        file_path_write = f"{self.data_path}/{location_id}"
+        with open(f"{file_path_write}.json", "w+") as f:
             f.write(json.dumps(bu_device_data, indent=4))
         with open(f"{file_path}", 'rb') as f:
             data = f.read()
-            with open(f"{file_path}.xlsx", 'wb+') as fw:
+            with open(f"{file_path_write}.xlsx", 'wb+') as fw:
                 fw.write(data)
 
 
-# if __name__ == "__main__":
-#     file_path = "/Users/venugopalnaidu/Downloads/OPC_Data_Collection_141124.xlsx"
-#     ThingsBoardInterface().create_bu_devices("TAS", "1234", "Wadala", file_path)
+if __name__ == "__main__":
+    file_path = "/Users/venugopalnaidu/Downloads/OPC_Data_Collection_141124.xlsx"
+    ThingsBoardInterface().create_bu_devices("TAS", "1999", "Dharmapuri", file_path)
 
 
