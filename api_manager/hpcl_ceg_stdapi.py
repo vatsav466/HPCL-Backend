@@ -181,3 +181,27 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await Screens.get_all(params, skip_secrets=True)
 
+
+@router.post('/indentdryout', response_model=IndentDryOut, tags=['IndentDryOut'])
+async def create(inputObj: IndentDryOutCreate):
+    return await inputObj.create()
+
+
+@router.put('/indentdryout', response_model=IndentDryOut, tags=['IndentDryOut'])
+async def update(inputObj: IndentDryOut):
+    return await inputObj.modify()
+
+
+@router.get('/indentdryout/{id}', response_model=IndentDryOut, tags=['IndentDryOut'])
+async def get(id: str):
+    return await IndentDryOut.get(id, skip_secrets=True)
+
+
+@router.get('/indentdryout', response_model=IndentDryOutGetResp, tags=['IndentDryOut'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await IndentDryOut.get_all(params, skip_secrets=True)
+
+
+@router.delete('/indentdryout/{id}', tags=['IndentDryOut'])
+async def delete(id: str):
+    return await IndentDryOut.delete(id)
