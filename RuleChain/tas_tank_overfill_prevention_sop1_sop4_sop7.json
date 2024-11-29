@@ -51,7 +51,9 @@
         "queueName": null,
         "configurationVersion": 0,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP001\";\ndetails['additionalInfo']['verify_proof_test'] = \"True\"\nreturn details;",
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP001\";\ndetails['additionalInfo']['verify_proof_test'] = \"True\"\nreturn details;",
+          "alarmDetailsBuildTbel": null,
           "alarmType": "LevelSwitch Pf Alarm"
         },
         "additionalInfo": {
@@ -69,7 +71,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP001\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\ndetails['additionalInfo']['verifyProofTest'] = \"True\"\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP001\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\ndetails['additionalInfo']['verifyProofTest'] = \"True\"\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "useMessageAlarmData": false,
           "overwriteAlarmDetails": null,
@@ -96,7 +98,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP001\";\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP001\";\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "alarmType": "Tankoverfill Alarm"
         },
@@ -115,7 +117,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank overfill prevention close inlet MOV\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP007\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\n\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank overfill prevention close inlet MOV\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP007\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\n\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "useMessageAlarmData": false,
           "overwriteAlarmDetails": null,
@@ -174,7 +176,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP007\";\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP007\";\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "alarmType": "TankoverfillMOV  Alarm"
         },
@@ -193,7 +195,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant ESD Closer of ROSOV OL\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP002\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant ESD Closer of ROSOV OL\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP002\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "useMessageAlarmData": false,
           "overwriteAlarmDetails": null,
@@ -236,7 +238,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant ESD Closer of ROSOV OL\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP002\";\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant ESD Closer of ROSOV OL\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP002\";\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "alarmType": "ESDROSOV  Alarm"
         },
@@ -287,7 +289,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant ESD Closer of MOV OL\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP009\";\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant ESD Closer of MOV OL\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP009\";\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "alarmType": "ESDMOV  Alarm"
         },
@@ -332,12 +334,18 @@
         "queueName": null,
         "configurationVersion": 0,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP001\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\n\nreturn details;",
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Tank Overfill Protection\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP001\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\n\nreturn details;",
+          "alarmDetailsBuildTbel": null,
           "useMessageAlarmData": false,
+          "overwriteAlarmDetails": null,
           "alarmType": "Tankoverfill Alarm",
           "severity": "CRITICAL",
           "propagate": false,
-          "relationTypes": []
+          "relationTypes": [],
+          "propagateToOwner": null,
+          "propagateToTenant": null,
+          "dynamicSeverity": null
         },
         "additionalInfo": {
           "description": "",
@@ -431,7 +439,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant ESD Closer of MOV OL\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP009\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant ESD Closer of MOV OL\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP009\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "useMessageAlarmData": false,
           "overwriteAlarmDetails": null,
@@ -566,6 +574,11 @@
         "fromIndex": 15,
         "toIndex": 14,
         "type": "Created"
+      },
+      {
+        "fromIndex": 15,
+        "toIndex": 14,
+        "type": "Updated"
       },
       {
         "fromIndex": 16,

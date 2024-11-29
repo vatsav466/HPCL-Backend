@@ -219,7 +219,7 @@ class ThingsBoardInterface:
         self.location = response
         return response['id']['id']  # Return the newly created location asset details
 
-    def create_device(self, bu, location_id, location_name, device_name, device_type=""):
+    def create_device(self, bu, location_id, location_name, device_name, device_type="", device=""):
         """
         Creates or updates a device in ThingsBoard under a specified business unit (BU) and location.
 
@@ -238,6 +238,10 @@ class ThingsBoardInterface:
         bu_id = self.get_bu(bu)
         print(f"Creating device for {device_name}")
 
+        data = "/Users/mac_1/PycharmProjects/Cloud/dnc_backend_v2/Agents/OpcDataSimulator/data.json"
+        with open(data, 'r') as file:
+            device_data = json.load(file)
+            
         # Define the metadata to associate with the device
         device_scope = {
             "location_id": f"{location_id}",
@@ -249,6 +253,23 @@ class ThingsBoardInterface:
             "BU": bu,
             device_name: 1
         }
+        telemetry_scope = {}
+        if "sensors" in device:
+            for sensor in device['sensors']:
+                sensor_name = sensor.get('sensor_name')
+                sensor_tag = sensor.get('sensor_tag')
+                
+                # Check if the sensor_tag is present in the device_data
+                if sensor_tag in device_data:
+                    # If sensor_tag is found in the JSON, assign the corresponding value
+                    sensor_value = device_data[sensor_tag]
+                    device_scope[sensor_name] = '1'
+                    telemetry_scope[sensor_name] = '1'
+                else:
+                    # If sensor_tag is not found, log or assign a default value
+                    print(f"Sensor tag {sensor_tag} not found in device data.")
+                    device_scope[sensor_name] = None  # Or some default value
+                    telemetry_scope[sensor_name] = None
 
         # Check if the device already exists by querying the device info
         device_data = self.api_handler("GET", "/api/tenant/deviceInfos", {},
@@ -261,6 +282,8 @@ class ThingsBoardInterface:
                 if record["name"] == device_name:
                     self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/SERVER_SCOPE",
                                      {}, device_scope)
+                    self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/timeseries/LATEST_TELEMETRY",
+                                     {}, telemetry_scope)
                     return record['id']['id']
 
         # If the device does not exist, create a new device with the specified details
@@ -279,6 +302,8 @@ class ThingsBoardInterface:
             tele_device = self.api_handler("POST",
                                            f"/api/plugins/telemetry/DEVICE/{device['id']['id']}/SERVER_SCOPE", {},
                                            {**device_scope, "deviceType": device_type})
+            latest_ts   = self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{device['id']['id']}/timeseries/LATEST_TELEMETRY",
+                                     {}, {**telemetry_scope, "deviceType": device_type})
             if tele_device:
                 # Associate the device with the customer
                 data = {
@@ -328,12 +353,14 @@ class ThingsBoardInterface:
 
         # Iterate over each device and create/update it in ThingsBoard
         for device in bu_device_data["data"]:
+            print("device --> ", device)
             device_id = self.create_device(
                 bu_device_data['bu'],
                 bu_device_data['location_id'],
                 bu_device_data['location_name'],
                 device["device_name"],
-                device["device_type"]
+                device["device_type"],
+                device
             )
             if device_id:
                 # Update the device data with the created device ID
@@ -355,7 +382,7 @@ class ThingsBoardInterface:
 
 
 if __name__ == "__main__":
-    file_path = "/Users/venugopalnaidu/Downloads/OPC_Data_Collection_141124.xlsx"
+    file_path = "/Users/mac_1/Downloads/OPC_Data_Collection_141124.xlsx"
     ThingsBoardInterface().create_bu_devices("TAS", "1999", "Dharmapuri", file_path)
 
 
