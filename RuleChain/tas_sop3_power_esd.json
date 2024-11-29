@@ -1,26 +1,26 @@
 {
   "ruleChain": {
-    "additionalInfo": {
-      "description": "power Esd"
-    },
     "name": "TAS-SOP3-Power ESD",
+    "type": "CORE",
     "firstRuleNodeId": null,
     "root": false,
     "debugMode": true,
-    "configuration": null
+    "configuration": null,
+    "additionalInfo": {
+      "description": "power Esd"
+    }
   },
   "metadata": {
+    "version": 3,
     "firstNodeIndex": 3,
     "nodes": [
       {
-        "additionalInfo": {
-          "description": "",
-          "layoutX": 623,
-          "layoutY": 285
-        },
         "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
         "name": "Create Power ESD Alerm",
         "debugMode": true,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
           "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant Power ESD Shutdown\";\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP003\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId']\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\ndetails['additionalInfo']['customData'] = msg_data\n\nreturn details;",
           "useMessageAlarmData": false,
@@ -28,30 +28,36 @@
           "severity": "CRITICAL",
           "propagate": false,
           "relationTypes": []
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 623,
+          "layoutY": 285
         }
       },
       {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Power ESD Status Check",
+        "debugMode": true,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "jsScript": "if (msg[\"POWER SWITCH STATUS\"] != undefined && (msg[\"POWER SWITCH STATUS\"] != metadata[\"ss_POWER SWITCH STATUS\"])){\n    return true\n}\nreturn false"
+        },
         "additionalInfo": {
           "description": "",
           "layoutX": 321,
           "layoutY": 315
-        },
-        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
-        "name": "Power ESD Status Check",
-        "debugMode": true,
-        "configuration": {
-          "jsScript": "if (msg[\"POWER SWITCH STATUS\"] != undefined && (msg[\"POWER SWITCH STATUS\"] != metadata[\"ss_POWER SWITCH STATUS\"])){\n    return true\n}\nreturn false"
         }
       },
       {
-        "additionalInfo": {
-          "description": "",
-          "layoutX": 932,
-          "layoutY": 313
-        },
         "type": "org.thingsboard.rule.engine.rabbitmq.TbRabbitMqNode",
         "name": "CEG Alert Publisher",
         "debugMode": true,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
         "configuration": {
           "exchangeNamePattern": "",
           "routingKeyPattern": "ceg_tb_listener",
@@ -65,63 +71,76 @@
           "connectionTimeout": 60000,
           "handshakeTimeout": 10000,
           "clientProperties": {}
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 932,
+          "layoutY": 313
         }
       },
       {
-        "additionalInfo": {
-          "description": "",
-          "layoutX": 339,
-          "layoutY": 157
-        },
         "type": "org.thingsboard.rule.engine.metadata.TbGetOriginatorFieldsNode",
         "name": "Server Fields",
         "debugMode": true,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
         "configuration": {
-          "fieldsMapping": {
+          "dataMapping": {
             "name": "originatorName",
             "type": "originatorType",
             "additionalInfo": "additionalInfo",
             "id": "deviceId",
             "tenantId": "tenantid"
-          }
+          },
+          "fetchTo": "METADATA"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 339,
+          "layoutY": 157
         }
       },
       {
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "Power Esd Check",
+        "debugMode": true,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "jsScript": "if (metadata[\"deviceType\"] == \"Power Switch\"){\n    return true\n}\nreturn false"
+        },
         "additionalInfo": {
           "description": "",
           "layoutX": 571,
           "layoutY": 76
-        },
-        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
-        "name": "Power Esd Check",
-        "debugMode": true,
-        "configuration": {
-          "jsScript": "if (metadata[\"deviceType\"] == \"Power Switch\"){\n    return true\n}\nreturn false"
         }
       },
       {
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Clear Power ESD Alarm",
+        "debugMode": true,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant Power ESD Shutdown\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP003\";\nreturn details;",
+          "alarmType": "PowerESD Alarm"
+        },
         "additionalInfo": {
           "description": "",
           "layoutX": 628,
           "layoutY": 378
-        },
-        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
-        "name": "Clear Power ESD Alarm",
-        "debugMode": true,
-        "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Plant Power ESD Shutdown\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP003\";\nreturn details;",
-          "alarmType": "PowerESD Alarm"
         }
       },
       {
-        "additionalInfo": {
-          "description": "",
-          "layoutX": 806,
-          "layoutY": 124
-        },
         "type": "org.thingsboard.rule.engine.metadata.TbGetAttributesNode",
         "name": "Server Scope Attributes",
         "debugMode": true,
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
         "configuration": {
           "tellFailureIfAbsent": true,
           "clientAttributeNames": [],
@@ -134,7 +153,13 @@
             "POWER SWITCH STATUS"
           ],
           "latestTsKeyNames": [],
-          "getLatestValueWithTs": false
+          "getLatestValueWithTs": false,
+          "fetchTo": "METADATA"
+        },
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 806,
+          "layoutY": 124
         }
       }
     ],

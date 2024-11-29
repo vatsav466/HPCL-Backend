@@ -2,6 +2,7 @@ import urdhva_base
 import json
 import asyncio
 import aio_pika
+import traceback
 import tas_listener
 
 async def on_message(message: aio_pika.abc.AbstractIncomingMessage) -> None:

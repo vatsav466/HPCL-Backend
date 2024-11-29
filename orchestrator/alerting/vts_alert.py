@@ -86,7 +86,10 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             print("into for loop of violation_type --> ", violation_type)
                             violation_count = int(vts_record.get(violation_type, 0))
                             print("into for loop of violation_count --> ", violation_count)
-                            if violation_type in ["night_driving_count", "speed_violation_count", "stoppage_violations_count"] and violation_count >5 or violation_type in ["route_deviation_count", "main_supply_removal_count", "no_halt_zone_count", "device_offline_count", "device_tamper_count"] and violation_count >=1:
+                            if violation_type in ["night_driving_count", "speed_violation_count", "stoppage_violations_count"] and \
+                               violation_count >5 or violation_type in ["route_deviation_count", "main_supply_removal_count", 
+                                                                        "no_halt_zone_count", "device_offline_count", "device_tamper_count"] \
+                                                                        and violation_count >=1:
                                 print("into if cond violation_type --> ", violation_type)
                                 print("into if cond violation_count --> ", violation_count)
                                 #getting the previous alert_count for particular violation based on vehicle_number , violation_type and sap_id
