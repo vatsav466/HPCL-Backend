@@ -890,6 +890,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "indentdryout",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "IndentDryOut",
+            "attributes": {},
+            "uris": [
+                "/api/indentdryout/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "indentdryout_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "IndentDryOut_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/indentdryout/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "indentdryout_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "IndentDryOut_admin",
+            "attributes": {},
+            "uris": [
+                "/api/indentdryout/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

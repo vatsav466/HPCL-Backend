@@ -50,6 +50,12 @@ class Va_Ingest_DataParams(pydantic.BaseModel):
     data: typing.Optional[typing.List[vaDataCreate]] | None = None
 
 
+class productsDetailsCreate(pydantic.BaseModel):
+    prod_code: typing.Optional[str] = pydantic.Field("", **{})
+    uom: typing.Optional[str] = pydantic.Field("", **{})
+    qty: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class crisDataCreate(pydantic.BaseModel):
     interlock_type: str
     interlock_description: typing.Optional[str] = pydantic.Field("", **{})
@@ -57,11 +63,16 @@ class crisDataCreate(pydantic.BaseModel):
     device_value: typing.Optional[str] = pydantic.Field("", **{})
     alert_id: str
     alert_status: ingestion_api_enum.AlertStatus
+    tank_id: typing.Optional[str] = pydantic.Field("", **{})
+    nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
+    pump_id: typing.Optional[str] = pydantic.Field("", **{})
+    products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
 
 
 class Cris_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
+    ro_code: str
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.Optional[typing.List[crisDataCreate]] | None = None
 

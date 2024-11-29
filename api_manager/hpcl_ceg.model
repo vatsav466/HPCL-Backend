@@ -435,3 +435,26 @@ Model Screens{
         crud_operations='read'
     }
 }
+
+Model productsDetails internal {
+    prod_code optional str
+    uom optional str
+    qty optional str
+}
+
+Model IndentDryOut {
+    sap_id str
+    location_id str
+    ro_code str
+    bu optional index_field BusinessUnit
+    interlock_type str
+    interlock_description optional str
+    device_id str
+    device_value optional str
+    alert_id str
+    alert_status index_field AlertStatus
+    tank_id optional str
+    nozzle_id optional str
+    pump_id optional str
+    products optional list productsDetails
+}

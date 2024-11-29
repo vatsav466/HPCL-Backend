@@ -1011,3 +1011,82 @@ class ScreensGetResp(pydantic.BaseModel):
     data: typing.List[Screens]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class productsDetailsCreate(pydantic.BaseModel):
+    prod_code: typing.Optional[str] = pydantic.Field("", **{})
+    uom: typing.Optional[str] = pydantic.Field("", **{})
+    qty: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class IndentDryOutSchema(UrdhvaPostgresBase):
+    __tablename__ = 'indent_dry_out'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    location_id: Mapped[str] = mapped_column("location_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_code: Mapped[str] = mapped_column("ro_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[typing.Any]] = mapped_column("bu", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
+    interlock_type: Mapped[str] = mapped_column("interlock_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    interlock_description: Mapped[typing.Optional[str]] = mapped_column("interlock_description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_id: Mapped[str] = mapped_column("device_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    device_value: Mapped[typing.Optional[str]] = mapped_column("device_value", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_id: Mapped[str] = mapped_column("alert_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    alert_status: Mapped[typing.Any] = mapped_column("alert_status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    tank_id: Mapped[typing.Optional[str]] = mapped_column("tank_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    nozzle_id: Mapped[typing.Optional[str]] = mapped_column("nozzle_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    pump_id: Mapped[typing.Optional[str]] = mapped_column("pump_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    products: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("products", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class IndentDryOutCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'indent_dry_out'
+    
+    sap_id: str
+    location_id: str
+    ro_code: str
+    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
+    interlock_type: str
+    interlock_description: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: str
+    device_value: typing.Optional[str] = pydantic.Field("", **{})
+    alert_id: str
+    alert_status: hpcl_ceg_enum.AlertStatus
+    tank_id: typing.Optional[str] = pydantic.Field("", **{})
+    nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
+    pump_id: typing.Optional[str] = pydantic.Field("", **{})
+    products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = IndentDryOutSchema
+        upsert_keys = []
+
+
+class IndentDryOut(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'indent_dry_out'
+    
+    sap_id: typing.Optional[str] | None = None
+    location_id: typing.Optional[str] | None = None
+    ro_code: typing.Optional[str] | None = None
+    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
+    interlock_type: typing.Optional[str] | None = None
+    interlock_description: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] | None = None
+    device_value: typing.Optional[str] = pydantic.Field("", **{})
+    alert_id: typing.Optional[str] | None = None
+    alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
+    tank_id: typing.Optional[str] = pydantic.Field("", **{})
+    nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
+    pump_id: typing.Optional[str] = pydantic.Field("", **{})
+    products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = IndentDryOutSchema
+        upsert_keys = []
+
+
+class IndentDryOutGetResp(pydantic.BaseModel):
+    data: typing.List[IndentDryOut]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
