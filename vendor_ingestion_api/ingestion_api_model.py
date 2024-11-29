@@ -25,6 +25,7 @@ class vtsDataCreate(pydantic.BaseModel):
     speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
     main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
     night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
+    no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
 
