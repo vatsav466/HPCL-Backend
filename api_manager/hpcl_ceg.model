@@ -486,5 +486,6 @@ Model IndentDryOut {
     tank_id optional str
     nozzle_id optional str
     pump_id optional str
+    indent_no optional str
     products optional list productsDetails
 }

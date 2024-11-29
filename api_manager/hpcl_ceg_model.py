@@ -1132,6 +1132,7 @@ class IndentDryOutSchema(UrdhvaPostgresBase):
     tank_id: Mapped[typing.Optional[str]] = mapped_column("tank_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     nozzle_id: Mapped[typing.Optional[str]] = mapped_column("nozzle_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     pump_id: Mapped[typing.Optional[str]] = mapped_column("pump_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     products: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("products", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
@@ -1151,6 +1152,7 @@ class IndentDryOutCreate(urdhva_base.postgresmodel.BasePostgresModel):
     tank_id: typing.Optional[str] = pydantic.Field("", **{})
     nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
     pump_id: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
     products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
 
     class Config:
@@ -1175,6 +1177,7 @@ class IndentDryOut(urdhva_base.postgresmodel.PostgresModel):
     tank_id: typing.Optional[str] = pydantic.Field("", **{})
     nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
     pump_id: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
     products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
 
     class Config:

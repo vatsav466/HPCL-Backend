@@ -67,6 +67,7 @@ class crisDataCreate(pydantic.BaseModel):
     tank_id: typing.Optional[str] = pydantic.Field("", **{})
     nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
     pump_id: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
     products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
 
 
