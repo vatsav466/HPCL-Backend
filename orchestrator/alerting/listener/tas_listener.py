@@ -20,6 +20,7 @@ async def tas_listener(rmsg):
             await create_alert(alertdata)
         elif rmsg['status'] == 'CLEARED_UNACK':
             alertdata = rmsg['details']['additionalInfo']
+            alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             print("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
                                                         rmsg['type']))
             await close_alert(alertdata)
@@ -44,3 +45,4 @@ async def tas_listener(rmsg):
 
 # if __name__ == "__main__":
 #     asyncio.run(tas_listener())
+
