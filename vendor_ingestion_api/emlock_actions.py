@@ -1,6 +1,7 @@
 from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
+import traceback
 import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/emlock')
@@ -22,7 +23,12 @@ async def emlock_ingest_data(data: Emlock_Ingest_DataParams):
     Returns:
     - dict: Status message indicating the success of the data submission.
     """
-    logger.info(f"Received EMLock data ingestion from vendor {data.vendor_id} {data.dict()}")
-    await alert_manager.create_alert({**data.dict(), "alert_type": "EMLock"})
-    return True, "Success"
-
+    try:
+        logger.info(f"Received EMLock data ingestion from vendor {data.vendor_id} {data.dict()}")
+        await alert_manager.create_alert({**data.dict(), "alert_type": "EMLock"})
+        return True, "Success"
+    
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(f"Error ingesting EMLock data: {str(e)}")
+        return False, str(e)

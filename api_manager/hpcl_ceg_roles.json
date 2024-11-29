@@ -541,6 +541,69 @@
             ]
         },
         {
+            "name": "vts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VTS",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VTS_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VTS_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "alerts",
             "type": "all",
             "ownerManagedAccess": false,

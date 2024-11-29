@@ -1,0 +1,2195 @@
+{
+    "data": [
+        {
+            "device_name": "Tank 1@Dharmapuri",
+            "device_id": "393b99c0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "p8oc3qJbp6R2LgeQvpZr",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK01.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK1.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK01_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK01_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK01.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW1_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK01.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK01IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK01OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 2@Dharmapuri",
+            "device_id": "396c6dc0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "pizD96l0TsqJvQyF5Pyo",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK02.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK2.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK02_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK02_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK02.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW2_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK02.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK02IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK02OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 3@Dharmapuri",
+            "device_id": "399f8bb0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "SjaNt6dawFOO02QDdZgV",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK03.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK3.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK03_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK03_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK03.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW3_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK03.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK03IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK03OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 4@Dharmapuri",
+            "device_id": "3a032f80-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "z11Rj0nrSEEt4nmC0IeL",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK04.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK4.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK04_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK04_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK04.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW4_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK04.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK04IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK04OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 5@Dharmapuri",
+            "device_id": "3a2eac50-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "yqwTWyLfdw1aDklLwcrY",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK05.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK5.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK05_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK05_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK05.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW5_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK05.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK05IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK05OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 6@Dharmapuri",
+            "device_id": "3a729320-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "kq5WIZ1Ea9I190OPanms",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK06.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK6.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK06_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK06_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK06.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW6_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK06.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK06IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK06OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 7@Dharmapuri",
+            "device_id": "3aab0840-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "td94weQcsmO24ntJSe6t",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK07.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK7.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK07_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK07_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK07.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW7_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK07.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK07IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK07OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 8@Dharmapuri",
+            "device_id": "3ad832c0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "BBb12UfqIfUZ9yZIimZF",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK08.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK8.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK08_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK08_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK08.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW8_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK08.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK08IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK08OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 9@Dharmapuri",
+            "device_id": "3b1c8ec0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "fgYtwE5vClVz7MakG2Uz",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK09.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK9.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK09_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK09_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK09.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW9_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK09.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK09IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK09OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 10@Dharmapuri",
+            "device_id": "3b45e8b0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "TK754W76iZrKOZUeclTO",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK010.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK10.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK10_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK10_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK10.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW10_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK10.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK10IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK10OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 11@Dharmapuri",
+            "device_id": "3b7472c0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "EBveHmznRVDe800gDzzv",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK11.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK11.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK11_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK11_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK11.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW11_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK11.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK11IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK11OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 12@Dharmapuri",
+            "device_id": "3ba19d40-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "eGJSxzZWF7jMomu2c8l4",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK12.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK12.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK12_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK12_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK12.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW12_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK12.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK12IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK12OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 13@Dharmapuri",
+            "device_id": "3bcddd60-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "faTMzaNm3KXT1qRQtxNa",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK13.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK13.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK13_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK13_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK13.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW13_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK13.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK13IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK13OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 14@Dharmapuri",
+            "device_id": "3bfd2ac0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "feL7FCtGB7hEOuoWY4Gl",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK14.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK14.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK14_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK14_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK14.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW14_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK14.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK14IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK14OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 15@Dharmapuri",
+            "device_id": "3c2aa360-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "WCDKazbaVGnMlPG4kLT2",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK15.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK15.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK15_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK15_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK15.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW15_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK15.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK15IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK15OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 16@Dharmapuri",
+            "device_id": "3c589130-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "LspMYw9g2p6m0jdt8AG7",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK16.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK16.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK16_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK16_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK16.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW16_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK16.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK16IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK16OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 17@Dharmapuri",
+            "device_id": "3c979600-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "MxnNTEkldynkswDARvOx",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK17.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK17.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK17_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK17_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK17.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW17_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK17.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK17IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK17OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 18@Dharmapuri",
+            "device_id": "3cc64720-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "Qo2o0KYZdOZFVFTcRXuH",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK18.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK18.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK18_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK18_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK18.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW18_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK18.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK18IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK18OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 19@Dharmapuri",
+            "device_id": "3cf56d70-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "brdnxV3yq2k6RKXSGr7W",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK19.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK19.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK19_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK19_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK19.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW19_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK19.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK19IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK19OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Tank 20@Dharmapuri",
+            "device_id": "3d2026f0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Tank",
+            "device_key": "nvU7sqAlbDtIDXiVnhAF",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Secondry Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/TANK_LEVEL_SEC_TK20.PV"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "/ASSETS/A1/RADAR_LEVEL_TK20.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK20_IL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "ROSOV OPEN STATUS OL",
+                    "sensor_tag": "/ASSETS/ESD/ROSOV_TK20_OL_OPSTS.PV"
+                },
+                {
+                    "sensor_name": "SERVO HHH",
+                    "sensor_tag": "/ASSETS/ESD/SERVO_HHH_TK20.PV"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "/ASSETS/ESD/VIB_LSW20_HH.PV"
+                },
+                {
+                    "sensor_name": "RADAR HHH",
+                    "sensor_tag": "/ASSETS/ESD/RADAR_HH_TK20.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS IL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK20IL.PV"
+                },
+                {
+                    "sensor_name": "MOV STATUS OL",
+                    "sensor_tag": "/ASSETS/A1/MOV002_IC_TK20OL.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 1@Dharmapuri",
+            "device_id": "3d4eb100-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "zlzYOl612e8rAZZ9ohO1",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER1.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 2@Dharmapuri",
+            "device_id": "3d7c50b0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "MoZx99IqOcFOGahq9H3J",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER2.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 3@Dharmapuri",
+            "device_id": "3db40280-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "RvFQKggEzvh9eakm2JwR",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER3.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 4@Dharmapuri",
+            "device_id": "3de4af70-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "URd68TAhRWHXWj9CUWs0",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER4.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 5@Dharmapuri",
+            "device_id": "3e120100-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "PJ6doc4JqZL64IXxydlW",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER5.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 6@Dharmapuri",
+            "device_id": "3e39fb60-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "Hgj62xAGpoHfmfjlDc3I",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER6.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 7@Dharmapuri",
+            "device_id": "3e709bc0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "sk5t08I2WUYg7nuTEIlj",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER7.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 8@Dharmapuri",
+            "device_id": "3e9efec0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "IENSzvzemAH5RfEOJVQu",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER8.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 9@Dharmapuri",
+            "device_id": "3ecbdb20-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "aPCvqGWaF6H6VjAWqydJ",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER9.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 10@Dharmapuri",
+            "device_id": "3ef89070-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "1G98OoqDmNry4889ixRr",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER10.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 11@Dharmapuri",
+            "device_id": "3f285300-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "X1w710sYyoPAjzZ3ENCw",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER11.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 12@Dharmapuri",
+            "device_id": "3f5619c0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "FabZq3b68nzoEtZ9sFhj",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER12.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 13@Dharmapuri",
+            "device_id": "3f865180-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "jpyIiO9pMzfp8Ah0QnP9",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER13.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 14@Dharmapuri",
+            "device_id": "3faff990-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "NEYUTkEsm4tygAC5nSZI",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER14.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 15@Dharmapuri",
+            "device_id": "3fe5af90-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "AYg1ogAde7ejehDDbUFc",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER15.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 16@Dharmapuri",
+            "device_id": "4020e3d0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "ihD3SfH0lo6WLXeiTYB5",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER16.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 17@Dharmapuri",
+            "device_id": "4056e7f0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "877H0D3rkrF7aXUISVAu",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER17.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 18@Dharmapuri",
+            "device_id": "408c28c0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "fJyla6l8xClbpA1SIlt4",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER18.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 19@Dharmapuri",
+            "device_id": "40c53a20-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "Jg4qLZEMouHneuqlRQCX",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER19.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 20@Dharmapuri",
+            "device_id": "40f264a0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "AUcJws8Te5fdJkQ2KkzA",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER20.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 21@Dharmapuri",
+            "device_id": "411f19f0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "l0qGjcAlEpXgN7M2qJmq",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER21.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 22@Dharmapuri",
+            "device_id": "414cb9a0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "Pe7ndWtArEDmIe1alAb1",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER22.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 23@Dharmapuri",
+            "device_id": "417c0700-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "o6SWPzcBJDekdDuJ7iQt",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER23.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 24@Dharmapuri",
+            "device_id": "41d6aa20-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "FjoILzALm9zJYQj29Unb",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER24.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 25@Dharmapuri",
+            "device_id": "42029c20-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "HKlN0brXPbs8XJ7oTyXr",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER25.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 26@Dharmapuri",
+            "device_id": "422b80e0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "v6HSlTFZ1QFxCv0MAg1v",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER26.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 27@Dharmapuri",
+            "device_id": "425ffe60-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "yYRiRqWgXIsJKdc0oZAJ",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER27.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 28@Dharmapuri",
+            "device_id": "42989a90-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "XNT87C8lLTlOPOxybmWj",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER28.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "Hooter 29@Dharmapuri",
+            "device_id": "42ca8000-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Hooter",
+            "device_key": "wje6xd8xSUWkdOcNm7zC",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HOOTER STATUS",
+                    "sensor_tag": "/ASSETS/ESD/HOOTER29.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD1@Dharmapuri",
+            "device_id": "4307d721-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "UZVQTlrI7SjnLM3gGHnp",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD1.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD2@Dharmapuri",
+            "device_id": "4346dbf0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "jdFkwolMjxbCTCJN1pl1",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD2.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD3@Dharmapuri",
+            "device_id": "43727fd0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "u7bbLuyvRLy3HvU10Gba",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD3.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD4@Dharmapuri",
+            "device_id": "43a094b0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "FIBdydiQDIObLKgqghrl",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD4.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD5@Dharmapuri",
+            "device_id": "440486a0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "ERUxZqikZ63nUztLOE2y",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD5.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD6@Dharmapuri",
+            "device_id": "443819c0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "NAnhn1HPRmA27LXqW4uV",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD6.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD7@Dharmapuri",
+            "device_id": "4495ca20-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "khffxiZs2rmukz2kP64Z",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD7.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD8@Dharmapuri",
+            "device_id": "44c20a40-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "hZypcsWbVCOZhwueXX6R",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD8.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD9@Dharmapuri",
+            "device_id": "44f0e270-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "up3hmQFHE7YKp4DHEnnG",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD9.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD10@Dharmapuri",
+            "device_id": "451dbed0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "zJm2cvK0EVYPNOxfPUXX",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD10.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD11@Dharmapuri",
+            "device_id": "454f5620-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "rwytFbx7LkXNlphAzuPZ",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD11.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD12@Dharmapuri",
+            "device_id": "4578b010-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "UCqOqcsSQTgl7sdWV4HN",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD12.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD13@Dharmapuri",
+            "device_id": "45a7af50-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "0vSk4XhTZHKLSbqZqxD8",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD13.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD14@Dharmapuri",
+            "device_id": "45d63960-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "BPscABl7VJHjGuLdrLZj",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD14.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD15@Dharmapuri",
+            "device_id": "4612a620-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "NgQFmi1xcj1vY5zTPknu",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD15.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD16@Dharmapuri",
+            "device_id": "468bf4d0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "2ioQfIWsKRmqH9uKwMYX",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD16.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD17@Dharmapuri",
+            "device_id": "46bf60e0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "XYizFPstabItc6kiOYcg",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD17.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD18@Dharmapuri",
+            "device_id": "46f7d600-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "cTFGJOK4gq8nHHNeMX9Z",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD18.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD19@Dharmapuri",
+            "device_id": "47294640-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "f6kAYnYyDQpSiick3jQk",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD19.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD20@Dharmapuri",
+            "device_id": "47555f50-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "0NIdwnx2MWk9QhaHTAFy",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD20.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD21@Dharmapuri",
+            "device_id": "478262c0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "c10XjQkH8cMgP1sihzYn",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD21.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD22@Dharmapuri",
+            "device_id": "47acce20-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "OUMn69bb0qhvggx8Wec5",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD22.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD23@Dharmapuri",
+            "device_id": "47dabbf0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "4cFs9GUWAz117TNxUx2e",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD23.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD24@Dharmapuri",
+            "device_id": "4847ae90-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "StxTpmHox8emXNAVdDqJ",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD24.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD25@Dharmapuri",
+            "device_id": "48754e40-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "0y6go7aEYWtw8hprDu2x",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD25.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD26@Dharmapuri",
+            "device_id": "48b25740-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "0HkOHCPNy9JAcAzBUcKJ",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD26.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD27@Dharmapuri",
+            "device_id": "48e09330-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "MXOiQZ8FvB7lRslrJtjA",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD27.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "ESD_SOFT@Dharmapuri",
+            "device_id": "491cb1d0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "ESD",
+            "device_key": "RzNrBhn387MC5S9P4POj",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "ESD STATUS",
+                    "sensor_tag": "/ASSETS/ESD/ESD_SOFT.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 1@Dharmapuri",
+            "device_id": "494b8a00-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "CIPQN4sUgYWwaXeWFNkG",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD01_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD01_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 2@Dharmapuri",
+            "device_id": "49886bf0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "8TJjXtvWlOk6tNPLzmGf",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD02_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD02_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 3@Dharmapuri",
+            "device_id": "49efb940-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "b3vYELgFdaT8x1aLJh9t",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD03_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD03_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 4@Dharmapuri",
+            "device_id": "4a239a80-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "01zrRWiM3Gn6SJ6ozlxJ",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD04_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD04_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 5@Dharmapuri",
+            "device_id": "4a65d3a0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "suO7ijm9MTErewWNOXyz",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD05_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD05_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 6@Dharmapuri",
+            "device_id": "4a987c60-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "P35DFasi1VlavvIyVsL0",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD06_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD06_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 7@Dharmapuri",
+            "device_id": "4ac8db30-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "23gNCbzJ8J6ANe4nlKJJ",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD07_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD07_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 8@Dharmapuri",
+            "device_id": "4af7b360-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "JwVoIIWVDKPV0iVxcOc3",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD08_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD08_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 9@Dharmapuri",
+            "device_id": "4b268b90-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "BvuWk59rIrvlp04vGJyN",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD09_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD09_H"
+                }
+            ]
+        },
+        {
+            "device_name": "OPD HCD 10@Dharmapuri",
+            "device_id": "4b62aa30-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "bI3DPLxvJfUpF9HUItG8",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD10_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.OPN_HCD10_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 11@Dharmapuri",
+            "device_id": "4bbed3f0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "SBktlVuBZYdNI70KrlGB",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD01_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD01_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 12@Dharmapuri",
+            "device_id": "4bec4c90-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "kSM0s2o9t8dIKWyrUk4h",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD02_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD02_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 13@Dharmapuri",
+            "device_id": "4c29f1d0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "vtmHZCQDf5INjdEyz1nE",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD03_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD03_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 14@Dharmapuri",
+            "device_id": "4c680c40-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "G9zGgLHtaHCNc14kKKl4",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD04_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD04_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 15@Dharmapuri",
+            "device_id": "4ca27d30-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "7ervDUvIjkri1KuwueR9",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD05_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD05_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 16@Dharmapuri",
+            "device_id": "4cd0e030-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "cnXJDneFDVAly7kpP2O2",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD06_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD06_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 17@Dharmapuri",
+            "device_id": "4cfd2050-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "Bh9Ti3m1kiDN8BlYA3zw",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD07_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD07_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 18@Dharmapuri",
+            "device_id": "4d2baa60-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "PWcezoyGTKBLt1kY676D",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD08_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD08_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 19@Dharmapuri",
+            "device_id": "4d5a8290-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "dcXQmKWD6vQQ0YdI7Mxe",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "HCD 40 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD09_HH"
+                },
+                {
+                    "sensor_name": "HCD 20 % ALARM",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.PT_HCD09_H"
+                }
+            ]
+        },
+        {
+            "device_name": "PTD HCD 20@Dharmapuri",
+            "device_id": "4d8737e0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "HCD",
+            "device_key": "tVZb0YFrCZCJnZLLIJaA",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": []
+        },
+        {
+            "device_name": "Power Switch@Dharmapuri",
+            "device_id": "4db0b8e0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Power ESD",
+            "device_key": "GrVmPcP3OBR4XkRiy5Km",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "POWER SWITCH STATUS",
+                    "sensor_tag": "/ASSETS/ESD/POWERTRIP.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 01@Dharmapuri",
+            "device_id": "4e1a9e41-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "l1wbFlqAxJvdGRCnNlee",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_01.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 02@Dharmapuri",
+            "device_id": "4e4e3160-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "TvajgGdHtwa3EY6K7Fi0",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_02.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 03@Dharmapuri",
+            "device_id": "4eaa0d00-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "Gyg8zZfrBnuQBLr1rsKx",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_03.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 04@Dharmapuri",
+            "device_id": "4ed7d3c0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "Krmo4xCLNd7ASgARktui",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_04.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 05@Dharmapuri",
+            "device_id": "4f4848d0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "Au8X0CesICYlQOxzqR3I",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_05.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 06@Dharmapuri",
+            "device_id": "4f701c20-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "6X5DvAt2ibyUyCRmCygh",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_06.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 07@Dharmapuri",
+            "device_id": "4f9e09f0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "Z3MFCqRshhWzHgIwylxd",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_07.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 08@Dharmapuri",
+            "device_id": "4ffa5ac0-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "3h4hvHJL926EmH8D9gOu",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_08.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 09@Dharmapuri",
+            "device_id": "50253b50-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "d3xH8ZgGhOBAJ8i26owo",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_09.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "DykeValveSTATUS FOR DYKE VALVE 10@Dharmapuri",
+            "device_id": "504e2010-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "Dyke Valve",
+            "device_key": "oD7YjX3v53LBCptzFhEN",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "DYKE VALVE STATUS",
+                    "sensor_tag": "/ASSETS/ESD/DYKE_VALVE_10.PV"
+                }
+            ]
+        },
+        {
+            "device_name": "oi@Dharmapuri",
+            "device_id": "50847250-ae87-11ef-a04d-0f6356c57054",
+            "device_type": "OI Tags",
+            "device_key": "ntvW5UQJkTmbZ4aV4bSb",
+            "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
+            "sensors": [
+                {
+                    "sensor_name": "Water Volume",
+                    "sensor_tag": "PROCESS_PLC.TANKS.FWT.FIRE_WTR_LVL_TK1"
+                },
+                {
+                    "sensor_name": "Water Volume.1",
+                    "sensor_tag": "PROCESS_PLC.TANKS.FWT.FIRE_WTR_LVL_TK2"
+                },
+                {
+                    "sensor_name": "Foam Volume",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.FT_LT01_PV"
+                },
+                {
+                    "sensor_name": "Foam Volume.1",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.FT_LT02_PV"
+                },
+                {
+                    "sensor_name": "Jockey Pump_1",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.JP1_AM.PV"
+                },
+                {
+                    "sensor_name": "Jockey Pump_2",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.JP2_AM.PV"
+                },
+                {
+                    "sensor_name": "Fire Engine_1",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.FE1_AM.PV"
+                },
+                {
+                    "sensor_name": "Fire Engine_2",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.FE2_AM.PV"
+                },
+                {
+                    "sensor_name": "Fire Engine_3",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.FE3_AM.PV"
+                },
+                {
+                    "sensor_name": "Fire Engine_4",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.FE4_AM.PV"
+                },
+                {
+                    "sensor_name": "Fire Engine_5",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.FE5_AM.PV"
+                },
+                {
+                    "sensor_name": "PT Farthest",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.HYDR_PT01_PV"
+                },
+                {
+                    "sensor_name": "PT Farthest.1",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.HYDR_PT02_PV"
+                },
+                {
+                    "sensor_name": "PT Farthest.2",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.HYDR_PT03_PV"
+                },
+                {
+                    "sensor_name": "PT Farthest.3",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.HYDR_PT04_PV"
+                },
+                {
+                    "sensor_name": "PT Farthest.4",
+                    "sensor_tag": "SAFETY_PLC.SCS0102.HYDR_PT05_PV"
+                }
+            ]
+        }
+    ],
+    "location_id": "1999",
+    "bu": "TAS",
+    "location_name": "Dharmapuri"
+}

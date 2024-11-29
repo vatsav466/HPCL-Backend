@@ -20,6 +20,7 @@ Model vtsData internal {
     speed_violation_count optional int
     main_supply_removal_count optional int
     night_driving_count optional int
+    no_halt_zone_count optional int
     device_offline_count optional int
     device_tamper_count optional int
 }
