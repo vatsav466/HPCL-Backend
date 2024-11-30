@@ -740,6 +740,9 @@ class AlertsSchema(UrdhvaPostgresBase):
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     raw_data: Mapped[typing.Optional[dict]] = mapped_column("raw_data", JSONB, index=False, nullable=True, default=pydantic.Field(default_factory=dict), primary_key=False, unique=False)
+    r1_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r1_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    r2_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r2_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    r3_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r3_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -776,6 +779,9 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     state: typing.Optional[str] = pydantic.Field("", **{})
     city: typing.Optional[str] = pydantic.Field("", **{})
     raw_data: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    r1_time: typing.Optional[datetime.datetime] | None = None
+    r2_time: typing.Optional[datetime.datetime] | None = None
+    r3_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -817,6 +823,9 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     state: typing.Optional[str] = pydantic.Field("", **{})
     city: typing.Optional[str] = pydantic.Field("", **{})
     raw_data: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    r1_time: typing.Optional[datetime.datetime] | None = None
+    r2_time: typing.Optional[datetime.datetime] | None = None
+    r3_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'

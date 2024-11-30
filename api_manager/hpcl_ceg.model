@@ -346,6 +346,11 @@ Model Alerts {
     // Device Raw Details
     raw_data optional dict
 
+    // Dry Out Use Case
+    r1_time optional datetime
+    r2_time optional datetime
+    r3_time optional datetime
+
     Action=> alert_action {
         action_type AlertActionType
         alert_id str
