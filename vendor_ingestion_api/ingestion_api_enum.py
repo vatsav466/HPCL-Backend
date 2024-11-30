@@ -19,6 +19,9 @@ class BusinessUnit(str, enum.Enum):
 class AlertStatus(str, enum.Enum):
     Open = 'Open'
     Close = 'Close'
+    InProgress = 'InProgress'
+    Cancel = 'Cancel'
+    OnHold = 'OnHold'
 
 
 

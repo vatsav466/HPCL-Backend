@@ -14,6 +14,9 @@ Enum NotificationLevel str {
 Enum AlertStatus str {
     Open='Open'
     Close='Close'
+    InProgress='InProgress'
+    Cancel='Cancel'
+    OnHold='OnHold'
 }
 
 Enum AlertState str {
