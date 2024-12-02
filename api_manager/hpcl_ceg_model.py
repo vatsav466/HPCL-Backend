@@ -622,22 +622,15 @@ class VTSSchema(UrdhvaPostgresBase):
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     vehicle_number: Mapped[str] = mapped_column("vehicle_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    violation_type: Mapped[str] = mapped_column("violation_type", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    violation_count: Mapped[int] = mapped_column("violation_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
     violation_start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("violation_start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     violation_history: Mapped[typing.Optional[typing.List[str]]] = mapped_column("violation_history", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    interlock_name: Mapped[typing.Optional[str]] = mapped_column("interlock_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     block_duration: Mapped[typing.Optional[str]] = mapped_column("block_duration", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     block_msg: Mapped[typing.Optional[str]] = mapped_column("block_msg", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    alert_status: Mapped[typing.Optional[typing.Any]] = mapped_column("alert_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Optional[typing.Any]] = mapped_column("status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     report_duration: Mapped[typing.Optional[str]] = mapped_column("report_duration", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     total_trips: Mapped[typing.Optional[int]] = mapped_column("total_trips", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    stoppage_violations_count: Mapped[typing.Optional[int]] = mapped_column("stoppage_violations_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    route_deviation_count: Mapped[typing.Optional[int]] = mapped_column("route_deviation_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    speed_violation_count: Mapped[typing.Optional[int]] = mapped_column("speed_violation_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    main_supply_removal_count: Mapped[typing.Optional[int]] = mapped_column("main_supply_removal_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    night_driving_count: Mapped[typing.Optional[int]] = mapped_column("night_driving_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    no_halt_zone_count: Mapped[typing.Optional[int]] = mapped_column("no_halt_zone_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    device_offline_count: Mapped[typing.Optional[int]] = mapped_column("device_offline_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    device_tamper_count: Mapped[typing.Optional[int]] = mapped_column("device_tamper_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
 
 
 class VTSCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -647,22 +640,15 @@ class VTSCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: str
     location_name: str
     vehicle_number: str
+    violation_type: str
+    violation_count: int
     violation_start_date: typing.Optional[datetime.datetime] | None = None
     violation_history: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
     block_duration: typing.Optional[str] = pydantic.Field("", **{})
     block_msg: typing.Optional[str] = pydantic.Field("", **{})
-    alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
+    status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
     report_duration: typing.Optional[str] = pydantic.Field("", **{})
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
-    stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
-    route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
-    speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
-    main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
-    night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
-    no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
-    device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
-    device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -677,22 +663,15 @@ class VTS(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] | None = None
     location_name: typing.Optional[str] | None = None
     vehicle_number: typing.Optional[str] | None = None
+    violation_type: typing.Optional[str] | None = None
+    violation_count: typing.Optional[int] | None = None
     violation_start_date: typing.Optional[datetime.datetime] | None = None
     violation_history: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    interlock_name: typing.Optional[str] = pydantic.Field("", **{})
     block_duration: typing.Optional[str] = pydantic.Field("", **{})
     block_msg: typing.Optional[str] = pydantic.Field("", **{})
-    alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
+    status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
     report_duration: typing.Optional[str] = pydantic.Field("", **{})
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
-    stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
-    route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
-    speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
-    main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
-    night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
-    no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
-    device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
-    device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
