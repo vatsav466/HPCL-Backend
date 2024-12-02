@@ -2,9 +2,9 @@
     "data": [
         {
             "device_name": "Tank 1@Dharmapuri",
-            "device_id": "393b99c0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "89c5d180-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "p8oc3qJbp6R2LgeQvpZr",
+            "device_key": "NwYJM2U2W4NEm6lwYuOn",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -47,9 +47,9 @@
         },
         {
             "device_name": "Tank 2@Dharmapuri",
-            "device_id": "396c6dc0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8a06d220-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "pizD96l0TsqJvQyF5Pyo",
+            "device_key": "qP15YsKf1zhcEYVqeGeT",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -92,9 +92,9 @@
         },
         {
             "device_name": "Tank 3@Dharmapuri",
-            "device_id": "399f8bb0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8a33ae80-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "SjaNt6dawFOO02QDdZgV",
+            "device_key": "Am6ZAYVzf1Z1RJHlCrJk",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -137,9 +137,9 @@
         },
         {
             "device_name": "Tank 4@Dharmapuri",
-            "device_id": "3a032f80-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8a61c360-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "z11Rj0nrSEEt4nmC0IeL",
+            "device_key": "z12LXzxV0auF7XAJVdcB",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -182,9 +182,9 @@
         },
         {
             "device_name": "Tank 5@Dharmapuri",
-            "device_id": "3a2eac50-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8a8eede0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "yqwTWyLfdw1aDklLwcrY",
+            "device_key": "UIHsirrKI4e8hpeZdmhq",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -227,9 +227,9 @@
         },
         {
             "device_name": "Tank 6@Dharmapuri",
-            "device_id": "3a729320-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8abd77f0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "kq5WIZ1Ea9I190OPanms",
+            "device_key": "DdBAAB7IvkQzbBRLPSMs",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -272,9 +272,9 @@
         },
         {
             "device_name": "Tank 7@Dharmapuri",
-            "device_id": "3aab0840-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8aeaa270-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "td94weQcsmO24ntJSe6t",
+            "device_key": "a4sOkipNTkzChewelisc",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -317,9 +317,9 @@
         },
         {
             "device_name": "Tank 8@Dharmapuri",
-            "device_id": "3ad832c0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8b17a5e0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "BBb12UfqIfUZ9yZIimZF",
+            "device_key": "wh5pTVMLO6CICXZbwIiF",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -362,9 +362,9 @@
         },
         {
             "device_name": "Tank 9@Dharmapuri",
-            "device_id": "3b1c8ec0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8b467e10-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "fgYtwE5vClVz7MakG2Uz",
+            "device_key": "X3LFUI9APEMhz9VvZXk1",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -407,9 +407,9 @@
         },
         {
             "device_name": "Tank 10@Dharmapuri",
-            "device_id": "3b45e8b0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8b7703f0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "TK754W76iZrKOZUeclTO",
+            "device_key": "HRereBc6ScrhMU9PuXj9",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -452,9 +452,9 @@
         },
         {
             "device_name": "Tank 11@Dharmapuri",
-            "device_id": "3b7472c0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8ba2cee0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "EBveHmznRVDe800gDzzv",
+            "device_key": "tzMY12QFEvAnr1xcnI7Y",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -497,9 +497,9 @@
         },
         {
             "device_name": "Tank 12@Dharmapuri",
-            "device_id": "3ba19d40-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8bd06e90-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "eGJSxzZWF7jMomu2c8l4",
+            "device_key": "puXMzZZhPq9URmjXbidc",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -542,9 +542,9 @@
         },
         {
             "device_name": "Tank 13@Dharmapuri",
-            "device_id": "3bcddd60-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8bfe5c60-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "faTMzaNm3KXT1qRQtxNa",
+            "device_key": "3U8TPs3VeOilqoUShOkW",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -587,9 +587,9 @@
         },
         {
             "device_name": "Tank 14@Dharmapuri",
-            "device_id": "3bfd2ac0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8c2c4a30-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "feL7FCtGB7hEOuoWY4Gl",
+            "device_key": "QT4Ny943quej6kPE9zzI",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -632,9 +632,9 @@
         },
         {
             "device_name": "Tank 15@Dharmapuri",
-            "device_id": "3c2aa360-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8c5974b0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "WCDKazbaVGnMlPG4kLT2",
+            "device_key": "TUNMa3OLoOXm5VlUWOe5",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -677,9 +677,9 @@
         },
         {
             "device_name": "Tank 16@Dharmapuri",
-            "device_id": "3c589130-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8c9a7550-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "LspMYw9g2p6m0jdt8AG7",
+            "device_key": "Xae1STz7nsYVZ5WRjeWx",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -722,9 +722,9 @@
         },
         {
             "device_name": "Tank 17@Dharmapuri",
-            "device_id": "3c979600-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8cd55b70-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "MxnNTEkldynkswDARvOx",
+            "device_key": "1vPR06tMnRN1rgnp1UZZ",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -767,9 +767,9 @@
         },
         {
             "device_name": "Tank 18@Dharmapuri",
-            "device_id": "3cc64720-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8d017480-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "Qo2o0KYZdOZFVFTcRXuH",
+            "device_key": "ZdODobUeKL363D1LzK0o",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -812,9 +812,9 @@
         },
         {
             "device_name": "Tank 19@Dharmapuri",
-            "device_id": "3cf56d70-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8d2e50e0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "brdnxV3yq2k6RKXSGr7W",
+            "device_key": "gk0MUAhyhAw9yEUIkFKe",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -857,9 +857,9 @@
         },
         {
             "device_name": "Tank 20@Dharmapuri",
-            "device_id": "3d2026f0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8d5bf090-b080-11ef-a04d-0f6356c57054",
             "device_type": "Tank",
-            "device_key": "nvU7sqAlbDtIDXiVnhAF",
+            "device_key": "P9WGhtyC5YsScaO6ik10",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -902,9 +902,9 @@
         },
         {
             "device_name": "Hooter 1@Dharmapuri",
-            "device_id": "3d4eb100-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8d8a7aa0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "zlzYOl612e8rAZZ9ohO1",
+            "device_key": "UXth86Raa0hgS4jPOxMt",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -915,9 +915,9 @@
         },
         {
             "device_name": "Hooter 2@Dharmapuri",
-            "device_id": "3d7c50b0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8dc49d70-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "MoZx99IqOcFOGahq9H3J",
+            "device_key": "zslvyHUc0uFeVYrD3Ben",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -928,9 +928,9 @@
         },
         {
             "device_name": "Hooter 3@Dharmapuri",
-            "device_id": "3db40280-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8df7bb60-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "RvFQKggEzvh9eakm2JwR",
+            "device_key": "VVJAJCACEJwGju1G5pQ2",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -941,9 +941,9 @@
         },
         {
             "device_name": "Hooter 4@Dharmapuri",
-            "device_id": "3de4af70-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8e23fb80-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "URd68TAhRWHXWj9CUWs0",
+            "device_key": "cgyDYvgDhMpHOE53LblA",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -954,9 +954,9 @@
         },
         {
             "device_name": "Hooter 5@Dharmapuri",
-            "device_id": "3e120100-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8e5fa4f0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "PJ6doc4JqZL64IXxydlW",
+            "device_key": "2LMjhnplOnXPW101KD7E",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -967,9 +967,9 @@
         },
         {
             "device_name": "Hooter 6@Dharmapuri",
-            "device_id": "3e39fb60-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8e8f6780-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "Hgj62xAGpoHfmfjlDc3I",
+            "device_key": "Jgga7DbvZVeuf0iBfpdq",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -980,9 +980,9 @@
         },
         {
             "device_name": "Hooter 7@Dharmapuri",
-            "device_id": "3e709bc0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8ebba7a0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "sk5t08I2WUYg7nuTEIlj",
+            "device_key": "KlMm9JheJ057J7B8i0yV",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -993,9 +993,9 @@
         },
         {
             "device_name": "Hooter 8@Dharmapuri",
-            "device_id": "3e9efec0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8eea0aa0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "IENSzvzemAH5RfEOJVQu",
+            "device_key": "vqcz42IvSuqrsy9HmJpw",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1006,9 +1006,9 @@
         },
         {
             "device_name": "Hooter 9@Dharmapuri",
-            "device_id": "3ecbdb20-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8f19a620-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "aPCvqGWaF6H6VjAWqydJ",
+            "device_key": "bRIRRLBU5CB9USKl6Ln7",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1019,9 +1019,9 @@
         },
         {
             "device_name": "Hooter 10@Dharmapuri",
-            "device_id": "3ef89070-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8f48cc70-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "1G98OoqDmNry4889ixRr",
+            "device_key": "vVL0PeL3rwloERj3Kk6D",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1032,9 +1032,9 @@
         },
         {
             "device_name": "Hooter 11@Dharmapuri",
-            "device_id": "3f285300-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8f761e00-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "X1w710sYyoPAjzZ3ENCw",
+            "device_key": "YYzOHTPLOSzaOQ3ofL64",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1045,9 +1045,9 @@
         },
         {
             "device_name": "Hooter 12@Dharmapuri",
-            "device_id": "3f5619c0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8fa25e20-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "FabZq3b68nzoEtZ9sFhj",
+            "device_key": "zMv2FNDV5rDydUKI8HhG",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1058,9 +1058,9 @@
         },
         {
             "device_name": "Hooter 13@Dharmapuri",
-            "device_id": "3f865180-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8fd024e0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "jpyIiO9pMzfp8Ah0QnP9",
+            "device_key": "HfIXjUYIlrEBjYfcPz01",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1071,9 +1071,9 @@
         },
         {
             "device_name": "Hooter 14@Dharmapuri",
-            "device_id": "3faff990-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "8fffc060-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "NEYUTkEsm4tygAC5nSZI",
+            "device_key": "jLEd37EzjddgC6h6f7FI",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1084,9 +1084,9 @@
         },
         {
             "device_name": "Hooter 15@Dharmapuri",
-            "device_id": "3fe5af90-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "90354f50-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "AYg1ogAde7ejehDDbUFc",
+            "device_key": "8WmvrB80ibyhj4kBE2Zx",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1097,9 +1097,9 @@
         },
         {
             "device_name": "Hooter 16@Dharmapuri",
-            "device_id": "4020e3d0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9096f750-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "ihD3SfH0lo6WLXeiTYB5",
+            "device_key": "5aOJ6ltE3GNZcEE0XcCb",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1110,9 +1110,9 @@
         },
         {
             "device_name": "Hooter 17@Dharmapuri",
-            "device_id": "4056e7f0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "90c66bc0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "877H0D3rkrF7aXUISVAu",
+            "device_key": "X1WzFTUjijqj7Dqcnn0e",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1123,9 +1123,9 @@
         },
         {
             "device_name": "Hooter 18@Dharmapuri",
-            "device_id": "408c28c0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "90f2fa00-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "fJyla6l8xClbpA1SIlt4",
+            "device_key": "87HB8VadrEJX7CHPqxuO",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1136,9 +1136,9 @@
         },
         {
             "device_name": "Hooter 19@Dharmapuri",
-            "device_id": "40c53a20-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "911f1310-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "Jg4qLZEMouHneuqlRQCX",
+            "device_key": "QPLKASjqNbKsgb0uC6wv",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1149,9 +1149,9 @@
         },
         {
             "device_name": "Hooter 20@Dharmapuri",
-            "device_id": "40f264a0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "914d9d20-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "AUcJws8Te5fdJkQ2KkzA",
+            "device_key": "cfOYl2WXJXikA7QVtJdh",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1162,9 +1162,9 @@
         },
         {
             "device_name": "Hooter 21@Dharmapuri",
-            "device_id": "411f19f0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "917aeeb0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "l0qGjcAlEpXgN7M2qJmq",
+            "device_key": "HjiqjbKA7WRfSFSoVD4m",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1175,9 +1175,9 @@
         },
         {
             "device_name": "Hooter 22@Dharmapuri",
-            "device_id": "414cb9a0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "91ae33b0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "Pe7ndWtArEDmIe1alAb1",
+            "device_key": "x7qO1NYJRyzH3hAE4NMI",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1188,9 +1188,9 @@
         },
         {
             "device_name": "Hooter 23@Dharmapuri",
-            "device_id": "417c0700-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "91d67c30-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "o6SWPzcBJDekdDuJ7iQt",
+            "device_key": "DV2I7e1ANQBDgdAmKKjW",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1201,9 +1201,9 @@
         },
         {
             "device_name": "Hooter 24@Dharmapuri",
-            "device_id": "41d6aa20-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "920665d0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "FjoILzALm9zJYQj29Unb",
+            "device_key": "uhlSZhmxKzYyDfKNR1xS",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1214,9 +1214,9 @@
         },
         {
             "device_name": "Hooter 25@Dharmapuri",
-            "device_id": "42029c20-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "92347ab0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "HKlN0brXPbs8XJ7oTyXr",
+            "device_key": "O7Ln5sjT3RIWsxhSKP9y",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1227,9 +1227,9 @@
         },
         {
             "device_name": "Hooter 26@Dharmapuri",
-            "device_id": "422b80e0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "926f12b0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "v6HSlTFZ1QFxCv0MAg1v",
+            "device_key": "s4NeO63NbTJpKtFF35Mf",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1240,9 +1240,9 @@
         },
         {
             "device_name": "Hooter 27@Dharmapuri",
-            "device_id": "425ffe60-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "92acb7f0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "yYRiRqWgXIsJKdc0oZAJ",
+            "device_key": "AOX5okWrlUnLkEGOVzfT",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1253,9 +1253,9 @@
         },
         {
             "device_name": "Hooter 28@Dharmapuri",
-            "device_id": "42989a90-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "92e972d0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "XNT87C8lLTlOPOxybmWj",
+            "device_key": "umRjxLzTfLUPb6eF1Y6D",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1266,9 +1266,9 @@
         },
         {
             "device_name": "Hooter 29@Dharmapuri",
-            "device_id": "42ca8000-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "93171280-b080-11ef-a04d-0f6356c57054",
             "device_type": "Hooter",
-            "device_key": "wje6xd8xSUWkdOcNm7zC",
+            "device_key": "JqBGNJgoQxpAqSAS49eM",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1279,9 +1279,9 @@
         },
         {
             "device_name": "ESD1@Dharmapuri",
-            "device_id": "4307d721-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "933bb180-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "UZVQTlrI7SjnLM3gGHnp",
+            "device_key": "Y6aFG4NezCwsncdBzipJ",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1292,9 +1292,9 @@
         },
         {
             "device_name": "ESD2@Dharmapuri",
-            "device_id": "4346dbf0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "936643f0-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "jdFkwolMjxbCTCJN1pl1",
+            "device_key": "YJ4V4A1TyGKC3AuMGYIL",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1305,9 +1305,9 @@
         },
         {
             "device_name": "ESD3@Dharmapuri",
-            "device_id": "43727fd0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "93a26290-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "u7bbLuyvRLy3HvU10Gba",
+            "device_key": "QZLHv3DOLZYYCyn8i0N9",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1318,9 +1318,9 @@
         },
         {
             "device_name": "ESD4@Dharmapuri",
-            "device_id": "43a094b0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "93da1460-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "FIBdydiQDIObLKgqghrl",
+            "device_key": "sxXmPyxLEzYXQKNZL9VF",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1331,9 +1331,9 @@
         },
         {
             "device_name": "ESD5@Dharmapuri",
-            "device_id": "440486a0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "941f0ca0-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "ERUxZqikZ63nUztLOE2y",
+            "device_key": "uvj9KTTVH3HaPxuCJ2q0",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1344,9 +1344,9 @@
         },
         {
             "device_name": "ESD6@Dharmapuri",
-            "device_id": "443819c0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "94570c90-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "NAnhn1HPRmA27LXqW4uV",
+            "device_key": "y4ZSHhB8o9KZ9jy13Grk",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1357,9 +1357,9 @@
         },
         {
             "device_name": "ESD7@Dharmapuri",
-            "device_id": "4495ca20-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "947e1c90-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "khffxiZs2rmukz2kP64Z",
+            "device_key": "ve1HkWbFx1V04jixdpuq",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1370,9 +1370,9 @@
         },
         {
             "device_name": "ESD8@Dharmapuri",
-            "device_id": "44c20a40-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "94b38470-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "hZypcsWbVCOZhwueXX6R",
+            "device_key": "rVrXoD24LQDLm8eZ1hVk",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1383,9 +1383,9 @@
         },
         {
             "device_name": "ESD9@Dharmapuri",
-            "device_id": "44f0e270-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "94e34700-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "up3hmQFHE7YKp4DHEnnG",
+            "device_key": "1EFQfnHA2qEh10K3utUQ",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1396,9 +1396,9 @@
         },
         {
             "device_name": "ESD10@Dharmapuri",
-            "device_id": "451dbed0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "951d42c0-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "zJm2cvK0EVYPNOxfPUXX",
+            "device_key": "WHAGFpOvk0WhQun8kAOS",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1409,9 +1409,9 @@
         },
         {
             "device_name": "ESD11@Dharmapuri",
-            "device_id": "454f5620-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "954cde40-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "rwytFbx7LkXNlphAzuPZ",
+            "device_key": "xc6ADjuwmGlG9fzhC1rV",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1422,9 +1422,9 @@
         },
         {
             "device_name": "ESD12@Dharmapuri",
-            "device_id": "4578b010-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "957b8f60-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "UCqOqcsSQTgl7sdWV4HN",
+            "device_key": "7exQV2a3lIeoeQU9iyOf",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1435,9 +1435,9 @@
         },
         {
             "device_name": "ESD13@Dharmapuri",
-            "device_id": "45a7af50-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "95b82330-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "0vSk4XhTZHKLSbqZqxD8",
+            "device_key": "thbcst1VACnzWXJyHI2e",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1448,9 +1448,9 @@
         },
         {
             "device_name": "ESD14@Dharmapuri",
-            "device_id": "45d63960-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "95f57a50-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "BPscABl7VJHjGuLdrLZj",
+            "device_key": "SKIDX8yMIKCgRGkpKJNh",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1461,9 +1461,9 @@
         },
         {
             "device_name": "ESD15@Dharmapuri",
-            "device_id": "4612a620-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "962b7e70-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "NgQFmi1xcj1vY5zTPknu",
+            "device_key": "DYdVG0DbAjCZkWWFtQ2m",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1474,9 +1474,9 @@
         },
         {
             "device_name": "ESD16@Dharmapuri",
-            "device_id": "468bf4d0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "96585ad0-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "2ioQfIWsKRmqH9uKwMYX",
+            "device_key": "runcHEngJkKTNZRAZkwW",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1487,9 +1487,9 @@
         },
         {
             "device_name": "ESD17@Dharmapuri",
-            "device_id": "46bf60e0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "96945260-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "XYizFPstabItc6kiOYcg",
+            "device_key": "Lu8iQflTGdNdz0rfZKAx",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1500,9 +1500,9 @@
         },
         {
             "device_name": "ESD18@Dharmapuri",
-            "device_id": "46f7d600-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "96dccd10-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "cTFGJOK4gq8nHHNeMX9Z",
+            "device_key": "WTZGyB36qUqg86itlHqn",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1513,9 +1513,9 @@
         },
         {
             "device_name": "ESD19@Dharmapuri",
-            "device_id": "47294640-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "971cbc40-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "f6kAYnYyDQpSiick3jQk",
+            "device_key": "VSQOvtsqxcAFTHmGFVpc",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1526,9 +1526,9 @@
         },
         {
             "device_name": "ESD20@Dharmapuri",
-            "device_id": "47555f50-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "97474eb0-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "0NIdwnx2MWk9QhaHTAFy",
+            "device_key": "6bOUyOq2lTJwcSEsB9zo",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1539,9 +1539,9 @@
         },
         {
             "device_name": "ESD21@Dharmapuri",
-            "device_id": "478262c0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "97a721f0-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "c10XjQkH8cMgP1sihzYn",
+            "device_key": "p4AcVKJIR1xOwrk53Qhe",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1552,9 +1552,9 @@
         },
         {
             "device_name": "ESD22@Dharmapuri",
-            "device_id": "47acce20-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "97dd2610-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "OUMn69bb0qhvggx8Wec5",
+            "device_key": "RqwohWqYzvTGyfnp2Gch",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1565,9 +1565,9 @@
         },
         {
             "device_name": "ESD23@Dharmapuri",
-            "device_id": "47dabbf0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "980bd730-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "4cFs9GUWAz117TNxUx2e",
+            "device_key": "hh8FJldPnris42boxLBj",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1578,9 +1578,9 @@
         },
         {
             "device_name": "ESD24@Dharmapuri",
-            "device_id": "4847ae90-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "98619850-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "StxTpmHox8emXNAVdDqJ",
+            "device_key": "wm3eaTnZfCB4z41L617e",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1591,9 +1591,9 @@
         },
         {
             "device_name": "ESD25@Dharmapuri",
-            "device_id": "48754e40-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9896d920-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "0y6go7aEYWtw8hprDu2x",
+            "device_key": "mFRCCWWidl1Qn6spx9tL",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1604,9 +1604,9 @@
         },
         {
             "device_name": "ESD26@Dharmapuri",
-            "device_id": "48b25740-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "98c58a40-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "0HkOHCPNy9JAcAzBUcKJ",
+            "device_key": "jdOyWjVy51G2Mc5B8Vhd",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1617,9 +1617,9 @@
         },
         {
             "device_name": "ESD27@Dharmapuri",
-            "device_id": "48e09330-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "98ff5ef0-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "MXOiQZ8FvB7lRslrJtjA",
+            "device_key": "RuwwNDUFxNRTGzUYygCD",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1630,9 +1630,9 @@
         },
         {
             "device_name": "ESD_SOFT@Dharmapuri",
-            "device_id": "491cb1d0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "992e8540-b080-11ef-a04d-0f6356c57054",
             "device_type": "ESD",
-            "device_key": "RzNrBhn387MC5S9P4POj",
+            "device_key": "qe8XU8m1DJltcfBqdl2B",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1643,9 +1643,9 @@
         },
         {
             "device_name": "OPD HCD 1@Dharmapuri",
-            "device_id": "494b8a00-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9968f630-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "CIPQN4sUgYWwaXeWFNkG",
+            "device_key": "goCZQ1yNBHmsQ91HgLK0",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1660,9 +1660,9 @@
         },
         {
             "device_name": "OPD HCD 2@Dharmapuri",
-            "device_id": "49886bf0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9999ca30-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "8TJjXtvWlOk6tNPLzmGf",
+            "device_key": "4LKL8fj9CyCYAkraRCb2",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1677,9 +1677,9 @@
         },
         {
             "device_name": "OPD HCD 3@Dharmapuri",
-            "device_id": "49efb940-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "99d6d330-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "b3vYELgFdaT8x1aLJh9t",
+            "device_key": "pNvuAmNFdKW3e1HQxtd9",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1694,9 +1694,9 @@
         },
         {
             "device_name": "OPD HCD 4@Dharmapuri",
-            "device_id": "4a239a80-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9a133ff0-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "01zrRWiM3Gn6SJ6ozlxJ",
+            "device_key": "zPmpfueC0A4RkuAPWdhU",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1711,9 +1711,9 @@
         },
         {
             "device_name": "OPD HCD 5@Dharmapuri",
-            "device_id": "4a65d3a0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9a3ff540-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "suO7ijm9MTErewWNOXyz",
+            "device_key": "fW6jN94xHEPemGOIpt7a",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1728,9 +1728,9 @@
         },
         {
             "device_name": "OPD HCD 6@Dharmapuri",
-            "device_id": "4a987c60-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9a6d1fc0-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "P35DFasi1VlavvIyVsL0",
+            "device_key": "CfYytIlng1ZvID0O3I8Y",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1745,9 +1745,9 @@
         },
         {
             "device_name": "OPD HCD 7@Dharmapuri",
-            "device_id": "4ac8db30-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9a9ae680-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "23gNCbzJ8J6ANe4nlKJJ",
+            "device_key": "Iro7JaIIZKGxDyHf8kRK",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1762,9 +1762,9 @@
         },
         {
             "device_name": "OPD HCD 8@Dharmapuri",
-            "device_id": "4af7b360-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9ae4c0c0-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "JwVoIIWVDKPV0iVxcOc3",
+            "device_key": "UDT1h5qUxmR6lkjVzVoS",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1779,9 +1779,9 @@
         },
         {
             "device_name": "OPD HCD 9@Dharmapuri",
-            "device_id": "4b268b90-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9b33a410-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "BvuWk59rIrvlp04vGJyN",
+            "device_key": "uLyaTDVpdhH781Re1dZ4",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1796,9 +1796,9 @@
         },
         {
             "device_name": "OPD HCD 10@Dharmapuri",
-            "device_id": "4b62aa30-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9b6366a0-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "bI3DPLxvJfUpF9HUItG8",
+            "device_key": "Imc46NlYgd9X5faC4EY8",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1813,9 +1813,9 @@
         },
         {
             "device_name": "PTD HCD 11@Dharmapuri",
-            "device_id": "4bbed3f0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9bc49970-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "SBktlVuBZYdNI70KrlGB",
+            "device_key": "3DvkMHxXv7e5qX5FawqG",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1830,9 +1830,9 @@
         },
         {
             "device_name": "PTD HCD 12@Dharmapuri",
-            "device_id": "4bec4c90-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9bfa9d90-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "kSM0s2o9t8dIKWyrUk4h",
+            "device_key": "CA951yVwaMaX1rdFBPaP",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1847,9 +1847,9 @@
         },
         {
             "device_name": "PTD HCD 13@Dharmapuri",
-            "device_id": "4c29f1d0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9c2afc60-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "vtmHZCQDf5INjdEyz1nE",
+            "device_key": "BnGWHnh7f2Hph2DiODid",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1864,9 +1864,9 @@
         },
         {
             "device_name": "PTD HCD 14@Dharmapuri",
-            "device_id": "4c680c40-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9c645be0-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "G9zGgLHtaHCNc14kKKl4",
+            "device_key": "VAdigzVwjdVcwU4vrwpW",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1881,9 +1881,9 @@
         },
         {
             "device_name": "PTD HCD 15@Dharmapuri",
-            "device_id": "4ca27d30-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9c93a940-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "7ervDUvIjkri1KuwueR9",
+            "device_key": "GGEoitZUC5tnL9fyxi3f",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1898,9 +1898,9 @@
         },
         {
             "device_name": "PTD HCD 16@Dharmapuri",
-            "device_id": "4cd0e030-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9ccf2ba0-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "cnXJDneFDVAly7kpP2O2",
+            "device_key": "vFThjSeenGDEeWUGqWAv",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1915,9 +1915,9 @@
         },
         {
             "device_name": "PTD HCD 17@Dharmapuri",
-            "device_id": "4cfd2050-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9cff1540-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "Bh9Ti3m1kiDN8BlYA3zw",
+            "device_key": "UQXet6LSaVEYPMMwJA70",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1932,9 +1932,9 @@
         },
         {
             "device_name": "PTD HCD 18@Dharmapuri",
-            "device_id": "4d2baa60-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9d2ded70-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "PWcezoyGTKBLt1kY676D",
+            "device_key": "OmAYEJluwLB78ND9oUPU",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1949,9 +1949,9 @@
         },
         {
             "device_name": "PTD HCD 19@Dharmapuri",
-            "device_id": "4d5a8290-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9d6948c0-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "dcXQmKWD6vQQ0YdI7Mxe",
+            "device_key": "Y9mFU75cemvuVza8VnG2",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1966,17 +1966,17 @@
         },
         {
             "device_name": "PTD HCD 20@Dharmapuri",
-            "device_id": "4d8737e0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9d964c30-b080-11ef-a04d-0f6356c57054",
             "device_type": "HCD",
-            "device_key": "tVZb0YFrCZCJnZLLIJaA",
+            "device_key": "TVEqi5aJ0mcQ3GIfDhyR",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": []
         },
         {
             "device_name": "Power Switch@Dharmapuri",
-            "device_id": "4db0b8e0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9dc23e30-b080-11ef-a04d-0f6356c57054",
             "device_type": "Power ESD",
-            "device_key": "GrVmPcP3OBR4XkRiy5Km",
+            "device_key": "4ALjd2xDsitNz1LynHtw",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -1987,9 +1987,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 01@Dharmapuri",
-            "device_id": "4e1a9e41-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9e0e8970-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "l1wbFlqAxJvdGRCnNlee",
+            "device_key": "2Pu8kcjFfjF0EmGL9h6z",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2000,9 +2000,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 02@Dharmapuri",
-            "device_id": "4e4e3160-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9e692c90-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "TvajgGdHtwa3EY6K7Fi0",
+            "device_key": "wDGwP0vHdNyOOQJNzj3T",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2013,9 +2013,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 03@Dharmapuri",
-            "device_id": "4eaa0d00-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9eccf770-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "Gyg8zZfrBnuQBLr1rsKx",
+            "device_key": "0k3yoK9SKB6bLmNAbYtY",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2026,9 +2026,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 04@Dharmapuri",
-            "device_id": "4ed7d3c0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9f40eef0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "Krmo4xCLNd7ASgARktui",
+            "device_key": "u0xJfZczaAIWGAKsriBs",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2039,9 +2039,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 05@Dharmapuri",
-            "device_id": "4f4848d0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9f99e460-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "Au8X0CesICYlQOxzqR3I",
+            "device_key": "XZNHNRya3ltGu4LcIP5X",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2052,9 +2052,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 06@Dharmapuri",
-            "device_id": "4f701c20-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9fc97fe0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "6X5DvAt2ibyUyCRmCygh",
+            "device_key": "L4cL1CO0X4vL33BHRX93",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2065,9 +2065,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 07@Dharmapuri",
-            "device_id": "4f9e09f0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "9ff5e710-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "Z3MFCqRshhWzHgIwylxd",
+            "device_key": "OjQOBrJ9eozqsoRjcVoD",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2078,9 +2078,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 08@Dharmapuri",
-            "device_id": "4ffa5ac0-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "a0250d60-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "3h4hvHJL926EmH8D9gOu",
+            "device_key": "v0TpKURCnGm3sxTBveoS",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2091,9 +2091,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 09@Dharmapuri",
-            "device_id": "50253b50-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "a0551e10-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "d3xH8ZgGhOBAJ8i26owo",
+            "device_key": "k8jWfrfDv90VD4UheNKC",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2104,9 +2104,9 @@
         },
         {
             "device_name": "DykeValveSTATUS FOR DYKE VALVE 10@Dharmapuri",
-            "device_id": "504e2010-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "a09868a0-b080-11ef-a04d-0f6356c57054",
             "device_type": "Dyke Valve",
-            "device_key": "oD7YjX3v53LBCptzFhEN",
+            "device_key": "szannNWknt6CasM1AwVS",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
@@ -2117,9 +2117,9 @@
         },
         {
             "device_name": "oi@Dharmapuri",
-            "device_id": "50847250-ae87-11ef-a04d-0f6356c57054",
+            "device_id": "a103d4a0-b080-11ef-a04d-0f6356c57054",
             "device_type": "OI Tags",
-            "device_key": "ntvW5UQJkTmbZ4aV4bSb",
+            "device_key": "MifNlgGsEKPCMaW64OIc",
             "entity_id": "391b6790-ae87-11ef-a04d-0f6356c57054",
             "sensors": [
                 {
