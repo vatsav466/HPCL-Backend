@@ -1016,6 +1016,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "screens",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Screens",
+            "attributes": {},
+            "uris": [
+                "/api/screens/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "screens_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Screens_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/screens/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "screens_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Screens_admin",
+            "attributes": {},
+            "uris": [
+                "/api/screens/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

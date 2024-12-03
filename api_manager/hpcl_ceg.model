@@ -507,3 +507,16 @@ Model IndentDryOut {
     indent_no optional str
     products optional list productsDetails
 }
+
+Model Screens {
+    screen_title str
+    dashboards list int
+    created_by optional str
+    updated_by optional str
+    x optional int
+    y optional int
+    w optional int
+    h optional int
+    static optional bool
+    moved optional bool
+}
