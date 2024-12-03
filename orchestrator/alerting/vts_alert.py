@@ -8,10 +8,6 @@ import utilities.interlock_mapping
 import utilities.vts_mapping as vts_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
-import orchestrator.actions.clear_vts_count as clear_vts_count
-import orchestrator.actions.check_trip_count as check_trip_count
-import orchestrator.actions.check_interlock_name as check_interlock_name
-import orchestrator.actions.check_violation_count as check_violation_count
 
 logger = urdhva_base.logger.Logger.getInstance('vts_alert_processing')
 
