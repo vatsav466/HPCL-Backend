@@ -480,6 +480,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     is_approved: typing.Optional[bool] = pydantic.Field(False, )
     is_exc_approval_time_exp: typing.Optional[bool] = pydantic.Field(False, )
     is_raised: typing.Optional[bool] = pydantic.Field(False, )
+    is_cancelled: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -490,6 +491,7 @@ class tagsCreate(pydantic.BaseModel):
     is_approved: typing.Optional[bool] = pydantic.Field(False, )
     is_exc_approval_time_exp: typing.Optional[bool] = pydantic.Field(False, )
     is_raised: typing.Optional[bool] = pydantic.Field(False, )
+    is_cancelled: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):

@@ -83,6 +83,7 @@ class AlertActionType(str, enum.Enum):
     Message = 'Message'
     excApprovalTimeExp = 'excApprovalTimeExp'
     Raised = 'Raised'
+    Cancelled = 'Cancelled'
 
 
 

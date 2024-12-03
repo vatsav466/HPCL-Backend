@@ -262,6 +262,7 @@ Model tags internal {
     isApproved optional bool
     isExcApprovalTimeExp optional bool
     isRaised optional bool
+    isCancelled optional bool
 }
 
 Model Interlock {
