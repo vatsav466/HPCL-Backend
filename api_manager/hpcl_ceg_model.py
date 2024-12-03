@@ -1187,7 +1187,6 @@ class IndentDryOutGetResp(pydantic.BaseModel):
 
 class ScreensSchema(UrdhvaPostgresBase):
     __tablename__ = 'screens'
-    __table_args__ = {'extend_existing':True}
     
     screen_title: Mapped[str] = mapped_column("screen_title", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     dashboards: Mapped[typing.List[int]] = mapped_column("dashboards", ARRAY(Integer), index=False, nullable=False, default=None, primary_key=False, unique=False)
