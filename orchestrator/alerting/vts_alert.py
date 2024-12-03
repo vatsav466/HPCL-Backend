@@ -8,6 +8,10 @@ import utilities.interlock_mapping
 import utilities.vts_mapping as vts_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
+import orchestrator.actions.clear_vts_count as clear_vts_count
+import orchestrator.actions.check_trip_count as check_trip_count
+import orchestrator.actions.check_interlock_name as check_interlock_name
+import orchestrator.actions.check_violation_count as check_violation_count
 
 logger = urdhva_base.logger.Logger.getInstance('vts_alert_processing')
 
@@ -34,6 +38,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
+            alert_data['location_type'] = 'TAS'
             status, location_details = await alert_helper.get_location_details(alert_data['location_type'],
                                                                                alert_data['location_id'])
             if not status:
@@ -60,7 +65,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             vts_data.update({"report_duration": record['report_duration'],
                                          "total_trips": record['total_trips'],
                                          "violation_history": vts_data["violation_history"] + [exception_msg]})
-                            resp = await hpcl_ceg_model.VTS(**vts_data).modify()
+                            await hpcl_ceg_model.VTS(**vts_data).modify()
                         else:
                             vts_data = {"bu": alert_data['location_type'].value, "sap_id": alert_data['location_id'],
                                          "location_name": location_details['name'],
