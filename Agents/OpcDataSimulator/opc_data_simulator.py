@@ -79,7 +79,7 @@ class OPCDataSimulator:
 
 
 def main():
-    OPCDataSimulator("data.json", "config.json").run()
+    OPCDataSimulator("data_old.json", "config.json").run()
 
 
 if __name__ == "__main__":

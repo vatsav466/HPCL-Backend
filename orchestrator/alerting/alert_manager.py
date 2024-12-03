@@ -150,7 +150,7 @@ class AlertAction:
                                   "action_type": {"type": "String", "value": action_type}})
         messaged_data = {
             "messageName": action_type,
-            "businessKey": alert_data.external_id,
+            "businessKey": alert_data.unique_id,
             "processVariables": process_variables
         }
         print("messaged_data: ", messaged_data)

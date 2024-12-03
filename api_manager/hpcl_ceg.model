@@ -47,6 +47,20 @@ Enum AlertActionType str {
     interLockOk='interLockOk'
     Message='Message'
     excApprovalTimeExp='excApprovalTimeExp'
+    Raised='Raised'
+}
+
+Enum IndentStatus str {
+    Pending='Pending'
+    IndentRaised='IndentRaised'
+    IndentOnHold='IndentOnHold'
+    IndentOnHoldReleased='IndentOnHoldReleased'
+    Cancelled='Cancelled'
+    TruckAllocated='TruckAllocated'
+    Transit='Transit'
+    InvoiceCreated='InvoiceCreated'
+    ValidIndent='ValidIndent'
+    SentToSAP='SentToSAP'
 }
 
 Model LocationMaster {
@@ -233,6 +247,7 @@ Model Alert_History internal {
     no_exception optional bool
     is_approved optional bool
     is_exc_approval_time_exp optional bool
+    is_raised optional bool
 }
 
 Model tags internal {
@@ -242,6 +257,7 @@ Model tags internal {
     noException optional bool
     isApproved optional bool
     isExcApprovalTimeExp optional bool
+    isRaised optional bool
 }
 
 Model Interlock {
@@ -284,22 +300,15 @@ Model VTS {
     sap_id index_field str
     location_name str
     vehicle_number index_field str
+    violation_type index_field str
+    violation_count int
     violation_start_date optional datetime
     violation_history optional list str
-    interlock_name optional str
     block_duration optional str
     block_msg optional str
-    alert_status optional AlertStatus
+    status optional AlertStatus
     report_duration optional str
     total_trips optional int
-    stoppage_violations_count optional int
-    route_deviation_count optional int
-    speed_violation_count optional int
-    main_supply_removal_count optional int
-    night_driving_count optional int
-    no_halt_zone_count optional int
-    device_offline_count optional int
-    device_tamper_count optional int
 
     Config=> {
         crud_operations='read'
@@ -350,6 +359,7 @@ Model Alerts {
     r1_time optional datetime
     r2_time optional datetime
     r3_time optional datetime
+    indent_status optional IndentStatus
 
     Action=> alert_action {
         action_type AlertActionType

@@ -21,6 +21,7 @@ async def tas_listener(rmsg):
         elif rmsg['status'] == 'CLEARED_UNACK':
             alertdata = rmsg['details']['additionalInfo']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
+            alertdata['alert_id'] = rmsg['id']['id']
             print("Close Alert bu:%s SAPID:%s for:%s " % (alertdata.get('bu', ''), alertdata.get('sap_id', ''),
                                                         rmsg['type']))
             await close_alert(alertdata)
