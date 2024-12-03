@@ -172,16 +172,6 @@ async def delete(id: str):
     return await CredsModel.delete(id)
 
 
-@router.get('/screens/{id}', response_model=Screens, tags=['Screens'])
-async def get(id: str):
-    return await Screens.get(id, skip_secrets=True)
-
-
-@router.get('/screens', response_model=ScreensGetResp, tags=['Screens'])
-async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
-    return await Screens.get_all(params, skip_secrets=True)
-
-
 @router.post('/indentdryout', response_model=IndentDryOut, tags=['IndentDryOut'])
 async def create(inputObj: IndentDryOutCreate):
     return await inputObj.create()

@@ -470,19 +470,6 @@ Model GroupsData internal {
     organization_id int
 }
 
-Model Screens{
-   screen_title str
-   groups optional list int
-   changed_by optional str
-   created_by str
-   created_user optional str
-   organization_id int
-   groups_data list GroupsData
-
-   Config=> {
-        crud_operations='read'
-    }
-}
 
 Model productsDetails internal {
     prod_code optional str
