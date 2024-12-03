@@ -82,6 +82,25 @@ class AlertActionType(str, enum.Enum):
     interLockOk = 'interLockOk'
     Message = 'Message'
     excApprovalTimeExp = 'excApprovalTimeExp'
+    Raised = 'Raised'
+
+
+
+
+
+
+
+class IndentStatus(str, enum.Enum):
+    Pending = 'Pending'
+    IndentRaised = 'IndentRaised'
+    IndentOnHold = 'IndentOnHold'
+    IndentOnHoldReleased = 'IndentOnHoldReleased'
+    Cancelled = 'Cancelled'
+    TruckAllocated = 'TruckAllocated'
+    Transit = 'Transit'
+    InvoiceCreated = 'InvoiceCreated'
+    ValidIndent = 'ValidIndent'
+    SentToSAP = 'SentToSAP'
 
 
 

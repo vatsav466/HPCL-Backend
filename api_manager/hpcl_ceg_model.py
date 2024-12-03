@@ -479,6 +479,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     no_exception: typing.Optional[bool] = pydantic.Field(False, )
     is_approved: typing.Optional[bool] = pydantic.Field(False, )
     is_exc_approval_time_exp: typing.Optional[bool] = pydantic.Field(False, )
+    is_raised: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -488,6 +489,7 @@ class tagsCreate(pydantic.BaseModel):
     no_exception: typing.Optional[bool] = pydantic.Field(False, )
     is_approved: typing.Optional[bool] = pydantic.Field(False, )
     is_exc_approval_time_exp: typing.Optional[bool] = pydantic.Field(False, )
+    is_raised: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):
@@ -722,6 +724,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     r1_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r1_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     r2_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r2_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     r3_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r3_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    indent_status: Mapped[typing.Optional[typing.Any]] = mapped_column("indent_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -761,6 +764,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     r1_time: typing.Optional[datetime.datetime] | None = None
     r2_time: typing.Optional[datetime.datetime] | None = None
     r3_time: typing.Optional[datetime.datetime] | None = None
+    indent_status: typing.Optional[hpcl_ceg_enum.IndentStatus] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -805,6 +809,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     r1_time: typing.Optional[datetime.datetime] | None = None
     r2_time: typing.Optional[datetime.datetime] | None = None
     r3_time: typing.Optional[datetime.datetime] | None = None
+    indent_status: typing.Optional[hpcl_ceg_enum.IndentStatus] | None = None
 
     class Config:
         collection_name = 'data_flow'

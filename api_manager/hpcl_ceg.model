@@ -47,6 +47,20 @@ Enum AlertActionType str {
     interLockOk='interLockOk'
     Message='Message'
     excApprovalTimeExp='excApprovalTimeExp'
+    Raised='Raised'
+}
+
+Enum IndentStatus str {
+    Pending='Pending'
+    IndentRaised='IndentRaised'
+    IndentOnHold='IndentOnHold'
+    IndentOnHoldReleased='IndentOnHoldReleased'
+    Cancelled='Cancelled'
+    TruckAllocated='TruckAllocated'
+    Transit='Transit'
+    InvoiceCreated='InvoiceCreated'
+    ValidIndent='ValidIndent'
+    SentToSAP='SentToSAP'
 }
 
 Model LocationMaster {
@@ -233,6 +247,7 @@ Model Alert_History internal {
     no_exception optional bool
     is_approved optional bool
     is_exc_approval_time_exp optional bool
+    is_raised optional bool
 }
 
 Model tags internal {
@@ -242,6 +257,7 @@ Model tags internal {
     noException optional bool
     isApproved optional bool
     isExcApprovalTimeExp optional bool
+    isRaised optional bool
 }
 
 Model Interlock {
@@ -343,6 +359,7 @@ Model Alerts {
     r1_time optional datetime
     r2_time optional datetime
     r3_time optional datetime
+    indent_status optional IndentStatus
 
     Action=> alert_action {
         action_type AlertActionType
