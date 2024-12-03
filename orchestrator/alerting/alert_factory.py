@@ -112,7 +112,10 @@ class AlertFactory:
                 alert_update = await hpcl_ceg_model.Alerts(**alert_data_dict).modify()
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
-                workflow_id =interlock_name.get("interlock_name", "")
+                print("interlock_name-->", interlock_name)
+                workflowid =interlock_name.get("interlock_name", "")
+                workflow_id = interlock_mapping.fmt_il_name(workflowid)
+                print("workflow_id: ", workflow_id)
                 print("workflow_id ", workflow_id)
                 await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
             else:
@@ -139,6 +142,7 @@ class AlertFactory:
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
         """
+        print("alert_data ---> ", alert_data)
         try:
             # il_data = None
             # al_data = None
