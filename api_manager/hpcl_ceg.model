@@ -48,6 +48,7 @@ Enum AlertActionType str {
     Message='Message'
     excApprovalTimeExp='excApprovalTimeExp'
     Raised='Raised'
+    Cancelled='Cancelled'
 }
 
 Enum IndentStatus str {
@@ -61,6 +62,8 @@ Enum IndentStatus str {
     InvoiceCreated='InvoiceCreated'
     ValidIndent='ValidIndent'
     SentToSAP='SentToSAP'
+    SalesOrderPlaced='SalesOrderPlaced'
+    Completed='Completed'
 }
 
 Model LocationMaster {
@@ -248,6 +251,7 @@ Model Alert_History internal {
     is_approved optional bool
     is_exc_approval_time_exp optional bool
     is_raised optional bool
+    is_cancelled optional bool
 }
 
 Model tags internal {

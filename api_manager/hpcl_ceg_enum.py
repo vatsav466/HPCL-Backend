@@ -101,6 +101,8 @@ class IndentStatus(str, enum.Enum):
     InvoiceCreated = 'InvoiceCreated'
     ValidIndent = 'ValidIndent'
     SentToSAP = 'SentToSAP'
+    SalesOrderPlaced = 'SalesOrderPlaced'
+    Completed = 'Completed'
 
 
 
