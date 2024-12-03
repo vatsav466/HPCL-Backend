@@ -156,12 +156,24 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower(), mapping))
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-    if filtered_data:
-        result = filtered_data[0]
-        # Remove unwanted characters from interlock_name
-        result['interlock_name'] = ''.join(
-            char for char in result['interlock_name'] if char not in ' :()-/'
-        )
-        return result
-    else:
-        return {}
+    print("filtered_data--->", filtered_data[0])
+    return filtered_data[0] if filtered_data else {}
+
+
+def fmt_il_name(interlock_name=None):
+    # Fetch interlock details from configuration
+    """
+    Format interlock name and return interlock details for a given BU.
+
+    If sop_id is provided, fetches the interlock details based on the sop_id.
+    If interlock_name is provided, fetches the interlock details based on the interlock_name.
+    If neither sop_id nor interlock_name is provided, returns an empty dictionary.
+
+    :param interlock_name: The name of the interlock
+    :param sop_id: The SOP ID of the interlock
+    :return: A dictionary containing the interlock details. The dictionary will contain the keys 'sop_id', 'interlock_name', 'location_name', 'device_name', 'device_type', 'device_id', 'state', 'city', 'zone' and 'interlock_status'. If the interlock is not found, an empty dictionary is returned.
+    """
+    if interlock_name:
+        interlock_name = ''.join(char for char in interlock_name if char not in ' :()-/')
+
+    return interlock_name

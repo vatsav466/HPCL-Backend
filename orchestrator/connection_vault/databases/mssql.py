@@ -192,10 +192,10 @@ class Mssql(BaseAction):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            query = f'SELECT * FROM {schema_name}."{table_name}";'
-            if not schema_name and schema_name == 'None':
-                query = f'SELECT * FROM "{table_name}";'
-
+            if not query:
+                query = f'SELECT * FROM {schema_name}."{table_name}"'
+                if not schema_name and schema_name == 'None':
+                    query = f'SELECT * FROM "{table_name}"'
             cursor.execute(query)
             batch_size = 1000000
             count = 0
