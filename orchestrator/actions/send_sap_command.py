@@ -16,6 +16,7 @@ class SendSapCommand:
         return ["alert_id", "interrupt", "vehicle"]
     
     async def sendsapcommand(self, params):
+        print("params --->", params)
         IST = pytz.timezone('Asia/Kolkata')
         currtime = datetime.datetime.now(IST).strftime('%d-%m-%Y %H:%M:%S')
         interuptName = params.get('interrupt')
@@ -36,7 +37,7 @@ class SendSapCommand:
         vendor = ''
         code = alert_data.get('sap_id', '')
         vehicle_number = alert_data.get('vehicle_number', '')
-        sopi_id = alert_data.get('sop_id', '')
+        sop_id = alert_data.get('sop_id', '')
         device_type = alert_data.get('device_type', '')
 
         if device_type == "Aryaomnitalk":
@@ -54,17 +55,19 @@ class SendSapCommand:
 
         if flag == 'U':
             await asyncio.sleep(4)
-            query = (f"vehicle_number='{vehicle_number}' and device_type='{'Aryaomnitalk'}'"
-                     f"and alert_status >='{'Open'}'")
-            status, ndata = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
-            if status and ndata['data']:
+            query = (f"vehicle_number='{vehicle_number}' and violation_type='{alert_data['violation_type']}'"
+                     f"and alert_status ='{'Open'}'")
+            ndata = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
+            if len(ndata['data']):
                 udata1 = ndata['data']
                 for fdata in udata1:
                     unblocks.append(fdata['id'])
             if len(unblocks) > 1:
-                alert_data["alert_history"].append(
+                '''alert_history = alert_data.get('alert_history')
+                alert_history.append(
                     'Another voilations are existing for this lorry:%s :%s-%s' % (vehicle_number, unblocks, currtime))
-                await hpcl_ceg_model.Alerts(**alert_data).modify()
+                data_object = hpcl_ceg_model.Alerts(**alert_data)
+                await data_object.modify()'''
                 return True, {"sapcommandsent": True}
         
         process_code = processcodemap.get(processkey, '')
@@ -73,17 +76,17 @@ class SendSapCommand:
         request_date = ts.strftime('%Y-%m-%d')
         request_time = ts.strftime('%H:%M:%S')
 
-        user_name = urdhva_base.settings.sap_user_name
-        password = urdhva_base.settings.sap_password
-        url = urdhva_base.settings.sap_url
+        user_name = ''     #urdhva_base.settings.sap_user_name
+        password = ''       #urdhva_base.settings.sap_password
+        url = ''            #urdhva_base.settings.sap_url
         reason = alert_data.get('msg', 'IRIS')
         blocks = []
 
-        query = (f"vehicle_number='{vehicle_number}' and device_type='{'Aryaomnitalk'}'"
-                     f"and alert_status >='{'Open'}'")
-        status, aldata2 = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
+        query = (f"vehicle_number='{vehicle_number}' and violation_type='{alert_data['violation_type']}'"
+                     f"and alert_status ='{'Open'}'")
+        aldata2 = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
 
-        if status and aldata2['data']:
+        if len(aldata2['data']):
             for fdata in aldata2['data']:
                 blocks.append(fdata['id'])
         
@@ -130,7 +133,7 @@ class SendSapCommand:
                         }
                 }
         
-        elif sopi_id == "SOP023":
+        elif sop_id == "SOP023":
             data = {"Input": {"Source": "CCC",
                               "Request_Date": request_date,  # "2021-01-21",
                               "Request_Time": request_time,  # "17:20:00",
@@ -144,11 +147,13 @@ class SendSapCommand:
                             }
                 }
         
-        elif flag == 'B' and interuptName == 'block' and len(
-                blocks) > 1:
-            alert_data['alert_history'].append(
+        elif flag == 'B' and interuptName == 'block' and len(blocks) > 1:
+            alert_history = alert_data.get('alert_history',[])
+            alert_history.append(
                 'Another voilations are existing for this lorry:%s :%s-%s' % (vehicle_number, blocks, currtime))
-            await hpcl_ceg_model.Alerts(**alert_data).modify()
+            alert_data['alert_history'] = [alert_history]
+            #data_object = hpcl_ceg_model.Alerts(**alert_data)
+            #await data_object.modify()
             return True, {"sapcommandsent": True}
         
         exceptionOcr, exceptionStr = False, ''
@@ -179,32 +184,10 @@ class SendSapCommand:
             else:
                 msg = 'Failed'
         
-        alert_data['alert_history'].append('%s - SAP Response:%s' % (currtime, msg))
-        alert_data['block'] = True 
-        await hpcl_ceg_model.Alerts(**alert_data).modify()
+        #alert_data['alert_history'].append('%s - SAP Response:%s' % (currtime, msg))
+        #alert_data['block'] = True 
+        #await hpcl_ceg_model.Alerts(**alert_data).modify()
 
         if exceptionOcr:
             return True, {"sapcommandsent": False}
-        return True, {"sapcommandsent": True}
-
-        
-
-
-
-
-
-
-
-
-        
-            
-
-
-
-
-            
-        
-
-
-
-        
+        return True, {"sapcommandsent": True} 
