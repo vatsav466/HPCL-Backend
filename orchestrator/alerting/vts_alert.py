@@ -68,7 +68,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             await hpcl_ceg_model.VTS(**vts_data).modify()
                         else:
                             vts_data = {"bu": alert_data['location_type'], "sap_id": alert_data['location_id'],
-                                         "location_name": location_details['location_name'],
+                                         "location_name": location_details['name'],
                                          "vehicle_number": record['tl_number'],
                                          "total_trips": record['total_trips'], "status": 'Open',
                                          "violation_history": [exception_msg],
@@ -91,6 +91,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                     if not interlock_details:
                                         continue
                                     vts_alert_data.update(interlock_details)
+                                    vts_alert_data['clear_count'] = details['alerting_rules'][count]['clear_count']
                                     await cls.create_alert(vts_alert_data)
                                     break
                 except Exception as e:
