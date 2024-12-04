@@ -16,7 +16,7 @@ class CheckForUnblock:
         """
         return ["alert_id", "days"]
     
-    async def checkForVehicleUnblock(self, alert_id, days):
+    async def checkForVehicleUnblock(self, params):
         """
         This function checks if the given alert is ready to be unblocked. 
         It retrieves the alert's creation time and the number of days it should wait, 
@@ -34,13 +34,14 @@ class CheckForUnblock:
             "waitTime" set to the value of the calculated wait time.
         """
         try:
-            days = int(days)
+            days = int(params.get('days',''))
 
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
-            createdTime = alert_data['created']
+            createdTime = alert_data['created_at']
+            createdTime = int(createdTime.timestamp())
             currentTime = int(datetime.datetime.now().timestamp())
             timeDiff = int((currentTime - createdTime) / 60)
             waitTime = 1
