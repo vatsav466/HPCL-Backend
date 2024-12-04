@@ -1,5 +1,9 @@
 import urdhva_base
 import json
+import datetime
+import traceback
+import utilities.interlock_mapping
+import utilities.va_mapping as va_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -29,27 +33,51 @@ class VAAlertManager(alert_factory.AlertFactory):
         """
         try:
             logger.info(f"alert_data received to create alert {alert_data}")
-            # alert_alert_data = await hpcl_ceg_model.Alerts.get_all()
+            '''# alert_alert_data = await hpcl_ceg_model.Alerts.get_all()
             bu_location_type = alert_data['bu']
             sap_id = alert_data['sap_id']
             sop_id = alert_data['sop_id']
             static_alert_data = alert_data.get('staticalert_data', {}) 
-            ''' 
+        
             staticalert_data': {'alertHistory': [alerthistorymessage],
             'VehicleNumber': doc['TL_Number'],
             'vendor': doc['Vendor_Code'],
             "VendorName": doc['Vendor_Name'],
             "vendormail": vendormail} 
-            '''
+        
             deviceid = alert_data['deviceId']
-            interlockname = alert_data['name']
+            interlockname = alert_data['name']'''
             
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=bu_location_type, sap_id=sap_id)
+            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value, sap_id=alert_data['location_id'])
             if status:
                 alert_data['location_data'] = loc_dt
-        
-            return cls.create_alert(alert_data)
+
+            recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
+            for record in alert_data['data']:
+                try:
+                    exception_msg = (f"alert_type - {record['alert_type']},"
+                                         f"alert_description - {record['alert_description']},"
+                                         f"device_id - {record['device_id']},"
+                                         f"video_url - {record['video_url']},"
+                                         f"Exception Date - {recv_time}")
+                    interlock_details = utilities.interlock_mapping.get_interlock_name(
+                        alert_data['location_type'].value, va_mapping.va_interlock_mapping[record.get('alert_type')]['interlock_name'])
+
+                    interlock_details.update({"bu": alert_data['location_type'].value,
+                                              "location_name": loc_dt['name'],
+                                              "sap_id": alert_data['location_id'],
+                                              "alert_history": [exception_msg],
+                                              "device_id" : record['device_id'],
+                                              "device_name":record['device_id'],
+                                              "message": record['video_url']
+                                              })
+                    
+                    await cls.create_alert(interlock_details)
+                except Exception as e:
+                    print(traceback.format_exc())
+                    logger.error(f"Exception in processing alert data {e}, Traceback "
+                                 f"{traceback.format_exc()}, data {alert_data}")
 
         except Exception as e:
             logger.error(e)
