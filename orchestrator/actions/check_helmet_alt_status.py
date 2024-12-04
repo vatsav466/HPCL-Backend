@@ -13,7 +13,7 @@ class CheckHelmetAltStatus:
         """
         return ["alert_id"]
     
-    async def checkHelmetAltStatus(self, alert_id):
+    async def checkHelmetAltStatus(self, params):
         """
         Checks the status of a helmet alert for a given alert ID.
 
@@ -32,13 +32,13 @@ class CheckHelmetAltStatus:
             "closeAlert" set to the value of closeAlt.
         """
         try:
-            logger.info("CHECK HELMET ATR alert_id:%s" % alert_id)
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            logger.info("CHECK HELMET ATR alert_id:%s" % params.get("alert_id",''))
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id',''))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
-            alerthistory = alert_data.get('alertHistory', [])
+            alerthistory = alert_data.get('alert_history', [])
             startCounter = False
             closeAlt = True
             for item in alerthistory:
