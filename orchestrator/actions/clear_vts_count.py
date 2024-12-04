@@ -23,15 +23,19 @@ class ClearVtsCount:
             alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
+            #check clear_count True or False
+            if alert_data.get('clear_count'):
+                query = (f"vehicle_number='{alert_data.get('vehicle_number')}' and bu='{alert_data.get('bu')}'"
+                        f"and status='Open' and violation_type='{alert_data.get('violation_type')}'")
+                resp = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1), resp_type='plain')
+                if len(resp['data']):
+                    vts_record = resp['data'][0]
+                    vts_record['violation_count'] = 0
+                    await hpcl_ceg_model.VTS(**vts_record).modify()
+                return True, None
             
-            query = (f"vehicle_number='{alert_data.get('vehicle_number')}' and bu='{alert_data.get('bu')}"
-                     f"and status='Open' and violation_type='{alert_data.get('violation_type')}'")
-            qstatus, resp = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
-            if resp['data']:
-                vts_record = resp['data'][0]
-                vts_record['violation_count'] = 0
-                await hpcl_ceg_model.VTS(**vts_record).modify()
-            return True, None
+            else:
+                return True, None
         
         except Exception as e:
             print(traceback.format_exc())
