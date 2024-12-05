@@ -353,6 +353,8 @@ Model Alerts {
     device_msg optional str                 // Message received from the device
     vehicle_number optional str
     violation_type optional str
+    clear_count optional bool
+
 
 
     // Notification Details

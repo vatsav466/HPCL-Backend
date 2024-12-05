@@ -718,6 +718,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     device_msg: Mapped[typing.Optional[str]] = mapped_column("device_msg", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     vehicle_number: Mapped[typing.Optional[str]] = mapped_column("vehicle_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    clear_count: Mapped[typing.Optional[bool]] = mapped_column("clear_count", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     alert_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("alert_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
     last_sms_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_sms_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     last_mailed_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_mailed_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -758,6 +759,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     device_msg: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    clear_count: typing.Optional[bool] = pydantic.Field(False, )
     alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
     last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -803,6 +805,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     device_msg: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    clear_count: typing.Optional[bool] = pydantic.Field(False, )
     alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
     last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})

@@ -6,7 +6,9 @@ logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
 
 class ClearVtsCount:
-    async def clear_vts_count(cls, device_name, vehicle_number):
+    async def get_required_variables(self):
+        return ["alert_id"]
+    async def clearvtscount(self, params):
         """
         Clear the old count for a given VTS device name and vehicle number.
         
@@ -18,17 +20,22 @@ class ClearVtsCount:
         tuple: (bool, str) A tuple indicating the success or failure of the operation and the reason.
         """
         try:
-            if device_name in ["stoppage_violations_count", "route_deviation_count", "speed_violation_count", "main_supply_removal_count",
-                            "night_driving_count", "no_halt_zone_count", "device_offline_count", "device_tamper_count"]:
-                query = (f"vehicle_number='{vehicle_number}' and bu='{'TAS'}"
-                        f"and status='Open' and device_name='{device_name}'"
-                        f"and sop_id ='{"SOP001"}'")
-                qstatus, resp = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
-                if resp['data']:
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+            #check clear_count True or False
+            if alert_data.get('clear_count'):
+                query = (f"vehicle_number='{alert_data.get('vehicle_number')}' and bu='{alert_data.get('bu')}'"
+                        f"and status='Open' and violation_type='{alert_data.get('violation_type')}'")
+                resp = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1), resp_type='plain')
+                if len(resp['data']):
                     vts_record = resp['data'][0]
-                    vts_record[device_name] = 0
+                    vts_record['violation_count'] = 0
                     await hpcl_ceg_model.VTS(**vts_record).modify()
-                return True, "Old count cleared Successfully"
+                return True, None
+            
+            else:
+                return True, None
         
         except Exception as e:
             print(traceback.format_exc())

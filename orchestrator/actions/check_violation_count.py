@@ -7,7 +7,7 @@ logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
 
 class CheckViolationCount:
-    async def check_violation_count(self, sap_id, vehicle_number, bu, violation_type):
+    async def check_violation_count(self, sap_id, bu, vehicle_number, violation_type):
         """
         This method is used to get the violation count for a given vehicle from the DB
         based on the given violation type and sap id.
@@ -26,10 +26,11 @@ class CheckViolationCount:
             dt_firstday = datetime.datetime(current_date.year, 3 * current_quarter - 2, 1)
             start_date = str(dt_firstday).replace(" ", "T")
             start_date_time = start_date + '.000Z'
-            query = (f"sap_id='{sap_id}' and vehicle_number='{vehicle_number}' and bu='{bu}'"
-                    f"and alert_status='Open' and violation_type='{violation_type}' and sop_id='{'SOP001'}'"
+            query = (f"sap_id='{sap_id}' and bu='{bu}' and vehicle_number='{vehicle_number}'"
+                    f"and alert_status='Open' and interlock_name='{violation_type}' and sop_id='{'SOP001'}'"
                     f"and created_at >='{start_date_time}'")
-            status, count = await hpcl_ceg_model.Alerts.count(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
+            count = await hpcl_ceg_model.Alerts.count(urdhva_base.queryparams.QueryParams(q=query))
+            #print("count",count)
             return count
 
         except Exception as e:
@@ -37,13 +38,4 @@ class CheckViolationCount:
             logger.error(e)
             return None
 
-    async def check_violation_all_count(self, sap_id, vehicle_number, bu, violation_type):
-        data = ['Speed Violation', 'Unauthorized Stoppage', 'Night Driving', 'Route Deviation', 'Power Disconnect','No Halt_Zone','VTS device_tampering','VTS offline']
-        finalresp = {}
-        for devicename in data:
-            query = (f"sap_id='{sap_id}' and vehicle_number='{vehicle_number}' and bu='{bu}'"
-                     f"and alert_status='Open' and violation_type='{violation_type}' and sop_id='{'SOP001'}'")
-            status, count = await hpcl_ceg_model.Alerts.count(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
-            finalresp[devicename] = count
-        return finalresp
     
