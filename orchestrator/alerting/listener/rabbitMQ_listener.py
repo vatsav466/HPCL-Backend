@@ -13,8 +13,8 @@ async def on_message(message: aio_pika.abc.AbstractIncomingMessage) -> None:
         try:
             # Process the message
             payload = json.loads(message.body.decode())
-            await tas_listener.tas_listener(payload)
             print(f"Received message: {payload}")
+            await tas_listener.tas_listener(payload)
         except Exception as e:
             print(traceback.format_exc())
             print(f"Error processing message: {e}")

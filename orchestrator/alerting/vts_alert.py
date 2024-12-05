@@ -38,6 +38,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
+            alert_data['location_type'] = 'TAS'
             status, location_details = await alert_helper.get_location_details(alert_data['location_type'],
                                                                                alert_data['location_id'])
             if not status:
@@ -48,15 +49,15 @@ class VTSAlertManager(alert_factory.AlertFactory):
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
             for record in alert_data["data"]:
                 try:
-                    for key, details in vts_mapping.vts_interlock_mapping.items:
+                    for key, details in vts_mapping.vts_interlock_mapping.items():
                         if not record.get(key):
                             continue
                         query = (f"sap_id='{alert_data['location_id']}' and vehicle_number='{record['tl_number']}' "
-                                 f"and alert_status='Open' and violation_type='{key}'")
-                        data = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1))
-                        exception_msg = (f"Vehicle Number - {record['vehicle_number']}, "
+                                 f"and status='Open' and violation_type='{key}'")
+                        data = await hpcl_ceg_model.VTS.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1),
+                                                                resp_type='plain')
+                        exception_msg = (f"Vehicle Number - {record['tl_number']}, "
                                          f"Violation Types - {details['description']}, "
-                                         f"Approved By - {record['approved_by']}, "
                                          f"Exception Date - {recv_time}")
                         if data["data"]:
                             vts_data = data['data'][0]
@@ -64,10 +65,10 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             vts_data.update({"report_duration": record['report_duration'],
                                          "total_trips": record['total_trips'],
                                          "violation_history": vts_data["violation_history"] + [exception_msg]})
-                            resp = await hpcl_ceg_model.VTS(**vts_data).modify()
+                            await hpcl_ceg_model.VTS(**vts_data).modify()
                         else:
-                            vts_data = {"bu": alert_data['location_type'].value, "sap_id": alert_data['location_id'],
-                                         "location_name": location_details['name'],
+                            vts_data = {"bu": alert_data['location_type'], "sap_id": alert_data['location_id'],
+                                         "location_name": location_details['location_name'],
                                          "vehicle_number": record['tl_number'],
                                          "total_trips": record['total_trips'], "status": 'Open',
                                          "violation_history": [exception_msg],
@@ -83,14 +84,14 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             if vts_data['violation_count'] > vts_data['violation_count'] + max_limit:
                                 continue
                             for count in sorted(details['alerting_rules'].keys()):
-                                if vts_data['violation_count'] == vts_data['violation_count'] + int(count) + 1:
+                                if vts_data['violation_count'] == details['alert_threshold'] + int(count) + 1:
                                     vts_alert_data = copy.deepcopy(vts_data)
                                     interlock_details = utilities.interlock_mapping.get_interlock_name(
-                                        alert_data['location_type'], details['alerting_rules'][key]['interlock_name'])
+                                        alert_data['location_type'], details['alerting_rules'][count]['interlock_name'])
                                     if not interlock_details:
                                         continue
                                     vts_alert_data.update(interlock_details)
-                                    await cls.create_alert(vts_data)
+                                    await cls.create_alert(vts_alert_data)
                                     break
                 except Exception as e:
                     print(traceback.format_exc())
