@@ -63,6 +63,9 @@
                 },
                 {
                     "name": "get_creds_details"
+                },
+                {
+                    "name": "get_schema"
                 }
             ]
         },
@@ -102,6 +105,9 @@
                 },
                 {
                     "name": "get_creds_details"
+                },
+                {
+                    "name": "get_schema"
                 }
             ]
         },
@@ -165,6 +171,9 @@
                 },
                 {
                     "name": "get_creds_details"
+                },
+                {
+                    "name": "get_schema"
                 }
             ]
         },
@@ -593,6 +602,10 @@
         {
             "name": "get_creds_details",
             "displayName": "get_creds_details"
+        },
+        {
+            "name": "get_schema",
+            "displayName": "get_schema"
         },
         {
             "name": "save_dashboards",
