@@ -1,4 +1,5 @@
 import urdhva_base
+import re
 import json
 import datetime
 import traceback
@@ -47,9 +48,14 @@ class VAAlertManager(alert_factory.AlertFactory):
         
             deviceid = alert_data['deviceId']
             interlockname = alert_data['name']'''
+
+            #getting location_id in this form from payload example "location_id": "ACC, Bandra, 11073010, 11073010",
+            location_id = alert_data['location_id']
+            match = re.findall(r'\b\d{5,}\b', location_id)
+            location_id = match[-1]
             
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value, sap_id=alert_data['location_id'])
+            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value, sap_id=location_id)
             if status:
                 alert_data['location_data'] = loc_dt
 
@@ -61,12 +67,15 @@ class VAAlertManager(alert_factory.AlertFactory):
                                          f"device_id - {record['device_id']},"
                                          f"video_url - {record['video_url']},"
                                          f"Exception Date - {recv_time}")
+                    
+                    print("Exception Message",exception_msg)
+                    
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
                         alert_data['location_type'].value, va_mapping.va_interlock_mapping[record.get('alert_type')]['interlock_name'])
 
                     interlock_details.update({"bu": alert_data['location_type'].value,
                                               "location_name": loc_dt['name'],
-                                              "sap_id": alert_data['location_id'],
+                                              "sap_id": location_id,
                                               "alert_history": [exception_msg],
                                               "device_id" : record['device_id'],
                                               "device_name":record['device_id'],
