@@ -43,6 +43,7 @@ class Settings(pydantic_settings.BaseSettings):
     cookie_name: str = "hpcl_ceg"
     default_index: str = "hpcl_ceg"
     multi_tenant_support: bool = True
+    password_salt: str = "hpcl_ceg_dnc"
 
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
