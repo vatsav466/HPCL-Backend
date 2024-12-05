@@ -11,7 +11,7 @@
     }
   },
   "metadata": {
-    "version": 3,
+    "version": 4,
     "firstNodeIndex": 5,
     "nodes": [
       {
@@ -23,17 +23,25 @@
         "configurationVersion": 1,
         "configuration": {
           "tellFailureIfAbsent": true,
+          "fetchTo": "METADATA",
           "clientAttributeNames": [],
           "sharedAttributeNames": [],
           "serverAttributeNames": [
-            "FireEngine Normal Mode",
-            "FireEngineHealthyCount",
-            "RequiredFoamVol",
-            "RequiredWaterVol"
+            "BU",
+            "SAPID",
+            "Water Volume",
+            "Foam Volume",
+            "Jockey Pump_1",
+            "Jockey Pump_2",
+            "Fire Engine_1",
+            "Fire Engine_2",
+            "Fire Engine_3",
+            "Fire Engine_4",
+            "Fire Engine_5",
+            "PT Farthest"
           ],
           "latestTsKeyNames": [],
-          "getLatestValueWithTs": false,
-          "fetchTo": "METADATA"
+          "getLatestValueWithTs": false
         },
         "additionalInfo": {
           "description": "",
@@ -52,7 +60,7 @@
           "exchangeNamePattern": "",
           "routingKeyPattern": "ceg_tb_listener",
           "messageProperties": "PERSISTENT_BASIC",
-          "host": "localhost",
+          "host": "140.245.238.142",
           "port": 5672,
           "virtualHost": "hpcl_ceg",
           "username": "hpcl_ceg",
@@ -76,7 +84,9 @@
         "queueName": null,
         "configurationVersion": 0,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Oi Alerts\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = \"TAS\";\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP023\";\nreturn details;",
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Operability Index\";\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = \"TAS\";\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP023\";\nreturn details;",
+          "alarmDetailsBuildTbel": null,
           "alarmType": "Dyke Alarm"
         },
         "additionalInfo": {
@@ -93,12 +103,18 @@
         "queueName": null,
         "configurationVersion": 0,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\n\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Oi Alerts\";\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = \"TAS\";\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP023\";\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\n\nreturn details;",
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\n\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"Operability Index\";\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = \"TAS\";\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP023\";\ndetails['additionalInfo']['device_name'] = metadata['originatorName']\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"]\n\nreturn details;",
+          "alarmDetailsBuildTbel": null,
           "useMessageAlarmData": false,
+          "overwriteAlarmDetails": null,
           "alarmType": "OI Alarm",
           "severity": "CRITICAL",
           "propagate": false,
-          "relationTypes": []
+          "relationTypes": [],
+          "propagateToOwner": null,
+          "propagateToTenant": null,
+          "dynamicSeverity": null
         },
         "additionalInfo": {
           "description": "",
@@ -153,7 +169,9 @@
         "queueName": null,
         "configurationVersion": 0,
         "configuration": {
-          "jsScript": "if (metadata[\"deviceType\"] == \"OI\"){\n    return true\n}\nreturn false"
+          "scriptLang": "JS",
+          "jsScript": "if (metadata[\"deviceType\"] == \"OI Tags\"){\n    return true\n}\nreturn false",
+          "tbelScript": null
         },
         "additionalInfo": {
           "description": "",
@@ -177,11 +195,6 @@
         "fromIndex": 3,
         "toIndex": 1,
         "type": "Created"
-      },
-      {
-        "fromIndex": 3,
-        "toIndex": 1,
-        "type": "Updated"
       },
       {
         "fromIndex": 4,

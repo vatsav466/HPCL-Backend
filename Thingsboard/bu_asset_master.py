@@ -253,7 +253,7 @@ class ThingsBoardInterface:
             "BU": bu,
             device_name: 1
         }
-        telemetry_scope = {}
+        # telemetry_scope = {}
         if "sensors" in device:
             for sensor in device['sensors']:
                 sensor_name = sensor.get('sensor_name')
@@ -263,13 +263,13 @@ class ThingsBoardInterface:
                 if sensor_tag in device_data:
                     # If sensor_tag is found in the JSON, assign the corresponding value
                     sensor_value = device_data[sensor_tag]
-                    device_scope[sensor_name] = '1'
-                    telemetry_scope[sensor_name] = '1'
+                    device_scope[sensor_name] = '0'
+                    # telemetry_scope[sensor_name] = '0'
                 else:
                     # If sensor_tag is not found, log or assign a default value
                     print(f"Sensor tag {sensor_tag} not found in device data.")
                     device_scope[sensor_name] = None  # Or some default value
-                    telemetry_scope[sensor_name] = None
+                    # telemetry_scope[sensor_name] = None
 
         # Check if the device already exists by querying the device info
         device_data = self.api_handler("GET", "/api/tenant/deviceInfos", {},
@@ -282,8 +282,8 @@ class ThingsBoardInterface:
                 if record["name"] == device_name:
                     self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/SERVER_SCOPE",
                                      {}, device_scope)
-                    self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/timeseries/LATEST_TELEMETRY",
-                                     {}, telemetry_scope)
+                    # self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/timeseries/LATEST_TELEMETRY",
+                    #                  {}, telemetry_scope)
                     return record['id']['id']
 
         # If the device does not exist, create a new device with the specified details
@@ -302,8 +302,8 @@ class ThingsBoardInterface:
             tele_device = self.api_handler("POST",
                                            f"/api/plugins/telemetry/DEVICE/{device['id']['id']}/SERVER_SCOPE", {},
                                            {**device_scope, "deviceType": device_type})
-            latest_ts   = self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{device['id']['id']}/timeseries/LATEST_TELEMETRY",
-                                     {}, {**telemetry_scope, "deviceType": device_type})
+            # latest_ts   = self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{device['id']['id']}/timeseries/LATEST_TELEMETRY",
+            #                          {}, {**telemetry_scope, "deviceType": device_type})
             if tele_device:
                 # Associate the device with the customer
                 data = {
