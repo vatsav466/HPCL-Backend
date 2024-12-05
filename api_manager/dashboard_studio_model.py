@@ -225,6 +225,7 @@ class Charts_Drill_Down_DataParams(pydantic.BaseModel):
     schema: str
     table: str
     filter_mapping: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
 
 
 class Charts_Dashboard_ChartsParams(pydantic.BaseModel):
@@ -283,6 +284,11 @@ class Charts_Connection_Vault_RoutingParams(pydantic.BaseModel):
 
 class Charts_Get_Creds_DetailsParams(pydantic.BaseModel):
     connection_id: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Charts_Get_SchemaParams(pydantic.BaseModel):
+    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    database: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class DashboardOrderInternalCreate(pydantic.BaseModel):

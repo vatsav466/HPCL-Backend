@@ -157,6 +157,7 @@ Model Charts {
         schema str
         table str
         filter_mapping optional dict
+        limit optional int
     }
     Action=> dashboard_charts {
 
@@ -213,6 +214,11 @@ Model Charts {
 
     Action=> get_creds_details {
         connection_id optional str
+    }
+
+    Action=> get_schema {
+        connection_id optional str
+        database optional str
     }
 
     Config=> {

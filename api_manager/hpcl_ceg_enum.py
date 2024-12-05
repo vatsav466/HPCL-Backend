@@ -84,6 +84,10 @@ class AlertActionType(str, enum.Enum):
     excApprovalTimeExp = 'excApprovalTimeExp'
     Raised = 'Raised'
     Cancelled = 'Cancelled'
+    Allocated = 'Allocated'
+    SentToSap = 'SentToSap'
+    OrderPlaced = 'OrderPlaced'
+    Created = 'Created'
 
 
 
@@ -93,11 +97,13 @@ class AlertActionType(str, enum.Enum):
 
 class IndentStatus(str, enum.Enum):
     Pending = 'Pending'
+    IndentNotRaised = 'IndentNotRaised'
     IndentRaised = 'IndentRaised'
     IndentOnHold = 'IndentOnHold'
     IndentOnHoldReleased = 'IndentOnHoldReleased'
     Cancelled = 'Cancelled'
     TruckAllocated = 'TruckAllocated'
+    TruckNotAllocated = 'TruckNotAllocated'
     Transit = 'Transit'
     InvoiceCreated = 'InvoiceCreated'
     ValidIndent = 'ValidIndent'

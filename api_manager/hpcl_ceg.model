@@ -49,15 +49,21 @@ Enum AlertActionType str {
     excApprovalTimeExp='excApprovalTimeExp'
     Raised='Raised'
     Cancelled='Cancelled'
+    Allocated='Allocated'
+    SentToSap='SentToSap'
+    OrderPlaced='OrderPlaced'
+    Created='Created'
 }
 
 Enum IndentStatus str {
     Pending='Pending'
+    IndentNotRaised='IndentNotRaised'
     IndentRaised='IndentRaised'
     IndentOnHold='IndentOnHold'
     IndentOnHoldReleased='IndentOnHoldReleased'
     Cancelled='Cancelled'
     TruckAllocated='TruckAllocated'
+    TruckNotAllocated='TruckNotAllocated'
     Transit='Transit'
     InvoiceCreated='InvoiceCreated'
     ValidIndent='ValidIndent'
@@ -252,6 +258,10 @@ Model Alert_History internal {
     is_exc_approval_time_exp optional bool
     is_raised optional bool
     is_cancelled optional bool
+    is_allocated optional bool
+    is_sent_to_sap optional bool
+    is_order_placed optional bool
+    is_created optional bool
 }
 
 Model tags internal {
@@ -263,6 +273,10 @@ Model tags internal {
     isExcApprovalTimeExp optional bool
     isRaised optional bool
     isCancelled optional bool
+    isAllocated optional bool
+    isSentToSap optional bool
+    isOrderPlaced optional bool
+    isCreated optional bool
 }
 
 Model Interlock {
@@ -496,19 +510,25 @@ Model productsDetails internal {
 }
 
 Model IndentDryOut {
-    sap_id str
-    location_id str
-    ro_code str
-    bu optional index_field BusinessUnit
-    interlock_type str
-    interlock_description optional str
-    device_id str
-    device_value optional str
-    alert_id str
-    alert_status index_field AlertStatus
-    tank_id optional str
-    nozzle_id optional str
-    pump_id optional str
-    indent_no optional str
-    products optional list productsDetails
+    bu unique_field index_field primary_key str
+    site_id str      // location id
+    fcc_code str     // fcc code
+    tank_no str      // tank id
+    product_no unique_field index_field primary_key str   //product no
+    item_name str    // product name
+    capacity int     // tank capacity
+    volume optional float  // remain volume
+    ullage optional float  // empty space in tank
+    avgsales_7days optional float // avg sales
+    stock_date optional datetime
+    status optional int
+    daysstatus optional int
+    lastrocdate optional datetime
+    executed_on optional datetime
+    pumpable_stock optional float
+    rosapcode unique_field index_field primary_key optional int
+    product_grp optional str
+    interlock_status optional AlertStatus
+    interlock_created_date optional datetime
+    interlock_closed_date optional datetime
 }

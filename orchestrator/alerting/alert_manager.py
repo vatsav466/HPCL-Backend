@@ -53,7 +53,10 @@ class AlertAction:
         """
         function_map = {"Justification": "justify_alert", "Rejected": "reject_alert", "Approved": "approve_alert",
                         "Override": "override_alert", "interLockOk": "interlock_ok_alert", 
-                        "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert"}
+                        "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert",
+                        "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
+                        "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
+                        "Created": "created_alert"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -62,10 +65,10 @@ class AlertAction:
             return False, "Provided alert id is not valid"
 
         # Validating whether user has access permissions for the provided action
-        status, resp, email = await cls.verify_user_access_permissions(alert_data.bu, alert_data.sap_id,
-                                                                       input_data['action_type'])
-        if not status:
-            return status, resp
+        # status, resp, email = await cls.verify_user_access_permissions(alert_data.bu, alert_data.sap_id,
+        #                                                                input_data['action_type'])
+        # if not status:
+        #     return status, resp
 
         # This creates a regular expression pattern to match anything within < and >,
         # which includes HTML tags like <div>, <span>, <br>, etc.
@@ -109,7 +112,13 @@ class AlertAction:
                             "revocation": event_tags.get("is_revocation", False),
                             "no_exception": event_tags.get("no_exception", False),
                             "is_approved": event_tags.get("is_approved", False),
-                            "is_exc_approval_time_exp": event_tags.get("is_exc_approval_time_exp", False)
+                            "is_exc_approval_time_exp": event_tags.get("is_exc_approval_time_exp", False),
+                            "is_raised": event_tags.get("is_raised", False),
+                            "is_cancelled": event_tags.get("is_cancelled", False),
+                            "is_allocated": event_tags.get("is_allocated", False),
+                            "is_sent_to_sap": event_tags.get("is_sent_to_sap", False),
+                            "is_order_placed": event_tags.get("is_order_placed", False),
+                            "is_created": event_tags.get("is_created", False)
         })
         # Modify the alert with the updated alert_history
         await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
@@ -129,7 +138,13 @@ class AlertAction:
                    "is_revocation": {"name": "isRevocation", "type": "Boolean"},
                    "no_exception": {"name": "noException", "type": "Boolean"},
                    "is_approved": {"name": "approved", "type": "Boolean"},
-                   "is_exc_approval_time_exp": {"name": "isExcApprovalTimeExp", "type": "Boolean"}
+                   "is_exc_approval_time_exp": {"name": "isExcApprovalTimeExp", "type": "Boolean"},
+                   "is_raised": {"name": "raised", "type": "Boolean"},
+                   "is_cancelled": {"name": "cancelled", "type": "Boolean"},
+                   "is_allocated": {"name": "allocated", "type": "Boolean"},
+                   "is_sent_to_sap": {"name": "sentToSAP", "type": "Boolean"},
+                   "is_order_placed": {"name": "orderPlaced", "type": "Boolean"},
+                   "is_created": {"name": "created", "type": "Boolean"},
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -157,6 +172,7 @@ class AlertAction:
         # Posting data to camunda
         url = urdhva_base.settings.camunda_url + "/engine-rest/message"
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
+
         if int(r.status_code / 100) != 2:
             print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
         else:
@@ -244,3 +260,63 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "excApprovalTimeExp")
+
+    @classmethod
+    async def raised_alert(cls, input_data, alert_data):
+        """
+        Function to raise an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Raised")
+
+    @classmethod
+    async def cancel_alert(cls, input_data, alert_data):
+        """
+        Function to cancel an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Cancelled")
+
+    @classmethod
+    async def allocate_alert(cls, input_data, alert_data):
+        """
+        Function to allocate an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Allocated")
+
+    @classmethod
+    async def sent_to_sap_alert(cls, input_data, alert_data):
+        """
+        Function to allocate an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "SentToSap")
+
+    @classmethod
+    async def order_placed_alert(cls, input_data, alert_data):
+        """
+        Function to allocate an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "OrderPlaced")
+
+    @classmethod
+    async def created_alert(cls, input_data, alert_data):
+        """
+        Function to allocate an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Created")
