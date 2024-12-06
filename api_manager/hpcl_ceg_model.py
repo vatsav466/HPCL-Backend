@@ -1220,5 +1220,10 @@ class IndentDryOutGetResp(pydantic.BaseModel):
 
 class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
     connection_name: str
+    source_table: str
+    destination_table: str
+    source_schema: typing.Optional[str] = pydantic.Field("", **{})
+    destination_schema: str
+    conflict_columns: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     
     

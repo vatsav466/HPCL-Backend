@@ -14,4 +14,14 @@ async def indentdryout_sync_data_from_cris_to_ceg(data: Indentdryout_Sync_Data_F
     Charts_Connection_Vault_RoutingParams.connection_id = data.connection_name
     Charts_Connection_Vault_RoutingParams.action = 'get_data'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    records = await function(schema_name=data.schema)
+    records = await function(schema_name=data.source_schema, table_name=data.source_table)
+
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_name
+    Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    return await function(
+        schema_name=data.destination_schema,
+        table_name=data.destination_table,
+        records=records,
+        conflict_columns=data.conflict_columns
+    )
