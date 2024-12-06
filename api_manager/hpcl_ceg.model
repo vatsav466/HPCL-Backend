@@ -536,5 +536,10 @@ Model IndentDryOut {
 
     Action=> sync_data_from_cris_to_ceg {
         connection_name str
+        source_table str
+        destination_table str
+        source_schema optional str
+        destination_schema str
+        conflict_columns optional list str
     }
 }

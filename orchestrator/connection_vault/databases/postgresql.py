@@ -307,6 +307,7 @@ class Postgresql(BaseAction):
                       'Decimal(precision=5, scale=0)': "numeric(10,0)",
                       'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'),
                       "Datetime(time_unit='us', time_zone=None)": str('timestamp'),
+                      "Decimal(precision=9, scale=3)": "numeric(10,3)",
                       "Decimal(precision=8, scale=3)": "numeric(10,3)", "Decimal(precision=5, scale=2)": "numeric(10,2)",
                       "Decimal(precision=10, scale=4)": "numeric(10,4)", "Datetime(time_unit='ns', time_zone=None)": str('timestamp')}
         col_dtype = {col: sample_records[col].dtype for col in sample_records.columns}
@@ -319,18 +320,19 @@ class Postgresql(BaseAction):
                 dty = str('double precision')
             table_create_sql += f'"{col}" {dty},'
 
-        if schema_name:
-            table_name = f'''{schema_name}"."{table_name}'''
+
         constraint_query = ""
         if primary_key:
             result_string = ', '.join(f'"{s}"' for s in primary_key)
-            constraint_query = f'CONSTRAINT pk_{table_name} PRIMARY KEY ({result_string})'
+            constraint_query = f'CONSTRAINT pk_{schema_name}_{table_name} PRIMARY KEY ({result_string}),'
         if unique_key:
             result_string = ', '.join(f'"{s}"' for s in unique_key)
-            constraint_query = f'CONSTRAINT uk_{table_name} UNIQUE ({result_string})'
-
-        table_create_sql = f''' {table_create_sql}, {constraint_query},'''
+            constraint_query = f'CONSTRAINT uk_{schema_name}_{table_name} UNIQUE ({result_string}),'
+        if constraint_query:
+            table_create_sql = f''' {table_create_sql} {constraint_query}'''
         table_create_sql = table_create_sql[:-1]
+        if schema_name:
+            table_name = f'''{schema_name}"."{table_name}'''
         table_create_sql = '''CREATE TABLE IF NOT EXISTS "''' + table_name + '''" (''' + table_create_sql + ''')'''
         print("table_create_sql: ", table_create_sql)
         await connection.execute(table_create_sql)
@@ -472,13 +474,17 @@ class Postgresql(BaseAction):
             records = pl.DataFrame(records)
 
         BATCH_SIZE = 1000  # Adjust this based on your system's capacity
+        if not update_columns:
+            update_columns = [col for col in records.columns if col not in conflict_columns]
         all_columns = conflict_columns + update_columns
         columns = ', '.join(f'"{key}"' for key in all_columns)
         conflict_clause = ', '.join(f'"{key}"' for key in conflict_columns)
         placeholders = ', '.join([f'${i + 1}' for i in range(len(all_columns))])
         updates = ', '.join([f"{column} = EXCLUDED.{column}" for column in all_columns if column not in conflict_columns])
 
-        result = await self.create_table(schema_name, table_name, records.head(10))
+        result = await self.create_table(schema_name, table_name, records.head(10), unique_key=conflict_columns)
+        if schema_name:
+            table_name = f'{schema_name}"."{table_name}'
         sql_query = f"""
             INSERT INTO "{table_name}" ({columns})
             VALUES ({placeholders})
