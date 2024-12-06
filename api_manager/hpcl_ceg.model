@@ -533,4 +533,8 @@ Model IndentDryOut {
     interlock_status optional AlertStatus
     interlock_created_date optional datetime
     interlock_closed_date optional datetime
+
+    Action=> sync_data_from_cris_to_ceg {
+        connection_name str
+    }
 }

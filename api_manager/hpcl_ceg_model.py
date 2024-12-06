@@ -1216,3 +1216,9 @@ class IndentDryOutGetResp(pydantic.BaseModel):
     data: typing.List[IndentDryOut]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
+    connection_name: str
+    
+    

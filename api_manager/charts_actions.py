@@ -126,11 +126,23 @@ async def create_charts(data: ChartsCreate):
     if not isinstance(chart_data_str, dict):
         chart_data = json.loads(chart_data_str)
     chart_data = chart_data_str
+
     if not chart_data['status']:
-        return {"status": False, "message": str(chart_data['message']), "data": chart_data['data']}
+        return {
+            "status": False, "message": str(chart_data['message']), "data": chart_data['data']
+        }
+
     if viztype in ['bar', 'line', 'area', 'custom_bar', 'time_series_bar']:
-        return {"status": True, "message": "success", "query":chart_data['query'],"x_axis": chart_data['x_axis'], "data": chart_data['data']}
-    return {"status": True, "message": "success", "query":chart_data['query'], "data": chart_data['data']}
+        return {
+            "status": True, "message": "success",
+            "query": chart_data['query'],
+            "x_axis": chart_data['x_axis'],
+            "data": chart_data['data']
+        }
+
+    return {
+        "status": True, "message": "success", "query": chart_data['query'], "data": chart_data['data']
+    }
 
 
 @router.post('/get_drill_down_data', tags=['Charts'])
@@ -145,14 +157,15 @@ async def drill_down_data(data: Charts_Drill_Down_DataParams):
     Output:
         {"data":[{}]}
     """
-    table_name = data.table
-    table_schema = data.schema
-    filter_mapping = data.filter_mapping
-    limit = 1000
+    _query = await charts_functions.drill_down_query(
+        data.table_name, data.table_schema, data.filter_mapping, data.limit
+    )  # TO DO need to get query from respective database
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=_query)
     return {
-        "status": True, "message": "success", "data": await charts_functions.get_drill_down_data(
-            table_name, table_schema, filter_mapping, limit
-        )
+        "status": True, "message": "success", "data": resp
     }
 
 
@@ -446,3 +459,21 @@ async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
     except Exception as e:
         raise ValueError(e)
         # return {"status": False, "message": "Failed to get credentials", "data": {}}
+
+
+# Action get_schema
+@router.post('/get_schema', tags=['Charts'])
+async def charts_get_schema(data: Charts_Get_SchemaParams):
+    '''
+
+    Args:
+        data:
+
+    Returns:
+
+    '''
+
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'get_schema'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    return await function(schema_name=data.schema)

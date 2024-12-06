@@ -975,6 +975,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "sync_data_from_cris_to_ceg"
                 }
             ]
         },
@@ -1014,6 +1017,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "sync_data_from_cris_to_ceg"
                 }
             ]
         }
@@ -1181,6 +1187,10 @@
         {
             "name": "load_creds",
             "displayName": "load_creds"
+        },
+        {
+            "name": "sync_data_from_cris_to_ceg",
+            "displayName": "sync_data_from_cris_to_ceg"
         }
     ]
 }
