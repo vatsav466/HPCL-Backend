@@ -83,6 +83,7 @@ class AlertFactory:
                                                         'last_escalated_to': [],
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
+                                                        'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             payload = {"businessKey": unique_id,
@@ -92,7 +93,8 @@ class AlertFactory:
                                      "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
                                      "location_type": {"value": bu, "type": "String"},
                                      "sap_id": {"value": sap_id, "type": "String"},
-                                     "sop_id": {"value": sop_id, "type": "String"}
+                                     "sop_id": {"value": sop_id, "type": "String"},
+                                     "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
                                      }}
 
             # Create Interlock
@@ -102,6 +104,7 @@ class AlertFactory:
                 interlock = await hpcl_ceg_model.InterlockCreate(**{**base_data,
                                                                     'interlock_status': hpcl_ceg_enum.AlertStatus.Open}
                                                                  ).create()
+
                 # Fetch the updated alert data
                 alert_data = await hpcl_ceg_model.Alerts.get(alert_resp['id'])
 
@@ -113,6 +116,7 @@ class AlertFactory:
 
                 # Modify the alert with the updated data
                 alert_update = await hpcl_ceg_model.Alerts(**alert_data_dict).modify()
+
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 print("interlock_name-->", interlock_name)

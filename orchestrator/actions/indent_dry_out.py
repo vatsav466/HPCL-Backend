@@ -92,6 +92,7 @@ class IndentDryOut:
                 f"AND TO_CHAR(PROD_REQD_DT, 'yyyy-mm-dd') = '{today_date}' AND CANCEL_INDENT IS NULL AND TRUCK_REGNO IS NOT NULL"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
+        print("resp: ", resp)
         if not resp:
             return False, {}
         resp = resp[0]
@@ -159,7 +160,7 @@ class IndentDryOut:
         # today_date = (datetime.datetime.now() - datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
                 f"AND TO_CHAR(PROD_REQD_DT, 'yyyy-mm-dd') = '{today_date}' AND CANCEL_INDENT IS NULL AND " \
-                f"(VALID_INDENT = 'N' OR VALID_INDENT = 'H')"
+                f"(VALID_INDENT = 'Y' OR VALID_INDENT = 'H')"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         if not resp:
@@ -168,6 +169,7 @@ class IndentDryOut:
         if resp.get("count") > 0:
             await self.update_alert_status(indent_status=IndentStatus.ValidIndent)
             return await self.send_alert_action(is_raised=True)
+        await self.update_alert_status(indent_status=IndentStatus.IndentOnHold)
         return await self.send_alert_action(is_raised=False)
 
     async def is_indent_sent_sap(self, params: dict):
@@ -180,7 +182,7 @@ class IndentDryOut:
         # today_date = (datetime.datetime.now() - datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
                 f"AND TO_CHAR(PROD_REQD_DT, 'yyyy-mm-dd') = '{today_date}' AND CANCEL_INDENT IS NULL AND " \
-                f"(VALID_INDENT = 'N' OR VALID_INDENT = 'H') AND BATCH_FLAG = 'Y'"
+                f"(VALID_INDENT = 'Y' OR VALID_INDENT = 'H') AND BATCH_FLAG = 'Y'"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -279,7 +281,7 @@ class IndentDryOut:
 
         query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST AS a, IMS_SAP.INDENT_PRODUCTS AS b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' AND " \
                 f"a.LOCN_CODE = b.LOCN_CODE AND TO_CHAR(a.PROD_REQD_DT, 'yyyy-mm-dd') = '{today_date}' AND a.INDENT_NO = b.INDENT_NO " \
-                f"AND a.CANCEL_INDENT IS NULL AND a.TRUCK_REGNO IS NOT NULL AND (a.VALID_INDENT = 'N' OR a.VALID_INDENT = 'H') " \
+                f"AND a.CANCEL_INDENT IS NULL AND a.TRUCK_REGNO IS NOT NULL AND (a.VALID_INDENT = 'Y' OR a.VALID_INDENT = 'H') " \
                 f"AND a.BATCH_FLAG = 'Y' AND b.SALES_ORDERNO IS NOT NULL"
 
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
