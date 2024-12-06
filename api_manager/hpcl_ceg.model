@@ -535,7 +535,8 @@ Model IndentDryOut {
     interlock_closed_date optional datetime
 
     Action=> sync_data_from_cris_to_ceg {
-        connection_name str
+        source_connection str
+        destination_connection str
         source_table str
         destination_table str
         source_schema optional str
