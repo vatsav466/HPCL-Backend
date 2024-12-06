@@ -723,7 +723,7 @@ async def drill_down_query(
         table_name: str,
         table_schema: str,
         filter_mapping: typing.Dict[str, typing.List[str]],
-        limit: int = 1000
+        limit: int = 0
 ):
     """
 
@@ -747,9 +747,10 @@ async def drill_down_query(
             else:
                 query += f'"{key}" IN ({where_cond}) '
             count += 1
-
-    # query += f" LIMIT {limit};"
     query = query[:-1]
+    if limit:
+        query += f" LIMIT {limit}"
+
     query += ';'
     return query
 
