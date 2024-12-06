@@ -49,13 +49,13 @@ class AlertFactory:
             bu = alert_data['bu']
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
-            interlock_name = alert_data.get('interlockName', '')
+            interlock_name = alert_data.get('interlock_name', '')
             print("sop_id --> ", sop_id)
             status, location_data = await alert_helper.get_location_details(bu, sap_id)
             print("status --> ", status)
             print("location_data --> ", location_data)
-            # if not status:
-            #     return False, location_data
+            if not status:
+                return False, location_data
             base_data = {key: location_data.get(key) for key in ['state', 'city', 'zone', 'region', 'district']}
             base_data.update({key: alert_data.get(key, '') for key in ['device_id', 'device_type', 'device_name']})
             base_data.update({"sop_id": sop_id, "sap_id": sap_id, "bu": bu,
@@ -116,7 +116,7 @@ class AlertFactory:
 
                 # Modify the alert with the updated data
                 alert_update = await hpcl_ceg_model.Alerts(**alert_data_dict).modify()
-                
+
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 print("interlock_name-->", interlock_name)
