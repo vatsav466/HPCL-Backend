@@ -182,7 +182,7 @@ class Postgresql(BaseAction):
         else:
             query += '*'
         if schema_name:
-            query += f' FROM {schema_name}."{table_name}"'
+            query += f' FROM "{schema_name}"."{table_name}"'
         else:
             query += f' FROM "{table_name}"'
         if condition:
@@ -308,6 +308,7 @@ class Postgresql(BaseAction):
                       'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'),
                       "Datetime(time_unit='us', time_zone=None)": str('timestamp'),
                       "Decimal(precision=9, scale=3)": "numeric(10,3)",
+                      "Decimal(precision=10, scale=3)": "numeric(10,3)",
                       "Decimal(precision=8, scale=3)": "numeric(10,3)", "Decimal(precision=5, scale=2)": "numeric(10,2)",
                       "Decimal(precision=10, scale=4)": "numeric(10,4)", "Datetime(time_unit='ns', time_zone=None)": str('timestamp')}
         col_dtype = {col: sample_records[col].dtype for col in sample_records.columns}

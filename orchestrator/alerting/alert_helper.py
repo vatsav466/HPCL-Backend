@@ -18,7 +18,7 @@ async def get_location_details(bu, sap_id):
     """
     if not bu or not sap_id:
         print("Invalid parameters: 'bu' and 'sap_id' are required.")
-        return False, "Invalid parameters: 'bu' and 'sap_id' are required."
+        return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
     redis_ins = await urdhva_base.redispool.get_redis_connection()
     if await redis_ins.hexists("location_master", f"{bu.upper()}_{sap_id}"):
         location_data = json.loads(await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}"))
@@ -41,7 +41,7 @@ async def get_location_details(bu, sap_id):
             location_data = location_data.__dict__
         await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data, default=utils.datetime_serializer))
         return True, location_data
-    return False, "Data not available"
+    return False, {"msg": "Data not available"}
 
 
 async def set_location_details(bu, sap_id, location_data, redis_client=None):
