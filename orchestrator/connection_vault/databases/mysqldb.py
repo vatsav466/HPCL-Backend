@@ -35,7 +35,9 @@ class Mysqldb(BaseAction):
 
     async def get_connection(self):
         if 'connection_name' in self.params.keys():
-            self.params = await CredsModel.get(self.params['connection_name'])
+            self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+        if not isinstance(self.params, dict):
+            self.params = self.params.__dict__
         if 'credentials' in self.params.keys():
             self.params = self.params['credentials']
         if self.params.get('is_ssh_tunnel', False):
