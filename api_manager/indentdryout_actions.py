@@ -37,7 +37,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     schema = connection_mapping.schema_mapping.get("ims", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
-    query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "status" IN ('0', ''1', '2');'''
+    query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "status" IN ('0', '1', '2');'''
     records = await function(schema_name=schema, table_name=table, query=query)
     records = records.head(10).to_dicts()
 
