@@ -32,10 +32,10 @@ async def indentdryout_sync_data_from_cris_to_ceg(data: Indentdryout_Sync_Data_F
 # Action create_dry_out_alert
 @router.post('/create_dry_out_alert', tags=['IndentDryOut'])
 async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_AlertParams):
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("ims", "1")
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "1")
     Charts_Connection_Vault_RoutingParams.action = 'get_data'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    schema = connection_mapping.schema_mapping.get("ims", "public")
+    schema = connection_mapping.schema_mapping.get("cris", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
     query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "status" IN ('0', '1', '2');'''
     records = await function(schema_name=schema, table_name=table, query=query)

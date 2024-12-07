@@ -86,7 +86,7 @@ class IndentDryOut:
         dealer_code = self.params.get("dealer_id")
         now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND CANCEL_INDENT IS NULL"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
@@ -108,7 +108,7 @@ class IndentDryOut:
         dealer_code = self.params.get("dealer_id")
         now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND CANCEL_INDENT IS NULL AND TRUCK_REGNO IS NULL"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
@@ -131,14 +131,14 @@ class IndentDryOut:
         dealer_code = self.params.get("dealer_id")
         now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND CANCEL_INDENT IS NOT NULL"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         if not resp:
             return False, {}
         resp = resp[0]
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN '{now}' AND '{next_date}'"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp_1 = await function(query=query)
@@ -163,7 +163,7 @@ class IndentDryOut:
         dealer_code = self.params.get("dealer_id")
         now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND CANCEL_INDENT IS NULL AND VALID_INDENT = 'N'"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
@@ -188,7 +188,7 @@ class IndentDryOut:
         dealer_code = self.params.get("dealer_id")
         now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND CANCEL_INDENT IS NULL AND " \
                 f"(VALID_INDENT = 'Y' OR VALID_INDENT = 'H')"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -211,7 +211,7 @@ class IndentDryOut:
         dealer_code = self.params.get("dealer_id")
         now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND CANCEL_INDENT IS NULL AND " \
                 f"(VALID_INDENT = 'Y' OR VALID_INDENT = 'H') AND BATCH_FLAG = 'Y'"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -232,7 +232,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         r1_status = self.params.get("r1_status")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE R1_STATUS = '{r1_status}'"
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE R1_STATUS = '{r1_status}'"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -247,7 +247,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         r2_status = self.params.get("r2_status")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE R2_STATUS = '{r2_status}'"
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE R2_STATUS = '{r2_status}'"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -265,7 +265,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         r3_status = self.params.get("r3_status")
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST WHERE R3_STATUS = '{r3_status}'"
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" WHERE R3_STATUS = '{r3_status}'"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -284,7 +284,7 @@ class IndentDryOut:
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         indent_no = self.params.get("indent_no")
         location_no = self.params.get("location_no")
-        query = f"SELECT * FROM IMS_SAP.INDENT_PRODUCTS where SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' " \
+        query = f"""SELECT * FROM "IMS_SAP"."INDENT_PRODUCTS" where SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND INDENT_NO = '{indent_no}' " \
                 f"AND LOCN_CODE = '{location_no}' AND SALES_ORDERNO IS NOT NULL AND INVOICE_NO IS NOT NULL"
 
@@ -315,7 +315,7 @@ class IndentDryOut:
         indent_no = self.params.get("indent_no")
         location_no = self.params.get("location_no")
 
-        query = f"SELECT COUNT(*) FROM IMS_SAP.INDENT_REQUEST AS a, IMS_SAP.INDENT_PRODUCTS AS b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' AND " \
+        query = f"""SELECT COUNT(*) FROM "IMS_SAP"."INDENT_REQUEST" AS a, "IMS_SAP"."INDENT_PRODUCTS" AS b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' AND """ \
                 f"a.LOCN_CODE = b.LOCN_CODE AND a.PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND a.INDENT_NO = b.INDENT_NO " \
                 f"AND a.CANCEL_INDENT IS NULL AND a.TRUCK_REGNO IS NOT NULL AND (a.VALID_INDENT = 'Y' OR a.VALID_INDENT = 'H') " \
                 f"AND a.BATCH_FLAG = 'Y' AND b.SALES_ORDERNO IS NOT NULL"
@@ -375,7 +375,7 @@ class IndentDryOut:
         dealer_code = self.params.get("dealer_id")
         now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-        query = f"SELECT a.INDENT_NO, b.PROD AS PROCUCT_NO FROM IMS_SAP.INDENT_REQUEST AS a, IMS_SAP.INDENT_PRODUCTS AS b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' AND " \
+        query = f"""SELECT a.INDENT_NO, b.PROD AS PROCUCT_NO FROM "IMS_SAP"."INDENT_REQUEST" AS a, "IMS_SAP"."INDENT_PRODUCTS" AS b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' AND """ \
                 f"a.LOCN_CODE = b.LOCN_CODE AND a.PROD_REQD_DT BETWEEN '{now}' AND '{next_date}' AND a.INDENT_NO = b.INDENT_NO " \
                 f"AND a.CANCEL_INDENT IS NULL AND (a.VALID_INDENT = 'Y' OR a.VALID_INDENT = 'H') "
 
