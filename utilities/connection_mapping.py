@@ -1,10 +1,12 @@
 connection_mapping = {
-    "ims": "2",
-    "hpcl_ceg": "1"
+    "ims": "3",
+    "hpcl_ceg": "1",
+    "cris": "2"
 }
 
 schema_mapping = {
-    "ims": "HPCL_HOS"
+    "cris": "HPCL_HOS",
+    "ims": "IMS_SAP"
 }
 
 table_mapping = {
