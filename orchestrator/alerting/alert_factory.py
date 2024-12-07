@@ -54,8 +54,8 @@ class AlertFactory:
             status, location_data = await alert_helper.get_location_details(bu, sap_id)
             print("status --> ", status)
             print("location_data --> ", location_data)
-            if not status:
-                return False, location_data
+            # if not status:
+            #     return False, location_data
             base_data = {key: location_data.get(key) for key in ['state', 'city', 'zone', 'region', 'district']}
             base_data.update({key: alert_data.get(key, '') for key in ['device_id', 'device_type', 'device_name']})
             base_data.update({"sop_id": sop_id, "sap_id": sap_id, "bu": bu,
@@ -84,6 +84,9 @@ class AlertFactory:
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
                                                         'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
+                                                        'dealer_id': alert_data.get('dealer_id', ''),
+                                                        'product_code': str(alert_data.get('product_code', '')),
+                                                        'indent_no': alert_data.get('indent_no', ''),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             payload = {"businessKey": unique_id,
@@ -95,6 +98,7 @@ class AlertFactory:
                                      "sap_id": {"value": sap_id, "type": "String"},
                                      "sop_id": {"value": sop_id, "type": "String"},
                                      "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
+                                     "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
                                      }}
 
             # Create Interlock

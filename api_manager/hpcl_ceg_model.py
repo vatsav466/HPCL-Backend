@@ -736,6 +736,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     r2_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r2_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     r3_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r3_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     indent_status: Mapped[typing.Optional[typing.Any]] = mapped_column("indent_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    product_code: Mapped[typing.Optional[str]] = mapped_column("product_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -777,6 +779,8 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     r2_time: typing.Optional[datetime.datetime] | None = None
     r3_time: typing.Optional[datetime.datetime] | None = None
     indent_status: typing.Optional[hpcl_ceg_enum.IndentStatus] | None = None
+    product_code: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -823,6 +827,8 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     r2_time: typing.Optional[datetime.datetime] | None = None
     r3_time: typing.Optional[datetime.datetime] | None = None
     indent_status: typing.Optional[hpcl_ceg_enum.IndentStatus] | None = None
+    product_code: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1226,5 +1232,8 @@ class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
     source_schema: typing.Optional[str] = pydantic.Field("", **{})
     destination_schema: str
     conflict_columns: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    
+
+
+class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
+    pass
     

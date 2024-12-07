@@ -87,7 +87,8 @@ tas_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviat
                           "model": "VA"},
                          {"sop_id": "SOP032", "interlock_name": "Camera is offline", "model": "VA"},
                          {"sop_id": "SOP033", "interlock_name": "Work Beyond time", "model": "VA"},
-                         {"sop_id": "SOP034", "interlock_name": "Tas Loss of communication VA", "model": "VA"}]
+                         {"sop_id": "SOP034", "interlock_name": "Tas Loss of communication VA", "model": "VA"},
+                         {"sop_id": "SOP291", "interlock_name": "Indent Dry Out"}]
 
 # Interlock name and sop mapping for RO Alerts
 ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlock"},
@@ -106,7 +107,8 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlo
                         {"sop_id": "SOP013", "interlock_name": "High level ( ATG) interlock"},
                         {"sop_id": "SOP018", "interlock_name": "Nozzle"},
                         {"sop_id": "SOP999", "interlock_name": "Nozzle Interlock"},
-                        {"sop_id": "SOP999", "interlock_name": "Bay Interlock"}]
+                        {"sop_id": "SOP999", "interlock_name": "Bay Interlock"},
+                        {"sop_id": "SOP291", "interlock_name": "Indent Dry Out"}]
 
 # Interlock name and sop mapping for LPG Alerts
 lpg_interlock_mapping = [

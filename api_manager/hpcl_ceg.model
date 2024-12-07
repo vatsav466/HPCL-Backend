@@ -381,6 +381,9 @@ Model Alerts {
     r2_time optional datetime
     r3_time optional datetime
     indent_status optional IndentStatus
+    product_code optional str
+    indent_no optional str
+    dealer_id optional str
 
     Action=> alert_action {
         action_type AlertActionType
@@ -542,5 +545,9 @@ Model IndentDryOut {
         source_schema optional str
         destination_schema str
         conflict_columns optional list str
+    }
+
+    Action=> create_dry_out_alert {
+
     }
 }
