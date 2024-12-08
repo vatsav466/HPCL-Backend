@@ -5,6 +5,7 @@ from hpcl_ceg_enum import AlertState as AlertState
 from hpcl_ceg_enum import AlertStatus as AlertStatus
 from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.connection_mapping as connection_mapping
+from charts_actions import charts_connection_vault_routing
 import orchestrator.alerting.alert_manager as alert_manager
 from orchestrator.alerting.alert_manager import close_alert
 from hpcl_ceg_model import Alerts_Alert_ActionParams, Alerts
@@ -105,6 +106,7 @@ class IndentDryOut:
             # await self.update_alert_status(indent_status=IndentStatus.IndentRaised)
             return await self.send_alert_action(is_raised=True)
         input_data["action_msg"] = "Indent Not Raised"
+        input_data["action_type"] = "Raised"
         await self.update_alert_status(indent_status=IndentStatus.IndentNotRaised, input_data=input_data)
         return await self.send_alert_action(is_raised=False)
 
@@ -133,9 +135,11 @@ class IndentDryOut:
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Truck Not Allocated"
+            input_data["action_type"] = "Message"
             await self.update_alert_status(indent_status=IndentStatus.TruckNotAllocated, input_data=input_data)
             return await self.send_alert_action(is_allocated=False)
         input_data["action_msg"] = "Truck Allocated"
+        input_data["action_type"] = "Allocated"
         input_data["event_tags"]["is_allocated"] = True
         await self.update_alert_status(indent_status=IndentStatus.TruckAllocated, input_data=input_data)
         return await self.send_alert_action(is_allocated=True)
@@ -171,6 +175,7 @@ class IndentDryOut:
         resp_1 = resp_1[0]
         if resp.get("count") > 0 & resp_1.get("count") == resp.get("count"):
             input_data["action_msg"] = "Indent Cancelled"
+            input_data["action_type"] = "Cancelled"
             input_data["event_tags"]["is_cancelled"] = True
             await self.update_alert_status(
                 indent_status=IndentStatus.Cancelled,
@@ -212,6 +217,7 @@ class IndentDryOut:
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Indent On Hold"
+            input_data["action_type"] = "Message"
             input_data["event_tags"]["is_raised"] = True
             await self.update_alert_status(
                 indent_status=IndentStatus.IndentOnHold,
@@ -247,11 +253,13 @@ class IndentDryOut:
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Valid Indent"
+            input_data["action_type"] = "Raised"
             input_data["event_tags"]["is_raised"] = True
             await self.update_alert_status(indent_status=IndentStatus.ValidIndent, input_data=input_data)
             return await self.send_alert_action(is_raised=True)
 
         input_data["action_msg"] = "Invalid Is On Hold"
+        input_data["action_type"] = "Message"
         input_data["event_tags"]["is_raised"] = False
         await self.update_alert_status(indent_status=IndentStatus.IndentOnHold, input_data=input_data)
         return await self.send_alert_action(is_raised=False)
@@ -282,6 +290,7 @@ class IndentDryOut:
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Sent To SAP"
+            input_data["action_type"] = "SentToSap"
             input_data["event_tags"]["is_sent_to_sap"] = True
             await self.update_alert_status(indent_status=IndentStatus.SentToSAP, input_data=input_data)
             return await self.send_alert_action(is_sent_to_sap=True)
@@ -366,6 +375,7 @@ class IndentDryOut:
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Invoice created"
+            input_data["action_type"] = "Created"
             input_data["event_tags"]["is_created"] = True
 
             await self.update_alert_status(
@@ -414,6 +424,7 @@ class IndentDryOut:
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Sales order created"
+            input_data["action_type"] = "OrderPlaced"
             input_data["event_tags"]["is_order_placed"] = True
             await self.update_alert_status(indent_status=IndentStatus.SalesOrderPlaced, input_data=input_data)
             return await self.send_alert_action(is_order_placed=True)
@@ -442,7 +453,9 @@ class IndentDryOut:
         alert_id = self.params.get("alert_id")
         alert_data = await Alerts.get(alert_id)
 
-        input_data = {}
+        # input_data = {
+        #     "action_type": "RO"
+        # }
         if alert_data.indent_status != indent_status:  # type: ignore
             await alert_manager.AlertAction().update_alert_history(
                 input_data=input_data, alert_data=alert_data
@@ -503,7 +516,24 @@ class IndentDryOut:
             alert_data = alert_data.__dict__
 
         alert_data['alert_type'] = 'RO'
+        alert_data['alert_id'] = alert_id
         alert_data['indent_status'] = indent_status
         alert_data['alert_status'] = alert_status
         alert_data['alert_state'] = alert_state
         await close_alert(alert_data)
+
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        return await function(
+            schema_name="HPCL_HOS",
+            table_name=connection_mapping.table_mapping.get("dry_out", ""),
+            records={
+                "indent_status": "Completed",
+                "site_id": alert_data['sap_id'],
+                "fcc_code": alert_data['sap_id'],
+                "product_no": int(alert_data['product_code']),
+                "tank_no": int(alert_data['device_id'])
+            },
+            conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
+        )
