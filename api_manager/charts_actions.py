@@ -10,11 +10,11 @@ import traceback
 import hpcl_ceg_model
 import urdhva_base.redispool
 import urdhva_base.context
-from orchestrator.dashboard.chart_factory import charts_functions
-from orchestrator.dashboard.chart_factory import charts_helpers
 from orchestrator.dashboard.chart_factory import JSONHashing
 from orchestrator.dashboard.chart_factory import date_actions
-
+from orchestrator.dashboard.chart_factory import charts_helpers
+import orchestrator.dbconnector.widget_actions as widget_actions
+from orchestrator.dashboard.chart_factory import charts_functions
 router = fastapi.APIRouter(prefix='/charts')
 
 
@@ -477,3 +477,14 @@ async def charts_get_schema(data: Charts_Get_SchemaParams):
     Charts_Connection_Vault_RoutingParams.action = 'get_schema'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     return await function(schema_name=data.schema)
+
+
+# Action generate_vis_data
+@router.post('/generate_vis_data', tags=['Charts'])
+async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
+    """
+    Function to generate widget data
+    :param data:
+    :return:
+    """
+    return await widget_actions.widget_actions.WidgetActions.execute_widget_action(data.action, data.filters)

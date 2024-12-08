@@ -113,6 +113,12 @@ Model filtered_keys internal {
     component optional str
 }
 
+Model WidgetFilters internal {
+    key str
+    cond str
+    value str
+}
+
 Model Charts {
     connection_id optional str
     database optional str
@@ -219,6 +225,11 @@ Model Charts {
     Action=> get_schema {
         connection_id optional str
         database optional str
+    }
+
+    Action=> generate_vis_data {
+        filters optional list WidgetFilters
+        action str
     }
 
     Config=> {

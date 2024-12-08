@@ -113,6 +113,12 @@ class filtered_keysCreate(pydantic.BaseModel):
     component: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class WidgetFiltersCreate(pydantic.BaseModel):
+    key: str
+    cond: str
+    value: str
+
+
 class ChartsSchema(UrdhvaPostgresBase):
     __tablename__ = 'charts'
     
@@ -289,6 +295,11 @@ class Charts_Get_Creds_DetailsParams(pydantic.BaseModel):
 class Charts_Get_SchemaParams(pydantic.BaseModel):
     connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    action: str
 
 
 class DashboardOrderInternalCreate(pydantic.BaseModel):
