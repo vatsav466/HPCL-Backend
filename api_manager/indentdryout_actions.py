@@ -58,6 +58,8 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         status = _dry['status']
         alert_data['product_code'] = _dry['product_no']
         alert_data['sap_id'] = _dry['site_id']
+        alert_data['device_id'] = _dry['tank_no']
+        alert_data['device_name'] = "Tank"
         alert_data['severity'] = 'Critical' if status == 0 else 'High' if status == 1 else 'Medium' if status == 2 else 'Low'
         alert_data['indent_no'] = ''
         alert_data['dealer_id'] = _dry['rosapcode']
