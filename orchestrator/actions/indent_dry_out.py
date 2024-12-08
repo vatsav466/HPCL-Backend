@@ -6,6 +6,7 @@ from hpcl_ceg_enum import AlertStatus as AlertStatus
 from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.connection_mapping as connection_mapping
 import orchestrator.alerting.alert_manager as alert_manager
+from orchestrator.alerting.alert_manager import close_alert
 from hpcl_ceg_model import Alerts_Alert_ActionParams, Alerts
 from hpcl_ceg_enum import AlertActionType as AlertActionType
 from alerts_actions import alerts_alert_action as alerts_alert_action
@@ -177,6 +178,13 @@ class IndentDryOut:
                 alert_state=AlertState.Resolved,
                 input_data=input_data
             )
+            await self.close_supply_chain_alert(
+                alert_id=self.params.get("alert_id"),
+                alert_status=AlertStatus.Cancel,
+                alert_state=AlertState.Resolved,
+                indent_status=IndentStatus.Cancelled
+            )
+
             return await self.send_alert_action(is_cancelled=True)
         return await self.send_alert_action(is_cancelled=False)
 
@@ -359,11 +367,18 @@ class IndentDryOut:
         if resp.get("count") > 0:
             input_data["action_msg"] = "Invoice created"
             input_data["event_tags"]["is_created"] = True
+
             await self.update_alert_status(
                 indent_status=IndentStatus.Completed,
                 alert_status=AlertStatus.Close,
                 alert_state=AlertState.Resolved,
                 input_data=input_data
+            )
+            await self.close_supply_chain_alert(
+                alert_id=self.params.get("alert_id"),
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                indent_status=IndentStatus.Completed
             )
             # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
             return await self.send_alert_action(is_created=True)
@@ -476,3 +491,19 @@ class IndentDryOut:
                 result[indent_no] = []
             result[indent_no].append(product_no)
         return result
+
+    async def close_supply_chain_alert(
+            self, alert_id: str,
+            alert_status: str = AlertStatus.Close,
+            alert_state: str = AlertState.Resolved,
+            indent_status: str = IndentStatus.Completed
+    ):
+        alert_data = await Alerts.get(alert_id)
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
+
+        alert_data['alert_type'] = 'RO'
+        alert_data['indent_status'] = indent_status
+        alert_data['alert_status'] = alert_status
+        alert_data['alert_state'] = alert_state
+        await close_alert(alert_data)
