@@ -18,6 +18,9 @@ Db_Urls_Base = {
         ],
         "redis": [
             "redis://localhost:6379"
+        ],
+        "tibco": [
+            "mysql+mysql://username:password@localhost:3306/db_name"
         ]
     }
 

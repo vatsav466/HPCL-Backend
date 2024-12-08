@@ -22,6 +22,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     bu_id: Mapped[typing.Optional[str]] = mapped_column("bu_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ro_id: Mapped[typing.Optional[str]] = mapped_column("ro_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     is_active: Mapped[typing.Optional[bool]] = mapped_column("is_active", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     activation_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("activation_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -42,6 +43,9 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     address: Mapped[typing.Optional[str]] = mapped_column("address", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     pincode: Mapped[typing.Optional[str]] = mapped_column("pincode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dealer_name: Mapped[typing.Optional[str]] = mapped_column("dealer_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dealer_phone: Mapped[typing.Optional[str]] = mapped_column("dealer_phone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dealer_email: Mapped[typing.Optional[str]] = mapped_column("dealer_email", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     local_automation_vendor: Mapped[typing.Optional[str]] = mapped_column("local_automation_vendor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     latitude: Mapped[typing.Optional[str]] = mapped_column("latitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     longitude: Mapped[typing.Optional[str]] = mapped_column("longitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -53,6 +57,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     bu: hpcl_ceg_enum.BusinessUnit
     sap_id: str
     bu_id: typing.Optional[str] = pydantic.Field("", **{})
+    ro_id: typing.Optional[str] = pydantic.Field("", **{})
     name: str
     is_active: typing.Optional[bool] = pydantic.Field(False, )
     activation_date: typing.Optional[datetime.datetime] | None = None
@@ -73,6 +78,9 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     address: typing.Optional[str] = pydantic.Field("", **{})
     pincode: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_name: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_phone: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_email: typing.Optional[str] = pydantic.Field("", **{})
     local_automation_vendor: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[str] = pydantic.Field("", **{})
     longitude: typing.Optional[str] = pydantic.Field("", **{})
@@ -89,6 +97,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
     sap_id: typing.Optional[str] | None = None
     bu_id: typing.Optional[str] = pydantic.Field("", **{})
+    ro_id: typing.Optional[str] = pydantic.Field("", **{})
     name: typing.Optional[str] | None = None
     is_active: typing.Optional[bool] = pydantic.Field(False, )
     activation_date: typing.Optional[datetime.datetime] | None = None
@@ -109,6 +118,9 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     address: typing.Optional[str] = pydantic.Field("", **{})
     pincode: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_name: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_phone: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_email: typing.Optional[str] = pydantic.Field("", **{})
     local_automation_vendor: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[str] = pydantic.Field("", **{})
     longitude: typing.Optional[str] = pydantic.Field("", **{})
@@ -738,6 +750,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     indent_status: Mapped[typing.Optional[typing.Any]] = mapped_column("indent_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     product_code: Mapped[typing.Optional[str]] = mapped_column("product_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dealer_id: Mapped[typing.Optional[str]] = mapped_column("dealer_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -781,6 +794,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     indent_status: typing.Optional[hpcl_ceg_enum.IndentStatus] | None = None
     product_code: typing.Optional[str] = pydantic.Field("", **{})
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -829,6 +843,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     indent_status: typing.Optional[hpcl_ceg_enum.IndentStatus] | None = None
     product_code: typing.Optional[str] = pydantic.Field("", **{})
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

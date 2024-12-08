@@ -54,8 +54,8 @@ class AlertFactory:
             status, location_data = await alert_helper.get_location_details(bu, sap_id)
             print("status --> ", status)
             print("location_data --> ", location_data)
-            # if not status:
-            #     return False, location_data
+            if not status:
+                return False, location_data
             base_data = {key: location_data.get(key) for key in ['state', 'city', 'zone', 'region', 'district']}
             base_data.update({key: alert_data.get(key, '') for key in ['device_id', 'device_type', 'device_name']})
             base_data.update({"sop_id": sop_id, "sap_id": sap_id, "bu": bu,

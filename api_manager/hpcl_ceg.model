@@ -76,6 +76,7 @@ Model LocationMaster {
     bu index_field BusinessUnit
     sap_id index_field str
     bu_id optional str
+    ro_id optional str
     name index_field str
     is_active optional bool
     activation_date optional datetime
@@ -96,6 +97,9 @@ Model LocationMaster {
     zone optional index_field str
     address optional str
     pincode optional str
+    dealer_name optional str
+    dealer_phone optional str
+    dealer_email optional str
     local_automation_vendor optional str
     latitude optional str
     longitude optional str
