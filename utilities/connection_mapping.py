@@ -1,7 +1,7 @@
 connection_mapping = {
-    "ims": "3",
+    "ims": "4",
     "hpcl_ceg": "1",
-    "cris": "2"
+    "cris": "4"
 }
 
 schema_mapping = {
