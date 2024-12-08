@@ -84,9 +84,9 @@ class AlertFactory:
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
                                                         'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
-                                                        'dealer_id': alert_data.get('dealer_id', ''),
+                                                        'dealer_id': str(alert_data.get('dealer_id', '')),
                                                         'product_code': str(alert_data.get('product_code', '')),
-                                                        'indent_no': alert_data.get('indent_no', ''),
+                                                        'indent_no': str(alert_data.get('indent_no', '')),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             payload = {"businessKey": unique_id,
