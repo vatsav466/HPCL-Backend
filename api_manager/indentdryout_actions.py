@@ -37,7 +37,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     schema = connection_mapping.schema_mapping.get("cris", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
-    query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "status" IN ('0', '1', '2');'''
+    query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" != 'Raised' AND "status" IN ('0', '1', '2');'''
     records = await function(schema_name=schema, table_name=table, query=query)
     records = records.head(10).to_dicts()
 
@@ -54,6 +54,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     }
 
     for _dry in records:
+        _dry['indent_status'] = 'Raised'
         status = _dry['status']
         alert_data['product_code'] = _dry['product_no']
         alert_data['sap_id'] = _dry['site_id']
@@ -61,5 +62,15 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         alert_data['indent_no'] = ''
         alert_data['dealer_id'] = _dry['rosapcode']
         await create_alert(alert_data)
+
+        Charts_Connection_Vault_RoutingParams.connection_id = "1"
+        Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        return await function(
+            schema_name="HPCL_HOS",
+            table_name=connection_mapping.table_mapping.get("dry_out", ""),
+            records=_dry,
+            conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
+        )
 
     return {"status": True, "message": "Alerts created successfully", "data": []}
