@@ -84,9 +84,9 @@ class AlertFactory:
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
                                                         'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
-                                                        'dealer_id': alert_data.get('dealer_id', ''),
+                                                        'dealer_id': str(alert_data.get('dealer_id', '')),
                                                         'product_code': str(alert_data.get('product_code', '')),
-                                                        'indent_no': alert_data.get('indent_no', ''),
+                                                        'indent_no': str(alert_data.get('indent_no', '')),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             payload = {"businessKey": unique_id,
@@ -106,6 +106,7 @@ class AlertFactory:
             if interlock_name:
                 # Create Interlock
                 interlock = await hpcl_ceg_model.InterlockCreate(**{**base_data,
+                                                                    'interlock_name': interlock_name,
                                                                     'interlock_status': hpcl_ceg_enum.AlertStatus.Open}
                                                                  ).create()
 
@@ -157,7 +158,7 @@ class AlertFactory:
         try:
             # il_data = None
             # al_data = None
-            bu = alert_data['BU']
+            bu = alert_data['bu']
             if 'interlock_id' not in alert_data.keys():
                 # Query for Interlock
                 query = f"interlock_name='{alert_data['interlock_name']}' AND bu='{bu}' AND sop_id='{alert_data['sop_id']}' AND sap_id='{alert_data['sap_id']}'"
