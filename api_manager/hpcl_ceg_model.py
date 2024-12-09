@@ -751,6 +751,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     product_code: Mapped[typing.Optional[str]] = mapped_column("product_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     dealer_id: Mapped[typing.Optional[str]] = mapped_column("dealer_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -795,6 +796,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     product_code: typing.Optional[str] = pydantic.Field("", **{})
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -844,6 +846,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     product_code: typing.Optional[str] = pydantic.Field("", **{})
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
