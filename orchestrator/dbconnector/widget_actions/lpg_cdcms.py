@@ -1,0 +1,3 @@
+class LPGCDCMSActions:
+    def __init__(self):
+        ...
