@@ -1,0 +1,151 @@
+from abc import ABC, abstractmethod
+import pyodbc
+import pymysql
+import psycopg2
+
+
+class DBConnectorFactory(ABC):
+    def __init__(self):
+        self.connection = None
+
+    @abstractmethod
+    def get_connection(self):
+        """Establish a connection to the database."""
+        pass
+
+    @abstractmethod
+    def generate_query(self, table_name: str, conditions: dict = None):
+        """Generate a query based on the table name and conditions."""
+        pass
+
+    @staticmethod
+    def get_default_conditions():
+        """Provide default conditions for user-level access control."""
+        return {}  # Example default condition
+
+    def generate_filter_clause(self, filters):
+        def generate_sql_where_clause(filters):
+            """
+            Generate SQL WHERE clause conditions from the provided filter list.
+
+            :param filters: List of dictionaries, each containing 'key', 'cond', and 'value'.
+            :return: A string representing the SQL WHERE clause.
+            """
+            conditions = []
+
+            for filter_item in filters:
+                key = filter_item['key']
+                condition = filter_item['cond']
+                value = filter_item['value']
+
+                if condition == 'equals':
+                    conditions.append(f"{key} = '{value}'")
+                elif condition == 'prefix':
+                    conditions.append(f"{key} LIKE '{value}%'")
+                elif condition == 'contains':
+                    conditions.append(f"{key} LIKE '%{value}%'")
+                elif condition == 'suffix':
+                    conditions.append(f"{key} LIKE '%{value}'")
+                elif condition == 'oneof' and isinstance(value, list):
+                    values = "', '".join(map(str, value))
+                    conditions.append(f"{key} IN ('{values}')")
+                else:
+                    raise ValueError(f"Unsupported condition: {condition}")
+        return "WHERE " + " AND ".join(f"{col} = '{val}'" for col, val in filters.items())
+
+    def execute_query(self, query):
+        """
+        Executes a query on the respective database and returns the results.
+        """
+        conn = self.get_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query)
+                return cursor.fetchall()
+        finally:
+            conn.close()
+
+
+class MySQLConnector(DBConnectorFactory):
+    def get_connection(self):
+        self.connection = pymysql.connect(
+            host="localhost",
+            user="root",
+            password="password",
+            database="mysql_db"
+        )
+        return self.connection
+
+    def generate_query(self, table_name: str, conditions: dict = None):
+        query = f"SELECT * FROM {table_name}"
+        if conditions:
+            condition_str = " AND ".join([f"{k}='{v}'" for k, v in conditions.items()])
+            query += f" WHERE {condition_str}"
+        return query
+
+
+class MSSQLConnector(DBConnectorFactory):
+    def get_connection(self):
+        self.connection = pyodbc.connect(
+            "Driver={SQL Server};"
+            "Server=localhost;"
+            "Database=mssql_db;"
+            "Trusted_Connection=yes;"
+        )
+        return self.connection
+
+    def generate_query(self, table_name: str, conditions: dict = None):
+        query = f"SELECT * FROM {table_name}"
+        if conditions:
+            condition_str = " AND ".join([f"{k}='{v}'" for k, v in conditions.items()])
+            query += f" WHERE {condition_str}"
+        return query
+
+
+class PostgreSQLConnector(DBConnectorFactory):
+    def get_connection(self):
+        self.connection = psycopg2.connect(
+            host="localhost",
+            user="postgres",
+            password="password",
+            database="postgres_db"
+        )
+        return self.connection
+
+    def generate_query(self, table_name: str, conditions: dict = None):
+        query = f"SELECT * FROM {table_name}"
+        if conditions:
+            condition_str = " AND ".join([f"{k}='{v}'" for k, v in conditions.items()])
+            query += f" WHERE {condition_str}"
+        return query
+
+
+# Example usage
+def example_usage():
+    db_factories = {
+        "mysql": MySQLConnector(),
+        "mssql": MSSQLConnector(),
+        "postgres": PostgreSQLConnector()
+    }
+
+    # Select a database type
+    db_type = "mysql"
+    connector = db_factories[db_type]
+
+    # Connect to the database
+    connection = connector.get_connection()
+    print(f"Connected to {db_type} database.")
+
+    # Generate a query
+    query = connector.generate_query("users", {"status": "active", "role": "admin"})
+    print(f"Generated Query: {query}")
+
+
+if __name__ == "__main__":
+    """
+    Filters Example
+    [{'key': 'name', 'cond': 'equals', 'value': 'abcd'}, {'key': 'name', 'cond': 'prefix', 'value': 'abcd'}, 
+    {'key': 'name', 'cond': 'contains', 'value': 'abcd'}, {'key': 'name', 'cond': 'suffix', 'value': 'abcd'}, 
+    {'key': 'name', 'cond': 'oneof', 'value': ['a', 'b']}]
+    """
+    example_usage()

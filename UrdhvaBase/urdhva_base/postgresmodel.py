@@ -334,13 +334,21 @@ class BasePostgresModel(pydantic.BaseModel):
         # if not entity_id:
         #     raise "missing context information"
         session = await manager.get_session()
-        await session.execute(
-            cls.Config.schema_class.__table__.delete().where(cls.Config.schema_class.id == int(row_id))
+        result = await session.execute(
+            select(cls.Config.schema_class).where(cls.Config.schema_class.id == int(row_id))
         )
-        await session.commit()
-        await asyncio.shield(session.close())
-        return True, "Success"
 
+        if result.scalars().first() is not None:
+            status = await session.execute(
+                cls.Config.schema_class.__table__.delete().where(cls.Config.schema_class.id == int(row_id))
+            )
+            
+            await session.commit()
+            await asyncio.shield(session.close())
+            return True, "Success"
+
+        else:
+            return False, "Fail"
     async def create(self, entity_id=None, upsert=False, upsert_skip_keys = []):
         """
 

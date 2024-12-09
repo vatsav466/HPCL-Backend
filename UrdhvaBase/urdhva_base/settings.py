@@ -18,6 +18,9 @@ Db_Urls_Base = {
         ],
         "redis": [
             "redis://localhost:6379"
+        ],
+        "tibco": [
+            "mysql+mysql://username:password@localhost:3306/db_name"
         ]
     }
 
@@ -43,6 +46,7 @@ class Settings(pydantic_settings.BaseSettings):
     cookie_name: str = "hpcl_ceg"
     default_index: str = "hpcl_ceg"
     multi_tenant_support: bool = True
+    password_salt: str = "hpcl_ceg_dnc"
 
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
@@ -102,7 +106,7 @@ class Settings(pydantic_settings.BaseSettings):
     superset_password: str = 'password'
 
     # camunda
-    camunda_url: str = 'http://localhost:8082'
+    camunda_url: str = 'http://10.90.38.166:8080'
     camunda_default_config: typing.Dict[str, int] = {
         "maxTasks": 1,
         "lockDuration": 10000,

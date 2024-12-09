@@ -46,7 +46,8 @@ class Secret(str):
         if isinstance(value, cls):
             return value
         if isinstance(value, str) and not value.startswith('enc#_'):
-            value = 'enc#_' + cryptography.fernet.Fernet(cls.get_key(domain)).encrypt(value.encode()).decode()
+            value = 'enc#_' + cryptography.fernet.Fernet(cls.get_key(urdhva_base.settings.password_salt)).encrypt(
+                value.encode()).decode()
             # print("encrypted: ", value)
         return cls(value)
 
@@ -58,4 +59,5 @@ class Secret(str):
 
     def get_secret(self, domain=None) -> str:
         # print(self.encode())
-        return cryptography.fernet.Fernet(self.get_key(domain)).decrypt(self[5:].encode()).decode()
+        return cryptography.fernet.Fernet(self.get_key(urdhva_base.settings.password_salt)).decrypt(
+            self[5:].encode()).decode()

@@ -11,7 +11,7 @@
     }
   },
   "metadata": {
-    "version": 9,
+    "version": 4,
     "firstNodeIndex": 6,
     "nodes": [
       {
@@ -23,18 +23,18 @@
         "configurationVersion": 1,
         "configuration": {
           "tellFailureIfAbsent": true,
+          "fetchTo": "METADATA",
           "clientAttributeNames": [],
           "sharedAttributeNames": [],
           "serverAttributeNames": [
             "BU",
             "plantlocation",
             "plantlocationid",
-            "SAPID",
-            "deviceType"
+            "deviceType",
+            "SAPID"
           ],
           "latestTsKeyNames": [],
-          "getLatestValueWithTs": false,
-          "fetchTo": "METADATA"
+          "getLatestValueWithTs": false
         },
         "additionalInfo": {
           "description": "",
@@ -50,7 +50,9 @@
         "queueName": null,
         "configurationVersion": 0,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"HCDS\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP005\";\nreturn details;",
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"HCDS(Audio visual alarm in control room)\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP005\";\nreturn details;",
+          "alarmDetailsBuildTbel": null,
           "alarmType": "HCDS Alarm"
         },
         "additionalInfo": {
@@ -70,7 +72,7 @@
           "exchangeNamePattern": "",
           "routingKeyPattern": "ceg_tb_listener",
           "messageProperties": "PERSISTENT_BASIC",
-          "host": "localhost",
+          "host": "140.245.238.142",
           "port": 5672,
           "virtualHost": "hpcl_ceg",
           "username": "hpcl_ceg",
@@ -95,7 +97,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"HCDS\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP005\";\ndetails['additionalInfo']['verifyProofTest'] = \"True\";\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"HCDS(Audio visual alarm in control room)\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP005\";\ndetails['additionalInfo']['verify_proof_test'] = \"True\";\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "alarmType": "HCD pf Alarm"
         },
@@ -129,12 +131,18 @@
         "queueName": null,
         "configurationVersion": 0,
         "configuration": {
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"HCD Fault Alarm\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP005\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId'];\ndetails['additionalInfo']['device_name'] = metadata['originatorName'];\ndetails['additionalInfo']['verifyProofTest'] = \"True\";\ndetails['additionalInfo']['raw_data'] = msg_data;\nreturn details;",
+          "scriptLang": "JS",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"HCDS(Audio visual alarm in control room)\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP005\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId'];\ndetails['additionalInfo']['device_name'] = metadata['originatorName'];\ndetails['additionalInfo']['verify_proof_test'] = \"True\";\ndetails['additionalInfo']['raw_data'] = msg_data;\nreturn details;",
+          "alarmDetailsBuildTbel": null,
           "useMessageAlarmData": false,
+          "overwriteAlarmDetails": null,
           "alarmType": "HCD pf Alarm",
           "severity": "CRITICAL",
           "propagate": false,
-          "relationTypes": []
+          "relationTypes": [],
+          "propagateToOwner": null,
+          "propagateToTenant": null,
+          "dynamicSeverity": null
         },
         "additionalInfo": {
           "description": "",
@@ -192,7 +200,7 @@
           "exchangeNamePattern": "",
           "routingKeyPattern": "ceg_tb_listener",
           "messageProperties": "PERSISTENT_BASIC",
-          "host": "localhost",
+          "host": "140.245.238.142",
           "port": 5672,
           "virtualHost": "hpcl_ceg",
           "username": "hpcl_ceg",
@@ -217,7 +225,7 @@
         "configurationVersion": 0,
         "configuration": {
           "scriptLang": "JS",
-          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"HCD Fault Alarm\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_sapid\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP005\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId'];\ndetails['additionalInfo']['device_name'] = metadata['originatorName'];\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"];\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
+          "alarmDetailsBuildJs": "var details = {};\nif (metadata.prevAlarmDetails) {\n    details = JSON.parse(metadata.prevAlarmDetails);\n}\nvar msg_data = msg\nvar additionalinfo = JSON.parse(metadata[\"additionalInfo\"]);\ndetails[\"additionalInfo\"] = additionalinfo;\ndetails[\"additionalInfo\"][\"interlock_name\"] = \"HCDS(Audio visual alarm in control room)\";\ndetails[\"additionalInfo\"][\"unit_name\"] = metadata[\"deviceName\"];\ndetails[\"additionalInfo\"][\"plantlocation\"] = metadata[\"ss_plantlocation\"];\ndetails[\"additionalInfo\"][\"plantlocationid\"] = metadata[\"ss_plantlocationid\"];\ndetails[\"additionalInfo\"][\"device_id\"] = metadata[\"deviceId\"];\ndetails[\"additionalInfo\"][\"sap_id\"] = metadata[\"ss_SAPID\"];\ndetails[\"additionalInfo\"][\"bu\"] = metadata[\"ss_BU\"];\ndetails[\"additionalInfo\"][\"sop_id\"] = \"SOP005\";\ndetails['additionalInfo']['device_id'] = metadata['deviceId'];\ndetails['additionalInfo']['device_name'] = metadata['originatorName'];\ndetails['additionalInfo']['device_type'] = metadata[\"deviceType\"];\ndetails['additionalInfo']['customData'] = msg_data\nreturn details;",
           "alarmDetailsBuildTbel": null,
           "useMessageAlarmData": false,
           "overwriteAlarmDetails": null,
@@ -263,6 +271,11 @@
       {
         "fromIndex": 1,
         "toIndex": 8,
+        "type": "Cleared"
+      },
+      {
+        "fromIndex": 3,
+        "toIndex": 2,
         "type": "Cleared"
       },
       {

@@ -4,6 +4,8 @@ from ingestion_api_model import *
 import fastapi
 import json
 import requests
+import traceback
+import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/va')
 
@@ -24,8 +26,15 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
     Returns:
     - dict: Status message indicating the success of the data submission.
     """
-    logger.info(f"Received VA data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
-    return True, "Success"
+    try:
+      logger.info(f"Received VA data ingestion from vendor {data.location_id}({data.location_type}) {data.dict()}")
+      await alert_manager.create_alert({**data.dict(), "alert_type": "VA"})
+      return True, "Success"
+      
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return {"status": False, "message": "Error", "data": []}
 
     # try:
         # header = {"Content-Type": "application/json", "Accept": "application/json"}

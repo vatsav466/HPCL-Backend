@@ -1,0 +1,3 @@
+class TibcoSalesActions:
+    def __init__(self):
+        ...

@@ -37,7 +37,7 @@ class EmptyRole:
             alert_data['rolelist'] = []
 
             if params.get('maintenance'):
-                alert_data['status'] = "Under Maintenance"
+                alert_data['alert_status'] = "Under Maintenance"
 
             data_object = hpcl_ceg_model.Alerts(**alert_data)
             await data_object.modify()

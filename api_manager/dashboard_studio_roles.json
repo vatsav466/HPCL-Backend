@@ -63,6 +63,12 @@
                 },
                 {
                     "name": "get_creds_details"
+                },
+                {
+                    "name": "get_schema"
+                },
+                {
+                    "name": "generate_vis_data"
                 }
             ]
         },
@@ -102,6 +108,9 @@
                 },
                 {
                     "name": "get_creds_details"
+                },
+                {
+                    "name": "get_schema"
                 }
             ]
         },
@@ -165,6 +174,12 @@
                 },
                 {
                     "name": "get_creds_details"
+                },
+                {
+                    "name": "get_schema"
+                },
+                {
+                    "name": "generate_vis_data"
                 }
             ]
         },
@@ -593,6 +608,14 @@
         {
             "name": "get_creds_details",
             "displayName": "get_creds_details"
+        },
+        {
+            "name": "get_schema",
+            "displayName": "get_schema"
+        },
+        {
+            "name": "generate_vis_data",
+            "displayName": "generate_vis_data"
         },
         {
             "name": "save_dashboards",

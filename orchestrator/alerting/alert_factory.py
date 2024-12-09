@@ -74,12 +74,19 @@ class AlertFactory:
                                                         'external_id': alert_data.get('alert_id', alert_id),
                                                         'interlock_name': interlock_name,
                                                         'interlock_id': '',
+                                                        'vehicle_number': alert_data.get('vehicle_number',''),
+                                                        'violation_type': alert_data.get('violation_type',''),
+                                                        'clear_count': alert_data.get('clear_count',False),
                                                         'alert_history': [],
                                                         'device_msg': alert_data.get('message', ''),
                                                         'last_sms_to': [], 'last_mailed_to': [],
                                                         'last_escalated_to': [],
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
+                                                        'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
+                                                        'dealer_id': str(alert_data.get('dealer_id', '')),
+                                                        'product_code': str(alert_data.get('product_code', '')),
+                                                        'indent_no': str(alert_data.get('indent_no', '')),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             payload = {"businessKey": unique_id,
@@ -89,7 +96,9 @@ class AlertFactory:
                                      "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
                                      "location_type": {"value": bu, "type": "String"},
                                      "sap_id": {"value": sap_id, "type": "String"},
-                                     "sop_id": {"value": sop_id, "type": "String"}
+                                     "sop_id": {"value": sop_id, "type": "String"},
+                                     "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
+                                     "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
                                      }}
 
             # Create Interlock
@@ -97,8 +106,10 @@ class AlertFactory:
             if interlock_name:
                 # Create Interlock
                 interlock = await hpcl_ceg_model.InterlockCreate(**{**base_data,
+                                                                    'interlock_name': interlock_name,
                                                                     'interlock_status': hpcl_ceg_enum.AlertStatus.Open}
                                                                  ).create()
+
                 # Fetch the updated alert data
                 alert_data = await hpcl_ceg_model.Alerts.get(alert_resp['id'])
 
@@ -110,9 +121,13 @@ class AlertFactory:
 
                 # Modify the alert with the updated data
                 alert_update = await hpcl_ceg_model.Alerts(**alert_data_dict).modify()
+
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
-                workflow_id =interlock_name.get("interlock_name", "")
+                print("interlock_name-->", interlock_name)
+                workflowid =interlock_name.get("interlock_name", "")
+                workflow_id = interlock_mapping.fmt_il_name(workflowid)
+                print("workflow_id: ", workflow_id)
                 print("workflow_id ", workflow_id)
                 await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
             else:
@@ -139,10 +154,11 @@ class AlertFactory:
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
         """
+        print("alert_data ---> ", alert_data)
         try:
             # il_data = None
             # al_data = None
-            bu = alert_data['BU']
+            bu = alert_data['bu']
             if 'interlock_id' not in alert_data.keys():
                 # Query for Interlock
                 query = f"interlock_name='{alert_data['interlock_name']}' AND bu='{bu}' AND sop_id='{alert_data['sop_id']}' AND sap_id='{alert_data['sap_id']}'"

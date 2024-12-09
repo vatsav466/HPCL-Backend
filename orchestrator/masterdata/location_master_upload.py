@@ -1,7 +1,9 @@
 import urdhva_base
 import traceback
+import polars as pl
 import hpcl_ceg_model
 import urdhva_base.redispool
+import urdhva_base.queryparams
 import utilities.bu_key_mapping as bu_key_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 
@@ -16,10 +18,22 @@ async def upload_location_master_data(df):
     # Iterate through the rows of the CSV and extract `bu` and `sapid`
     df = df.rename(bu_key_mapping.Location)
     try:
+        df = df.with_columns(pl.lit(True).alias('is_active'))
         data = df.to_dicts()
         for data_dump in data:
             data_obj = hpcl_ceg_model.LocationMasterCreate(**data_dump)
-            await data_obj.create()
+            resp = await hpcl_ceg_model.LocationMaster.get_all(urdhva_base.queryparams.QueryParams(
+                q=f"sap_id='{data_dump['sap_id']}'"), resp_type='plain')
+            if len(resp['data']):
+                if len(resp['data']) > 1:
+                    for rec in resp['data']:
+                        await hpcl_ceg_model.LocationMaster.delete(rec['id'])
+                    await data_obj.create()
+                else:
+                    data_dump['id'] = resp['data'][0]['id']
+                    await hpcl_ceg_model.LocationMaster(**data_dump).modify()
+            else:
+                await data_obj.create()
             await alert_helper.set_location_details(data_dump["bu"], data_dump["sap_id"], data_dump, redis_client)
         return True, "Location Master Uploaded Successfully"
     except Exception as e:

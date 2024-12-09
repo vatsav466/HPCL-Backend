@@ -48,25 +48,35 @@ Enum AlertActionType str {
     Message='Message'
     excApprovalTimeExp='excApprovalTimeExp'
     Raised='Raised'
+    Cancelled='Cancelled'
+    Allocated='Allocated'
+    SentToSap='SentToSap'
+    OrderPlaced='OrderPlaced'
+    Created='Created'
 }
 
 Enum IndentStatus str {
     Pending='Pending'
+    IndentNotRaised='IndentNotRaised'
     IndentRaised='IndentRaised'
     IndentOnHold='IndentOnHold'
     IndentOnHoldReleased='IndentOnHoldReleased'
     Cancelled='Cancelled'
     TruckAllocated='TruckAllocated'
+    TruckNotAllocated='TruckNotAllocated'
     Transit='Transit'
     InvoiceCreated='InvoiceCreated'
     ValidIndent='ValidIndent'
     SentToSAP='SentToSAP'
+    SalesOrderPlaced='SalesOrderPlaced'
+    Completed='Completed'
 }
 
 Model LocationMaster {
     bu index_field BusinessUnit
     sap_id index_field str
     bu_id optional str
+    ro_id optional str
     name index_field str
     is_active optional bool
     activation_date optional datetime
@@ -87,6 +97,9 @@ Model LocationMaster {
     zone optional index_field str
     address optional str
     pincode optional str
+    dealer_name optional str
+    dealer_phone optional str
+    dealer_email optional str
     local_automation_vendor optional str
     latitude optional str
     longitude optional str
@@ -248,6 +261,11 @@ Model Alert_History internal {
     is_approved optional bool
     is_exc_approval_time_exp optional bool
     is_raised optional bool
+    is_cancelled optional bool
+    is_allocated optional bool
+    is_sent_to_sap optional bool
+    is_order_placed optional bool
+    is_created optional bool
 }
 
 Model tags internal {
@@ -258,6 +276,11 @@ Model tags internal {
     isApproved optional bool
     isExcApprovalTimeExp optional bool
     isRaised optional bool
+    isCancelled optional bool
+    isAllocated optional bool
+    isSentToSap optional bool
+    isOrderPlaced optional bool
+    isCreated optional bool
 }
 
 Model Interlock {
@@ -334,6 +357,8 @@ Model Alerts {
     device_msg optional str                 // Message received from the device
     vehicle_number optional str
     violation_type optional str
+    clear_count optional bool
+
 
 
     // Notification Details
@@ -360,6 +385,9 @@ Model Alerts {
     r2_time optional datetime
     r3_time optional datetime
     indent_status optional IndentStatus
+    product_code optional str
+    indent_no optional str
+    dealer_id optional str
 
     Action=> alert_action {
         action_type AlertActionType
@@ -478,21 +506,41 @@ Model productsDetails internal {
 }
 
 Model IndentDryOut {
-    sap_id str
-    location_id str
-    ro_code str
-    bu optional index_field BusinessUnit
-    interlock_type str
-    interlock_description optional str
-    device_id str
-    device_value optional str
-    alert_id str
-    alert_status index_field AlertStatus
-    tank_id optional str
-    nozzle_id optional str
-    pump_id optional str
-    indent_no optional str
-    products optional list productsDetails
+    bu unique_field index_field primary_key str
+    site_id str      // location id
+    fcc_code str     // fcc code
+    tank_no str      // tank id
+    product_no unique_field index_field primary_key str   //product no
+    item_name str    // product name
+    capacity int     // tank capacity
+    volume optional float  // remain volume
+    ullage optional float  // empty space in tank
+    avgsales_7days optional float // avg sales
+    stock_date optional datetime
+    status optional int
+    daysstatus optional int
+    lastrocdate optional datetime
+    executed_on optional datetime
+    pumpable_stock optional float
+    rosapcode unique_field index_field primary_key optional int
+    product_grp optional str
+    interlock_status optional AlertStatus
+    interlock_created_date optional datetime
+    interlock_closed_date optional datetime
+
+    Action=> sync_data_from_cris_to_ceg {
+        source_connection str
+        destination_connection str
+        source_table str
+        destination_table str
+        source_schema optional str
+        destination_schema str
+        conflict_columns optional list str
+    }
+
+    Action=> create_dry_out_alert {
+
+    }
 }
 
 Model Screens {

@@ -912,6 +912,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "sync_data_from_cris_to_ceg"
+                },
+                {
+                    "name": "create_dry_out_alert"
                 }
             ]
         },
@@ -951,6 +957,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "sync_data_from_cris_to_ceg"
+                },
+                {
+                    "name": "create_dry_out_alert"
                 }
             ]
         },
@@ -1181,6 +1193,14 @@
         {
             "name": "load_creds",
             "displayName": "load_creds"
+        },
+        {
+            "name": "sync_data_from_cris_to_ceg",
+            "displayName": "sync_data_from_cris_to_ceg"
+        },
+        {
+            "name": "create_dry_out_alert",
+            "displayName": "create_dry_out_alert"
         }
     ]
 }

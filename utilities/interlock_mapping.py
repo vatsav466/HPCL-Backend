@@ -87,7 +87,8 @@ tas_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviat
                           "model": "VA"},
                          {"sop_id": "SOP032", "interlock_name": "Camera is offline", "model": "VA"},
                          {"sop_id": "SOP033", "interlock_name": "Work Beyond time", "model": "VA"},
-                         {"sop_id": "SOP034", "interlock_name": "Tas Loss of communication VA", "model": "VA"}]
+                         {"sop_id": "SOP034", "interlock_name": "Tas Loss of communication VA", "model": "VA"},
+                         {"sop_id": "SOP291", "interlock_name": "Indent Dry Out"}]
 
 # Interlock name and sop mapping for RO Alerts
 ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlock"},
@@ -106,7 +107,8 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlo
                         {"sop_id": "SOP013", "interlock_name": "High level ( ATG) interlock"},
                         {"sop_id": "SOP018", "interlock_name": "Nozzle"},
                         {"sop_id": "SOP999", "interlock_name": "Nozzle Interlock"},
-                        {"sop_id": "SOP999", "interlock_name": "Bay Interlock"}]
+                        {"sop_id": "SOP999", "interlock_name": "Bay Interlock"},
+                        {"sop_id": "SOP291", "interlock_name": "Indent Dry Out"}]
 
 # Interlock name and sop mapping for LPG Alerts
 lpg_interlock_mapping = [
@@ -146,6 +148,21 @@ rdi_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Product Quality
                          {"sop_id": "SOP003", "interlock_name": "Unauthorized Decantation RDI"}]
 
 
+# def get_interlock_name(bu, interlock_name=None, sop_id=None):
+#     # Fetch interlock details from configuration
+#     if not bu or (not interlock_name and not sop_id):
+#         return {}
+#     mapping = eval(f'{urdhva_base.utilities.snake_case(bu)}_interlock_mapping')
+#     filtered_data = []
+#     if sop_id:
+#         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower(), mapping))
+#     elif interlock_name:
+#         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
+#     elif sop_id and interlock_name:
+#         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower() and x['interlock_name'].lower() == interlock_name.lower(), mapping))
+#     print("filtered_data--->", filtered_data[0])
+#     return filtered_data[0] if filtered_data else {}
+
 def get_interlock_name(bu, interlock_name=None, sop_id=None):
     # Fetch interlock details from configuration
     if not bu or (not interlock_name and not sop_id):
@@ -153,15 +170,35 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
     mapping = eval(f'{urdhva_base.utilities.snake_case(bu)}_interlock_mapping')
     filtered_data = []
     if sop_id:
+        print("sop_id-->", sop_id)
         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower(), mapping))
+        print(f"Entries with sop_id '{sop_id}':")
+        for item in filtered_data:
+            print(item) 
+        if len(filtered_data) > 1 and interlock_name:
+            filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), filtered_data))
+            print("filtered_data(1)------>", filtered_data)
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-    if filtered_data:
-        result = filtered_data[0]
-        # Remove unwanted characters from interlock_name
-        result['interlock_name'] = ''.join(
-            char for char in result['interlock_name'] if char not in ' :()-/'
-        )
-        return result
-    else:
-        return {}
+        print("filtered_data(2)", filtered_data)
+    print("filtered_data--->", filtered_data[0])
+    return filtered_data[0] if filtered_data else {}
+
+
+def fmt_il_name(interlock_name=None):
+    # Fetch interlock details from configuration
+    """
+    Format interlock name and return interlock details for a given BU.
+
+    If sop_id is provided, fetches the interlock details based on the sop_id.
+    If interlock_name is provided, fetches the interlock details based on the interlock_name.
+    If neither sop_id nor interlock_name is provided, returns an empty dictionary.
+
+    :param interlock_name: The name of the interlock
+    :param sop_id: The SOP ID of the interlock
+    :return: A dictionary containing the interlock details. The dictionary will contain the keys 'sop_id', 'interlock_name', 'location_name', 'device_name', 'device_type', 'device_id', 'state', 'city', 'zone' and 'interlock_status'. If the interlock is not found, an empty dictionary is returned.
+    """
+    if interlock_name:
+        interlock_name = ''.join(char for char in interlock_name if char not in ' :()-/')
+
+    return interlock_name

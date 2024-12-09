@@ -22,6 +22,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     bu: Mapped[typing.Any] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     bu_id: Mapped[typing.Optional[str]] = mapped_column("bu_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ro_id: Mapped[typing.Optional[str]] = mapped_column("ro_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     is_active: Mapped[typing.Optional[bool]] = mapped_column("is_active", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     activation_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("activation_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -42,6 +43,9 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     address: Mapped[typing.Optional[str]] = mapped_column("address", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     pincode: Mapped[typing.Optional[str]] = mapped_column("pincode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dealer_name: Mapped[typing.Optional[str]] = mapped_column("dealer_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dealer_phone: Mapped[typing.Optional[str]] = mapped_column("dealer_phone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dealer_email: Mapped[typing.Optional[str]] = mapped_column("dealer_email", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     local_automation_vendor: Mapped[typing.Optional[str]] = mapped_column("local_automation_vendor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     latitude: Mapped[typing.Optional[str]] = mapped_column("latitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     longitude: Mapped[typing.Optional[str]] = mapped_column("longitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -53,6 +57,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     bu: hpcl_ceg_enum.BusinessUnit
     sap_id: str
     bu_id: typing.Optional[str] = pydantic.Field("", **{})
+    ro_id: typing.Optional[str] = pydantic.Field("", **{})
     name: str
     is_active: typing.Optional[bool] = pydantic.Field(False, )
     activation_date: typing.Optional[datetime.datetime] | None = None
@@ -73,6 +78,9 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     address: typing.Optional[str] = pydantic.Field("", **{})
     pincode: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_name: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_phone: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_email: typing.Optional[str] = pydantic.Field("", **{})
     local_automation_vendor: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[str] = pydantic.Field("", **{})
     longitude: typing.Optional[str] = pydantic.Field("", **{})
@@ -89,6 +97,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
     sap_id: typing.Optional[str] | None = None
     bu_id: typing.Optional[str] = pydantic.Field("", **{})
+    ro_id: typing.Optional[str] = pydantic.Field("", **{})
     name: typing.Optional[str] | None = None
     is_active: typing.Optional[bool] = pydantic.Field(False, )
     activation_date: typing.Optional[datetime.datetime] | None = None
@@ -109,6 +118,9 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     address: typing.Optional[str] = pydantic.Field("", **{})
     pincode: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_name: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_phone: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_email: typing.Optional[str] = pydantic.Field("", **{})
     local_automation_vendor: typing.Optional[str] = pydantic.Field("", **{})
     latitude: typing.Optional[str] = pydantic.Field("", **{})
     longitude: typing.Optional[str] = pydantic.Field("", **{})
@@ -480,6 +492,11 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     is_approved: typing.Optional[bool] = pydantic.Field(False, )
     is_exc_approval_time_exp: typing.Optional[bool] = pydantic.Field(False, )
     is_raised: typing.Optional[bool] = pydantic.Field(False, )
+    is_cancelled: typing.Optional[bool] = pydantic.Field(False, )
+    is_allocated: typing.Optional[bool] = pydantic.Field(False, )
+    is_sent_to_sap: typing.Optional[bool] = pydantic.Field(False, )
+    is_order_placed: typing.Optional[bool] = pydantic.Field(False, )
+    is_created: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -490,6 +507,11 @@ class tagsCreate(pydantic.BaseModel):
     is_approved: typing.Optional[bool] = pydantic.Field(False, )
     is_exc_approval_time_exp: typing.Optional[bool] = pydantic.Field(False, )
     is_raised: typing.Optional[bool] = pydantic.Field(False, )
+    is_cancelled: typing.Optional[bool] = pydantic.Field(False, )
+    is_allocated: typing.Optional[bool] = pydantic.Field(False, )
+    is_sent_to_sap: typing.Optional[bool] = pydantic.Field(False, )
+    is_order_placed: typing.Optional[bool] = pydantic.Field(False, )
+    is_created: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):
@@ -708,6 +730,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     device_msg: Mapped[typing.Optional[str]] = mapped_column("device_msg", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     vehicle_number: Mapped[typing.Optional[str]] = mapped_column("vehicle_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    clear_count: Mapped[typing.Optional[bool]] = mapped_column("clear_count", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     alert_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("alert_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
     last_sms_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_sms_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     last_mailed_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_mailed_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -725,6 +748,9 @@ class AlertsSchema(UrdhvaPostgresBase):
     r2_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r2_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     r3_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r3_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     indent_status: Mapped[typing.Optional[typing.Any]] = mapped_column("indent_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    product_code: Mapped[typing.Optional[str]] = mapped_column("product_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dealer_id: Mapped[typing.Optional[str]] = mapped_column("dealer_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -748,6 +774,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     device_msg: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    clear_count: typing.Optional[bool] = pydantic.Field(False, )
     alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
     last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -765,6 +792,9 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     r2_time: typing.Optional[datetime.datetime] | None = None
     r3_time: typing.Optional[datetime.datetime] | None = None
     indent_status: typing.Optional[hpcl_ceg_enum.IndentStatus] | None = None
+    product_code: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -793,6 +823,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     device_msg: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    clear_count: typing.Optional[bool] = pydantic.Field(False, )
     alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
     last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -810,6 +841,9 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     r2_time: typing.Optional[datetime.datetime] | None = None
     r3_time: typing.Optional[datetime.datetime] | None = None
     indent_status: typing.Optional[hpcl_ceg_enum.IndentStatus] | None = None
+    product_code: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
+    dealer_id: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1060,77 +1094,98 @@ class productsDetailsCreate(pydantic.BaseModel):
 class IndentDryOutSchema(UrdhvaPostgresBase):
     __tablename__ = 'indent_dry_out'
     
-    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    location_id: Mapped[str] = mapped_column("location_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    ro_code: Mapped[str] = mapped_column("ro_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    bu: Mapped[typing.Optional[typing.Any]] = mapped_column("bu", String, index=True, nullable=True, default=None, primary_key=False, unique=False)
-    interlock_type: Mapped[str] = mapped_column("interlock_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    interlock_description: Mapped[typing.Optional[str]] = mapped_column("interlock_description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    device_id: Mapped[str] = mapped_column("device_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    device_value: Mapped[typing.Optional[str]] = mapped_column("device_value", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    alert_id: Mapped[str] = mapped_column("alert_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    alert_status: Mapped[typing.Any] = mapped_column("alert_status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    tank_id: Mapped[typing.Optional[str]] = mapped_column("tank_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    nozzle_id: Mapped[typing.Optional[str]] = mapped_column("nozzle_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    pump_id: Mapped[typing.Optional[str]] = mapped_column("pump_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    products: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("products", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=True, unique=False)
+    site_id: Mapped[str] = mapped_column("site_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    fcc_code: Mapped[str] = mapped_column("fcc_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    tank_no: Mapped[str] = mapped_column("tank_no", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    product_no: Mapped[str] = mapped_column("product_no", String, index=True, nullable=False, default=None, primary_key=True, unique=False)
+    item_name: Mapped[str] = mapped_column("item_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    capacity: Mapped[int] = mapped_column("capacity", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    volume: Mapped[typing.Optional[float]] = mapped_column("volume", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    ullage: Mapped[typing.Optional[float]] = mapped_column("ullage", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    avgsales_7days: Mapped[typing.Optional[float]] = mapped_column("avgsales_7days", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    stock_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("stock_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Optional[int]] = mapped_column("status", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    daysstatus: Mapped[typing.Optional[int]] = mapped_column("daysstatus", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    lastrocdate: Mapped[typing.Optional[datetime.datetime]] = mapped_column("lastrocdate", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    executed_on: Mapped[typing.Optional[datetime.datetime]] = mapped_column("executed_on", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    pumpable_stock: Mapped[typing.Optional[float]] = mapped_column("pumpable_stock", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    rosapcode: Mapped[typing.Optional[int]] = mapped_column("rosapcode", Integer, index=True, nullable=True, default=0, primary_key=True, unique=False)
+    product_grp: Mapped[typing.Optional[str]] = mapped_column("product_grp", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    interlock_status: Mapped[typing.Optional[typing.Any]] = mapped_column("interlock_status", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    interlock_created_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("interlock_created_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    interlock_closed_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("interlock_closed_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(bu, product_no, rosapcode, name="indent_dry_out_bu_product_no_rosapcode"),)
 
 
 class IndentDryOutCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'indent_dry_out'
     
-    sap_id: str
-    location_id: str
-    ro_code: str
-    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
-    interlock_type: str
-    interlock_description: typing.Optional[str] = pydantic.Field("", **{})
-    device_id: str
-    device_value: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: str
-    alert_status: hpcl_ceg_enum.AlertStatus
-    tank_id: typing.Optional[str] = pydantic.Field("", **{})
-    nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
-    pump_id: typing.Optional[str] = pydantic.Field("", **{})
-    indent_no: typing.Optional[str] = pydantic.Field("", **{})
-    products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
+    bu: str
+    site_id: str
+    fcc_code: str
+    tank_no: str
+    product_no: str
+    item_name: str
+    capacity: int
+    volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ullage: typing.Optional[float] = pydantic.Field(0.0, **{})
+    avgsales_7days: typing.Optional[float] = pydantic.Field(0.0, **{})
+    stock_date: typing.Optional[datetime.datetime] | None = None
+    status: typing.Optional[int] = pydantic.Field(0, **{})
+    daysstatus: typing.Optional[int] = pydantic.Field(0, **{})
+    lastrocdate: typing.Optional[datetime.datetime] | None = None
+    executed_on: typing.Optional[datetime.datetime] | None = None
+    pumpable_stock: typing.Optional[float] = pydantic.Field(0.0, **{})
+    rosapcode: typing.Optional[int] = pydantic.Field(0, **{})
+    product_grp: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
+    interlock_created_date: typing.Optional[datetime.datetime] | None = None
+    interlock_closed_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         schema_class = IndentDryOutSchema
-        upsert_keys = []
+        upsert_keys = ['bu', 'product_no', 'rosapcode']
 
 
 class IndentDryOut(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'indent_dry_out'
     
-    sap_id: typing.Optional[str] | None = None
-    location_id: typing.Optional[str] | None = None
-    ro_code: typing.Optional[str] | None = None
-    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
-    interlock_type: typing.Optional[str] | None = None
-    interlock_description: typing.Optional[str] = pydantic.Field("", **{})
-    device_id: typing.Optional[str] | None = None
-    device_value: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: typing.Optional[str] | None = None
-    alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
-    tank_id: typing.Optional[str] = pydantic.Field("", **{})
-    nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
-    pump_id: typing.Optional[str] = pydantic.Field("", **{})
-    indent_no: typing.Optional[str] = pydantic.Field("", **{})
-    products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
+    bu: typing.Optional[str] | None = None
+    site_id: typing.Optional[str] | None = None
+    fcc_code: typing.Optional[str] | None = None
+    tank_no: typing.Optional[str] | None = None
+    product_no: typing.Optional[str] | None = None
+    item_name: typing.Optional[str] | None = None
+    capacity: typing.Optional[int] | None = None
+    volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    ullage: typing.Optional[float] = pydantic.Field(0.0, **{})
+    avgsales_7days: typing.Optional[float] = pydantic.Field(0.0, **{})
+    stock_date: typing.Optional[datetime.datetime] | None = None
+    status: typing.Optional[int] = pydantic.Field(0, **{})
+    daysstatus: typing.Optional[int] = pydantic.Field(0, **{})
+    lastrocdate: typing.Optional[datetime.datetime] | None = None
+    executed_on: typing.Optional[datetime.datetime] | None = None
+    pumpable_stock: typing.Optional[float] = pydantic.Field(0.0, **{})
+    rosapcode: typing.Optional[int] = pydantic.Field(0, **{})
+    product_grp: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
+    interlock_created_date: typing.Optional[datetime.datetime] | None = None
+    interlock_closed_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         schema_class = IndentDryOutSchema
-        upsert_keys = []
+        upsert_keys = ['bu', 'product_no', 'rosapcode']
 
 
 class IndentDryOutGetResp(pydantic.BaseModel):
     data: typing.List[IndentDryOut]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
 
 
 class ScreensSchema(UrdhvaPostgresBase):
@@ -1192,3 +1247,18 @@ class ScreensGetResp(pydantic.BaseModel):
     data: typing.List[Screens]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+      
+class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
+    source_connection: str
+    destination_connection: str
+    source_table: str
+    destination_table: str
+    source_schema: typing.Optional[str] = pydantic.Field("", **{})
+    destination_schema: str
+    conflict_columns: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+
+class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
+    pass
+    
