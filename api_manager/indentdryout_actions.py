@@ -6,6 +6,7 @@ import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from orchestrator.alerting.alert_manager import create_alert
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
 
 router = fastapi.APIRouter(prefix='/indentdryout')
 
@@ -53,10 +54,13 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         'severity': ""
     }
 
+    _mapping = await indent_dry_out({}).prod_code_mapping()
+
     for _dry in records:
         _dry['indent_status'] = 'Raised'
         status = _dry['status']
-        alert_data['product_code'] = _dry['product_no']
+        # alert_data['product_code'] = _dry['product_no']
+        alert_data['product_code'] = _mapping.get(_dry['item_name'], _dry['product_no'])
         alert_data['sap_id'] = _dry['site_id']
         alert_data['device_id'] = _dry['tank_no']
         alert_data['device_name'] = "Tank"
