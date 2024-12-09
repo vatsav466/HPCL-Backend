@@ -498,19 +498,6 @@ Model GroupsData internal {
     organization_id int
 }
 
-Model Screens{
-   screen_title str
-   groups optional list int
-   changed_by optional str
-   created_by str
-   created_user optional str
-   organization_id int
-   groups_data list GroupsData
-
-   Config=> {
-        crud_operations='read'
-    }
-}
 
 Model productsDetails internal {
     prod_code optional str
@@ -554,4 +541,17 @@ Model IndentDryOut {
     Action=> create_dry_out_alert {
 
     }
+}
+
+Model Screens {
+    screen_title str
+    dashboards list int
+    created_by optional str
+    updated_by optional str
+    x optional int
+    y optional int
+    w optional int
+    h optional int
+    static optional bool
+    moved optional bool
 }

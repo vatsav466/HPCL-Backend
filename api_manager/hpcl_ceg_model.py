@@ -1085,58 +1085,6 @@ class GroupsDataCreate(pydantic.BaseModel):
     organization_id: int
 
 
-class ScreensSchema(UrdhvaPostgresBase):
-    __tablename__ = 'screens'
-    
-    screen_title: Mapped[str] = mapped_column("screen_title", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    groups: Mapped[typing.Optional[typing.List[int]]] = mapped_column("groups", ARRAY(Integer), index=False, nullable=True, default=0, primary_key=False, unique=False)
-    changed_by: Mapped[typing.Optional[str]] = mapped_column("changed_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    created_by: Mapped[str] = mapped_column("created_by", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    created_user: Mapped[typing.Optional[str]] = mapped_column("created_user", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    organization_id: Mapped[int] = mapped_column("organization_id", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    groups_data: Mapped[typing.List[typing.Any]] = mapped_column("groups_data", JSONB, index=False, nullable=False, default=None, primary_key=False, unique=False)
-
-
-class ScreensCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'screens'
-    
-    screen_title: str
-    groups: typing.Optional[typing.List[int]] = pydantic.Field(0, **{})
-    changed_by: typing.Optional[str] = pydantic.Field("", **{})
-    created_by: str
-    created_user: typing.Optional[str] = pydantic.Field("", **{})
-    organization_id: int
-    groups_data: typing.List[GroupsDataCreate]
-
-    class Config:
-        collection_name = 'data_flow'
-        schema_class = ScreensSchema
-        upsert_keys = []
-
-
-class Screens(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'screens'
-    
-    screen_title: typing.Optional[str] | None = None
-    groups: typing.Optional[typing.List[int]] = pydantic.Field(0, **{})
-    changed_by: typing.Optional[str] = pydantic.Field("", **{})
-    created_by: typing.Optional[str] | None = None
-    created_user: typing.Optional[str] = pydantic.Field("", **{})
-    organization_id: typing.Optional[int] | None = None
-    groups_data: typing.Optional[typing.List[GroupsDataCreate]] | None = None
-
-    class Config:
-        collection_name = 'data_flow'
-        schema_class = ScreensSchema
-        upsert_keys = []
-
-
-class ScreensGetResp(pydantic.BaseModel):
-    data: typing.List[Screens]
-    total: int = pydantic.Field(0)
-    count: int = pydantic.Field(0)
-
-
 class productsDetailsCreate(pydantic.BaseModel):
     prod_code: typing.Optional[str] = pydantic.Field("", **{})
     uom: typing.Optional[str] = pydantic.Field("", **{})
@@ -1239,6 +1187,68 @@ class IndentDryOutGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+
+class ScreensSchema(UrdhvaPostgresBase):
+    __tablename__ = 'screens'
+    
+    screen_title: Mapped[str] = mapped_column("screen_title", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    dashboards: Mapped[typing.List[int]] = mapped_column("dashboards", ARRAY(Integer), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    created_by: Mapped[typing.Optional[str]] = mapped_column("created_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    updated_by: Mapped[typing.Optional[str]] = mapped_column("updated_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    x: Mapped[typing.Optional[int]] = mapped_column("x", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    y: Mapped[typing.Optional[int]] = mapped_column("y", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    w: Mapped[typing.Optional[int]] = mapped_column("w", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    h: Mapped[typing.Optional[int]] = mapped_column("h", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    static: Mapped[typing.Optional[bool]] = mapped_column("static", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    moved: Mapped[typing.Optional[bool]] = mapped_column("moved", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+
+
+class ScreensCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'screens'
+    
+    screen_title: str
+    dashboards: typing.List[int]
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+    x: typing.Optional[int] = pydantic.Field(0, **{})
+    y: typing.Optional[int] = pydantic.Field(0, **{})
+    w: typing.Optional[int] = pydantic.Field(0, **{})
+    h: typing.Optional[int] = pydantic.Field(0, **{})
+    static: typing.Optional[bool] = pydantic.Field(False, )
+    moved: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = ScreensSchema
+        upsert_keys = []
+
+
+class Screens(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'screens'
+    
+    screen_title: typing.Optional[str] | None = None
+    dashboards: typing.Optional[typing.List[int]] | None = None
+    created_by: typing.Optional[str] = pydantic.Field("", **{})
+    updated_by: typing.Optional[str] = pydantic.Field("", **{})
+    x: typing.Optional[int] = pydantic.Field(0, **{})
+    y: typing.Optional[int] = pydantic.Field(0, **{})
+    w: typing.Optional[int] = pydantic.Field(0, **{})
+    h: typing.Optional[int] = pydantic.Field(0, **{})
+    static: typing.Optional[bool] = pydantic.Field(False, )
+    moved: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = ScreensSchema
+        upsert_keys = []
+
+
+class ScreensGetResp(pydantic.BaseModel):
+    data: typing.List[Screens]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+      
 class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
     source_connection: str
     destination_connection: str
