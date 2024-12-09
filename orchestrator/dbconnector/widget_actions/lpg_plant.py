@@ -3,6 +3,11 @@ import utilities.helpers as helpers
 
 
 class LPGPlantActions:
+
+    @staticmethod
+    def get_next_level_drill_params(present_group):
+        ...
+
     @staticmethod
     def get_production_details(filters):
         timezone_format = 'YYYY-MM-DD HH24:MI:SS.US'

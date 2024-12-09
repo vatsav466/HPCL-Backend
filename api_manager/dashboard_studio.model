@@ -230,6 +230,7 @@ Model Charts {
     Action=> generate_vis_data {
         filters optional list WidgetFilters
         action str
+        drill_state optional str
     }
 
     Config=> {
