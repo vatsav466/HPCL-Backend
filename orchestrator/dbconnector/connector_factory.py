@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from decimal import Decimal
 import pyodbc
 import pymysql
 import psycopg2
@@ -61,9 +62,27 @@ class DBConnectorFactory(ABC):
         try:
             with conn.cursor() as cursor:
                 cursor.execute(query)
-                return cursor.fetchall()
+                column_names = [desc[0] for desc in cursor.description]
+                return column_names, cursor.fetchall()
         finally:
             conn.close()
+    def process_recommendations(self, keys, query_result):
+        """
+        Converts a Decimal values into proper float values and returns the data as key value pairs
+        with the columns as key and data for the columns as value
+        """
+        return [
+            {
+                **dict(
+                    zip(
+                        keys,
+                        [float(col) if isinstance(col, Decimal) else col for col in row]
+                    )
+                )
+            }
+            for row in query_result
+        ]
+
 
 
 class MySQLConnector(DBConnectorFactory):
@@ -105,10 +124,10 @@ class MSSQLConnector(DBConnectorFactory):
 class PostgreSQLConnector(DBConnectorFactory):
     def get_connection(self):
         self.connection = psycopg2.connect(
-            host="localhost",
-            user="postgres",
-            password="password",
-            database="postgres_db"
+            host="localhost", # localhost
+            user="ceg_user", # postgres
+            password="TTNqetkiJLPM50jC", # password
+            database="hpcl_ceg" # postgres_db
         )
         return self.connection
 

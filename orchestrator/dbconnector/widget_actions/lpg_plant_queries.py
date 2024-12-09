@@ -1,0 +1,565 @@
+import utilities.helpers as helpers
+
+timezone_format = 'YYYY-MM-DD HH24:MI:SS.US'
+lpg_plant_query = {
+    "production_query": f'''SELECT SUM("productivity.normal.production")/1000 AS total_production,
+        AVG("productivity.normal.production") AS average_production
+FROM public.lpg_consolidated_data
+WHERE TO_TIMESTAMP(process_date, 'YYYY-MM-DD HH24:MI:SS.US') BETWEEN TO_TIMESTAMP('{helpers.get_time_stamp_by_delta(months=1)} 00:00:00.000000', '{timezone_format}')
+  AND TO_TIMESTAMP('{helpers.get_time_stamp_by_delta(months=0)} 00:00:00.000000', '{timezone_format}')
+LIMIT 50000;''',
+
+    "rejection_query": f'''SELECT AVG(sortoutpercentage)/100 AS cs_rejections
+FROM
+  (WITH aggregated_data AS
+     (SELECT el.system_id,
+             el.process_id,
+             el.process_status,
+             COUNT(el.event_log_id) AS count,
+             REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name,
+             el.process_date::DATE AS process_date
+      FROM lpg_event_log_data el
+      WHERE el.system_id IN (1,
+                             2)
+        AND el.process_id IN (4,
+                              24)
+      GROUP BY el.system_id,
+               el.process_id,
+               el.process_status,
+               REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1'),
+               el.process_date::DATE),
+        mapped_data AS
+     (SELECT ad.system_id,
+             ad.process_id,
+             ad.process_status,
+             ad.count,
+             ad.plant_name,
+             ad.process_date,
+             p.zone
+      FROM aggregated_data ad
+      LEFT JOIN plants p ON ad.plant_name = p.short_name) SELECT system_id,
+                                                                 SUM(count) AS handled,
+                                                                 SUM(count) FILTER (
+                                                                                    WHERE process_status != 0) AS sortout,
+                                                                 CASE
+                                                                     WHEN SUM(count) > 0 THEN (SUM(count) FILTER (
+                                                                                                                  WHERE process_status != 0) * 1.0) / SUM(count)
+                                                                     ELSE 0
+                                                                 END AS sortOutPercentage,
+                                                                 plant_name,
+                                                                 zone,
+                                                                 process_date
+   FROM mapped_data
+   GROUP BY system_id,
+            plant_name,
+            zone,
+            process_date) AS virtual_table
+WHERE process_date >= TO_DATE('{helpers.get_time_stamp_by_delta(months=1)}', 'YYYY-MM-DD')
+  AND process_date < TO_DATE('{helpers.get_time_stamp_by_delta(months=0)}', 'YYYY-MM-DD')
+LIMIT 50000;''',
+
+    "total_gd_rejection": f'''SELECT AVG(sortoutpercentage)/100 AS "Percentage"
+FROM
+  (WITH aggregated_data AS
+     (SELECT el.system_id,
+             el.process_id,
+             el.process_status,
+             COUNT(el.event_log_id) AS count,
+             REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name,
+             el.process_date::DATE AS process_date
+      FROM lpg_event_log_data el
+      WHERE el.system_id IN (1,
+                             2)
+        AND el.process_id IN (3,
+                              23)
+      GROUP BY el.system_id,
+               el.process_id,
+               el.process_status,
+               REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1'),
+               el.process_date::DATE),
+        mapped_data AS
+     (SELECT ad.system_id,
+             ad.process_id,
+             ad.process_status,
+             ad.count,
+             ad.plant_name,
+             ad.process_date,
+             p.zone
+      FROM aggregated_data ad
+      LEFT JOIN plants p ON ad.plant_name = p.short_name) SELECT system_id,
+                                                                 SUM(count) AS handled,
+                                                                 SUM(count) FILTER (
+                                                                                    WHERE process_status != 0) AS sortout,
+                                                                 CASE
+                                                                     WHEN SUM(count) > 0 THEN (SUM(count) FILTER (
+                                                                                                                  WHERE process_status != 0) * 1.0) / SUM(count)
+                                                                     ELSE 0
+                                                                 END AS sortOutPercentage,
+                                                                 plant_name,
+                                                                 zone,
+                                                                 process_date
+   FROM mapped_data
+   GROUP BY system_id,
+            plant_name,
+            zone,
+            process_date) AS virtual_table
+WHERE process_date >= TO_DATE('{helpers.get_time_stamp_by_delta(months=1)}', 'YYYY-MM-DD')
+  AND process_date < TO_DATE('{helpers.get_time_stamp_by_delta(months=0)}', 'YYYY-MM-DD')
+LIMIT 50000;''',
+
+    "total_pt_rejection": f'''SELECT AVG(sortoutpercentage)/100 AS "AVG(sortoutpercentage)/100"
+FROM
+  (WITH aggregated_data AS
+     (SELECT el.system_id,
+             el.process_id,
+             el.process_status,
+             COUNT(el.event_log_id) AS count,
+             REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name,
+             el.process_date::DATE AS process_date
+      FROM lpg_event_log_data el
+      WHERE el.system_id IN (1,
+                             2)
+        AND el.process_id IN (4,
+                              24)
+      GROUP BY el.system_id,
+               el.process_id,
+               el.process_status,
+               REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1'),
+               el.process_date::DATE),
+        mapped_data AS
+     (SELECT ad.system_id,
+             ad.process_id,
+             ad.process_status,
+             ad.count,
+             ad.plant_name,
+             ad.process_date,
+             p.zone
+      FROM aggregated_data ad
+      LEFT JOIN plants p ON ad.plant_name = p.short_name) SELECT system_id,
+                                                                 SUM(count) AS handled,
+                                                                 SUM(count) FILTER (
+                                                                                    WHERE process_status != 0) AS sortout,
+                                                                 CASE
+                                                                     WHEN SUM(count) > 0 THEN (SUM(count) FILTER (
+                                                                                                                  WHERE process_status != 0) * 1.0) / SUM(count)
+                                                                     ELSE 0
+                                                                 END AS sortOutPercentage,
+                                                                 plant_name,
+                                                                 zone,
+                                                                 process_date
+   FROM mapped_data
+   GROUP BY system_id,
+            plant_name,
+            zone,
+            process_date) AS virtual_table
+WHERE process_date >= TO_DATE('{helpers.get_time_stamp_by_delta(months=1)}', 'YYYY-MM-DD')
+  AND process_date < TO_DATE('{helpers.get_time_stamp_by_delta(months=0)}', 'YYYY-MM-DD')
+LIMIT 50000;''',
+    
+    "productivity_cyl_per_hour": f'''SELECT zone AS zone,
+               AVG("productivity.normal.productivity") AS "Total Productivity"
+FROM public.lpg_consolidated_data
+GROUP BY zone
+ORDER BY COUNT(*) DESC
+LIMIT 10000;''',
+
+    "rejections_by_zones" : f'''SELECT zone AS zone,
+               rejection_type AS rejection_type,
+               AVG(sort_out_percentage) AS "AVG(sort_out_percentage)",
+               COUNT(*) AS count
+FROM public."Rejections"
+GROUP BY zone,
+         rejection_type
+ORDER BY count DESC
+LIMIT 10000;''',
+
+    "daily_productivity_cyl_per_hour": f'''SELECT DATE_TRUNC('day', process_date) AS process_date,
+       sum("productivity.normal.productivity") AS "Productivity"
+FROM public.lpg_consolidated_data
+GROUP BY DATE_TRUNC('day', process_date)
+ORDER BY "Productivity" DESC
+LIMIT 10000;''',
+    
+    "cyl_rejection_in_check_scale": f'''SELECT zone AS zone,
+               AVG("sort_out_percentage") AS "AVG(""sort_out_percentage"")"
+FROM
+  (WITH aggregated_data AS
+     (SELECT system_id,
+             topic_name,
+             DATE(process_date) AS process_date,
+             COUNT(production_log_id) AS total_count,
+             SUM(CASE
+                     WHEN process_status IN (1040, 2064, 1296, 17424, 1048, 4120, 5392, 1041, 1042, 2192, 4112, 4113, 5136, 6160) THEN 1
+                     ELSE 0
+                 END) AS sort_outs,
+             SUM(CASE
+                     WHEN process_status < 0
+                          OR process_status = 4096 THEN 1
+                     ELSE 0
+                 END) AS comm_errors
+      FROM lpg_dncceg_data
+      WHERE system_id IN (1,
+                          2)
+        AND process_id IN (2,
+                           22)
+      GROUP BY system_id,
+               topic_name,
+               DATE(process_date)),
+        final_data AS
+     (SELECT system_id,
+             topic_name,
+             process_date,
+             total_count,
+             total_count - sort_outs AS cyl_filled,
+             sort_outs,
+             comm_errors,
+             CASE
+                 WHEN total_count > 0 THEN sort_outs::FLOAT / total_count
+                 ELSE 0
+             END AS sort_out_percentage,
+             REGEXP_REPLACE(topic_name, '^.*_dncceg_([^-\s]+).*$', '\\\1') AS plant_name
+      FROM aggregated_data) SELECT fd.*,
+                                   p.zone
+   FROM final_data fd
+   JOIN plants p ON p.short_name = fd.plant_name) AS virtual_table
+GROUP BY zone
+ORDER BY "AVG(""sort_out_percentage"")" DESC
+LIMIT 1000;''',
+
+
+
+
+
+    "cyl_rejection_in_gd": f'''SELECT zone AS zone,
+               sum(sortoutpercentage) AS "Rejection Percentage"
+FROM
+  (WITH aggregated_data AS
+     (SELECT el.system_id,
+             el.process_id,
+             el.process_status,
+             COUNT(el.event_log_id) AS count,
+             REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name,
+             el.process_date::DATE AS process_date
+      FROM lpg_event_log_data el
+      WHERE el.system_id IN (1,
+                             2)
+        AND el.process_id IN (3,
+                              23)
+      GROUP BY el.system_id,
+               el.process_id,
+               el.process_status,
+               REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1'),
+               el.process_date::DATE),
+        mapped_data AS
+     (SELECT ad.system_id,
+             ad.process_id,
+             ad.process_status,
+             ad.count,
+             ad.plant_name,
+             ad.process_date,
+             p.zone
+      FROM aggregated_data ad
+      LEFT JOIN plants p ON ad.plant_name = p.short_name) SELECT system_id,
+                                                                 SUM(count) AS handled,
+                                                                 SUM(count) FILTER (
+                                                                                    WHERE process_status != 0) AS sortout,
+                                                                 CASE
+                                                                     WHEN SUM(count) > 0 THEN (SUM(count) FILTER (
+                                                                                                                  WHERE process_status != 0) * 1.0) / SUM(count)
+                                                                     ELSE 0
+                                                                 END AS sortOutPercentage,
+                                                                 plant_name,
+                                                                 zone,
+                                                                 process_date
+   FROM mapped_data
+   GROUP BY system_id,
+            plant_name,
+            zone,
+            process_date) AS virtual_table
+GROUP BY zone
+ORDER BY "Rejection Percentage" DESC
+LIMIT 1000;''',
+
+    "cyl_rejection_in_pt": f'''SELECT zone AS zone,
+               AVG("sortoutpercentage") AS "Percentage Rejection"
+FROM
+  (WITH aggregated_data AS
+     (SELECT el.system_id,
+             el.process_id,
+             el.process_status,
+             COUNT(el.event_log_id) AS count,
+             REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name,
+             el.process_date::DATE AS process_date
+      FROM lpg_event_log_data el
+      WHERE el.system_id IN (1,
+                             2)
+        AND el.process_id IN (4,
+                              24)
+      GROUP BY el.system_id,
+               el.process_id,
+               el.process_status,
+               REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1'),
+               el.process_date::DATE),
+        mapped_data AS
+     (SELECT ad.system_id,
+             ad.process_id,
+             ad.process_status,
+             ad.count,
+             ad.plant_name,
+             ad.process_date,
+             p.zone
+      FROM aggregated_data ad
+      LEFT JOIN plants p ON ad.plant_name = p.short_name) SELECT system_id,
+                                                                 SUM(count) AS handled,
+                                                                 SUM(count) FILTER (
+                                                                                    WHERE process_status != 0) AS sortout,
+                                                                 CASE
+                                                                     WHEN SUM(count) > 0 THEN (SUM(count) FILTER (
+                                                                                                                  WHERE process_status != 0) * 1.0) / SUM(count)
+                                                                     ELSE 0
+                                                                 END AS sortOutPercentage,
+                                                                 plant_name,
+                                                                 zone,
+                                                                 process_date
+   FROM mapped_data
+   GROUP BY system_id,
+            plant_name,
+            zone,
+            process_date) AS virtual_table
+GROUP BY zone
+ORDER BY "Percentage Rejection" DESC
+LIMIT 1000;''',
+
+    "cyl_count_by_carousel": f'''SELECT carousel AS carousel,
+       sum("bottling.14_2kg") AS "14.2 KG",
+       sum("bottling.19kg") AS "19 KG"
+FROM public.lpg_consolidated_data
+GROUP BY carousel
+ORDER BY "14.2 KG" DESC
+LIMIT 1000;''',
+
+    "cyl_count_by_zone": f'''SELECT zone AS zone,
+               sum("bottling.14_2kg") AS "SUM(bottling.14_2kg)",
+               sum("bottling.19kg") AS "SUM(bottling.19kg)",
+               COUNT(*) AS count
+FROM public.lpg_consolidated_data
+WHERE process_date >= TO_TIMESTAMP('{helpers.get_time_stamp_by_delta(months=1)} 00:00:00.000000', '{timezone_format}')
+  AND process_date < TO_TIMESTAMP('{helpers.get_time_stamp_by_delta(months=0)} 00:00:00.000000', '{timezone_format}')
+GROUP BY zone
+ORDER BY count DESC
+LIMIT 10000;''',
+
+    "bottom_cs_plants": f'''SELECT plant_name AS plant_name,
+       system_id AS system_id,
+       AVG("sort_out_percentage") AS "AVG(""sort_out_percentage"")"
+FROM
+  (WITH aggregated_data AS
+     (SELECT system_id,
+             topic_name,
+             DATE(process_date) AS process_date,
+             COUNT(production_log_id) AS total_count,
+             SUM(CASE
+                     WHEN process_status IN (1040, 2064, 1296, 17424, 1048, 4120, 5392, 1041, 1042, 2192, 4112, 4113, 5136, 6160) THEN 1
+                     ELSE 0
+                 END) AS sort_outs,
+             SUM(CASE
+                     WHEN process_status < 0
+                          OR process_status = 4096 THEN 1
+                     ELSE 0
+                 END) AS comm_errors
+      FROM lpg_dncceg_data
+      WHERE system_id IN (1,
+                          2)
+        AND process_id IN (2,
+                           22)
+      GROUP BY system_id,
+               topic_name,
+               DATE(process_date)),
+        final_data AS
+     (SELECT system_id,
+             topic_name,
+             process_date,
+             total_count,
+             total_count - sort_outs AS cyl_filled,
+             sort_outs,
+             comm_errors,
+             CASE
+                 WHEN total_count > 0 THEN sort_outs::FLOAT / total_count
+                 ELSE 0
+             END AS sort_out_percentage,
+             REGEXP_REPLACE(topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name
+      FROM aggregated_data) SELECT fd.*,
+                                   p.zone
+   FROM final_data fd
+   JOIN plants p ON p.short_name = fd.plant_name) AS virtual_table
+GROUP BY plant_name,
+         system_id
+ORDER BY COUNT(*) DESC
+LIMIT 10000;''',
+
+    "bottom_gd_plants": f'''SELECT plant_name AS plant_name,
+       system_id AS system_id,
+       sum(sortoutpercentage) AS "Percentage Rejection"
+FROM
+  (WITH aggregated_data AS
+     (SELECT el.system_id,
+             el.process_id,
+             el.process_status,
+             COUNT(el.event_log_id) AS count,
+             REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name,
+             el.process_date::DATE AS process_date
+      FROM lpg_event_log_data el
+      WHERE el.system_id IN (1,
+                             2)
+        AND el.process_id IN (3,
+                              23)
+      GROUP BY el.system_id,
+               el.process_id,
+               el.process_status,
+               REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1'),
+               el.process_date::DATE),
+        mapped_data AS
+     (SELECT ad.system_id,
+             ad.process_id,
+             ad.process_status,
+             ad.count,
+             ad.plant_name,
+             ad.process_date,
+             p.zone
+      FROM aggregated_data ad
+      LEFT JOIN plants p ON ad.plant_name = p.short_name) SELECT system_id,
+                                                                 SUM(count) AS handled,
+                                                                 SUM(count) FILTER (
+                                                                                    WHERE process_status != 0) AS sortout,
+                                                                 CASE
+                                                                     WHEN SUM(count) > 0 THEN (SUM(count) FILTER (
+                                                                                                                  WHERE process_status != 0) * 1.0) / SUM(count)
+                                                                     ELSE 0
+                                                                 END AS sortOutPercentage,
+                                                                 plant_name,
+                                                                 zone,
+                                                                 process_date
+   FROM mapped_data
+   GROUP BY system_id,
+            plant_name,
+            zone,
+            process_date) AS virtual_table
+GROUP BY plant_name,
+         system_id
+ORDER BY "Percentage Rejection" DESC
+LIMIT 10000;''',
+
+    "bottom_pt_plants": f'''SELECT plant_name AS plant_name,
+       system_id AS system_id,
+       sum(sortoutpercentage) AS "Percentage Rejection"
+FROM
+  (WITH aggregated_data AS
+     (SELECT el.system_id,
+             el.process_id,
+             el.process_status,
+             COUNT(el.event_log_id) AS count,
+             REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name,
+             el.process_date::DATE AS process_date
+      FROM lpg_event_log_data el
+      WHERE el.system_id IN (1,
+                             2)
+        AND el.process_id IN (4,
+                              24)
+      GROUP BY el.system_id,
+               el.process_id,
+               el.process_status,
+               REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1'),
+               el.process_date::DATE),
+        mapped_data AS
+     (SELECT ad.system_id,
+             ad.process_id,
+             ad.process_status,
+             ad.count,
+             ad.plant_name,
+             ad.process_date,
+             p.zone
+      FROM aggregated_data ad
+      LEFT JOIN plants p ON ad.plant_name = p.short_name) SELECT system_id,
+                                                                 SUM(count) AS handled,
+                                                                 SUM(count) FILTER (
+                                                                                    WHERE process_status != 0) AS sortout,
+                                                                 CASE
+                                                                     WHEN SUM(count) > 0 THEN (SUM(count) FILTER (
+                                                                                                                  WHERE process_status != 0) * 1.0) / SUM(count)
+                                                                     ELSE 0
+                                                                 END AS sortOutPercentage,
+                                                                 plant_name,
+                                                                 zone,
+                                                                 process_date
+   FROM mapped_data
+   GROUP BY system_id,
+            plant_name,
+            zone,
+            process_date) AS virtual_table
+GROUP BY plant_name,
+         system_id
+ORDER BY "Percentage Rejection" DESC
+LIMIT 10000;''',
+
+    "bottom_productivity_plants": f'''SELECT short_name AS short_name,
+       AVG("productivity.normal.productivity") AS "Total Productivity"
+FROM public.lpg_consolidated_data
+WHERE (short_name NOT IN ('sitarganj',
+                          'madurai'))
+GROUP BY short_name
+ORDER BY COUNT(*) DESC
+LIMIT 10000;''',
+
+    "productivity_by_zone": f'''SELECT DATE_TRUNC('day', process_date) AS process_date,
+       zone AS zone,
+               sum("productivity.normal.productivity") AS "SUM(productivity.normal.productivity)"
+FROM public.lpg_consolidated_data
+GROUP BY DATE_TRUNC('day', process_date),
+         zone
+ORDER BY "SUM(productivity.normal.productivity)" DESC
+LIMIT 50000;''',
+
+    "productivity_by_location": f'''SELECT DATE_TRUNC('day', process_date) AS process_date,
+       short_name AS short_name,
+       sum("productivity.normal.productivity") AS "SUM(productivity.normal.productivity)"
+FROM public.lpg_consolidated_data
+GROUP BY DATE_TRUNC('day', process_date),
+         short_name
+ORDER BY "SUM(productivity.normal.productivity)" DESC
+LIMIT 10000;''',
+
+    "consolidated_table": f'''SELECT DATE_TRUNC('day', process_date) AS process_date,
+       short_name AS short_name,
+       carousel AS carousel,
+       sum("bottling.14_2kg") AS "Bottling Summary(14.2KG)",
+       sum("bottling.19kg") AS "Bottling Summary(19KG)",
+       sum("bottling.total") AS "Bottling Summary(Total)",
+       sum("productivity.normal.production") AS "Productivity Normal Hours(Production)",
+       sum("productivity.normal.stoppages") AS "Productivity Normal Hours(Stoppage)",
+       sum("productivity.normal.productivity") AS "Productivity Normal Hours(Productivity)",
+       sum("productivity.break.production") AS "Productivity Break Hours(Production)",
+       sum("productivity.break.net_hours") AS "Productivity Break Hours(Net Hours)",
+       sum("productivity.break.productivity") AS "Productivity Break Hours(Productivity)",
+       sum("productivity.overtime.production") AS "Productivity Overtime(Production)",
+       sum("productivity.overtime.productivity") AS "Productivity Overtime(Net Hours)"
+FROM public.lpg_consolidated_data
+GROUP BY DATE_TRUNC('day', process_date),
+         short_name,
+         carousel
+ORDER BY "Bottling Summary(14.2KG)" DESC
+LIMIT 10000;''',
+
+     "top_productivity_plants": f'''SELECT short_name AS short_name,
+       AVG("productivity.normal.productivity") AS "Productivity"
+FROM public.lpg_consolidated_data
+WHERE short_name IN ('sitarganj',
+                     'madurai',
+                     'barhi',
+                     'mysore',
+                     'gummidipoondi')
+GROUP BY short_name
+ORDER BY COUNT(*) DESC
+LIMIT 10000;'''
+
+}
+
