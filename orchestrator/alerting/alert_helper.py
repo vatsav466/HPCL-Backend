@@ -100,7 +100,7 @@ async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
     redis_ins = await urdhva_base.redispool.get_redis_connection()
     redis_key = [f"{bu.upper()}", f"{sap_id.upper()}", f"{sop_id.upper()}"]
     if device_id:
-        redis_key.append(f"_{device_id.upper()}")
+        redis_key.append(f"_{str(device_id).upper()}")
     number = await redis_ins.incr("_".join(redis_key))
     redis_key.append(f"{pad_digits(number, 8)}")
     return "_".join(redis_key)

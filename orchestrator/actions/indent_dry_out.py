@@ -555,18 +555,20 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        return await function(
-            schema_name="HPCL_HOS",
-            table_name=connection_mapping.table_mapping.get("dry_out", ""),
-            records={
-                "indent_status": "Completed",
-                "site_id": alert_data['sap_id'],
-                "fcc_code": alert_data['sap_id'],
-                "product_no": int(alert_data['product_code']),
-                "tank_no": int(alert_data['device_id'])
-            },
-            conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
-        )
+        for each_tank in str(alert_data['device_id']).split(","):
+            await function(
+                schema_name="HPCL_HOS",
+                table_name=connection_mapping.table_mapping.get("dry_out", ""),
+                records={
+                    "indent_status": "Completed",
+                    "site_id": alert_data['sap_id'],
+                    "fcc_code": alert_data['sap_id'],
+                    "product_no": int(alert_data['product_code']),
+                    "tank_no": int(each_tank)
+                },
+                conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
+            )
+        return
 
     async def update_indent_no(self, indent_no: str):
         alert_data = await Alerts.get(self.params["alert_id"])
