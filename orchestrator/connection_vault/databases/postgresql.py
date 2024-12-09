@@ -305,10 +305,13 @@ class Postgresql(BaseAction):
         dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('text'), 'Boolean': str('text'),
                       'Float64': str('double precision'), 'Float32': str('double precision'),
                       'Decimal(precision=5, scale=0)': "numeric(10,0)",
+                      'Decimal(precision=None, scale=0)': "numeric(10,0)",
                       'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'),
                       "Datetime(time_unit='us', time_zone=None)": str('timestamp'),
                       "Decimal(precision=9, scale=3)": "numeric(10,3)",
                       "Decimal(precision=10, scale=3)": "numeric(10,3)",
+                      "Decimal(precision=None, scale=3)": "numeric(10,3)",
+                      "Decimal(precision=None, scale=4)": "numeric(10,3)",
                       "Decimal(precision=8, scale=3)": "numeric(10,3)", "Decimal(precision=5, scale=2)": "numeric(10,2)",
                       "Decimal(precision=10, scale=4)": "numeric(10,4)", "Datetime(time_unit='ns', time_zone=None)": str('timestamp')}
         col_dtype = {col: sample_records[col].dtype for col in sample_records.columns}
@@ -448,6 +451,7 @@ class Postgresql(BaseAction):
         """
         try:
             connection = await self.get_connection()
+            print("query: ", query)
             stmt = await connection.prepare(query)
             columns = [a.name for a in stmt.get_attributes()]
             data = await stmt.fetch()
@@ -471,6 +475,7 @@ class Postgresql(BaseAction):
         :return:
         """
         connection = await self.get_connection()
+        print(records)
         if not isinstance(records, pl.DataFrame):
             records = pl.DataFrame(records)
 

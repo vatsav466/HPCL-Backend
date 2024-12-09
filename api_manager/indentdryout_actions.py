@@ -39,17 +39,17 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     schema = connection_mapping.schema_mapping.get("cris", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
     query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" != 'Raised' AND "status" IN ('0', '1', '2');'''
-    query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-            rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no,
-            case when sum(pumpable_Stock) <=0 then 1
-            when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
-            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
-            else 6 end status
-            from "{schema}".{table} sch
-            where 1=1 and sch.volume>0 and sch.rosapcode = '41052982'
-            group by site_id, fcc_code, item_name, rosapcode
-            order by site_id, fcc_code, item_name, rosapcode'''
+    # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
+    #         rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
+    #         case when sum(pumpable_Stock) <=0 then 1
+    #         when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
+    #         when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
+    #         when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
+    #         else 6 end status
+    #         from "{schema}".{table} sch
+    #         where 1=1 and sch.volume>0
+    #         group by site_id, fcc_code, item_name, rosapcode, product_no
+    #         order by site_id, fcc_code, item_name, rosapcode, product_no'''
     records = await function(schema_name=schema, table_name=table, query=query)
     records = records.head(10).to_dicts()
 
@@ -83,14 +83,12 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         Charts_Connection_Vault_RoutingParams.connection_id = "1"
         Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        for each_tank in str(alert_data['device_id']).split(','):
-            _dry['tank_no'] = each_tank
-            await function(
-                schema_name="HPCL_HOS",
-                table_name=connection_mapping.table_mapping.get("dry_out", ""),
-                records=_dry,
-                conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
-            )
+        await function(
+            schema_name="HPCL_HOS",
+            table_name=connection_mapping.table_mapping.get("dry_out", ""),
+            records=_dry,
+            conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
+        )
         return
 
     return {"status": True, "message": "Alerts created successfully", "data": []}
