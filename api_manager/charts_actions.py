@@ -13,7 +13,8 @@ import urdhva_base.context
 from orchestrator.dashboard.chart_factory import JSONHashing
 from orchestrator.dashboard.chart_factory import date_actions
 from orchestrator.dashboard.chart_factory import charts_helpers
-import orchestrator.dbconnector.widget_actions as widget_actions
+from orchestrator.dbconnector.widget_actions import widget_actions
+# import orchestrator.dbconnector.widget_actions as widget_actions
 from orchestrator.dashboard.chart_factory import charts_functions
 router = fastapi.APIRouter(prefix='/charts')
 
@@ -487,4 +488,4 @@ async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
     :param data:
     :return:
     """
-    return await widget_actions.widget_actions.WidgetActions.execute_widget_action(data.action, data.filters)
+    return await widget_actions.WidgetActions.execute_widget_action(data.action, data.filters, data.drill_state)
