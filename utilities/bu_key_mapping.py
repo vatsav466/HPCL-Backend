@@ -1,4 +1,5 @@
 Location = {
+    "ROCode": "ro_id",
     "LocationID": "sap_id",
     "LocationName": "name",
     "LocationType": "bu",
@@ -11,7 +12,11 @@ Location = {
     "LocationPinCode": "pinCode",
     "Latitude": "latitude",
     "Longitude": "longitude",
-    "LocalAutomationVendor": "localAutomationVendor"
+    "LocalAutomationVendor": "localAutomationVendor",
+    "DealerName" : "dealer_name",
+    "DealerMobile" : "dealer_phone",
+    "DealerEmail" : "dealer_email",
+    "SalesArea": "sales_area"
 }
 
 LPG = {
