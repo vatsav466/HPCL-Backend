@@ -233,6 +233,10 @@ Model Charts {
         drill_state optional str
     }
 
+    Action=> enable_cross_filter {
+        filters list WidgetFilters
+    }
+
     Config=> {
         collection_name=charts
     }

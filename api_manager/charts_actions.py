@@ -14,7 +14,6 @@ from orchestrator.dashboard.chart_factory import JSONHashing
 from orchestrator.dashboard.chart_factory import date_actions
 from orchestrator.dashboard.chart_factory import charts_helpers
 from orchestrator.dbconnector.widget_actions import widget_actions
-# import orchestrator.dbconnector.widget_actions as widget_actions
 from orchestrator.dashboard.chart_factory import charts_functions
 router = fastapi.APIRouter(prefix='/charts')
 
@@ -489,3 +488,9 @@ async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
     :return:
     """
     return await widget_actions.WidgetActions.execute_widget_action(data.action, data.filters, data.drill_state)
+
+
+# Action enable_cross_filter
+@router.post('/enable_cross_filter', tags=['Charts'])
+async def charts_enable_cross_filter(data: Charts_Enable_Cross_FilterParams):
+    return await widget_actions.WidgetActions.execute_cross_filters(data.filters)
