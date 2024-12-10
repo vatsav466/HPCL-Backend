@@ -389,6 +389,7 @@ Model Alerts {
     indent_no optional str
     dealer_id optional str
     workflow_instance_id optional str
+    workflow_datetime optional datetime
 
     Action=> alert_action {
         action_type AlertActionType

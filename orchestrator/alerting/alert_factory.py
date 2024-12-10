@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import datetime
 import traceback
 import hpcl_ceg_enum
 import hpcl_ceg_model
@@ -87,6 +88,11 @@ class AlertFactory:
                                                         'dealer_id': str(alert_data.get('dealer_id', '')),
                                                         'product_code': str(alert_data.get('product_code', '')),
                                                         'indent_no': str(alert_data.get('indent_no', '')),
+                                                        'workflow_datetime': alert_data.get(
+                                                            'workflow_datetime',
+                                                            datetime.datetime.now(datetime.UTC)
+                                                            .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+                                                        ),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             payload = {"businessKey": unique_id,
@@ -99,6 +105,10 @@ class AlertFactory:
                                      "sop_id": {"value": sop_id, "type": "String"},
                                      "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
                                      "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
+                                     "workflow_datetime": {"value": alert_data.get(
+                                         'workflow_datetime',
+                                         datetime.datetime.now(datetime.UTC)
+                                         .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
                                      }}
 
             # Create Interlock
