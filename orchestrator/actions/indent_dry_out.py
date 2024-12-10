@@ -58,7 +58,7 @@ class IndentDryOut:
         return [
             "alert_id", "bu", "interlock_name", "interlock_id",
             "dealer_id", "connection_name", "indent_no", "location_no",
-            "product_code", "sap_id", "sop_id", "workflow_datetime"
+            "product_code", "sap_id", "sop_id", "workflow_datetime", "terminal_loc_code"
         ]
 
     async def send_alert_action(
@@ -111,7 +111,7 @@ class IndentDryOut:
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND CANCEL_INDENT IS NULL"
 
-        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO AS "INDENT_NO" , b.PROD AS "PROD" """ \
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO AS "INDENT_NO" , b.PROD AS "PROD", a.LOCN_CODE AS "LOCN_CODE" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"""AND a.PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                 f"""AND b.PROD = '{prod_code}' """ \
@@ -135,7 +135,8 @@ class IndentDryOut:
 
         if resp.get("count") > 0:
             self.params['indent_no'] = ",".join(indent_no)
-            await self.update_indent_no(str(self.params['indent_no']))
+            self.params['terminal_loc_code'] = resp.get("LOCN_CODE")
+            await self.update_indent_no(str(self.params['indent_no']), str(resp.get("LOCN_CODE")))
             # await self.update_alert_status(indent_status=IndentStatus.IndentRaised)
             return await self.send_alert_action(is_raised=True)
         input_data["action_msg"] = "Indent Not Raised"
@@ -635,7 +636,7 @@ class IndentDryOut:
         )
         return
 
-    async def update_indent_no(self, indent_no: str):
+    async def update_indent_no(self, indent_no: str, loc_code: str):
         alert_data = await Alerts.get(self.params["alert_id"])
 
         if not isinstance(alert_data, dict):
@@ -643,8 +644,11 @@ class IndentDryOut:
         instance_id = alert_data.get("workflow_instance_id")
         CAMUNDA_URL = f"{urdhva_base.settings.camunda_url}/engine-rest"
         headers = {"Content-Type": "application/json"}
-        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
-        payload = {"value": indent_no, "type": "String"}
+        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables"
+        payload = {
+            "indent_no": {"value": indent_no, "type": "String"},
+            "terminal_loc_code": {"value": loc_code, "type": "String"},
+        }
 
         response = requests.put(url, json=payload, headers=headers)
         if response.status_code != 200:

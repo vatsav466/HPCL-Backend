@@ -93,6 +93,7 @@ class AlertFactory:
                                                             datetime.datetime.now(datetime.UTC)
                                                             .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                                                         ),
+                                                        'terminal_loc_code': alert_data.get('terminal_loc_code', ''),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             payload = {"businessKey": unique_id,
@@ -109,7 +110,8 @@ class AlertFactory:
                                          'workflow_datetime',
                                          datetime.datetime.now(datetime.UTC)
                                          .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
-                                     }}
+                                     },
+                                    "terminal_loc_code": {"value": alert_data.get('terminal_loc_code', ''), "type": "String"}}
 
             # Create Interlock
             # Start workflow after creating the interlock

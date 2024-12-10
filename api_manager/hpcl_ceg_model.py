@@ -753,6 +753,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     dealer_id: Mapped[typing.Optional[str]] = mapped_column("dealer_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("workflow_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    terminal_loc_code: Mapped[typing.Optional[str]] = mapped_column("terminal_loc_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -799,6 +800,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
+    terminal_loc_code: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -850,6 +852,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
+    terminal_loc_code: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
