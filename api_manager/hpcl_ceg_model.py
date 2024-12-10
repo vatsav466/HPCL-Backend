@@ -752,6 +752,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     dealer_id: Mapped[typing.Optional[str]] = mapped_column("dealer_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    workflow_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("workflow_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    terminal_loc_code: Mapped[typing.Optional[str]] = mapped_column("terminal_loc_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -797,6 +799,8 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_datetime: typing.Optional[datetime.datetime] | None = None
+    terminal_loc_code: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -847,6 +851,8 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
+    workflow_datetime: typing.Optional[datetime.datetime] | None = None
+    terminal_loc_code: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1190,6 +1196,19 @@ class IndentDryOutGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
+    source_connection: str
+    destination_connection: str
+    source_table: str
+    destination_table: str
+    source_schema: typing.Optional[str] = pydantic.Field("", **{})
+    destination_schema: str
+    conflict_columns: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+
+class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
+    pass
+
 
 class ScreensSchema(UrdhvaPostgresBase):
     __tablename__ = 'screens'
@@ -1250,18 +1269,3 @@ class ScreensGetResp(pydantic.BaseModel):
     data: typing.List[Screens]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
-
-      
-class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
-    source_connection: str
-    destination_connection: str
-    source_table: str
-    destination_table: str
-    source_schema: typing.Optional[str] = pydantic.Field("", **{})
-    destination_schema: str
-    conflict_columns: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-
-
-class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
-    pass
-    

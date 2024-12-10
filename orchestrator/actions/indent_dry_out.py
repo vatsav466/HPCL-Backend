@@ -31,6 +31,18 @@ class IndentDryOut:
         }
         return _mapping_code
 
+    async def prod_code_reverse_mapping(self):
+        _mapping_code = {
+            "MS": "1322000",
+            "HSD": "1683000",
+            "TURBO": "1683100",
+            "E20": "1322000",
+            "POWER 95": "3672000",
+            "POWER 99": "2682000",
+            "POWER 100": "3373000"
+        }
+        return _mapping_code
+
     async def get_connection_name(self):
         self.params['connection_name'] = connection_mapping.connection_mapping.get(
             self.params['connection_name'], self.params['connection_name']
@@ -46,7 +58,7 @@ class IndentDryOut:
         return [
             "alert_id", "bu", "interlock_name", "interlock_id",
             "dealer_id", "connection_name", "indent_no", "location_no",
-            "product_code", "sap_id", "sop_id",
+            "product_code", "sap_id", "sop_id", "workflow_datetime", "terminal_loc_code"
         ]
 
     async def send_alert_action(
@@ -89,12 +101,17 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         prod_code = self.params.get("product_code")
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND CANCEL_INDENT IS NULL"
 
-        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO AS "INDENT_NO" , b.PROD AS "PROD" """ \
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO AS "INDENT_NO" , b.PROD AS "PROD", a.LOCN_CODE AS "LOCN_CODE" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"""AND a.PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                 f"""AND b.PROD = '{prod_code}' """ \
@@ -111,14 +128,15 @@ class IndentDryOut:
         }
         print("resp: ", resp)
         if not resp:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
 
-        indent_no = [i.get("INDENT_NO") for i in resp]
+        indent_no = [str(i.get("INDENT_NO")) for i in resp]
         resp = resp[0]
 
         if resp.get("count") > 0:
             self.params['indent_no'] = ",".join(indent_no)
-            await self.update_indent_no(str(self.params['indent_no']))
+            self.params['terminal_loc_code'] = resp.get("LOCN_CODE")
+            await self.update_indent_no(str(self.params['indent_no']), str(resp.get("LOCN_CODE")))
             # await self.update_alert_status(indent_status=IndentStatus.IndentRaised)
             return await self.send_alert_action(is_raised=True)
         input_data["action_msg"] = "Indent Not Raised"
@@ -134,11 +152,16 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = "','".join(self.params.get("indent_no").split(","))
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND INDENT_NO IN ('{indent_no}') AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') " \
-                f"AND CANCEL_INDENT IS NULL AND TRUCK_REGNO IS NULL"
+                f"AND CANCEL_INDENT IS NULL AND TRUCK_REGNO IS NOT NULL"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print("resp: ", resp)
@@ -149,18 +172,19 @@ class IndentDryOut:
             }
         }
         if not resp:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         if resp.get("count") > 0:
-            input_data["action_msg"] = "Truck Not Allocated"
-            input_data["action_type"] = "Message"
-            await self.update_alert_status(indent_status=IndentStatus.TruckNotAllocated, input_data=input_data)
-            return await self.send_alert_action(is_allocated=False)
-        input_data["action_msg"] = "Truck Allocated"
-        input_data["action_type"] = "Allocated"
-        input_data["event_tags"]["is_allocated"] = True
-        await self.update_alert_status(indent_status=IndentStatus.TruckAllocated, input_data=input_data)
-        return await self.send_alert_action(is_allocated=True)
+            input_data["action_msg"] = "Truck Allocated"
+            input_data["action_type"] = "Allocated"
+            input_data["event_tags"]["is_allocated"] = True
+            await self.update_alert_status(indent_status=IndentStatus.TruckAllocated, input_data=input_data)
+            return await self.send_alert_action(is_allocated=True)
+        input_data["action_msg"] = "Truck Not Allocated"
+        input_data["action_type"] = "Message"
+        await self.update_alert_status(indent_status=IndentStatus.TruckNotAllocated, input_data=input_data)
+        return await self.send_alert_action(is_allocated=False)
+
 
     async def is_indent_cancelled(self, params: dict):
         if not self.params:
@@ -170,7 +194,12 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = "','".join(self.params.get("indent_no").split(","))
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') " \
@@ -184,7 +213,7 @@ class IndentDryOut:
             }
         }
         if not resp:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD')" \
@@ -192,7 +221,7 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp_1 = await function(query=query)
         if not resp_1:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
         resp_1 = resp_1[0]
         if resp.get("count") > 0 & resp_1.get("count") == resp.get("count"):
             input_data["action_msg"] = "Indent Cancelled"
@@ -222,7 +251,12 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = "','".join(self.params.get("indent_no").split(","))
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') " \
@@ -236,7 +270,7 @@ class IndentDryOut:
             }
         }
         if not resp:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Indent On Hold"
@@ -260,7 +294,12 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = "','".join(self.params.get("indent_no").split(","))
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND CANCEL_INDENT IS NULL AND " \
@@ -274,7 +313,7 @@ class IndentDryOut:
             }
         }
         if not resp:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Valid Indent"
@@ -297,7 +336,12 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = "','".join(self.params.get("indent_no").split(","))
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR(DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND CANCEL_INDENT IS NULL AND " \
@@ -312,7 +356,7 @@ class IndentDryOut:
         }
         print(resp)
         if not resp:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Sent To SAP"
@@ -377,7 +421,12 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         indent_no = "','".join(self.params.get("indent_no").split(","))
         location_no = self.params.get("location_no")
@@ -404,7 +453,7 @@ class IndentDryOut:
             }
         }
         if not resp:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Invoice created"
@@ -434,7 +483,12 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         indent_no = "','".join(self.params.get("indent_no").split(","))
         location_no = self.params.get("location_no")
@@ -453,7 +507,7 @@ class IndentDryOut:
             }
         }
         if not resp:
-            return False, {}
+            return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         if resp.get("count") > 0:
             input_data["action_msg"] = "Sales order created"
@@ -518,7 +572,12 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
-        now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         query = f"""SELECT a.INDENT_NO AS "indent_no", b.PROD AS "product_nonumber = "12345678"" FROM "IMS_SAP"."INDENT_REQUEST" AS a, "IMS_SAP"."INDENT_PRODUCTS" AS b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' AND """ \
                 f"a.LOCN_CODE = b.LOCN_CODE AND a.PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND a.INDENT_NO = b.INDENT_NO " \
@@ -559,6 +618,10 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         # for each_tank in str(alert_data['device_id']).split(","):
+        _mapping = await self.prod_code_mapping()
+        prod_key = next((k for k, v in _mapping.items() if v == str(alert_data['product_code'])), None)
+        _reverse_mapping = await self.prod_code_reverse_mapping()
+        alert_data['product_code'] = _reverse_mapping.get(prod_key, alert_data['product_code'])
         await function(
             schema_name="HPCL_HOS",
             table_name=connection_mapping.table_mapping.get("dry_out", ""),
@@ -573,7 +636,7 @@ class IndentDryOut:
         )
         return
 
-    async def update_indent_no(self, indent_no: str):
+    async def update_indent_no(self, indent_no: str, loc_code: str):
         alert_data = await Alerts.get(self.params["alert_id"])
 
         if not isinstance(alert_data, dict):
@@ -581,8 +644,11 @@ class IndentDryOut:
         instance_id = alert_data.get("workflow_instance_id")
         CAMUNDA_URL = f"{urdhva_base.settings.camunda_url}/engine-rest"
         headers = {"Content-Type": "application/json"}
-        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
-        payload = {"value": indent_no, "type": "String"}
+        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables"
+        payload = {
+            "indent_no": {"value": indent_no, "type": "String"},
+            "terminal_loc_code": {"value": loc_code, "type": "String"},
+        }
 
         response = requests.put(url, json=payload, headers=headers)
         if response.status_code != 200:

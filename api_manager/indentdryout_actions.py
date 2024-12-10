@@ -2,6 +2,7 @@ import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
+import datetime
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from orchestrator.alerting.alert_manager import create_alert
@@ -38,7 +39,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     schema = connection_mapping.schema_mapping.get("cris", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
-    query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" != 'Raised' AND "status" IN ('0', '1', '2');'''
+    query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" NOT IN ('Raised', 'Completed') AND "status" IN ('0', '1', '2');'''
     # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
     #         rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
     #         case when sum(pumpable_Stock) <=0 then 1
@@ -62,7 +63,9 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         'product_code': '',
         'indent_no': '',
         'dealer_id': '',
-        'severity': ""
+        'severity': "",
+        'workflow_datetime': '',
+        'terminal_loc_code': ''
     }
 
     _mapping = await indent_dry_out().prod_code_mapping()
@@ -78,6 +81,8 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         alert_data['severity'] = 'Critical' if status == 0 else 'High' if status == 1 else 'Medium' if status == 2 else 'Low'
         alert_data['indent_no'] = ''
         alert_data['dealer_id'] = _dry['rosapcode']
+        alert_data['workflow_datetime'] = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+        alert_data['terminal_loc_code'] = ''
         await create_alert(alert_data)
 
         Charts_Connection_Vault_RoutingParams.connection_id = "1"
@@ -89,6 +94,5 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
             records=_dry,
             conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
         )
-        return
 
     return {"status": True, "message": "Alerts created successfully", "data": []}
