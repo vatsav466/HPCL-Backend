@@ -23,7 +23,9 @@ class LPGPlantActions:
         production_query = lpg_plant_queries.lpg_plant_query.get("production_query")
         print(production_query)
         if filters:
-            production_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(production_query, filters, drill_state )
+            production_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(production_query, filters, drill_state)
+        else:
+            production_query_ = production_query
         try:
             prod_keys, production_res = connector_factory.PostgreSQLConnector().execute_query(production_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -36,6 +38,8 @@ class LPGPlantActions:
         rejection_query = lpg_plant_queries.lpg_plant_query.get("rejection_query")
         if filters:
             rejection_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(rejection_query, filters, drill_state )
+        else:
+            rejection_query_ = rejection_query
         try:
             rej_keys, rejection_res = connector_factory.PostgreSQLConnector().execute_query(rejection_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -47,6 +51,8 @@ class LPGPlantActions:
         total_gd_rejection = lpg_plant_queries.lpg_plant_query.get("total_gd_rejection")
         if filters:
             total_gd_rejection_ = await widget_actions.WidgetActions.apply_filter_drilldown(total_gd_rejection, filters, drill_state )
+        else:
+            total_gd_rejection_ = total_gd_rejection
         try:
             gd_rej_keys, gd_rejection_res = connector_factory.PostgreSQLConnector().execute_query(total_gd_rejection_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -58,6 +64,8 @@ class LPGPlantActions:
         total_pt_rejection = lpg_plant_queries.lpg_plant_query.get("total_pt_rejection")
         if filters:
             total_pt_rejection_ = await widget_actions.WidgetActions.apply_filter_drilldown(total_pt_rejection, filters, drill_state )
+        else:
+            total_pt_rejection_ = total_pt_rejection
         try:
             pt_rej_keys, pt_rejection_res = connector_factory.PostgreSQLConnector().execute_query(total_pt_rejection_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -83,6 +91,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_productivity_cyl_per_hour(filters, drill_state):
         productivity_cyl_per_hour = lpg_plant_queries.lpg_plant_query.get("productivity_cyl_per_hour")
+        productivity_cyl_per_hour_= productivity_cyl_per_hour
         if filters:
             productivity_cyl_per_hour_ = await widget_actions.WidgetActions.apply_filter_drilldown(productivity_cyl_per_hour, filters, drill_state )
         try:
@@ -100,13 +109,14 @@ class LPGPlantActions:
     @staticmethod
     async def get_rejections_by_zones(filters, drill_state):
         rejections_by_zones_query = lpg_plant_queries.lpg_plant_query.get("rejections_by_zones")
+        rejections_by_zones_query_ = rejections_by_zones_query
         if filters:
-            rejections_by_zones_query = await widget_actions.WidgetActions.apply_filter_drilldown(rejections_by_zones_query, filters, drill_state)
+            rejections_by_zones_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(rejections_by_zones_query, filters, drill_state)
         try:
-            keys, res = connector_factory.PostgreSQLConnector().execute_query(daily_prod_query_)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(rejections_by_zones_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
-            keys, res = connector_factory.PostgreSQLConnector().execute_query(daily_prod_query)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(rejections_by_zones_query)
         data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
         if not drill_state:
             drill_state = "column"
@@ -117,6 +127,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_daily_productivity_cyl_per_hour(filters, drill_state):
         daily_prod_query = lpg_plant_queries.lpg_plant_query.get("daily_productivity_cyl_per_hour")
+        daily_prod_query_ = daily_prod_query
         if filters:
             daily_prod_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(daily_prod_query, filters, drill_state)
         try:
@@ -136,6 +147,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_cyl_rejection_in_check_scale(filters, drill_state):
         cyl_rej_query = lpg_plant_queries.lpg_plant_query.get("cyl_rejection_in_check_scale")
+        cyl_rej_query_ = cyl_rej_query
         if filters:
             cyl_rej_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(cyl_rej_query, filters, drill_state)
         try:
@@ -154,6 +166,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_cyl_rejection_in_gd(filters, drill_state):
         cyl_rej_query = lpg_plant_queries.lpg_plant_query.get("cyl_rejection_in_gd")
+        cyl_rej_query_ = cyl_rej_query
         print("*"*100)
         if filters:
             cyl_rej_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(cyl_rej_query, filters, drill_state)
@@ -176,6 +189,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_cyl_rejection_in_pt(filters, drill_state):
         cyl_rej_query = lpg_plant_queries.lpg_plant_query.get("cyl_rejection_in_pt")
+        cyl_rej_query_ = cyl_rej_query
         if filters:
             cyl_rej_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(cyl_rej_query, filters, drill_state)
         try:
@@ -194,6 +208,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_cyl_count_by_carousel(filters, drill_state):
         cyl_carousel_query = lpg_plant_queries.lpg_plant_query.get("cyl_count_by_carousel")
+        cyl_carousel_query_ = cyl_carousel_query
         if filters:
             cyl_carousel_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(cyl_carousel_query, filters, drill_state)
         try:
@@ -211,6 +226,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_cyl_count_by_zone(filters, drill_state):
         cyl_zone_query = lpg_plant_queries.lpg_plant_query.get("cyl_count_by_zone")
+        cyl_zone_query_ = cyl_zone_query
         if filters:
             cyl_zone_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(cyl_zone_query, filters, drill_state)
         try:
@@ -228,6 +244,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_bottom_cs_plants(filters, drill_state):
         cs_plants_query = lpg_plant_queries.lpg_plant_query.get("bottom_cs_plants")
+        cs_plants_query_ = cs_plants_query
         if filters:
             cs_plants_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(cs_plants_query, filters, drill_state)
         try:
@@ -245,6 +262,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_bottom_gd_plants(filters, drill_state):
         gd_plants_query = lpg_plant_queries.lpg_plant_query.get("bottom_gd_plants")
+        gd_plants_query_ = gd_plants_query
         if filters:
             gd_plants_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(gd_plants_query, filters, drill_state)
         try:
@@ -262,6 +280,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_bottom_pt_plants(filters, drill_state):
         pt_plants_query = lpg_plant_queries.lpg_plant_query.get("bottom_pt_plants")
+        pt_plants_query_ = pt_plants_query
         if filters:
             pt_plants_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(pt_plants_query, filters, drill_state)
         try:
@@ -279,6 +298,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_bottom_productivity_plants(filters, drill_state):
         prod_plants_query = lpg_plant_queries.lpg_plant_query.get("bottom_productivity_plants")
+        prod_plants_query_ = prod_plants_query
         if filters:
             prod_plants_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(prod_plants_query, filters, drill_state)
         try:
@@ -296,6 +316,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_productivity_by_zone(filters, drill_state):
         prod_by_zone_query = lpg_plant_queries.lpg_plant_query.get("productivity_by_zone")
+        prod_by_zone_query_ = prod_by_zone_query
         if filters:
             prod_by_zone_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(prod_by_zone_query, filters, drill_state)
         try:
@@ -313,6 +334,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_productivity_by_location(filters, drill_state):
         prod_by_location_query = lpg_plant_queries.lpg_plant_query.get("productivity_by_location")
+        prod_by_location_query_ = prod_by_location_query
         if filters:
             prod_by_location_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(prod_by_location_query, filters, drill_state)
         try:
@@ -330,6 +352,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_consolidated_table(filters, drill_state):
         consolidated_tab_query = lpg_plant_queries.lpg_plant_query.get("consolidated_table")
+        consolidated_tab_query_ = consolidated_tab_query
         if filters:
             consolidated_tab_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(consolidated_tab_query, filters, drill_state)
         try:
@@ -347,6 +370,7 @@ class LPGPlantActions:
     @staticmethod
     async def get_top_productivity_plants(filters, drill_state):
         top_prod_query = lpg_plant_queries.lpg_plant_query.get("top_productivity_plants")
+        top_prod_query_ =  top_prod_query
         if filters:
             top_prod_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(top_prod_query, filters, drill_state)
         try:
