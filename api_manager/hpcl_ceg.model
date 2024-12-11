@@ -103,6 +103,8 @@ Model LocationMaster {
     local_automation_vendor optional str
     latitude optional str
     longitude optional str
+    sales_area optional str
+    terminal_plant_id optional str
 
     Action=> upload_location_master {
     }
