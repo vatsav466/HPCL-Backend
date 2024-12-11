@@ -582,5 +582,8 @@ LIMIT 10000;''',
     "non_tas_alerts": f'''SELECT alert_section, COUNT(*) AS alert_count 
                           FROM public.alerts WHERE alert_section NOT IN ('TAS')
                           GROUP BY bu, alert_section;''',
+    
+    "no_of_terminals": f'''SELECT bu, COUNT(*) AS no_of_terminals FROM public.alerts 
+                           GROUP BY bu;''',
 }
 

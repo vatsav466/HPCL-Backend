@@ -25,7 +25,8 @@ lpg_dashboard_actions = [
     'sod_terminal',
     'alert_categories',
     'tas_alerts',
-    'non_tas_alerts'
+    'non_tas_alerts',
+    'no_of_terminals'
 ]
 
 # Todo:- import all widget action modules here
@@ -55,6 +56,7 @@ widget_mapping = {
     'alert_categories': {},
     'tas_alerts': {},
     'non_tas_alerts':{},
+    'no_of_terminals':{},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''}
 }

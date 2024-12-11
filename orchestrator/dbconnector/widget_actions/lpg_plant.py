@@ -495,3 +495,22 @@ class LPGPlantActions:
         drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
         return {"status": True, "message": "success", "data": data,
                 "drill_down_column": drill_down_column}
+    
+    @staticmethod
+    async def no_of_terminals(filters, drill_state):
+        no_of_terminals_query = lpg_plant_queries.lpg_plant_query.get("no_of_terminals")
+        no_of_terminals_query_ = no_of_terminals_query
+        if filters:
+            no_of_terminals_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(no_of_terminals_query, filters, drill_state)
+        try:
+            print("no_of_terminals_query_ --> ", no_of_terminals_query_)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(no_of_terminals_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(no_of_terminals_query)
+        data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
+        if not drill_state:
+            drill_state = "column"
+        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
+        return {"status": True, "message": "success", "data": data,
+                "drill_down_column": drill_down_column}
