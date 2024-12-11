@@ -532,4 +532,21 @@ class LPGPlantActions:
         drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
         return {"status": True, "message": "success", "data": data,
                 "drill_down_column": drill_down_column}
-                
+    
+    @staticmethod
+    async def alert_distributions(filters, drill_state):
+        alert_distributions_query = lpg_plant_queries.lpg_plant_query.get("alert_distributions")
+        alert_distributions_query_ = alert_distributions_query
+        if filters:
+            alert_distributions_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(alert_distributions_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(alert_distributions_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(alert_distributions_query)
+        data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
+        if not drill_state:
+            drill_state = "column"
+        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
+        return {"status": True, "message": "success", "data": data,
+                "drill_down_column": drill_down_column}

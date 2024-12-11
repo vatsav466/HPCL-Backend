@@ -606,5 +606,7 @@ LIMIT 10000;''',
                                 alerts
                             ORDER BY 
                                 alert_ageing;''',
+    
+    "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count FROM public.alerts GROUP BY severity;''',
 }
 
