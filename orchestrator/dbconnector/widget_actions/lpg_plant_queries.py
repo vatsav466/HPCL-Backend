@@ -559,7 +559,14 @@ WHERE short_name IN ('sitarganj',
                      'gummidipoondi')
 GROUP BY short_name
 ORDER BY COUNT(*) DESC
-LIMIT 10000;'''
+LIMIT 10000;''',
 
+    "high_alert_locations": f'''SELECT location_name, COUNT(*) AS alert_count
+                                FROM public.alerts WHERE severity = 'High'
+                                GROUP BY location_name;''',
+    
+    "critical_alert_locations": f'''SELECT location_name, COUNT(*) AS alert_count
+                                FROM public.alerts WHERE severity = 'Critical'
+                                GROUP BY location_name;'''
 }
 
