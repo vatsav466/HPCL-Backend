@@ -69,6 +69,9 @@
                 },
                 {
                     "name": "generate_vis_data"
+                },
+                {
+                    "name": "enable_cross_filter"
                 }
             ]
         },
@@ -180,6 +183,9 @@
                 },
                 {
                     "name": "generate_vis_data"
+                },
+                {
+                    "name": "enable_cross_filter"
                 }
             ]
         },
@@ -616,6 +622,10 @@
         {
             "name": "generate_vis_data",
             "displayName": "generate_vis_data"
+        },
+        {
+            "name": "enable_cross_filter",
+            "displayName": "enable_cross_filter"
         },
         {
             "name": "save_dashboards",
