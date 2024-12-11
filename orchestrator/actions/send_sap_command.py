@@ -55,9 +55,10 @@ class SendSapCommand:
 
         if flag == 'U':
             await asyncio.sleep(4)
-            query = (f"vehicle_number='{vehicle_number}' and device_type='{alert_data['device_type']}'"
+            query = (f"vehicle_number='{vehicle_number}' and device_type='{device_type}'"
                      f"and alert_status ='{'Open'}'")
             ndata = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
+            print("ndata---->",ndata)
             if len(ndata['data']):
                 udata1 = ndata['data']
                 for fdata in udata1:
@@ -82,7 +83,7 @@ class SendSapCommand:
         reason = alert_data.get('msg', 'IRIS')
         blocks = []
 
-        query = (f"vehicle_number='{vehicle_number}' and device_type='{alert_data['device_type']}'"
+        query = (f"vehicle_number='{vehicle_number}' and device_type='{device_type}'"
                      f"and alert_status ='{'Open'}'")
         aldata2 = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
 
