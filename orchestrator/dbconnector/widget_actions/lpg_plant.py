@@ -23,7 +23,7 @@ class LPGPlantActions:
         production_query = lpg_plant_queries.lpg_plant_query.get("production_query")
         print(production_query)
         if filters:
-            production_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(production_query, filters, drill_state )
+            production_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(production_query, filters, drill_state)
         try:
             prod_keys, production_res = connector_factory.PostgreSQLConnector().execute_query(production_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -101,12 +101,12 @@ class LPGPlantActions:
     async def get_rejections_by_zones(filters, drill_state):
         rejections_by_zones_query = lpg_plant_queries.lpg_plant_query.get("rejections_by_zones")
         if filters:
-            rejections_by_zones_query = await widget_actions.WidgetActions.apply_filter_drilldown(rejections_by_zones_query, filters, drill_state)
+            rejections_by_zones_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(rejections_by_zones_query, filters, drill_state)
         try:
-            keys, res = connector_factory.PostgreSQLConnector().execute_query(daily_prod_query_)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(rejections_by_zones_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
-            keys, res = connector_factory.PostgreSQLConnector().execute_query(daily_prod_query)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(rejections_by_zones_query)
         data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
         if not drill_state:
             drill_state = "column"
