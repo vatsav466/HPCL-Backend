@@ -77,9 +77,10 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "location_name": loc_dt['name'],
                                               "sap_id": location_id,
                                               "alert_history": [exception_msg],
-                                              "device_id" : record['device_id'],
-                                              "device_name":record['device_id'],
-                                              "message": record['video_url']
+                                              "device_id": record['device_id'],
+                                              "device_name": record['device_id'],
+                                              "message": record['video_url'],
+                                              "alert_section": "VA"
                                               })
                     
                     await cls.create_alert(interlock_details)

@@ -91,6 +91,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                     if not interlock_details:
                                         continue
                                     vts_alert_data.update(interlock_details)
+                                    vts_alert_data['alert_section'] = 'VTS'
                                     vts_alert_data['clear_count'] = details['alerting_rules'][count]['clear_count']
                                     await cls.create_alert(vts_alert_data)
                                     break
