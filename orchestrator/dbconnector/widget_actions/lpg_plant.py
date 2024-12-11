@@ -403,7 +403,7 @@ class LPGPlantActions:
             drill_state = "column"
         drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
         return {"status": True, "message": "success", "data": data,
-                "high_alert_locations": drill_down_column}
+                "drill_down_column": drill_down_column}
 
     @staticmethod
     async def critical_alert_locations(filters, drill_state):
@@ -411,7 +411,7 @@ class LPGPlantActions:
         high_alert_query_ = high_alert_query
         if filters:
             high_alert_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(high_alert_query, filters, drill_state)
-            print("high_alert_query_ --> ", high_alert_query_)
+            print("critical_alert_locations --> ", high_alert_query_)
         try:
             keys, res = connector_factory.PostgreSQLConnector().execute_query(high_alert_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -422,4 +422,22 @@ class LPGPlantActions:
             drill_state = "column"
         drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
         return {"status": True, "message": "success", "data": data,
-                "critical_alert_locations": drill_down_column}
+                "drill_down_column": drill_down_column}
+
+    @staticmethod
+    async def sod_terminal(filters, drill_state):
+        sod_terminal_query = lpg_plant_queries.lpg_plant_query.get("sod_terminal")
+        sod_terminal_query_ = sod_terminal_query
+        if filters:
+            sod_terminal_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(sod_terminal_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(sod_terminal_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(sod_terminal_query)
+        data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
+        if not drill_state:
+            drill_state = "column"
+        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
+        return {"status": True, "message": "success", "data": data,
+                "drill_down_column": drill_down_column}

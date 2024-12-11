@@ -567,6 +567,8 @@ LIMIT 10000;''',
     
     "critical_alert_locations": f'''SELECT location_name, COUNT(*) AS alert_count
                                 FROM public.alerts WHERE severity = 'Critical'
-                                GROUP BY location_name;'''
+                                GROUP BY location_name;''',
+    
+    "sod_terminal": f'''SELECT severity, COUNT(*) AS alert_count FROM public.alerts GROUP BY severity;'''
 }
 

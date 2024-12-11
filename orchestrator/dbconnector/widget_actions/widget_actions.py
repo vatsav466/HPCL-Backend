@@ -21,7 +21,8 @@ lpg_dashboard_actions = [
     'get_consolidated_table',
     'get_top_productivity_plants',
     'high_alert_locations',
-    'critical_alert_locations'
+    'critical_alert_locations',
+    'sod_terminal'
 ]
 
 # Todo:- import all widget action modules here
@@ -47,6 +48,7 @@ widget_mapping = {
     'get_top_productivity_plants': {},
     'high_alert_locations': {},
     'critical_alert_locations': {},
+    'sod_terminal': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''}
 }
