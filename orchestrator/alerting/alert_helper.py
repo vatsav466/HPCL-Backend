@@ -41,6 +41,24 @@ async def get_location_details(bu, sap_id):
             location_data = location_data.__dict__
         await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data, default=utils.datetime_serializer))
         return True, location_data
+    elif bu == "RO":
+        query = f"bu = '{bu.upper()}' AND ro_id = '{sap_id}'"
+        params = urdhva_base.queryparams.QueryParams()
+        params.limit = 100
+        params.fields = None
+        params.q = query
+        params.sort = None
+        # Fetching data from database
+        locdata = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+        print(locdata)
+        if locdata.get('data', []):
+            location_data = locdata.get('data')[0]
+            print("location_data: ", location_data)
+            if not isinstance(location_data, dict):
+                location_data = location_data.__dict__
+            await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}",
+                                 json.dumps(location_data, default=utils.datetime_serializer))
+            return True, location_data
     return False, {"msg": "Data not available"}
 
 

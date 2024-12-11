@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
-import pyodbc
+# import pyodbc
 import pymysql
 import psycopg2
 
@@ -105,12 +105,12 @@ class MySQLConnector(DBConnectorFactory):
 
 class MSSQLConnector(DBConnectorFactory):
     def get_connection(self):
-        self.connection = pyodbc.connect(
+        self.connection = "" '''pyodbc.connect(
             "Driver={SQL Server};"
             "Server=localhost;"
             "Database=mssql_db;"
             "Trusted_Connection=yes;"
-        )
+        )'''
         return self.connection
 
     def generate_query(self, table_name: str, conditions: dict = None):
@@ -124,7 +124,7 @@ class MSSQLConnector(DBConnectorFactory):
 class PostgreSQLConnector(DBConnectorFactory):
     def get_connection(self):
         self.connection = psycopg2.connect(
-            host="localhost", # localhost
+            host="140.245.238.142", # localhost
             user="ceg_user", # postgres
             password="TTNqetkiJLPM50jC", # password
             database="hpcl_ceg" # postgres_db

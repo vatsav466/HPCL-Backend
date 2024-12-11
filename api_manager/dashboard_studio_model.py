@@ -303,6 +303,10 @@ class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
     drill_state: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):
+    filters: typing.List[WidgetFiltersCreate]
+
+
 class DashboardOrderInternalCreate(pydantic.BaseModel):
     dashboard_id: int
     display_name: typing.Optional[str] = pydantic.Field("", **{})

@@ -5,7 +5,7 @@ lpg_plant_query = {
     "production_query": f'''SELECT SUM("productivity.normal.production")/1000 AS total_production,
         AVG("productivity.normal.production") AS average_production
 FROM public.lpg_consolidated_data
-WHERE TO_TIMESTAMP(process_date, 'YYYY-MM-DD HH24:MI:SS.US') BETWEEN TO_TIMESTAMP('{helpers.get_time_stamp_by_delta(months=1)} 00:00:00.000000', '{timezone_format}')
+WHERE process_date BETWEEN TO_TIMESTAMP('{helpers.get_time_stamp_by_delta(months=1)} 00:00:00.000000', '{timezone_format}')
   AND TO_TIMESTAMP('{helpers.get_time_stamp_by_delta(months=0)} 00:00:00.000000', '{timezone_format}')
 LIMIT 50000;''',
 
@@ -217,7 +217,7 @@ FROM
                  WHEN total_count > 0 THEN sort_outs::FLOAT / total_count
                  ELSE 0
              END AS sort_out_percentage,
-             REGEXP_REPLACE(topic_name, '^.*_dncceg_([^-\s]+).*$', '\\\1') AS plant_name
+             REGEXP_REPLACE(topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name
       FROM aggregated_data) SELECT fd.*,
                                    p.zone
    FROM final_data fd
@@ -238,7 +238,7 @@ FROM
              el.process_id,
              el.process_status,
              COUNT(el.event_log_id) AS count,
-             REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1') AS plant_name,
+             SUBSTRING(el.topic_name FROM '^.*_dncceg_([^-\s]+).*') AS plant_name,
              el.process_date::DATE AS process_date
       FROM lpg_event_log_data el
       WHERE el.system_id IN (1,
@@ -248,7 +248,7 @@ FROM
       GROUP BY el.system_id,
                el.process_id,
                el.process_status,
-               REGEXP_REPLACE(el.topic_name, '^.*_dncceg_([^-\s]+).*$', '\\1'),
+               SUBSTRING(el.topic_name FROM '^.*_dncceg_([^-\s]+).*'),
                el.process_date::DATE),
         mapped_data AS
      (SELECT ad.system_id,

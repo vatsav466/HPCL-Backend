@@ -50,9 +50,9 @@ class VAAlertManager(alert_factory.AlertFactory):
             interlockname = alert_data['name']'''
 
             #getting location_id in this form from payload example "location_id": "ACC, Bandra, 11073010, 11073010",
-            location_id = alert_data['location_id']
-            match = re.findall(r'\b\d{5,}\b', location_id)
-            location_id = match[-1]
+            location_id = alert_data['location_id'].split(",")[-1].strip()
+            # match = re.findall(r'\b\d{5,}\b', location_id)
+            # location_id = match[-1]
             
             # Retrieve necessary fields from the alert_data
             status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value, sap_id=location_id)
@@ -77,9 +77,10 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "location_name": loc_dt['name'],
                                               "sap_id": location_id,
                                               "alert_history": [exception_msg],
-                                              "device_id" : record['device_id'],
-                                              "device_name":record['device_id'],
-                                              "message": record['video_url']
+                                              "device_id": record['device_id'],
+                                              "device_name": record['device_id'],
+                                              "message": record['video_url'],
+                                              "alert_section": "VA"
                                               })
                     
                     await cls.create_alert(interlock_details)
