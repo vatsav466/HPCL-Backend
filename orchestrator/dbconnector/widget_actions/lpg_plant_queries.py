@@ -562,30 +562,52 @@ ORDER BY COUNT(*) DESC
 LIMIT 10000;''',
 
     "high_alert_locations": f'''SELECT location_name, COUNT(*) AS alert_count
-                                FROM public.alerts WHERE severity = 'High'
-                                GROUP BY location_name;''',
-    
+                                FROM public.alerts 
+                                WHERE severity = 'High'
+                                GROUP BY location_name 
+                                ORDER BY alert_count DESC 
+                                LIMIT 10;''',
+
     "critical_alert_locations": f'''SELECT location_name, COUNT(*) AS alert_count
-                                FROM public.alerts WHERE severity = 'Critical'
-                                GROUP BY location_name;''',
-    
-    "sod_terminal": f'''SELECT severity, COUNT(*) AS alert_count FROM public.alerts GROUP BY severity;''',
+                                FROM public.alerts 
+                                WHERE severity = 'Critical'
+                                GROUP BY location_name 
+                                ORDER BY alert_count DESC 
+                                LIMIT 10;''',
+
+    "sod_terminal": f'''SELECT severity, COUNT(*) AS alert_count 
+                        FROM public.alerts 
+                        GROUP BY severity 
+                        ORDER BY alert_count DESC 
+                        LIMIT 10;''',
 
     "alert_categories": f'''SELECT severity, alert_status, COUNT(*) AS alert_count 
-                            FROM public.alerts WHERE alert_status IN ('Open', 'Close')
-                            GROUP BY severity, alert_status;''',
-    
+                            FROM public.alerts 
+                            WHERE alert_status IN ('Open', 'Close')
+                            GROUP BY severity, alert_status 
+                            ORDER BY alert_count DESC 
+                            LIMIT 10;''',
+
     "tas_alerts": f'''SELECT bu, alert_section, COUNT(*) AS alert_count 
-                      FROM public.alerts WHERE alert_section NOT IN ('VA', 'VTS')
-                      GROUP BY bu, alert_section;''',
+                      FROM public.alerts 
+                      WHERE alert_section NOT IN ('VA', 'VTS')
+                      GROUP BY bu, alert_section 
+                      ORDER BY alert_count DESC 
+                      LIMIT 10;''',
 
     "non_tas_alerts": f'''SELECT alert_section, COUNT(*) AS alert_count 
-                          FROM public.alerts WHERE alert_section NOT IN ('TAS')
-                          GROUP BY bu, alert_section;''',
-    
-    "no_of_terminals": f'''SELECT bu, COUNT(*) AS no_of_terminals FROM public.alerts 
-                           GROUP BY bu;''',
-    
+                          FROM public.alerts 
+                          WHERE alert_section NOT IN ('TAS')
+                          GROUP BY alert_section 
+                          ORDER BY alert_count DESC 
+                          LIMIT 10;''',
+
+    "no_of_terminals": f'''SELECT bu, COUNT(*) AS no_of_terminals 
+                           FROM public.alerts 
+                           GROUP BY bu 
+                           ORDER BY no_of_terminals DESC 
+                           LIMIT 10;''',
+
     "alert_ageing": f'''SELECT DISTINCT
                                 CASE 
                                     WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
@@ -605,8 +627,13 @@ LIMIT 10000;''',
                             FROM 
                                 alerts
                             ORDER BY 
-                                alert_ageing;''',
-    
-    "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count FROM public.alerts GROUP BY severity;''',
+                                alert_ageing 
+                            LIMIT 10;''',
+
+    "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count 
+                               FROM public.alerts 
+                               GROUP BY severity 
+                               ORDER BY alert_count DESC 
+                               LIMIT 10;''',
 }
 
