@@ -569,6 +569,18 @@ LIMIT 10000;''',
                                 FROM public.alerts WHERE severity = 'Critical'
                                 GROUP BY location_name;''',
     
-    "sod_terminal": f'''SELECT severity, COUNT(*) AS alert_count FROM public.alerts GROUP BY severity;'''
+    "sod_terminal": f'''SELECT severity, COUNT(*) AS alert_count FROM public.alerts GROUP BY severity;''',
+
+    "alert_categories": f'''SELECT severity, alert_status, COUNT(*) AS alert_count 
+                            FROM public.alerts WHERE alert_status IN ('Open', 'Close')
+                            GROUP BY severity, alert_status;''',
+    
+    "tas_alerts": f'''SELECT bu, alert_section, COUNT(*) AS alert_count 
+                      FROM public.alerts WHERE alert_section NOT IN ('VA', 'VTS')
+                      GROUP BY bu, alert_section;''',
+
+    "non_tas_alerts": f'''SELECT alert_section, COUNT(*) AS alert_count 
+                          FROM public.alerts WHERE alert_section NOT IN ('TAS')
+                          GROUP BY bu, alert_section;''',
 }
 

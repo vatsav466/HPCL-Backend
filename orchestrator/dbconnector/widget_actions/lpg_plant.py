@@ -441,3 +441,57 @@ class LPGPlantActions:
         drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
         return {"status": True, "message": "success", "data": data,
                 "drill_down_column": drill_down_column}
+    
+    @staticmethod
+    async def alert_categories(filters, drill_state):
+        alert_categories_query = lpg_plant_queries.lpg_plant_query.get("alert_categories")
+        alert_categories_query_ = alert_categories_query
+        if filters:
+            alert_categories_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(alert_categories_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(alert_categories_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(alert_categories_query)
+        data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
+        if not drill_state:
+            drill_state = "column"
+        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
+        return {"status": True, "message": "success", "data": data,
+                "drill_down_column": drill_down_column}
+
+    @staticmethod
+    async def tas_alerts(filters, drill_state):
+        tas_alerts_query = lpg_plant_queries.lpg_plant_query.get("tas_alerts")
+        tas_alerts_query_ = tas_alerts_query
+        if filters:
+            tas_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(tas_alerts_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(tas_alerts_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(tas_alerts_query)
+        data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
+        if not drill_state:
+            drill_state = "column"
+        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
+        return {"status": True, "message": "success", "data": data,
+                "drill_down_column": drill_down_column}
+    
+    @staticmethod
+    async def non_tas_alerts(filters, drill_state):
+        non_tas_alerts_query = lpg_plant_queries.lpg_plant_query.get("non_tas_alerts")
+        non_tas_alerts_query_ = non_tas_alerts_query
+        if filters:
+            non_tas_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(non_tas_alerts_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(non_tas_alerts_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector().execute_query(non_tas_alerts_query)
+        data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
+        if not drill_state:
+            drill_state = "column"
+        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
+        return {"status": True, "message": "success", "data": data,
+                "drill_down_column": drill_down_column}
