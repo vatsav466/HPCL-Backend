@@ -585,5 +585,26 @@ LIMIT 10000;''',
     
     "no_of_terminals": f'''SELECT bu, COUNT(*) AS no_of_terminals FROM public.alerts 
                            GROUP BY bu;''',
+    
+    "alert_ageing": f'''SELECT DISTINCT
+                                CASE 
+                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
+                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
+                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '6 to 10 Days'
+                                    ELSE 'Older than 10 Days'
+                                END AS alert_ageing,
+                                COUNT(*) OVER (
+                                    PARTITION BY 
+                                    CASE 
+                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
+                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
+                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '6 to 10 Days'
+                                        ELSE 'Older than 10 Days'
+                                    END
+                                ) AS alert_count
+                            FROM 
+                                alerts
+                            ORDER BY 
+                                alert_ageing;''',
 }
 
