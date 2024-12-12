@@ -635,5 +635,20 @@ LIMIT 10000;''',
                                GROUP BY severity 
                                ORDER BY alert_count DESC 
                                LIMIT 10;''',
+        
+        "analytics": f'''
+                        SELECT 
+                            location_name, 
+                            COUNT(*) as alert_count, 
+                            COUNT(severity) as severity_count, 
+                            alert_status, 
+                            severity,
+                            SUM(CASE WHEN alert_status = 'open' THEN 1 ELSE 0 END) as open_count,
+                            SUM(CASE WHEN alert_status = 'closed' THEN 1 ELSE 0 END) as closed_count,
+                            (SELECT COUNT(*) FROM alerts) as total_alerts
+                        FROM alerts
+                        GROUP BY location_name, severity, alert_status
+                        ORDER BY alert_count DESC
+                        LIMIT 10;
+                        '''
 }
-
