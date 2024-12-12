@@ -485,11 +485,11 @@ class LPGPlantActions:
         if filters:
             non_tas_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(non_tas_alerts_query, filters, drill_state)
         try:
-            keys, res = connector_factory.PostgreSQLConnector().execute_query(non_tas_alerts_query_)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(non_tas_alerts_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
-            keys, res = connector_factory.PostgreSQLConnector().execute_query(non_tas_alerts_query)
-        data = connector_factory.PostgreSQLConnector().process_recommendations(keys, res)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(non_tas_alerts_query)
+        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         if not drill_state:
             drill_state = "column"
         drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
