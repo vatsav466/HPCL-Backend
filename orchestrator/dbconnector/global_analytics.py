@@ -84,5 +84,23 @@ class GlobalAnalytics:
             ]
         }
 
-        return result
+        return {"status": true, "message": "Success", "data": result}
+    
+    @staticmethod
+    async def alert_ageing(filters, drill_state):
+        alert_ageing_query = lpg_plant_queries.lpg_plant_query.get("alert_ageing")
+        alert_ageing_query_ = alert_ageing_query
+        if filters:
+            alert_ageing_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(alert_ageing_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(alert_ageing_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(alert_ageing_query)
+        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        if not drill_state:
+            drill_state = "column"
+        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
+        return {"status": True, "message": "success", "data": data,
+                "drill_down_column": drill_down_column}
         
