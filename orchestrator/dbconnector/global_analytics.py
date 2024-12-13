@@ -84,7 +84,7 @@ class GlobalAnalytics:
             ]
         }
 
-        return {"status": true, "message": "Success", "data": result}
+        return {"status": True, "message": "Success", "data": result}
     
     @staticmethod
     async def alert_ageing(filters, drill_state):
