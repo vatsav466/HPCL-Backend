@@ -37,7 +37,7 @@ class GlobalAnalytics:
         # Process the results
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         print("data --> ", data)
-        
+
         active_locations = set()
         inactive_locations = set()
         total_alerts = 0
@@ -85,7 +85,4 @@ class GlobalAnalytics:
         }
 
         return result
-
-        return result
-
         
