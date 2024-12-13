@@ -218,7 +218,7 @@ class AlertFactory:
                     alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                     alert['interlock_name'] = alert_data.get('interlock_name', '')
                     if il_data:
-                        alert['interlock_id'] = il_data[0]['id']
+                        alert['interlock_id'] = str(il_data[0]['id'])
                     data_obj = hpcl_ceg_model.Alerts(**alert)
                     await data_obj.modify()
 
