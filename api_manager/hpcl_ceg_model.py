@@ -503,6 +503,10 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     is_sent_to_sap: typing.Optional[bool] = pydantic.Field(False, )
     is_order_placed: typing.Optional[bool] = pydantic.Field(False, )
     is_created: typing.Optional[bool] = pydantic.Field(False, )
+    is_r1_swipe: typing.Optional[bool] = pydantic.Field(False, )
+    is_r2_swipe: typing.Optional[bool] = pydantic.Field(False, )
+    is_r3_swipe: typing.Optional[bool] = pydantic.Field(False, )
+    is_delivered: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -518,6 +522,10 @@ class tagsCreate(pydantic.BaseModel):
     is_sent_to_sap: typing.Optional[bool] = pydantic.Field(False, )
     is_order_placed: typing.Optional[bool] = pydantic.Field(False, )
     is_created: typing.Optional[bool] = pydantic.Field(False, )
+    is_r1_swipe: typing.Optional[bool] = pydantic.Field(False, )
+    is_r2_swipe: typing.Optional[bool] = pydantic.Field(False, )
+    is_r3_swipe: typing.Optional[bool] = pydantic.Field(False, )
+    is_delivered: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):
@@ -760,6 +768,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("workflow_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     terminal_loc_code: Mapped[typing.Optional[str]] = mapped_column("terminal_loc_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    progress_rate: Mapped[typing.Optional[int]] = mapped_column("progress_rate", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -807,6 +816,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
     terminal_loc_code: typing.Optional[str] = pydantic.Field("", **{})
+    progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -859,6 +869,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
     terminal_loc_code: typing.Optional[str] = pydantic.Field("", **{})
+    progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'

@@ -116,7 +116,7 @@ class IndentDryOut:
                 f"""AND a.PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                 f"""AND b.PROD = '{prod_code}' """ \
                 f"""AND a.LOCN_CODE = b.LOCN_CODE AND a.INDENT_NO = b.INDENT_NO AND a.CANCEL_INDENT IS NULL """ \
-                f"""GROUP BY a.INDENT_NO, b.PROD ORDER BY a.INDENT_NO DESC"""
+                f"""GROUP BY a.INDENT_NO, b.PROD, a.LOCN_CODE ORDER BY a.INDENT_NO DESC"""
 
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
@@ -616,23 +616,31 @@ class IndentDryOut:
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         # for each_tank in str(alert_data['device_id']).split(","):
         _mapping = await self.prod_code_mapping()
         prod_key = next((k for k, v in _mapping.items() if v == str(alert_data['product_code'])), None)
         _reverse_mapping = await self.prod_code_reverse_mapping()
         alert_data['product_code'] = _reverse_mapping.get(prod_key, alert_data['product_code'])
+        # await function(
+        #     schema_name="HPCL_HOS",
+        #     table_name=connection_mapping.table_mapping.get("dry_out", ""),
+        #     records={
+        #         "indent_status": "Completed",
+        #         "site_id": alert_data['sap_id'],
+        #         "fcc_code": alert_data['sap_id'],
+        #         "product_no": int(alert_data['product_code']),
+        #         "tank_no": int(alert_data['device_id']),
+        #     },
+        #     conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
+        # )
+        query = f"""UPDATE "HPCL_HOS".sch_inventory_forecast_dashboard SET "indent_status" = 'Completed' """ \
+                f"""WHERE "site_id" = '{alert_data['sap_id']}' """ \
+                f"""AND "fcc_code" = '{alert_data['sap_id']}' """ \
+                f"""AND "product_no" = '{alert_data['product_code']}' """
         await function(
-            schema_name="HPCL_HOS",
-            table_name=connection_mapping.table_mapping.get("dry_out", ""),
-            records={
-                "indent_status": "Completed",
-                "site_id": alert_data['sap_id'],
-                "fcc_code": alert_data['sap_id'],
-                "product_no": int(alert_data['product_code']),
-                "tank_no": int(alert_data['device_id']),
-            },
-            conflict_columns=["site_id", "fcc_code", "product_no", "tank_no"]
+            query=query
         )
         return
 
@@ -644,12 +652,21 @@ class IndentDryOut:
         instance_id = alert_data.get("workflow_instance_id")
         CAMUNDA_URL = f"{urdhva_base.settings.camunda_url}/engine-rest"
         headers = {"Content-Type": "application/json"}
-        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables"
+        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
         payload = {
             "indent_no": {"value": indent_no, "type": "String"},
             "terminal_loc_code": {"value": loc_code, "type": "String"},
         }
+        payload = {"value": indent_no, "type": "String"}
 
+        response = requests.put(url, json=payload, headers=headers)
+        if response.status_code != 200:
+            print("Error updating indent no", response.text)
+        else:
+            print("Indent no updated successfully")
+
+        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/terminal_loc_code"
+        payload = {"value": loc_code, "type": "String"}
         response = requests.put(url, json=payload, headers=headers)
         if response.status_code != 200:
             print("Error updating indent no", response.text)

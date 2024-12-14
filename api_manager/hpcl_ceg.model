@@ -53,6 +53,10 @@ Enum AlertActionType str {
     SentToSap='SentToSap'
     OrderPlaced='OrderPlaced'
     Created='Created'
+    R1Swipe='R1Swipe'
+    R2Swipe='R2Swipe'
+    R3Swipe='R3Swipe'
+    Delivered='Delivered'
 }
 
 Enum IndentStatus str {
@@ -70,6 +74,10 @@ Enum IndentStatus str {
     SentToSAP='SentToSAP'
     SalesOrderPlaced='SalesOrderPlaced'
     Completed='Completed'
+    R1Swipe='R1Swipe'
+    R2Swipe='R2Swipe'
+    R3Swipe='R3Swipe'
+    Delivered='Delivered'
 }
 
 Model LocationMaster {
@@ -268,6 +276,10 @@ Model Alert_History internal {
     is_sent_to_sap optional bool
     is_order_placed optional bool
     is_created optional bool
+    is_r1_swipe optional bool
+    is_r2_swipe optional bool
+    is_r3_swipe optional bool
+    is_delivered optional bool
 }
 
 Model tags internal {
@@ -283,6 +295,10 @@ Model tags internal {
     isSentToSap optional bool
     isOrderPlaced optional bool
     isCreated optional bool
+    isR1Swipe optional bool
+    isR2Swipe optional bool
+    isR3Swipe optional bool
+    isDelivered optional bool
 }
 
 Model Interlock {
@@ -393,6 +409,7 @@ Model Alerts {
     workflow_instance_id optional str
     workflow_datetime optional datetime
     terminal_loc_code optional str
+    progress_rate optional int
 
     Action=> alert_action {
         action_type AlertActionType
