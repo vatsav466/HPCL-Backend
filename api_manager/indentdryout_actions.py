@@ -120,11 +120,11 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
         "Plant Incharge\nReagional Manager", "Plant Incharge\nReagional Manager", "Plant Incharge\nReagional Manager",
         "Sales Officer\nReagional Manager"
     ]
-    query = "select location_name as name, sap_id, progress_rate as present_stage" \
-            "case when severity = 'Critical' then 0 " \
-            "when severity = 'High' then 1 " \
-            "when severity = 'Medium' then 2 " \
-            "when severity = 'Low' then 3 " \
+    query = "select location_name as name, sap_id, progress_rate as present_stage," \
+            "case when severity = 'Critical' then '0' " \
+            "when severity = 'High' then '1' " \
+            "when severity = 'Medium' then '2' " \
+            "when severity = 'Low' then '3' " \
             "else severity " \
             "end as dry_out_days " \
             "from alerts where interlock_name = 'Indent Dry Out'"
