@@ -96,3 +96,24 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         )
 
     return {"status": True, "message": "Alerts created successfully", "data": []}
+
+
+# Action get_dried_out_plants
+@router.post('/get_dried_out_plants', tags=['IndentDryOut'])
+async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_PlantsParams):
+    return [
+        {"name": "location1", "sap_id": "12345", "dry_out_days": 3, "present_stage": 3},
+        {"name": "location2", "sap_id": "112233", "dry_out_days": 2, "present_stage": 3},
+        {"name": "location3", "sap_id": "223344", "dry_out_days": 3, "present_stage": 4},
+        {"name": "location4", "sap_id": "334455", "dry_out_days": -3, "present_stage": 6},
+        {"name": "location5", "sap_id": "445566", "dry_out_days": -1, "present_stage": 5},
+        {"name": "location6", "sap_id": "556677", "dry_out_days": -2, "present_stage": 2},
+        {"name": "location6", "sap_id": "556677", "dry_out_days": -2, "present_stage": 1},
+        {"name": "location6", "sap_id": "556677", "dry_out_days": -6, "present_stage": 0}
+    ]
+
+
+# Action get_dry_out_stats
+@router.post('/get_dry_out_stats', tags=['IndentDryOut'])
+async def indentdryout_get_dry_out_stats(data: Indentdryout_Get_Dry_Out_StatsParams):
+    ...

@@ -1106,6 +1106,12 @@ class productsDetailsCreate(pydantic.BaseModel):
     qty: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class DataFiltersCreate(pydantic.BaseModel):
+    key: str
+    cond: str
+    value: str
+
+
 class IndentDryOutSchema(UrdhvaPostgresBase):
     __tablename__ = 'indent_dry_out'
     
@@ -1210,6 +1216,14 @@ class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
     source_schema: typing.Optional[str] = pydantic.Field("", **{})
     destination_schema: str
     conflict_columns: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+
+class Indentdryout_Get_Dried_Out_PlantsParams(pydantic.BaseModel):
+    filters: typing.List[DataFiltersCreate]
+
+
+class Indentdryout_Get_Dry_Out_StatsParams(pydantic.BaseModel):
+    filters: typing.List[DataFiltersCreate]
 
 
 class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):

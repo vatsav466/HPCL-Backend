@@ -917,6 +917,12 @@
                     "name": "sync_data_from_cris_to_ceg"
                 },
                 {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_dry_out_stats"
+                },
+                {
                     "name": "create_dry_out_alert"
                 }
             ]
@@ -933,6 +939,12 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_dry_out_stats"
                 }
             ]
         },
@@ -960,6 +972,12 @@
                 },
                 {
                     "name": "sync_data_from_cris_to_ceg"
+                },
+                {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_dry_out_stats"
                 },
                 {
                     "name": "create_dry_out_alert"
@@ -1197,6 +1215,14 @@
         {
             "name": "sync_data_from_cris_to_ceg",
             "displayName": "sync_data_from_cris_to_ceg"
+        },
+        {
+            "name": "get_dried_out_plants",
+            "displayName": "get_dried_out_plants"
+        },
+        {
+            "name": "get_dry_out_stats",
+            "displayName": "get_dry_out_stats"
         },
         {
             "name": "create_dry_out_alert",
