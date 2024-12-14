@@ -6,6 +6,8 @@ import aio_pika
 import traceback
 import tas_listener
 
+logger = urdhva_base.logger.Logger.getInstance("rabbitmq_processing_log")
+
 async def on_message(message: aio_pika.abc.AbstractIncomingMessage) -> None:
     """
     Callback for processing received messages.
@@ -59,13 +61,18 @@ async def consume_message():
             await channel.set_qos(prefetch_count=1)
 
             # List of queues to consume
-            rabbitmq_queues = ['ceg_tb_listener', 'ceg_oitags_listener', 'ceg_hcd_listener']
+            rabbitmq_queues = urdhva_base.settings.rabbitmq_queue
+            cleaned_queues = rabbitmq_queues.strip("[]").replace("'", "").split(',')
 
-            # Consume messages from each queue
-            for queue_name in rabbitmq_queues:
-                # Start consuming from each queue
+            # Strip any extra spaces from each queue name
+            rabbitmq_queues_list = [queue.strip() for queue in cleaned_queues]
+
+            # Print to verify the correct format
+            print(f"Queue names: {rabbitmq_queues_list}")
+
+            # Now consume messages from each queue
+            for queue_name in rabbitmq_queues_list:
                 asyncio.create_task(consume_from_queue(queue_name, channel))
-
             # Keep the consumer running
             await asyncio.Future()  # Runs indefinitely until interrupted
 
