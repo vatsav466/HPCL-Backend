@@ -88,6 +88,10 @@ class AlertActionType(str, enum.Enum):
     SentToSap = 'SentToSap'
     OrderPlaced = 'OrderPlaced'
     Created = 'Created'
+    R1Swipe = 'R1Swipe'
+    R2Swipe = 'R2Swipe'
+    R3Swipe = 'R3Swipe'
+    Delivered = 'Delivered'
 
 
 
@@ -110,6 +114,10 @@ class IndentStatus(str, enum.Enum):
     SentToSAP = 'SentToSAP'
     SalesOrderPlaced = 'SalesOrderPlaced'
     Completed = 'Completed'
+    R1Swipe = 'R1Swipe'
+    R2Swipe = 'R2Swipe'
+    R3Swipe = 'R3Swipe'
+    Delivered = 'Delivered'
 
 
 
