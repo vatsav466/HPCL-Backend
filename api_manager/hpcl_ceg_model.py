@@ -1300,3 +1300,70 @@ class ScreensGetResp(pydantic.BaseModel):
     data: typing.List[Screens]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class DeviceMasterSchema(UrdhvaPostgresBase):
+    __tablename__ = 'device_master'
+    
+    bu: Mapped[typing.Any] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_id: Mapped[typing.Optional[str]] = mapped_column("ro_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_type: Mapped[typing.Any] = mapped_column("device_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    tank_no: Mapped[typing.Optional[str]] = mapped_column("tank_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tank_name: Mapped[typing.Optional[str]] = mapped_column("tank_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tank_capacity: Mapped[typing.Optional[int]] = mapped_column("tank_capacity", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    pump_no: Mapped[typing.Optional[int]] = mapped_column("pump_no", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    du_no: Mapped[typing.Optional[int]] = mapped_column("du_no", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    nozzle_no: Mapped[typing.Optional[int]] = mapped_column("nozzle_no", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    global_nozzle_no: Mapped[typing.Optional[int]] = mapped_column("global_nozzle_no", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    product_type: Mapped[str] = mapped_column("product_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class DeviceMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'device_master'
+    
+    bu: hpcl_ceg_enum.BusinessUnit
+    sap_id: str
+    ro_id: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: hpcl_ceg_enum.DeviceType
+    tank_no: typing.Optional[str] = pydantic.Field("", **{})
+    tank_name: typing.Optional[str] = pydantic.Field("", **{})
+    tank_capacity: typing.Optional[int] = pydantic.Field(0, **{})
+    pump_no: typing.Optional[int] = pydantic.Field(0, **{})
+    du_no: typing.Optional[int] = pydantic.Field(0, **{})
+    nozzle_no: typing.Optional[int] = pydantic.Field(0, **{})
+    global_nozzle_no: typing.Optional[int] = pydantic.Field(0, **{})
+    product_type: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = DeviceMasterSchema
+        upsert_keys = []
+
+
+class DeviceMaster(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'device_master'
+    
+    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
+    sap_id: typing.Optional[str] | None = None
+    ro_id: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[hpcl_ceg_enum.DeviceType] | None = None
+    tank_no: typing.Optional[str] = pydantic.Field("", **{})
+    tank_name: typing.Optional[str] = pydantic.Field("", **{})
+    tank_capacity: typing.Optional[int] = pydantic.Field(0, **{})
+    pump_no: typing.Optional[int] = pydantic.Field(0, **{})
+    du_no: typing.Optional[int] = pydantic.Field(0, **{})
+    nozzle_no: typing.Optional[int] = pydantic.Field(0, **{})
+    global_nozzle_no: typing.Optional[int] = pydantic.Field(0, **{})
+    product_type: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = DeviceMasterSchema
+        upsert_keys = []
+
+
+class DeviceMasterGetResp(pydantic.BaseModel):
+    data: typing.List[DeviceMaster]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

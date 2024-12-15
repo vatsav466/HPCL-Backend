@@ -6,6 +6,14 @@ Enum BusinessUnit str {
     CP='CP'
 }
 
+Enum DeviceType str {
+    Tank='Tank'
+    DU='DU'
+    Pump='Pump'
+    Nozzle='Nozzle'
+    ATG='ATG'
+}
+
 Enum NotificationLevel str {
     InitialNotification='InitialNotification'
     InitialEscalation='InitialEscalation'
@@ -590,4 +598,24 @@ Model Screens {
     h optional int
     static optional bool
     moved optional bool
+}
+
+// Device Master
+Model DeviceMaster {
+    bu BusinessUnit
+    sap_id str
+    ro_id optional str
+    device_type DeviceType   // Type of the device pump/nozzle/tank/...
+    tank_no optional str     // Number of the tank
+    tank_name optional str   // Name of the tank
+    tank_capacity optional int // Capacity of tank in liters
+    pump_no optional int
+    du_no optional int
+    nozzle_no optional int
+    global_nozzle_no optional int
+    product_type str
+
+    Config=> {
+        crud_operations='read'
+    }
 }

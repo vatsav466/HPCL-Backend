@@ -1046,6 +1046,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "devicemaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceMaster",
+            "attributes": {},
+            "uris": [
+                "/api/devicemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "devicemaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/devicemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "devicemaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/devicemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

@@ -16,6 +16,19 @@ class BusinessUnit(str, enum.Enum):
 
 
 
+class DeviceType(str, enum.Enum):
+    Tank = 'Tank'
+    DU = 'DU'
+    Pump = 'Pump'
+    Nozzle = 'Nozzle'
+    ATG = 'ATG'
+
+
+
+
+
+
+
 class NotificationLevel(str, enum.Enum):
     InitialNotification = 'InitialNotification'
     InitialEscalation = 'InitialEscalation'

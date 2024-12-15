@@ -220,3 +220,14 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/screens/{id}', tags=['Screens'])
 async def delete(id: str):
     return await Screens.delete(id)
+
+
+@router.get('/devicemaster/{id}', response_model=DeviceMaster, tags=['DeviceMaster'])
+async def get(id: str):
+    return await DeviceMaster.get(id, skip_secrets=True)
+
+
+@router.get('/devicemaster', response_model=DeviceMasterGetResp, tags=['DeviceMaster'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await DeviceMaster.get_all(params, skip_secrets=True)
+

@@ -141,9 +141,8 @@ class AlertFactory:
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 print("workflow_id: ", workflow_id)
                 print("workflow_id ", workflow_id)
-                if not alert_data_dict.get("alert_section") != "VA" or alert_data_dict.get("alert_section") != "VTS":
+                if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
-                # await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
             else:
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
 
