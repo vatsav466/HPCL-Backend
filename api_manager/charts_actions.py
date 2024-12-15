@@ -436,6 +436,8 @@ async def charts_get_auto_complete_text(data: Charts_Get_Auto_Complete_TextParam
 # Action connection_vault_routing
 @router.post('/connection_vault_routing', tags=['Charts'])
 async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingParams):
+    if not data.connection_id:
+        data.connection_id = "4"
     Charts_Get_Creds_DetailsParams.connection_id = data.connection_id
     creds_details = await charts_get_creds_details(Charts_Get_Creds_DetailsParams)
     module_path = f"orchestrator.connection_vault." \

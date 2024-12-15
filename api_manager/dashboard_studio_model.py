@@ -244,6 +244,7 @@ class Charts_Get_Dashboard_Chart_FormParams(pydantic.BaseModel):
 
 class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
     connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    schema: str
     table: str
     column: typing.List[str]
     where_cond: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )

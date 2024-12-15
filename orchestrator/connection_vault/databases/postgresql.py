@@ -419,12 +419,14 @@ class Postgresql(BaseAction):
                     where_query = where_query[:-5]
                     if where_query:
                         query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
+                print("query_: ", query)
                 stmt = await connection.prepare(
                     query
                 )
                 data = await stmt.fetch()
-                data = pd.DataFrame(data)
-                columns_mapping[column] = data[column].unique().tolist()
+                # data = pd.DataFrame(data)
+                # columns_mapping[column] = data[column].unique().tolist()
+                columns_mapping[column] = [record[column] for record in data]
             # await connection.close()
             await self.close_connection(connection)
             return {
