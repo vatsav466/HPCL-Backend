@@ -627,6 +627,9 @@
                 },
                 {
                     "name": "alert_action"
+                },
+                {
+                    "name": "get_performance_index"
                 }
             ]
         },
@@ -642,6 +645,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_performance_index"
                 }
             ]
         },
@@ -669,6 +675,9 @@
                 },
                 {
                     "name": "alert_action"
+                },
+                {
+                    "name": "get_performance_index"
                 }
             ]
         },
@@ -1254,6 +1263,10 @@
         {
             "name": "alert_action",
             "displayName": "alert_action"
+        },
+        {
+            "name": "get_performance_index",
+            "displayName": "get_performance_index"
         },
         {
             "name": "upload_cems_location_master",

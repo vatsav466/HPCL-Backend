@@ -88,6 +88,12 @@ Enum IndentStatus str {
     Delivered='Delivered'
 }
 
+Model DataFilters internal {
+    key str
+    cond str
+    value str
+}
+
 Model LocationMaster {
     bu index_field BusinessUnit
     sap_id index_field str
@@ -428,6 +434,11 @@ Model Alerts {
         event_tags optional tags
     }
 
+    Action=> get_performance_index {
+        bu str
+        filters optional list DataFilters
+    }
+
     Config=> {
         crud_operations='read'
     }
@@ -533,12 +544,6 @@ Model productsDetails internal {
     prod_code optional str
     uom optional str
     qty optional str
-}
-
-Model DataFilters internal {
-    key str
-    cond str
-    value str
 }
 
 Model IndentDryOut {

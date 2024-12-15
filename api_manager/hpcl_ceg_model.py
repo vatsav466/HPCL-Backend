@@ -16,6 +16,12 @@ from sqlalchemy.orm import *
 from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
+class DataFiltersCreate(pydantic.BaseModel):
+    key: str
+    cond: str
+    value: str
+
+
 class LocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'location_master'
     
@@ -892,6 +898,11 @@ class Alerts_Alert_ActionParams(pydantic.BaseModel):
     event_tags: typing.Optional[tagsCreate] | None = None
 
 
+class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
+    bu: str
+    filters: typing.Optional[typing.List[DataFiltersCreate]] | None = None
+
+
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'cems_location_master'
     
@@ -1115,12 +1126,6 @@ class productsDetailsCreate(pydantic.BaseModel):
     prod_code: typing.Optional[str] = pydantic.Field("", **{})
     uom: typing.Optional[str] = pydantic.Field("", **{})
     qty: typing.Optional[str] = pydantic.Field("", **{})
-
-
-class DataFiltersCreate(pydantic.BaseModel):
-    key: str
-    cond: str
-    value: str
 
 
 class IndentDryOutSchema(UrdhvaPostgresBase):
