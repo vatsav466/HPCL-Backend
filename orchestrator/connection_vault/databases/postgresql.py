@@ -28,12 +28,16 @@ class Postgresql(BaseAction):
         super().__init__(params)
 
     async def get_connection(self):
-        if 'connection_name' in self.params.keys():
+        if 'connection_name' in self.params.keys() and self.params['connection_name']:
+            print("connection_name_: ",self.params['connection_name'])
             self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
-        if not isinstance(self.params, dict):
-            self.params = self.params.__dict__
-        if 'credentials' in self.params.keys():
-            self.params = self.params['credentials']
+            if not isinstance(self.params, dict):
+                self.params = self.params.__dict__
+            if 'credentials' in self.params.keys():
+                self.params = self.params['credentials']
+        else:
+            self.params = {'host': '140.245.238.142', 'port':'5432', 'user_name':'ceg_user', 'password': 'TTNqetkiJLPM50jC', 'database_name': 'hpcl_ceg'}
+            
         if self.params.get('is_ssh_tunnel', False):
             tunnel = SSHTunnelForwarder(
                 (self.params['ssh_tunnel']['host'], self.params['ssh_tunnel']['port']),

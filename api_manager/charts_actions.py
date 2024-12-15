@@ -436,12 +436,16 @@ async def charts_get_auto_complete_text(data: Charts_Get_Auto_Complete_TextParam
 # Action connection_vault_routing
 @router.post('/connection_vault_routing', tags=['Charts'])
 async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingParams):
+    # if not data.connection_id:
+    #     data.connection_id = "4"
     if not data.connection_id:
-        data.connection_id = "4"
-    Charts_Get_Creds_DetailsParams.connection_id = data.connection_id
-    creds_details = await charts_get_creds_details(Charts_Get_Creds_DetailsParams)
+        Charts_Get_Creds_DetailsParams.connection_id = None
+        creds_details = {"cred_model": "Databases", 'cred_type': "PostgreSQL"}
+    else:
+        Charts_Get_Creds_DetailsParams.connection_id = data.connection_id
+        creds_details = await charts_get_creds_details(Charts_Get_Creds_DetailsParams)
     module_path = f"orchestrator.connection_vault." \
-                  f"{creds_details['cred_model'].lower()}.{creds_details['cred_type'].lower()}"
+                f"{creds_details['cred_model'].lower()}.{creds_details['cred_type'].lower()}"
     name = creds_details['cred_type']
     module = importlib.import_module(module_path)
     klass = getattr(module, name.title().replace("_", ""))
@@ -454,6 +458,7 @@ async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingP
 @router.post('/get_creds_details', tags=['Charts'])
 async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
     try:
+
         creds_details = await CredsModel.get(data.connection_id)
         if not isinstance(creds_details, dict):
             creds_details = creds_details.__dict__
