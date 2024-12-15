@@ -98,11 +98,7 @@ class GlobalAnalytics:
             print(e)
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(alert_ageing_query)
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        if not drill_state:
-            drill_state = "column"
-        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
-        return {"status": True, "message": "success", "data": data,
-                "drill_down_column": drill_down_column}
+        return {"status": True, "message": "success", "data": data}
     
     @staticmethod
     async def no_of_locations(filters, drill_state):
@@ -116,8 +112,5 @@ class GlobalAnalytics:
             print(e)
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        if not drill_state:
-            drill_state = "column"
-        drill_down_column = await LPGPlantActions.get_next_level_drill_params(drill_state)
-        return {"status": True, "message": "success", "data": data, "drill_down_column": drill_down_column}
+        return {"status": True, "message": "success", "data": data}
                     
