@@ -900,6 +900,8 @@ class Alerts_Alert_ActionParams(pydantic.BaseModel):
 
 class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
     bu: str
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
     filters: typing.Optional[typing.List[DataFiltersCreate]] | None = None
 
 

@@ -39,8 +39,12 @@ async def alerts_alert_action(data: Alerts_Alert_ActionParams):
 # Action get_performance_index
 @router.post('/get_performance_index', tags=['Alerts'])
 async def alerts_get_performance_index(data: Alerts_Get_Performance_IndexParams):
-    query = f"SELECT sap_id, name from location_data where bu='{data.bu}'"
-    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=50000, skip=0)
+    query = f"SELECT sap_id, name from location_master where bu='{data.bu}'"
+    if not data.limit:
+        data.limit = 100
+    if not data.skip:
+        data.skip = 0
+    resp = await urdhva_base.BasePostgresModel.get_aggr_data(query, limit=data.limit, skip=data.skip)
     for rec in resp['data']:
         rec.update({"in_charge": "Location Incharge", "score": 99, "rank": 1})
     return resp['data']

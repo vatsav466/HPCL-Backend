@@ -436,6 +436,8 @@ Model Alerts {
 
     Action=> get_performance_index {
         bu str
+        skip optional int
+        limit optional int
         filters optional list DataFilters
     }
 
