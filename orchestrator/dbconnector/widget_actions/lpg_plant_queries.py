@@ -565,48 +565,41 @@ LIMIT 10000;''',
                                 FROM public.alerts 
                                 WHERE severity = 'High'
                                 GROUP BY location_name 
-                                ORDER BY alert_count DESC 
-                                LIMIT 10;''',
+                                ORDER BY alert_count DESC''',
 
     "critical_alert_locations": f'''SELECT location_name, COUNT(*) AS alert_count
                                 FROM public.alerts 
                                 WHERE severity = 'Critical'
                                 GROUP BY location_name 
-                                ORDER BY alert_count DESC 
-                                LIMIT 10;''',
+                                ORDER BY alert_count DESC''',
 
     "sod_terminal": f'''SELECT severity, COUNT(*) AS alert_count 
                         FROM public.alerts 
                         GROUP BY severity 
-                        ORDER BY alert_count DESC 
-                        LIMIT 10;''',
+                        ORDER BY alert_count DESC''',
 
     "alert_categories": f'''SELECT severity, alert_status, COUNT(*) AS alert_count 
                             FROM public.alerts 
                             WHERE alert_status IN ('Open', 'Close')
                             GROUP BY severity, alert_status 
-                            ORDER BY alert_count DESC 
-                            LIMIT 10;''',
+                            ORDER BY alert_count DESC''',
 
     "tas_alerts": f'''SELECT bu, alert_section, COUNT(*) AS alert_count 
                       FROM public.alerts 
                       WHERE alert_section NOT IN ('VA', 'VTS')
                       GROUP BY bu, alert_section 
-                      ORDER BY alert_count DESC 
-                      LIMIT 10;''',
+                      ORDER BY alert_count DESC''',
 
     "non_tas_alerts": f'''SELECT alert_section, COUNT(*) AS alert_count 
                           FROM public.alerts 
                           WHERE alert_section NOT IN ('TAS')
                           GROUP BY alert_section 
-                          ORDER BY alert_count DESC 
-                          LIMIT 10;''',
+                          ORDER BY alert_count DESC''',
 
     "no_of_terminals": f'''SELECT bu, COUNT(*) AS no_of_terminals 
                            FROM public.alerts 
                            GROUP BY bu 
-                           ORDER BY no_of_terminals DESC 
-                           LIMIT 10;''',
+                           ORDER BY no_of_terminals DESC''',
 
     "alert_ageing": f'''SELECT DISTINCT
                                 CASE 
@@ -627,28 +620,22 @@ LIMIT 10000;''',
                             FROM 
                                 alerts
                             ORDER BY 
-                                alert_ageing 
-                            LIMIT 10;''',
+                                alert_ageing''',
 
     "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count 
                                FROM public.alerts 
                                GROUP BY severity 
-                               ORDER BY alert_count DESC 
-                               LIMIT 10;''',
+                               ORDER BY alert_count DESC ;''',
         
-        "analytics": f'''
-                        SELECT 
-                            location_name, 
-                            COUNT(*) as alert_count, 
-                            COUNT(severity) as severity_count, 
-                            alert_status, 
-                            severity,
-                            SUM(CASE WHEN alert_status = 'open' THEN 1 ELSE 0 END) as open_count,
-                            SUM(CASE WHEN alert_status = 'closed' THEN 1 ELSE 0 END) as closed_count,
-                            (SELECT COUNT(*) FROM alerts) as total_alerts
-                        FROM alerts
-                        GROUP BY location_name, severity, alert_status
-                        ORDER BY alert_count DESC
-                        LIMIT 10;
-                        '''
+    "analytics": f'''SELECT 
+                        a.sap_id, a.interlock_name,
+                        COUNT(a.severity) as severity_count, 
+                        a.alert_status, 
+                        a.severity,
+                        b.name
+                    FROM alerts a 
+                    left join location_master b ON a.sap_id = b.sap_id
+                    GROUP BY a.sap_id, a.interlock_name, a.severity, a.alert_status, b.name
+                    ORDER BY severity_count DESC;
+                    '''
 }
