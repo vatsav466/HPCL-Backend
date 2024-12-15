@@ -56,12 +56,19 @@ class VAAlertManager(alert_factory.AlertFactory):
             
             # Retrieve necessary fields from the alert_data
             status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value, sap_id=location_id)
-            if status:
-                alert_data['location_data'] = loc_dt
+            if not status:
+                return
 
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
             for record in alert_data['data']:
                 try:
+                    rediskey = f"{alert_data['location_type'].value}{location_id}{record['device_id'].lower()}"
+                    redis_ins = await urdhva_base.redispool.get_redis_connection()
+                    if await redis_ins.exists(rediskey):
+                           return 
+                    # Afredis_ins.setexert
+                    await redis_ins.setex(rediskey, 4*60*60, record['device_id'])
+
                     exception_msg = (f"alert_type - {record['alert_type']},"
                                          f"alert_description - {record['alert_description']},"
                                          f"device_id - {record['device_id']},"
@@ -69,9 +76,13 @@ class VAAlertManager(alert_factory.AlertFactory):
                                          f"Exception Date - {recv_time}")
                     
                     print("Exception Message",exception_msg)
-                    
+                    interlock_name = " ".join(re.split(r'[_-]', record['alert_type'])).title() + " " + alert_data['location_type'].value
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
-                        alert_data['location_type'].value, va_mapping.va_interlock_mapping[record.get('alert_type')]['interlock_name'])
+                        alert_data['location_type'].value, interlock_name)
+                    
+                    if not interlock_details:
+                        print("Interlock Details Not Found for this alert_type")
+                        return
 
                     interlock_details.update({"bu": alert_data['location_type'].value,
                                               "location_name": loc_dt['name'],
