@@ -1,5 +1,6 @@
 import urdhva_base
 import re
+from orchestrator.dbconnector import global_analytics
 from orchestrator.dbconnector.widget_actions import lpg_plant
 
 lpg_dashboard_actions = [
@@ -19,7 +20,17 @@ lpg_dashboard_actions = [
     'get_productivity_by_zone',
     'get_productivity_by_location',
     'get_consolidated_table',
-    'get_top_productivity_plants'
+    'get_top_productivity_plants',
+    'high_alert_locations',
+    'critical_alert_locations',
+    'sod_terminal',
+    'alert_categories',
+    'tas_alerts',
+    'non_tas_alerts',
+    'no_of_terminals',
+    'alert_ageing',
+    'alert_distributions',
+    'analytics'
 ]
 
 # Todo:- import all widget action modules here
@@ -43,21 +54,58 @@ widget_mapping = {
     'get_productivity_by_location': {},
     'get_consolidated_table': {},
     'get_top_productivity_plants': {},
+    'high_alert_locations': {},
+    'critical_alert_locations': {},
+    'sod_terminal': {},
+    'alert_categories': {},
+    'tas_alerts': {},
+    'non_tas_alerts':{},
+    'no_of_terminals':{},
+    'alert_ageing': {},
+    'alert_distributions': {},
+    'analytics': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''}
 }
 
 
-
 class WidgetActions:
     @staticmethod
+    # Safely resolve the module and function
     async def execute_widget_action(func_name, filters, drill_state):
-        if func_name not in widget_mapping:
-            return {"status": False, "message": "Not supported action", "data": []}
+        try:
+            # Debugging: Log the input function name
+            print(f"Received func_name: {func_name}")
+
+            # Determine the module containing the function
+            if hasattr(lpg_plant.LPGPlantActions, func_name):
+                module = lpg_plant.LPGPlantActions
+                print(f"Function {func_name} found in LPGPlantActions.")
+            elif hasattr(global_analytics.GlobalAnalytics, func_name):
+                module = global_analytics.GlobalAnalytics
+                print(f"Function {func_name} found in GlobalAnalytics.")
+            else:
+                # List available functions in each module for debugging
+                print(f"Available functions in LPGPlantActions: {dir(lpg_plant.LPGPlantActions)}")
+                print(f"Available functions in GlobalAnalytics: {dir(global_analytics.GlobalAnalytics)}")
+                raise AttributeError(f"Function {func_name} not found in either module.")
+
+            # Retrieve the function from the resolved module
+            func = getattr(module, func_name)
+            print(f"Resolved function: {dir(func)}")
+
+            # Execute the function asynchronously
+            return await func(filters, drill_state)
         
-        return await eval(f"lpg_plant.LPGPlantActions.{func_name}")(filters, drill_state)
-        # return await eval(f"{widget_mapping[func_name]['module_name']}."
-        #                   f"{widget_mapping[func_name]['func_name']}")(filters, drill_state)
+        except AttributeError as e:
+            # Handle case where the function name is invalid
+            raise RuntimeError(
+                f"Error resolving function: {func_name} not found. "
+                f"Checked in LPGPlantActions: {hasattr(lpg_plant.LPGPlantActions, func_name)}, "
+                f"and GlobalAnalytics: {hasattr(global_analytics.GlobalAnalytics, func_name)}. "
+                f"Original error: {e}"
+            )
+
 
     @staticmethod
     async def execute_cross_filters(filters):

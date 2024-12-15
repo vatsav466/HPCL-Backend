@@ -35,8 +35,8 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
 
     # Iterate over each sheet and its corresponding DataFrame
     for sheet_name, df in sheets.items():
-        df.fillna("", inplace=True)  # Replace NaN values with empty strings to simplify processing
-
+        df = df.fillna("")  # Replace NaN values with empty strings to simplify processing
+        print("df --> ", df)
         # Convert each row in the DataFrame to a dictionary
         for record in df.to_dict(orient="records"):
             # Extract and clean the device name, then remove it from the record
@@ -46,9 +46,13 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
             record.pop("S.No", None)
 
             # Construct a list of sensors from the remaining key-value pairs in the record
+            # sensors = [
+            #     {"sensor_name": key.strip(), "sensor_tag": value.strip()}
+            #     for key, value in record.items() if value  # Include only non-empty values
+            # ]
             sensors = [
                 {"sensor_name": key.strip(), "sensor_tag": value.strip()}
-                for key, value in record.items() if value  # Include only non-empty values
+                for key, value in record.items()  # Include only non-empty values
             ]
 
             # Add the processed device data to the list
@@ -268,7 +272,7 @@ class ThingsBoardInterface:
                 else:
                     # If sensor_tag is not found, log or assign a default value
                     print(f"Sensor tag {sensor_tag} not found in device data.")
-                    device_scope[sensor_name] = None  # Or some default value
+                    device_scope[sensor_name] = '0'  # Or some default value
                     # telemetry_scope[sensor_name] = None
 
         # Check if the device already exists by querying the device info

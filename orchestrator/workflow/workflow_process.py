@@ -1,7 +1,8 @@
+import urdhva_base
 import json
 import requests
 import traceback
-import urdhva_base
+import hpcl_ceg_model
 
 
 logger = urdhva_base.logger.Logger.getInstance("workflow_process_log")
@@ -30,6 +31,7 @@ class Camunda:
             response.raise_for_status()
             print(response.json())
             logger.info(response.json())
+            await self.update_alerts_with_instance_id(payload['variables']['alert_id']['value'], response.json().get("id"))
         except requests.exceptions.RequestException as e:
             print(f"Error starting workflow: {e}")
             logger.error(f"Error starting workflow: {e}")
@@ -54,3 +56,11 @@ class Camunda:
             print("Camunda close response code: %s text:%s" % (response.status_code, response.text))
         else:
             print("InterLock Ok Successfully Sent to : " + str(workflowId))
+
+    async def update_alerts_with_instance_id(self, alert_id, instance_id):
+        alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
+
+        alert_data['workflow_instance_id'] = instance_id
+        await hpcl_ceg_model.Alerts(**alert_data).modify()

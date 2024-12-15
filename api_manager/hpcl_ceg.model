@@ -6,6 +6,14 @@ Enum BusinessUnit str {
     CP='CP'
 }
 
+Enum DeviceType str {
+    Tank='Tank'
+    DU='DU'
+    Pump='Pump'
+    Nozzle='Nozzle'
+    ATG='ATG'
+}
+
 Enum NotificationLevel str {
     InitialNotification='InitialNotification'
     InitialEscalation='InitialEscalation'
@@ -53,6 +61,10 @@ Enum AlertActionType str {
     SentToSap='SentToSap'
     OrderPlaced='OrderPlaced'
     Created='Created'
+    R1Swipe='R1Swipe'
+    R2Swipe='R2Swipe'
+    R3Swipe='R3Swipe'
+    Delivered='Delivered'
 }
 
 Enum IndentStatus str {
@@ -70,6 +82,16 @@ Enum IndentStatus str {
     SentToSAP='SentToSAP'
     SalesOrderPlaced='SalesOrderPlaced'
     Completed='Completed'
+    R1Swipe='R1Swipe'
+    R2Swipe='R2Swipe'
+    R3Swipe='R3Swipe'
+    Delivered='Delivered'
+}
+
+Model DataFilters internal {
+    key str
+    cond str
+    value str
 }
 
 Model LocationMaster {
@@ -103,6 +125,8 @@ Model LocationMaster {
     local_automation_vendor optional str
     latitude optional str
     longitude optional str
+    sales_area optional str
+    terminal_plant_id optional str
 
     Action=> upload_location_master {
     }
@@ -266,6 +290,10 @@ Model Alert_History internal {
     is_sent_to_sap optional bool
     is_order_placed optional bool
     is_created optional bool
+    is_r1_swipe optional bool
+    is_r2_swipe optional bool
+    is_r3_swipe optional bool
+    is_delivered optional bool
 }
 
 Model tags internal {
@@ -281,6 +309,10 @@ Model tags internal {
     isSentToSap optional bool
     isOrderPlaced optional bool
     isCreated optional bool
+    isR1Swipe optional bool
+    isR2Swipe optional bool
+    isR3Swipe optional bool
+    isDelivered optional bool
 }
 
 Model Interlock {
@@ -388,6 +420,10 @@ Model Alerts {
     product_code optional str
     indent_no optional str
     dealer_id optional str
+    workflow_instance_id optional str
+    workflow_datetime optional datetime
+    terminal_loc_code optional str
+    progress_rate optional int
 
     Action=> alert_action {
         action_type AlertActionType
@@ -396,6 +432,13 @@ Model Alerts {
         days optional int
         justificationType optional str
         event_tags optional tags
+    }
+
+    Action=> get_performance_index {
+        bu str
+        skip optional int
+        limit optional int
+        filters optional list DataFilters
     }
 
     Config=> {
@@ -538,6 +581,14 @@ Model IndentDryOut {
         conflict_columns optional list str
     }
 
+    Action=> get_dried_out_plants {
+        filters list DataFilters
+    }
+
+    Action=> get_dry_out_stats {
+        filters list DataFilters
+    }
+
     Action=> create_dry_out_alert {
 
     }
@@ -554,4 +605,24 @@ Model Screens {
     h optional int
     static optional bool
     moved optional bool
+}
+
+// Device Master
+Model DeviceMaster {
+    bu BusinessUnit
+    sap_id str
+    ro_id optional str
+    device_type DeviceType   // Type of the device pump/nozzle/tank/...
+    tank_no optional str     // Number of the tank
+    tank_name optional str   // Name of the tank
+    tank_capacity optional int // Capacity of tank in liters
+    pump_no optional int
+    du_no optional int
+    nozzle_no optional int
+    global_nozzle_no optional int
+    product_type str
+
+    Config=> {
+        crud_operations='read'
+    }
 }

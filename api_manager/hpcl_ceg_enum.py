@@ -16,6 +16,19 @@ class BusinessUnit(str, enum.Enum):
 
 
 
+class DeviceType(str, enum.Enum):
+    Tank = 'Tank'
+    DU = 'DU'
+    Pump = 'Pump'
+    Nozzle = 'Nozzle'
+    ATG = 'ATG'
+
+
+
+
+
+
+
 class NotificationLevel(str, enum.Enum):
     InitialNotification = 'InitialNotification'
     InitialEscalation = 'InitialEscalation'
@@ -88,6 +101,10 @@ class AlertActionType(str, enum.Enum):
     SentToSap = 'SentToSap'
     OrderPlaced = 'OrderPlaced'
     Created = 'Created'
+    R1Swipe = 'R1Swipe'
+    R2Swipe = 'R2Swipe'
+    R3Swipe = 'R3Swipe'
+    Delivered = 'Delivered'
 
 
 
@@ -110,6 +127,10 @@ class IndentStatus(str, enum.Enum):
     SentToSAP = 'SentToSAP'
     SalesOrderPlaced = 'SalesOrderPlaced'
     Completed = 'Completed'
+    R1Swipe = 'R1Swipe'
+    R2Swipe = 'R2Swipe'
+    R3Swipe = 'R3Swipe'
+    Delivered = 'Delivered'
 
 
 

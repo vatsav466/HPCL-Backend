@@ -3,14 +3,16 @@ from decimal import Decimal
 # import pyodbc
 import pymysql
 import psycopg2
+import orchestrator.dbconnector.credential_loader as credential_loader
 
 
 class DBConnectorFactory(ABC):
-    def __init__(self):
+    def __init__(self, conn_type):
+        self.conn_type=conn_type
         self.connection = None
 
     @abstractmethod
-    def get_connection(self):
+    def get_connection(self, cred_type):
         """Establish a connection to the database."""
         pass
 
@@ -123,11 +125,12 @@ class MSSQLConnector(DBConnectorFactory):
 
 class PostgreSQLConnector(DBConnectorFactory):
     def get_connection(self):
+        creds = credential_loader.get_credentials(self.conn_type)
         self.connection = psycopg2.connect(
-            host="140.245.238.142", # localhost
-            user="ceg_user", # postgres
-            password="TTNqetkiJLPM50jC", # password
-            database="hpcl_ceg" # postgres_db
+            host=creds["host"], # localhost
+            user=creds["user"], # postgres
+            password=creds["password"], # password
+            database=creds["database"] # postgres_db
         )
         return self.connection
 

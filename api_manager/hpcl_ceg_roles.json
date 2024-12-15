@@ -627,6 +627,9 @@
                 },
                 {
                     "name": "alert_action"
+                },
+                {
+                    "name": "get_performance_index"
                 }
             ]
         },
@@ -642,6 +645,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_performance_index"
                 }
             ]
         },
@@ -669,6 +675,9 @@
                 },
                 {
                     "name": "alert_action"
+                },
+                {
+                    "name": "get_performance_index"
                 }
             ]
         },
@@ -917,6 +926,12 @@
                     "name": "sync_data_from_cris_to_ceg"
                 },
                 {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_dry_out_stats"
+                },
+                {
                     "name": "create_dry_out_alert"
                 }
             ]
@@ -933,6 +948,12 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_dry_out_stats"
                 }
             ]
         },
@@ -960,6 +981,12 @@
                 },
                 {
                     "name": "sync_data_from_cris_to_ceg"
+                },
+                {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_dry_out_stats"
                 },
                 {
                     "name": "create_dry_out_alert"
@@ -1013,6 +1040,69 @@
             "attributes": {},
             "uris": [
                 "/api/screens/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "devicemaster",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceMaster",
+            "attributes": {},
+            "uris": [
+                "/api/devicemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "devicemaster_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceMaster_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/devicemaster/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "devicemaster_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DeviceMaster_admin",
+            "attributes": {},
+            "uris": [
+                "/api/devicemaster/*"
             ],
             "scopes": [
                 {
@@ -1175,6 +1265,10 @@
             "displayName": "alert_action"
         },
         {
+            "name": "get_performance_index",
+            "displayName": "get_performance_index"
+        },
+        {
             "name": "upload_cems_location_master",
             "displayName": "upload_cems_location_master"
         },
@@ -1197,6 +1291,14 @@
         {
             "name": "sync_data_from_cris_to_ceg",
             "displayName": "sync_data_from_cris_to_ceg"
+        },
+        {
+            "name": "get_dried_out_plants",
+            "displayName": "get_dried_out_plants"
+        },
+        {
+            "name": "get_dry_out_stats",
+            "displayName": "get_dry_out_stats"
         },
         {
             "name": "create_dry_out_alert",

@@ -37,8 +37,9 @@ async def locationmaster_upload_location_master(upload_file: fastapi.UploadFile 
         HTTPException: If there is an error processing the CSV file.
     """
     try:
-        df = pl.read_csv(upload_file.file).with_columns(pl.all().cast(pl.Utf8, strict=False))
+        df = pl.read_csv(upload_file.file, infer_schema_length=0).with_columns(pl.all().cast(pl.Utf8, strict=False))
     except Exception as e:
+        print(traceback.format_exc())
         print(f"Exception while reading CSV file, {e}")
         return False, "Failed to process CSV file, Please reverify uploaded content and reverify"
     return await location_master_upload.upload_location_master_data(df)
