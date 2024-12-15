@@ -76,6 +76,7 @@ tas_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviat
                          {"sop_id": "SOP022", "interlock_name": "Additive Under-dose Alarm"},
                          {"sop_id": "SOP023", "interlock_name": "Operability Index"},
                          {"sop_id": "SOP024", "interlock_name": "Intrusion Detection", "model": "VA"},
+                         {"sop_id": "SOP024", "interlock_name": "Valve Open TAS", "model": "VA"},
                          {"sop_id": "SOP025", "interlock_name": "Non-wearing of Safety Belt at Height", "model": "VA"},
                          {"sop_id": "SOP026", "interlock_name": "Non-Wearing of Safety Helmet", "model": "VA"},
                          {"sop_id": "SOP027", "interlock_name": "Person not wearing Safety Helmet", "model": "VA"},
@@ -98,13 +99,17 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlo
                         {"sop_id": "SOP005", "interlock_name": "k-Factor Interlock"},
                         {"sop_id": "SOP006", "interlock_name": "Tank Low Level  Interlock"},
                         {"sop_id": "SOP007", "interlock_name": "Water Level High Interlock"},
-                        {"sop_id": "SOP008", "interlock_name": "Safety Violations during decantation(VA)",
+                        {"sop_id": "SOP008", "interlock_name": "Absence Of Sand Bucket Decantation RO",
                          "model": "VA"},
-                        {"sop_id": "SOP009", "interlock_name": "Vehicle count / Queue management(VA)", "model": "VA"},
+                        {"sop_id": "SOP008", "interlock_name": "Absence Of Sand Bucket RO","model": "VA"},
+                        {"sop_id": "SOP009", "interlock_name": "Overstaying Of Heavy Vehicle RO", "model": "VA"},
+                        {"sop_id": "SOP009", "interlock_name": "Overstaying Of Four Wheelers RO", "model": "VA"},
+                        {"sop_id": "SOP009", "interlock_name": "Overstaying Of Two Wheelers RO", "model": "VA"},
                         {"sop_id": "SOP010", "interlock_name": "ATG Communication Failure Interlock"},
                         {"sop_id": "SOP011", "interlock_name": "TT Decantation Interlock"},
                         {"sop_id": "SOP012", "interlock_name": "FCC Offline"},
                         {"sop_id": "SOP013", "interlock_name": "High level ( ATG) interlock"},
+                        {"sop_id": "SOP016", "interlock_name": "Absence Of Fire Extinguisher RO", "model": "VA"},
                         {"sop_id": "SOP018", "interlock_name": "Nozzle"},
                         {"sop_id": "SOP999", "interlock_name": "Nozzle Interlock"},
                         {"sop_id": "SOP999", "interlock_name": "Bay Interlock"},
@@ -132,9 +137,9 @@ lpg_interlock_mapping = [
     {"sop_id": "SOP016", "interlock_name": "Non-wearing of Safety Belt at Height", "model": "VA"},
     {"sop_id": "SOP017", "interlock_name": "LPG Leakage/Fire in Plant", "model": "VA"},
     {"sop_id": "SOP018", "interlock_name": "Loss of communication(VA)", "model": "VA"},
-    {"sop_id": "SOP021", "interlock_name": "Person not wearing Safety Helmet", "model": "VA"},
+    {"sop_id": "SOP021", "interlock_name": "Ppe Compliance LPG", "model": "VA"},
     {"sop_id": "SOP022", "interlock_name": "Person not wearing Safety Harness/Belt", "model": "VA"},
-    {"sop_id": "SOP023", "interlock_name": "Fire Extinguisher is not available", "model": "VA"},
+    {"sop_id": "SOP023", "interlock_name": "Fire Extinguisher LPG", "model": "VA"},
     {"sop_id": "SOP024", "interlock_name": "Fire Hose is not available", "model": "VA"},
     {"sop_id": "SOP025", "interlock_name": "Person not wearing Protective Clothing", "model": "VA"},
     {"sop_id": "SOP026", "interlock_name": "Camera is offline", "model": "VA"},
@@ -181,7 +186,7 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
         print("filtered_data(2)", filtered_data)
-    print("filtered_data--->", filtered_data[0])
+    #print("filtered_data--->", filtered_data[0])
     return filtered_data[0] if filtered_data else {}
 
 

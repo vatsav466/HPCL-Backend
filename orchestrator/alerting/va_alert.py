@@ -50,18 +50,25 @@ class VAAlertManager(alert_factory.AlertFactory):
             interlockname = alert_data['name']'''
 
             #getting location_id in this form from payload example "location_id": "ACC, Bandra, 11073010, 11073010",
-            location_id = alert_data['location_id']
-            match = re.findall(r'\b\d{5,}\b', location_id)
-            location_id = match[-1]
+            location_id = alert_data['location_id'].split(",")[-1].strip()
+            # match = re.findall(r'\b\d{5,}\b', location_id)
+            # location_id = match[-1]
             
             # Retrieve necessary fields from the alert_data
             status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value, sap_id=location_id)
-            if status:
-                alert_data['location_data'] = loc_dt
+            if not status:
+                return
 
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
             for record in alert_data['data']:
                 try:
+                    rediskey = f"{alert_data['location_type'].value}{location_id}{record['device_id'].lower()}"
+                    redis_ins = await urdhva_base.redispool.get_redis_connection()
+                    if await redis_ins.exists(rediskey):
+                           return 
+                    # Afredis_ins.setexert
+                    await redis_ins.setex(rediskey, 4*60*60, record['device_id'])
+
                     exception_msg = (f"alert_type - {record['alert_type']},"
                                          f"alert_description - {record['alert_description']},"
                                          f"device_id - {record['device_id']},"
@@ -69,17 +76,22 @@ class VAAlertManager(alert_factory.AlertFactory):
                                          f"Exception Date - {recv_time}")
                     
                     print("Exception Message",exception_msg)
-                    
+                    interlock_name = " ".join(re.split(r'[_-]', record['alert_type'])).title() + " " + alert_data['location_type'].value
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
-                        alert_data['location_type'].value, va_mapping.va_interlock_mapping[record.get('alert_type')]['interlock_name'])
+                        alert_data['location_type'].value, interlock_name)
+                    
+                    if not interlock_details:
+                        print("Interlock Details Not Found for this alert_type")
+                        return
 
                     interlock_details.update({"bu": alert_data['location_type'].value,
                                               "location_name": loc_dt['name'],
                                               "sap_id": location_id,
                                               "alert_history": [exception_msg],
-                                              "device_id" : record['device_id'],
-                                              "device_name":record['device_id'],
-                                              "message": record['video_url']
+                                              "device_id": record['device_id'],
+                                              "device_name": record['device_id'],
+                                              "message": record['video_url'],
+                                              "alert_section": "VA"
                                               })
                     
                     await cls.create_alert(interlock_details)
