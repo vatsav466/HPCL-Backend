@@ -637,5 +637,8 @@ LIMIT 10000;''',
                     left join location_master b ON a.sap_id = b.sap_id
                     GROUP BY a.sap_id, a.interlock_name, a.severity, a.alert_status, b.name
                     ORDER BY severity_count DESC;
-                    '''
+                    ''',
+
+    "no_of_locations": f'''SELECT COUNT(sap_id) FROM location_master'''
+
 }
