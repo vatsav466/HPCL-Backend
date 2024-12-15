@@ -4,9 +4,10 @@ import json
 import datetime
 import traceback
 import utilities.interlock_mapping
-import utilities.va_mapping as va_mapping
+import utilities.va_alert_mapping as va_alert_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
+import utilities.va_alert_mapping
 
 logger = urdhva_base.logger.Logger.getInstance("va_alert_processing")
 
@@ -56,12 +57,20 @@ class VAAlertManager(alert_factory.AlertFactory):
             
             # Retrieve necessary fields from the alert_data
             status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value, sap_id=location_id)
-            if status:
-                alert_data['location_data'] = loc_dt
+            if not status:
+                logger.info(f"Error in finding location {location_id} "
+                            f"for bu {alert_data['location_type'].value} - {loc_dt}")
+                return
 
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
             for record in alert_data['data']:
                 try:
+                    rediskey = f"{alert_data['location_type'].value}{location_id}{record['device_id'].lower()}"
+                    redis_ins = await urdhva_base.redispool.get_redis_connection()
+                    if await redis_ins.exists(rediskey):
+                        logger.info(f"Alert already exists for {rediskey}")
+                        return
+                    
                     exception_msg = (f"alert_type - {record['alert_type']},"
                                          f"alert_description - {record['alert_description']},"
                                          f"device_id - {record['device_id']},"
@@ -69,9 +78,15 @@ class VAAlertManager(alert_factory.AlertFactory):
                                          f"Exception Date - {recv_time}")
                     
                     print("Exception Message",exception_msg)
+
+                    va_alert_data = va_alert_mapping.VA_Alert_Mapping[alert_data['location_type']].get(record['alert_type'],{})
+                    if not va_alert_data:
+                        print("interlock_details not found")
+                        return
+                
                     
-                    interlock_details = utilities.interlock_mapping.get_interlock_name(
-                        alert_data['location_type'].value, va_mapping.va_interlock_mapping[record.get('alert_type')]['interlock_name'])
+                    interlock_details = utilities.interlock_mapping.get_interlock_name(alert_data['location_type'].value, 
+                                                                                       va_alert_data["name"])
 
                     interlock_details.update({"bu": alert_data['location_type'].value,
                                               "location_name": loc_dt['name'],
@@ -80,9 +95,11 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "device_id": record['device_id'],
                                               "device_name": record['device_id'],
                                               "message": record['video_url'],
+                                              "severity": va_alert_data["severity"],
                                               "alert_section": "VA"
                                               })
                     
+                    await redis_ins.setex(rediskey, 4*60*60, record['device_id'])
                     await cls.create_alert(interlock_details)
                 except Exception as e:
                     print(traceback.format_exc())
