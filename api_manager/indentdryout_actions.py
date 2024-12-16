@@ -122,6 +122,26 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
         "Plant Incharge\nRM", "Plant Incharge\nRM", "Plant Incharge\nRM",
         "Plant Incharge\nRM", "SO\nRM"
     ]
+    where_clause = ["interlock_name = 'Indent Dry Out'"]
+    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    for record in data.filters:
+        # If filter was on Sales Area Getting all ro id's under that sales area
+        if record.key == 'sales_area':
+            query = f"select ro_id from location_master where sales_area='{record.value}' and bu='RO'"
+            function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            resp = await function(
+                query=query
+            )
+            print(resp)
+            ro_ids = [rec['ro_id'] for rec in resp]
+            if len(ro_ids) == 1:
+                where_clause.append(f"sap_id='{ro_ids[0]}'")
+            else:
+                where_clause.append(f"sap_id in {tuple([rec['ro_id'] for rec in resp])}")
+        else:
+            where_clause.append(f"{record.key}='{record.value}'")
+    conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage," \
             "case when severity = 'Critical' then '0' " \
             "when severity = 'High' then '1' " \
@@ -129,10 +149,7 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
             "when severity = 'Low' then '3' " \
             "else severity " \
             "end as dry_out_days " \
-            "from alerts where interlock_name = 'Indent Dry Out'"
-
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            f"from alerts where {conditions}"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
