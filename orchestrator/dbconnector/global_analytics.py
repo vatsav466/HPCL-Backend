@@ -11,6 +11,43 @@ from psycopg2 import sql, errors
 class GlobalAnalytics:
     @staticmethod
     async def analytics(filters, drill_state):
+        """
+        Retrieves analytics data for the given filters and drill state.
+
+        Args:
+            filters (list): List of filter objects with the following structure:
+                {
+                    "key": str,  # Column name
+                    "value": str,  # Filter value
+                    "operator": str,  # Filter operator (e.g. =, !=, LIKE)
+                    "type": str  # Filter type (e.g. string, number, date)
+                }
+            drill_state (dict): Drill state with the following structure:
+                {
+                    "column": str,  # Column name
+                    "value": str,  # Drill value
+                    "type": str  # Drill type (e.g. string, number, date)
+                }
+
+        Returns:
+            dict: Analytics data with the following structure:
+                {
+                    "activeLocations": int,  # Number of active locations
+                    "inactiveLocations": int,  # Number of inactive locations
+                    "totalAlerts": str,  # Total number of alerts (formatted with commas)
+                    "alertDistribution": list,  # List of objects with the following structure:
+                        {
+                            "name": str,  # Interlock name
+                            "value": int  # Number of alerts
+                        }
+                    "top10Alerts": list,  # List of objects with the following structure:
+                        {
+                            "name": str,  # Interlock name
+                            "value": int  # Number of alerts
+                        }
+                    "no_of_locations": int  # Number of locations
+                }
+        """
         no_of_locations_query = lpg_plant_queries.lpg_plant_query.get("no_of_locations")
         no_of_locations_query_ = no_of_locations_query
         if filters:
@@ -21,8 +58,6 @@ class GlobalAnalytics:
             print(e)
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
         no_of_locations_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        # return {"status": True, "message": "success", "data": data}
-
 
         analytics_query = lpg_plant_queries.lpg_plant_query.get("analytics")
         analytics_query_ = analytics_query
@@ -49,7 +84,6 @@ class GlobalAnalytics:
 
         # Process the results
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        print("data --> ", data)
 
         active_locations = set()
         inactive_locations = set()
@@ -102,6 +136,12 @@ class GlobalAnalytics:
     
     @staticmethod
     async def alert_ageing(filters, drill_state):
+        """
+        This method is used to fetch the alert ageing data for the given filters and drill state
+        :param filters: The filter parameters
+        :param drill_state: The drill down state
+        :return: A dictionary containing the status, message and the alert ageing data
+        """
         alert_ageing_query = lpg_plant_queries.lpg_plant_query.get("alert_ageing")
         alert_ageing_query_ = alert_ageing_query
         if filters:
@@ -116,6 +156,16 @@ class GlobalAnalytics:
     
     @staticmethod
     async def day_wise_alerts(filters, drill_state):
+        """
+        Fetches the day-wise alerts data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the day-wise alerts data.
+        """
         day_wise_alerts_query = lpg_plant_queries.lpg_plant_query.get("day_wise_alerts")
         day_wise_alerts_query_ = day_wise_alerts_query
         if filters:
@@ -127,4 +177,39 @@ class GlobalAnalytics:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(day_wise_alerts_query)
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         return {"status": True, "message": "success", "data": data}
-                    
+    
+    @staticmethod
+    async def location_severity_count(filters, drill_state):
+        """
+        Fetches the location severity count data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the location severity count data.
+        """
+        location_severity_count_query_ = location_severity_count_query
+
+        if filters:
+            for filter_ in filters:
+                print("filter_ --> ", filter_)
+                if filter_.key == "bu":
+                    # Explicitly qualify the column with the correct table alias
+                    filter_key = f"a.{filter_.key}"  # Assuming "a" is the alias for the table containing "bu"
+                    filter_condition = f" WHERE {filter_key} = '{filter_.value}'"
+                    # Add the filter condition before GROUP BY
+                    location_severity_count_query_ = location_severity_count_query_.replace("GROUP BY", f"{filter_condition} GROUP BY")
+                    break
+
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            # Retry with the original query if the column is undefined
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query)
+
+        # Process the results
+        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        return {"status": True, "message": "success", "data": data}

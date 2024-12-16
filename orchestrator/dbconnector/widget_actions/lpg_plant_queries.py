@@ -675,5 +675,19 @@ LIMIT 10000;''',
                         GROUP BY DATE(created_at), severity
                         ORDER BY alert_date, severity;
                         ''',
-
+    
+    "location_severity_count": f'''SELECT 
+                                        b.name AS location_name,
+                                        a.severity,
+                                        COUNT(a.severity) AS alert_count
+                                    FROM 
+                                        alerts a
+                                    LEFT JOIN 
+                                        location_master b 
+                                    ON 
+                                        a.sap_id = b.sap_id
+                                    GROUP BY 
+                                        b.name, a.severity
+                                    ORDER BY 
+                                        b.name, a.severity;'''
 }
