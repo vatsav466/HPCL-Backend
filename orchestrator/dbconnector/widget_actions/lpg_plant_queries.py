@@ -601,26 +601,52 @@ LIMIT 10000;''',
                            GROUP BY bu 
                            ORDER BY no_of_terminals DESC''',
 
-    "alert_ageing": f'''SELECT DISTINCT
-                                CASE 
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '6 to 10 Days'
-                                    ELSE 'Older than 10 Days'
-                                END AS alert_ageing,
-                                COUNT(*) OVER (
-                                    PARTITION BY 
-                                    CASE 
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '6 to 10 Days'
-                                        ELSE 'Older than 10 Days'
-                                    END
-                                ) AS alert_count
-                            FROM 
-                                alerts
-                            ORDER BY 
-                                alert_ageing''',
+    "alert_ageing": f'''WITH date_ranges AS (
+                        SELECT 
+                            '1 Day' AS alert_ageing, 0 AS start_day, 1 AS end_day
+                        UNION ALL
+                        SELECT '2 to 3 Days', 2, 3
+                        UNION ALL
+                        SELECT '3 to 5 Days', 4, 5
+                        UNION ALL
+                        SELECT '5 to 10 Days', 6, 10
+                        UNION ALL
+                        SELECT '10 to 15 Days', 11, 15
+                        UNION ALL
+                        SELECT '15 to 20 Days', 16, 20
+                        UNION ALL
+                        SELECT '20 to 25 Days', 21, 25
+                        UNION ALL
+                        SELECT 'More than 25 Days', 26, NULL
+                    ),
+                    alerts_grouped AS (
+                        SELECT 
+                            CASE 
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 0 AND 1 THEN '1 Day'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 3 THEN '2 to 3 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 4 AND 5 THEN '3 to 5 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '5 to 10 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 11 AND 15 THEN '10 to 15 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 16 AND 20 THEN '15 to 20 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 21 AND 25 THEN '20 to 25 Days'
+                                ELSE 'More than 25 Days'
+                            END AS alert_ageing,
+                            COUNT(*) AS alert_count
+                        FROM alerts
+                        GROUP BY alert_ageing
+                    )
+                    SELECT 
+                        r.alert_ageing,
+                        COALESCE(a.alert_count, 0) AS alert_count
+                    FROM 
+                        date_ranges r
+                    LEFT JOIN 
+                        alerts_grouped a
+                    ON 
+                        r.alert_ageing = a.alert_ageing
+                    ORDER BY 
+                        r.start_day;
+''',
 
     "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count 
                                FROM public.alerts 
