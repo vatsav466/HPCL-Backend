@@ -28,12 +28,18 @@ class Postgresql(BaseAction):
         super().__init__(params)
 
     async def get_connection(self):
-        if 'connection_name' in self.params.keys():
+        if 'connection_name' in self.params.keys() and self.params['connection_name']:
+            print("connection_name_: ",self.params['connection_name'])
             self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
-        if not isinstance(self.params, dict):
-            self.params = self.params.__dict__
-        if 'credentials' in self.params.keys():
-            self.params = self.params['credentials']
+            if not isinstance(self.params, dict):
+                self.params = self.params.__dict__
+            if 'credentials' in self.params.keys():
+                self.params = self.params['credentials']
+        else:
+            db = urdhva_base.settings.db_urls['postgres_async'][0]
+            self.params = {'host': db.host, 'port': db.port, 'user_name': db.username,
+                           'password': db.password, 'database_name': db.path.split("/")[-1]}
+            
         if self.params.get('is_ssh_tunnel', False):
             tunnel = SSHTunnelForwarder(
                 (self.params['ssh_tunnel']['host'], self.params['ssh_tunnel']['port']),
@@ -422,12 +428,14 @@ class Postgresql(BaseAction):
                     where_query = where_query[:-5]
                     if where_query:
                         query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
+                print("query_: ", query)
                 stmt = await connection.prepare(
                     query
                 )
                 data = await stmt.fetch()
-                data = pd.DataFrame(data)
-                columns_mapping[column] = data[column].unique().tolist()
+                # data = pd.DataFrame(data)
+                # columns_mapping[column] = data[column].unique().tolist()
+                columns_mapping[column] = [record[column] for record in data]
             # await connection.close()
             await self.close_connection(connection)
             return {
