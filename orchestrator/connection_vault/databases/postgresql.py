@@ -36,7 +36,9 @@ class Postgresql(BaseAction):
             if 'credentials' in self.params.keys():
                 self.params = self.params['credentials']
         else:
-            self.params = {'host': '140.245.238.142', 'port':'5432', 'user_name':'ceg_user', 'password': 'TTNqetkiJLPM50jC', 'database_name': 'hpcl_ceg'}
+            db = urdhva_base.settings.db_urls['postgres_async'][0]
+            self.params = {'host': db.host, 'port': db.port, 'user_name': db.username,
+                           'password': db.password, 'database_name': db.path.split("/")[-1]}
             
         if self.params.get('is_ssh_tunnel', False):
             tunnel = SSHTunnelForwarder(
