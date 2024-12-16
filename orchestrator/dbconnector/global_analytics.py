@@ -48,29 +48,19 @@ class GlobalAnalytics:
                     "no_of_locations": int  # Number of locations
                 }
         """
-        no_of_locations_query = lpg_plant_queries.lpg_plant_query.get("no_of_locations")
-        no_of_locations_query_ = no_of_locations_query
-        if filters:
-            no_of_locations_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(no_of_locations_query, filters, drill_state)
-        try:
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query_)
-        except psycopg2.errors.UndefinedColumn as e:
-            print(e)
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
-        no_of_locations_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
 
         analytics_query = lpg_plant_queries.lpg_plant_query.get("analytics")
         analytics_query_ = analytics_query
 
-        # Apply filters if provided
         if filters:
-            # Ensure filters are qualified with the correct table alias
             for filter_ in filters:
                 if filter_.key == "bu":
-                    filter_key = f"a.{filter_.key}"  # Qualify with the table alias
-                    filter_condition = f" WHERE {filter_key} = '{filter_.value}'"
-                    analytics_query_ = analytics_query.replace("GROUP BY", f"{filter_condition} GROUP BY")
-                    break
+                    # Update the key of the filter to include the alias 'a.'
+                    filter_.key = f"a.{filter_.key}"
+                
+            # After modifying the filters, send the updated filters to apply_filter_drilldown
+            print("Updated filters --> ", filters)
+            analytics_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(analytics_query, filters, drill_state)
 
             print("analytics_query_ --> ", analytics_query_)
 
@@ -111,7 +101,7 @@ class GlobalAnalytics:
             total_alerts += severity_count
 
             # Update alert distribution by severity
-            alert_distribution[severity] += severity_count
+            alert_distribution[interlock_name] += severity_count
 
             # Update top alerts by interlock name
             top_alerts[interlock_name] += severity_count
@@ -132,6 +122,7 @@ class GlobalAnalytics:
         }
 
         return {"status": True, "message": "Success", "data": result}
+
     
     @staticmethod
     async def alert_ageing(filters, drill_state):
@@ -213,3 +204,27 @@ class GlobalAnalytics:
         # Process the results
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         return {"status": True, "message": "success", "data": data}
+
+    @staticmethod
+    async def no_of_locations(filters, drill_state):
+        """
+        Fetches the top interlocks data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the top interlocks data.
+        """
+        no_of_locations_query = lpg_plant_queries.lpg_plant_query.get("no_of_locations")
+        no_of_locations_query_ = no_of_locations_query
+        if filters:
+            no_of_locations_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(no_of_locations_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
+        no_of_locations_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        print("no_of_locations_query_ -> ", no_of_locations_query_)
