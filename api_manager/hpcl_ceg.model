@@ -585,6 +585,10 @@ Model IndentDryOut {
         filters list DataFilters
     }
 
+    Action=> get_alert_history {
+        sap_id str
+    }
+
     Action=> get_dry_out_stats {
         filters list DataFilters
     }

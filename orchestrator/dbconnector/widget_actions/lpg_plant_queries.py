@@ -637,5 +637,31 @@ LIMIT 10000;''',
                     left join location_master b ON a.sap_id = b.sap_id
                     GROUP BY a.sap_id, a.interlock_name, a.severity, a.alert_status, b.name
                     ORDER BY severity_count DESC;
-                    '''
+                    ''',
+
+    "no_of_locations": f'''SELECT COUNT(sap_id) FROM location_master''',
+
+    "day_wise_alerts": f'''SELECT 
+                            DATE(created_at) AS alert_date,
+                            severity,
+                            COUNT(*) AS total_alerts
+                        FROM alerts
+                        GROUP BY DATE(created_at), severity
+                        ORDER BY alert_date, severity;
+                        ''',
+    
+    "location_severity_count": f'''SELECT 
+                                        b.name AS location_name,
+                                        a.severity,
+                                        COUNT(a.severity) AS alert_count
+                                    FROM 
+                                        alerts a
+                                    LEFT JOIN 
+                                        location_master b 
+                                    ON 
+                                        a.sap_id = b.sap_id
+                                    GROUP BY 
+                                        b.name, a.severity
+                                    ORDER BY 
+                                        b.name, a.severity;'''
 }
