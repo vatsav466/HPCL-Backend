@@ -111,7 +111,7 @@ class GlobalAnalytics:
             total_alerts += severity_count
 
             # Update alert distribution by severity
-            alert_distribution[interlock_name] += severity_count
+            alert_distribution[severity] += severity_count
 
             # Update top alerts by interlock name
             top_alerts[interlock_name] += severity_count
@@ -128,8 +128,7 @@ class GlobalAnalytics:
             "top10Alerts": [
                 {"name": name, "value": value}
                 for name, value in sorted(top_alerts.items(), key=lambda x: x[1], reverse=True)[:10]
-            ],
-            "no_of_locations": no_of_locations_data
+            ]
         }
 
         return {"status": True, "message": "Success", "data": result}
