@@ -137,7 +137,16 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     resp = await function(
         query=query
     )
-    return {"status": True, "message": "Success", "data": resp, "top_x_axis": top_x_axis, "bottom_x_axis": bottom_x_axis}
+    stats = {i+1: 0 for i, _ in enumerate(top_x_axis)}
+    for rec in resp:
+        if rec['present_stage'] not in stats:
+            stats[rec['present_stage']] = 0
+        stats[rec['present_stage']] += 1
+
+    return {"status": True, "message": "Success", "data": resp, "top_x_axis": top_x_axis,
+            "bottom_x_axis": bottom_x_axis, "stats": [{"section": top_x_axis[key-1],
+                                                       "value": value} for key, value in stats.items()
+                                                      if key <= len(top_x_axis)]}
     # return [
     #     {"name": "location1", "sap_id": "12345", "dry_out_days": 3, "present_stage": 3},
     #     {"name": "location2", "sap_id": "112233", "dry_out_days": 2, "present_stage": 3},
