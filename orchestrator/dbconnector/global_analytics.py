@@ -190,6 +190,7 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the location severity count data.
         """
+        location_severity_count_query = lpg_plant_queries.lpg_plant_query.get("location_severity_count")
         location_severity_count_query_ = location_severity_count_query
 
         if filters:
