@@ -77,6 +77,7 @@ class DBConnectorFactory(ABC):
                 return column_names, cursor.fetchall()
         finally:
             conn.close()
+
     def process_recommendations(self, keys, query_result):
         """
         Converts a Decimal values into proper float values and returns the data as key value pairs
