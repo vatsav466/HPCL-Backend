@@ -11,6 +11,19 @@ from psycopg2 import sql, errors
 class GlobalAnalytics:
     @staticmethod
     async def analytics(filters, drill_state):
+        no_of_locations_query = lpg_plant_queries.lpg_plant_query.get("no_of_locations")
+        no_of_locations_query_ = no_of_locations_query
+        if filters:
+            no_of_locations_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(no_of_locations_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
+        no_of_locations_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        # return {"status": True, "message": "success", "data": data}
+
+
         analytics_query = lpg_plant_queries.lpg_plant_query.get("analytics")
         analytics_query_ = analytics_query
 
@@ -81,7 +94,8 @@ class GlobalAnalytics:
             "top10Alerts": [
                 {"name": name, "value": value}
                 for name, value in sorted(top_alerts.items(), key=lambda x: x[1], reverse=True)[:10]
-            ]
+            ],
+            "no_of_locations": no_of_locations_data
         }
 
         return {"status": True, "message": "Success", "data": result}
@@ -100,17 +114,17 @@ class GlobalAnalytics:
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         return {"status": True, "message": "success", "data": data}
     
-    @staticmethod
-    async def no_of_locations(filters, drill_state):
-        no_of_locations_query = lpg_plant_queries.lpg_plant_query.get("no_of_locations")
-        no_of_locations_query_ = no_of_locations_query
-        if filters:
-            no_of_locations_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(no_of_locations_query, filters, drill_state)
-        try:
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query_)
-        except psycopg2.errors.UndefinedColumn as e:
-            print(e)
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
-        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        return {"status": True, "message": "success", "data": data}
+    # @staticmethod
+    # async def no_of_locations(filters, drill_state):
+        # no_of_locations_query = lpg_plant_queries.lpg_plant_query.get("no_of_locations")
+        # no_of_locations_query_ = no_of_locations_query
+        # if filters:
+        #     no_of_locations_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(no_of_locations_query, filters, drill_state)
+        # try:
+        #     keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query_)
+        # except psycopg2.errors.UndefinedColumn as e:
+        #     print(e)
+        #     keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
+        # data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        # return {"status": True, "message": "success", "data": data}
                     
