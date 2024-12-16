@@ -77,7 +77,7 @@ class GlobalAnalytics:
             total_alerts += severity_count
 
             # Update alert distribution by severity
-            alert_distribution[severity] += severity_count
+            alert_distribution[interlock_name] += severity_count
 
             # Update top alerts by interlock name
             top_alerts[interlock_name] += severity_count
