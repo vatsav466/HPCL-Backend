@@ -160,7 +160,7 @@ async def indentdryout_get_dry_out_stats(data: Indentdryout_Get_Dry_Out_StatsPar
 @router.post('/get_alert_history', tags=['IndentDryOut'])
 async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryParams):
     query = (f"select * from alerts where interlock_name = 'Indent Dry Out' and "
-             f"sap_id='{data.sapid}' ORDER BY created_at DESC LIMIT 1")
+             f"sap_id='{data.sap_id}' ORDER BY created_at DESC LIMIT 1")
     Charts_Connection_Vault_RoutingParams.connection_id = "1"
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)

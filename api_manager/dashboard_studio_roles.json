@@ -72,6 +72,9 @@
                 },
                 {
                     "name": "enable_cross_filter"
+                },
+                {
+                    "name": "generate_embedded_url"
                 }
             ]
         },
@@ -186,6 +189,9 @@
                 },
                 {
                     "name": "enable_cross_filter"
+                },
+                {
+                    "name": "generate_embedded_url"
                 }
             ]
         },
@@ -626,6 +632,10 @@
         {
             "name": "enable_cross_filter",
             "displayName": "enable_cross_filter"
+        },
+        {
+            "name": "generate_embedded_url",
+            "displayName": "generate_embedded_url"
         },
         {
             "name": "save_dashboards",

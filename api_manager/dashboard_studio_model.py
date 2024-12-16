@@ -308,6 +308,10 @@ class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):
     filters: typing.List[WidgetFiltersCreate]
 
 
+class Charts_Generate_Embedded_UrlParams(pydantic.BaseModel):
+    dash_id: str
+
+
 class DashboardOrderInternalCreate(pydantic.BaseModel):
     dashboard_id: int
     display_name: typing.Optional[str] = pydantic.Field("", **{})

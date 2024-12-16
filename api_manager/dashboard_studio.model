@@ -238,6 +238,10 @@ Model Charts {
         filters list WidgetFilters
     }
 
+    Action=> generate_embedded_url {
+        dash_id str
+    }
+
     Config=> {
         collection_name=charts
     }

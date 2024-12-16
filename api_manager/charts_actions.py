@@ -15,6 +15,7 @@ from orchestrator.dashboard.chart_factory import date_actions
 from orchestrator.dashboard.chart_factory import charts_helpers
 from orchestrator.dbconnector.widget_actions import widget_actions
 from orchestrator.dashboard.chart_factory import charts_functions
+from orchestrator.dashboard.dashboard_actions.superset_embedded_dashboard import SupersetManager
 router = fastapi.APIRouter(prefix='/charts')
 
 
@@ -501,3 +502,9 @@ async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
 @router.post('/enable_cross_filter', tags=['Charts'])
 async def charts_enable_cross_filter(data: Charts_Enable_Cross_FilterParams):
     return await widget_actions.WidgetActions.execute_cross_filters(data.filters)
+
+
+# Action generate_embedded_url
+@router.post('/generate_embedded_url', tags=['Charts'])
+async def charts_generate_embedded_url(data: Charts_Generate_Embedded_UrlParams):
+    return await SupersetManager.get_embedded_dashboard_uri(data.dash_id)
