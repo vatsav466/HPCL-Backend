@@ -665,6 +665,15 @@ LIMIT 10000;''',
                     ORDER BY severity_count DESC;
                     ''',
 
-    "no_of_locations": f'''SELECT COUNT(sap_id) FROM location_master'''
+    "no_of_locations": f'''SELECT COUNT(sap_id) FROM location_master''',
+
+    "day_wise_alerts": f'''SELECT 
+                            DATE(created_at) AS alert_date,
+                            severity,
+                            COUNT(*) AS total_alerts
+                        FROM alerts
+                        GROUP BY DATE(created_at), severity
+                        ORDER BY alert_date, severity;
+                        ''',
 
 }

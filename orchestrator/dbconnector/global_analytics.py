@@ -114,17 +114,17 @@ class GlobalAnalytics:
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         return {"status": True, "message": "success", "data": data}
     
-    # @staticmethod
-    # async def no_of_locations(filters, drill_state):
-        # no_of_locations_query = lpg_plant_queries.lpg_plant_query.get("no_of_locations")
-        # no_of_locations_query_ = no_of_locations_query
-        # if filters:
-        #     no_of_locations_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(no_of_locations_query, filters, drill_state)
-        # try:
-        #     keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query_)
-        # except psycopg2.errors.UndefinedColumn as e:
-        #     print(e)
-        #     keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
-        # data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        # return {"status": True, "message": "success", "data": data}
+    @staticmethod
+    async def day_wise_alerts(filters, drill_state):
+        day_wise_alerts_query = lpg_plant_queries.lpg_plant_query.get("day_wise_alerts")
+        day_wise_alerts_query_ = day_wise_alerts_query
+        if filters:
+            day_wise_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(day_wise_alerts_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(day_wise_alerts_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(day_wise_alerts_query)
+        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        return {"status": True, "message": "success", "data": data}
                     
