@@ -65,6 +65,8 @@ class AlertFactory:
 
             # Create Alert
             alert_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
+            if not alert_data.get('alert_id'):
+                alert_data['alert_id'] = alert_id
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
             # Generate alert alert_data
@@ -73,7 +75,7 @@ class AlertFactory:
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': alert_data.get("alert_section", bu),
-                                                        'external_id': alert_data.get('alert_id', alert_id),
+                                                        'external_id': alert_data['alert_id'],
                                                         'interlock_name': interlock_name,
                                                         'interlock_id': '',
                                                         'vehicle_number': alert_data.get('vehicle_number',''),
@@ -98,7 +100,7 @@ class AlertFactory:
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             redis_ins = await urdhva_base.redispool.get_redis_connection()
-            await redis_ins.hset("alert_mapping", alert_id, alert_resp['id'])
+            await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
                        "variables": {"alert_id": {"value": alert_resp['id'], "type": "String"},
                                      "interlock_name": {"value": interlock_name, "type": "String"},
