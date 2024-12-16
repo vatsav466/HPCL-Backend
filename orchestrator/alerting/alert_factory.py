@@ -171,7 +171,10 @@ class AlertFactory:
         try:
             # il_data = None
             # al_data = None
-            bu = alert_data['bu']
+            if 'BU' in alert_data.keys():
+                bu = alert_data['BU']
+            else:
+                bu = alert_data['bu']
             if 'interlock_id' not in alert_data.keys():
                 # Query for Interlock
                 query = f"interlock_name='{alert_data['interlock_name']}' AND bu='{bu}' AND sop_id='{alert_data['sop_id']}' AND sap_id='{alert_data['sap_id']}'"
