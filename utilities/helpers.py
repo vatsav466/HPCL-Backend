@@ -1,4 +1,5 @@
 import string
+import hashlib
 import datetime
 try:
     from secrets import choice
@@ -52,3 +53,29 @@ def get_time_stamp_by_delta(dt=None, months=0, days=0, with_month_start_day=True
         return dt.strftime(date_time_format)
 
     return dt
+
+
+def generate_hash(list_of_strings, bit_size=64):
+    """
+    Generates unique hash key for the given inputs
+    :param list_of_strings:
+    :param bit_size:
+    :return: unique string
+    """
+    # Convert the list of strings to a single string
+    combined_string = ''.join(list_of_strings)
+    # Create a hash object
+    if bit_size > 40:
+        # SHA256 for 64-bit key
+        hash_object = hashlib.sha256()
+    elif bit_size > 32:
+        # SHA1 for 40-bit key
+        hash_object = hashlib.sha1()
+    else:
+        # SHA1 for 32-bit key
+        hash_object = hashlib.md5()
+    # Update the hash object with the combined string
+    hash_object.update(combined_string.encode('utf-8'))
+    # Get the hexadecimal digest of the hash
+    hash_value = hash_object.hexdigest()
+    return hash_value

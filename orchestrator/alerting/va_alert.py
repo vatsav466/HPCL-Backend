@@ -3,11 +3,12 @@ import re
 import json
 import datetime
 import traceback
+import urdhva_base.redispool
 import utilities.interlock_mapping
+import utilities.helpers as helpers
 import utilities.va_alert_mapping as va_alert_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
-import utilities.va_alert_mapping
 
 logger = urdhva_base.logger.Logger.getInstance("va_alert_processing")
 
@@ -35,28 +36,13 @@ class VAAlertManager(alert_factory.AlertFactory):
         """
         try:
             logger.info(f"alert_data received to create alert {alert_data}")
-            '''# alert_alert_data = await hpcl_ceg_model.Alerts.get_all()
-            bu_location_type = alert_data['bu']
-            sap_id = alert_data['sap_id']
-            sop_id = alert_data['sop_id']
-            static_alert_data = alert_data.get('staticalert_data', {}) 
-        
-            staticalert_data': {'alertHistory': [alerthistorymessage],
-            'VehicleNumber': doc['TL_Number'],
-            'vendor': doc['Vendor_Code'],
-            "VendorName": doc['Vendor_Name'],
-            "vendormail": vendormail} 
-        
-            deviceid = alert_data['deviceId']
-            interlockname = alert_data['name']'''
 
             #getting location_id in this form from payload example "location_id": "ACC, Bandra, 11073010, 11073010",
             location_id = alert_data['location_id'].split(",")[-1].strip()
-            # match = re.findall(r'\b\d{5,}\b', location_id)
-            # location_id = match[-1]
-            
+
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value, sap_id=location_id)
+            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value,
+                                                                     sap_id=location_id)
             if not status:
                 logger.info(f"Error in finding location {location_id} "
                             f"for bu {alert_data['location_type'].value} - {loc_dt}")
@@ -65,28 +51,30 @@ class VAAlertManager(alert_factory.AlertFactory):
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
             for record in alert_data['data']:
                 try:
-                    rediskey = f"{alert_data['location_type'].value}{location_id}{record['device_id'].lower()}"
+                    keys = [location_id, alert_data['location_type'].value, "VA", record['device_id'],
+                            record['alert_type']]
+                    alert_id = helpers.generate_hash(keys)
                     redis_ins = await urdhva_base.redispool.get_redis_connection()
-                    if await redis_ins.exists(rediskey):
-                        logger.info(f"Alert already exists for {rediskey}")
-                        return
-                    
-                    exception_msg = (f"alert_type - {record['alert_type']},"
-                                         f"alert_description - {record['alert_description']},"
-                                         f"device_id - {record['device_id']},"
-                                         f"video_url - {record['video_url']},"
-                                         f"Exception Date - {recv_time}")
-                    
-                    print("Exception Message",exception_msg)
+                    if await redis_ins.hexists("alert_mapping", alert_id):
+                        continue
 
-                    va_alert_data = va_alert_mapping.VA_Alert_Mapping[alert_data['location_type']].get(record['alert_type'],{})
+                    exception_msg = (f"alert_type - {record['alert_type']},"
+                                     f"alert_description - {record['alert_description']},"
+                                     f"device_id - {record['device_id']},"
+                                     f"video_url - {record['video_url']},"
+                                     f"Exception Date - {recv_time}")
+
+                    print("Exception Message", exception_msg)
+
+                    va_alert_data = va_alert_mapping.VA_Alert_Mapping[alert_data['location_type']].get(
+                        record['alert_type'], {})
                     if not va_alert_data:
                         print("interlock_details not found")
                         return
-                
-                    
-                    interlock_details = utilities.interlock_mapping.get_interlock_name(alert_data['location_type'].value, 
-                                                                                       va_alert_data["name"])
+
+                    interlock_details = utilities.interlock_mapping.get_interlock_name(
+                        alert_data['location_type'].value,
+                        va_alert_data["name"])
 
                     interlock_details.update({"bu": alert_data['location_type'].value,
                                               "location_name": loc_dt['name'],
@@ -96,10 +84,10 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "device_name": record['device_id'],
                                               "message": record['video_url'],
                                               "severity": va_alert_data["severity"],
+                                              "alert_id": alert_id,
                                               "alert_section": "VA"
                                               })
-                    
-                    await redis_ins.setex(rediskey, 4*60*60, record['device_id'])
+
                     await cls.create_alert(interlock_details)
                 except Exception as e:
                     print(traceback.format_exc())
@@ -131,6 +119,6 @@ class VAAlertManager(alert_factory.AlertFactory):
         try:
             logger.info(f"Alert data received to close alert: {alert_data}")
             return await cls.close_alert(alert_data)
-            
+
         except Exception as e:
             raise Exception(status_code=500, detail="Error closing alert.") from e

@@ -4,6 +4,7 @@ import datetime
 import traceback
 import hpcl_ceg_enum
 import hpcl_ceg_model
+import urdhva_base.redispool
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
@@ -96,6 +97,8 @@ class AlertFactory:
                                                         'terminal_loc_code': alert_data.get('terminal_loc_code', ''),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
+            redis_ins = await urdhva_base.redispool.get_redis_connection()
+            await redis_ins.hset("alert_mapping", alert_id, alert_resp['id'])
             payload = {"businessKey": unique_id,
                        "variables": {"alert_id": {"value": alert_resp['id'], "type": "String"},
                                      "interlock_name": {"value": interlock_name, "type": "String"},
