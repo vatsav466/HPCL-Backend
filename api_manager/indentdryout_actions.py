@@ -111,14 +111,14 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
 async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_PlantsParams):
     top_x_axis = [
         "Indent Not Raised", "Indent Raised", "Valid Indent", "Truck Allocated", "Sent to SAP",
-        "Sales Order Placed", "Invoice Created", "R1 Swiped", "R2 Swiped", "R3 Swiped",
+        "Sales Order Placed", "R2 Swiped", "R3 Swiped", "Invoice Created", "VTS",
         "Indent Delivered"
     ]
     bottom_x_axis = [
-        "Dealer", "Sales Officer\nReagional Manager", "Sales Officer\nCola Officer", "Sales Officer",
-        "Sales Officer\nReagional Manager", "Sales Officer\nReagional Manager", "Plant Incharge\nReagional Manager",
-        "Plant Incharge\nReagional Manager", "Plant Incharge\nReagional Manager", "Plant Incharge\nReagional Manager",
-        "Sales Officer\nReagional Manager"
+        "Dealer", "Sales Officer\nRegional Manager", "Sales Officer\nCola Officer", "Sales Officer",
+        "Sales Officer\nRegional Manager", "Sales Officer\nRegional Manager",
+        "Plant Incharge\nRegional Manager", "Plant Incharge\nRegional Manager", "Plant Incharge\nRegional Manager",
+        "Plant Incharge\nRegional Manager", "Sales Officer\nRegional Manager"
     ]
     query = "select location_name as name, sap_id, progress_rate as present_stage," \
             "case when severity = 'Critical' then '0' " \
