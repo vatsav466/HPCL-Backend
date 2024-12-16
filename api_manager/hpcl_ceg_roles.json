@@ -929,6 +929,9 @@
                     "name": "get_dried_out_plants"
                 },
                 {
+                    "name": "get_alert_history"
+                },
+                {
                     "name": "get_dry_out_stats"
                 },
                 {
@@ -951,6 +954,9 @@
                 },
                 {
                     "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_alert_history"
                 },
                 {
                     "name": "get_dry_out_stats"
@@ -984,6 +990,9 @@
                 },
                 {
                     "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_alert_history"
                 },
                 {
                     "name": "get_dry_out_stats"
@@ -1295,6 +1304,10 @@
         {
             "name": "get_dried_out_plants",
             "displayName": "get_dried_out_plants"
+        },
+        {
+            "name": "get_alert_history",
+            "displayName": "get_alert_history"
         },
         {
             "name": "get_dry_out_stats",

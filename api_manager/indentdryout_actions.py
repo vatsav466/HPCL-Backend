@@ -1,8 +1,11 @@
 import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
+import pytz
+import json
 import fastapi
 import datetime
+import dateutil.parser as parser
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from orchestrator.alerting.alert_manager import create_alert
@@ -151,3 +154,48 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
 @router.post('/get_dry_out_stats', tags=['IndentDryOut'])
 async def indentdryout_get_dry_out_stats(data: Indentdryout_Get_Dry_Out_StatsParams):
     ...
+
+
+# Action get_alert_history
+@router.post('/get_alert_history', tags=['IndentDryOut'])
+async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryParams):
+    query = (f"select * from alerts where interlock_name = 'Indent Dry Out' and "
+             f"sap_id='{data.sapid}' ORDER BY created_at DESC LIMIT 1")
+    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    alert_history = {
+        "details": {},
+        "data": []
+    }
+
+    def convert_time_read_format(date_time):
+        try:
+            utc_timestamp = parser.parse(date_time).replace(tzinfo=None)
+            # Define UTC and IST timezones
+            utc = pytz.utc
+            ist = pytz.timezone('Asia/Kolkata')
+            # Localize the UTC timestamp and convert it to IST
+            utc_time = utc.localize(utc_timestamp)
+            ist_time = utc_time.astimezone(ist)
+            # Format the IST timestamp in the desired format
+            formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
+            return formatted_ist_time
+        except:
+            return "-"
+
+    if resp:
+        resp = resp[0]
+        alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
+                                    "state": resp["state"], "indent_status": resp["indent_status"]}
+        alert_history["data"].append(f"Dry-out Location Identified at "
+                                     f"{convert_time_read_format(str(resp['created_at']))}")
+
+        for history in json.loads(resp.get("alert_history", [])):
+            alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
+                                         f" {convert_time_read_format(str(history['allocated_time']))}, "
+                                         f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+    return alert_history

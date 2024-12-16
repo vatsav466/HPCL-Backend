@@ -1240,6 +1240,10 @@ class Indentdryout_Get_Dried_Out_PlantsParams(pydantic.BaseModel):
     filters: typing.List[DataFiltersCreate]
 
 
+class Indentdryout_Get_Alert_HistoryParams(pydantic.BaseModel):
+    sap_id: str
+
+
 class Indentdryout_Get_Dry_Out_StatsParams(pydantic.BaseModel):
     filters: typing.List[DataFiltersCreate]
 

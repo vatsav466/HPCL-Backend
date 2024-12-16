@@ -37,8 +37,8 @@ class Postgresql(BaseAction):
                 self.params = self.params['credentials']
         else:
             db = urdhva_base.settings.db_urls['postgres_async'][0]
-            self.params = {'host': db.host, 'port': db.port, 'user_name': db.username,
-                           'password': db.password, 'database_name': db.path.split("/")[-1]}
+            self.params = {'host': db.host, 'port': db.port, 'user_name': db.query.split("&")[0].split("=")[-1],
+                           'password': db.query.split("&")[1].split("=")[-1], 'database_name': db.path.split("/")[-1]}
             
         if self.params.get('is_ssh_tunnel', False):
             tunnel = SSHTunnelForwarder(
@@ -85,8 +85,8 @@ class Postgresql(BaseAction):
                 "data": []
             }
         except asyncpg.PostgresConnectionError as err:
-            # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -112,7 +112,8 @@ class Postgresql(BaseAction):
             }
         except asyncpg.PostgresConnectionError as err:
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -137,8 +138,9 @@ class Postgresql(BaseAction):
                 "data": data['schema_name'].unique().tolist()
             }
         except asyncpg.PostgresConnectionError as err:
+            print(err, traceback.format_exc())
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -166,7 +168,8 @@ class Postgresql(BaseAction):
             }
         except asyncpg.PostgresConnectionError as err:
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -264,8 +267,9 @@ class Postgresql(BaseAction):
                 "data": data['column_name'].unique().tolist()
             }
         except asyncpg.PostgresConnectionError as err:
+            print(err, traceback.format_exc())
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -292,8 +296,9 @@ class Postgresql(BaseAction):
                 "data": data['column_name'].unique().tolist()
             }
         except asyncpg.PostgresConnectionError as err:
+            print(err, traceback.format_exc())
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -443,8 +448,8 @@ class Postgresql(BaseAction):
                 "data": columns_mapping
             }
         except Exception as err:
-            print(err)
-            traceback.print_exc(file=sys.stdout)
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
