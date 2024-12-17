@@ -127,13 +127,15 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         # If filter was on Sales Area Getting all ro id's under that sales area
-        if record.key == 'sales_area':
-            query = f"select ro_id from location_master where sales_area='{record.value}' and bu='RO'"
+        if record.key in ['sales_area', 'plant']:
+            if record.key == "sales_area":
+                query = f"select ro_id from location_master where sales_area='{record.value}' and bu='RO'"
+            else:
+                query = f"select ro_id from location_master where terminal_plant_id='{record.value}' and bu='RO'"
             function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(
                 query=query
             )
-            print(resp)
             ro_ids = [rec['ro_id'] for rec in resp]
             if len(ro_ids) == 1:
                 where_clause.append(f"sap_id='{ro_ids[0]}'")
