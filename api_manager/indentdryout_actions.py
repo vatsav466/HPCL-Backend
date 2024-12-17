@@ -227,3 +227,19 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
                                          f" {convert_time_read_format(str(history['allocated_time']))}, "
                                          f"Processed at {convert_time_read_format(str(history['processed_time']))}")
     return alert_history
+
+
+# Action get_distinct_plant
+@router.post('/get_distinct_plant', tags=['IndentDryOut'])
+async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantParams):
+    region = data.region.split()[:-2]
+    query = (f"select DISTINCT terminal_plant_id FROM location_master where bu='RO' and "
+             f"LOWER(sales_area) like '%{region.lower()}%'")
+    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    return [rec['terminal_plant_id'] for rec in resp]
+

@@ -935,6 +935,9 @@
                     "name": "get_dry_out_stats"
                 },
                 {
+                    "name": "get_distinct_plant"
+                },
+                {
                     "name": "create_dry_out_alert"
                 }
             ]
@@ -960,6 +963,9 @@
                 },
                 {
                     "name": "get_dry_out_stats"
+                },
+                {
+                    "name": "get_distinct_plant"
                 }
             ]
         },
@@ -996,6 +1002,9 @@
                 },
                 {
                     "name": "get_dry_out_stats"
+                },
+                {
+                    "name": "get_distinct_plant"
                 },
                 {
                     "name": "create_dry_out_alert"
@@ -1312,6 +1321,10 @@
         {
             "name": "get_dry_out_stats",
             "displayName": "get_dry_out_stats"
+        },
+        {
+            "name": "get_distinct_plant",
+            "displayName": "get_distinct_plant"
         },
         {
             "name": "create_dry_out_alert",

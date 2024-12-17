@@ -1248,6 +1248,10 @@ class Indentdryout_Get_Dry_Out_StatsParams(pydantic.BaseModel):
     filters: typing.List[DataFiltersCreate]
 
 
+class Indentdryout_Get_Distinct_PlantParams(pydantic.BaseModel):
+    region: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
     pass
 
