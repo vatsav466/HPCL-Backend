@@ -56,6 +56,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                     alert_id = helpers.generate_hash(keys)
                     redis_ins = await urdhva_base.redispool.get_redis_connection()
                     if await redis_ins.hexists("alert_mapping", alert_id):
+                        logger.info("Alert already exists")
                         continue
 
                     exception_msg = (f"alert_type - {record['alert_type']},"
@@ -66,11 +67,11 @@ class VAAlertManager(alert_factory.AlertFactory):
 
                     print("Exception Message", exception_msg)
 
-                    va_alert_data = va_alert_mapping.VA_Alert_Mapping[alert_data['location_type']].get(
+                    va_alert_data = va_alert_mapping.VA_Alert_Mapping[alert_data['location_type'].value].get(
                         record['alert_type'], {})
                     if not va_alert_data:
-                        print("interlock_details not found")
-                        return
+                        logger.info("interlock_details not found")
+                        continue
 
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
                         alert_data['location_type'].value,

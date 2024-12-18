@@ -23,14 +23,14 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
         for record in alert_data['data']:
             if record['violation_type'] not in emlock_mapping.emlock_vehicle_mapping:
-                return
+                continue
             record['location_type'] = 'TAS'
             status, location_details = await alert_helper.get_location_details(record['location_type'],
                                                                                 record['location_id'])
             if not status:
                 logger.info(f"Error in finding location {record['location_id']} "
                             f"for bu {record['location_type']} - {location_details}")
-                return
+                continue
             exception_msg = (f"Vehicle Number - {record['vehicle_number']}, Violation Type - {record['violation_type']}"
                              f", Approved By - {record['approved_by']}, "
                              f"Exception Date - {recv_time}")
