@@ -1252,6 +1252,7 @@ class Indentdryout_Get_Dry_Out_StatsParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Distinct_PlantParams(pydantic.BaseModel):
+    bu: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
 
 
