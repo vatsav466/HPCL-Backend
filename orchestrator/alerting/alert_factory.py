@@ -58,7 +58,12 @@ class AlertFactory:
             print("location_data --> ", location_data)
             # if not status:
             #     return False, location_data
-            base_data = {key: location_data.get(key) for key in ['state', 'city', 'zone', 'region', 'district']}
+            base_data = {
+                key: location_data.get(key) for key in [
+                    'state', 'city', 'zone', 'region', 'district', 'terminal_plant_id',
+                    'terminal_plant_name', 'sales_area'
+                ]
+            }
             base_data.update({key: alert_data.get(key, '') for key in ['device_id', 'device_type', 'device_name']})
             base_data.update({"sop_id": sop_id, "sap_id": sap_id, "bu": bu,
                               "location_name": location_data.get('name', '')})

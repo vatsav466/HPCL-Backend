@@ -409,6 +409,7 @@ Model Alerts {
     region optional str
     state optional str
     city optional str
+    sales_area optional str
 
     // Device Raw Details
     raw_data optional dict
@@ -423,7 +424,8 @@ Model Alerts {
     dealer_id optional str
     workflow_instance_id optional str
     workflow_datetime optional datetime
-    terminal_loc_code optional str
+    terminal_plant_id optional str
+    terminal_plant_name optional str
     progress_rate optional int
 
     Action=> alert_action {
@@ -597,6 +599,10 @@ Model IndentDryOut {
     Action=> get_distinct_plant {
         bu optional str
         region optional str
+    }
+
+    Action=> get_distinct_location_details {
+        bu optional str
     }
 
     Action=> create_dry_out_alert {
