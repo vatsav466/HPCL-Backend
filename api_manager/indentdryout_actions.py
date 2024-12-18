@@ -234,7 +234,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
 async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantParams):
     region = " ".join(data.region.split()[:-2])
     query = (f"select DISTINCT terminal_plant_id, terminal_plant_name FROM location_master where bu='RO' and "
-             f"LOWER(sales_area) like '%{region.lower()}%' and terminal_plant_id!=None")
+             f"LOWER(sales_area) like '%{region.lower()}%' and terminal_plant_id is not null")
     Charts_Connection_Vault_RoutingParams.connection_id = "1"
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
