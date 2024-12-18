@@ -43,17 +43,17 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     schema = connection_mapping.schema_mapping.get("cris", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
     query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" NOT IN ('Raised', 'Completed') AND "status" IN ('0', '1', '2');'''
-    # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-    #         rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
-    #         case when sum(pumpable_Stock) <=0 then 1
-    #         when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-    #         when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
-    #         when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
-    #         else 6 end status
-    #         from "{schema}".{table} sch
-    #         where 1=1 and sch.volume>0
-    #         group by site_id, fcc_code, item_name, rosapcode, product_no
-    #         order by site_id, fcc_code, item_name, rosapcode, product_no'''
+    query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
+            rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, indent_status
+            case when sum(pumpable_Stock) <=0 then 0
+            when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 1
+            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 2
+            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 3
+            else 5 end status
+            from "{schema}".{table} sch
+            where 1=1 and sch.volume>0
+            group by site_id, fcc_code, item_name, rosapcode, product_no, indent_status
+            order by site_id, fcc_code, item_name, rosapcode, product_no'''
     records = await function(schema_name=schema, table_name=table, query=query)
     records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
     records = records.head(10).to_dicts()
@@ -119,8 +119,8 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     ]
     bottom_x_axis = [
         "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM",
-        "Plant Incharge\nRM", "Plant Incharge\nRM", "Plant Incharge\nRM",
-        "Plant Incharge\nRM", "SO\nRM"
+        "PO\nRM", "PO\nRM", "POnRM",
+        "PO\nRM", "SO\nRM"
     ]
     where_clause = ["interlock_name = 'Indent Dry Out'"]
     Charts_Connection_Vault_RoutingParams.connection_id = "1"
@@ -258,3 +258,27 @@ async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantP
 
     # Correct return statement
     return [f"{rec['terminal_plant_id']}({rec['terminal_plant_name']})" for rec in resp if rec['terminal_plant_id']]
+
+
+# Action get_distinct_location_details
+@router.post('/get_distinct_location_details', tags=['IndentDryOut'])
+async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Distinct_Location_DetailsParams):
+    query = (
+        f"SELECT zone, region, sales_area, terminal_plant_id, terminal_plant_name"
+        f"FROM location_master "
+        f"WHERE bu='RO'"
+    )
+    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    data = await function(query=query)
+    result = {
+        key: [entry[key] for entry in data]
+        for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
+    }
+    result['Plant'] = [
+        f"{entry['terminal_plant_id']}({entry['terminal_plant_name']})"
+        for entry in data
+    ]
+
+    return {"status": True, "message": "Success", "data": result}
