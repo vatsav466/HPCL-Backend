@@ -19,6 +19,19 @@ class IndentDryOut:
     def __init__(self):
         self.params = dict()
 
+    async def update_dry_out_histrory(self, dry_out_alerts):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(
+            schema_name="HPCL_HOS",
+            table_name=connection_mapping.table_mapping.get("dry_out", ""),
+            records=dry_out_alerts,
+            conflict_columns=["ro_sap_code", "dry_out_start_date", "product_no"]
+        )
+        return resp
+
     async def prod_code_mapping(self):
         _mapping_code = {
             "MS": "2811000",
@@ -58,7 +71,8 @@ class IndentDryOut:
         return [
             "alert_id", "bu", "interlock_name", "interlock_id",
             "dealer_id", "connection_name", "indent_no", "location_no",
-            "product_code", "sap_id", "sop_id", "workflow_datetime", "terminal_loc_code"
+            "product_code", "sap_id", "sop_id", "workflow_datetime", "terminal_plant_id",
+            "terminal_plant_name"
         ]
 
     async def send_alert_action(
@@ -135,7 +149,7 @@ class IndentDryOut:
 
         if resp.get("count") > 0:
             self.params['indent_no'] = ",".join(indent_no)
-            self.params['terminal_loc_code'] = resp.get("LOCN_CODE")
+            self.params['terminal_plant_id'] = resp.get("LOCN_CODE")
             await self.update_indent_no(str(self.params['indent_no']), str(resp.get("LOCN_CODE")))
             # await self.update_alert_status(indent_status=IndentStatus.IndentRaised)
             return await self.send_alert_action(is_raised=True)
@@ -655,7 +669,7 @@ class IndentDryOut:
         url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
         payload = {
             "indent_no": {"value": indent_no, "type": "String"},
-            "terminal_loc_code": {"value": loc_code, "type": "String"},
+            "terminal_plant_id": {"value": loc_code, "type": "String"},
         }
         payload = {"value": indent_no, "type": "String"}
 
@@ -665,7 +679,7 @@ class IndentDryOut:
         else:
             print("Indent no updated successfully")
 
-        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/terminal_loc_code"
+        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/terminal_plant_id"
         payload = {"value": loc_code, "type": "String"}
         response = requests.put(url, json=payload, headers=headers)
         if response.status_code != 200:
