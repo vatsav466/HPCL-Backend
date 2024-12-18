@@ -286,9 +286,9 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
         key: list(set([entry.get(key) for entry in data if entry.get(key)]))
         for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
     }
-    result['plant'] = [
+    result['plant'] = list(set([
         f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
         for entry in data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
-    ]
+    ]))
 
     return {"status": True, "message": "Success", "data": result}
