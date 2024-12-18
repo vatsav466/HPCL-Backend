@@ -101,7 +101,7 @@ class AlertFactory:
                                                             datetime.datetime.now(datetime.UTC)
                                                             .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                                                         ),
-                                                        # 'terminal_plant_id': alert_data.get('terminal_plant_id', ''),
+                                                        'terminal_plant_id': alert_data.get('terminal_plant_id', ''),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -120,8 +120,8 @@ class AlertFactory:
                                          'workflow_datetime',
                                          datetime.datetime.now(datetime.UTC)
                                          .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
-                                     }}
-                                    # "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}
+                                     },
+                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}
 
             # Create Interlock
             # Start workflow after creating the interlock
