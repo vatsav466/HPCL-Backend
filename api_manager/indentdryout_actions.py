@@ -128,19 +128,22 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     for record in data.filters:
         # If filter was on Sales Area Getting all ro id's under that sales area
         if record.key in ['sales_area', 'plant']:
-            if record.key == "sales_area":
-                query = f"select ro_id from location_master where sales_area='{record.value}' and bu='RO'"
-            else:
-                query = f"select ro_id from location_master where terminal_plant_id='{record.value}' and bu='RO'"
-            function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-            resp = await function(
-                query=query
-            )
-            ro_ids = [rec['ro_id'] for rec in resp]
-            if len(ro_ids) == 1:
-                where_clause.append(f"sap_id='{ro_ids[0]}'")
-            else:
-                where_clause.append(f"sap_id in {tuple([rec['ro_id'] for rec in resp])}")
+            if record.value:
+                if record.key == "sales_area":
+                    query = f"select ro_id from location_master where sales_area='{record.value}' and bu='RO'"
+                else:
+                    if "(" in record.value:
+                        record.value = record.value.split("(")[-1].split(")")[0].strip()
+                    query = f"select ro_id from location_master where terminal_plant_id='{record.value}' and bu='RO'"
+                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+                resp = await function(
+                    query=query
+                )
+                ro_ids = [rec['ro_id'] for rec in resp]
+                if len(ro_ids) == 1:
+                    where_clause.append(f"sap_id='{ro_ids[0]}'")
+                else:
+                    where_clause.append(f"sap_id in {tuple([rec['ro_id'] for rec in resp])}")
         else:
             where_clause.append(f"{record.key}='{record.value}'")
     conditions = ' AND '.join(where_clause)
@@ -156,7 +159,7 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     resp = await function(
         query=query
     )
-    stats = {i+1: 0 for i, _ in enumerate(top_x_axis)}
+    stats = {i: 0 for i, _ in enumerate(top_x_axis)}
     for rec in resp:
         if rec['present_stage'] not in stats:
             stats[rec['present_stage']] = 0
