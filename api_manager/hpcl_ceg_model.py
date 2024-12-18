@@ -57,6 +57,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     longitude: Mapped[typing.Optional[str]] = mapped_column("longitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -94,6 +95,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     longitude: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -136,6 +138,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     longitude: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

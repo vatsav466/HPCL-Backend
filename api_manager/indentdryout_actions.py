@@ -232,14 +232,54 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
 # Action get_distinct_plant
 @router.post('/get_distinct_plant', tags=['IndentDryOut'])
 async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantParams):
-    region = " ".join(data.region.split()[:-2])
-    query = (f"select DISTINCT terminal_plant_id FROM location_master where bu='RO' and "
-             f"LOWER(sales_area) like '%{region.lower()}%' and terminal_plant_id!=None")
+    # region = " ".join(data.region.split()[:-2])
+    # query = (f"select DISTINCT terminal_plant_id FROM location_master where bu='RO' and "
+    #          f"LOWER(sales_area) like '%{region.lower()}%' and terminal_plant_id!=None")
+    # Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    # return [rec['terminal_plant_id'] for rec in resp if rec['terminal_plant_id']]
+    filters = []
+    if data.bu:  # Check if 'bu' is provided
+        filters.append(f"bu = '{data.bu}'")
+    if data.sales_area:  # Check if 'sales_area' is provided
+        filters.append(f"LOWER(sales_area) LIKE '%{data.sales_area.lower()}%'")
+    if data.region:  # Check if 'region' is provided
+        region = " ".join(data.region.split()[:-2])  # Process region as per your logic
+        filters.append(f"LOWER(sales_area) LIKE '%{region.lower()}%'")
+
+    # Combine filters into a WHERE clause
+    where_clause = " AND ".join(filters)
+    if where_clause:  # If there are any filters, include the WHERE keyword
+        where_clause = f"WHERE {where_clause}"
+
+    # Construct the query
+    query = (
+        f"SELECT DISTINCT terminal_plant_id, terminal_plant_name "
+        f"FROM location_master "
+        f"{where_clause} AND terminal_plant_id IS NOT NULL"
+    )
+
+    # Set connection and action parameters
     Charts_Connection_Vault_RoutingParams.connection_id = "1"
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+    # Execute the query
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
-    return [rec['terminal_plant_id'] for rec in resp if rec['terminal_plant_id']]
+    resp = await function(query=query)
+
+    # Format and return the result as ID(name)
+    # return [
+    #     f"{rec['terminal_plant_id']}({rec['terminal_plant_name']})"
+    #     for rec in resp
+    #     if rec['terminal_plant_id'] and rec['terminal_plant_name']
+    # ]
+
+    return [
+        f"{rec['terminal_plant_id']}({rec['terminal_plant_name']})"
+        for rec in resp]
+
 
