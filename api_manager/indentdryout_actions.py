@@ -270,8 +270,14 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
     query = (
         f"""SELECT "zone", region, sales_area, terminal_plant_id, terminal_plant_name """
         f"FROM location_master "
-        f"WHERE bu='RO'"
+        f"WHERE bu = '{data.bu}'"
     )
+    if data.zone:
+        query += f""" AND "zone" = '{data.zone}'"""
+    if data.region:
+        query += f" AND region = '{data.region}'"
+    if data.sales_area:
+        query += f" AND sales_area = '{data.sales_area}'"
     Charts_Connection_Vault_RoutingParams.connection_id = "1"
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -280,7 +286,7 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
         key: list(set([entry.get(key) for entry in data if entry.get(key)]))
         for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
     }
-    result['Plant'] = [
+    result['plant'] = [
         f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
         for entry in data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
     ]
