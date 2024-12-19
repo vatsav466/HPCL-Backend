@@ -66,8 +66,8 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     alert_data = {
         'bu': 'RO',
         'alert_type': 'RO',
-        'sop_id': 'SOP291',
-        'interlock_name': 'Indent Dry Out',
+        'sop_id': 'SOP293',
+        'interlock_name': 'Dry Out Triggering Flow',
         'sap_id': '',  # location_id
         'product_code': '',
         'indent_no': '',
@@ -94,7 +94,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         alert_data['terminal_plant_id'] = ''
         await create_alert(alert_data)
 
-        Charts_Connection_Vault_RoutingParams.connection_id = "1"
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         query = f"""UPDATE "HPCL_HOS".sch_inventory_forecast_dashboard SET "indent_status" = 'Raised' """ \
@@ -128,7 +128,7 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
         "PO\nRM", "SO\nRM"
     ]
     where_clause = ["interlock_name = 'Indent Dry Out'"]
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         # If filter was on Sales Area Getting all ro id's under that sales area
@@ -188,7 +188,7 @@ async def indentdryout_get_dry_out_stats(data: Indentdryout_Get_Dry_Out_StatsPar
 async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryParams):
     query = (f"select * from alerts where interlock_name = 'Indent Dry Out' and "
              f"sap_id='{data.sap_id}' ORDER BY created_at DESC LIMIT 1")
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get('hpcl_ceg', '1')
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
@@ -234,7 +234,7 @@ async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantP
     region = " ".join(data.region.split()[:-2])
     query = (f"select DISTINCT terminal_plant_id FROM location_master where bu='RO' and "
              f"LOWER(sales_area) like '%{region.lower()}%' and terminal_plant_id!=''")
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
@@ -275,7 +275,7 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
         query += f" AND region = '{data.region}'"
     if data.sales_area:
         query += f" AND sales_area = '{data.sales_area}'"
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)

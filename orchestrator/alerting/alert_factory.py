@@ -101,7 +101,6 @@ class AlertFactory:
                                                             datetime.datetime.now(datetime.UTC)
                                                             .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                                                         ),
-                                                        'terminal_plant_id': alert_data.get('terminal_plant_id', ''),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -120,8 +119,9 @@ class AlertFactory:
                                          'workflow_datetime',
                                          datetime.datetime.now(datetime.UTC)
                                          .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
-                                     },
-                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}
+                                     "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
+                                     "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
+                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}}
 
             # Create Interlock
             # Start workflow after creating the interlock
@@ -151,6 +151,7 @@ class AlertFactory:
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 print("workflow_id: ", workflow_id)
                 print("workflow_id ", workflow_id)
+                print("payload: ", payload)
                 if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
             else:
