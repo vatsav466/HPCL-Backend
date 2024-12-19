@@ -6,6 +6,7 @@ import json
 import fastapi
 import datetime
 import polars as pl
+import pandas as pd
 import dateutil.parser as parser
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
@@ -297,29 +298,64 @@ async def indentdryout_sync_ro_daily_sales(data: Indentdryout_Sync_Ro_Daily_Sale
     until = data.to_date
     # tr_transaction_dailysales
     query = f'''
-        SELECT * FROM "{connection_mapping.schema_mapping.get("cris", "HPCL_HOS")}"."tr_transaction_dailysales"
-        WHERE "transaction_date" BETWEEN '{since}' AND '{until}';
+        SELECT 
+            "site_id",
+            "fcc_code",
+            "transaction_date", 
+            "tank_no", 
+            "pump_no",
+            "nozzle_no", 
+            "product_no", 
+            "transaction_type",
+            "total_sales", 
+            "start_totalizer", 
+            "end_totalizer", 
+            "txn_amount", 
+            "last_transaction_date",
+            "first_transaction_date"
+        FROM
+            "{connection_mapping.schema_mapping.get("cris", "HPCL_HOS")}"."tr_transaction_dailysales"
+        WHERE 
+            "transaction_date" BETWEEN '{since}' AND '{until}';
     '''
-    print(query)
 
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")  #2   # tr_transaction_dailysales
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)
-    records = pl.DataFrame(data)
-    columns_to_drop = ['created_by', 'modified_by', 'creation_date', 'modified_date', 'receipts_print_count', 
-                       'sms_sent_count', 'txncount', 'testing_txn']
-    tr_daily_sales = records.drop(columns_to_drop)
+    column_mapping = {
+        "site_id": pl.Utf8,                
+        "fcc_code": pl.Utf8,               
+        "transaction_date": pl.Date,   
+        "tank_no": pl.Int32,               
+        "pump_no": pl.Int32,               
+        "nozzle_no": pl.Int32,             
+        "product_no": pl.Int32,            
+        "transaction_type": pl.Utf8,       
+        "total_sales": pl.Float64,         
+        "start_totalizer": pl.Float64,
+        "end_totalizer": pl.Float64,
+        "txn_amount": pl.Float64,
+        "last_transaction_date": pl.Datetime, 
+        "first_transaction_date": pl.Datetime 
+    }
+    tr_daily_sales = pl.DataFrame(data, schema=column_mapping)
 
     # ro master
-    ro_query = f''' SELECT "site_id", "ro_code", "ro_sap_code" FROM "{connection_mapping.schema_mapping.get("hpcl_ceg", "HPCL_HOS")}"."ro_master"; '''
+    ro_query = f''' 
+        SELECT 
+            "ro_id", 
+            "sap_id"
+        FROM 
+            "public"."location_master"; '''
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1") # 1  ro_master
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     ro_data = await function(query=ro_query)
     ro_master = pl.DataFrame(ro_data)
+    ro_master.rename(mapping={"sap_id": "ro_sap_code"})
 
-    tr_daily_sales = tr_daily_sales.join(ro_master.unique(subset='site_id', keep='first'), left_on='site_id', right_on='ro_code', how='left')
+    tr_daily_sales = tr_daily_sales.join(ro_master.unique(subset='ro_id', keep='first'), left_on='site_id', right_on='ro_id', how='left')
     
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'upsert_data'

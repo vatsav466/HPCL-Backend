@@ -319,6 +319,7 @@ class Postgresql(BaseAction):
                       'Decimal(precision=None, scale=0)': "numeric(10,0)",
                       'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'),
                       "Datetime(time_unit='us', time_zone=None)": str('timestamp'),
+                      "Date": str('timestamp'),
                       "Decimal(precision=9, scale=3)": "numeric(10,3)",
                       "Decimal(precision=10, scale=3)": "numeric(10,3)",
                       "Decimal(precision=None, scale=3)": "numeric(10,3)",
