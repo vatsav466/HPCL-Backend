@@ -301,9 +301,10 @@ async def indentdryout_sync_ro_daily_sales(data: Indentdryout_Sync_Ro_Daily_Sale
     until = data.to_date
     # tr_transaction_dailysales
     query = f'''
-        SELECT * FROM "{connection_mapping.connection_mapping.get("cris", "HPCL_HOS")}"."tr_transaction_dailysales"
+        SELECT * FROM "{connection_mapping.schema_mapping.get("cris", "HPCL_HOS")}"."tr_transaction_dailysales"
         WHERE "transaction_date" BETWEEN '{since}' AND '{until}';
     '''
+    print(query)
 
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")  #2   # tr_transaction_dailysales
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -315,7 +316,7 @@ async def indentdryout_sync_ro_daily_sales(data: Indentdryout_Sync_Ro_Daily_Sale
     tr_daily_sales = records.drop(columns_to_drop)
 
     # ro master
-    ro_query = f''' SELECT "site_id", "ro_code", "ro_sap_code" FROM "{connection_mapping.connection_mapping.get("hpcl_ceg", "HPCL_HOS")}"."ro_master"; '''
+    ro_query = f''' SELECT "site_id", "ro_code", "ro_sap_code" FROM "{connection_mapping.schema_mapping.get("hpcl_ceg", "HPCL_HOS")}"."ro_master"; '''
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1") # 1  ro_master
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
