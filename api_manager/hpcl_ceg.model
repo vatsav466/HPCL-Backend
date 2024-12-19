@@ -65,6 +65,7 @@ Enum AlertActionType str {
     R2Swipe='R2Swipe'
     R3Swipe='R3Swipe'
     Delivered='Delivered'
+    Tripped='Tripped'
 }
 
 Enum IndentStatus str {
@@ -295,6 +296,7 @@ Model Alert_History internal {
     is_r2_swipe optional bool
     is_r3_swipe optional bool
     is_delivered optional bool
+    is_tripped optional bool
 }
 
 Model tags internal {
@@ -314,6 +316,7 @@ Model tags internal {
     isR2Swipe optional bool
     isR3Swipe optional bool
     isDelivered optional bool
+    isTripped optional bool
 }
 
 Model Interlock {
