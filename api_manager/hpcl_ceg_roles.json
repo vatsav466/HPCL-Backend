@@ -942,6 +942,9 @@
                 },
                 {
                     "name": "create_dry_out_alert"
+                },
+                {
+                    "name": "sync_ro_daily_sales"
                 }
             ]
         },
@@ -1017,6 +1020,9 @@
                 },
                 {
                     "name": "create_dry_out_alert"
+                },
+                {
+                    "name": "sync_ro_daily_sales"
                 }
             ]
         },
@@ -1342,6 +1348,10 @@
         {
             "name": "create_dry_out_alert",
             "displayName": "create_dry_out_alert"
+        },
+        {
+            "name": "sync_ro_daily_sales",
+            "displayName": "sync_ro_daily_sales"
         }
     ]
 }

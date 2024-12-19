@@ -1273,6 +1273,11 @@ class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
     pass
 
 
+class Indentdryout_Sync_Ro_Daily_SalesParams(pydantic.BaseModel):
+    from_date: datetime.datetime
+    to_date: datetime.datetime
+
+
 class ScreensSchema(UrdhvaPostgresBase):
     __tablename__ = 'screens'
     
