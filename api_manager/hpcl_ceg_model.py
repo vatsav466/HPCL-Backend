@@ -766,6 +766,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.Optional[str]] = mapped_column("state", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     city: Mapped[typing.Optional[str]] = mapped_column("city", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     raw_data: Mapped[typing.Optional[dict]] = mapped_column("raw_data", JSONB, index=False, nullable=True, default=pydantic.Field(default_factory=dict), primary_key=False, unique=False)
     r1_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r1_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     r2_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("r2_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -776,7 +777,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     dealer_id: Mapped[typing.Optional[str]] = mapped_column("dealer_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_instance_id: Mapped[typing.Optional[str]] = mapped_column("workflow_instance_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     workflow_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("workflow_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    terminal_loc_code: Mapped[typing.Optional[str]] = mapped_column("terminal_loc_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     progress_rate: Mapped[typing.Optional[int]] = mapped_column("progress_rate", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
 
 
@@ -814,6 +816,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     region: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     city: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
     raw_data: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     r1_time: typing.Optional[datetime.datetime] | None = None
     r2_time: typing.Optional[datetime.datetime] | None = None
@@ -824,7 +827,8 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
-    terminal_loc_code: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
@@ -867,6 +871,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     region: typing.Optional[str] = pydantic.Field("", **{})
     state: typing.Optional[str] = pydantic.Field("", **{})
     city: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
     raw_data: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     r1_time: typing.Optional[datetime.datetime] | None = None
     r2_time: typing.Optional[datetime.datetime] | None = None
@@ -877,7 +882,8 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     dealer_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_instance_id: typing.Optional[str] = pydantic.Field("", **{})
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
-    terminal_loc_code: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
@@ -1254,6 +1260,13 @@ class Indentdryout_Get_Dry_Out_StatsParams(pydantic.BaseModel):
 class Indentdryout_Get_Distinct_PlantParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):

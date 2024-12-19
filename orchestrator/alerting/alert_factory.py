@@ -58,7 +58,12 @@ class AlertFactory:
             print("location_data --> ", location_data)
             # if not status:
             #     return False, location_data
-            base_data = {key: location_data.get(key) for key in ['state', 'city', 'zone', 'region', 'district']}
+            base_data = {
+                key: location_data.get(key) for key in [
+                    'state', 'city', 'zone', 'region', 'district', 'terminal_plant_id',
+                    'terminal_plant_name', 'sales_area'
+                ]
+            }
             base_data.update({key: alert_data.get(key, '') for key in ['device_id', 'device_type', 'device_name']})
             base_data.update({"sop_id": sop_id, "sap_id": sap_id, "bu": bu,
                               "location_name": location_data.get('name', '')})
@@ -96,7 +101,7 @@ class AlertFactory:
                                                             datetime.datetime.now(datetime.UTC)
                                                             .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                                                         ),
-                                                        'terminal_loc_code': alert_data.get('terminal_loc_code', ''),
+                                                        'terminal_plant_id': alert_data.get('terminal_plant_id', ''),
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             redis_ins = await urdhva_base.redispool.get_redis_connection()
@@ -116,7 +121,7 @@ class AlertFactory:
                                          datetime.datetime.now(datetime.UTC)
                                          .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
                                      },
-                                    "terminal_loc_code": {"value": alert_data.get('terminal_loc_code', ''), "type": "String"}}
+                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}
 
             # Create Interlock
             # Start workflow after creating the interlock

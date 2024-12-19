@@ -5,6 +5,7 @@ import pytz
 import json
 import fastapi
 import datetime
+import polars as pl
 import dateutil.parser as parser
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
@@ -38,23 +39,26 @@ async def indentdryout_sync_data_from_cris_to_ceg(data: Indentdryout_Sync_Data_F
 @router.post('/create_dry_out_alert', tags=['IndentDryOut'])
 async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_AlertParams):
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'get_data'
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     schema = connection_mapping.schema_mapping.get("cris", "public")
     table = connection_mapping.table_mapping.get("dry_out", "")
     query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" NOT IN ('Raised', 'Completed') AND "status" IN ('0', '1', '2');'''
-    # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-    #         rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
-    #         case when sum(pumpable_Stock) <=0 then 1
-    #         when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-    #         when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
-    #         when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
-    #         else 6 end status
-    #         from "{schema}".{table} sch
-    #         where 1=1 and sch.volume>0
-    #         group by site_id, fcc_code, item_name, rosapcode, product_no
-    #         order by site_id, fcc_code, item_name, rosapcode, product_no'''
-    records = await function(schema_name=schema, table_name=table, query=query)
+    query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
+            rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, indent_status, 
+            case when sum(pumpable_Stock) <=0 then 0
+            when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 1
+            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 2
+            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 3
+            else 5 end status
+            from "{schema}".{table} sch
+            where 1=1 and sch.volume>0
+            group by site_id, fcc_code, item_name, rosapcode, product_no, indent_status
+            order by site_id, fcc_code, item_name, rosapcode, product_no'''
+    # records = await function(schema_name=schema, table_name=table, query=query)
+    records = await function(query=query)
+    records = pl.DataFrame(records)
+    records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
     records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
     records = records.head(10).to_dicts()
 
@@ -69,7 +73,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         'dealer_id': '',
         'severity': "",
         'workflow_datetime': '',
-        'terminal_loc_code': ''
+        'terminal_plant_id': ''
     }
 
     _mapping = await indent_dry_out().prod_code_mapping()
@@ -86,7 +90,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         alert_data['indent_no'] = ''
         alert_data['dealer_id'] = _dry['rosapcode']
         alert_data['workflow_datetime'] = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
-        alert_data['terminal_loc_code'] = ''
+        alert_data['terminal_plant_id'] = ''
         await create_alert(alert_data)
 
         Charts_Connection_Vault_RoutingParams.connection_id = "1"
@@ -119,8 +123,8 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     ]
     bottom_x_axis = [
         "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM",
-        "Plant Incharge\nRM", "Plant Incharge\nRM", "Plant Incharge\nRM",
-        "Plant Incharge\nRM", "SO\nRM"
+        "PO\nRM", "PO\nRM", "POnRM",
+        "PO\nRM", "SO\nRM"
     ]
     where_clause = ["interlock_name = 'Indent Dry Out'"]
     Charts_Connection_Vault_RoutingParams.connection_id = "1"
@@ -258,3 +262,33 @@ async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantP
 
     # Correct return statement
     return [f"{rec['terminal_plant_id']}({rec['terminal_plant_name']})" for rec in resp if rec['terminal_plant_id']]
+
+
+# Action get_distinct_location_details
+@router.post('/get_distinct_location_details', tags=['IndentDryOut'])
+async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Distinct_Location_DetailsParams):
+    query = (
+        f"""SELECT "zone", region, sales_area, terminal_plant_id, terminal_plant_name """
+        f"FROM location_master "
+        f"WHERE bu = '{data.bu}'"
+    )
+    if data.zone:
+        query += f""" AND "zone" = '{data.zone}'"""
+    if data.region:
+        query += f" AND region = '{data.region}'"
+    if data.sales_area:
+        query += f" AND sales_area = '{data.sales_area}'"
+    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    data = await function(query=query)
+    result = {
+        key: list(set([entry.get(key) for entry in data if entry.get(key)]))
+        for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
+    }
+    result['plant'] = list(set([
+        f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
+        for entry in data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
+    ]))
+
+    return {"status": True, "message": "Success", "data": result}
