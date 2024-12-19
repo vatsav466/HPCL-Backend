@@ -6,7 +6,8 @@ connection_mapping = {
 
 schema_mapping = {
     "cris": "HPCL_HOS",
-    "ims": "IMS_SAP"
+    "ims": "IMS_SAP",
+    "hpcl_ceg": "HPCL_HOS"
 }
 
 table_mapping = {
