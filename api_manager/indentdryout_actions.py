@@ -299,7 +299,7 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
 @router.post('/sync_ro_daily_sales', tags=['IndentDryOut'])
 async def indentdryout_sync_ro_daily_sales(data: Indentdryout_Sync_Ro_Daily_SalesParams):
 
-    return await indent_dryout_sync_ro_daily_sales(data)
+    return await indent_dryout_sync_ro_daily_sales(data.from_date, data.to_date)
 
 # Action get_indent_analysis
 @router.post('/get_indent_analysis', tags=['IndentDryOut'])
