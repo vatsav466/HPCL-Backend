@@ -20,9 +20,15 @@ async def get_location_details(bu, sap_id):
         print("Invalid parameters: 'bu' and 'sap_id' are required.")
         return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
     redis_ins = await urdhva_base.redispool.get_redis_connection()
-    if await redis_ins.hexists("location_master", f"{bu.upper()}_{sap_id}"):
-        location_data = json.loads(await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}"))
-        return True, location_data
+    try:
+        if await redis_ins.hexists("location_master", f"{bu.upper()}_{sap_id}"):
+            location_data = json.loads(await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}"))
+            return True, location_data
+    except Exception as e:
+        print("Redis Exception: ", e)
+        return False, {}
+    finally:
+        await redis_ins.close()
 
     # Verifying the same available in database or not
     query = f"bu = '{bu.upper()}' AND sap_id = '{sap_id}'"

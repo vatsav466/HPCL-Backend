@@ -115,7 +115,9 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlo
                         {"sop_id": "SOP018", "interlock_name": "Nozzle"},
                         {"sop_id": "SOP999", "interlock_name": "Nozzle Interlock"},
                         {"sop_id": "SOP999", "interlock_name": "Bay Interlock"},
-                        {"sop_id": "SOP291", "interlock_name": "Indent Dry Out"},]
+                        {"sop_id": "SOP291", "interlock_name": "Indent Dry Out"},
+                        {"sop_id": "SOP292", "interlock_name": "Dry Out Each Indent Wise MainFlow"},
+                        {"sop_id": "SOP293", "interlock_name": "Dry Out Triggering Flow"},]
 
 # Interlock name and sop mapping for LPG Alerts
 lpg_interlock_mapping = [

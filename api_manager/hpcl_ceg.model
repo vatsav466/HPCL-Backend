@@ -65,6 +65,7 @@ Enum AlertActionType str {
     R2Swipe='R2Swipe'
     R3Swipe='R3Swipe'
     Delivered='Delivered'
+    Tripped='Tripped'
 }
 
 Enum IndentStatus str {
@@ -269,7 +270,7 @@ Model assetData internal {
 Model assetDetails internal {
     asset_id str
     data optional assetData
-} 
+}
 
 Model Alert_History internal {
     device_data optional str
@@ -295,6 +296,7 @@ Model Alert_History internal {
     is_r2_swipe optional bool
     is_r3_swipe optional bool
     is_delivered optional bool
+    is_tripped optional bool
 }
 
 Model tags internal {
@@ -314,6 +316,7 @@ Model tags internal {
     isR2Swipe optional bool
     isR3Swipe optional bool
     isDelivered optional bool
+    isTripped optional bool
 }
 
 Model Interlock {
@@ -321,7 +324,7 @@ Model Interlock {
     sap_id index_field str
     sop_id index_field str
     interlock_name optional index_field str
-    location_name optional str	
+    location_name optional str
     device_name optional str
     device_type optional str
     device_id optional str
@@ -392,6 +395,10 @@ Model Alerts {
     violation_type optional str
     clear_count optional bool
 
+    // Marking Alert
+    is_flagged_false optional bool
+    rca optional str
+    rca_type optional str
 
 
     // Notification Details
@@ -593,6 +600,10 @@ Model IndentDryOut {
     }
 
     Action=> get_dry_out_stats {
+        filters list DataFilters
+    }
+
+    Action=> get_indent_analysis {
         filters list DataFilters
     }
 

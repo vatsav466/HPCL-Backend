@@ -51,12 +51,13 @@ class AlertAction:
         :param input_data:
         :return:
         """
+        print("input_data --> ", input_data)
         function_map = {"Justification": "justify_alert", "Rejected": "reject_alert", "Approved": "approve_alert",
                         "Override": "override_alert", "interLockOk": "interlock_ok_alert", 
                         "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert",
                         "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
-                        "Created": "created_alert"}
+                        "Created": "created_alert", "Tripped": "tripped_alert"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -95,6 +96,7 @@ class AlertAction:
         """
         # Todo:- here we have to write all the generic functionality like updating the alert data,
         #  history, fetching users, roles, ...
+        print("input_data --> ", input_data)
         alert_history = alert_data.alert_history
         allocated_time = alert_data.updated_at
         if alert_history and alert_history[-1].get("processed_time"):
@@ -122,7 +124,8 @@ class AlertAction:
                             "is_r1_swipe": event_tags.get("is_r1_swipe", False),
                             "is_r2_swipe": event_tags.get("is_r2_swipe", False),
                             "is_r3_swipe": event_tags.get("is_r3_swipe", False),
-                            "is_delivered": event_tags.get("is_delivered", False)
+                            "is_delivered": event_tags.get("is_delivered", False),
+                            "is_tripped": event_tags.get("is_tripped", False)
         })
         # Modify the alert with the updated alert_history
         await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
@@ -153,6 +156,7 @@ class AlertAction:
                    "is_r2_swipe": {"name": "r2Swipe", "type": "Boolean"},
                    "is_r3_swipe": {"name": "r3Swipe", "type": "Boolean"},
                    "is_delivered": {"name": "delivered", "type": "Boolean"},
+                   "is_tripped": {"name": "tripped", "type": "Boolean"},
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -367,3 +371,14 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "R3Swipe")
+    
+    @classmethod
+    async def tripped_alert(cls, input_data, alert_data):
+        """
+        Function to R4 Swipe an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Tripped")
+

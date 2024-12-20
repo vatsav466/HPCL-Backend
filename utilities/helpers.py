@@ -1,3 +1,5 @@
+import urdhva_base
+import base64
 import string
 import hashlib
 import datetime
@@ -6,6 +8,7 @@ try:
 except ImportError:
     from random import choice
 from dateutil.relativedelta import relativedelta
+
 
 
 def password_generator(password_length=16, special_characters_allowed=True, case_sensitive=True):
@@ -79,3 +82,24 @@ def generate_hash(list_of_strings, bit_size=64):
     # Get the hexadecimal digest of the hash
     hash_value = hash_object.hexdigest()
     return hash_value
+
+
+def encrypt_file(file_path):
+    """
+    Encrypt a file using the provided encryption key.
+    
+    Args:
+        file_path (str): Path to the file to be encrypted.
+        encryption_key (bytes): Encryption key.
+
+    Returns:
+        str: Path to the encrypted file.
+    """
+    encrypted_file_path = f"{file_path}.enc"
+
+    with open(file_path, "rb") as file:
+        file_data = file.read()  # Read file content
+        with open(encrypted_file_path, "wb") as encrypted_file:
+            encrypted_file.write(file_data)  # Save encrypted data
+    file_path = str(urdhva_base.types.Secret().validate(encrypted_file_path, ''))
+    return base64.b64encode(file_path.encode()).decode()
