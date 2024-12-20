@@ -935,6 +935,9 @@
                     "name": "get_dry_out_stats"
                 },
                 {
+                    "name": "get_indent_analysis"
+                },
+                {
                     "name": "get_distinct_plant"
                 },
                 {
@@ -969,6 +972,9 @@
                 },
                 {
                     "name": "get_dry_out_stats"
+                },
+                {
+                    "name": "get_indent_analysis"
                 },
                 {
                     "name": "get_distinct_plant"
@@ -1011,6 +1017,9 @@
                 },
                 {
                     "name": "get_dry_out_stats"
+                },
+                {
+                    "name": "get_indent_analysis"
                 },
                 {
                     "name": "get_distinct_plant"
@@ -1336,6 +1345,10 @@
         {
             "name": "get_dry_out_stats",
             "displayName": "get_dry_out_stats"
+        },
+        {
+            "name": "get_indent_analysis",
+            "displayName": "get_indent_analysis"
         },
         {
             "name": "get_distinct_plant",

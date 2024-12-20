@@ -489,7 +489,6 @@ class Postgresql(BaseAction):
         :return:
         """
         connection = await self.get_connection()
-        print(records)
         if not isinstance(records, pl.DataFrame):
             records = pl.DataFrame(records)
 

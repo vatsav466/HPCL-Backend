@@ -66,8 +66,8 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     alert_data = {
         'bu': 'RO',
         'alert_type': 'RO',
-        'sop_id': 'SOP291',
-        'interlock_name': 'Indent Dry Out',
+        'sop_id': 'SOP293',
+        'interlock_name': 'Dry Out Triggering Flow',
         'sap_id': '',  # location_id
         'product_code': '',
         'indent_no': '',
@@ -94,7 +94,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         alert_data['terminal_plant_id'] = ''
         await create_alert(alert_data)
 
-        Charts_Connection_Vault_RoutingParams.connection_id = "1"
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         query = f"""UPDATE "HPCL_HOS".sch_inventory_forecast_dashboard SET "indent_status" = 'Raised' """ \
@@ -124,11 +124,11 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     ]
     bottom_x_axis = [
         "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM",
-        "PO\nRM", "PO\nRM", "POnRM",
+        "PO\nRM", "PO\nRM", "PO\nRM",
         "PO\nRM", "SO\nRM"
     ]
     where_clause = ["interlock_name = 'Indent Dry Out'"]
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         # If filter was on Sales Area Getting all ro id's under that sales area
@@ -174,16 +174,7 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
             "bottom_x_axis": bottom_x_axis, "stats": [{"section": top_x_axis[key-1],
                                                        "value": value} for key, value in stats.items()
                                                       if key <= len(top_x_axis)]}
-    # return [
-    #     {"name": "location1", "sap_id": "12345", "dry_out_days": 3, "present_stage": 3},
-    #     {"name": "location2", "sap_id": "112233", "dry_out_days": 2, "present_stage": 3},
-    #     {"name": "location3", "sap_id": "223344", "dry_out_days": 3, "present_stage": 4},
-    #     {"name": "location4", "sap_id": "334455", "dry_out_days": -3, "present_stage": 6},
-    #     {"name": "location5", "sap_id": "445566", "dry_out_days": -1, "present_stage": 5},
-    #     {"name": "location6", "sap_id": "556677", "dry_out_days": -2, "present_stage": 2},
-    #     {"name": "location6", "sap_id": "556677", "dry_out_days": -2, "present_stage": 1},
-    #     {"name": "location6", "sap_id": "556677", "dry_out_days": -6, "present_stage": 0}
-    # ]
+
 
 
 # Action get_dry_out_stats
@@ -197,7 +188,7 @@ async def indentdryout_get_dry_out_stats(data: Indentdryout_Get_Dry_Out_StatsPar
 async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryParams):
     query = (f"select * from alerts where interlock_name = 'Indent Dry Out' and "
              f"sap_id='{data.sap_id}' ORDER BY created_at DESC LIMIT 1")
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get('hpcl_ceg', '1')
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
@@ -240,26 +231,31 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
 # Action get_distinct_plant
 @router.post('/get_distinct_plant', tags=['IndentDryOut'])
 async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantParams):
-    # region = " ".join(data.region.split()[:-2])
-    # query = (f"select DISTINCT terminal_plant_id, terminal_plant_name FROM location_master where bu='RO' and "
-    #          f"LOWER(sales_area) like '%{region.lower()}%' and terminal_plant_id is not null")
-    # Charts_Connection_Vault_RoutingParams.connection_id = "1"
-    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    # resp = await function(
-    #     query=query
-    # )
-    # return [rec['terminal_plant_id'](rec['terminal_plant_name']) for rec in resp if rec['terminal_plant_id']]
     region = " ".join(data.region.split()[:-2])
-    query = (
-        f"SELECT DISTINCT terminal_plant_id, terminal_plant_name "
-        f"FROM location_master "
-        f"WHERE bu='RO' AND LOWER(sales_area) LIKE '%{region.lower()}%' AND terminal_plant_id IS NOT NULL"
-    )
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    query = (f"select DISTINCT terminal_plant_id FROM location_master where bu='RO' and "
+             f"LOWER(sales_area) like '%{region.lower()}%' and terminal_plant_id!=''")
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(query=query)
+    resp = await function(
+        query=query
+    )
+    plant_id = [rec['terminal_plant_id'] for rec in resp if rec['terminal_plant_id']]
+    cond = ""
+    if len(plant_id) == 1:
+        cond = f"sap_id = {plant_id[0]}"
+    else:
+        cond = f"sap_id IN {tuple(plant_id)}"
+    query = f"select name,sap_id from location_master where {cond}"
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    map_data = {rec['sap_id']: rec['name'] for rec in resp}
+    for key in plant_id:
+        if key not in map_data:
+            map_data[key] = key
+    return [f"{key}({value})" for key, value in map_data.items()]
 
     # Correct return statement
     return [f"{rec['terminal_plant_id']}({rec['terminal_plant_name']})" for rec in resp if rec['terminal_plant_id']]
@@ -279,7 +275,7 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
         query += f" AND region = '{data.region}'"
     if data.sales_area:
         query += f" AND sales_area = '{data.sales_area}'"
-    Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)
@@ -299,3 +295,25 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
 @router.post('/sync_ro_daily_sales', tags=['IndentDryOut'])
 async def indentdryout_sync_ro_daily_sales(data: Indentdryout_Sync_Ro_Daily_SalesParams):
     return await indent_dryout_sync_ro_daily_sales(data)
+
+# Action get_indent_analysis
+@router.post('/get_indent_analysis', tags=['IndentDryOut'])
+async def indentdryout_get_indent_analysis(data: Indentdryout_Get_Indent_AnalysisParams):
+    conditions = {rec.key: rec.value for rec in data.filters}
+    if conditions["model"] == "all":
+        if conditions.get("category") == "cat_a":
+            ...
+        return {"indents_not_placed": 300, "indents_on_hold": 50, "indents_in_progress": 34,
+                "pending_indents": 23, "total": 407}
+    elif conditions["model"] == "pending_indents":
+        if conditions.get("category") == "cat_a":
+            ...
+        return {"dealer_tt": 10, "tt_available": 0, "dealer_tt_return": 4, "tt_return": 11,
+                "pending_indents": 23, "date": str(datetime.datetime.utcnow())}
+    elif conditions["model"] == "indents_not_placed":
+        if conditions.get("category") == "cat_a":
+            ...
+        return {"indents_not_placed": 1000, "date": str(datetime.datetime.utcnow()),
+                "dry_out_2days": 50, "dry_out_7days": 34, "dry_out_15days": 12, "dry_out_30days": 0}
+    else:
+        return {}

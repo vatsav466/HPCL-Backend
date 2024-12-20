@@ -516,6 +516,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     is_r2_swipe: typing.Optional[bool] = pydantic.Field(False, )
     is_r3_swipe: typing.Optional[bool] = pydantic.Field(False, )
     is_delivered: typing.Optional[bool] = pydantic.Field(False, )
+    is_tripped: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -535,6 +536,7 @@ class tagsCreate(pydantic.BaseModel):
     is_r2_swipe: typing.Optional[bool] = pydantic.Field(False, )
     is_r3_swipe: typing.Optional[bool] = pydantic.Field(False, )
     is_delivered: typing.Optional[bool] = pydantic.Field(False, )
+    is_tripped: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):
@@ -754,6 +756,9 @@ class AlertsSchema(UrdhvaPostgresBase):
     vehicle_number: Mapped[typing.Optional[str]] = mapped_column("vehicle_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     clear_count: Mapped[typing.Optional[bool]] = mapped_column("clear_count", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    is_flagged_false: Mapped[typing.Optional[bool]] = mapped_column("is_flagged_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    rca: Mapped[typing.Optional[str]] = mapped_column("rca", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    rca_type: Mapped[typing.Optional[str]] = mapped_column("rca_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_history: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("alert_history", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
     last_sms_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_sms_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     last_mailed_to: Mapped[typing.Optional[typing.List[str]]] = mapped_column("last_mailed_to", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -804,6 +809,9 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
     clear_count: typing.Optional[bool] = pydantic.Field(False, )
+    is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
+    rca: typing.Optional[str] = pydantic.Field("", **{})
+    rca_type: typing.Optional[str] = pydantic.Field("", **{})
     alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
     last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -859,6 +867,9 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
     clear_count: typing.Optional[bool] = pydantic.Field(False, )
+    is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
+    rca: typing.Optional[str] = pydantic.Field("", **{})
+    rca_type: typing.Optional[str] = pydantic.Field("", **{})
     alert_history: typing.Optional[typing.List[Alert_HistoryCreate]] | None = None
     last_sms_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     last_mailed_to: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -1254,6 +1265,10 @@ class Indentdryout_Get_Alert_HistoryParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Dry_Out_StatsParams(pydantic.BaseModel):
+    filters: typing.List[DataFiltersCreate]
+
+
+class Indentdryout_Get_Indent_AnalysisParams(pydantic.BaseModel):
     filters: typing.List[DataFiltersCreate]
 
 
