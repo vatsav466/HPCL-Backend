@@ -130,6 +130,7 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
         "PO\nRM", "SO\nRM"
     ]
     where_clause = ["interlock_name = 'Indent Dry Out'"]
+    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
