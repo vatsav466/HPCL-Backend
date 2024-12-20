@@ -785,6 +785,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     progress_rate: Mapped[typing.Optional[int]] = mapped_column("progress_rate", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -838,6 +839,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -896,6 +898,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1291,6 +1294,10 @@ class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
 class Indentdryout_Sync_Ro_Daily_SalesParams(pydantic.BaseModel):
     from_date: datetime.datetime
     to_date: datetime.datetime
+
+
+class Indentdryout_Get_Dry_Out_CountParams(pydantic.BaseModel):
+    pass
 
 
 class ScreensSchema(UrdhvaPostgresBase):

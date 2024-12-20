@@ -11,5 +11,9 @@ schema_mapping = {
 }
 
 table_mapping = {
-    "dry_out": "sch_inventory_forecast_dashboard"
+    "dry_out": "sch_inventory_forecast_dashboard",
+    "indent_req": "INDENT_REQUEST",
+    "indent_prod": "INDENT_PRODUCTS",
+    "indent_pattern": "INDENT_PATTERN",
+    "truck_swipe": "TRUCK_SWIPE_ENTRY_SAP",
 }

@@ -434,6 +434,7 @@ Model Alerts {
     terminal_plant_id optional str
     terminal_plant_name optional str
     progress_rate optional int
+    category optional str
 
     Action=> alert_action {
         action_type AlertActionType
@@ -626,6 +627,10 @@ Model IndentDryOut {
     Action=> sync_ro_daily_sales {
         from_date datetime
         to_date datetime
+    }
+
+    Action=> get_dry_out_count {
+
     }
 }
 
