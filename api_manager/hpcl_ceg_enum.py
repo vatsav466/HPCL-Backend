@@ -105,6 +105,7 @@ class AlertActionType(str, enum.Enum):
     R2Swipe = 'R2Swipe'
     R3Swipe = 'R3Swipe'
     Delivered = 'Delivered'
+    Tripped = 'Tripped'
 
 
 
