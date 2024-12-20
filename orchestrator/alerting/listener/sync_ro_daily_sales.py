@@ -68,7 +68,7 @@ async def indent_dryout_sync_ro_daily_sales(data):
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         ro_data = await function(query=ro_query)
         ro_master = pl.DataFrame(ro_data)
-        ro_master.rename(mapping={"sap_id": "ro_sap_code"})
+        ro_master = ro_master.rename(mapping={"sap_id": "ro_sap_code"})
 
         tr_daily_sales = tr_daily_sales.join(ro_master.unique(subset='ro_id', keep='first'), left_on='site_id', right_on='ro_id', how='left')
         
