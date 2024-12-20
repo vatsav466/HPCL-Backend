@@ -405,7 +405,7 @@ class IndentDryOut:
         input_data["action_msg"] = "Invalid Is On Hold"
         input_data["action_type"] = "Message"
         input_data["event_tags"]["is_raised"] = False
-        await self.update_alert_status(indent_status=IndentStatus.IndentOnHold, input_data=input_data)
+        await self.update_alert_status(indent_status=IndentStatus.IndentOnHold, input_data=input_data, progress_rate="2")
         return await self.send_alert_action(is_raised=False)
 
     async def is_indent_sent_sap(self, params: dict):
@@ -454,7 +454,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        query = f"""SELECT a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST" a, 
                         "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b
@@ -494,7 +494,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        query = f"""SELECT a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
                                 "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b
@@ -534,7 +534,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        query = f"""SELECT a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
                                 "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b

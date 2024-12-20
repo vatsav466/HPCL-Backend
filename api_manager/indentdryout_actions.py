@@ -61,6 +61,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     records = pl.DataFrame(records)
     records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
     records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
+    records = records.filter(pl.col('status') == 1)
     records = records.head(10).to_dicts()
 
     alert_data = {
@@ -87,7 +88,8 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         alert_data['sap_id'] = _dry['rosapcode']
         alert_data['device_id'] = str(_dry['tank_no'])
         alert_data['device_name'] = "Tank"
-        alert_data['severity'] = 'Critical' if status == 0 else 'High' if status == 1 else 'Medium' if status == 2 else 'Low'
+        # alert_data['severity'] = 'Critical' if status == 0 else 'High' if status == 1 else 'Medium' if status == 2 else 'Low'
+        alert_data['severity'] = 'Critical' if status == 1 else 'High' if status == 2 else 'Medium' if status == 3 else 'Low'
         alert_data['indent_no'] = ''
         alert_data['dealer_id'] = _dry['rosapcode']
         alert_data['workflow_datetime'] = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
