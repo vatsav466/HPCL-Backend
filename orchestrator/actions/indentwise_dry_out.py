@@ -220,7 +220,7 @@ class IndentDryOut:
         }
         input_data["action_msg"] = "Indent Not Raised"
         input_data["action_type"] = "Raised"
-        await self.update_alert_status(indent_status=IndentStatus.IndentNotRaised, input_data=input_data)
+        await self.update_alert_status(indent_status=IndentStatus.IndentNotRaised, input_data=input_data, progress_rate="1")
         return await self.send_alert_action(is_raised=False)
 
     async def is_truck_allocated(self, params: dict):
@@ -257,7 +257,7 @@ class IndentDryOut:
             input_data["action_msg"] = "Truck Allocated"
             input_data["action_type"] = "Allocated"
             input_data["event_tags"]["is_allocated"] = True
-            await self.update_alert_status(indent_status=IndentStatus.TruckAllocated, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.TruckAllocated, input_data=input_data, progress_rate="4")
             return await self.send_alert_action(is_allocated=True)
         input_data["action_msg"] = "Truck Not Allocated"
         input_data["action_type"] = "Message"
@@ -359,7 +359,8 @@ class IndentDryOut:
                 indent_status=IndentStatus.IndentOnHold,
                 alert_status=AlertStatus.OnHold,
                 alert_state=AlertState.InProgress,
-                input_data=input_data
+                input_data=input_data,
+                progress_rate="3"
             )
             return await self.send_alert_action(is_raised=True)
         return await self.send_alert_action(is_raised=False)
@@ -398,7 +399,7 @@ class IndentDryOut:
             input_data["action_msg"] = "Valid Indent"
             input_data["action_type"] = "Raised"
             input_data["event_tags"]["is_raised"] = True
-            await self.update_alert_status(indent_status=IndentStatus.ValidIndent, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.ValidIndent, input_data=input_data, progress_rate="3")
             return await self.send_alert_action(is_raised=True)
 
         input_data["action_msg"] = "Invalid Is On Hold"
@@ -441,7 +442,7 @@ class IndentDryOut:
             input_data["action_msg"] = "Sent To SAP"
             input_data["action_type"] = "SentToSap"
             input_data["event_tags"]["is_sent_to_sap"] = True
-            await self.update_alert_status(indent_status=IndentStatus.SentToSAP, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.SentToSAP, input_data=input_data, progress_rate="5")
             return await self.send_alert_action(is_sent_to_sap=True)
         return await self.send_alert_action(is_sent_to_sap=False)
 
@@ -521,7 +522,7 @@ class IndentDryOut:
             input_data["action_msg"] = "R2 Swiped"
             input_data["action_type"] = "R2Swipe"
             input_data["event_tags"]["is_r2_swipe"] = True
-            await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data, progress_rate="7")
             return await self.send_alert_action(is_r2_swipe=True)
         return await self.send_alert_action(is_r2_swipe=False)
 
@@ -561,7 +562,7 @@ class IndentDryOut:
             input_data["action_msg"] = "R3 Swiped"
             input_data["action_type"] = "R3Swipe"
             input_data["event_tags"]["is_r3_swipe"] = True
-            await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data, progress_rate="9")
             return await self.send_alert_action(is_r3_swipe=True)
         return await self.send_alert_action(is_r3_swipe=False)
 
@@ -613,7 +614,8 @@ class IndentDryOut:
 
             await self.update_alert_status(
                 indent_status=IndentStatus.InvoiceCreated,
-                input_data=input_data
+                input_data=input_data,
+                progress_rate="8"
             )
             # await self.close_supply_chain_alert(
             #     alert_id=self.params.get("alert_id"),
@@ -675,7 +677,8 @@ class IndentDryOut:
                 indent_status=IndentStatus.Completed,
                 alert_status=AlertStatus.Close,
                 alert_state=AlertState.Resolved,
-                input_data=input_data
+                input_data=input_data,
+                progress_rate="11"
             )
             await self.close_supply_chain_alert(
                 alert_id=self.params.get("alert_id"),
@@ -724,7 +727,7 @@ class IndentDryOut:
             input_data["action_msg"] = "Sales order created"
             input_data["action_type"] = "OrderPlaced"
             input_data["event_tags"]["is_order_placed"] = True
-            await self.update_alert_status(indent_status=IndentStatus.SalesOrderPlaced, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.SalesOrderPlaced, input_data=input_data, progress_rate="6")
             return await self.send_alert_action(is_order_placed=True)
         return await self.send_alert_action(is_order_placed=False)
 
@@ -752,7 +755,8 @@ class IndentDryOut:
             indent_status: str,
             alert_status: str = AlertStatus.InProgress,
             alert_state: str = AlertState.InProgress,
-            input_data: dict = {}
+            input_data: dict = {},
+            progress_rate: str = "1"
     ):
         alert_id = self.params.get("alert_id")
         alert_data = await Alerts.get(alert_id)
@@ -772,6 +776,7 @@ class IndentDryOut:
             alert_data['indent_status'] = indent_status
             alert_data['alert_status'] = alert_status
             alert_data['alert_state'] = alert_state
+            alert_data['progress_rate'] = str(progress_rate)
             print("alert_data: ", alert_data)
             alert_data = Alerts(**alert_data)
             await alert_data.modify()

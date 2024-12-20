@@ -343,17 +343,17 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     dry_out_data = pl.DataFrame(dry_out_data)
     dry_out = dry_out_data.filter(
         pl.col("status") == 1).select(
-        [pl.col("rosapcode"), pl.col("item_name")]
+        [pl.col("rosapcode")]
     ).unique().shape[0]
 
     intraday_dry_out = dry_out_data.filter(
         pl.col("status") == 2).select(
-        [pl.col("rosapcode"), pl.col("item_name")]
+        [pl.col("rosapcode")]
     ).unique().shape[0]
 
     potential_dry_out = dry_out_data.filter(
         pl.col("status") > 2).select(
-        [pl.col("rosapcode"), pl.col("item_name")]
+        [pl.col("rosapcode")]
     ).unique().shape[0]
 
     return {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
