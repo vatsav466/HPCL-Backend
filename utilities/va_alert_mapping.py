@@ -33,6 +33,6 @@ VA_Alert_Mapping = {
         "LPGLeak-Detection": {"name": "Lpg Leakage Detection",  "severity": "Critical"},
         "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt",  "severity": "Medium"},
         "PPE_HELMET": {"name": "Person not wearing Safety Helmet", "severity": "Medium"},
-        "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock LPG", "severity": "High"}
+        "ABSENCE OF WHEELCHOCK": {"name": "Missing Wheel Chock", "severity": "High"}
     }
 }
