@@ -272,24 +272,50 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
         f"FROM location_master "
         f"WHERE bu = '{data.bu}'"
     )
-    if data.zone:
-        query += f""" AND "zone" = '{data.zone}'"""
-    if data.region:
-        query += f" AND region = '{data.region}'"
-    if data.sales_area:
-        query += f" AND sales_area = '{data.sales_area}'"
+    # if data.zone:
+    #     query += f""" AND "zone" = '{data.zone}'"""
+    # if data.region:
+    #     query += f" AND region = '{data.region}'"
+    # if data.sales_area:
+    #     query += f" AND sales_area = '{data.sales_area}'"
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    data = await function(query=query)
-    result = {
-        key: list(set([entry.get(key) for entry in data if entry.get(key)]))
-        for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
-    }
-    result['plant'] = list(set([
-        f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
-        for entry in data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
-    ]))
+    location_master_data = await function(query=query)
+    location_master_data = pl.DataFrame(location_master_data)
+    # result = {
+    #     key: list(set([entry.get(key) for entry in data if entry.get(key)]))
+    #     for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
+    # }
+    result = {"zone": location_master_data.select("zone").unique().to_series().to_list()}
+    result["region"] = location_master_data.select("region").unique().to_series().to_list()
+    result["sales_area"] = location_master_data.select("sales_area").unique().to_series().to_list()
+
+    if data.zone and not data.region and not data.sales_area:
+        result["region"] = location_master_data.filter(
+            pl.col("zone") == data.zone
+        ).select("region").unique().to_series().to_list()
+
+    if data.zone and data.region and not data.sales_area:
+        result["sales_area"] = location_master_data.filter(
+            (pl.col("zone") == data.zone) & (pl.col("region") == data.region)
+        ).select("sales_area").unique().to_series().to_list()
+
+    if data.zone and data.region and data.sales_area:
+        location_master_data = location_master_data.filter(
+            (pl.col("zone") == data.zone) & (pl.col("region") == data.region) & (pl.col("sales_area") == data.sales_area)
+        ).select(["terminal_plant_id", "terminal_plant_name"]).to_dicts()
+        result['plant'] = list(set([
+            f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
+            for entry in location_master_data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
+        ]))
+    else:
+        result['plant'] = list(set([
+            f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
+            for entry in location_master_data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
+        ]))
+
+
 
     return {"status": True, "message": "Success", "data": result}
 
