@@ -204,20 +204,23 @@ class IndentDryOut:
             print("resp: ", resp)
             if not resp:
                 return await self.send_alert_action(is_raised=False)
-        resp = resp[0]
-        if resp.get("count") > 0:
-            # self.params['indent_no'] = ",".join(indent_no)
-            # self.params['terminal_plant_id'] = resp.get("LOCN_CODE")
-            # await self.update_indent_no(str(self.params['indent_no']), str(resp.get("LOCN_CODE")))
-            # await self.update_alert_status(indent_status=IndentStatus.IndentRaised)
-            return await self.send_alert_action(is_raised=True)
-
         input_data = {
             "action_msg": "",
             "event_tags": {
                 "is_raised": False
             }
         }
+        resp = resp[0]
+        if resp.get("count") > 0:
+            # self.params['indent_no'] = ",".join(indent_no)
+            # self.params['terminal_plant_id'] = resp.get("LOCN_CODE")
+            # await self.update_indent_no(str(self.params['indent_no']), str(resp.get("LOCN_CODE")))
+            input_data["action_msg"] = "Indent Raised"
+            input_data["action_type"] = "Raised"
+            input_data["event_tags"]["is_raised"] = True
+            await self.update_alert_status(indent_status=IndentStatus.IndentRaised, input_data=input_data, progress_rate="2")
+            return await self.send_alert_action(is_raised=True)
+
         input_data["action_msg"] = "Indent Not Raised"
         input_data["action_type"] = "Raised"
         await self.update_alert_status(indent_status=IndentStatus.IndentNotRaised, input_data=input_data, progress_rate="1")
@@ -464,7 +467,8 @@ class IndentDryOut:
                         AND a.LOCN_CODE = b.LOCN_CODE
                         AND a.TRUCK_REGNO = b.TRUCK_REGNO
                         AND b.CARD_STATUS = 'R'
-                        AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) """
+                        AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) 
+                    GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -504,7 +508,8 @@ class IndentDryOut:
                                 AND a.LOCN_CODE = b.LOCN_CODE
                                 AND a.TRUCK_REGNO = b.TRUCK_REGNO
                                 AND b.CARD_STATUS = 'I'
-                                AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) """
+                                AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) 
+                            GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -544,7 +549,8 @@ class IndentDryOut:
                                 AND a.LOCN_CODE = b.LOCN_CODE
                                 AND a.TRUCK_REGNO = b.TRUCK_REGNO
                                 AND b.CARD_STATUS = 'O'
-                                AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) """
+                                AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) 
+                            GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -756,7 +762,7 @@ class IndentDryOut:
             alert_status: str = AlertStatus.InProgress,
             alert_state: str = AlertState.InProgress,
             input_data: dict = {},
-            progress_rate: str = "1"
+            progress_rate: str = "0"
     ):
         alert_id = self.params.get("alert_id")
         alert_data = await Alerts.get(alert_id)
@@ -776,7 +782,8 @@ class IndentDryOut:
             alert_data['indent_status'] = indent_status
             alert_data['alert_status'] = alert_status
             alert_data['alert_state'] = alert_state
-            alert_data['progress_rate'] = str(progress_rate)
+            if str(progress_rate) != "0":
+                alert_data['progress_rate'] = str(progress_rate)
             print("alert_data: ", alert_data)
             alert_data = Alerts(**alert_data)
             await alert_data.modify()
