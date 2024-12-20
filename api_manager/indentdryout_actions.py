@@ -287,18 +287,18 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
     #     key: list(set([entry.get(key) for entry in data if entry.get(key)]))
     #     for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
     # }
-    result = {"zone": location_master_data.select("zone").unique().to_series().to_list()}
-    result["region"] = location_master_data.select("region").unique().to_series().to_list()
-    result["sales_area"] = location_master_data.select("sales_area").unique().to_series().to_list()
+    result = {"zone": location_master_data.filter(~pl.col("zone").is_in("", None)).select("zone").unique().to_series().to_list()}
+    result["region"] = location_master_data.filter(~pl.col("region").is_in("", None)).select("region").unique().to_series().to_list()
+    result["sales_area"] = location_master_data.filter(~pl.col("sales_area").is_in("", None)).select("sales_area").unique().to_series().to_list()
 
     if data.zone and not data.region and not data.sales_area:
         result["region"] = location_master_data.filter(
-            pl.col("zone") == data.zone
+            (pl.col("zone") == data.zone) & ~(pl.col("region").is_in("", None))
         ).select("region").unique().to_series().to_list()
 
     if data.zone and data.region and not data.sales_area:
         result["sales_area"] = location_master_data.filter(
-            (pl.col("zone") == data.zone) & (pl.col("region") == data.region)
+            (pl.col("zone") == data.zone) & (pl.col("region") == data.region) & ~(pl.col("sales_area").is_in("", None))
         ).select("sales_area").unique().to_series().to_list()
 
     if data.zone and data.region and data.sales_area:
