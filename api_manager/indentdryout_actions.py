@@ -150,9 +150,11 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
                 if len(ro_ids) == 1:
                     where_clause.append(f"sap_id='{ro_ids[0]}'")
                 else:
-                    where_clause.append(f"sap_id in {tuple([rec['ro_id'] for rec in resp])}")
+                    if resp:
+                        where_clause.append(f"sap_id in {tuple([rec['ro_id'] for rec in resp])}")
         else:
-            where_clause.append(f"{record.key}='{record.value}'")
+            if record.value:
+                where_clause.append(f"{record.key}='{record.value}'")
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage," \
             "case when severity = 'Critical' then '0' " \
