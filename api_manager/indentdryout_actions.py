@@ -120,14 +120,11 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
 @router.post('/get_dried_out_plants', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_PlantsParams):
     top_x_axis = [
-        "Indent Not Raised", "Indent Raised", "Valid Indent", "Truck Allocated", "Sent to SAP",
-        "Sales Order Placed", "R2 Swiped", "Invoice Created", "R3 Swiped", "VTS",
-        "Indent Delivered"
+        "Indent Not Raised", "Pending Indents", "Indent On Hold", "Truck Allocated", "Sent to SAP",
+        "Sales Order Placed", "R2 Swiped", "Invoice Created", "R3 Swiped", "VTS", "Indent Delivered"
     ]
     bottom_x_axis = [
-        "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM",
-        "PO\nRM", "PO\nRM", "PO\nRM",
-        "PO\nRM", "SO\nRM"
+        "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "SO\nRM"
     ]
     where_clause = ["interlock_name = 'Indent Dry Out'"]
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
@@ -169,17 +166,18 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     resp = await function(
         query=query
     )
-    stats = {i: 0 for i, _ in enumerate(top_x_axis)}
+    stats = {i+1: 0 for i, _ in enumerate(top_x_axis)}
     for rec in resp:
+        if rec['present_stage'] == 0:
+            rec['present_stage'] = 1
         if rec['present_stage'] not in stats:
             stats[rec['present_stage']] = 0
         stats[rec['present_stage']] += 1
-
+    stats = [{"section": top_x_axis[key-1], "value": value, "serial": key}
+             for key, value in stats.items() if key <= len(top_x_axis)]
+    stats = sorted(stats, key=lambda x: x['serial'])
     return {"status": True, "message": "Success", "data": resp, "top_x_axis": top_x_axis,
-            "bottom_x_axis": bottom_x_axis, "stats": [{"section": top_x_axis[key-1],
-                                                       "value": value} for key, value in stats.items()
-                                                      if key <= len(top_x_axis)]}
-
+            "bottom_x_axis": bottom_x_axis, "stats": stats}
 
 
 # Action get_dry_out_stats
