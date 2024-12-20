@@ -280,6 +280,8 @@ class BasePostgresModel(pydantic.BaseModel):
             query_params.append(cls.Config.standard_query)
         if params and params.q and len(params.q) > 0:
             query_params.append(params.q)
+        if cls.Config.search_fields:
+            ...
         if len(query_params):
             query.append("where " + " AND ".join(query_params))
 
@@ -346,9 +348,8 @@ class BasePostgresModel(pydantic.BaseModel):
             await session.commit()
             await asyncio.shield(session.close())
             return True, "Success"
+        return False, "Fail"
 
-        else:
-            return False, "Fail"
     async def create(self, entity_id=None, upsert=False, upsert_skip_keys = []):
         """
 
@@ -486,6 +487,7 @@ class BasePostgresModel(pydantic.BaseModel):
         from_attributes = True
         collection_name: urdhva_base.settings.default_index
         schema_class: Base
+        search_fields: []
         upsert_keys: []
 
 

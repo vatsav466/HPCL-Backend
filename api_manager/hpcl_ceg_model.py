@@ -848,6 +848,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = AlertsSchema
         upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
 
 
 class Alerts(urdhva_base.postgresmodel.PostgresModel):
@@ -907,6 +908,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = AlertsSchema
         upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
 
 
 class AlertsGetResp(pydantic.BaseModel):
