@@ -948,6 +948,9 @@
                 },
                 {
                     "name": "sync_ro_daily_sales"
+                },
+                {
+                    "name": "get_dry_out_count"
                 }
             ]
         },
@@ -981,6 +984,9 @@
                 },
                 {
                     "name": "get_distinct_location_details"
+                },
+                {
+                    "name": "get_dry_out_count"
                 }
             ]
         },
@@ -1032,6 +1038,9 @@
                 },
                 {
                     "name": "sync_ro_daily_sales"
+                },
+                {
+                    "name": "get_dry_out_count"
                 }
             ]
         },
@@ -1365,6 +1374,10 @@
         {
             "name": "sync_ro_daily_sales",
             "displayName": "sync_ro_daily_sales"
+        },
+        {
+            "name": "get_dry_out_count",
+            "displayName": "get_dry_out_count"
         }
     ]
 }

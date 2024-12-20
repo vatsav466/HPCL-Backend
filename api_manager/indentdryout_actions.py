@@ -318,3 +318,42 @@ async def indentdryout_get_indent_analysis(data: Indentdryout_Get_Indent_Analysi
                 "dry_out_2days": 50, "dry_out_7days": 34, "dry_out_15days": 12, "dry_out_30days": 0}
     else:
         return {}
+
+
+# Action get_dry_out_count
+@router.post('/get_dry_out_count', tags=['IndentDryOut'])
+async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountParams):
+    schema = connection_mapping.schema_mapping.get("hpcl_ceg")
+    table = connection_mapping.table_mapping.get("dry_out")
+    query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
+                rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, indent_status, 
+                case when sum(pumpable_Stock) <=0 then 0
+                when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 1
+                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 2
+                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 3
+                else 5 end status
+                from "{schema}".{table} sch
+                where 1=1 and sch.volume>0
+                group by site_id, fcc_code, item_name, rosapcode, product_no, indent_status
+                order by site_id, fcc_code, item_name, rosapcode, product_no'''
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    dry_out_data = await function(query=query)
+    dry_out_data = pl.DataFrame(dry_out_data)
+    dry_out = dry_out_data.filter(
+        pl.col("status") == 1).select(
+        [pl.col("rosapcode"), pl.col("item_name")]
+    ).unique().shape[0]
+
+    intraday_dry_out = dry_out_data.filter(
+        pl.col("status") == 2).select(
+        [pl.col("rosapcode"), pl.col("item_name")]
+    ).unique().shape[0]
+
+    potential_dry_out = dry_out_data.filter(
+        pl.col("status") > 2).select(
+        [pl.col("rosapcode"), pl.col("item_name")]
+    ).unique().shape[0]
+
+    return {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
