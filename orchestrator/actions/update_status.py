@@ -1,6 +1,7 @@
 import urdhva_base
 import traceback
 import hpcl_ceg_model
+import orchestrator.alerting.alert_manager as alert_manager
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -35,11 +36,14 @@ class UpdateStatus:
 
             alert_data['role'] = ''
             alert_data['rolelist'] = []
-            alert_data['status'] = 'Under Maintenance'
             alert_data['finalapproval'] = True
+            alert_data['alert_id'] = params.get('alert_id')
+            alert_data["action_msg"] = "Under Maintenance"
+            alert_data["action_type"] = "UnderMaintenance"
+            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
 
-            data_object = hpcl_ceg_model.Alerts(**alert_data)
-            await data_object.modify()
+            # data_object = hpcl_ceg_model.Alerts(**alert_data)
+            # await data_object.modify()
             return True, None
         
         except Exception as e:

@@ -58,6 +58,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -96,6 +97,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -139,6 +141,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -926,6 +929,10 @@ class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
     skip: typing.Optional[int] = pydantic.Field(0, **{})
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     filters: typing.Optional[typing.List[DataFiltersCreate]] | None = None
+
+
+class Alerts_Upload_ImageParams(pydantic.BaseModel):
+    pass
 
 
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):

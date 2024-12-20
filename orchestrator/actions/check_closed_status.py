@@ -47,6 +47,10 @@ class CheckClosedStatus:
             for item in alerthistory:
                 if "CLOSED" in item:
                     closeSubmitted = True
+                    alert_data['alert_id'] = alert_id
+                    alert_data["action_msg"] = "Closed Status"
+                    alert_data["action_type"] = "ClosedStatus"
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     break
             return True, {"closedStatus": closeSubmitted}
 

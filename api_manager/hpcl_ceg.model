@@ -66,6 +66,11 @@ Enum AlertActionType str {
     R3Swipe='R3Swipe'
     Delivered='Delivered'
     Tripped='Tripped'
+    InterlockCleared='InterlockCleared'
+    InterlockNotCleared='InterlockNotCleared'
+    UnderMaintenance='UnderMaintenance'
+    RevocationApproved='RevocationApproved'
+    ExceptionApproved='ExceptionApproved'
 }
 
 Enum IndentStatus str {
@@ -129,6 +134,7 @@ Model LocationMaster {
     sales_area optional str
     terminal_plant_id optional str
     terminal_plant_name optional str
+    category optional str
 
     Action=> upload_location_master {
     }
@@ -450,6 +456,9 @@ Model Alerts {
         skip optional int
         limit optional int
         filters optional list DataFilters
+    }
+
+    Action=> upload_image {
     }
 
     Config=> {

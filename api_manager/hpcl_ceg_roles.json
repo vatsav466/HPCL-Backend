@@ -630,6 +630,9 @@
                 },
                 {
                     "name": "get_performance_index"
+                },
+                {
+                    "name": "upload_image"
                 }
             ]
         },
@@ -678,6 +681,9 @@
                 },
                 {
                     "name": "get_performance_index"
+                },
+                {
+                    "name": "upload_image"
                 }
             ]
         },
@@ -1318,6 +1324,10 @@
         {
             "name": "get_performance_index",
             "displayName": "get_performance_index"
+        },
+        {
+            "name": "upload_image",
+            "displayName": "upload_image"
         },
         {
             "name": "upload_cems_location_master",
