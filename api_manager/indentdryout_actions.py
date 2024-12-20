@@ -310,6 +310,7 @@ async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Dist
             for entry in location_master_data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
         ]))
     else:
+        location_master_data = location_master_data.to_dicts()
         result['plant'] = list(set([
             f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
             for entry in location_master_data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
