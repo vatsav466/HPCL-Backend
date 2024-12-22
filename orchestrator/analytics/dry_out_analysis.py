@@ -9,7 +9,7 @@ req_keys = {
 }
 
 
-async def get_locations(bu, zone=None, region=None, sales_area=None):
+async def get_locations(bu, zone=[], region=[], sales_area=[]):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -62,7 +62,7 @@ async def get_locations(bu, zone=None, region=None, sales_area=None):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
-                    if rec.get(key) != value:
+                    if rec.get(key) not in value:
                         skip_record = True
                         break
             if skip_record or not rec["sap_id"]:
@@ -77,7 +77,7 @@ async def get_locations(bu, zone=None, region=None, sales_area=None):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
-                    if rec.get(key) != value:
+                    if rec.get(key) not in value:
                         skip_record = True
                         break
             if skip_record or not rec["region"]:
@@ -91,7 +91,7 @@ async def get_locations(bu, zone=None, region=None, sales_area=None):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
-                    if rec.get(key) != value:
+                    if rec.get(key) not in value:
                         skip_record = True
                         break
             if skip_record or not rec["sales_area"]:
@@ -103,12 +103,13 @@ async def get_locations(bu, zone=None, region=None, sales_area=None):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
-                    if rec.get(key) != value:
+                    if rec.get(key) not in value:
                         skip_record = True
                         break
             if skip_record or not rec["sap_id"]:
                 continue
-            final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
+            final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
+                                                     "category": check_category(rec['category'])}
 
     for key, details in final_data.items():
         final_data[key] = list(details.values())

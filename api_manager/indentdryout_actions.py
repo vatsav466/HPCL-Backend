@@ -269,7 +269,7 @@ async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantP
 @router.post('/get_distinct_location_details', tags=['IndentDryOut'])
 async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Distinct_Location_DetailsParams):
     return {"status": True, "message": "Success",
-            "data": dry_out_analysis.get_locations(data.bu, data.zone, data.region, data.sales_area)}
+            "data": await dry_out_analysis.get_locations(data.bu, data.zone, data.region, data.sales_area)}
     # query = (
     #     f"""SELECT "zone", region, sales_area, terminal_plant_id, terminal_plant_name """
     #     f"FROM location_master "

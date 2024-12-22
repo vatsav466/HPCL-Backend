@@ -625,9 +625,9 @@ Model IndentDryOut {
 
     Action=> get_distinct_location_details {
         bu optional str
-        zone optional str
-        region optional str
-        sales_area optional str
+        zone optional list str
+        region optional list str
+        sales_area optional list str
     }
 
     Action=> create_dry_out_alert {
