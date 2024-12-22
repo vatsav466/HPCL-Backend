@@ -1291,9 +1291,9 @@ class Indentdryout_Get_Distinct_PlantParams(pydantic.BaseModel):
 
 class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[str] = pydantic.Field("", **{})
-    region: typing.Optional[str] = pydantic.Field("", **{})
-    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
 
 class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
