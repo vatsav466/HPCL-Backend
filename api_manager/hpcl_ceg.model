@@ -569,6 +569,12 @@ Model productsDetails internal {
     qty optional str
 }
 
+Model IndentDryOutDataFilters internal {
+    key str
+    cond str
+    value list str
+}
+
 Model IndentDryOut {
     bu unique_field index_field primary_key str
     site_id str      // location id
@@ -603,7 +609,7 @@ Model IndentDryOut {
     }
 
     Action=> get_dried_out_plants {
-        filters list DataFilters
+        filters list IndentDryOutDataFilters
     }
 
     Action=> get_alert_history {

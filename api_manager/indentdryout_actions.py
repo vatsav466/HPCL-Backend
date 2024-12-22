@@ -136,11 +136,21 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
         if record.key in ['sales_area', 'plant']:
             if record.value:
                 if record.key == "sales_area":
-                    query = f"select ro_id from location_master where sales_area='{record.value}' and bu='RO'"
+                    if len(record.value) == 1:
+                        query = f"select ro_id from location_master where sales_area='{record.value[0]}' and bu='RO'"
+                    else:
+                        query = f"select ro_id from location_master where sales_area in {tuple(record.value)} and bu='RO'"
                 else:
-                    if "(" in record.value:
-                        record.value = record.value.split("(")[-1].split(")")[0].strip()
-                    query = f"select ro_id from location_master where terminal_plant_id='{record.value}' and bu='RO'"
+                    values = []
+                    for rec in record.value:
+                        if "(" in rec:
+                            values.append(rec.split("(")[-1].split(")")[0].strip())
+                        else:
+                            values.append(rec)
+                    if len(values) == 1:
+                        query = f"select ro_id from location_master where terminal_plant_id='{values[0]}' and bu='RO'"
+                    else:
+                        query = f"select ro_id from location_master where terminal_plant_id in {tuple(values)} and bu='RO'"
                 function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
                 resp = await function(
                     query=query

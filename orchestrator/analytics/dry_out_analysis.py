@@ -54,7 +54,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
 
     # Filtering zone
     for rec in bu_data.to_dict(orient='records'):
-        final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
+        if rec["zone"]:
+            final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
     if zone:
         key_mapping["zone"] = zone
     if bu.upper() == "TAS":
@@ -67,7 +68,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
                         break
             if skip_record or not rec["sap_id"]:
                 continue
-            final_data["plant"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
+            if rec["sap_id"]:
+                final_data["plant"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
     else:
         if region:
             key_mapping["region"] = region
@@ -82,7 +84,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
                         break
             if skip_record or not rec["region"]:
                 continue
-            final_data["region"][rec["region"]] = {"name": rec["region"], "id": rec["region"]}
+            if rec["region"]:
+                final_data["region"][rec["region"]] = {"name": rec["region"], "id": rec["region"]}
 
         # Filtering Sales Area
         if sales_area:
@@ -96,7 +99,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
                         break
             if skip_record or not rec["sales_area"]:
                 continue
-            final_data["sales_area"][rec["sales_area"]] = {"name": rec["sales_area"], "id": rec["sales_area"]}
+            if rec["sales_area"]:
+                final_data["sales_area"][rec["sales_area"]] = {"name": rec["sales_area"], "id": rec["sales_area"]}
 
         # Filtering Plant
         for rec in bu_data.to_dict(orient='records'):
@@ -108,8 +112,9 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
                         break
             if skip_record or not rec["sap_id"]:
                 continue
-            final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
-                                                     "category": check_category(rec['category'])}
+            if rec["sap_id"]:
+                final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
+                                                         "category": check_category(rec['category'])}
 
     for key, details in final_data.items():
         final_data[key] = list(details.values())
