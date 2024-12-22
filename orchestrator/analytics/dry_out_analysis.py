@@ -22,8 +22,6 @@ async def get_locations(bu, zone=None, region=None, sales_area=None):
     """
     redis_client = await urdhva_base.redispool.get_redis_connection()
     location_data = await redis_client.hgetall("location_master")
-    with open("/Users/venugopalnaidu/Downloads/location_data.json") as f:
-        location_data = json.load(f)
 
     def get_string_output(input_value):
         if isinstance(input_value, bytes):
