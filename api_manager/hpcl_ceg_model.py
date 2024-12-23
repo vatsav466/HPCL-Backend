@@ -789,6 +789,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     progress_rate: Mapped[typing.Optional[int]] = mapped_column("progress_rate", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    indent_raised_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("indent_raised_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -843,6 +844,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
+    indent_raised_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -903,6 +905,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
+    indent_raised_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'

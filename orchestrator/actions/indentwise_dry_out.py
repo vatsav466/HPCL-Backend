@@ -120,12 +120,12 @@ class IndentDryOut:
                 datetime.timedelta(days=0)
         ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=3)).strftime("%Y-%m-%d")
-        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO AS "INDENT_NO" , b.PROD AS "PROD", a.LOCN_CODE AS "LOCN_CODE" """ \
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO AS "INDENT_NO" , b.PROD AS "PROD", a.LOCN_CODE AS "LOCN_CODE", a.INDENT_DATE AS "INDENT_DATE" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' """ \
                 f"""AND a.PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                 f"""AND b.PROD = '{prod_code}' """ \
                 f"""AND a.LOCN_CODE = b.LOCN_CODE AND a.INDENT_NO = b.INDENT_NO AND a.CANCEL_INDENT IS NULL """ \
-                f"""GROUP BY a.INDENT_NO, b.PROD, a.LOCN_CODE ORDER BY a.INDENT_NO DESC"""
+                f"""GROUP BY a.INDENT_NO, b.PROD, a.LOCN_CODE, a.INDENT_DATE ORDER BY a.INDENT_NO DESC"""
 
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         total_indent = await function(query=query)
@@ -138,6 +138,7 @@ class IndentDryOut:
                 print(each_indent)
                 self.params['indent_no'] = str(each_indent['INDENT_NO'])
                 self.params['terminal_plant_id'] = str(each_indent['LOCN_CODE'])
+                self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                 await create_alert(self.params)
 
         return True, {"msg": "Alert raised"}
@@ -163,12 +164,12 @@ class IndentDryOut:
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND CANCEL_INDENT IS NULL"
 
         if not self.params.get("indent_no"):
-            query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO AS "INDENT_NO" , b.PROD AS "PROD", a.LOCN_CODE AS "LOCN_CODE" """ \
+            query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO AS "INDENT_NO" , b.PROD AS "PROD", a.LOCN_CODE AS "LOCN_CODE", a.INDENT_DATE AS "INDENT_DATE" """ \
                     f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a.DEALER_CODE,1,10) = '{dealer_code}' """ \
                     f"""AND a.PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                     f"""AND b.PROD = '{prod_code}' """ \
                     f"""AND a.LOCN_CODE = b.LOCN_CODE AND a.INDENT_NO = b.INDENT_NO AND a.CANCEL_INDENT IS NULL """ \
-                    f"""GROUP BY a.INDENT_NO, b.PROD, a.LOCN_CODE ORDER BY a.INDENT_NO DESC"""
+                    f"""GROUP BY a.INDENT_NO, b.PROD, a.LOCN_CODE, a.INDENT_DATE ORDER BY a.INDENT_NO DESC"""
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
             print("In If condition: ", resp)
@@ -180,7 +181,12 @@ class IndentDryOut:
                 if count == 1:
                     self.params['indent_no'] = str(each_indent.get('INDENT_NO'))
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
-                    await self.update_indent_no(str(self.params['indent_no']), str(each_indent.get("LOCN_CODE")))
+                    self.params['indent_raised_date'] = each_indent.get('INDENT_DATE')
+                    await self.update_indent_no(
+                        str(self.params['indent_no']),
+                        str(each_indent.get("LOCN_CODE")),
+                        each_indent.get("INDENT_DATE")
+                    )
                     count += 1
                 else:
                     self.params['sop_id'] = 'SOP292'
@@ -189,6 +195,7 @@ class IndentDryOut:
                     self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
                     self.params['indent_no'] = str(each_indent.get('INDENT_NO'))
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
+                    self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     await create_alert(self.params)
 
         else:
@@ -873,7 +880,7 @@ class IndentDryOut:
         )
         return
 
-    async def update_indent_no(self, indent_no: str, loc_code: str):
+    async def update_indent_no(self, indent_no: str, loc_code: str, indent_raised_date):
         alert_data = await Alerts.get(self.params["alert_id"])
 
         if not isinstance(alert_data, dict):
@@ -901,4 +908,13 @@ class IndentDryOut:
             print("Error updating indent no", response.text)
         else:
             print("Indent no updated successfully")
+
+        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_raised_date"
+        payload = {"value": indent_raised_date.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z", "type": "String"}
+        response = requests.put(url, json=payload, headers=headers)
+        if response.status_code != 200:
+            print("Error updating indent no", response.text)
+        else:
+            print("Indent no updated successfully")
+
         return True

@@ -101,6 +101,7 @@ class AlertFactory:
                                                             datetime.datetime.now(datetime.UTC)
                                                             .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                                                         ),
+                                                        'indent_raised_date': alert_data.get('indent_raised_date', None),
                                                         'progress_rate': 1,
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
@@ -121,6 +122,7 @@ class AlertFactory:
                                          datetime.datetime.now(datetime.UTC)
                                          .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
                                      "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
+                                     "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
                                      "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
                                     "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}}
 
