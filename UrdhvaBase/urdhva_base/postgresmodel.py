@@ -284,8 +284,8 @@ class BasePostgresModel(pydantic.BaseModel):
             search_conditions = []
             if cls.Config.search_fields:
                 for field in cls.Config.search_fields:
-                    print("result --> ", field)
-                    search_conditions.append(f"{cls.__tablename__}.{field} ILIKE '%{params.search_text}%'")
+                    if params.search_text:
+                        search_conditions.append(f"{cls.__tablename__}.{field} ILIKE '%{params.search_text}%'")
                 
                 if search_conditions:
                     print("search_conditions --> ", search_conditions)
