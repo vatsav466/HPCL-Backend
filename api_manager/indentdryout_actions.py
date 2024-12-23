@@ -168,7 +168,7 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
                 else:
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
-    query = "select location_name as name, sap_id, progress_rate as present_stage," \
+    query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "case when severity = 'Critical' then '0' " \
             "when severity = 'High' then '1' " \
             "when severity = 'Medium' then '2' " \
@@ -203,14 +203,15 @@ async def indentdryout_get_dry_out_stats(data: Indentdryout_Get_Dry_Out_StatsPar
 # Action get_alert_history
 @router.post('/get_alert_history', tags=['IndentDryOut'])
 async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryParams):
-    query = (f"select * from alerts where interlock_name = 'Indent Dry Out' and "
-             f"sap_id='{data.sap_id}' ORDER BY created_at DESC LIMIT 1")
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get('hpcl_ceg', '1')
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+    # query = (f"select * from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
+    #          f"sap_id='{data.sap_id}' ORDER BY created_at DESC LIMIT 1")
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get('hpcl_ceg', '1')
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    resp = await Alerts.get(data.alert_id)
     alert_history = {
         "details": {},
         "data": []
@@ -232,7 +233,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             return "-"
 
     if resp:
-        resp = resp[0]
+        # resp = resp[0]
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
                                     "state": resp["state"], "indent_status": resp["indent_status"]}
         alert_history["data"].append(f"Dry-out Location Identified at "
