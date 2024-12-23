@@ -54,7 +54,7 @@ class GlobalAnalytics:
 
         if filters:
             for filter_ in filters:
-                if filter_.key == "bu":
+                if filter_.key:
                     # Update the key of the filter to include the alias 'a.'
                     filter_.key = f"a.{filter_.key}"
                 
