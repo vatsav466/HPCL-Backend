@@ -245,7 +245,7 @@ class GlobalAnalytics:
         severity_count_query_ = severity_count_query
         if filters:
             for filter_ in filters:
-                if filter_.key == "bu":
+                if filter_.key:
                     # Update the key of the filter to include the alias 'a.'
                     filter_.key = f"lm.{filter_.key}"
             severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(severity_count_query, filters, drill_state)
