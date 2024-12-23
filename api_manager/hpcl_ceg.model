@@ -66,6 +66,11 @@ Enum AlertActionType str {
     R3Swipe='R3Swipe'
     Delivered='Delivered'
     Tripped='Tripped'
+    InterlockCleared='InterlockCleared'
+    InterlockNotCleared='InterlockNotCleared'
+    UnderMaintenance='UnderMaintenance'
+    RevocationApproved='RevocationApproved'
+    ExceptionApproved='ExceptionApproved'
 }
 
 Enum IndentStatus str {
@@ -129,6 +134,7 @@ Model LocationMaster {
     sales_area optional str
     terminal_plant_id optional str
     terminal_plant_name optional str
+    category optional str
 
     Action=> upload_location_master {
     }
@@ -434,6 +440,7 @@ Model Alerts {
     terminal_plant_id optional str
     terminal_plant_name optional str
     progress_rate optional int
+    category optional str
 
     Action=> alert_action {
         action_type AlertActionType
@@ -451,8 +458,12 @@ Model Alerts {
         filters optional list DataFilters
     }
 
+    Action=> upload_image {
+    }
+
     Config=> {
         crud_operations='read'
+        search_fields='bu,sap_id,sop_id,location_name,alert_section,interlock_name,device_name,device_id,device_msg,violation_type,rca_type,assigned_to,region,zone,indent_status'
     }
 }
 
@@ -558,6 +569,12 @@ Model productsDetails internal {
     qty optional str
 }
 
+Model IndentDryOutDataFilters internal {
+    key str
+    cond str
+    value list str
+}
+
 Model IndentDryOut {
     bu unique_field index_field primary_key str
     site_id str      // location id
@@ -592,11 +609,11 @@ Model IndentDryOut {
     }
 
     Action=> get_dried_out_plants {
-        filters list DataFilters
+        filters list IndentDryOutDataFilters
     }
 
     Action=> get_alert_history {
-        sap_id str
+        alert_id str
     }
 
     Action=> get_dry_out_stats {
@@ -614,9 +631,9 @@ Model IndentDryOut {
 
     Action=> get_distinct_location_details {
         bu optional str
-        zone optional str
-        region optional str
-        sales_area optional str
+        zone optional list str
+        region optional list str
+        sales_area optional list str
     }
 
     Action=> create_dry_out_alert {
@@ -626,6 +643,10 @@ Model IndentDryOut {
     Action=> sync_ro_daily_sales {
         from_date datetime
         to_date datetime
+    }
+
+    Action=> get_dry_out_count {
+
     }
 }
 

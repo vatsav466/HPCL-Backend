@@ -6,13 +6,14 @@ import json
 import fastapi
 import datetime
 import polars as pl
-import pandas as pd
 import dateutil.parser as parser
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from orchestrator.alerting.alert_manager import create_alert
+import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
+from orchestrator.alerting.listener.sync_ro_daily_sales import indent_dryout_sync_ro_daily_sales
 
 router = fastapi.APIRouter(prefix='/indentdryout')
 
@@ -61,6 +62,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     records = pl.DataFrame(records)
     records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
     records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
+    records = records.filter(pl.col('status') == 1)
     records = records.head(10).to_dicts()
 
     alert_data = {
@@ -87,7 +89,8 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         alert_data['sap_id'] = _dry['rosapcode']
         alert_data['device_id'] = str(_dry['tank_no'])
         alert_data['device_name'] = "Tank"
-        alert_data['severity'] = 'Critical' if status == 0 else 'High' if status == 1 else 'Medium' if status == 2 else 'Low'
+        # alert_data['severity'] = 'Critical' if status == 0 else 'High' if status == 1 else 'Medium' if status == 2 else 'Low'
+        alert_data['severity'] = 'Critical' if status == 1 else 'High' if status == 2 else 'Medium' if status == 3 else 'Low'
         alert_data['indent_no'] = ''
         alert_data['dealer_id'] = _dry['rosapcode']
         alert_data['workflow_datetime'] = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
@@ -118,16 +121,14 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
 @router.post('/get_dried_out_plants', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_PlantsParams):
     top_x_axis = [
-        "Indent Not Raised", "Indent Raised", "Valid Indent", "Truck Allocated", "Sent to SAP",
-        "Sales Order Placed", "R2 Swiped", "Invoice Created", "R3 Swiped", "VTS",
-        "Indent Delivered"
+        "Indent Not Raised", "Pending Indents", "Indent On Hold", "Truck Allocated", "Sent to SAP",
+        "Sales Order Placed", "R2 Swiped", "Invoice Created", "R3 Swiped", "VTS", "Indent Delivered"
     ]
     bottom_x_axis = [
-        "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM",
-        "PO\nRM", "PO\nRM", "PO\nRM",
-        "PO\nRM", "SO\nRM"
+        "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "SO\nRM"
     ]
     where_clause = ["interlock_name = 'Indent Dry Out'"]
+    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
@@ -135,11 +136,21 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
         if record.key in ['sales_area', 'plant']:
             if record.value:
                 if record.key == "sales_area":
-                    query = f"select ro_id from location_master where sales_area='{record.value}' and bu='RO'"
+                    if len(record.value) == 1:
+                        query = f"select ro_id from location_master where sales_area='{record.value[0]}' and bu='RO'"
+                    else:
+                        query = f"select ro_id from location_master where sales_area in {tuple(record.value)} and bu='RO'"
                 else:
-                    if "(" in record.value:
-                        record.value = record.value.split("(")[-1].split(")")[0].strip()
-                    query = f"select ro_id from location_master where terminal_plant_id='{record.value}' and bu='RO'"
+                    values = []
+                    for rec in record.value:
+                        if "(" in rec:
+                            values.append(rec.split("(")[-1].split(")")[0].strip())
+                        else:
+                            values.append(rec)
+                    if len(values) == 1:
+                        query = f"select ro_id from location_master where terminal_plant_id='{values[0]}' and bu='RO'"
+                    else:
+                        query = f"select ro_id from location_master where terminal_plant_id in {tuple(values)} and bu='RO'"
                 function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
                 resp = await function(
                     query=query
@@ -148,11 +159,17 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
                 if len(ro_ids) == 1:
                     where_clause.append(f"sap_id='{ro_ids[0]}'")
                 else:
-                    where_clause.append(f"sap_id in {tuple([rec['ro_id'] for rec in resp])}")
+                    if resp:
+                        where_clause.append(f"sap_id in {tuple([rec['ro_id'] for rec in resp])}")
         else:
-            where_clause.append(f"{record.key}='{record.value}'")
+            if record.value:
+                # if len(record.value) == 1:
+                if isinstance(record.value, list):
+                    where_clause.append(f"{record.key} in {str(tuple(record.value)).replace(',)', ')')}")
+                else:
+                    where_clause.append(f"{record.key}='{record.value}'")
     conditions = ' AND '.join(where_clause)
-    query = "select location_name as name, sap_id, progress_rate as present_stage," \
+    query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "case when severity = 'Critical' then '0' " \
             "when severity = 'High' then '1' " \
             "when severity = 'Medium' then '2' " \
@@ -164,17 +181,18 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     resp = await function(
         query=query
     )
-    stats = {i: 0 for i, _ in enumerate(top_x_axis)}
+    stats = {i+1: 0 for i, _ in enumerate(top_x_axis)}
     for rec in resp:
+        if rec['present_stage'] == 0:
+            rec['present_stage'] = 1
         if rec['present_stage'] not in stats:
             stats[rec['present_stage']] = 0
         stats[rec['present_stage']] += 1
-
+    stats = [{"section": top_x_axis[key-1], "value": value, "serial": key}
+             for key, value in stats.items() if key <= len(top_x_axis)]
+    stats = sorted(stats, key=lambda x: x['serial'])
     return {"status": True, "message": "Success", "data": resp, "top_x_axis": top_x_axis,
-            "bottom_x_axis": bottom_x_axis, "stats": [{"section": top_x_axis[key-1],
-                                                       "value": value} for key, value in stats.items()
-                                                      if key <= len(top_x_axis)]}
-
+            "bottom_x_axis": bottom_x_axis, "stats": stats}
 
 
 # Action get_dry_out_stats
@@ -186,14 +204,17 @@ async def indentdryout_get_dry_out_stats(data: Indentdryout_Get_Dry_Out_StatsPar
 # Action get_alert_history
 @router.post('/get_alert_history', tags=['IndentDryOut'])
 async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryParams):
-    query = (f"select * from alerts where interlock_name = 'Indent Dry Out' and "
-             f"sap_id='{data.sap_id}' ORDER BY created_at DESC LIMIT 1")
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get('hpcl_ceg', '1')
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+    # query = (f"select * from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
+    #          f"sap_id='{data.sap_id}' ORDER BY created_at DESC LIMIT 1")
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get('hpcl_ceg', '1')
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    resp = await Alerts.get(data.alert_id)
+    if not isinstance(resp, dict):
+        resp = resp.__dict__
     alert_history = {
         "details": {},
         "data": []
@@ -215,13 +236,13 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             return "-"
 
     if resp:
-        resp = resp[0]
+        # resp = resp[0]
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
                                     "state": resp["state"], "indent_status": resp["indent_status"]}
         alert_history["data"].append(f"Dry-out Location Identified at "
                                      f"{convert_time_read_format(str(resp['created_at']))}")
 
-        for history in json.loads(resp.get("alert_history", [])):
+        for history in resp.get("alert_history", []):
             alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
                                          f" {convert_time_read_format(str(history['allocated_time']))}, "
                                          f"Processed at {convert_time_read_format(str(history['processed_time']))}")
@@ -264,111 +285,67 @@ async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantP
 # Action get_distinct_location_details
 @router.post('/get_distinct_location_details', tags=['IndentDryOut'])
 async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Distinct_Location_DetailsParams):
-    query = (
-        f"""SELECT "zone", region, sales_area, terminal_plant_id, terminal_plant_name """
-        f"FROM location_master "
-        f"WHERE bu = '{data.bu}'"
-    )
-    if data.zone:
-        query += f""" AND "zone" = '{data.zone}'"""
-    if data.region:
-        query += f" AND region = '{data.region}'"
-    if data.sales_area:
-        query += f" AND sales_area = '{data.sales_area}'"
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    data = await function(query=query)
-    result = {
-        key: list(set([entry.get(key) for entry in data if entry.get(key)]))
-        for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
-    }
-    result['plant'] = list(set([
-        f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
-        for entry in data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
-    ]))
-
-    return {"status": True, "message": "Success", "data": result}
+    return {"status": True, "message": "Success",
+            "data": await dry_out_analysis.get_locations(data.bu, data.zone, data.region, data.sales_area)}
+    # query = (
+    #     f"""SELECT "zone", region, sales_area, terminal_plant_id, terminal_plant_name """
+    #     f"FROM location_master "
+    #     f"WHERE bu = '{data.bu}'"
+    # )
+    # # if data.zone:
+    # #     query += f""" AND "zone" = '{data.zone}'"""
+    # # if data.region:
+    # #     query += f" AND region = '{data.region}'"
+    # # if data.sales_area:
+    # #     query += f" AND sales_area = '{data.sales_area}'"
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # location_master_data = await function(query=query)
+    # location_master_data = pl.DataFrame(location_master_data)
+    # # result = {
+    # #     key: list(set([entry.get(key) for entry in data if entry.get(key)]))
+    # #     for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
+    # # }
+    # result = {"zone": location_master_data.filter(~pl.col("zone").is_in("", None)).select("zone").unique().to_series().to_list()}
+    # result["region"] = location_master_data.filter(~pl.col("region").is_in("", None)).select("region").unique().to_series().to_list()
+    # result["sales_area"] = location_master_data.filter(~pl.col("sales_area").is_in("", None)).select("sales_area").unique().to_series().to_list()
+    #
+    # if data.zone and not data.region and not data.sales_area:
+    #     result["region"] = location_master_data.filter(
+    #         (pl.col("zone") == data.zone) & ~(pl.col("region").is_in("", None))
+    #     ).select("region").unique().to_series().to_list()
+    #
+    # if data.zone and data.region and not data.sales_area:
+    #     result["sales_area"] = location_master_data.filter(
+    #         (pl.col("zone") == data.zone) & (pl.col("region") == data.region) & ~(pl.col("sales_area").is_in("", None))
+    #     ).select("sales_area").unique().to_series().to_list()
+    #
+    # if data.zone and data.region and data.sales_area:
+    #     location_master_data = location_master_data.filter(
+    #         (pl.col("zone") == data.zone) & (pl.col("region") == data.region) & (pl.col("sales_area") == data.sales_area)
+    #     ).select(["terminal_plant_id", "terminal_plant_name"]).to_dicts()
+    #     result['plant'] = list(set([
+    #         f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
+    #         for entry in location_master_data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
+    #     ]))
+    # else:
+    #     location_master_data = location_master_data.to_dicts()
+    #     result['plant'] = list(set([
+    #         f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
+    #         for entry in location_master_data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
+    #     ]))
+    #
+    #
+    #
+    # return {"status": True, "message": "Success", "data": result}
 
 
 # Action sync_ro_daily_sales
 @router.post('/sync_ro_daily_sales', tags=['IndentDryOut'])
 async def indentdryout_sync_ro_daily_sales(data: Indentdryout_Sync_Ro_Daily_SalesParams):
-    since = data.from_date
-    until = data.to_date
-    # tr_transaction_dailysales
-    query = f'''
-        SELECT 
-            "site_id",
-            "fcc_code",
-            "transaction_date", 
-            "tank_no", 
-            "pump_no",
-            "nozzle_no", 
-            "product_no", 
-            "transaction_type",
-            "total_sales", 
-            "start_totalizer", 
-            "end_totalizer", 
-            "txn_amount", 
-            "last_transaction_date",
-            "first_transaction_date"
-        FROM
-            "{connection_mapping.schema_mapping.get("cris", "HPCL_HOS")}"."tr_transaction_dailysales"
-        WHERE 
-            "transaction_date" BETWEEN '{since}' AND '{until}';
-    '''
 
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")  #2   # tr_transaction_dailysales
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    data = await function(query=query)
-    column_mapping = {
-        "site_id": pl.Utf8,                
-        "fcc_code": pl.Utf8,               
-        "transaction_date": pl.Date,   
-        "tank_no": pl.Int32,               
-        "pump_no": pl.Int32,               
-        "nozzle_no": pl.Int32,             
-        "product_no": pl.Int32,            
-        "transaction_type": pl.Utf8,       
-        "total_sales": pl.Float64,         
-        "start_totalizer": pl.Float64,
-        "end_totalizer": pl.Float64,
-        "txn_amount": pl.Float64,
-        "last_transaction_date": pl.Datetime, 
-        "first_transaction_date": pl.Datetime 
-    }
-    tr_daily_sales = pl.DataFrame(data, schema=column_mapping)
-
-    # ro master
-    ro_query = f''' 
-        SELECT 
-            "ro_id", 
-            "sap_id"
-        FROM 
-            "public"."location_master"; '''
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1") # 1  ro_master
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    ro_data = await function(query=ro_query)
-    ro_master = pl.DataFrame(ro_data)
-    ro_master.rename(mapping={"sap_id": "ro_sap_code"})
-
-    tr_daily_sales = tr_daily_sales.join(ro_master.unique(subset='ro_id', keep='first'), left_on='site_id', right_on='ro_id', how='left')
-    
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    conflict_columnsList = ['site_id', 'ro_sap_code', 'transaction_date', 'tank_no', 'pump_no', 
-                        'nozzle_no', 'product_no', 'transaction_type']
-    return await function(
-        schema_name='HPCL_HOS',
-        table_name='ro_daily_sales',
-        records=tr_daily_sales.to_dicts(),
-        conflict_columns=conflict_columnsList
-    )
-
+    return await indent_dryout_sync_ro_daily_sales(data.from_date, data.to_date)
 
 # Action get_indent_analysis
 @router.post('/get_indent_analysis', tags=['IndentDryOut'])
@@ -391,3 +368,42 @@ async def indentdryout_get_indent_analysis(data: Indentdryout_Get_Indent_Analysi
                 "dry_out_2days": 50, "dry_out_7days": 34, "dry_out_15days": 12, "dry_out_30days": 0}
     else:
         return {}
+
+
+# Action get_dry_out_count
+@router.post('/get_dry_out_count', tags=['IndentDryOut'])
+async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountParams):
+    schema = connection_mapping.schema_mapping.get("hpcl_ceg")
+    table = connection_mapping.table_mapping.get("dry_out")
+    query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
+                rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, indent_status, 
+                case when sum(pumpable_Stock) <=0 then 0
+                when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 1
+                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 2
+                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 3
+                else 5 end status
+                from "{schema}".{table} sch
+                where 1=1 and sch.volume>0
+                group by site_id, fcc_code, item_name, rosapcode, product_no, indent_status
+                order by site_id, fcc_code, item_name, rosapcode, product_no'''
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    dry_out_data = await function(query=query)
+    dry_out_data = pl.DataFrame(dry_out_data)
+    dry_out = dry_out_data.filter(
+        pl.col("status") == 1).select(
+        [pl.col("rosapcode")]
+    ).unique().shape[0]
+
+    intraday_dry_out = dry_out_data.filter(
+        pl.col("status") == 2).select(
+        [pl.col("rosapcode")]
+    ).unique().shape[0]
+
+    potential_dry_out = dry_out_data.filter(
+        pl.col("status") > 2).select(
+        [pl.col("rosapcode")]
+    ).unique().shape[0]
+
+    return {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}

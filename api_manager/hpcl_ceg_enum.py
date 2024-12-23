@@ -106,6 +106,11 @@ class AlertActionType(str, enum.Enum):
     R3Swipe = 'R3Swipe'
     Delivered = 'Delivered'
     Tripped = 'Tripped'
+    InterlockCleared = 'InterlockCleared'
+    InterlockNotCleared = 'InterlockNotCleared'
+    UnderMaintenance = 'UnderMaintenance'
+    RevocationApproved = 'RevocationApproved'
+    ExceptionApproved = 'ExceptionApproved'
 
 
 

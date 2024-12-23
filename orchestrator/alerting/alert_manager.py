@@ -96,9 +96,16 @@ class AlertAction:
         """
         # Todo:- here we have to write all the generic functionality like updating the alert data,
         #  history, fetching users, roles, ...
-        print("input_data --> ", input_data)
-        alert_history = alert_data.alert_history
-        allocated_time = alert_data.updated_at
+        print("input_data for alert--> ", input_data)
+        alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data, 'alert_history', [])
+        # alert_history = alert_data.alert_history
+        print("alert_history --> ", alert_history)
+        # allocated_time = alert_data.updated_at
+        if isinstance(alert_data, dict):
+            allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
+        else:
+            allocated_time = alert_data.updated_at if hasattr(alert_data, 'updated_at') else datetime.datetime.now(datetime.timezone.utc)
+        
         if alert_history and alert_history[-1].get("processed_time"):
             allocated_time = alert_history[-1]["processed_time"]
         processed_time = datetime.datetime.now(datetime.timezone.utc)
@@ -125,10 +132,19 @@ class AlertAction:
                             "is_r2_swipe": event_tags.get("is_r2_swipe", False),
                             "is_r3_swipe": event_tags.get("is_r3_swipe", False),
                             "is_delivered": event_tags.get("is_delivered", False),
-                            "is_tripped": event_tags.get("is_tripped", False)
-        })
+                            "is_tripped": event_tags.get("is_tripped", False)        
+                        })
+        print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
-        await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
+        # Handle alert_data based on whether it is a dictionary or object
+        alert_id = alert_data.get('id') if isinstance(alert_data, dict) else getattr(alert_data, 'id', None)
+        
+        if not alert_id:
+            raise ValueError("Alert data does not have an 'id' field.")
+
+        # Modify the alert with the updated alert_history
+        await hpcl_ceg_model.Alerts(**{"id": alert_id, "alert_history": alert_history}).modify()
+        # await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
 
     @classmethod
     def get_exception_message(cls, exception):

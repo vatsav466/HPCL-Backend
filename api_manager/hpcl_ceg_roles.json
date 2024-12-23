@@ -630,6 +630,9 @@
                 },
                 {
                     "name": "get_performance_index"
+                },
+                {
+                    "name": "upload_image"
                 }
             ]
         },
@@ -678,6 +681,9 @@
                 },
                 {
                     "name": "get_performance_index"
+                },
+                {
+                    "name": "upload_image"
                 }
             ]
         },
@@ -948,6 +954,9 @@
                 },
                 {
                     "name": "sync_ro_daily_sales"
+                },
+                {
+                    "name": "get_dry_out_count"
                 }
             ]
         },
@@ -981,6 +990,9 @@
                 },
                 {
                     "name": "get_distinct_location_details"
+                },
+                {
+                    "name": "get_dry_out_count"
                 }
             ]
         },
@@ -1032,6 +1044,9 @@
                 },
                 {
                     "name": "sync_ro_daily_sales"
+                },
+                {
+                    "name": "get_dry_out_count"
                 }
             ]
         },
@@ -1311,6 +1326,10 @@
             "displayName": "get_performance_index"
         },
         {
+            "name": "upload_image",
+            "displayName": "upload_image"
+        },
+        {
             "name": "upload_cems_location_master",
             "displayName": "upload_cems_location_master"
         },
@@ -1365,6 +1384,10 @@
         {
             "name": "sync_ro_daily_sales",
             "displayName": "sync_ro_daily_sales"
+        },
+        {
+            "name": "get_dry_out_count",
+            "displayName": "get_dry_out_count"
         }
     ]
 }

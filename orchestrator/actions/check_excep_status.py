@@ -15,7 +15,7 @@ class CheckExcepStatus:
         """
         return ["alert_id"]
 
-    async def checkExcepstatus(self, alert_id):
+    async def checkExcepstatus(self, params):
         """
         Checks if an exception has been taken for a given alert ID.
 
@@ -33,16 +33,20 @@ class CheckExcepStatus:
         """
         exceptaken = False
         try:
-            print("Check Exception request raised alert_id:%s" % alert_id)
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+            print("Check Exception request raised alert_id:%s" % params.get('alert_id'))
+            alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
             alerthistory = alert_data.get('alertHistory', [])
             for item in alerthistory:
-                if "Exception" in item:
+                if "no_exception" in item:
                     exceptaken = True
+                    alert_data['alert_id'] = params.get('alert_id')
+                    alert_data["action_msg"] = ""
+                    alert_data["action_type"] = ""
+                    await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     break
             return True, {"excepStatus": exceptaken}
 

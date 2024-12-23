@@ -59,9 +59,9 @@ class AlertFactory:
             # if not status:
             #     return False, location_data
             base_data = {
-                key: location_data.get(key) for key in [
+                key: location_data.get(key, '') for key in [
                     'state', 'city', 'zone', 'region', 'district', 'terminal_plant_id',
-                    'terminal_plant_name', 'sales_area'
+                    'terminal_plant_name', 'sales_area', 'category'
                 ]
             }
             base_data.update({key: alert_data.get(key, '') for key in ['device_id', 'device_type', 'device_name']})
@@ -101,6 +101,7 @@ class AlertFactory:
                                                             datetime.datetime.now(datetime.UTC)
                                                             .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                                                         ),
+                                                        'progress_rate': 1,
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
             redis_ins = await urdhva_base.redispool.get_redis_connection()

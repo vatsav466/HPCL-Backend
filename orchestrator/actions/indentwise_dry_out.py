@@ -204,23 +204,26 @@ class IndentDryOut:
             print("resp: ", resp)
             if not resp:
                 return await self.send_alert_action(is_raised=False)
-        resp = resp[0]
-        if resp.get("count") > 0:
-            # self.params['indent_no'] = ",".join(indent_no)
-            # self.params['terminal_plant_id'] = resp.get("LOCN_CODE")
-            # await self.update_indent_no(str(self.params['indent_no']), str(resp.get("LOCN_CODE")))
-            # await self.update_alert_status(indent_status=IndentStatus.IndentRaised)
-            return await self.send_alert_action(is_raised=True)
-
         input_data = {
             "action_msg": "",
             "event_tags": {
                 "is_raised": False
             }
         }
+        resp = resp[0]
+        if resp.get("count") > 0:
+            # self.params['indent_no'] = ",".join(indent_no)
+            # self.params['terminal_plant_id'] = resp.get("LOCN_CODE")
+            # await self.update_indent_no(str(self.params['indent_no']), str(resp.get("LOCN_CODE")))
+            input_data["action_msg"] = "Indent Raised"
+            input_data["action_type"] = "Raised"
+            input_data["event_tags"]["is_raised"] = True
+            await self.update_alert_status(indent_status=IndentStatus.IndentRaised, input_data=input_data, progress_rate="2")
+            return await self.send_alert_action(is_raised=True)
+
         input_data["action_msg"] = "Indent Not Raised"
         input_data["action_type"] = "Raised"
-        await self.update_alert_status(indent_status=IndentStatus.IndentNotRaised, input_data=input_data)
+        await self.update_alert_status(indent_status=IndentStatus.IndentNotRaised, input_data=input_data, progress_rate="1")
         return await self.send_alert_action(is_raised=False)
 
     async def is_truck_allocated(self, params: dict):
@@ -257,7 +260,7 @@ class IndentDryOut:
             input_data["action_msg"] = "Truck Allocated"
             input_data["action_type"] = "Allocated"
             input_data["event_tags"]["is_allocated"] = True
-            await self.update_alert_status(indent_status=IndentStatus.TruckAllocated, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.TruckAllocated, input_data=input_data, progress_rate="4")
             return await self.send_alert_action(is_allocated=True)
         input_data["action_msg"] = "Truck Not Allocated"
         input_data["action_type"] = "Message"
@@ -359,7 +362,8 @@ class IndentDryOut:
                 indent_status=IndentStatus.IndentOnHold,
                 alert_status=AlertStatus.OnHold,
                 alert_state=AlertState.InProgress,
-                input_data=input_data
+                input_data=input_data,
+                progress_rate="3"
             )
             return await self.send_alert_action(is_raised=True)
         return await self.send_alert_action(is_raised=False)
@@ -398,13 +402,13 @@ class IndentDryOut:
             input_data["action_msg"] = "Valid Indent"
             input_data["action_type"] = "Raised"
             input_data["event_tags"]["is_raised"] = True
-            await self.update_alert_status(indent_status=IndentStatus.ValidIndent, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.ValidIndent, input_data=input_data, progress_rate="3")
             return await self.send_alert_action(is_raised=True)
 
         input_data["action_msg"] = "Invalid Is On Hold"
         input_data["action_type"] = "Message"
         input_data["event_tags"]["is_raised"] = False
-        await self.update_alert_status(indent_status=IndentStatus.IndentOnHold, input_data=input_data)
+        await self.update_alert_status(indent_status=IndentStatus.IndentOnHold, input_data=input_data, progress_rate="2")
         return await self.send_alert_action(is_raised=False)
 
     async def is_indent_sent_sap(self, params: dict):
@@ -441,7 +445,7 @@ class IndentDryOut:
             input_data["action_msg"] = "Sent To SAP"
             input_data["action_type"] = "SentToSap"
             input_data["event_tags"]["is_sent_to_sap"] = True
-            await self.update_alert_status(indent_status=IndentStatus.SentToSAP, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.SentToSAP, input_data=input_data, progress_rate="5")
             return await self.send_alert_action(is_sent_to_sap=True)
         return await self.send_alert_action(is_sent_to_sap=False)
 
@@ -453,7 +457,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        query = f"""SELECT a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST" a, 
                         "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b
@@ -463,7 +467,8 @@ class IndentDryOut:
                         AND a.LOCN_CODE = b.LOCN_CODE
                         AND a.TRUCK_REGNO = b.TRUCK_REGNO
                         AND b.CARD_STATUS = 'R'
-                        AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) """
+                        AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) 
+                    GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -493,7 +498,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        query = f"""SELECT a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
                                 "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b
@@ -503,7 +508,8 @@ class IndentDryOut:
                                 AND a.LOCN_CODE = b.LOCN_CODE
                                 AND a.TRUCK_REGNO = b.TRUCK_REGNO
                                 AND b.CARD_STATUS = 'I'
-                                AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) """
+                                AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) 
+                            GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -521,7 +527,7 @@ class IndentDryOut:
             input_data["action_msg"] = "R2 Swiped"
             input_data["action_type"] = "R2Swipe"
             input_data["event_tags"]["is_r2_swipe"] = True
-            await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data, progress_rate="7")
             return await self.send_alert_action(is_r2_swipe=True)
         return await self.send_alert_action(is_r2_swipe=False)
 
@@ -533,7 +539,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        query = f"""SELECT a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
+        query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
                                 "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b
@@ -543,7 +549,8 @@ class IndentDryOut:
                                 AND a.LOCN_CODE = b.LOCN_CODE
                                 AND a.TRUCK_REGNO = b.TRUCK_REGNO
                                 AND b.CARD_STATUS = 'O'
-                                AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) """
+                                AND TRUNC(b.LOADED_ON) = TRUNC(SYSDATE) 
+                            GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         print(resp)
@@ -561,7 +568,7 @@ class IndentDryOut:
             input_data["action_msg"] = "R3 Swiped"
             input_data["action_type"] = "R3Swipe"
             input_data["event_tags"]["is_r3_swipe"] = True
-            await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data, progress_rate="9")
             return await self.send_alert_action(is_r3_swipe=True)
         return await self.send_alert_action(is_r3_swipe=False)
 
@@ -613,7 +620,8 @@ class IndentDryOut:
 
             await self.update_alert_status(
                 indent_status=IndentStatus.InvoiceCreated,
-                input_data=input_data
+                input_data=input_data,
+                progress_rate="8"
             )
             # await self.close_supply_chain_alert(
             #     alert_id=self.params.get("alert_id"),
@@ -675,7 +683,8 @@ class IndentDryOut:
                 indent_status=IndentStatus.Completed,
                 alert_status=AlertStatus.Close,
                 alert_state=AlertState.Resolved,
-                input_data=input_data
+                input_data=input_data,
+                progress_rate="11"
             )
             await self.close_supply_chain_alert(
                 alert_id=self.params.get("alert_id"),
@@ -724,7 +733,7 @@ class IndentDryOut:
             input_data["action_msg"] = "Sales order created"
             input_data["action_type"] = "OrderPlaced"
             input_data["event_tags"]["is_order_placed"] = True
-            await self.update_alert_status(indent_status=IndentStatus.SalesOrderPlaced, input_data=input_data)
+            await self.update_alert_status(indent_status=IndentStatus.SalesOrderPlaced, input_data=input_data, progress_rate="6")
             return await self.send_alert_action(is_order_placed=True)
         return await self.send_alert_action(is_order_placed=False)
 
@@ -752,7 +761,8 @@ class IndentDryOut:
             indent_status: str,
             alert_status: str = AlertStatus.InProgress,
             alert_state: str = AlertState.InProgress,
-            input_data: dict = {}
+            input_data: dict = {},
+            progress_rate: str = "0"
     ):
         alert_id = self.params.get("alert_id")
         alert_data = await Alerts.get(alert_id)
@@ -772,6 +782,8 @@ class IndentDryOut:
             alert_data['indent_status'] = indent_status
             alert_data['alert_status'] = alert_status
             alert_data['alert_state'] = alert_state
+            if str(progress_rate) != "0":
+                alert_data['progress_rate'] = str(progress_rate)
             print("alert_data: ", alert_data)
             alert_data = Alerts(**alert_data)
             await alert_data.modify()

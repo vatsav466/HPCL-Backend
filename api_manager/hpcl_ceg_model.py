@@ -58,6 +58,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -96,6 +97,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -139,6 +141,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -785,6 +788,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     progress_rate: Mapped[typing.Optional[int]] = mapped_column("progress_rate", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -838,11 +842,13 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
         schema_class = AlertsSchema
         upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
 
 
 class Alerts(urdhva_base.postgresmodel.PostgresModel):
@@ -896,11 +902,13 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
         schema_class = AlertsSchema
         upsert_keys = []
+        search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
 
 
 class AlertsGetResp(pydantic.BaseModel):
@@ -923,6 +931,10 @@ class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
     skip: typing.Optional[int] = pydantic.Field(0, **{})
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     filters: typing.Optional[typing.List[DataFiltersCreate]] | None = None
+
+
+class Alerts_Upload_ImageParams(pydantic.BaseModel):
+    pass
 
 
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):
@@ -1150,6 +1162,12 @@ class productsDetailsCreate(pydantic.BaseModel):
     qty: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class IndentDryOutDataFiltersCreate(pydantic.BaseModel):
+    key: str
+    cond: str
+    value: typing.List[str]
+
+
 class IndentDryOutSchema(UrdhvaPostgresBase):
     __tablename__ = 'indent_dry_out'
     
@@ -1257,11 +1275,11 @@ class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Dried_Out_PlantsParams(pydantic.BaseModel):
-    filters: typing.List[DataFiltersCreate]
+    filters: typing.List[IndentDryOutDataFiltersCreate]
 
 
 class Indentdryout_Get_Alert_HistoryParams(pydantic.BaseModel):
-    sap_id: str
+    alert_id: str
 
 
 class Indentdryout_Get_Dry_Out_StatsParams(pydantic.BaseModel):
@@ -1279,9 +1297,9 @@ class Indentdryout_Get_Distinct_PlantParams(pydantic.BaseModel):
 
 class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[str] = pydantic.Field("", **{})
-    region: typing.Optional[str] = pydantic.Field("", **{})
-    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
 
 class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
@@ -1291,6 +1309,10 @@ class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
 class Indentdryout_Sync_Ro_Daily_SalesParams(pydantic.BaseModel):
     from_date: datetime.datetime
     to_date: datetime.datetime
+
+
+class Indentdryout_Get_Dry_Out_CountParams(pydantic.BaseModel):
+    pass
 
 
 class ScreensSchema(UrdhvaPostgresBase):

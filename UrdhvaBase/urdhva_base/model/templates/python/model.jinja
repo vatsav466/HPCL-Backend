@@ -88,6 +88,9 @@ class {{input.name}}Create({%- if not input.is_internal -%}{{input.dbbase[1]}}{%
         {% if input.config.engine_id_fields is defined and input.config.engine_id_fields -%}
         engine_id_fields = {{input.config.engine_id_fields.split(',')}}
         {% endif -%}
+        {% if input.config.search_fields is defined and input.config.search_fields -%}
+        search_fields = {{input.config.search_fields.split(',')}}
+        {% endif -%}
         {% if input.config.upsert_skip_keys is defined and input.config.upsert_skip_keys -%}
         upsert_skip_keys = {{input.config.upsert_skip_keys.split(',')}}
         {% endif -%}
@@ -134,6 +137,9 @@ class {{input.name}}({{input.dbbase[2]}}):
         {% endif -%}
         {% if input.config.engine_id_fields is defined and input.config.engine_id_fields -%}
         engine_id_fields = {{input.config.engine_id_fields.split(',')}}
+        {% endif -%}
+        {% if input.config.search_fields is defined and input.config.search_fields -%}
+        search_fields = {{input.config.search_fields.split(',')}}
         {% endif -%}
         {% if input.config.upsert_skip_keys is defined and input.config.upsert_skip_keys -%}
         upsert_skip_keys = {{input.config.upsert_skip_keys.split(',')}}
