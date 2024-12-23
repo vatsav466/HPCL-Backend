@@ -86,7 +86,7 @@ class AlertFactory:
                                                         'vehicle_number': alert_data.get('vehicle_number',''),
                                                         'violation_type': alert_data.get('violation_type',''),
                                                         'clear_count': alert_data.get('clear_count',False),
-                                                        'alert_history': [],
+                                                        'alert_history': alert_data.get('alert_history',[]),
                                                         'device_msg': alert_data.get('message', ''),
                                                         'last_sms_to': [], 'last_mailed_to': [],
                                                         'last_escalated_to': [],

@@ -13,7 +13,8 @@ class CheckViolationCount:
         based on the given violation type and sap id.
         
         Parameters:
-        sap_id (str): The sap id of the vehicle.
+        sap_id (str): The SAP ID of the vehicle.
+        bu (str): The Business Unit of the vehicle.
         vehicle_number (str): The vehicle number for which violation count is to be fetched.
         violation_type (str): The type of violation for which count is to be fetched.
         
@@ -21,21 +22,26 @@ class CheckViolationCount:
         int: The violation count of the vehicle.
         """
         try:
+            # Get the current date and calculate the first day of the current quarter
             current_date = datetime.datetime.now()
             current_quarter = int((current_date.month - 1) / 3 + 1)
             dt_firstday = datetime.datetime(current_date.year, 3 * current_quarter - 2, 1)
-            start_date = str(dt_firstday).replace(" ", "T")
-            start_date_time = start_date + '.000Z'
-            query = (f"sap_id='{sap_id}' and bu='{bu}' and vehicle_number='{vehicle_number}'"
-                    f"and alert_status='Open' and interlock_name='{violation_type}' and sop_id='{'SOP001'}'"
-                    f"and created_at >='{start_date_time}'")
+            
+            # Format the start date in the same format as the database ('YYYY-MM-DD HH:MM:SS.SSSSSS')
+            start_date_time = dt_firstday.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+            # Construct the query
+            query = (f"sap_id='{sap_id}' and bu='{bu}' and vehicle_number='{vehicle_number}' "
+                     f"and alert_status='Open' and violation_type='{violation_type}' "
+                     f"and created_at >= '{start_date_time}'")
+            
+            # Fetch the count of violations matching the query
             count = await hpcl_ceg_model.Alerts.count(urdhva_base.queryparams.QueryParams(q=query))
-            #print("count",count)
+            print("count-------->", count)
             return count
 
         except Exception as e:
+            # Log the error and return None
             print(traceback.format_exc())
             logger.error(e)
             return None
-
-    
