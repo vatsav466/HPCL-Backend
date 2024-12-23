@@ -165,7 +165,7 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
             if record.value:
                 # if len(record.value) == 1:
                 if isinstance(record.value, list):
-                    where_clause.append(f"{record.key} in {tuple(record.value)}")
+                    where_clause.append(f"{record.key} in {str(tuple(record.value)).replace(',)', ')')}")
                 else:
                     where_clause.append(f"{record.key}='{record.value}'")
     conditions = ' AND '.join(where_clause)
