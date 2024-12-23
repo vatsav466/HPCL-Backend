@@ -441,6 +441,7 @@ Model Alerts {
     terminal_plant_name optional str
     progress_rate optional int
     category optional str
+    indent_raised_date optional datetime
 
     Action=> alert_action {
         action_type AlertActionType
