@@ -228,3 +228,34 @@ class GlobalAnalytics:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
         no_of_locations_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         print("no_of_locations_query_ -> ", no_of_locations_query_)
+
+    @staticmethod
+    async def severity_count(filters, drill_state):
+        """
+        Fetches the severity count data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the severity count data.
+        """
+        severity_count_query = lpg_plant_queries.lpg_plant_query.get("severity_count")
+        severity_count_query_ = severity_count_query
+        if filters:
+            for filter_ in filters:
+                if filter_.key:
+                    # Update the key of the filter to include the alias 'a.'
+                    filter_.key = f"lm.{filter_.key}"
+            severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(severity_count_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query)
+        severity_count_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        for item in severity_count_data:
+            item['operability_index'] = 99
+        print("severity_count_query_ -> ", severity_count_query_)
+        return {"status": True, "message": "success", "data": severity_count_data}

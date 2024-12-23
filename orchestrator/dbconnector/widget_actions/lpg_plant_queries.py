@@ -663,5 +663,29 @@ LIMIT 10000;''',
                                     GROUP BY 
                                         b.name, a.severity
                                     ORDER BY 
-                                        b.name, a.severity;'''
+                                        b.name, a.severity;''',
+    
+    "severity_count": f'''SELECT 
+                            lm.sap_id,
+                            lm.bu,
+                            lm.state,
+                            lm.region,
+                            lm.zone,
+                            lm.name,
+                            lm.latitude,
+                            lm.longitude,
+                            jsonb_build_object(
+                                'Critical', SUM(CASE WHEN a.severity = 'Critical' THEN 1 ELSE 0 END),
+                                'High', SUM(CASE WHEN a.severity = 'High' THEN 1 ELSE 0 END),
+                                'Medium', SUM(CASE WHEN a.severity = 'Medium' THEN 1 ELSE 0 END),
+                                'Low', SUM(CASE WHEN a.severity = 'Low' THEN 1 ELSE 0 END)
+                            ) AS alerts
+                        FROM 
+                            location_master lm
+                        LEFT JOIN 
+                            alerts a
+                        ON 
+                            lm.sap_id = a.sap_id AND lm.bu = a.bu
+                        GROUP BY 
+                            lm.sap_id, lm.bu, lm.state, lm.region, lm.zone, lm.name, lm.latitude, lm.longitude;'''
 }
