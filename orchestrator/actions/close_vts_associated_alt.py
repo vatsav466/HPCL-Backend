@@ -28,8 +28,6 @@ class CloseVtsAssociatedAlert:
         else:
             print("Message sent to camunda")
         return True, "Successfully sent message to camunda"
-
-
     
     async def closeVtsAssociatedAlt(self, params):
         alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id',''))

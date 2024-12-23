@@ -1318,6 +1318,12 @@ class Indentdryout_Get_Dry_Out_CountParams(pydantic.BaseModel):
     pass
 
 
+class Indentdryout_Get_Filtered_Location_DataParams(pydantic.BaseModel):
+    request_parameter: str
+    bu: str
+    filters: typing.Optional[typing.List[IndentDryOutDataFiltersCreate]] | None = None
+
+
 class ScreensSchema(UrdhvaPostgresBase):
     __tablename__ = 'screens'
     

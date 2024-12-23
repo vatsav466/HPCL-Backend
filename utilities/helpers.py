@@ -10,7 +10,6 @@ except ImportError:
 from dateutil.relativedelta import relativedelta
 
 
-
 def password_generator(password_length=16, special_characters_allowed=True, case_sensitive=True):
     """
     @description: function to generate random password
@@ -103,3 +102,14 @@ def encrypt_file(file_path):
             encrypted_file.write(file_data)  # Save encrypted data
     file_path = str(urdhva_base.types.Secret().validate(encrypted_file_path, ''))
     return base64.b64encode(file_path.encode()).decode()
+
+
+def normalize_string(input_value):
+    """
+    Normalizes provided string, If binary convert to string and return else return string
+    :param input_value:
+    :return:
+    """
+    if isinstance(input_value, bytes):
+        return input_value.decode()
+    return input_value

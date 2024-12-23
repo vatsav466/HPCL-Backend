@@ -957,6 +957,9 @@
                 },
                 {
                     "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
                 }
             ]
         },
@@ -993,6 +996,9 @@
                 },
                 {
                     "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
                 }
             ]
         },
@@ -1047,6 +1053,9 @@
                 },
                 {
                     "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
                 }
             ]
         },
@@ -1388,6 +1397,10 @@
         {
             "name": "get_dry_out_count",
             "displayName": "get_dry_out_count"
+        },
+        {
+            "name": "get_filtered_location_data",
+            "displayName": "get_filtered_location_data"
         }
     ]
 }

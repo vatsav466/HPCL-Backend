@@ -649,6 +649,12 @@ Model IndentDryOut {
     Action=> get_dry_out_count {
 
     }
+
+    Action=> get_filtered_location_data {
+        request_parameter str
+        bu str
+        filters optional list IndentDryOutDataFilters
+    }
 }
 
 Model Screens {

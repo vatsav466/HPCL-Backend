@@ -13,7 +13,7 @@ from orchestrator.alerting.alert_manager import create_alert
 import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
-from orchestrator.alerting.listener.sync_ro_daily_sales import indent_dryout_sync_ro_daily_sales
+import orchestrator.alerting.listener.sync_ro_daily_sales as sync_ro_daily_sales
 
 router = fastapi.APIRouter(prefix='/indentdryout')
 
@@ -163,11 +163,10 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
                         where_clause.append(f"sap_id in {tuple([rec['ro_id'] for rec in resp])}")
         else:
             if record.value:
-                # if len(record.value) == 1:
-                if isinstance(record.value, list):
-                    where_clause.append(f"{record.key} in {str(tuple(record.value)).replace(',)', ')')}")
+                if len(record.value) == 1:
+                    where_clause.append(f"{record.key}='{record.value[0]}'")
                 else:
-                    where_clause.append(f"{record.key}='{record.value}'")
+                    where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "case when severity = 'Critical' then '0' " \
@@ -204,14 +203,6 @@ async def indentdryout_get_dry_out_stats(data: Indentdryout_Get_Dry_Out_StatsPar
 # Action get_alert_history
 @router.post('/get_alert_history', tags=['IndentDryOut'])
 async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryParams):
-    # query = (f"select * from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
-    #          f"sap_id='{data.sap_id}' ORDER BY created_at DESC LIMIT 1")
-    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get('hpcl_ceg', '1')
-    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    # resp = await function(
-    #     query=query
-    # )
     resp = await Alerts.get(data.alert_id)
     if not isinstance(resp, dict):
         resp = resp.__dict__
@@ -236,7 +227,6 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             return "-"
 
     if resp:
-        # resp = resp[0]
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
                                     "state": resp["state"], "indent_status": resp["indent_status"]}
         alert_history["data"].append(f"Dry-out Location Identified at "
@@ -287,65 +277,13 @@ async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantP
 async def indentdryout_get_distinct_location_details(data: Indentdryout_Get_Distinct_Location_DetailsParams):
     return {"status": True, "message": "Success",
             "data": await dry_out_analysis.get_locations(data.bu, data.zone, data.region, data.sales_area)}
-    # query = (
-    #     f"""SELECT "zone", region, sales_area, terminal_plant_id, terminal_plant_name """
-    #     f"FROM location_master "
-    #     f"WHERE bu = '{data.bu}'"
-    # )
-    # # if data.zone:
-    # #     query += f""" AND "zone" = '{data.zone}'"""
-    # # if data.region:
-    # #     query += f" AND region = '{data.region}'"
-    # # if data.sales_area:
-    # #     query += f" AND sales_area = '{data.sales_area}'"
-    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    # location_master_data = await function(query=query)
-    # location_master_data = pl.DataFrame(location_master_data)
-    # # result = {
-    # #     key: list(set([entry.get(key) for entry in data if entry.get(key)]))
-    # #     for key in data[0] if key not in ('terminal_plant_id', 'terminal_plant_name')
-    # # }
-    # result = {"zone": location_master_data.filter(~pl.col("zone").is_in("", None)).select("zone").unique().to_series().to_list()}
-    # result["region"] = location_master_data.filter(~pl.col("region").is_in("", None)).select("region").unique().to_series().to_list()
-    # result["sales_area"] = location_master_data.filter(~pl.col("sales_area").is_in("", None)).select("sales_area").unique().to_series().to_list()
-    #
-    # if data.zone and not data.region and not data.sales_area:
-    #     result["region"] = location_master_data.filter(
-    #         (pl.col("zone") == data.zone) & ~(pl.col("region").is_in("", None))
-    #     ).select("region").unique().to_series().to_list()
-    #
-    # if data.zone and data.region and not data.sales_area:
-    #     result["sales_area"] = location_master_data.filter(
-    #         (pl.col("zone") == data.zone) & (pl.col("region") == data.region) & ~(pl.col("sales_area").is_in("", None))
-    #     ).select("sales_area").unique().to_series().to_list()
-    #
-    # if data.zone and data.region and data.sales_area:
-    #     location_master_data = location_master_data.filter(
-    #         (pl.col("zone") == data.zone) & (pl.col("region") == data.region) & (pl.col("sales_area") == data.sales_area)
-    #     ).select(["terminal_plant_id", "terminal_plant_name"]).to_dicts()
-    #     result['plant'] = list(set([
-    #         f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
-    #         for entry in location_master_data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
-    #     ]))
-    # else:
-    #     location_master_data = location_master_data.to_dicts()
-    #     result['plant'] = list(set([
-    #         f"{entry['terminal_plant_id'] if entry['terminal_plant_id'] else ''}({entry['terminal_plant_name'] if entry['terminal_plant_name'] else ''})"
-    #         for entry in location_master_data if entry.get('terminal_plant_id') and entry.get('terminal_plant_name')
-    #     ]))
-    #
-    #
-    #
-    # return {"status": True, "message": "Success", "data": result}
 
 
 # Action sync_ro_daily_sales
 @router.post('/sync_ro_daily_sales', tags=['IndentDryOut'])
 async def indentdryout_sync_ro_daily_sales(data: Indentdryout_Sync_Ro_Daily_SalesParams):
 
-    return await indent_dryout_sync_ro_daily_sales(data.from_date, data.to_date)
+    return await sync_ro_daily_sales.indent_dryout_sync_ro_daily_sales(data.from_date, data.to_date)
 
 # Action get_indent_analysis
 @router.post('/get_indent_analysis', tags=['IndentDryOut'])
@@ -407,3 +345,9 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     ).unique().shape[0]
 
     return {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+
+
+# Action get_filtered_location_data
+@router.post('/get_filtered_location_data', tags=['IndentDryOut'])
+async def indentdryout_get_filtered_location_data(data: Indentdryout_Get_Filtered_Location_DataParams):
+    return await dry_out_analysis.get_filtered_location_data(data.bu, data.request_parameter, data.filters)
