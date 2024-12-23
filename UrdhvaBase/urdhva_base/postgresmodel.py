@@ -280,8 +280,16 @@ class BasePostgresModel(pydantic.BaseModel):
             query_params.append(cls.Config.standard_query)
         if params and params.q and len(params.q) > 0:
             query_params.append(params.q)
-        if cls.Config.search_fields:
-            ...
+        if params and params.q:
+            search_conditions = []
+            if cls.Config.search_fields:
+                for field in cls.Config.search_fields:
+                    print("result --> ", field)
+                    search_conditions.append(f"{cls.__tablename__}.{field} ILIKE '%{params.search_text}%'")
+                
+                if search_conditions:
+                    print("search_conditions --> ", search_conditions)
+                    query_params.append(f"({' OR '.join(search_conditions)})")
         if len(query_params):
             query.append("where " + " AND ".join(query_params))
 
@@ -290,7 +298,7 @@ class BasePostgresModel(pydantic.BaseModel):
             try:
                 order_by = json.loads(params.sort) if isinstance(params.sort, str) else params.sort
                 for key, value in order_by.items():
-                    order = 'ASC' if 'asc' in value.lower() else 'DESC'
+                    order = 'ASC' if 'asc' in value.lower() else 'DESC'  
                     query.append(f"ORDER BY {key} {order}")
                     break
             except Exception as e:
