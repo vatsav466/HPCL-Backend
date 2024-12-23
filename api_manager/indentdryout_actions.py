@@ -213,6 +213,8 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
     #     query=query
     # )
     resp = await Alerts.get(data.alert_id)
+    if not isinstance(resp, dict):
+        resp = resp.__dict__
     alert_history = {
         "details": {},
         "data": []
@@ -240,7 +242,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
         alert_history["data"].append(f"Dry-out Location Identified at "
                                      f"{convert_time_read_format(str(resp['created_at']))}")
 
-        for history in json.loads(resp.get("alert_history", [])):
+        for history in resp.get("alert_history", []):
             alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
                                          f" {convert_time_read_format(str(history['allocated_time']))}, "
                                          f"Processed at {convert_time_read_format(str(history['processed_time']))}")
