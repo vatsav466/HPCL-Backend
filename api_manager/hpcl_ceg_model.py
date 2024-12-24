@@ -171,6 +171,10 @@ class Locationmaster_Download_TemplateParams(pydantic.BaseModel):
     pass
 
 
+class Locationmaster_Upload_Tags_DataParams(pydantic.BaseModel):
+    pass
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     

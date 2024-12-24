@@ -36,6 +36,9 @@
                 },
                 {
                     "name": "download_template"
+                },
+                {
+                    "name": "upload_tags_data"
                 }
             ]
         },
@@ -87,6 +90,9 @@
                 },
                 {
                     "name": "download_template"
+                },
+                {
+                    "name": "upload_tags_data"
                 }
             ]
         },
@@ -1277,6 +1283,10 @@
         {
             "name": "download_template",
             "displayName": "download_template"
+        },
+        {
+            "name": "upload_tags_data",
+            "displayName": "upload_tags_data"
         },
         {
             "name": "upload_role_master",
