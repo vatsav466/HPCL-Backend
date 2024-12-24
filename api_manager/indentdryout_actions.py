@@ -133,39 +133,39 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         # If filter was on Sales Area Getting all ro id's under that sales area
-        if record.key in ['sales_area', 'plant', 'category']:
-            if record.value:
-                if record.key == "sales_area":
-                    if len(record.value) == 1:
-                        query = f"select ro_id from location_master where sales_area='{record.value[0]}' and bu='RO'"
-                    else:
-                        query = f"select ro_id from location_master where sales_area in {tuple(record.value)} and bu='RO'"
-                elif record.key == "category" and record.value[0] == "cat_a":
-                    query = f"select ro_id from location_master where category='R01' and bu='RO'"
-                else:
-                    values = []
-                    for rec in record.value:
-                        if "(" in rec:
-                            values.append(rec.split("(")[-1].split(")")[0].strip())
-                        else:
-                            values.append(rec)
-                    if len(values) == 1:
-                        query = f"select ro_id from location_master where terminal_plant_id='{values[0]}' and bu='RO'"
-                    else:
-                        query = f"select ro_id from location_master where terminal_plant_id in {tuple(values)} and bu='RO'"
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(
-                    query=query
-                )
-                ro_ids = [rec['ro_id'] for rec in resp]
-                if len(ro_ids) == 1:
-                    where_clause.append(f"sap_id='{ro_ids[0]}'")
-                elif len(ro_ids) > 1:
-                    where_clause.append(f"sap_id in {tuple(ro_ids)}")
-        elif record.key == "progress_rate":
+        # if record.key in ['sales_area', 'category']:
+        #     if record.value:
+        #         if record.key == "sales_area":
+        #             if len(record.value) == 1:
+        #                 query = f"select ro_id from location_master where sales_area='{record.value[0]}' and bu='RO'"
+        #             else:
+        #                 query = f"select ro_id from location_master where sales_area in {tuple(record.value)} and bu='RO'"
+        #         else:
+        #             values = []
+        #             for rec in record.value:
+        #                 if "(" in rec:
+        #                     values.append(rec.split("(")[-1].split(")")[0].strip())
+        #                 else:
+        #                     values.append(rec)
+        #             if len(values) == 1:
+        #                 query = f"select ro_id from location_master where terminal_plant_id='{values[0]}' and bu='RO'"
+        #             else:
+        #                 query = f"select ro_id from location_master where terminal_plant_id in {tuple(values)} and bu='RO'"
+        #         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        #         resp = await function(
+        #             query=query
+        #         )
+        #         ro_ids = [rec['ro_id'] for rec in resp]
+        #         if len(ro_ids) == 1:
+        #             where_clause.append(f"sap_id='{ro_ids[0]}'")
+        #         elif len(ro_ids) > 1:
+        #             where_clause.append(f"sap_id in {tuple(ro_ids)}")
+        if record.key == "progress_rate":
             where_clause.append(f"progress_rate={int(record.value[0])-1}")
         else:
             if record.value:
+                if record.key == "plant":
+                    record.key = "terminal_plant_id"
                 if len(record.value) == 1:
                     where_clause.append(f"{record.key}='{record.value[0]}'")
                 else:
