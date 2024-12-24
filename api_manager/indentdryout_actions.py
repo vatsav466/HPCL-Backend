@@ -415,6 +415,12 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
         else:
             result[indent_key] = 0  # Default to 0 if no result is found
 
+    dry_out_counts = await indentdryout_get_dry_out_count(data)
+    dry_out_count = dry_out_counts.get("dry_out", 0)
+
+    # Add the dry_out count to the result dictionary
+    result["dry_out"] = dry_out_count
+    
     # Return the final result
     return result
   
