@@ -466,8 +466,8 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         query=query
     )
 
-    stats_query = "select sap_id, min(progress_rate) as present_stage" \
-                  f"from alerts where {conditions}" \
+    stats_query = "select sap_id, min(progress_rate) as present_stage " \
+                  f"from alerts where {conditions} " \
                   f"group by sap_id"
     stats_resp = await function(
         query=stats_query
