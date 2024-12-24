@@ -385,12 +385,12 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
         conditions = []
         for rec in record:
             if rec.key == "indent_status":
-            # Map the input value to the corresponding list in indent_mapping
+                # Map the input value to the corresponding list in indent_mapping
                 mapped_values = indent_values  # Use the values for the current indent group
-            # Create the condition for indent_status
-                condition = f"indent_status IN ({', '.join([f"'{val}'" for val in mapped_values])})"
+                # Create the condition for indent_status
+                condition = f"indent_status IN ({', '.join(['{val}' for val in mapped_values])})"
             else:
-            # Default condition for other keys
+                # Default condition for other keys
                 condition = f"{rec.key} = '{rec.value}'"
             conditions.append(condition)
         # Combine all conditions using AND
@@ -425,3 +425,71 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
     
 
 
+
+
+# Action get_dried_out_ro
+@router.post('/get_dried_out_ro', tags=['IndentDryOut'])
+async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParams):
+    top_x_axis = [
+        "Indent Not Raised", "Pending Indents", "Indent On Hold", "Truck Allocated", "Sent to SAP",
+        "Sales Order Placed", "R2 Swiped", "Invoice Created", "R3 Swiped", "VTS", "Indent Delivered"
+    ]
+    bottom_x_axis = [
+        "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "SO\nRM"
+    ]
+    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    for record in data.filters:
+        if record.key == "progress_rate":
+            where_clause.append(f"progress_rate={int(record.value[0]) - 1}")
+        else:
+            if record.value:
+                if record.key == "plant":
+                    record.key = "terminal_plant_id"
+                if len(record.value) == 1:
+                    where_clause.append(f"{record.key}='{record.value[0]}'")
+                else:
+                    where_clause.append(f"{record.key} in {tuple(record.value)}")
+    conditions = ' AND '.join(where_clause)
+    query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
+            "indent_no as indent_no, product_code as product_code, " \
+            "case when severity = 'Critical' then '1' " \
+            "when severity = 'High' then '2' " \
+            "when severity = 'Medium' then '3' " \
+            "when severity = 'Low' then '4' " \
+            "else severity " \
+            "end as dry_out_days " \
+            f"from alerts where {conditions}"
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+
+    stats_query = "select sap_id, min(progress_rate) as present_stage" \
+                  f"from alerts where {conditions}" \
+                  f"group by sap_id"
+    stats_resp = await function(
+        query=stats_query
+    )
+
+    grouped_data = {}
+    for entry in resp:
+        sap_id = entry["sap_id"]
+        if sap_id not in grouped_data:
+            grouped_data[sap_id] = []
+        grouped_data[sap_id].append(entry)
+    formatted_data = [{key: value} for key, value in grouped_data.items()]
+
+    stats = {i + 1: 0 for i, _ in enumerate(top_x_axis)}
+    for rec in stats_resp:
+        if rec['present_stage'] == 0:
+            rec['present_stage'] = 1
+        if rec['present_stage'] not in stats:
+            stats[rec['present_stage']] = 0
+        stats[rec['present_stage']] += 1
+    stats = [{"section": top_x_axis[key - 1], "value": value, "serial": key}
+             for key, value in stats.items() if key <= len(top_x_axis)]
+    stats = sorted(stats, key=lambda x: x['serial'])
+    return {"status": True, "message": "Success", "data": formatted_data, "top_x_axis": top_x_axis,
+            "bottom_x_axis": bottom_x_axis, "stats": stats}

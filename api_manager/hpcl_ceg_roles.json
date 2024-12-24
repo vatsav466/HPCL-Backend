@@ -969,6 +969,9 @@
                 },
                 {
                     "name": "get_indent_data"
+                },
+                {
+                    "name": "get_dried_out_ro"
                 }
             ]
         },
@@ -1011,6 +1014,9 @@
                 },
                 {
                     "name": "get_indent_data"
+                },
+                {
+                    "name": "get_dried_out_ro"
                 }
             ]
         },
@@ -1071,6 +1077,9 @@
                 },
                 {
                     "name": "get_indent_data"
+                },
+                {
+                    "name": "get_dried_out_ro"
                 }
             ]
         },
@@ -1424,6 +1433,10 @@
         {
             "name": "get_indent_data",
             "displayName": "get_indent_data"
+        },
+        {
+            "name": "get_dried_out_ro",
+            "displayName": "get_dried_out_ro"
         }
     ]
 }
