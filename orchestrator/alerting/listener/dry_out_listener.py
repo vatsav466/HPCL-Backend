@@ -16,7 +16,7 @@ from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
 class DryoutCollector:
     @classmethod
     async def get_dry_out_data(cls):
-        redis_queue = await urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
+        redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
         # Query to fetch dry out locations, intraday dry-out and potential dry out location
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
