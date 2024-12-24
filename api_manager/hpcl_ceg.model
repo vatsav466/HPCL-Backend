@@ -149,9 +149,9 @@ Model LocationMaster {
     Action=> download_template {
     }
 
-    Action=> upload_tags_data{   
+    Action=> upload_tags_data {
     }
-    
+
     Config=> {
         crud_operations='read'
     }

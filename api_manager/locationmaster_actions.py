@@ -179,3 +179,4 @@ async def locationmaster_upload_tags_data(upload_file: fastapi.UploadFile = fast
     except Exception as e:
         logger.error(f"An error occurred while processing the JSON file: {traceback.format_exc()}")
         return {"status": False, "message": f"An error occurred: {e}"}
+    
