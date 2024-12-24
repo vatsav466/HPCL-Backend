@@ -48,10 +48,10 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     query = f'''SELECT * FROM "{schema}"."{table}" WHERE "volume" > 0 AND "indent_status" NOT IN ('Raised', 'Completed') AND "status" IN ('0', '1', '2');'''
     query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
             rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, indent_status, 
-            case when sum(pumpable_Stock) <=0 then 0
-            when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 1
-            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 2
-            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 3
+            case when sum(pumpable_Stock) <=0 then 1
+            when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
+            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
+            when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
             else 5 end status
             from "{schema}".{table} sch
             where 1=1 and sch.volume>0
@@ -172,10 +172,10 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
-            "case when severity = 'Critical' then '0' " \
-            "when severity = 'High' then '1' " \
-            "when severity = 'Medium' then '2' " \
-            "when severity = 'Low' then '3' " \
+            "case when severity = 'Critical' then '1' " \
+            "when severity = 'High' then '2' " \
+            "when severity = 'Medium' then '3' " \
+            "when severity = 'Low' then '4' " \
             "else severity " \
             "end as dry_out_days " \
             f"from alerts where {conditions}"
@@ -224,7 +224,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             utc_time = utc.localize(utc_timestamp)
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
-            formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
+            formatted_ist_time = ist_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
             return formatted_ist_time
         except:
             return "-"
