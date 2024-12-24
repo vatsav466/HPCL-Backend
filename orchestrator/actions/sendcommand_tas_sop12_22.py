@@ -4,6 +4,7 @@ import hpcl_ceg_model
 # from constants import *
 # import send_tas_rq_message
 from utilities.bu_key_mapping import tasSopcommands
+import orchestrator.alerting.alert_manager as alert_manager
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -50,22 +51,32 @@ class SendcommandTasSop1222:
             if len(loadingPointId) == 1:
                 loadingPointId = "0" + loadingPointId
 
+            alert_data["event_tags"] = {}
             interuptName = interuptName.lower()
             if interuptName == "terminateloading":
                 messageBody = {"tagsData": {tasSopcommands[sop_id].replace("ID", loadingPointId): 1}}
                 # await send_tas_rq_message.sendTASRQMessage(sap_id, messageBody)
                 print("Recieved input for tripping the loading point %s" % str(sap_id))
-                alert_data['isTripped'] = True
-                data_object = hpcl_ceg_model.Alerts(**alert_data)
-                await data_object.modify()
+                alert_data['alert_id'] = alert_id
+                alert_data["event_tags"]['is_tripped'] = True
+                alert_data["action_msg"] = "Tripped"
+                alert_data["action_type"] = "Tripped"
+                await alert_manager.AlertAction().update_alert_data(input_data=alert_data)
+                # data_object = hpcl_ceg_model.Alerts(**alert_data)
+                # await data_object.modify()
 
             elif interuptName == "unterminateloading":
                 print("Recieved input for untripping the loading point %s" % str(sap_id))
                 messageBody = {"tagsData": {tasSopcommands[sop_id].replace("ID", loadingPointId): 0}}
                 # await send_tas_rq_message.sendTASRQMessage(sap_id, messageBody)
-                alert_data['isTripped'] = False
-                data_object = hpcl_ceg_model.Alerts(**alert_data)
-                await data_object.modify()
+                alert_data['alert_id'] = alert_id
+                alert_data["event_tags"]['is_tripped'] = True
+                alert_data["action_msg"] = "Tripped"
+                alert_data["action_type"] = "Tripped"
+                await alert_manager.AlertAction().update_alert_data(input_data=alert_data)
+                # alert_data['isTripped'] = False
+                # data_object = hpcl_ceg_model.Alerts(**alert_data)
+                # await data_object.modify()
             else:
                 print("Unknown interrupt came")
 

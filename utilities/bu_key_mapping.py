@@ -1,4 +1,5 @@
 Location = {
+    "ROCode": "ro_id",
     "LocationID": "sap_id",
     "LocationName": "name",
     "LocationType": "bu",
@@ -8,10 +9,17 @@ Location = {
     "LocationRegion": "region",
     "LocationCity": "city",
     "LocationZone": "zone",
-    "LocationPinCode": "pinCode",
+    "LocationPinCode": "pincode",
     "Latitude": "latitude",
     "Longitude": "longitude",
-    "LocalAutomationVendor": "localAutomationVendor"
+    "LocalAutomationVendor": "local_automation_vendor",
+    "DealerName" : "dealer_name",
+    "DealerMobile" : "dealer_phone",
+    "DealerEmail" : "dealer_email",
+    "SalesArea": "sales_area",
+    "DeliveryPlantID": "terminal_plant_id",
+    "DeliveryPlantName": "terminal_plant_name",
+    "Category": "category"
 }
 
 LPG = {

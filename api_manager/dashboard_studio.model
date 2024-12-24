@@ -113,6 +113,12 @@ Model filtered_keys internal {
     component optional str
 }
 
+Model WidgetFilters internal {
+    key str
+    cond str
+    value str
+}
+
 Model Charts {
     connection_id optional str
     database optional str
@@ -168,6 +174,7 @@ Model Charts {
 
     Action=> get_distinct_values {
         connection_id optional str
+        schema str
         table str
         column list str
         where_cond optional dict
@@ -219,6 +226,20 @@ Model Charts {
     Action=> get_schema {
         connection_id optional str
         database optional str
+    }
+
+    Action=> generate_vis_data {
+        filters optional list WidgetFilters
+        action str
+        drill_state optional str
+    }
+
+    Action=> enable_cross_filter {
+        filters list WidgetFilters
+    }
+
+    Action=> generate_embedded_url {
+        dash_id str
     }
 
     Config=> {

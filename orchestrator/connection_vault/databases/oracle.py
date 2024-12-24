@@ -35,9 +35,10 @@ class Oracle(BaseAction):
     async def get_connection(self):
         if 'connection_name' in self.params.keys():
             self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+        if not isinstance(self.params, dict):
+            self.params = self.params.__dict__
         if 'credentials' in self.params.keys():
             self.params = self.params['credentials']
-
         if self.params.get('is_ssh_tunnel', False):
             tunnel = SSHTunnelForwarder(
                 (self.params['ssh_tunnel']['host'], self.params['ssh_tunnel']['port']),
@@ -57,6 +58,8 @@ class Oracle(BaseAction):
             self.params['dns'] += f"/{self.params['sid']}"
         elif self.params.get('service_name', ''):
             self.params['dns'] += f"/{self.params['service_name']}"
+        elif self.params.get('database_name', ''):
+            self.params['dns'] += f"/{self.params['database_name']}"
         connection = cx_Oracle.connect(
             self.params["user_name"],
             self.params["password"],
@@ -391,12 +394,14 @@ class Oracle(BaseAction):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
+            print("query: ", query)
             cursor.execute(query)
             records = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
             records = {column: [record[i] for record in records] for i, column in enumerate(column_names)}
+            records = pd.DataFrame(records)
             await self.close_connection(connection)
-            return records
+            return records.to_dict(orient='records')
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)

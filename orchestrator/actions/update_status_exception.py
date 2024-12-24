@@ -1,6 +1,7 @@
 import urdhva_base
 import traceback
 import hpcl_ceg_model
+import orchestrator.alerting.alert_manager as alert_manager
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -35,8 +36,11 @@ class Update_Status_Exception:
 
             alert_data['role'] = ''
             alert_data['rolelist'] = []
-            alert_data['status'] = 'Exception Approved'
             alert_data['finalapproval'] = True
+            alert_data['alert_id'] = params.get('alert_id')
+            alert_data["action_msg"] = "Exception Approved"
+            alert_data["action_type"] = "ExceptionApproved"
+            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
 
             data_object = hpcl_ceg_model.Alerts(**alert_data)
             await data_object.modify()

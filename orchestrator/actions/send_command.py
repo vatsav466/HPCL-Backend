@@ -37,6 +37,7 @@ class SendCommand:
 
             aldata = await hpcl_ceg_model.Alerts.get(alert_id)
             # tb = ThingsBoardApi.TB('tas', aldata['sap_id'])
+            commands = ''
             cmddata = {}
             pumptype = params.get('type')
             isPumpShutDown = params.get('shutdownPump')

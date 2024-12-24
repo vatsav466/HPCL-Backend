@@ -51,12 +51,13 @@ class AlertAction:
         :param input_data:
         :return:
         """
+        print("input_data --> ", input_data)
         function_map = {"Justification": "justify_alert", "Rejected": "reject_alert", "Approved": "approve_alert",
                         "Override": "override_alert", "interLockOk": "interlock_ok_alert", 
                         "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert",
                         "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
-                        "Created": "created_alert"}
+                        "Created": "created_alert", "Tripped": "tripped_alert"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -95,8 +96,16 @@ class AlertAction:
         """
         # Todo:- here we have to write all the generic functionality like updating the alert data,
         #  history, fetching users, roles, ...
-        alert_history = alert_data.alert_history
-        allocated_time = alert_data.updated_at
+        print("input_data for alert--> ", input_data)
+        alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data, 'alert_history', [])
+        # alert_history = alert_data.alert_history
+        print("alert_history --> ", alert_history)
+        # allocated_time = alert_data.updated_at
+        if isinstance(alert_data, dict):
+            allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
+        else:
+            allocated_time = alert_data.updated_at if hasattr(alert_data, 'updated_at') else datetime.datetime.now(datetime.timezone.utc)
+        
         if alert_history and alert_history[-1].get("processed_time"):
             allocated_time = alert_history[-1]["processed_time"]
         processed_time = datetime.datetime.now(datetime.timezone.utc)
@@ -118,10 +127,24 @@ class AlertAction:
                             "is_allocated": event_tags.get("is_allocated", False),
                             "is_sent_to_sap": event_tags.get("is_sent_to_sap", False),
                             "is_order_placed": event_tags.get("is_order_placed", False),
-                            "is_created": event_tags.get("is_created", False)
-        })
+                            "is_created": event_tags.get("is_created", False),
+                            "is_r1_swipe": event_tags.get("is_r1_swipe", False),
+                            "is_r2_swipe": event_tags.get("is_r2_swipe", False),
+                            "is_r3_swipe": event_tags.get("is_r3_swipe", False),
+                            "is_delivered": event_tags.get("is_delivered", False),
+                            "is_tripped": event_tags.get("is_tripped", False)        
+                        })
+        print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
-        await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
+        # Handle alert_data based on whether it is a dictionary or object
+        alert_id = alert_data.get('id') if isinstance(alert_data, dict) else getattr(alert_data, 'id', None)
+        
+        if not alert_id:
+            raise ValueError("Alert data does not have an 'id' field.")
+
+        # Modify the alert with the updated alert_history
+        await hpcl_ceg_model.Alerts(**{"id": alert_id, "alert_history": alert_history}).modify()
+        # await hpcl_ceg_model.Alerts(**{"id": alert_data.id, "alert_history": alert_history}).modify()
 
     @classmethod
     def get_exception_message(cls, exception):
@@ -145,6 +168,11 @@ class AlertAction:
                    "is_sent_to_sap": {"name": "sentToSAP", "type": "Boolean"},
                    "is_order_placed": {"name": "orderPlaced", "type": "Boolean"},
                    "is_created": {"name": "created", "type": "Boolean"},
+                   "is_r1_swipe": {"name": "r1Swipe", "type": "Boolean"},
+                   "is_r2_swipe": {"name": "r2Swipe", "type": "Boolean"},
+                   "is_r3_swipe": {"name": "r3Swipe", "type": "Boolean"},
+                   "is_delivered": {"name": "delivered", "type": "Boolean"},
+                   "is_tripped": {"name": "tripped", "type": "Boolean"},
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -178,7 +206,6 @@ class AlertAction:
         else:
             print("Message sent to camunda")
         return True, "Successfully sent message to camunda"
-
 
     @classmethod
     async def verify_user_access_permissions(cls, bu, sap_id, action_type):
@@ -320,3 +347,54 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "Created")
+
+    @classmethod
+    async def delivered_alert(cls, input_data, alert_data):
+        """
+        Function to allocate an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Delivered")
+
+    @classmethod
+    async def r1_swipe_alert(cls, input_data, alert_data):
+        """
+        Function to R1 Swipe an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "R1Swipe")
+
+    @classmethod
+    async def r2_swipe_alert(cls, input_data, alert_data):
+        """
+        Function to R2 Swipe an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "R2Swipe")
+
+    @classmethod
+    async def r3_swipe_alert(cls, input_data, alert_data):
+        """
+        Function to R3 Swipe an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "R3Swipe")
+    
+    @classmethod
+    async def tripped_alert(cls, input_data, alert_data):
+        """
+        Function to R4 Swipe an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Tripped")
+

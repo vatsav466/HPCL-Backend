@@ -18,11 +18,17 @@ async def get_location_details(bu, sap_id):
     """
     if not bu or not sap_id:
         print("Invalid parameters: 'bu' and 'sap_id' are required.")
-        return False, "Invalid parameters: 'bu' and 'sap_id' are required."
+        return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
     redis_ins = await urdhva_base.redispool.get_redis_connection()
-    if await redis_ins.hexists("location_master", f"{bu.upper()}_{sap_id}"):
-        location_data = json.loads(await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}"))
-        return True, location_data
+    try:
+        if await redis_ins.hexists("location_master", f"{bu.upper()}_{sap_id}"):
+            location_data = json.loads(await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}"))
+            return True, location_data
+    except Exception as e:
+        print("Redis Exception: ", e)
+        return False, {}
+    finally:
+        await redis_ins.close()
 
     # Verifying the same available in database or not
     query = f"bu = '{bu.upper()}' AND sap_id = '{sap_id}'"
@@ -41,7 +47,25 @@ async def get_location_details(bu, sap_id):
             location_data = location_data.__dict__
         await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}", json.dumps(location_data, default=utils.datetime_serializer))
         return True, location_data
-    return False, "Data not available"
+    elif bu == "RO":
+        query = f"bu = '{bu.upper()}' AND ro_id = '{sap_id}'"
+        params = urdhva_base.queryparams.QueryParams()
+        params.limit = 100
+        params.fields = None
+        params.q = query
+        params.sort = None
+        # Fetching data from database
+        locdata = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+        print(locdata)
+        if locdata.get('data', []):
+            location_data = locdata.get('data')[0]
+            print("location_data: ", location_data)
+            if not isinstance(location_data, dict):
+                location_data = location_data.__dict__
+            await redis_ins.hset("location_master", f"{bu.upper()}_{sap_id}",
+                                 json.dumps(location_data, default=utils.datetime_serializer))
+            return True, location_data
+    return False, {"msg": "Data not available"}
 
 
 async def set_location_details(bu, sap_id, location_data, redis_client=None):
@@ -100,7 +124,7 @@ async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
     redis_ins = await urdhva_base.redispool.get_redis_connection()
     redis_key = [f"{bu.upper()}", f"{sap_id.upper()}", f"{sop_id.upper()}"]
     if device_id:
-        redis_key.append(f"_{device_id.upper()}")
+        redis_key.append(f"_{str(device_id).upper()}")
     number = await redis_ins.incr("_".join(redis_key))
     redis_key.append(f"{pad_digits(number, 8)}")
     return "_".join(redis_key)

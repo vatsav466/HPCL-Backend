@@ -66,6 +66,15 @@
                 },
                 {
                     "name": "get_schema"
+                },
+                {
+                    "name": "generate_vis_data"
+                },
+                {
+                    "name": "enable_cross_filter"
+                },
+                {
+                    "name": "generate_embedded_url"
                 }
             ]
         },
@@ -174,6 +183,15 @@
                 },
                 {
                     "name": "get_schema"
+                },
+                {
+                    "name": "generate_vis_data"
+                },
+                {
+                    "name": "enable_cross_filter"
+                },
+                {
+                    "name": "generate_embedded_url"
                 }
             ]
         },
@@ -606,6 +624,18 @@
         {
             "name": "get_schema",
             "displayName": "get_schema"
+        },
+        {
+            "name": "generate_vis_data",
+            "displayName": "generate_vis_data"
+        },
+        {
+            "name": "enable_cross_filter",
+            "displayName": "enable_cross_filter"
+        },
+        {
+            "name": "generate_embedded_url",
+            "displayName": "generate_embedded_url"
         },
         {
             "name": "save_dashboards",

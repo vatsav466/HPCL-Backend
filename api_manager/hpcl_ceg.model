@@ -6,6 +6,14 @@ Enum BusinessUnit str {
     CP='CP'
 }
 
+Enum DeviceType str {
+    Tank='Tank'
+    DU='DU'
+    Pump='Pump'
+    Nozzle='Nozzle'
+    ATG='ATG'
+}
+
 Enum NotificationLevel str {
     InitialNotification='InitialNotification'
     InitialEscalation='InitialEscalation'
@@ -53,6 +61,16 @@ Enum AlertActionType str {
     SentToSap='SentToSap'
     OrderPlaced='OrderPlaced'
     Created='Created'
+    R1Swipe='R1Swipe'
+    R2Swipe='R2Swipe'
+    R3Swipe='R3Swipe'
+    Delivered='Delivered'
+    Tripped='Tripped'
+    InterlockCleared='InterlockCleared'
+    InterlockNotCleared='InterlockNotCleared'
+    UnderMaintenance='UnderMaintenance'
+    RevocationApproved='RevocationApproved'
+    ExceptionApproved='ExceptionApproved'
 }
 
 Enum IndentStatus str {
@@ -70,12 +88,23 @@ Enum IndentStatus str {
     SentToSAP='SentToSAP'
     SalesOrderPlaced='SalesOrderPlaced'
     Completed='Completed'
+    R1Swipe='R1Swipe'
+    R2Swipe='R2Swipe'
+    R3Swipe='R3Swipe'
+    Delivered='Delivered'
+}
+
+Model DataFilters internal {
+    key str
+    cond str
+    value str
 }
 
 Model LocationMaster {
     bu index_field BusinessUnit
     sap_id index_field str
     bu_id optional str
+    ro_id optional str
     name index_field str
     is_active optional bool
     activation_date optional datetime
@@ -96,9 +125,16 @@ Model LocationMaster {
     zone optional index_field str
     address optional str
     pincode optional str
+    dealer_name optional str
+    dealer_phone optional str
+    dealer_email optional str
     local_automation_vendor optional str
     latitude optional str
     longitude optional str
+    sales_area optional str
+    terminal_plant_id optional str
+    terminal_plant_name optional str
+    category optional str
 
     Action=> upload_location_master {
     }
@@ -240,7 +276,7 @@ Model assetData internal {
 Model assetDetails internal {
     asset_id str
     data optional assetData
-} 
+}
 
 Model Alert_History internal {
     device_data optional str
@@ -262,6 +298,11 @@ Model Alert_History internal {
     is_sent_to_sap optional bool
     is_order_placed optional bool
     is_created optional bool
+    is_r1_swipe optional bool
+    is_r2_swipe optional bool
+    is_r3_swipe optional bool
+    is_delivered optional bool
+    is_tripped optional bool
 }
 
 Model tags internal {
@@ -277,6 +318,11 @@ Model tags internal {
     isSentToSap optional bool
     isOrderPlaced optional bool
     isCreated optional bool
+    isR1Swipe optional bool
+    isR2Swipe optional bool
+    isR3Swipe optional bool
+    isDelivered optional bool
+    isTripped optional bool
 }
 
 Model Interlock {
@@ -284,7 +330,7 @@ Model Interlock {
     sap_id index_field str
     sop_id index_field str
     interlock_name optional index_field str
-    location_name optional str	
+    location_name optional str
     device_name optional str
     device_type optional str
     device_id optional str
@@ -355,6 +401,10 @@ Model Alerts {
     violation_type optional str
     clear_count optional bool
 
+    // Marking Alert
+    is_flagged_false optional bool
+    rca optional str
+    rca_type optional str
 
 
     // Notification Details
@@ -372,6 +422,7 @@ Model Alerts {
     region optional str
     state optional str
     city optional str
+    sales_area optional str
 
     // Device Raw Details
     raw_data optional dict
@@ -381,6 +432,16 @@ Model Alerts {
     r2_time optional datetime
     r3_time optional datetime
     indent_status optional IndentStatus
+    product_code optional str
+    indent_no optional str
+    dealer_id optional str
+    workflow_instance_id optional str
+    workflow_datetime optional datetime
+    terminal_plant_id optional str
+    terminal_plant_name optional str
+    progress_rate optional int
+    category optional str
+    indent_raised_date optional datetime
 
     Action=> alert_action {
         action_type AlertActionType
@@ -391,8 +452,19 @@ Model Alerts {
         event_tags optional tags
     }
 
+    Action=> get_performance_index {
+        bu str
+        skip optional int
+        limit optional int
+        filters optional list DataFilters
+    }
+
+    Action=> upload_image {
+    }
+
     Config=> {
         crud_operations='read'
+        search_fields='bu,sap_id,sop_id,location_name,alert_section,interlock_name,device_name,device_id,device_msg,violation_type,rca_type,assigned_to,region,zone,indent_status'
     }
 }
 
@@ -491,24 +563,17 @@ Model GroupsData internal {
     organization_id int
 }
 
-Model Screens{
-   screen_title str
-   groups optional list int
-   changed_by optional str
-   created_by str
-   created_user optional str
-   organization_id int
-   groups_data list GroupsData
-
-   Config=> {
-        crud_operations='read'
-    }
-}
 
 Model productsDetails internal {
     prod_code optional str
     uom optional str
     qty optional str
+}
+
+Model IndentDryOutDataFilters internal {
+    key str
+    cond str
+    value list str
 }
 
 Model IndentDryOut {
@@ -533,4 +598,94 @@ Model IndentDryOut {
     interlock_status optional AlertStatus
     interlock_created_date optional datetime
     interlock_closed_date optional datetime
+
+    Action=> sync_data_from_cris_to_ceg {
+        source_connection str
+        destination_connection str
+        source_table str
+        destination_table str
+        source_schema optional str
+        destination_schema str
+        conflict_columns optional list str
+    }
+
+    Action=> get_dried_out_plants {
+        filters list IndentDryOutDataFilters
+    }
+
+    Action=> get_alert_history {
+        alert_id str
+    }
+
+    Action=> get_dry_out_stats {
+        filters list DataFilters
+    }
+
+    Action=> get_indent_analysis {
+        filters list DataFilters
+    }
+
+    Action=> get_distinct_plant {
+        bu optional str
+        region optional str
+    }
+
+    Action=> get_distinct_location_details {
+        bu optional str
+        zone optional list str
+        region optional list str
+        sales_area optional list str
+    }
+
+    Action=> create_dry_out_alert {
+
+    }
+
+    Action=> sync_ro_daily_sales {
+        from_date datetime
+        to_date datetime
+    }
+
+    Action=> get_dry_out_count {
+
+    }
+
+    Action=> get_filtered_location_data {
+        request_parameter str
+        bu str
+        filters optional list IndentDryOutDataFilters
+    }
+}
+
+Model Screens {
+    screen_title str
+    dashboards list int
+    created_by optional str
+    updated_by optional str
+    x optional int
+    y optional int
+    w optional int
+    h optional int
+    static optional bool
+    moved optional bool
+}
+
+// Device Master
+Model DeviceMaster {
+    bu BusinessUnit
+    sap_id str
+    ro_id optional str
+    device_type DeviceType   // Type of the device pump/nozzle/tank/...
+    tank_no optional str     // Number of the tank
+    tank_name optional str   // Name of the tank
+    tank_capacity optional int // Capacity of tank in liters
+    pump_no optional int
+    du_no optional int
+    nozzle_no optional int
+    global_nozzle_no optional int
+    product_type str
+
+    Config=> {
+        crud_operations='read'
+    }
 }

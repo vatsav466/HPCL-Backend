@@ -10,11 +10,12 @@ import traceback
 import hpcl_ceg_model
 import urdhva_base.redispool
 import urdhva_base.context
-from orchestrator.dashboard.chart_factory import charts_functions
-from orchestrator.dashboard.chart_factory import charts_helpers
 from orchestrator.dashboard.chart_factory import JSONHashing
 from orchestrator.dashboard.chart_factory import date_actions
-
+from orchestrator.dashboard.chart_factory import charts_helpers
+from orchestrator.dbconnector.widget_actions import widget_actions
+from orchestrator.dashboard.chart_factory import charts_functions
+from orchestrator.dashboard.dashboard_actions.superset_embedded_dashboard import SupersetManager
 router = fastapi.APIRouter(prefix='/charts')
 
 
@@ -126,11 +127,23 @@ async def create_charts(data: ChartsCreate):
     if not isinstance(chart_data_str, dict):
         chart_data = json.loads(chart_data_str)
     chart_data = chart_data_str
+
     if not chart_data['status']:
-        return {"status": False, "message": str(chart_data['message']), "data": chart_data['data']}
+        return {
+            "status": False, "message": str(chart_data['message']), "data": chart_data['data']
+        }
+
     if viztype in ['bar', 'line', 'area', 'custom_bar', 'time_series_bar']:
-        return {"status": True, "message": "success", "query":chart_data['query'],"x_axis": chart_data['x_axis'], "data": chart_data['data']}
-    return {"status": True, "message": "success", "query":chart_data['query'], "data": chart_data['data']}
+        return {
+            "status": True, "message": "success",
+            "query": chart_data['query'],
+            "x_axis": chart_data['x_axis'],
+            "data": chart_data['data']
+        }
+
+    return {
+        "status": True, "message": "success", "query": chart_data['query'], "data": chart_data['data']
+    }
 
 
 @router.post('/get_drill_down_data', tags=['Charts'])
@@ -145,14 +158,15 @@ async def drill_down_data(data: Charts_Drill_Down_DataParams):
     Output:
         {"data":[{}]}
     """
-    table_name = data.table
-    table_schema = data.schema
-    filter_mapping = data.filter_mapping
-    limit = 1000
+    _query = await charts_functions.drill_down_query(
+        data.table_name, data.table_schema, data.filter_mapping, data.limit
+    )  # TO DO need to get query from respective database
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=_query)
     return {
-        "status": True, "message": "success", "data": await charts_functions.get_drill_down_data(
-            table_name, table_schema, filter_mapping, limit
-        )
+        "status": True, "message": "success", "data": resp
     }
 
 
@@ -423,10 +437,16 @@ async def charts_get_auto_complete_text(data: Charts_Get_Auto_Complete_TextParam
 # Action connection_vault_routing
 @router.post('/connection_vault_routing', tags=['Charts'])
 async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingParams):
-    Charts_Get_Creds_DetailsParams.connection_id = data.connection_id
-    creds_details = await charts_get_creds_details(Charts_Get_Creds_DetailsParams)
+    # if not data.connection_id:
+    #     data.connection_id = "4"
+    if not data.connection_id:
+        Charts_Get_Creds_DetailsParams.connection_id = None
+        creds_details = {"cred_model": "Databases", 'cred_type': "PostgreSQL"}
+    else:
+        Charts_Get_Creds_DetailsParams.connection_id = data.connection_id
+        creds_details = await charts_get_creds_details(Charts_Get_Creds_DetailsParams)
     module_path = f"orchestrator.connection_vault." \
-                  f"{creds_details['cred_model'].lower()}.{creds_details['cred_type'].lower()}"
+                f"{creds_details['cred_model'].lower()}.{creds_details['cred_type'].lower()}"
     name = creds_details['cred_type']
     module = importlib.import_module(module_path)
     klass = getattr(module, name.title().replace("_", ""))
@@ -439,6 +459,7 @@ async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingP
 @router.post('/get_creds_details', tags=['Charts'])
 async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
     try:
+
         creds_details = await CredsModel.get(data.connection_id)
         if not isinstance(creds_details, dict):
             creds_details = creds_details.__dict__
@@ -446,3 +467,44 @@ async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
     except Exception as e:
         raise ValueError(e)
         # return {"status": False, "message": "Failed to get credentials", "data": {}}
+
+
+# Action get_schema
+@router.post('/get_schema', tags=['Charts'])
+async def charts_get_schema(data: Charts_Get_SchemaParams):
+    '''
+
+    Args:
+        data:
+
+    Returns:
+
+    '''
+
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'get_schema'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    return await function(schema_name=data.schema)
+
+
+# Action generate_vis_data
+@router.post('/generate_vis_data', tags=['Charts'])
+async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
+    """
+    Function to generate widget data
+    :param data:
+    :return:
+    """
+    return await widget_actions.WidgetActions.execute_widget_action(data.action, data.filters, data.drill_state)
+
+
+# Action enable_cross_filter
+@router.post('/enable_cross_filter', tags=['Charts'])
+async def charts_enable_cross_filter(data: Charts_Enable_Cross_FilterParams):
+    return await widget_actions.WidgetActions.execute_cross_filters(data.filters)
+
+
+# Action generate_embedded_url
+@router.post('/generate_embedded_url', tags=['Charts'])
+async def charts_generate_embedded_url(data: Charts_Generate_Embedded_UrlParams):
+    return await SupersetManager.get_embedded_dashboard_uri(data.dash_id)

@@ -32,6 +32,8 @@ class S4Hana(BaseAction):
     async def get_connection(self):
         if 'connection_name' in self.params.keys():
             self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+        if not isinstance(self.params, dict):
+            self.params = self.params.__dict__
         if 'credentials' in self.params.keys():
             self.params = self.params['credentials']
         connection = ConnectionContext(

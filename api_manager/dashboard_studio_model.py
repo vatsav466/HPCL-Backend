@@ -113,6 +113,12 @@ class filtered_keysCreate(pydantic.BaseModel):
     component: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class WidgetFiltersCreate(pydantic.BaseModel):
+    key: str
+    cond: str
+    value: str
+
+
 class ChartsSchema(UrdhvaPostgresBase):
     __tablename__ = 'charts'
     
@@ -238,6 +244,7 @@ class Charts_Get_Dashboard_Chart_FormParams(pydantic.BaseModel):
 
 class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
     connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    schema: str
     table: str
     column: typing.List[str]
     where_cond: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
@@ -289,6 +296,20 @@ class Charts_Get_Creds_DetailsParams(pydantic.BaseModel):
 class Charts_Get_SchemaParams(pydantic.BaseModel):
     connection_id: typing.Optional[str] = pydantic.Field("", **{})
     database: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    action: str
+    drill_state: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):
+    filters: typing.List[WidgetFiltersCreate]
+
+
+class Charts_Generate_Embedded_UrlParams(pydantic.BaseModel):
+    dash_id: str
 
 
 class DashboardOrderInternalCreate(pydantic.BaseModel):

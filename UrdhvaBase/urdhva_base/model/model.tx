@@ -123,6 +123,7 @@ Config:
         ('foreign_keys='foreign_keys=STRING)?
         ('standard_query='standard_query=STRING)?
         ('engine_id_fields='engine_id_fields=STRING)?
+        ('search_fields='search_fields=STRING)?
         ('upsert_skip_keys='upsert_skip_keys=STRING)?
         (unique_on_entity?='unique_on_entity')?
         (bulkcreate?='bulkcreate')?

@@ -1,8 +1,10 @@
 import urdhva_base
 import json
+import datetime
 import traceback
 import hpcl_ceg_enum
 import hpcl_ceg_model
+import urdhva_base.redispool
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
@@ -54,24 +56,31 @@ class AlertFactory:
             status, location_data = await alert_helper.get_location_details(bu, sap_id)
             print("status --> ", status)
             print("location_data --> ", location_data)
-            if not status:
-                return False, location_data
-            base_data = {key: location_data.get(key) for key in ['state', 'city', 'zone', 'region', 'district']}
+            # if not status:
+            #     return False, location_data
+            base_data = {
+                key: location_data.get(key, '') for key in [
+                    'state', 'city', 'zone', 'region', 'district', 'terminal_plant_id',
+                    'terminal_plant_name', 'sales_area', 'category'
+                ]
+            }
             base_data.update({key: alert_data.get(key, '') for key in ['device_id', 'device_type', 'device_name']})
             base_data.update({"sop_id": sop_id, "sap_id": sap_id, "bu": bu,
                               "location_name": location_data.get('name', '')})
 
             # Create Alert
             alert_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id, alert_data.get('device_id'))
+            if not alert_data.get('alert_id'):
+                alert_data['alert_id'] = alert_id
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
             # Generate alert alert_data
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
-                                                        'severity': alert_data.get('severity', "Critical").capitalize(),
+                                                        'severity': alert_data.get('severity', "Medium").capitalize(),
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
-                                                        'unique_id': unique_id, 'alert_section': bu,
-                                                        'external_id': alert_data.get('alert_id', alert_id),
+                                                        'unique_id': unique_id, 'alert_section': alert_data.get("alert_section", bu),
+                                                        'external_id': alert_data['alert_id'],
                                                         'interlock_name': interlock_name,
                                                         'interlock_id': '',
                                                         'vehicle_number': alert_data.get('vehicle_number',''),
@@ -83,8 +92,21 @@ class AlertFactory:
                                                         'last_escalated_to': [],
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
+                                                        'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
+                                                        'dealer_id': str(alert_data.get('dealer_id', '')),
+                                                        'product_code': str(alert_data.get('product_code', '')),
+                                                        'indent_no': str(alert_data.get('indent_no', '')),
+                                                        'workflow_datetime': alert_data.get(
+                                                            'workflow_datetime',
+                                                            datetime.datetime.now(datetime.UTC)
+                                                            .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+                                                        ),
+                                                        'indent_raised_date': alert_data.get('indent_raised_date', None),
+                                                        'progress_rate': 1,
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
+            redis_ins = await urdhva_base.redispool.get_redis_connection()
+            await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
                        "variables": {"alert_id": {"value": alert_resp['id'], "type": "String"},
                                      "interlock_name": {"value": interlock_name, "type": "String"},
@@ -92,16 +114,27 @@ class AlertFactory:
                                      "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
                                      "location_type": {"value": bu, "type": "String"},
                                      "sap_id": {"value": sap_id, "type": "String"},
-                                     "sop_id": {"value": sop_id, "type": "String"}
-                                     }}
+                                     "sop_id": {"value": sop_id, "type": "String"},
+                                     "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
+                                     "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
+                                     "workflow_datetime": {"value": alert_data.get(
+                                         'workflow_datetime',
+                                         datetime.datetime.now(datetime.UTC)
+                                         .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
+                                     "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
+                                     "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
+                                     "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
+                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}}
 
             # Create Interlock
             # Start workflow after creating the interlock
             if interlock_name:
                 # Create Interlock
                 interlock = await hpcl_ceg_model.InterlockCreate(**{**base_data,
+                                                                    'interlock_name': interlock_name,
                                                                     'interlock_status': hpcl_ceg_enum.AlertStatus.Open}
                                                                  ).create()
+
                 # Fetch the updated alert data
                 alert_data = await hpcl_ceg_model.Alerts.get(alert_resp['id'])
 
@@ -113,6 +146,7 @@ class AlertFactory:
 
                 # Modify the alert with the updated data
                 alert_update = await hpcl_ceg_model.Alerts(**alert_data_dict).modify()
+
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 print("interlock_name-->", interlock_name)
@@ -120,7 +154,9 @@ class AlertFactory:
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 print("workflow_id: ", workflow_id)
                 print("workflow_id ", workflow_id)
-                await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
+                print("payload: ", payload)
+                if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
+                    await Camunda().start_workflow(payload=payload, workflowId=workflow_id)
             else:
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
 
@@ -149,7 +185,10 @@ class AlertFactory:
         try:
             # il_data = None
             # al_data = None
-            bu = alert_data['BU']
+            if 'BU' in alert_data.keys():
+                bu = alert_data['BU']
+            else:
+                bu = alert_data['bu']
             if 'interlock_id' not in alert_data.keys():
                 # Query for Interlock
                 query = f"interlock_name='{alert_data['interlock_name']}' AND bu='{bu}' AND sop_id='{alert_data['sop_id']}' AND sap_id='{alert_data['sap_id']}'"
@@ -197,7 +236,7 @@ class AlertFactory:
                     alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                     alert['interlock_name'] = alert_data.get('interlock_name', '')
                     if il_data:
-                        alert['interlock_id'] = il_data[0]['id']
+                        alert['interlock_id'] = str(il_data[0]['id'])
                     data_obj = hpcl_ceg_model.Alerts(**alert)
                     await data_obj.modify()
 

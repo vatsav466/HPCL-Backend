@@ -53,6 +53,12 @@ class IsEsdShutdown:
             percent = (resp / totalesdcount) * 100
             print('TOTAL:%s CURRENT:%s PERCENTAGE:%s' % (totalesdcount, resp, percent))
             esdshutdown = percent > 15
+
+            aldata['alert_id'] = alertid
+            aldata["action_msg"] = "ESD Shutdown"
+            aldata["action_type"] = "ESDShutdown"
+            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+
         except Exception as e:
             print(f"Exception Occurred While Sending isESDShutdown for alert {alertid}: {e}")
             print(f"Traceback: {traceback.format_exc()}")

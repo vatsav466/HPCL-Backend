@@ -2,6 +2,7 @@ import urdhva_base
 import traceback
 # import ThingsBoardApi
 import hpcl_ceg_model
+import orchestrator.alerting.alert_manager as alert_manager
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -55,6 +56,17 @@ class InterlockStatus:
                 try:
                     # tbAltStatus = await tb.getTbAlertStatus(tbAlertId)
                     tbAltStatus = False
+                    #TODO: Might change the action msg as reuired for the 
+                    if tbAltStatus:
+                        alert_data['alert_id'] = alert_id
+                        alert_data["action_msg"] = "Interlock Cleared"
+                        alert_data["action_type"] = "InterlockCleared"
+                        await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+                    else:
+                        alert_data['alert_id'] = alert_id
+                        alert_data["action_msg"] = "Interlock not Cleared"
+                        alert_data["action_type"] = "InterlockNotCleared"
+                        await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 except Exception as e:
                     print("Exception in getting current Alert status in thingsboard %s" % (e))
             return True, {"interlockcleared": tbAltStatus}

@@ -627,6 +627,12 @@
                 },
                 {
                     "name": "alert_action"
+                },
+                {
+                    "name": "get_performance_index"
+                },
+                {
+                    "name": "upload_image"
                 }
             ]
         },
@@ -642,6 +648,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_performance_index"
                 }
             ]
         },
@@ -669,6 +678,12 @@
                 },
                 {
                     "name": "alert_action"
+                },
+                {
+                    "name": "get_performance_index"
+                },
+                {
+                    "name": "upload_image"
                 }
             ]
         },
@@ -892,6 +907,159 @@
             ]
         },
         {
+            "name": "indentdryout",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "IndentDryOut",
+            "attributes": {},
+            "uris": [
+                "/api/indentdryout/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "sync_data_from_cris_to_ceg"
+                },
+                {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_alert_history"
+                },
+                {
+                    "name": "get_dry_out_stats"
+                },
+                {
+                    "name": "get_indent_analysis"
+                },
+                {
+                    "name": "get_distinct_plant"
+                },
+                {
+                    "name": "get_distinct_location_details"
+                },
+                {
+                    "name": "create_dry_out_alert"
+                },
+                {
+                    "name": "sync_ro_daily_sales"
+                },
+                {
+                    "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
+                }
+            ]
+        },
+        {
+            "name": "indentdryout_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "IndentDryOut_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/indentdryout/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_alert_history"
+                },
+                {
+                    "name": "get_dry_out_stats"
+                },
+                {
+                    "name": "get_indent_analysis"
+                },
+                {
+                    "name": "get_distinct_plant"
+                },
+                {
+                    "name": "get_distinct_location_details"
+                },
+                {
+                    "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
+                }
+            ]
+        },
+        {
+            "name": "indentdryout_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "IndentDryOut_admin",
+            "attributes": {},
+            "uris": [
+                "/api/indentdryout/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "sync_data_from_cris_to_ceg"
+                },
+                {
+                    "name": "get_dried_out_plants"
+                },
+                {
+                    "name": "get_alert_history"
+                },
+                {
+                    "name": "get_dry_out_stats"
+                },
+                {
+                    "name": "get_indent_analysis"
+                },
+                {
+                    "name": "get_distinct_plant"
+                },
+                {
+                    "name": "get_distinct_location_details"
+                },
+                {
+                    "name": "create_dry_out_alert"
+                },
+                {
+                    "name": "sync_ro_daily_sales"
+                },
+                {
+                    "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
+                }
+            ]
+        },
+        {
             "name": "screens",
             "type": "all",
             "ownerManagedAccess": false,
@@ -955,13 +1123,13 @@
             ]
         },
         {
-            "name": "indentdryout",
+            "name": "devicemaster",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "IndentDryOut",
+            "displayName": "DeviceMaster",
             "attributes": {},
             "uris": [
-                "/api/indentdryout/*"
+                "/api/devicemaster/*"
             ],
             "scopes": [
                 {
@@ -979,13 +1147,13 @@
             ]
         },
         {
-            "name": "indentdryout_readOnly",
+            "name": "devicemaster_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "IndentDryOut_readOnly",
+            "displayName": "DeviceMaster_readOnly",
             "attributes": {},
             "uris": [
-                "/api/indentdryout/*"
+                "/api/devicemaster/*"
             ],
             "scopes": [
                 {
@@ -994,13 +1162,13 @@
             ]
         },
         {
-            "name": "indentdryout_admin",
+            "name": "devicemaster_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "IndentDryOut_admin",
+            "displayName": "DeviceMaster_admin",
             "attributes": {},
             "uris": [
-                "/api/indentdryout/*"
+                "/api/devicemaster/*"
             ],
             "scopes": [
                 {
@@ -1163,6 +1331,14 @@
             "displayName": "alert_action"
         },
         {
+            "name": "get_performance_index",
+            "displayName": "get_performance_index"
+        },
+        {
+            "name": "upload_image",
+            "displayName": "upload_image"
+        },
+        {
             "name": "upload_cems_location_master",
             "displayName": "upload_cems_location_master"
         },
@@ -1181,6 +1357,50 @@
         {
             "name": "load_creds",
             "displayName": "load_creds"
+        },
+        {
+            "name": "sync_data_from_cris_to_ceg",
+            "displayName": "sync_data_from_cris_to_ceg"
+        },
+        {
+            "name": "get_dried_out_plants",
+            "displayName": "get_dried_out_plants"
+        },
+        {
+            "name": "get_alert_history",
+            "displayName": "get_alert_history"
+        },
+        {
+            "name": "get_dry_out_stats",
+            "displayName": "get_dry_out_stats"
+        },
+        {
+            "name": "get_indent_analysis",
+            "displayName": "get_indent_analysis"
+        },
+        {
+            "name": "get_distinct_plant",
+            "displayName": "get_distinct_plant"
+        },
+        {
+            "name": "get_distinct_location_details",
+            "displayName": "get_distinct_location_details"
+        },
+        {
+            "name": "create_dry_out_alert",
+            "displayName": "create_dry_out_alert"
+        },
+        {
+            "name": "sync_ro_daily_sales",
+            "displayName": "sync_ro_daily_sales"
+        },
+        {
+            "name": "get_dry_out_count",
+            "displayName": "get_dry_out_count"
+        },
+        {
+            "name": "get_filtered_location_data",
+            "displayName": "get_filtered_location_data"
         }
     ]
 }

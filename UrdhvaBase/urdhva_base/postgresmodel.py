@@ -280,6 +280,16 @@ class BasePostgresModel(pydantic.BaseModel):
             query_params.append(cls.Config.standard_query)
         if params and params.q and len(params.q) > 0:
             query_params.append(params.q)
+        if params and params.q:
+            search_conditions = []
+            if hasattr(cls.Config, 'search_fields') and cls.Config.search_fields:
+                for field in cls.Config.search_fields:
+                    if params.search_text:
+                        search_conditions.append(f"{cls.__tablename__}.{field} ILIKE '%{params.search_text}%'")
+                
+                if search_conditions:
+                    print("search_conditions --> ", search_conditions)
+                    query_params.append(f"({' OR '.join(search_conditions)})")
         if len(query_params):
             query.append("where " + " AND ".join(query_params))
 
@@ -288,7 +298,7 @@ class BasePostgresModel(pydantic.BaseModel):
             try:
                 order_by = json.loads(params.sort) if isinstance(params.sort, str) else params.sort
                 for key, value in order_by.items():
-                    order = 'ASC' if 'asc' in value.lower() else 'DESC'
+                    order = 'ASC' if 'asc' in value.lower() else 'DESC'  
                     query.append(f"ORDER BY {key} {order}")
                     break
             except Exception as e:
@@ -334,12 +344,19 @@ class BasePostgresModel(pydantic.BaseModel):
         # if not entity_id:
         #     raise "missing context information"
         session = await manager.get_session()
-        await session.execute(
-            cls.Config.schema_class.__table__.delete().where(cls.Config.schema_class.id == int(row_id))
+        result = await session.execute(
+            select(cls.Config.schema_class).where(cls.Config.schema_class.id == int(row_id))
         )
-        await session.commit()
-        await asyncio.shield(session.close())
-        return True, "Success"
+
+        if result.scalars().first() is not None:
+            status = await session.execute(
+                cls.Config.schema_class.__table__.delete().where(cls.Config.schema_class.id == int(row_id))
+            )
+            
+            await session.commit()
+            await asyncio.shield(session.close())
+            return True, "Success"
+        return False, "Fail"
 
     async def create(self, entity_id=None, upsert=False, upsert_skip_keys = []):
         """
@@ -478,6 +495,7 @@ class BasePostgresModel(pydantic.BaseModel):
         from_attributes = True
         collection_name: urdhva_base.settings.default_index
         schema_class: Base
+        search_fields: []
         upsert_keys: []
 
 

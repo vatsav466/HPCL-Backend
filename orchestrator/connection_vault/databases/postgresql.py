@@ -2,12 +2,14 @@ import urdhva_base
 import re
 import os
 import sys
+import json
 import typing
 import asyncpg
 import traceback
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
+from itertools import islice
 from sshtunnel import SSHTunnelForwarder
 from orchestrator.dashboard.chart_factory.query_operator import (
     FilterStringOperator,
@@ -26,12 +28,18 @@ class Postgresql(BaseAction):
         super().__init__(params)
 
     async def get_connection(self):
-        if 'connection_name' in self.params.keys():
+        if 'connection_name' in self.params.keys() and self.params['connection_name']:
+            print("connection_name_: ",self.params['connection_name'])
             self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
-        if not isinstance(self.params, dict):
-            self.params = self.params.__dict__
-        if 'credentials' in self.params.keys():
-            self.params = self.params['credentials']
+            if not isinstance(self.params, dict):
+                self.params = self.params.__dict__
+            if 'credentials' in self.params.keys():
+                self.params = self.params['credentials']
+        else:
+            db = urdhva_base.settings.db_urls['postgres_async'][0]
+            self.params = {'host': db.host, 'port': db.port, 'user_name': db.query.split("&")[0].split("=")[-1],
+                           'password': db.query.split("&")[1].split("=")[-1], 'database_name': db.path.split("/")[-1]}
+            
         if self.params.get('is_ssh_tunnel', False):
             tunnel = SSHTunnelForwarder(
                 (self.params['ssh_tunnel']['host'], self.params['ssh_tunnel']['port']),
@@ -77,8 +85,8 @@ class Postgresql(BaseAction):
                 "data": []
             }
         except asyncpg.PostgresConnectionError as err:
-            # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -104,7 +112,8 @@ class Postgresql(BaseAction):
             }
         except asyncpg.PostgresConnectionError as err:
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -129,8 +138,9 @@ class Postgresql(BaseAction):
                 "data": data['schema_name'].unique().tolist()
             }
         except asyncpg.PostgresConnectionError as err:
+            print(err, traceback.format_exc())
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -158,7 +168,8 @@ class Postgresql(BaseAction):
             }
         except asyncpg.PostgresConnectionError as err:
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -180,7 +191,7 @@ class Postgresql(BaseAction):
         else:
             query += '*'
         if schema_name:
-            query += f' FROM {schema_name}."{table_name}"'
+            query += f' FROM "{schema_name}"."{table_name}"'
         else:
             query += f' FROM "{table_name}"'
         if condition:
@@ -256,8 +267,9 @@ class Postgresql(BaseAction):
                 "data": data['column_name'].unique().tolist()
             }
         except asyncpg.PostgresConnectionError as err:
+            print(err, traceback.format_exc())
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -284,22 +296,36 @@ class Postgresql(BaseAction):
                 "data": data['column_name'].unique().tolist()
             }
         except asyncpg.PostgresConnectionError as err:
+            print(err, traceback.format_exc())
             # logger.error(err)
-            traceback.print_exc(file=sys.stdout)
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
             }
 
-    async def create_table(self, schema_name, table_name, sample_records, debug=False, **kwargs):
+    async def create_table(
+            self, schema_name, table_name,
+            sample_records, primary_key=[],
+            unique_key=[], debug=False, **kwargs
+    ):
         if not isinstance(sample_records, pl.DataFrame):
             sample_records = pl.DataFrame(sample_records)
         connection = await self.get_connection()
         table_create_sql = ''
-        dtype_dict = {'String': str('text'), 'Int64': str('text'), 'Int32': str('text'), 'Boolean': str('text'),
+        dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('text'), 'Boolean': str('text'),
                       'Float64': str('double precision'), 'Float32': str('double precision'),
+                      'Decimal(precision=5, scale=0)': "numeric(10,0)",
+                      'Decimal(precision=None, scale=0)': "numeric(10,0)",
                       'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'),
-                      "Datetime(time_unit='us', time_zone=None)": str('timestamp')}
+                      "Datetime(time_unit='us', time_zone=None)": str('timestamp'),
+                      "Date": str('timestamp'),
+                      "Decimal(precision=9, scale=3)": "numeric(10,3)",
+                      "Decimal(precision=10, scale=3)": "numeric(10,3)",
+                      "Decimal(precision=None, scale=3)": "numeric(10,3)",
+                      "Decimal(precision=None, scale=4)": "numeric(10,3)",
+                      "Decimal(precision=8, scale=3)": "numeric(10,3)", "Decimal(precision=5, scale=2)": "numeric(10,2)",
+                      "Decimal(precision=10, scale=4)": "numeric(10,4)", "Datetime(time_unit='ns', time_zone=None)": str('timestamp')}
         col_dtype = {col: sample_records[col].dtype for col in sample_records.columns}
         print("col_dtype: ", col_dtype)
         for col, dty in col_dtype.items():
@@ -309,10 +335,24 @@ class Postgresql(BaseAction):
             if col == 'DC_AMOUNT':
                 dty = str('double precision')
             table_create_sql += f'"{col}" {dty},'
-        table_create_sql = table_create_sql[:-1]
 
+
+        constraint_query = ""
+        if primary_key:
+            result_string = ', '.join(f'"{s}"' for s in primary_key)
+            constraint_query = f'CONSTRAINT pk_{schema_name}_{table_name} PRIMARY KEY ({result_string}),'
+        if unique_key:
+            result_string = ', '.join(f'"{s}"' for s in unique_key)
+            constraint_query = f'CONSTRAINT uk_{schema_name}_{table_name} UNIQUE ({result_string}),'
+        if constraint_query:
+            table_create_sql = f''' {table_create_sql} {constraint_query}'''
+        table_create_sql = table_create_sql[:-1]
+        if schema_name:
+            table_name = f'''{schema_name}"."{table_name}'''
         table_create_sql = '''CREATE TABLE IF NOT EXISTS "''' + table_name + '''" (''' + table_create_sql + ''')'''
+        print("table_create_sql: ", table_create_sql)
         await connection.execute(table_create_sql)
+        await self.close_connection(connection)
         # await connection.commit()
         return True
 
@@ -394,12 +434,14 @@ class Postgresql(BaseAction):
                     where_query = where_query[:-5]
                     if where_query:
                         query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
+                print("query_: ", query)
                 stmt = await connection.prepare(
                     query
                 )
                 data = await stmt.fetch()
-                data = pd.DataFrame(data)
-                columns_mapping[column] = data[column].unique().tolist()
+                # data = pd.DataFrame(data)
+                # columns_mapping[column] = data[column].unique().tolist()
+                columns_mapping[column] = [record[column] for record in data]
             # await connection.close()
             await self.close_connection(connection)
             return {
@@ -407,8 +449,8 @@ class Postgresql(BaseAction):
                 "data": columns_mapping
             }
         except Exception as err:
-            print(err)
-            traceback.print_exc(file=sys.stdout)
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
@@ -423,18 +465,65 @@ class Postgresql(BaseAction):
         """
         try:
             connection = await self.get_connection()
-            cursor = connection.cursor()
-            cursor.execute(query)
-            records = cursor.fetchall()
-            column_names = [desc[0] for desc in cursor.description]
-            records = {col: [row[i] for row in records] for i, col in enumerate(column_names)}
+            print("query: ", query)
+            stmt = await connection.prepare(query)
+            columns = [a.name for a in stmt.get_attributes()]
+            data = await stmt.fetch()
+            data = pd.DataFrame(data, columns=columns)
             # await connection.close()
             await self.close_connection(connection)
-            return records
+            return data.to_dict(orient='records')
         except Exception as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
             raise asyncpg.RaiseError(err)
+
+    async def upsert_data(self, records, schema_name, table_name, conflict_columns=[], update_columns=[], **kwargs):
+        """
+        @description:
+        :param records:
+        :param schema_name:
+        :param table_name:
+        :param conflict_columns:
+        :param update_columns:
+        :return:
+        """
+        connection = await self.get_connection()
+        if not isinstance(records, pl.DataFrame):
+            records = pl.DataFrame(records)
+
+        BATCH_SIZE = 1000  # Adjust this based on your system's capacity
+        if not update_columns:
+            update_columns = [col for col in records.columns if col not in conflict_columns]
+        all_columns = conflict_columns + update_columns
+        columns = ', '.join(f'"{key}"' for key in all_columns)
+        conflict_clause = ', '.join(f'"{key}"' for key in conflict_columns)
+        placeholders = ', '.join([f'${i + 1}' for i in range(len(all_columns))])
+        updates = ', '.join([f"{column} = EXCLUDED.{column}" for column in all_columns if column not in conflict_columns])
+
+        result = await self.create_table(schema_name, table_name, records.head(10), unique_key=conflict_columns)
+        if schema_name:
+            table_name = f'{schema_name}"."{table_name}'
+        sql_query = f"""
+            INSERT INTO "{table_name}" ({columns})
+            VALUES ({placeholders})
+            ON CONFLICT ({conflict_clause}) DO UPDATE
+            SET {updates};
+        """
+
+        print(sql_query)
+        for batch in self.chunked_iterable(records.to_dicts(), BATCH_SIZE):
+            # values = [[value for value in project.values()] for project in batch]
+            rows = [tuple(row[col] for col in all_columns) for row in batch]
+            await connection.executemany(sql_query, rows)
+        await self.close_connection(connection)
+
+        return {"status": True, "message": "Data Upsert Successfully", "data": []}
+
+    def chunked_iterable(self, iterable, size):
+        """Helper function to split iterable into chunks."""
+        it = iter(iterable)
+        return iter(lambda: list(islice(it, size)), [])
 
 
 class QueryBuilder:
@@ -457,7 +546,22 @@ class QueryBuilder:
             query_val = f"'{val}'"
         return query_val
 
-    async def is_num_val(self, dtype, val) -> str:
+    def isfloat(self, val) -> bool:
+        """
+
+        Args:
+            val:
+
+        Returns:
+
+        """
+        try:
+            float(val)
+            return True
+        except ValueError:
+            return False
+
+    async def is_num_val(self, val) -> str:
         """
 
         Args:
@@ -468,16 +572,11 @@ class QueryBuilder:
 
         """
         query_val = ''
-        if dtype in ["bigint", "integer"]:
-            if isinstance(val, list):
-                query_val = ', '.join(f"{v}" for v in val)
-            else:
-                query_val = val
+        if isinstance(val, list):
+            query_val = ', '.join(f"'{val}'" if self.isfloat(val) else f"'{v}'" for v in val)
         else:
-            if isinstance(val, list):
-                query_val = ', '.join(f"'{v}'" for v in val)
-            else:
-                query_val = f"'{val}'"
+            query_val = f"'{val}'" if self.isfloat(val) else f"'{val}'"
+
         return query_val
 
     async def select_col(self, agg: str, col: str, table_alias: str) -> str:
@@ -512,6 +611,7 @@ class QueryBuilder:
         """
         map_tables = dict()
         ascii_num = 97
+        print("tables_list: ", tables_list)
         for table_name in tables_list:
             if table_name:
                 map_tables[table_name] = chr(ascii_num)
@@ -547,17 +647,34 @@ class QueryBuilder:
                 map_columns[table].update({f'"{col}"': f'"{alias_col}"'})
                 group_by_map[table].append(f'"{col}"')
             for metric in metrics:
-                alias_col = f'''"{metric['aggregate']}({metric['column']})"'''
-                agg_op = eval(f"AggregationOperator.{metric['aggregate']}.value")
-                agg_col = f'''{agg_op}("{table_mappings.get(table, "a")}"."{metric["column"]}")'''
-                map_columns[table].update({agg_col: alias_col})
+                if metric:
+                    alias_col = f'''"{metric['agg']}({metric['column']})"'''
+                    agg_op = eval(f"AggregationOperator.{metric['agg'].upper()}.value")
+                    agg_col = f'''{agg_op}("{table_mappings.get(table, "a")}"."{metric["column"]}")'''
+                    map_columns[table].update({agg_col: alias_col})
 
-        for table, columns in join_conditions.items():
-            map_columns[table] = dict()
-            group_by_map[table] = []
-            for col, alias_col in columns['columns'].items():
-                map_columns[table].update({f'"{col}"': f'"{alias_col}"'})
-                group_by_map[table].append(f'"{col}"')
+        for json_condition in join_conditions:
+            if json_condition.get("source_table", "") and json_condition.get("target_table", ""):
+                if json_condition.get("source_table", "") not in map_columns.keys():
+                    map_columns[json_condition.get("source_table", "")] = dict()
+                if json_condition.get("target_table", "") not in map_columns.keys():
+                    map_columns[json_condition.get("target_table", "")] = dict()
+
+                if json_condition.get("source_table", "") not in group_by_map.keys():
+                    group_by_map[json_condition.get("source_table", "")] = []
+                if json_condition.get("target_table", "") not in group_by_map.keys():
+                    group_by_map[json_condition.get("target_table", "")] = []
+
+                for json_col in json_condition.get("join_where_clause", []):
+                    map_columns[json_condition.get("source_table", "")].update({f'"{json_col["source_column"]}"': f'"{json_col["source_label"]}"'})
+                    map_columns[json_condition.get("target_table", "")].update({f'"{json_col["target_column"]}"': f'"{json_col["target_label"]}"'})
+                    group_by_map[json_condition.get("source_table", "")].append(f'"{json_col["source_column"]}"')
+                    group_by_map[json_condition.get("target_table", "")].append(f'"{json_col["target_column"]}"')
+
+                for column, alias_col in json_condition.get("select_columns", {}).items():
+                    map_columns[json_condition.get("target_table", "")].update({f'"{column}"': f'"{alias_col}"'})
+                    group_by_map[json_condition.get("target_table", "")].append(f'"{column}"')
+
         return map_columns, group_by_map
 
     async def get_select_columns(
@@ -640,7 +757,7 @@ class QueryBuilder:
     async def join_query_builder(
             self,
             join_query_json: typing.Dict[str, typing.Any],
-            table_mapping: typing.Dict[str, str]
+            table_mappings: typing.Dict[str, str]
     ) -> str:
         """
 
@@ -679,16 +796,16 @@ class QueryBuilder:
 
         """
         final_json_query = ""
-        for table, join_dict in join_query_json.items():
+        for each_join_query in join_query_json:
+            target_table = each_join_query['target_table']
             join_query = ""
-            join_cond = eval(f"JoinOperator.{join_dict['join']}.value")
+            join_type = eval(f"JoinOperator.{each_join_query['join']}.value")
 
             join_where_clause = ""
             count = 1
-            for filters in join_dict["filters"]:
-                filters = filters.copy()
-                filters['dtype'] = filters.get('dtype', 'character varying')
-                where_cond = await self.where_clause(filters, table, table_mapping)
+            for filters in each_join_query["filters"]:
+                filters['dtype'] = filters.get('dtype', 'character varying') # To Do need to get datatype from table
+                where_cond = await self.where_clause(filters, target_table, table_mappings)
                 operator = filters.get("cond", "AND")
                 if count == 1:
                     join_where_clause += f' {where_cond} '
@@ -696,19 +813,43 @@ class QueryBuilder:
                     join_where_clause += f'{operator} {where_cond} '
                 count += 1
 
-            if join_where_clause:
-                join_cond += f' (SELECT * FROM "{table}" AS {table_mapping.get(table, "a")} WHERE {join_where_clause})'
+            join_cond = " (SELECT "
+            if each_join_query.get("select_columns", {}):
+                for column, alias_column in each_join_query.get("select_columns", {}).items():
+                    join_cond += f'{table_mappings.get(target_table, "a")}."{column}"'
+                    join_cond += ", "
+                join_cond = join_cond[:-2]
+                join_cond += " "
+            else:
+                join_cond += "* "
 
-            for each_cond in join_dict["cond"]:
-                on_cond = f'{table_mapping.get(each_cond["from"]["table"], "a")}.{each_cond["from"]["column"]} = ' \
-                          f'{table_mapping.get(each_cond["to"]["table"], "a")}.{each_cond["to"]["column"]}'
-                # join_query += f'{join_cond} "{table}" AS {table_mapping.get(table, "a")} ON {on_cond} '
-                join_query += f'ON {on_cond} AND '
+            join_cond += f' FROM "{target_table}" AS {table_mappings.get(target_table, "a")}'
+            if join_where_clause:
+                join_cond += f' WHERE {join_where_clause})'
+            else:
+                join_cond += f')'
+            count = 1
+            for each_cond in each_join_query["join_where_clause"]:
+                source_cond = f"""'{each_cond["source_column"]}'""" \
+                    if each_cond['textSSBox'] \
+                    else \
+                    f'''{table_mappings.get(each_join_query["source_table"], "a")}."{each_cond['source_column']}"'''
+                target_cond = f"""'{each_cond["target_column"]}'""" \
+                    if each_cond['textSTBox'] \
+                    else \
+                    f'''{table_mappings.get(each_join_query["target_table"], "a")}."{each_cond['target_column']}"'''
+                on_cond = f'{source_cond}::text = {target_cond}::text'
+                if count == 1:
+                    join_query += f'ON {on_cond} AND '
+                else:
+                    join_query += f' {on_cond} AND '
+                count += 1
+
             if join_query.endswith(" AND "):
                 join_query = join_query[:-4]
 
-            join_query = f'{join_cond} AS {table_mapping.get(table, "a")} {join_query}'
-            final_json_query += f'{join_query}\n'
+            join_query = f'{join_cond} AS {table_mappings.get(target_table, "a")} {join_query}'
+            final_json_query += f' {join_type} {join_query}\n'
 
         return final_json_query
 
@@ -738,7 +879,7 @@ class QueryBuilder:
         op = filter_cond["op"]
         val = filter_cond["val"]
         col = filter_cond["column"]
-        dtype = filter_cond["dtype"]
+        # dtype = filter_cond["dtype"]
         table_alias = table_mapping.get(table, "a")
         where_clause_cond: str = ""
         select_column = await self.select_col(agg, col, table_alias)
@@ -748,29 +889,29 @@ class QueryBuilder:
                 start_date, end_date = match.groups()
                 where_clause_cond += f'''{select_column} BETWEEN '{start_date}' AND '{end_date}' '''
         elif op == FilterStringOperator.IN or op == FilterStringOperator.NOT_IN:
-            val_list = await self.is_num_val(dtype, val)
+            val_list = await self.is_num_val(val)
             where_clause_cond += f'''{select_column} IN ({val_list}) '''
         elif op == FilterStringOperator.IS_TRUE:
             where_clause_cond += f'''{select_column} IS TRUE '''
         elif op == FilterStringOperator.IS_FALSE:
             where_clause_cond += f'''{select_column} IS FALSE '''
         elif op == FilterStringOperator.NOT_EQUALS:
-            val = await self.is_num_val(dtype, val)
+            val = await self.is_num_val(val)
             where_clause_cond += f'''{select_column} != {val} '''
         elif op == FilterStringOperator.EQUALS:
-            val = await self.is_num_val(dtype, val)
+            val = await self.is_num_val(val)
             where_clause_cond += f'''{select_column} = {val} '''
         elif op == FilterStringOperator.GREATER_THAN:
-            val = await self.is_num_val(dtype, val)
+            val = await self.is_num_val(val)
             where_clause_cond += f'''{select_column} > {val} '''
         elif op == FilterStringOperator.LESS_THAN:
-            val = await self.is_num_val(dtype, val)
+            val = await self.is_num_val(val)
             where_clause_cond += f'''{select_column} < {val} '''
         elif op == FilterStringOperator.GREATER_THAN_OR_EQUALS:
-            val = await self.is_num_val(dtype, val)
+            val = await self.is_num_val(val)
             where_clause_cond += f'''{select_column} >= {val} '''
         elif op == FilterStringOperator.LESS_THAN_OR_EQUALS:
-            val = await self.is_num_val(dtype, val)
+            val = await self.is_num_val(val)
             where_clause_cond += f'''{select_column} <= {val} '''
         elif op == FilterStringOperator.LIKE:
             where_clause_cond += f'''{select_column} LIKE '%{val}%' '''
@@ -930,7 +1071,7 @@ class QueryBuilder:
         query = ""
 
         # getting mapping tables
-        table_mappings = await self.map_alias_name_to_table([query_context["table_name"]] + [query_context["join_table"]])
+        table_mappings = await self.map_alias_name_to_table([query_context["table_name"]] + query_context["join_tables"])
 
         # including groupby columns to select columns
         query_context["map_column"], group_by_map = await self.add_metric_to_col(
@@ -970,10 +1111,10 @@ class QueryBuilder:
                 filters = filters.copy()
                 filters['dtype'] = filters.get('dtype', 'character varying')
                 where_clause = await self.where_clause(
-                    filters, query_context['table'], table_mappings
+                    filters, query_context['table_name'], table_mappings
                 )
                 if count == 1:
-                    query += "WHERE {}".format(where_clause)
+                    query += " WHERE {}".format(where_clause)
                 else:
                     query += "{} {}".format(operator, where_clause)
                 count += 1
@@ -995,14 +1136,14 @@ class QueryBuilder:
 
         # Order By Query
         if query_context.get("order_by", {}):
-            query += "ORDER BY "
-            count = 1
-            for column, condition in query_context["order_by"].items():
-                if count == 1:
-                    query += f'"{column}" {condition} '
-                else:
-                    break
-                count += 1
+            if query_context['order_by'].get("column", ""):
+                column = await self.select_col(
+                    "",
+                    query_context['order_by'].get("column", ""),
+                    table_mappings.get(query_context['table_name'], "a")
+                )
+                cond = query_context['order_by'].get("cond", "ASC")
+                query += f'ORDER BY {column} {cond} '
 
         # Limit Query
         if query_context.get("limit", 0):
