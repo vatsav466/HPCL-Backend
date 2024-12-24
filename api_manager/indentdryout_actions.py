@@ -378,6 +378,7 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
     }
     # Prepare a dictionary to store results
     result = {}
+    total_count = 0
     # Loop through each indent group to calculate the count
     for indent_key, indent_values in indent_mapping.items():
     # Construct conditions
