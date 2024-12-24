@@ -662,6 +662,10 @@ Model IndentDryOut {
     Action=> get_indent_data {
         filters list DataFilters
     }
+
+    Action=> get_dried_out_ro {
+        filters list IndentDryOutDataFilters
+    }
 }
 
 Model Screens {
