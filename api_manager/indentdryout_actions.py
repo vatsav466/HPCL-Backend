@@ -361,3 +361,59 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
 @router.post('/get_filtered_location_data', tags=['IndentDryOut'])
 async def indentdryout_get_filtered_location_data(data: Indentdryout_Get_Filtered_Location_DataParams):
     return await dry_out_analysis.get_filtered_location_data(data.bu, data.request_parameter, data.filters)
+
+
+# Action get_indent_data
+@router.post('/get_indent_data', tags=['IndentDryOut'])
+async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams):
+    # record = data.filters
+    # indent_mapping = {
+    #     "indent_not_placed": ["Pending"], 
+    #     "indent_on_hold": ["IndentOnHold"], 
+    #     "work_in_progress": ["IndentRaised", "TruckAllocated", "InvoiceCreated", "ValidIndent", "SentToSAP", "SalesOrderPlaced", "R2Swipe", "R3Swipe"]
+    # }
+    # if record.key == "indent_status":
+    #     record.value = indent_mapping.get(record.key, record.value)
+    # conditions = ' '.join(where_clause)
+    # query = f'''select count(indent_status) from alerts where {conditions}'''
+
+    record = data.filters
+    indent_mapping = {
+        "indent_not_placed": ["Pending"], 
+        "indent_on_hold": ["IndentOnHold"], 
+        "work_in_progress": [
+            "IndentRaised", "TruckAllocated", "InvoiceCreated", 
+            "ValidIndent", "SentToSAP", "SalesOrderPlaced", 
+            "R2Swipe", "R3Swipe"
+        ]
+    }
+
+    # Construct conditions
+    conditions = []
+    for rec in record:
+        if rec["key"] == "indent_status":
+            # Map the input value to the corresponding list in indent_mapping
+            mapped_values = indent_mapping.get(rec["value"], [rec["value"]])
+            # Create the condition for indent_status
+            condition = f"indent_status IN ({', '.join([f"'{val}'" for val in mapped_values])})"
+        else:
+            # Default condition for other keys
+            condition = f"{rec['key']} = '{rec['value']}'"
+        conditions.append(condition)
+
+    # Combine all conditions using AND
+    where_clause = ' AND '.join(conditions)
+
+    # Build the SQL query
+    query = f'''SELECT COUNT(indent_status) FROM alerts WHERE {where_clause}'''
+
+    print("Generated Query:", query)
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    print("resp --> ", resp)
+    
+    
+
+

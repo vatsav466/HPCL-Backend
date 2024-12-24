@@ -966,6 +966,9 @@
                 },
                 {
                     "name": "get_filtered_location_data"
+                },
+                {
+                    "name": "get_indent_data"
                 }
             ]
         },
@@ -1005,6 +1008,9 @@
                 },
                 {
                     "name": "get_filtered_location_data"
+                },
+                {
+                    "name": "get_indent_data"
                 }
             ]
         },
@@ -1062,6 +1068,9 @@
                 },
                 {
                     "name": "get_filtered_location_data"
+                },
+                {
+                    "name": "get_indent_data"
                 }
             ]
         },
@@ -1411,6 +1420,10 @@
         {
             "name": "get_filtered_location_data",
             "displayName": "get_filtered_location_data"
+        },
+        {
+            "name": "get_indent_data",
+            "displayName": "get_indent_data"
         }
     ]
 }

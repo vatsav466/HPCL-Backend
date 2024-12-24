@@ -658,6 +658,10 @@ Model IndentDryOut {
         bu str
         filters optional list IndentDryOutDataFilters
     }
+
+    Action=> get_indent_data {
+        filters list DataFilters
+    }
 }
 
 Model Screens {

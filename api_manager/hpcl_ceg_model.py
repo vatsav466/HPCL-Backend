@@ -1328,6 +1328,10 @@ class Indentdryout_Get_Filtered_Location_DataParams(pydantic.BaseModel):
     filters: typing.Optional[typing.List[IndentDryOutDataFiltersCreate]] | None = None
 
 
+class Indentdryout_Get_Indent_DataParams(pydantic.BaseModel):
+    filters: typing.List[DataFiltersCreate]
+
+
 class ScreensSchema(UrdhvaPostgresBase):
     __tablename__ = 'screens'
     
