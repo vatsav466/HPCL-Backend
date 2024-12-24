@@ -63,7 +63,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "Route Deviation",
-        "alert_threshold": 1
+        "alert_threshold": 5
     },
     "stoppage_violations_count": {
         "alerting_rules": {
@@ -99,7 +99,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "NoHalt Zone",
-        "alert_threshold": 1
+        "alert_threshold": 0
     },
     "device_offline_count": {
         "alerting_rules": {
@@ -117,7 +117,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "Device Offline",
-        "alert_threshold": 1
+        "alert_threshold": 0
     },
     "device_tamper_count": {
         "alerting_rules": {
@@ -129,7 +129,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "Device Tampered",
-        "alert_threshold": 5
+        "alert_threshold": 0
     },
     "main_supply_removal_count": {
         "alerting_rules": {
@@ -141,7 +141,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "Main Supply Removal",
-        "alert_threshold": 5
+        "alert_threshold": 0
     }
 }
 
@@ -210,7 +210,7 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "Route Deviation",
-        "alert_threshold": 1
+        "alert_threshold": 5
     },
     "stoppage_violations_count": {
         "alerting_rules": {
@@ -246,7 +246,7 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "NoHalt Zone",
-        "alert_threshold": 1
+        "alert_threshold": 0
     },
     "device_offline_count": {
         "alerting_rules": {
@@ -264,7 +264,7 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "Device Offline",
-        "alert_threshold": 1
+        "alert_threshold": 0
     },
     "device_tamper_count": {
         "alerting_rules": {
@@ -276,7 +276,7 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "Device Tampered",
-        "alert_threshold": 5
+        "alert_threshold": 0
     },
     "main_supply_removal_count": {
         "alerting_rules": {
@@ -288,6 +288,6 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "Main Supply Removal",
-        "alert_threshold": 5
+        "alert_threshold": 0
     }
 }
