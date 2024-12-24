@@ -370,7 +370,7 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
     indent_mapping = {
         "indent_not_placed": ["Pending"],
         "indent_on_hold": ["IndentOnHold"],
-        "work_in_progress": [
+        "indent_in_progress": [
             "IndentRaised", "TruckAllocated", "InvoiceCreated",
             "ValidIndent", "SentToSAP", "SalesOrderPlaced",
             "R2Swipe", "R3Swipe"
@@ -392,15 +392,11 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
             # Default condition for other keys
                 condition = f"{rec.key} = '{rec.value}'"
             conditions.append(condition)
-
         # Combine all conditions using AND
         where_clause = ' AND '.join(conditions)
-
         # Build the SQL query
         query = f'''SELECT COUNT(indent_status) as count FROM alerts WHERE {where_clause}'''
-
         print(f"Generated Query for {indent_key}:", query)
-
         # Execute the query
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -411,16 +407,17 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
 
         # Extract the count from the response and store it in the result dictionary
         if resp and isinstance(resp, list) and "count" in resp[0]:
-            result[indent_key] = resp[0]["count"]
+            count = resp[0]["count"]
+            result[indent_key] = count
+            total_count += count 
         else:
             result[indent_key] = 0  # Default to 0 if no result is found
-
     dry_out_counts = await indentdryout_get_dry_out_count(data)
     dry_out_count = dry_out_counts.get("dry_out", 0)
-
     # Add the dry_out count to the result dictionary
     result["dry_out"] = dry_out_count
-    
+    total_count += dry_out_count
+    result["total_count"] = total_count
     # Return the final result
     return result
   
