@@ -228,14 +228,21 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
 
     if resp:
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
-                                    "state": resp["state"], "indent_status": resp["indent_status"]}
-        alert_history["data"].append(f"Dry-out Location Identified at "
-                                     f"{convert_time_read_format(str(resp['created_at']))}")
-
+                                    "state": resp["state"], "indent_status": resp["indent_status"],
+                                    "indent_raised_date": convert_time_read_format(str(resp['indent_raised_date']))}
+        alert_history["data"].append({"action_msg": "Dry-out Location Identified",
+                                      "allocated_time": convert_time_read_format(str(resp['created_at'])),
+                                      "processed_time": convert_time_read_format(str(resp['created_at']))})
         for history in resp.get("alert_history", []):
-            alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
-                                         f" {convert_time_read_format(str(history['allocated_time']))}, "
-                                         f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+            alert_history["data"].append({"action_msg": history['action_msg'],
+                                          "allocated_time": convert_time_read_format(str(history['allocated_time'])),
+                                          "processed_time": convert_time_read_format(str(history['processed_time']))})
+        # alert_history["data"].append(f"Dry-out Location Identified at "
+        #                              f"{convert_time_read_format(str(resp['created_at']))}")
+        # for history in resp.get("alert_history", []):
+        #     alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
+        #                                  f" {convert_time_read_format(str(history['allocated_time']))}, "
+        #                                  f"Processed at {convert_time_read_format(str(history['processed_time']))}")
     return alert_history
 
 
@@ -315,10 +322,10 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     table = connection_mapping.table_mapping.get("dry_out")
     query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
                 rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, indent_status, 
-                case when sum(pumpable_Stock) <=0 then 0
-                when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 1
-                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 2
-                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 3
+                case when sum(pumpable_Stock) <=0 then 1
+                when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
+                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
+                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
                 else 5 end status
                 from "{schema}".{table} sch
                 where 1=1 and sch.volume>0
