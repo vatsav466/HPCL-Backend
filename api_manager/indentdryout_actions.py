@@ -366,54 +366,58 @@ async def indentdryout_get_filtered_location_data(data: Indentdryout_Get_Filtere
 # Action get_indent_data
 @router.post('/get_indent_data', tags=['IndentDryOut'])
 async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams):
-    # record = data.filters
-    # indent_mapping = {
-    #     "indent_not_placed": ["Pending"], 
-    #     "indent_on_hold": ["IndentOnHold"], 
-    #     "work_in_progress": ["IndentRaised", "TruckAllocated", "InvoiceCreated", "ValidIndent", "SentToSAP", "SalesOrderPlaced", "R2Swipe", "R3Swipe"]
-    # }
-    # if record.key == "indent_status":
-    #     record.value = indent_mapping.get(record.key, record.value)
-    # conditions = ' '.join(where_clause)
-    # query = f'''select count(indent_status) from alerts where {conditions}'''
-
     record = data.filters
     indent_mapping = {
-        "indent_not_placed": ["Pending"], 
-        "indent_on_hold": ["IndentOnHold"], 
+        "indent_not_placed": ["Pending"],
+        "indent_on_hold": ["IndentOnHold"],
         "work_in_progress": [
-            "IndentRaised", "TruckAllocated", "InvoiceCreated", 
-            "ValidIndent", "SentToSAP", "SalesOrderPlaced", 
+            "IndentRaised", "TruckAllocated", "InvoiceCreated",
+            "ValidIndent", "SentToSAP", "SalesOrderPlaced",
             "R2Swipe", "R3Swipe"
         ]
     }
-
+    # Prepare a dictionary to store results
+    result = {}
+    # Loop through each indent group to calculate the count
+    for indent_key, indent_values in indent_mapping.items():
     # Construct conditions
-    conditions = []
-    for rec in record:
-        if rec["key"] == "indent_status":
+        conditions = []
+        for rec in record:
+            if rec.key == "indent_status":
             # Map the input value to the corresponding list in indent_mapping
-            mapped_values = indent_mapping.get(rec["value"], [rec["value"]])
+                mapped_values = indent_values  # Use the values for the current indent group
             # Create the condition for indent_status
-            condition = f"indent_status IN ({', '.join([f"'{val}'" for val in mapped_values])})"
-        else:
+                condition = f"indent_status IN ({', '.join([f"'{val}'" for val in mapped_values])})"
+            else:
             # Default condition for other keys
-            condition = f"{rec['key']} = '{rec['value']}'"
-        conditions.append(condition)
+                condition = f"{rec.key} = '{rec.value}'"
+            conditions.append(condition)
 
-    # Combine all conditions using AND
-    where_clause = ' AND '.join(conditions)
+        # Combine all conditions using AND
+        where_clause = ' AND '.join(conditions)
 
-    # Build the SQL query
-    query = f'''SELECT COUNT(indent_status) FROM alerts WHERE {where_clause}'''
+        # Build the SQL query
+        query = f'''SELECT COUNT(indent_status) as count FROM alerts WHERE {where_clause}'''
 
-    print("Generated Query:", query)
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
-    print("resp --> ", resp)
-    
+        print(f"Generated Query for {indent_key}:", query)
+
+        # Execute the query
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+
+        print(f"Response for {indent_key} --> ", resp)
+
+        # Extract the count from the response and store it in the result dictionary
+        if resp and isinstance(resp, list) and "count" in resp[0]:
+            result[indent_key] = resp[0]["count"]
+        else:
+            result[indent_key] = 0  # Default to 0 if no result is found
+
+    # Return the final result
+    return result
+  
     
 
 
