@@ -18,7 +18,7 @@ class DryoutCollector:
     async def get_dry_out_data(cls):
         redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
         # Query to fetch dry out locations, intraday dry-out and potential dry out location
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "2")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         schema = connection_mapping.schema_mapping.get("cris", "public")
@@ -70,7 +70,7 @@ class DryoutCollector:
             alert_data['device_name'] = "Tank"
             alert_data[
                 'severity'] = 'Critical' if status == 1 else 'High' if status == 2 else 'Medium' if status == 3 else 'Low'
-            location_data = await alert_helper.get_location_details("RO", _dry['rosapcode'])
+            status, location_data = await alert_helper.get_location_details("RO", _dry['rosapcode'])
             if location_data.get("category") == 'R01':
                 alert_data['severity'] = 'Critical'
             alert_data['indent_no'] = ''

@@ -4,6 +4,7 @@ import importlib
 import traceback
 import orchestrator
 from concurrent.futures import ThreadPoolExecutor
+from orchestrator.alerting.listener.dry_out_listener import *
 from camunda.external_task.external_task import ExternalTask, TaskResult
 from camunda.external_task.external_task_worker import ExternalTaskWorker
 
@@ -32,6 +33,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         print("variables --> ", variables)
         status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
         print("status: ", status)
+
         print("data: ", data)
         if status:
             if data:
@@ -43,10 +45,37 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
             return task.failure(
                 error_message="task failed", error_details=data, max_retries=3, retry_timeout=5000
             )
+
     except Exception as e:
         logger.error(f"Task failed: {e}")
         logger.error(traceback.format_exc())
-        return task.failure(error_message=str(e), error_details=str(e), max_retries=3, retry_timeout=5000)
+    return task.failure(error_message=str(e), error_details=str(e), max_retries=3, retry_timeout=5000)
+
+
+async def main():
+    """
+    Main entry point of the workflow manager.
+
+    This function sets up an ExternalTaskWorker and subscribes to the 'workflow_consumer' topic.
+    It then runs the algo_external_task function for each incoming task in a separate thread.
+    """
+    engine_local_base_url = urdhva_base.settings.camunda_url + "/engine-rest"
+    # etw = ExternalTaskWorker(10, base_url=ENGINE_LOCAL_BASE_URL, config=default_config)
+    topics = ['dryout_indentwise_consumer']
+    loop = asyncio.get_event_loop()
+    executor = ThreadPoolExecutor(max_workers=400)  # Adjust the number of workers as needed
+    tasks = []
+    for topic in topics:
+        for i in range(1, 200):
+            etw = ExternalTaskWorker(i, base_url=engine_local_base_url, config=urdhva_base.settings.camunda_default_config)
+            tasks.append(loop.run_in_executor(
+                executor, lambda: etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task)))
+            )
+    await asyncio.gather(*tasks)
+
+# Run the asyncio event loop
+if __name__ == "__main__":
+    asyncio.run(main())
 
 
 # Wrapper function to run async functions synchronously
@@ -63,29 +92,3 @@ def run_async_function(async_func, task):
     """
     return asyncio.run(async_func(task))
 
-
-async def main():
-    """
-    Main entry point of the workflow manager.
-
-    This function sets up an ExternalTaskWorker and subscribes to the 'workflow_consumer' topic.
-    It then runs the algo_external_task function for each incoming task in a separate thread.
-    """
-    engine_local_base_url = urdhva_base.settings.camunda_url + "/engine-rest"
-    # etw = ExternalTaskWorker(10, base_url=ENGINE_LOCAL_BASE_URL, config=default_config)
-    topics = ['workflow_consumer']
-    loop = asyncio.get_event_loop()
-    executor = ThreadPoolExecutor(max_workers=400)  # Adjust the number of workers as needed
-    tasks = []
-    for topic in topics:
-        for i in range(1, 200):
-            etw = ExternalTaskWorker(i, base_url=engine_local_base_url,
-                                     config=urdhva_base.settings.camunda_default_config)
-            tasks.append(loop.run_in_executor(
-                executor, lambda: etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task)))
-            )
-    await asyncio.gather(*tasks)
-
-# Run the asyncio event loop
-if __name__ == "__main__":
-    asyncio.run(main())
