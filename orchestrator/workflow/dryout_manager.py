@@ -1,9 +1,12 @@
 import urdhva_base
+import sys
 import asyncio
 import importlib
 import traceback
 import orchestrator
 from concurrent.futures import ThreadPoolExecutor
+import utilities.connection_mapping as connection_mapping
+from orchestrator.alerting.listener.dry_out_listener import *
 from camunda.external_task.external_task import ExternalTask, TaskResult
 from camunda.external_task.external_task_worker import ExternalTaskWorker
 
@@ -32,6 +35,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         print("variables --> ", variables)
         status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
         print("status: ", status)
+
         print("data: ", data)
         if status:
             if data:
@@ -43,10 +47,11 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
             return task.failure(
                 error_message="task failed", error_details=data, max_retries=3, retry_timeout=5000
             )
+
     except Exception as e:
         logger.error(f"Task failed: {e}")
         logger.error(traceback.format_exc())
-        return task.failure(error_message=str(e), error_details=str(e), max_retries=3, retry_timeout=5000)
+    return task.failure(error_message=str(e), error_details=str(e), max_retries=3, retry_timeout=5000)
 
 
 # Wrapper function to run async functions synchronously
@@ -64,16 +69,17 @@ def run_async_function(async_func, task):
     return asyncio.run(async_func(task))
 
 
-async def main():
+async def main(camunda_connector_name):
     """
     Main entry point of the workflow manager.
 
     This function sets up an ExternalTaskWorker and subscribes to the 'workflow_consumer' topic.
     It then runs the algo_external_task function for each incoming task in a separate thread.
     """
-    engine_local_base_url = urdhva_base.settings.camunda_url + "/engine-rest"
+    # engine_local_base_url = f"{urdhva_base.settings.camunda_url}/engine-rest"
+    engine_local_base_url = f"{connection_mapping.camunda_listener_mapping[camunda_connector_name]}/engine-rest"
     # etw = ExternalTaskWorker(10, base_url=ENGINE_LOCAL_BASE_URL, config=default_config)
-    topics = ['workflow_consumer']
+    topics = ['dryout_indentwise_consumer']
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=400)  # Adjust the number of workers as needed
     tasks = []
@@ -86,6 +92,16 @@ async def main():
             )
     await asyncio.gather(*tasks)
 
-# Run the asyncio event loop
+
+def usage():
+    print(f"Usage:- python {sys.argv[0]} <connector_name>")
+
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    if len(sys.argv) == 1:
+        print("Invalid arguments")
+        usage()
+        sys.exit(-1)
+    asyncio.run(main(sys.argv[1]))
+
+

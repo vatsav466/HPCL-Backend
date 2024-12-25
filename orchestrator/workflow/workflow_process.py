@@ -13,17 +13,20 @@ class Camunda:
         self.camunda_url = urdhva_base.settings.camunda_url
         self.headers = {"Content-Type": "application/json"}
 
-    async def start_workflow(self, payload, workflowId):
+    async def start_workflow(self, payload, workflowId, camunda_url=urdhva_base.settings.camunda_url):
         """
         Initiates a workflow using the specified payload and process key.
 
         :param payload: Dictionary containing the data to be sent to the workflow engine.
-        :param key: String representing the process definition key to start.
+        :param workflowId: String representing the process definition key to start.
+        :param camunda_url: String representing the camunda connection.
         :return: JSON response from the workflow engine.
         If the request is successful (status code 200), the response is returned as JSON.
         If there is an exception during the request (e.g., network error, timeout, etc.),
         an error message is printed and None is returned
         """
+        if camunda_url:
+            self.camunda_url = camunda_url
         url = f" {self.camunda_url}/engine-rest/process-definition/key/{workflowId}/start"
 
         try:

@@ -3,6 +3,7 @@ from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import pytz
 import json
+import math
 import fastapi
 import datetime
 import polars as pl
@@ -40,6 +41,22 @@ async def indentdryout_sync_data_from_cris_to_ceg(data: Indentdryout_Sync_Data_F
 # Action create_dry_out_alert
 @router.post('/create_dry_out_alert', tags=['IndentDryOut'])
 async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_AlertParams):
+    def assign_values_to_dataframe(df, values):
+        n = len(df)
+        if n == 0:
+            df["camunda_listener"] = []
+            return df
+
+        if n <= 10:
+            assigned_values = values[:n]
+        else:
+            repeats = math.ceil(n / len(values))
+            assigned_values = (values * repeats)[:n]
+
+        df["camunda_listener"] = assigned_values
+        return df
+
+    redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -63,6 +80,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
     records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
     records = records.filter(pl.col('status') == 1)
+    records = assign_values_to_dataframe(records, list(connection_mapping.camunda_listener_mapping.keys()))
     records = records.head(10).to_dicts()
 
     alert_data = {
@@ -95,7 +113,11 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
         alert_data['dealer_id'] = _dry['rosapcode']
         alert_data['workflow_datetime'] = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
         alert_data['terminal_plant_id'] = ''
-        await create_alert(alert_data)
+        alert_data['camunda_host'] = connection_mapping.camunda_listener_mapping.get(_dry['camunda_listener'])['host']
+        alert_data['camunda_port'] = connection_mapping.camunda_listener_mapping.get(_dry['camunda_listener'])['port']
+        alert_data['dry_out_in_days'] = _dry['status']
+        await redis_queue.put(json.dumps(alert_data))
+        # await create_alert(alert_data)
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -388,7 +410,7 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
                 # Map the input value to the corresponding list in indent_mapping
                 mapped_values = indent_values  # Use the values for the current indent group
                 # Create the condition for indent_status
-                condition = f"indent_status IN ({', '.join([f'\'{val}\'' for val in mapped_values])})"
+                condition = f"""indent_status IN ({', '.join([f"'{val}'" for val in mapped_values])})"""
             else:
                 # Default condition for other keys
                 condition = f"{rec.key} = '{rec.value}'"

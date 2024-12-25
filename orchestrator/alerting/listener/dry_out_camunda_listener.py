@@ -3,6 +3,7 @@ import sys
 import json
 import asyncio
 import urdhva_base.redispool
+from orchestrator.actions.indentwise_dry_out import IndentDryOut
 
 
 class DryOutCamundaListener:
@@ -23,12 +24,8 @@ class DryOutCamundaListener:
         print(f"Location: {location_id} Product: {product_id}")
         # Todo:-
         # Get All non cancelled indents from IMS
-        indents = []
-        for indent in indents:
-            if indent["status"] == "CANCELLED":
-                continue
-            # Check alert created or not for loction/product/indent
-            # If not created create alert
+        await IndentDryOut().check_raised_indent(task)
+
 
 
 def usage():
