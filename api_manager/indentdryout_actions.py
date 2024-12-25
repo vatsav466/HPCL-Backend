@@ -388,7 +388,7 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
                 # Map the input value to the corresponding list in indent_mapping
                 mapped_values = indent_values  # Use the values for the current indent group
                 # Create the condition for indent_status
-                condition = f"indent_status IN ({', '.join(['{val}' for val in mapped_values])})"
+                condition = f"indent_status IN ({', '.join([f'\'{val}\'' for val in mapped_values])})"
             else:
                 # Default condition for other keys
                 condition = f"{rec.key} = '{rec.value}'"
