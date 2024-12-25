@@ -12,20 +12,21 @@ import orchestrator.alerting.lpg_alert as lpg_alert
 import orchestrator.alerting.emlock_alert as emlock_alert
 
 
-async def create_alert(alert_data):
+async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url):
     """
     Create an alert based on input alert data. This function delegates the actual creation of the alert to the specific
     alert manager (e.g. ROAlertManager, VAAlertManager, etc.) based on the 'alert_type' field in the input alert data.
 
     Parameters:
         alert_data (dict): A dictionary containing the data to create the alert.
+        camunda_url (String): Camunda Connection String.
 
     Returns:
         dict: A dictionary containing the status, message and the created alert document.
     """
     print("into create alert", alert_data)
     alert_type = alert_data['alert_type']
-    return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").create_bu_alert(alert_data)
+    return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").create_bu_alert(alert_data, camunda_url)
 
 
 async def close_alert(alert_data):

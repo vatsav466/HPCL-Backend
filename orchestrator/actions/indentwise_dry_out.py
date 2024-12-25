@@ -102,6 +102,16 @@ class IndentDryOut:
         }
         return True, msg_block
 
+    async def create_dry_out_summary(self):
+        schema_name = connection_mapping.schema_mapping.get("hpcl_ceg", "HPCL_HOS")
+        table_name = connection_mapping.table_mapping.get("dry_out", "sch_inventory_forecast_dashboard")
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+            "hpcl_ceg", "1"
+        )
+        Charts_Connection_Vault_RoutingParams.action = 'get_data'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        records = await function(schema_name=schema_name, table_name=table_name, query=query)
+
     async def check_raised_indent(self, params: dict):
         if not self.params:
             self.params = params
@@ -111,6 +121,10 @@ class IndentDryOut:
         self.params['alert_type'] = 'RO'
         self.params['bu'] = 'RO'
         self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
+        camunda_url = urdhva_base.settings.camunda_url
+        if self.params['camunda_host']:
+            camunda_url = f"http://{self.params['camunda_host']}:{self.params['camunda_port']}"
+
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -132,14 +146,14 @@ class IndentDryOut:
         print("total_indent: ", total_indent)
 
         if not total_indent:
-            await create_alert(self.params)
+            await create_alert(self.params, camunda_url)
         else:
             for each_indent in total_indent:
                 print(each_indent)
                 self.params['indent_no'] = str(each_indent['INDENT_NO'])
                 self.params['terminal_plant_id'] = str(each_indent['LOCN_CODE'])
                 self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
-                await create_alert(self.params)
+                await create_alert(self.params, camunda_url)
 
         return True, {"msg": "Alert raised"}
 

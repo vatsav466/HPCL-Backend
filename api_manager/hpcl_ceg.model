@@ -445,6 +445,7 @@ Model Alerts {
     progress_rate optional int
     category optional str
     indent_raised_date optional datetime
+    dry_out_in_days optional str
 
     Action=> alert_action {
         action_type AlertActionType
