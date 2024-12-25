@@ -1178,6 +1178,64 @@ class IndentDryOutDataFiltersCreate(pydantic.BaseModel):
     value: typing.List[str]
 
 
+class DryOutHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'dry_out_history'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=True, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    start_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("start_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    product_no: Mapped[str] = mapped_column("product_no", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    item_name: Mapped[str] = mapped_column("item_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    plant_id: Mapped[str] = mapped_column("plant_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    plant_name: Mapped[str] = mapped_column("plant_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    status: Mapped[typing.Any] = mapped_column("status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class DryOutHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'dry_out_history'
+    
+    bu: str
+    sap_id: str
+    start_time: typing.Optional[datetime.datetime] | None = None
+    end_time: typing.Optional[datetime.datetime] | None = None
+    product_no: str
+    item_name: str
+    plant_id: str
+    plant_name: str
+    status: hpcl_ceg_enum.AlertStatus
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = DryOutHistorySchema
+        upsert_keys = []
+
+
+class DryOutHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'dry_out_history'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    start_time: typing.Optional[datetime.datetime] | None = None
+    end_time: typing.Optional[datetime.datetime] | None = None
+    product_no: typing.Optional[str] | None = None
+    item_name: typing.Optional[str] | None = None
+    plant_id: typing.Optional[str] | None = None
+    plant_name: typing.Optional[str] | None = None
+    status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = DryOutHistorySchema
+        upsert_keys = []
+
+
+class DryOutHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[DryOutHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class IndentDryOutSchema(UrdhvaPostgresBase):
     __tablename__ = 'indent_dry_out'
     

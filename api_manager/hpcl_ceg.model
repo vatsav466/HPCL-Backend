@@ -580,6 +580,24 @@ Model IndentDryOutDataFilters internal {
     value list str
 }
 
+// Model for dry-out analysis, Per product one will get created
+// It will get closed if no open alerts for the product and it was out of dry-out.
+Model DryOutHistory {
+    bu index_field primary_key str
+    sap_id index_field str      // location id
+    start_time optional datetime
+    end_time optional datetime
+    product_no index_field str   //product no
+    item_name str                // product name
+    plant_id index_field str
+    plant_name str
+    status index_field AlertStatus // To Check whether Dry-out in Open or Closed
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
 Model IndentDryOut {
     bu unique_field index_field primary_key str
     site_id str      // location id

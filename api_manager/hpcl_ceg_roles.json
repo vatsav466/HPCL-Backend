@@ -913,6 +913,69 @@
             ]
         },
         {
+            "name": "dryouthistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutHistory",
+            "attributes": {},
+            "uris": [
+                "/api/dryouthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "dryouthistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dryouthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dryouthistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dryouthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "indentdryout",
             "type": "all",
             "ownerManagedAccess": false,
