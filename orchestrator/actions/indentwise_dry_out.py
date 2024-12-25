@@ -148,7 +148,7 @@ class IndentDryOut:
 
         if not total_indent:
             # Check Alert Exists for same Scenario or not
-            query = (f"select id from alerts where bu='RO' and "
+            query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                      f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
                      f"indent_no='' and alert_status='Open' and product_code='{self.params['product_code']}'")
             alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
@@ -157,11 +157,15 @@ class IndentDryOut:
                 # Todo:- Create Dry-Out history data for the bu/sap_id/product if not available in Open State
             else:
                 # If dry_out_days found diff, update alert
-                ...
+                for record in alerts_data['data']:
+                    if record.get('dry_out_in_days') != self.params['dry_out_in_days']:
+                        query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
+                                 f"where id='{record['id']}'")
+                        await hpcl_ceg_model.Alerts.update_by_query(query)
         else:
             for each_indent in total_indent:
                 print(each_indent)
-                query = (f"select id from alerts where bu='RO' and "
+                query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                          f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
                          f"indent_no='{self.params['indent_no']}' and alert_status='Open' and "
                          f"product_code='{self.params['product_code']}'")
@@ -174,7 +178,11 @@ class IndentDryOut:
                     # Todo:- Create Dry-Out history data for the bu/sap_id/product if not available in Open State
                 else:
                     # If dry_out_days found diff, update alert
-                    ...
+                    for record in alerts_data['data']:
+                        if record.get('dry_out_in_days') != self.params['dry_out_in_days']:
+                            query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
+                                     f"where id='{record['id']}'")
+                            await hpcl_ceg_model.Alerts.update_by_query(query)
 
         return True, {"msg": "Alert raised"}
 
