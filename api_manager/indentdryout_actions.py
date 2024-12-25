@@ -84,7 +84,7 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
     records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
     records = records.filter(pl.col('status') == 1)
-    records = cls.assign_values_to_dataframe(records,
+    records = assign_values_to_dataframe(records,
                                              list(connection_mapping.camunda_listener_mapping.values()))
     records = records.head(10).to_dicts()
 
