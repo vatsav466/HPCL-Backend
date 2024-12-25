@@ -86,7 +86,7 @@ class AlertFactory:
                                                         'vehicle_number': alert_data.get('vehicle_number',''),
                                                         'violation_type': alert_data.get('violation_type',''),
                                                         'clear_count': alert_data.get('clear_count',False),
-                                                        'alert_history': [],
+                                                        'alert_history': alert_data.get('alert_history',[]),
                                                         'device_msg': alert_data.get('message', ''),
                                                         'last_sms_to': [], 'last_mailed_to': [],
                                                         'last_escalated_to': [],
@@ -255,6 +255,10 @@ class AlertFactory:
                     al_data = al_data.__dict__
                 al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                 al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
+                redis_ins = await urdhva_base.redispool.get_redis_connection()
+                if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
+                    await redis_ins.hdel("alert_mapping", al_data['external_id'])
+                await redis_ins.close()
                 data_obj = hpcl_ceg_model.Alerts(**al_data)
                 await data_obj.modify()
 

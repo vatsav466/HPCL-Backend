@@ -5,13 +5,13 @@ vts_interlock_mapping = {
                 "interlock_name": "Speed Violation FirstTime",
                 "block_duration": 7,
                 "block_msg": "7 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "Speed Violation SecondTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "2": {
                 "interlock_name": "Speed Violation ThirdTime",
@@ -29,13 +29,13 @@ vts_interlock_mapping = {
                 "interlock_name": "Night Driving FirstTime",
                 "block_duration": 7,
                 "block_msg": "7 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "Night Driving SecondTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "2": {
                 "interlock_name": "Night Driving ThirdTime",
@@ -53,7 +53,7 @@ vts_interlock_mapping = {
                 "interlock_name": "VTS RouteDeviation FirstTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "VTS RouteDeviation SecondTime",
@@ -63,7 +63,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "Route Deviation",
-        "alert_threshold": 1
+        "alert_threshold": 5
     },
     "stoppage_violations_count": {
         "alerting_rules": {
@@ -71,7 +71,7 @@ vts_interlock_mapping = {
                 "interlock_name": "Unauthorized Stoppage FirstTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "Unauthorized Stoppage SecondTime",
@@ -89,7 +89,7 @@ vts_interlock_mapping = {
                 "interlock_name": "NoHalt Zone FirstTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "NoHalt Zone SecondTime",
@@ -99,7 +99,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "NoHalt Zone",
-        "alert_threshold": 1
+        "alert_threshold": 0
     },
     "device_offline_count": {
         "alerting_rules": {
@@ -107,7 +107,7 @@ vts_interlock_mapping = {
                 "interlock_name": "VTS Offline FirstTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "VTS Offline SecondTime",
@@ -117,7 +117,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "Device Offline",
-        "alert_threshold": 1
+        "alert_threshold": 0
     },
     "device_tamper_count": {
         "alerting_rules": {
@@ -129,7 +129,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "Device Tampered",
-        "alert_threshold": 5
+        "alert_threshold": 0
     },
     "main_supply_removal_count": {
         "alerting_rules": {
@@ -141,7 +141,7 @@ vts_interlock_mapping = {
             }
         },
         "description": "Main Supply Removal",
-        "alert_threshold": 5
+        "alert_threshold": 0
     }
 }
 
@@ -152,13 +152,13 @@ vts_exception_interlock_mapping = {
                 "interlock_name": "Speed Violation Exception FirstTime",
                 "block_duration": 7,
                 "block_msg": "7 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "Speed Violation Exception SecondTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "2": {
                 "interlock_name": "Speed Violation Exception ThirdTime",
@@ -176,13 +176,13 @@ vts_exception_interlock_mapping = {
                 "interlock_name": "Night Driving Exception FirstTime",
                 "block_duration": 7,
                 "block_msg": "7 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "Night Driving Exception SecondTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "2": {
                 "interlock_name": "Night Driving Exception ThirdTime",
@@ -200,7 +200,7 @@ vts_exception_interlock_mapping = {
                 "interlock_name": "Route Deviation Exception FirstTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "Route Deviation Exception SecondTime",
@@ -210,7 +210,7 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "Route Deviation",
-        "alert_threshold": 1
+        "alert_threshold": 5
     },
     "stoppage_violations_count": {
         "alerting_rules": {
@@ -218,7 +218,7 @@ vts_exception_interlock_mapping = {
                 "interlock_name": "Unauthorized Stoppage Exception FirstTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "Unauthorized Stoppage Exception SecondTime",
@@ -236,7 +236,7 @@ vts_exception_interlock_mapping = {
                 "interlock_name": "NoHalt zone Exception FirstTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "NoHalt Zone Exception SecondTime",
@@ -246,7 +246,7 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "NoHalt Zone",
-        "alert_threshold": 1
+        "alert_threshold": 0
     },
     "device_offline_count": {
         "alerting_rules": {
@@ -254,7 +254,7 @@ vts_exception_interlock_mapping = {
                 "interlock_name": "VTS offline Exception FirstTime",
                 "block_duration": 90,
                 "block_msg": "90 days",
-                "clear_count": False
+                "clear_count": True
             },
             "1": {
                 "interlock_name": "VTS Offline Exception SecondTime",
@@ -264,7 +264,7 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "Device Offline",
-        "alert_threshold": 1
+        "alert_threshold": 0
     },
     "device_tamper_count": {
         "alerting_rules": {
@@ -276,7 +276,7 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "Device Tampered",
-        "alert_threshold": 5
+        "alert_threshold": 0
     },
     "main_supply_removal_count": {
         "alerting_rules": {
@@ -288,6 +288,6 @@ vts_exception_interlock_mapping = {
             }
         },
         "description": "Main Supply Removal",
-        "alert_threshold": 5
+        "alert_threshold": 0
     }
 }

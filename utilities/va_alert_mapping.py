@@ -1,8 +1,8 @@
 VA_Alert_Mapping = {
     "RO": {
-        "FIRE/SMOKE": {"name": "Fire/Smoke Detection", "severity": "Critical"},
-        "SMOKE": {"name": "Smoke Detection", "severity": "Critical"},
-        "Fire": {"name": "Fire Detection", "severity": "Critical"},
+        "FIRE/SMOKE": {"name": "Fire/Smoke Detection RO", "severity": "Critical"},
+        "SMOKE": {"name": "Smoke Detection RO", "severity": "Critical"},
+        "Fire": {"name": "Fire Detection RO", "severity": "Critical"},
         "ABSENCE_OF_EARTHING": {"name": "Absence Of Earthing", "severity": "Critical"},
         "ABSENCE_OF_WHEELCHOCK": {"name": "Absence Of Wheelchock RO", "severity": "High"},
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {"name": "Absence Of Fire Extinguisher Decantation", "severity": "High"},
@@ -12,20 +12,20 @@ VA_Alert_Mapping = {
         "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock RO", "severity": "High"}
     },
     "TAS": {
-        "FIRE/SMOKE": {"name": "Fire/Smoke Detection", "severity": "Critical"},
-        "SMOKE": {"name": "Smoke Detection", "severity": "Critical"},
-        "Fire": {"name": "Fire Detection", "severity": "Critical"},
+        "FIRE/SMOKE": {"name": "Fire/Smoke Detection TAS", "severity": "Critical"},
+        "SMOKE": {"name": "Smoke Detection TAS", "severity": "Critical"},
+        "Fire": {"name": "Fire Detection TAS", "severity": "Critical"},
         "ABSENCE_OF_WHEELCHOCK": {"name": "Absence Of Wheelchock TAS", "severity": "High"},
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {"name": "Absence Of Fire Extinguisher Tt Operations", "severity": "High"},
-        "PPE_HELMET": {"name": "Person not wearing Safety Helmet", "severity": "Medium"},
+        "PPE_HELMET": {"name": "Person not wearing Safety Helmet TAS", "severity": "Medium"},
         "LINE_OF_FIRE": {"name": "Intrusion", "severity": "Critical"},
         "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt", "severity": "Critical"},
-        "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock RO", "severity": "High"}
+        "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock TAS", "severity": "High"}
     },
     "LPG": {
-        "FIRE/SMOKE": {"name": "Fire/Smoke Detection", "severity": "Critical"},
-        "SMOKE": {"name": "Smoke Detection", "severity": "Critical"},
-        "Fire": {"name": "Fire Detection", "severity": "Critical"},
+        "FIRE/SMOKE": {"name": "Fire/Smoke Detection LPG", "severity": "Critical"},
+        "SMOKE": {"name": "Smoke Detection LPG", "severity": "Critical"},
+        "Fire": {"name": "Fire Detection LPG", "severity": "Critical"},
         "Fire-Extinguisher": {"name": "Fire Extinguisher", "severity": "High"},
         "Wheel-Chock": {"name": "Missing Wheel Chock", "severity": "High"},
         "Intrusion-PersonAtPerimeter": {"name": "Intrusion Person At Perimeter", "severity": "Critical"},
@@ -33,6 +33,6 @@ VA_Alert_Mapping = {
         "LPGLeak-Detection": {"name": "Lpg Leakage Detection",  "severity": "Critical"},
         "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt",  "severity": "Medium"},
         "PPE_HELMET": {"name": "Person not wearing Safety Helmet", "severity": "Medium"},
-        "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock RO", "severity": "High"}
+        "ABSENCE OF WHEELCHOCK": {"name": "Missing Wheel Chock", "severity": "High"}
     }
 }
