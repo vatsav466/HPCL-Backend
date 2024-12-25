@@ -1,6 +1,6 @@
-import asyncio
-
 import urdhva_base
+import asyncio
+import math
 import json
 import datetime
 import polars as pl
@@ -14,6 +14,26 @@ from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
 
 
 class DryoutCollector:
+    @classmethod
+    def assign_values_to_dataframe(cls, df, values):
+        """
+        Assigning camunda urls equally for each flow
+        :param df:
+        :param values:
+        :return:
+        """
+        n = len(df)
+        if n == 0:
+            df = df.with_columns(pl.Series("camunda_listener", []))
+            return df
+        if n <= 10:
+            assigned_values = values[:n]
+        else:
+            repeats = math.ceil(n / len(values))
+            assigned_values = (values * repeats)[:n]
+        df = df.with_columns(pl.Series("camunda_listener", assigned_values))
+        return df
+
     @classmethod
     async def get_dry_out_data(cls):
         redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
@@ -41,7 +61,9 @@ class DryoutCollector:
         records = pl.DataFrame(records)
         records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
         records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
-        records = records.filter(pl.col('status') == 1)
+        records = records.filter(pl.col('status') <= 2)
+        records = cls.assign_values_to_dataframe(records,
+                                                 list(connection_mapping.camunda_listener_mapping.values()))
         records = records.head(10).to_dicts()
 
         alert_data = {

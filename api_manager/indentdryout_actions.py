@@ -42,18 +42,22 @@ async def indentdryout_sync_data_from_cris_to_ceg(data: Indentdryout_Sync_Data_F
 @router.post('/create_dry_out_alert', tags=['IndentDryOut'])
 async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_AlertParams):
     def assign_values_to_dataframe(df, values):
+        """
+        Assigning camunda urls equally for each flow
+        :param df:
+        :param values:
+        :return:
+        """
         n = len(df)
         if n == 0:
-            df["camunda_listener"] = []
+            df = df.with_columns(pl.Series("camunda_listener", []))
             return df
-
         if n <= 10:
             assigned_values = values[:n]
         else:
             repeats = math.ceil(n / len(values))
             assigned_values = (values * repeats)[:n]
-
-        df["camunda_listener"] = assigned_values
+        df = df.with_columns(pl.Series("camunda_listener", assigned_values))
         return df
 
     redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
@@ -80,7 +84,8 @@ async def indentdryout_create_dry_out_alert(data: Indentdryout_Create_Dry_Out_Al
     records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
     records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
     records = records.filter(pl.col('status') == 1)
-    records = assign_values_to_dataframe(records, list(connection_mapping.camunda_listener_mapping.keys()))
+    records = cls.assign_values_to_dataframe(records,
+                                             list(connection_mapping.camunda_listener_mapping.values()))
     records = records.head(10).to_dicts()
 
     alert_data = {
