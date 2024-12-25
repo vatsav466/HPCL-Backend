@@ -14,9 +14,12 @@ class DryOutCamundaListener:
     async def listener(self):
         queue_ins = urdhva_base.redispool.RedisQueue(self.queue_name)
         while True:
-            task = await queue_ins.get(timeout=60)
-            if task:
-                await self.process_task(json.loads(task))
+            try:
+                task = await queue_ins.get(timeout=60)
+                if task:
+                    await self.process_task(json.loads(task))
+            except Exception as e:
+                ...
 
     async def process_task(self, task):
         location_id = task['sap_id']
