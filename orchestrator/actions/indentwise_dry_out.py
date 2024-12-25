@@ -148,19 +148,23 @@ class IndentDryOut:
 
         if not total_indent:
             # Check Alert Exists for same Scenario or not
-            query = (f"select id from alerts where alert_type='RO' and "
-                     "interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
-                     "indent_no='' and alert_status='Open'")
+            query = (f"select id from alerts where bu='RO' and "
+                     f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
+                     f"indent_no='' and alert_status='Open' and product_code='{self.params['product_code']}'")
             alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
             if not alerts_data['data']:
                 await create_alert(self.params, camunda_url)
                 # Todo:- Create Dry-Out history data for the bu/sap_id/product if not available in Open State
+            else:
+                # If dry_out_days found diff, update alert
+                ...
         else:
             for each_indent in total_indent:
                 print(each_indent)
-                query = (f"select id from alerts where alert_type='RO' and "
-                         "interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
-                         "indent_no='{ self.params['indent_no']}' and alert_status='Open'")
+                query = (f"select id from alerts where bu='RO' and "
+                         f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
+                         f"indent_no='{self.params['indent_no']}' and alert_status='Open' and "
+                         f"product_code='{self.params['product_code']}'")
                 alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
                 if not alerts_data['data']:
                     self.params['indent_no'] = str(each_indent['INDENT_NO'])
@@ -168,6 +172,9 @@ class IndentDryOut:
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     await create_alert(self.params, camunda_url)
                     # Todo:- Create Dry-Out history data for the bu/sap_id/product if not available in Open State
+                else:
+                    # If dry_out_days found diff, update alert
+                    ...
 
         return True, {"msg": "Alert raised"}
 

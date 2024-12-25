@@ -77,8 +77,8 @@ async def main(camunda_connector_name):
     It then runs the algo_external_task function for each incoming task in a separate thread.
     """
     # engine_local_base_url = f"{urdhva_base.settings.camunda_url}/engine-rest"
-    engine_local_base_url = f"{connection_mapping.camunda_listener_mapping[camunda_connector_name]}/engine-rest"
-    # etw = ExternalTaskWorker(10, base_url=ENGINE_LOCAL_BASE_URL, config=default_config)
+    conn = connection_mapping.camunda_listener_mapping[camunda_connector_name]
+    engine_local_base_url = f"http://{conn['host']}:{conn['port']}/engine-rest"
     topics = ['dryout_indentwise_consumer']
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=400)  # Adjust the number of workers as needed

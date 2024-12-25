@@ -2,8 +2,11 @@ import urdhva_base
 import sys
 import json
 import asyncio
+import traceback
 import urdhva_base.redispool
 from orchestrator.actions.indentwise_dry_out import IndentDryOut
+
+logger = urdhva_base.Logger.getInstance("dry_out_camunda_listener.log")
 
 
 class DryOutCamundaListener:
@@ -19,11 +22,13 @@ class DryOutCamundaListener:
                 if task:
                     await self.process_task(json.loads(task))
             except Exception as e:
-                ...
+                if 'Timeout reading' not in str(e):
+                    print(f"Exception in dry-out task process {e}, {traceback.format_exc()}")
+                    logger.error(f"Exception in dry-out task process {e}, {traceback.format_exc()}")
 
     async def process_task(self, task):
         location_id = task['sap_id']
-        product_id = task['product_id']
+        product_id = task['product_code']
         print(f"Location: {location_id} Product: {product_id}")
         # Todo:-
         # Get All non cancelled indents from IMS

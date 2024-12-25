@@ -44,7 +44,7 @@ class DryoutCollector:
         schema = connection_mapping.schema_mapping.get("cris", "public")
         table = connection_mapping.table_mapping.get("dry_out", "")
         query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-                    rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, indent_status, 
+                    rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, 
                     case when sum(pumpable_Stock) <=0 then 0
                     when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 1
                     when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and 
@@ -54,12 +54,12 @@ class DryoutCollector:
                     else 5 end status
                     from "{schema}".{table} sch
                     where 1=1 and sch.volume>0
-                    group by site_id, fcc_code, item_name, rosapcode, product_no, indent_status
+                    group by site_id, fcc_code, item_name, rosapcode, product_no
                     order by site_id, fcc_code, item_name, rosapcode, product_no'''
         # records = await function(schema_name=schema, table_name=table, query=query)
         records = await function(query=query)
         records = pl.DataFrame(records)
-        records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
+        # records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
         records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
         records = records.filter(pl.col('status') <= 2)
         records = cls.assign_values_to_dataframe(records,
@@ -77,7 +77,8 @@ class DryoutCollector:
             'dealer_id': '',
             'severity': "",
             'workflow_datetime': '',
-            'terminal_plant_id': ''
+            'terminal_plant_id': '',
+            'connection_name': 'ims'
         }
 
         _mapping = await indent_dry_out().prod_code_mapping()
@@ -100,6 +101,8 @@ class DryoutCollector:
             alert_data['workflow_datetime'] = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                               :-3] + "Z"
             alert_data['terminal_plant_id'] = ''
+            alert_data['camunda_host'] = _dry['camunda_listener']['host']
+            alert_data['camunda_port'] = _dry['camunda_listener']['port']
             await redis_queue.put(json.dumps(alert_data))
 
 
