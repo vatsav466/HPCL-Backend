@@ -140,6 +140,8 @@ class WidgetActions:
             elif condition == 'oneof' and isinstance(value, list):
                 values = "', '".join(map(str, value))
                 conditions.append(f"{key} IN ('{values}')")
+            elif condition == 'pattern':
+                conditions.append(f"{key} ILIKE '%{value}%'")
             elif condition == 'date_filter':
                 if value == '1d':
                     conditions.append(f"{key}::DATE = CURRENT_DATE - INTERVAL '1 DAY'")
