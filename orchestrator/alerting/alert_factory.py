@@ -158,6 +158,7 @@ class AlertFactory:
                 print("payload: ", payload)
                 if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+                    await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
 
@@ -240,6 +241,8 @@ class AlertFactory:
                         alert['interlock_id'] = str(il_data[0]['id'])
                     data_obj = hpcl_ceg_model.Alerts(**alert)
                     await data_obj.modify()
+                    redis_ins = await urdhva_base.redispool.get_redis_connection()
+                    await redis_ins.hdel("alert_camunda_url", str(alert['id']))
 
                 print("Interlock and Alert updated successfully.")
 
@@ -262,6 +265,7 @@ class AlertFactory:
                 await redis_ins.close()
                 data_obj = hpcl_ceg_model.Alerts(**al_data)
                 await data_obj.modify()
+                await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
 
             return True, {"status": "Alert Closed"}
         
