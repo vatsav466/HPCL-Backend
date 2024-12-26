@@ -460,14 +460,19 @@ async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingP
 async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
     redis_ins = await urdhva_base.redispool.get_redis_connection()
     try:
-        if await redis_ins.exists(f"cred_store_{data.connection_id}"):
-            creds_details = json.loads(base64.b64decode(await redis_ins.get(f"cred_store_{data.connection_id}")))
-            return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
-        creds_details = await CredsModel.get(data.connection_id)
-        if not isinstance(creds_details, dict):
-            creds_details = creds_details.__dict__
-        await redis_ins.setex(f"cred_store_{data.connection_id}", 24*60*60,
-                              base64.b64encode(json.dumps(creds_details).encode()).decode())
+        try:
+            if await redis_ins.exists(f"cred_store_{data.connection_id}"):
+                creds_details = json.loads(base64.b64decode(await redis_ins.get(f"cred_store_{data.connection_id}")))
+                return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
+            creds_details = await CredsModel.get(data.connection_id)
+            if not isinstance(creds_details, dict):
+                creds_details = creds_details.__dict__
+            await redis_ins.setex(f"cred_store_{data.connection_id}", 24*60*60,
+                                  base64.b64encode(json.dumps(creds_details).encode()).decode())
+        except:
+            creds_details = await CredsModel.get(data.connection_id)
+            if not isinstance(creds_details, dict):
+                creds_details = creds_details.__dict__
         return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
     except Exception as e:
         raise ValueError(e)
