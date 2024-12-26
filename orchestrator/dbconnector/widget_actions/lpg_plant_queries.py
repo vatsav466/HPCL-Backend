@@ -602,25 +602,37 @@ LIMIT 10000;''',
                            ORDER BY no_of_terminals DESC''',
 
     "alert_ageing": f'''SELECT DISTINCT
-                                CASE 
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '6 to 10 Days'
-                                    ELSE 'Older than 10 Days'
-                                END AS alert_ageing,
-                                COUNT(*) OVER (
-                                    PARTITION BY 
-                                    CASE 
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '6 to 10 Days'
-                                        ELSE 'Older than 10 Days'
-                                    END
-                                ) AS alert_count
-                            FROM 
-                                alerts
-                            ORDER BY 
-                                alert_ageing''',
+                        CASE 
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN '5 to 7 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN '7 to 10 Days'
+                            ELSE 'Older than 10 Days'
+                        END AS alert_ageing,
+                        COUNT(*) OVER (
+                            PARTITION BY 
+                            CASE 
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN '5 to 7 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN '7 to 10 Days'
+                                ELSE 'Older than 10 Days'
+                            END
+                        ) AS alert_count,
+                        CASE 
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 1
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN 2
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN 3
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN 4
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN 5
+                            ELSE 6
+                        END AS alert_ageing_order
+                    FROM 
+                        alerts
+                    ORDER BY 
+                        alert_ageing_order''',
 
     "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count 
                                FROM public.alerts 
