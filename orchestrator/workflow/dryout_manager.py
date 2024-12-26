@@ -35,7 +35,6 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         print("variables --> ", variables)
         status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
         print("status: ", status)
-
         print("data: ", data)
         if status:
             if data:
@@ -51,7 +50,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     except Exception as e:
         logger.error(f"Task failed: {e}")
         logger.error(traceback.format_exc())
-    return task.failure(error_message=str(e), error_details=str(e), max_retries=3, retry_timeout=5000)
+        return task.failure(error_message=str(e), error_details=str(e), max_retries=3, retry_timeout=5000)
 
 
 # Wrapper function to run async functions synchronously
