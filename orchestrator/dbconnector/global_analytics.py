@@ -80,6 +80,7 @@ class GlobalAnalytics:
         total_alerts = 0
         alert_distribution = defaultdict(int)
         top_alerts = defaultdict(int)
+        interlock_alerts = defaultdict(lambda: defaultdict(int))
 
         # Process each alert
         for alert in data:
@@ -106,6 +107,9 @@ class GlobalAnalytics:
             # Update top alerts by interlock name
             top_alerts[interlock_name] += severity_count
 
+            interlock_alerts[interlock_name][severity] += severity_count
+
+
         # Format the output
         result = {
             "activeLocations": len(active_locations),
@@ -118,7 +122,15 @@ class GlobalAnalytics:
             "top10Alerts": [
                 {"name": name, "value": value}
                 for name, value in sorted(top_alerts.items(), key=lambda x: x[1], reverse=True)[:10]
-            ]
+            ],
+            "interlock_alerts": [
+        {
+            "interlock_name": interlock_name,
+            **{key: value for key, value in details.items() if key != "interlock_name"}
+        }
+        for interlock_name, details in interlock_alerts.items()
+    ]
+
         }
 
         return {"status": True, "message": "Success", "data": result}
