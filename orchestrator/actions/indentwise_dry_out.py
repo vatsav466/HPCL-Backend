@@ -507,7 +507,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        today_date = datetime.datetime.now()
+        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST" a, 
@@ -518,7 +518,7 @@ class IndentDryOut:
                         AND a.LOCN_CODE = b.LOCN_CODE
                         AND a.TRUCK_REGNO = b.TRUCK_REGNO
                         AND b.CARD_STATUS = 'R'
-                        AND TRUNC(b.LOADED_ON) = TRUNC({today_date}) 
+                        AND TRUNC(b.LOADED_ON) = '{today_date}' 
                     GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
@@ -549,7 +549,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        today_date = datetime.datetime.now()
+        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
@@ -560,7 +560,7 @@ class IndentDryOut:
                                 AND a.LOCN_CODE = b.LOCN_CODE
                                 AND a.TRUCK_REGNO = b.TRUCK_REGNO
                                 AND b.CARD_STATUS = 'I'
-                                AND TRUNC(b.LOADED_ON) = TRUNC({today_date}) 
+                                AND TRUNC(b.LOADED_ON) = '{today_date}' 
                             GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
@@ -591,7 +591,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        today_date = datetime.datetime.now()
+        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count", a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
@@ -602,7 +602,7 @@ class IndentDryOut:
                                 AND a.LOCN_CODE = b.LOCN_CODE
                                 AND a.TRUCK_REGNO = b.TRUCK_REGNO
                                 AND b.CARD_STATUS = 'O'
-                                AND TRUNC(b.LOADED_ON) = TRUNC({today_date}) 
+                                AND TRUNC(b.LOADED_ON) = '{today_date}'
                             GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
