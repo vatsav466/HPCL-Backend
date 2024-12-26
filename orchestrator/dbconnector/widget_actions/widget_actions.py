@@ -143,7 +143,9 @@ class WidgetActions:
             elif condition == 'pattern':
                 conditions.append(f"{key} ILIKE '%{value}%'")
             elif condition == 'date_filter':
-                if value == '1d':
+                if value == '24h':
+                    conditions.append(f"{key} >= CURRENT_TIMESTAMP - INTERVAL '24 hours'")
+                elif value == '1d':
                     conditions.append(f"{key}::DATE = CURRENT_DATE - INTERVAL '1 DAY'")
                 elif value == '1w':
                     conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '7 DAY'")
