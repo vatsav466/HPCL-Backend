@@ -713,5 +713,7 @@ LIMIT 10000;''',
                             ORDER BY 
                                 alert_hour;''',
     
-    "sales_performance": f'''SELECT * FROM public."M60_LEVEL_METADATA"'''
+    "sales_performance": f'''SELECT * FROM public."M60_LEVEL_METADATA"''',
+
+    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_SALES"'''
 }

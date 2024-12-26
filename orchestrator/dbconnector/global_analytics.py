@@ -321,8 +321,33 @@ class GlobalAnalytics:
             print(e)
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(sales_performance_query)
         sales_performance_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        print("sales_performance_data -> ", sales_performance_data)
+        # print("sales_performance_data -> ", sales_performance_data)
         return {"status": True, "message": "success", "data": sales_performance_data}
+    
+    @staticmethod
+    async def sales_growth(filters, drill_state):
+        """
+        Fetches the sales performance data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the sales performance data.
+        """
+        sales_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
+        sales_growth_query_ = sales_growth_query
+        if filters:
+            sales_growth_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(sales_growth_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(sales_growth_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(sales_growth_query)
+        sales_growth_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        # print("sales_growth_data -> ", sales_growth_data)
+        return {"status": True, "message": "success", "data": sales_growth_data}
 
 
     
