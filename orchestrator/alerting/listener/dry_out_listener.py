@@ -61,7 +61,7 @@ class DryoutCollector:
         records = pl.DataFrame(records)
         # records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
         records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
-        records = records.filter(pl.col('status') <= 2)
+        records = records.filter(pl.col('status') <= 3)
         records = cls.assign_values_to_dataframe(records,
                                                  list(connection_mapping.camunda_listener_mapping.values()))
         records = records.head(10).to_dicts()
