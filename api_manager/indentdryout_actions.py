@@ -502,10 +502,10 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
 
     grouped_data = {}
     for entry in resp:
-        sap_id = entry["sap_id"]
-        if sap_id not in grouped_data:
-            grouped_data[sap_id] = []
-        grouped_data[sap_id].append(entry)
+        sap_name = entry["name"]
+        if sap_name not in grouped_data:
+            grouped_data[sap_name] = []
+        grouped_data[sap_name].append(entry)
     formatted_data = [{key: value} for key, value in grouped_data.items()]
 
     stats = {i + 1: 0 for i, _ in enumerate(top_x_axis)}
