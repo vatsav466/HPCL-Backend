@@ -1035,6 +1035,9 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_data"
                 }
             ]
         },
@@ -1080,6 +1083,9 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_data"
                 }
             ]
         },
@@ -1143,6 +1149,9 @@
                 },
                 {
                     "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_data"
                 }
             ]
         },
@@ -1563,6 +1572,10 @@
         {
             "name": "get_dried_out_ro",
             "displayName": "get_dried_out_ro"
+        },
+        {
+            "name": "get_dried_out_ro_data",
+            "displayName": "get_dried_out_ro_data"
         }
     ]
 }

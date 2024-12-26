@@ -45,12 +45,12 @@ class DryoutCollector:
         table = connection_mapping.table_mapping.get("dry_out", "")
         query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
                     rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, 
-                    case when sum(pumpable_Stock) <=0 then 0
-                    when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 1
+                    case when sum(pumpable_Stock) <=0 then 1
+                    when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
                     when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and 
-                    (sum(sch.avgsales_7days)/7)*3 then 2
+                    (sum(sch.avgsales_7days)/7)*3 then 3
                     when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and 
-                    (sum(sch.avgsales_7days)/7)*6 then 3
+                    (sum(sch.avgsales_7days)/7)*6 then 4
                     else 5 end status
                     from "{schema}".{table} sch
                     where 1=1 and sch.volume>0
@@ -103,6 +103,7 @@ class DryoutCollector:
             alert_data['terminal_plant_id'] = ''
             alert_data['camunda_host'] = _dry['camunda_listener']['host']
             alert_data['camunda_port'] = _dry['camunda_listener']['port']
+            alert_data['dry_out_in_days'] = str(status)
             await redis_queue.put(json.dumps(alert_data))
 
 

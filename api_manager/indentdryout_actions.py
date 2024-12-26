@@ -479,6 +479,47 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                 else:
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+    stats_query = "select sap_id, min(progress_rate) as present_stage " \
+                  f"from alerts where {conditions} " \
+                  f"group by sap_id"
+    stats_resp = await function(
+        query=stats_query
+    )
+
+    stats = {i + 1: 0 for i, _ in enumerate(top_x_axis)}
+    for rec in stats_resp:
+        if rec['present_stage'] == 0:
+            rec['present_stage'] = 1
+        if rec['present_stage'] not in stats:
+            stats[rec['present_stage']] = 0
+        stats[rec['present_stage']] += 1
+    stats = [{"section": top_x_axis[key - 1], "value": value, "serial": key}
+             for key, value in stats.items() if key <= len(top_x_axis)]
+    stats = sorted(stats, key=lambda x: x['serial'])
+    return {"status": True, "message": "Success", "top_x_axis": top_x_axis,
+            "bottom_x_axis": bottom_x_axis, "stats": stats}
+
+
+# Action get_dried_out_ro_data
+@router.post('/get_dried_out_ro_data', tags=['IndentDryOut'])
+async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro_DataParams):
+    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    for record in data.filters:
+        if record.key == "progress_rate":
+            where_clause.append(f"progress_rate={int(record.value[0]) - 1}")
+        else:
+            if record.value:
+                if record.key == "plant":
+                    record.key = "terminal_plant_id"
+                if len(record.value) == 1:
+                    where_clause.append(f"{record.key}='{record.value[0]}'")
+                else:
+                    where_clause.append(f"{record.key} in {tuple(record.value)}")
+    conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, " \
             "case when severity = 'Critical' then '1' " \
@@ -493,30 +534,12 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         query=query
     )
 
-    stats_query = "select sap_id, min(progress_rate) as present_stage " \
-                  f"from alerts where {conditions} " \
-                  f"group by sap_id"
-    stats_resp = await function(
-        query=stats_query
-    )
-
     grouped_data = {}
     for entry in resp:
-        sap_name = entry["name"]
-        if sap_name not in grouped_data:
-            grouped_data[sap_name] = []
-        grouped_data[sap_name].append(entry)
+        sap_id = entry["sap_id"]
+        if sap_id not in grouped_data:
+            grouped_data[sap_id] = []
+        grouped_data[sap_id].append(entry)
     formatted_data = [{key: value} for key, value in grouped_data.items()]
 
-    stats = {i + 1: 0 for i, _ in enumerate(top_x_axis)}
-    for rec in stats_resp:
-        if rec['present_stage'] == 0:
-            rec['present_stage'] = 1
-        if rec['present_stage'] not in stats:
-            stats[rec['present_stage']] = 0
-        stats[rec['present_stage']] += 1
-    stats = [{"section": top_x_axis[key - 1], "value": value, "serial": key}
-             for key, value in stats.items() if key <= len(top_x_axis)]
-    stats = sorted(stats, key=lambda x: x['serial'])
-    return {"status": True, "message": "Success", "data": formatted_data, "top_x_axis": top_x_axis,
-            "bottom_x_axis": bottom_x_axis, "stats": stats}
+    return {"status": True, "message": "Success", "data": formatted_data}

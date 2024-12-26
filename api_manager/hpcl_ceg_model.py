@@ -1397,6 +1397,10 @@ class Indentdryout_Get_Dried_Out_RoParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 
 
+class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+
+
 class ScreensSchema(UrdhvaPostgresBase):
     __tablename__ = 'screens'
     

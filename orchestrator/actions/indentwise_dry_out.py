@@ -317,7 +317,6 @@ class IndentDryOut:
         await self.update_alert_status(indent_status=IndentStatus.TruckNotAllocated, input_data=input_data)
         return await self.send_alert_action(is_allocated=False)
 
-
     async def is_indent_cancelled(self, params: dict):
         if not self.params:
             self.params = params
