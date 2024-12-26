@@ -687,5 +687,17 @@ LIMIT 10000;''',
                         ON 
                             lm.sap_id = a.sap_id AND lm.bu = a.bu
                         GROUP BY 
-                            lm.sap_id, lm.bu, lm.state, lm.region, lm.zone, lm.name, lm.latitude, lm.longitude;'''
+                            lm.sap_id, lm.bu, lm.state, lm.region, lm.zone, lm.name, lm.latitude, lm.longitude;''',
+    
+    "hourly_alerts": f'''SELECT 
+                                DATE_TRUNC('hour', created_at) AS alert_hour,
+                                COUNT(*) AS alert_count
+                            FROM 
+                                alerts
+                            WHERE 
+                                created_at >= CURRENT_TIMESTAMP - INTERVAL '24 hours'
+                            GROUP BY 
+                                DATE_TRUNC('hour', created_at)
+                            ORDER BY 
+                                alert_hour;''',
 }

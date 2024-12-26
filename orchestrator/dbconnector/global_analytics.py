@@ -259,3 +259,31 @@ class GlobalAnalytics:
             item['operability_index'] = 99
         print("severity_count_query_ -> ", severity_count_query_)
         return {"status": True, "message": "success", "data": severity_count_data}
+    
+    @staticmethod
+    async def hourly_alerts(filters, drill_state):
+        """
+        Fetches the hourly alerts data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the hourly alerts data.
+        """
+        hourly_alerts_query = lpg_plant_queries.lpg_plant_query.get("hourly_alerts")
+        hourly_alerts_query_ = hourly_alerts_query
+        if filters:
+            hourly_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(hourly_alerts_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query)
+        hourly_alerts_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        print("hourly_alerts_data -> ", hourly_alerts_data)
+
+
+    
+        
