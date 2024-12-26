@@ -712,4 +712,6 @@ LIMIT 10000;''',
                                 DATE_TRUNC('hour', created_at)
                             ORDER BY 
                                 alert_hour;''',
+    
+    "sales_performance": f'''SELECT * FROM public."M60_LEVEL_METADATA"'''
 }

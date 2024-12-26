@@ -33,7 +33,10 @@ lpg_dashboard_actions = [
     'analytics',
     'no_of_locations',
     'day_wise_alerts',
-    'location_severity_count'
+    'location_severity_count',
+    'severity_count',
+    'hourly_alerts',
+    'sales_performance'
 ]
 
 # Todo:- import all widget action modules here
@@ -70,6 +73,9 @@ widget_mapping = {
     'no_of_locations': {},
     'day_wise_alerts': {},
     'location_severity_count': {},
+    'severity_count': {},
+    'hourly_alerts': {},
+    'sales_performance': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''}
 }
