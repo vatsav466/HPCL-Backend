@@ -240,6 +240,7 @@ class GlobalAnalytics:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
         no_of_locations_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         print("no_of_locations_query_ -> ", no_of_locations_query_)
+        return {"status": True, "message": "success", "data": no_of_locations_data}
 
     @staticmethod
     async def severity_count(filters, drill_state):
