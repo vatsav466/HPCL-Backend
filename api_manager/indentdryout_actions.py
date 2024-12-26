@@ -457,13 +457,8 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
 # Action get_dried_out_ro
 @router.post('/get_dried_out_ro', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParams):
-    top_x_axis = [
-        "Indent Not Raised", "Pending Indents", "Indent On Hold", "Truck Allocated", "Sent to SAP",
-        "Sales Order Placed", "R2 Swiped", "Invoice Created", "R3 Swiped", "VTS", "Indent Delivered"
-    ]
-    bottom_x_axis = [
-        "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "SO\nRM"
-    ]
+    top_x_axis = connection_mapping.dry_out_top_x_axis
+
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -495,16 +490,25 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         if rec['present_stage'] not in stats:
             stats[rec['present_stage']] = 0
         stats[rec['present_stage']] += 1
-    stats = [{"section": top_x_axis[key - 1], "value": value, "serial": key}
+    stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
+              "group": top_x_axis[key - 1]['group']}
              for key, value in stats.items() if key <= len(top_x_axis)]
     stats = sorted(stats, key=lambda x: x['serial'])
-    return {"status": True, "message": "Success", "top_x_axis": top_x_axis,
-            "bottom_x_axis": bottom_x_axis, "stats": stats}
+    return {
+        "status": True, "message": "Success", "stats": stats,
+        "valid_indents": {
+            "section": "Valid Indents", "value": sum([rec['value'] for rec in stats[3:-1]]),
+            "serial": stats[3]['serial'], "condition": ">", "group": "valid_indents"
+        }
+    }
 
 
 # Action get_dried_out_ro_data
 @router.post('/get_dried_out_ro_data', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro_DataParams):
+    top_x_axis = connection_mapping.dry_out_top_x_axis
+    bottom_x_axis = connection_mapping.dry_out_bottom_x_axis
+
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -542,4 +546,6 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
         grouped_data[sap_id].append(entry)
     formatted_data = [{key: value} for key, value in grouped_data.items()]
 
-    return {"status": True, "message": "Success", "data": formatted_data}
+    return {"status": True, "message": "Success", "data": formatted_data,
+            "top_x_axis": [rec['name'] for rec in top_x_axis],
+            "bottom_x_axis": bottom_x_axis}
