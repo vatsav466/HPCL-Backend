@@ -102,7 +102,7 @@ class AlertFactory:
                                                             .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                                                         ),
                                                         'indent_raised_date': alert_data.get('indent_raised_date', None),
-                                                        'dry_out_in_days': alert_data.get('dry_out_in_days'),
+                                                        'dry_out_in_days': str(alert_data.get('dry_out_in_days', '1')),
                                                         'progress_rate': 1,
                                                         'raw_data': {}}).create()
             print("resp ---> ", alert_resp)
