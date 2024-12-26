@@ -19,16 +19,16 @@ table_mapping = {
 }
 
 camunda_listener_mapping = {
-    "camunda_dryout_01": {"host": "10.90.38.166", "port": 9080},
-    "camunda_dryout_02": {"host": "10.90.38.166", "port": 9081},
-    "camunda_dryout_03": {"host": "10.90.38.166", "port": 9082},
-    "camunda_dryout_04": {"host": "10.90.38.166", "port": 9083},
-    "camunda_dryout_05": {"host": "10.90.38.166", "port": 9084},
-    "camunda_dryout_06": {"host": "10.90.38.166", "port": 9085},
-    "camunda_dryout_07": {"host": "10.90.38.166", "port": 9086},
-    "camunda_dryout_08": {"host": "10.90.38.166", "port": 9087},
-    "camunda_dryout_09": {"host": "10.90.38.166", "port": 9088},
-    "camunda_dryout_10": {"host": "10.90.38.166", "port": 9089}
+    "camunda_dryout_01": {"host": "10.90.38.167", "port": 9080},
+    "camunda_dryout_02": {"host": "10.90.38.167", "port": 9081},
+    "camunda_dryout_03": {"host": "10.90.38.167", "port": 9082},
+    "camunda_dryout_04": {"host": "10.90.38.167", "port": 9083},
+    "camunda_dryout_05": {"host": "10.90.38.167", "port": 9084},
+    "camunda_dryout_06": {"host": "10.90.38.167", "port": 9085},
+    "camunda_dryout_07": {"host": "10.90.38.167", "port": 9086},
+    "camunda_dryout_08": {"host": "10.90.38.167", "port": 9087},
+    "camunda_dryout_09": {"host": "10.90.38.167", "port": 9088},
+    "camunda_dryout_10": {"host": "10.90.38.167", "port": 9089}
 }
 
 dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"}, {"name": "Pending Indents", "group": "pending"},
