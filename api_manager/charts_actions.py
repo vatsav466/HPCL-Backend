@@ -458,8 +458,8 @@ async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingP
 # Action get_creds_details
 @router.post('/get_creds_details', tags=['Charts'])
 async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
+    redis_ins = await urdhva_base.redispool.get_redis_connection()
     try:
-        redis_ins = await urdhva_base.redispool.get_redis_connection()
         if await redis_ins.exists(f"cred_store_{data.connection_id}"):
             creds_details = json.loads(base64.b64decode(await redis_ins.get(f"cred_store_{data.connection_id}")))
             return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
@@ -467,11 +467,16 @@ async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
         if not isinstance(creds_details, dict):
             creds_details = creds_details.__dict__
         await redis_ins.setex(f"cred_store_{data.connection_id}", 24*60*60,
-                              base64.b64encode(json.dumps(creds_details, default=str).encode()).decode())
+                              base64.b64encode(json.dumps(creds_details).encode()).decode())
         return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
     except Exception as e:
         raise ValueError(e)
         # return {"status": False, "message": "Failed to get credentials", "data": {}}
+    finally:
+        try:
+            await redis_ins.close()
+        except:
+            ...
 
 
 # Action get_schema

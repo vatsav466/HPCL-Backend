@@ -33,13 +33,21 @@ class Postgresql(BaseAction):
         if 'connection_name' in self.params.keys() and self.params['connection_name']:
             print("connection_name_: ", self.params['connection_name'])
             redis_ins = await urdhva_base.redispool.get_redis_connection()
-            redis_key = f"cred_store_{self.params['connection_name']}"
-            if await redis_ins.exists(f"cred_store_{self.params['connection_name']}"):
-                self.params = json.loads(base64.b64decode(await redis_ins.get(redis_key)))
-            else:
+            try:
+                redis_key = f"cred_store_{self.params['connection_name']}"
+                if await redis_ins.exists(f"cred_store_{self.params['connection_name']}"):
+                    self.params = json.loads(base64.b64decode(await redis_ins.get(redis_key)))
+                else:
+                    self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+                    await redis_ins.setex(redis_key, 24 * 60 * 60,
+                                          base64.b64encode(json.dumps(self.params, default=str).encode()).decode())
+            except:
                 self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
-                await redis_ins.setex(redis_key, 24 * 60 * 60,
-                                      base64.b64encode(json.dumps(self.params, default=str).encode()).decode())
+            finally:
+                try:
+                    await redis_ins.close()
+                except:
+                    ...
             if not isinstance(self.params, dict):
                 self.params = self.params.__dict__
             if 'credentials' in self.params.keys():
