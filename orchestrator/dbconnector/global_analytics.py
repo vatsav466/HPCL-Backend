@@ -283,6 +283,7 @@ class GlobalAnalytics:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query)
         hourly_alerts_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         print("hourly_alerts_data -> ", hourly_alerts_data)
+        return {"status": True, "message": "success", "data": hourly_alerts_data}
 
 
     
