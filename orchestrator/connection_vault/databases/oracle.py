@@ -41,7 +41,7 @@ class Oracle(BaseAction):
             redis_key = f"cred_store_{self.params['connection_name']}"
             try:
                 if redis_ins.exists(f"cred_store_{self.params['connection_name']}"):
-                    self.params = json.loads(base64.b64decode(await redis_ins.get(redis_key)))
+                    self.params = json.loads(base64.b64decode(redis_ins.get(redis_key)))
                 else:
                     self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
                     redis_ins.setex(redis_key, 24 * 60 * 60,

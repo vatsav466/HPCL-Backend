@@ -462,7 +462,7 @@ async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
     try:
         try:
             if redis_ins.exists(f"cred_store_{data.connection_id}"):
-                creds_details = json.loads(base64.b64decode(await redis_ins.get(f"cred_store_{data.connection_id}")))
+                creds_details = json.loads(base64.b64decode(redis_ins.get(f"cred_store_{data.connection_id}")))
                 return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
             creds_details = await CredsModel.get(data.connection_id)
             if not isinstance(creds_details, dict):
