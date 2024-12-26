@@ -2,95 +2,93 @@ import urdhva_base.utilities
 
 
 # Interlock name and sop mapping for TAS Alerts
-tas_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS",
-                          "block_duration": 730, "block_msg": "2 years"},
-                         {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage FirstTime", "model": "VTS",
-                          "block_duration": 90, "block_msg": "90 days"},
-                         {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage SecondTime", "model": "VTS",
-                          "block_duration": 730, "block_msg": "2 years"},
-                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime", "model": "VTS",
-                          "block_duration": 90, "block_msg": "90 days"},
-                         {"sop_id": "SOP001", "interlock_name": "VTS PowerDisconnect", "model": "VTS"},
-                         {"sop_id": "SOP001", "interlock_name": "VTS Offline FirstTime", "model": "VTS",
-                          "block_duration": 90, "block_msg": "90 days"},
-                         {"sop_id": "SOP001", "interlock_name": "VTS Offline SecondTime", "model": "VTS",
-                          "block_duration": 730, "block_msg": "2 years"},
-                         {"sop_id": "SOP001", "interlock_name": "Tank overfill prevention(ROSV)"},
-                         {"sop_id": "SOP001", "interlock_name": "Night Driving FirstTime", "model": "VTS",
-                          "block_duration": 7, "block_msg": "7 days"},
-                         {"sop_id": "SOP001", "interlock_name": "VTS Device Tampering", "model": "VTS",
-                          "block_duration": 1460, "block_msg": "Permanent"},
-                         {"sop_id": "SOP001", "interlock_name": "Night Driving SecondTime", "model": "VTS",
-                          "block_duration": 90, "block_msg": "90 days"},
-                         {"sop_id": "SOP001", "interlock_name": "Night Driving ThirdTime", "model": "VTS",
-                          "block_duration": 730, "block_msg": "2 years"},
-                         {"sop_id": "SOP001", "interlock_name": "Speed Violation FirstTime", "model": "VTS",
-                          "block_duration": 7, "block_msg": "7 days"},
-                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FirstTime", "model": "VTS",
-                          "block_duration": 90, "block_msg": "90 days"},
-                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SecondTime", "model": "VTS",
-                          "block_duration": 730, "block_msg": "2 years"},
-                         {"sop_id": "SOP001", "interlock_name": "Speed Violation SecondTime", "model": "VTS",
-                          "block_duration": 90, "block_msg": "90 days"},
-                         {"sop_id": "SOP001", "interlock_name": "Speed Violation ThirdTime", "model": "VTS",
-                          "block_duration": 730, "block_msg": "2 years"},
+tas_interlock_mapping = [
+                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_90days"},
+                         {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_SecondTime_2years"},
+
+                         {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_90days"},
+                         {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+
+                         {"sop_id": "SOP001", "interlock_name": "VTS PowerDisconnect", "model": "VTS", "workflow_name": "Tas_Vts_PermanantBlock"},                         
+                         {"sop_id": "SOP001", "interlock_name": "VTS Device Tampering", "model": "VTS", "workflow_name": "Tas_Vts_PermanantBlock"},
+
+                         {"sop_id": "SOP001", "interlock_name": "VTS Offline FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_90days"},
+                         {"sop_id": "SOP001", "interlock_name": "VTS Offline SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_SecondTime_2years"},
+
+                         {"sop_id": "SOP001", "interlock_name": "Night Driving FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_7days"},
+                         {"sop_id": "SOP001", "interlock_name": "Night Driving SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_90days"},
+                         {"sop_id": "SOP001", "interlock_name": "Night Driving ThirdTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_SecondTime_2years"},
+
+                         {"sop_id": "SOP001", "interlock_name": "Speed Violation FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_7days"},
+                         {"sop_id": "SOP001", "interlock_name": "Speed Violation SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_90days"},
+                         {"sop_id": "SOP001", "interlock_name": "Speed Violation ThirdTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_SecondTime_2years"},
+
+                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_90days"},
+                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_SecondTime_2years"},
+
+                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_FirstTime_7days"},
+                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+
+                         {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_FirstTime_7days"},
+                         {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+
+                         {"sop_id": "SOP001E", "interlock_name": "VTS PowerDisconnect Exception", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+                         {"sop_id": "SOP001E", "interlock_name": "VTS device Tampering Exception", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+
+                         {"sop_id": "SOP001E", "interlock_name": "VTS offline Exception FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_FirstTime_7days"},
+                         {"sop_id": "SOP001E", "interlock_name": "VTS Offline Exception SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+                         
+                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_FirstTime_7days"},
+                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_SecondTime_90days"},
+                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception ThirdTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+
+
+                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_FirstTime_7days"},
+                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_SecondTime_90days"},
+                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception ThirdTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+
+                         {"sop_id": "SOP001E", "interlock_name": "NoHalt zone Exception FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_FirstTime_7days"},
+                         {"sop_id": "SOP001E", "interlock_name": "NoHalt Zone Exception SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+
                          {"sop_id": "SOP001", "interlock_name": "EM Locks : VTS Offline - Lorry", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception SecondTime",
-                          "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "VTS Offline Exception SecondTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception SecondTime",
-                          "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception FirstTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception FirstTime",
-                          "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "VTS PowerDisconnect Exception", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "VTS offline Exception FirstTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception FirstTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "VTS device Tampering Exception", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception SecondTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception FirstTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "NoHalt zone Exception FirstTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception ThirdTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "NoHalt Zone Exception SecondTime", "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception SecondTime",
-                          "model": "VTS"},
-                         {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception ThirdTime", "model": "VTS"},
-                         {"sop_id": "SOP002", "interlock_name": "Plant ESD(closure of tank ROSOVs)"},
-                         {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS"},
-                         {"sop_id": "SOP003", "interlock_name": "Plant ESD(Power shutdown)"},
-                         {"sop_id": "SOP004", "interlock_name": "Rim seal fire protection system"},
-                         {"sop_id": "SOP005", "interlock_name": "HCDS(Audio visual alarm in control room)"},
-                         {"sop_id": "SOP007", "interlock_name": "Tank overfill prevention(MOV)"},
-                         {"sop_id": "SOP009", "interlock_name": "Plant ESD(Closure of tank MOVS)"},
-                         {"sop_id": "SOP011", "interlock_name": "Dyke drain valve position indication"},
-                         {"sop_id": "SOP012", "interlock_name": "Pulse Security Alarm"},
-                         {"sop_id": "SOP013", "interlock_name": "K factors"},
-                         {"sop_id": "SOP014", "interlock_name": "No flow alarm"},
-                         {"sop_id": "SOP015", "interlock_name": "Low flow alarm"},
-                         {"sop_id": "SOP016", "interlock_name": "High flow alarm"},
-                         {"sop_id": "SOP017", "interlock_name": "Un-Authorized Flow alarm"},
-                         {"sop_id": "SOP018", "interlock_name": "Meter Overrun Alarm"},
-                         {"sop_id": "SOP019", "interlock_name": "Blend Overdose Alarm"},
-                         {"sop_id": "SOP020", "interlock_name": "Blend Under-dose Alarm"},
-                         {"sop_id": "SOP021", "interlock_name": "Additive Overdose Alarm"},
-                         {"sop_id": "SOP022", "interlock_name": "Additive Under-dose Alarm"},
-                         {"sop_id": "SOP023", "interlock_name": "Operability Index"},
-                         {"sop_id": "SOP024", "interlock_name": "Intrusion", "model": "VA"},
-                         {"sop_id": "SOP024", "interlock_name": "Smoke Detection TAS", "model": "VA"},
-                         {"sop_id": "SOP024", "interlock_name": "Fire Detection TAS", "model": "VA"},
-                         {"sop_id": "SOP024", "interlock_name": "Fire/Smoke Detection TAS", "model": "VA"},
-                         {"sop_id": "SOP024", "interlock_name": "Absence Of Wheelchock TAS", "model": "VA"},
-                         {"sop_id": "SOP025", "interlock_name": "Non-wearing of Safety Belt at Height", "model": "VA"},
-                         {"sop_id": "SOP026", "interlock_name": "Non-Wearing of Safety Helmet", "model": "VA"},
-                         {"sop_id": "SOP027", "interlock_name": "Person not wearing Safety Helmet TAS", "model": "VA"},
-                         {"sop_id": "SOP028", "interlock_name": "Person not wearing Safety Harness/Belt TAS", "model": "VA"},
-                         {"sop_id": "SOP029", "interlock_name": "Absence Of Fire Extinguisher Tt Operations", "model": "VA"},
-                         {"sop_id": "SOP030", "interlock_name": "Fire Hose is not available", "model": "VA"},
-                         {"sop_id": "SOP031", "interlock_name": "Person not wearing Protective Clothing", "model": "VA"},
-                         {"sop_id": "SOP032", "interlock_name": "Camera is offline", "model": "VA"},
-                         {"sop_id": "SOP033", "interlock_name": "Work Beyond time", "model": "VA"},
-                         {"sop_id": "SOP034", "interlock_name": "Tas Loss of communication VA", "model": "VA"},
-                         {"sop_id": "SOP291", "interlock_name": "Indent Dry Out"}]
+
+                         {"sop_id": "SOP001", "interlock_name": "Tank overfill prevention(ROSV)", "workflow_name": ""},
+                         {"sop_id": "SOP002", "interlock_name": "Plant ESD(closure of tank ROSOVs)", "workflow_name": ""},
+                         {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS", "workflow_name": ""},
+                         {"sop_id": "SOP003", "interlock_name": "Plant ESD(Power shutdown)", "workflow_name": ""},
+                         {"sop_id": "SOP004", "interlock_name": "Rim seal fire protection system", "workflow_name": ""},
+                         {"sop_id": "SOP005", "interlock_name": "HCDS(Audio visual alarm in control room)", "workflow_name": ""},
+                         {"sop_id": "SOP007", "interlock_name": "Tank overfill prevention(MOV)", "workflow_name": ""},
+                         {"sop_id": "SOP009", "interlock_name": "Plant ESD(Closure of tank MOVS)", "workflow_name": ""},
+                         {"sop_id": "SOP011", "interlock_name": "Dyke drain valve position indication", "workflow_name": ""},
+                         {"sop_id": "SOP012", "interlock_name": "Pulse Security Alarm", "workflow_name": ""},
+                         {"sop_id": "SOP013", "interlock_name": "K factors", "workflow_name": ""},
+                         {"sop_id": "SOP014", "interlock_name": "No flow alarm", "workflow_name": ""},
+                         {"sop_id": "SOP015", "interlock_name": "Low flow alarm", "workflow_name": ""},
+                         {"sop_id": "SOP016", "interlock_name": "High flow alarm", "workflow_name": ""},
+                         {"sop_id": "SOP017", "interlock_name": "Un-Authorized Flow alarm", "workflow_name": ""},
+                         {"sop_id": "SOP018", "interlock_name": "Meter Overrun Alarm", "workflow_name": ""},
+                         {"sop_id": "SOP019", "interlock_name": "Blend Overdose Alarm", "workflow_name": ""},
+                         {"sop_id": "SOP020", "interlock_name": "Blend Under-dose Alarm", "workflow_name": ""},
+                         {"sop_id": "SOP021", "interlock_name": "Additive Overdose Alarm", "workflow_name": ""},
+                         {"sop_id": "SOP022", "interlock_name": "Additive Under-dose Alarm", "workflow_name": ""},
+                         {"sop_id": "SOP023", "interlock_name": "Operability Index", "workflow_name": ""},
+                         {"sop_id": "SOP024", "interlock_name": "Intrusion", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP024", "interlock_name": "Smoke Detection TAS", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP024", "interlock_name": "Fire Detection TAS", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP024", "interlock_name": "Fire/Smoke Detection TAS", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP024", "interlock_name": "Absence Of Wheelchock TAS", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP025", "interlock_name": "Non-wearing of Safety Belt at Height", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP026", "interlock_name": "Non-Wearing of Safety Helmet", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP027", "interlock_name": "Person not wearing Safety Helmet TAS", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP028", "interlock_name": "Person not wearing Safety Harness/Belt TAS", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP029", "interlock_name": "Absence Of Fire Extinguisher Tt Operations", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP030", "interlock_name": "Fire Hose is not available", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP031", "interlock_name": "Person not wearing Protective Clothing", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP032", "interlock_name": "Camera is offline", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP033", "interlock_name": "Work Beyond time", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP034", "interlock_name": "Tas Loss of communication VA", "model": "VA", "workflow_name": ""},
+                         {"sop_id": "SOP291", "interlock_name": "Indent Dry Out", "workflow_name": ""}]
 
 # Interlock name and sop mapping for RO Alerts
 ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlock"},
@@ -115,8 +113,8 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlo
                         {"sop_id": "SOP018", "interlock_name": "Nozzle"},
                         {"sop_id": "SOP999", "interlock_name": "Nozzle Interlock"},
                         {"sop_id": "SOP999", "interlock_name": "Bay Interlock"},
-                        {"sop_id": "SOP291", "interlock_name": "Indent Dry Out"},
-                        {"sop_id": "SOP292", "interlock_name": "Dry Out Each Indent Wise MainFlow"},
+                        {"sop_id": "SOP291", "interlock_name": "Indent Dry Out", "workflow_name": "Indent Dry Out"},
+                        {"sop_id": "SOP292", "interlock_name": "Dry Out Each Indent Wise MainFlow", "workflow_name": "Dry Out Each Indent Wise MainFlow"},
                         {"sop_id": "SOP293", "interlock_name": "Dry Out Triggering Flow"},]
 
 # Interlock name and sop mapping for LPG Alerts
@@ -161,26 +159,11 @@ rdi_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Product Quality
                          {"sop_id": "SOP003", "interlock_name": "Unauthorized Decantation RDI"}]
 
 
-# def get_interlock_name(bu, interlock_name=None, sop_id=None):
-#     # Fetch interlock details from configuration
-#     if not bu or (not interlock_name and not sop_id):
-#         return {}
-#     mapping = eval(f'{urdhva_base.utilities.snake_case(bu)}_interlock_mapping')
-#     filtered_data = []
-#     if sop_id:
-#         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower(), mapping))
-#     elif interlock_name:
-#         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-#     elif sop_id and interlock_name:
-#         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower() and x['interlock_name'].lower() == interlock_name.lower(), mapping))
-#     print("filtered_data--->", filtered_data[0])
-#     return filtered_data[0] if filtered_data else {}
-
 def get_interlock_name(bu, interlock_name=None, sop_id=None):
-    # Fetch interlock details from configuration
     if not bu or (not interlock_name and not sop_id):
         return {}
     mapping = eval(f'{urdhva_base.utilities.snake_case(bu)}_interlock_mapping')
+    print("mapping --> ", mapping)
     filtered_data = []
     if sop_id:
         print("sop_id-->", sop_id)
@@ -212,6 +195,6 @@ def fmt_il_name(interlock_name=None):
     :return: A dictionary containing the interlock details. The dictionary will contain the keys 'sop_id', 'interlock_name', 'location_name', 'device_name', 'device_type', 'device_id', 'state', 'city', 'zone' and 'interlock_status'. If the interlock is not found, an empty dictionary is returned.
     """
     if interlock_name:
-        interlock_name = ''.join(char for char in interlock_name if char not in ' :()-/')
+        interlock_name = ''.join(char for char in interlock_name if char not in ' :()-/_')
 
     return interlock_name

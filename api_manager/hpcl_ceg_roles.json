@@ -1271,6 +1271,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "vtsalerthistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VtsAlertHistory",
+            "attributes": {},
+            "uris": [
+                "/api/vtsalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vtsalerthistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VtsAlertHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vtsalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vtsalerthistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VtsAlertHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vtsalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

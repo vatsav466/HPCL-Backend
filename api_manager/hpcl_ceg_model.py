@@ -1523,3 +1523,79 @@ class DeviceMasterGetResp(pydantic.BaseModel):
     data: typing.List[DeviceMaster]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class VtsAlertHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'vts_alert_history'
+    
+    vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tl_number: Mapped[str] = mapped_column("tl_number", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    report_duration: Mapped[typing.Optional[str]] = mapped_column("report_duration", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    total_trips: Mapped[typing.Optional[int]] = mapped_column("total_trips", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    stoppage_violations_count: Mapped[typing.Optional[int]] = mapped_column("stoppage_violations_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    route_deviation_count: Mapped[typing.Optional[int]] = mapped_column("route_deviation_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    speed_violation_count: Mapped[typing.Optional[int]] = mapped_column("speed_violation_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    main_supply_removal_count: Mapped[typing.Optional[int]] = mapped_column("main_supply_removal_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    night_driving_count: Mapped[typing.Optional[int]] = mapped_column("night_driving_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    no_halt_zone_count: Mapped[typing.Optional[int]] = mapped_column("no_halt_zone_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    device_offline_count: Mapped[typing.Optional[int]] = mapped_column("device_offline_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    device_tamper_count: Mapped[typing.Optional[int]] = mapped_column("device_tamper_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    approved_by: Mapped[typing.Optional[str]] = mapped_column("approved_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'vts_alert_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    tl_number: str
+    report_duration: typing.Optional[str] = pydantic.Field("", **{})
+    total_trips: typing.Optional[int] = pydantic.Field(0, **{})
+    stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
+    route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
+    night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
+    no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
+    device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
+    device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
+    approved_by: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = VtsAlertHistorySchema
+        upsert_keys = []
+
+
+class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'vts_alert_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    tl_number: typing.Optional[str] | None = None
+    report_duration: typing.Optional[str] = pydantic.Field("", **{})
+    total_trips: typing.Optional[int] = pydantic.Field(0, **{})
+    stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
+    route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    speed_violation_count: typing.Optional[int] = pydantic.Field(0, **{})
+    main_supply_removal_count: typing.Optional[int] = pydantic.Field(0, **{})
+    night_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
+    no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
+    device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
+    device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
+    approved_by: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = VtsAlertHistorySchema
+        upsert_keys = []
+
+
+class VtsAlertHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[VtsAlertHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
