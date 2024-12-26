@@ -103,7 +103,7 @@ class DryoutCollector:
             alert_data['terminal_plant_id'] = ''
             alert_data['camunda_host'] = _dry['camunda_listener']['host']
             alert_data['camunda_port'] = _dry['camunda_listener']['port']
-            alert_data['dry_out_in_days'] = str(status)
+            alert_data['dry_out_in_days'] = str(_dry['status'])
             await redis_queue.put(json.dumps(alert_data))
 
 

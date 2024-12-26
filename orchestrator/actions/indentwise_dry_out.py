@@ -158,7 +158,7 @@ class IndentDryOut:
             else:
                 # If dry_out_days found diff, update alert
                 for record in alerts_data['data']:
-                    if record.get('dry_out_in_days') != self.params['dry_out_in_days']:
+                    if record['dry_out_in_days'] != self.params['dry_out_in_days']:
                         query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
                                  f"where id='{record['id']}'")
                         await hpcl_ceg_model.Alerts.update_by_query(query)
@@ -179,7 +179,7 @@ class IndentDryOut:
                 else:
                     # If dry_out_days found diff, update alert
                     for record in alerts_data['data']:
-                        if record.get('dry_out_in_days') != self.params['dry_out_in_days']:
+                        if record['dry_out_in_days'] != self.params['dry_out_in_days']:
                             query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
                                      f"where id='{record['id']}'")
                             await hpcl_ceg_model.Alerts.update_by_query(query)
