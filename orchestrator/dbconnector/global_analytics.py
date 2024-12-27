@@ -2,6 +2,7 @@ import urdhva_base
 import json
 import psycopg2
 import polars as pl
+import pandas as pd
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
@@ -336,8 +337,17 @@ class GlobalAnalytics:
             sales_performance_query_ += ' AND '.join(conditions)
 
         resp = await function(query=sales_performance_query_)
+        resp = pd.DataFrame(resp)
+        for each_float_col in ["TARGET_QTY_TMT", "Prediction_Value", "Product_Achievement", 
+                                "Zone_Region_Achievement", "Rate_Per_Day_Required_MMT", 
+                                "Rate_per_day_current_MMT", "FinalSum", "FinalActualSum", "NETWEIGHT_TMT"]:
+            resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        for each_str_col in ["SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+                            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
+                            "month_year", "month_name"]:
+            resp[each_float_col] = resp[each_float_col].fillna('')
         print("resp -->  ", resp)
-        return {"status": True, "message": "success", "data": resp}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     
     @staticmethod
@@ -373,5 +383,11 @@ class GlobalAnalytics:
             sales_growth_query_ += ' AND '.join(conditions)
 
         resp = await function(query=sales_growth_query_)
+        resp = pd.DataFrame(resp)
+        for each_float_col in ["sum_total_sales", "total_sales"]:
+            resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        for each_str_col in ["month_name", "fiscal_month", "SBU_CD", "ZONE_CD", "RO_CD", "SA_CD", "MATERIAL_CD", 
+                            "fiscal_year", "month_year", "percentage_change"]:
+            resp[each_float_col] = resp[each_float_col].fillna('')
         print("resp -->  ", resp)
-        return {"status": True, "message": "success", "data": resp}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
