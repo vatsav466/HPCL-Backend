@@ -1259,6 +1259,9 @@
                     "name": "delete"
                 },
                 {
+                    "name": "get_rejections"
+                },
+                {
                     "name": "get_cs_rejections"
                 },
                 {
@@ -1281,6 +1284,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_rejections"
                 },
                 {
                     "name": "get_cs_rejections"
@@ -1314,6 +1320,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_rejections"
                 },
                 {
                     "name": "get_cs_rejections"
@@ -1755,6 +1764,10 @@
         {
             "name": "get_productivity_rate",
             "displayName": "get_productivity_rate"
+        },
+        {
+            "name": "get_rejections",
+            "displayName": "get_rejections"
         },
         {
             "name": "get_cs_rejections",
