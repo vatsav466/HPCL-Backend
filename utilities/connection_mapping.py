@@ -41,3 +41,9 @@ dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"}, {"na
 dry_out_bottom_x_axis = [
         "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "SO\nRM"
     ]
+
+creds_type = {
+    "3": {"cred_model": "Databases", 'cred_type': "PostgreSQL"},
+    "2": {"cred_model": "Databases", 'cred_type': "Oracle"},
+    "1": {"cred_model": "Databases", 'cred_type': "PostgreSQL"}
+}

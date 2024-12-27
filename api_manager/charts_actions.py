@@ -8,8 +8,9 @@ import base64
 import importlib
 import traceback
 import hpcl_ceg_model
-import urdhva_base.redispool
 import urdhva_base.context
+import urdhva_base.redispool
+import utilities.connection_mapping as connection_mapping
 from orchestrator.dashboard.chart_factory import JSONHashing
 from orchestrator.dashboard.chart_factory import date_actions
 from orchestrator.dashboard.chart_factory import charts_helpers
@@ -458,7 +459,7 @@ async def charts_connection_vault_routing(data: Charts_Connection_Vault_RoutingP
 # Action get_creds_details
 @router.post('/get_creds_details', tags=['Charts'])
 async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
-    redis_ins = urdhva_base.redispool.get_synchronous_redis_connection()
+    # redis_ins = urdhva_base.redispool.get_synchronous_redis_connection()
     try:
         # try:
         #     if redis_ins.exists(f"cred_store_{data.connection_id}"):
@@ -470,9 +471,10 @@ async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
         #     redis_ins.setex(f"cred_store_{data.connection_id}", 24*60*60,
         #                           base64.b64encode(json.dumps(creds_details).encode()).decode())
         # except:
-        creds_details = await CredsModel.get(data.connection_id)
-        if not isinstance(creds_details, dict):
-            creds_details = creds_details.__dict__
+        # creds_details = await CredsModel.get(data.connection_id)
+        # if not isinstance(creds_details, dict):
+        #     creds_details = creds_details.__dict__
+        creds_details = connection_mapping.creds_type.get(data.connection_id, "1")
         return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
     except Exception as e:
         raise ValueError(e)
