@@ -713,7 +713,13 @@ LIMIT 10000;''',
                             ORDER BY 
                                 alert_hour;''',
     
-    "sales_performance": f'''SELECT * FROM public."M60_LEVEL_METADATA"''',
+    "sales_performance": f'''SELECT "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+                                    "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "INVOICE_DT", 
+                                    "TARGET_QTY_TMT", "FISCAL_YEAR", "NETWEIGHT_TMT", "FinalSum", 
+                                    "FinalActualSum", "Rate_Per_Day_Required_MMT", "Rate_per_day_current_MMT", 
+                                    "month_year", "month_name", "Prediction_Value", "Zone_Region_Achievement",  
+                                    "Product_Achievement" 
+                            FROM public."M60_LEVEL_METADATA"''',
 
     "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_SALES"'''
 }
