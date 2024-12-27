@@ -117,11 +117,12 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
                 final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
                                                          "category": check_category(rec['category'])}
 
+    for key, details in final_data.items():
+        final_data[key] = list(details.values())
+
     # adding products
     final_data["products"] = [{"name": key, "id": val} for val, key in product_code_mapping.items()]
 
-    for key, details in final_data.items():
-        final_data[key] = list(details.values())
     return final_data
 
 
