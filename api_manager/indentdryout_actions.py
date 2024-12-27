@@ -491,7 +491,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
              for key, value in stats.items() if key <= len(top_x_axis)]
     stats.append(
         {
-            "section": "Indent Placed",
+            "section": "Indent Raised",
             "value": sum(item['value'] for item in stats if 2 <= item['serial'] <= 10),
             "serial": 12, "condition": "=", "group": "not_raised"
         }

@@ -31,8 +31,9 @@ camunda_listener_mapping = {
     "camunda_dryout_10": {"host": "10.90.38.167", "port": 9089}
 }
 
-dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"}, {"name": "Pending Indents", "group": "pending"},
-                  {"name": "Indent On Hold", "group": "pending"}, {"name": "Truck Allocated", "group": "wip"},
+dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"},
+                  {"name": "Indent On Hold", "group": "pending"}, {"name": "Pending Indents", "group": "pending"},
+                  {"name": "Truck Allocated", "group": "wip"},
                   {"name": "Sent to SAP", "group": "wip"}, {"name": "Sales Order Placed", "group": "wip"},
                   {"name": "R2 Swiped", "group": "wip"}, {"name": "Invoice Created", "group": "wip"},
                   {"name": "R3 Swiped", "group": "wip"}, {"name": "VTS", "group": "wip"},
