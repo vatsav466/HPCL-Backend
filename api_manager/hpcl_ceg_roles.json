@@ -1156,6 +1156,177 @@
             ]
         },
         {
+            "name": "lpgoperations",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperations",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_productions_rate"
+                },
+                {
+                    "name": "get_productivity_rate"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperations_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperations_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_productions_rate"
+                },
+                {
+                    "name": "get_productivity_rate"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperations_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperations_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_productions_rate"
+                },
+                {
+                    "name": "get_productivity_rate"
+                }
+            ]
+        },
+        {
+            "name": "lpgrejections",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgRejections",
+            "attributes": {},
+            "uris": [
+                "/api/lpgrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_cs_rejections"
+                },
+                {
+                    "name": "get_gd_rejections"
+                },
+                {
+                    "name": "get_pt_rejections"
+                }
+            ]
+        },
+        {
+            "name": "lpgrejections_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgRejections_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_cs_rejections"
+                },
+                {
+                    "name": "get_gd_rejections"
+                },
+                {
+                    "name": "get_pt_rejections"
+                }
+            ]
+        },
+        {
+            "name": "lpgrejections_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgRejections_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_cs_rejections"
+                },
+                {
+                    "name": "get_gd_rejections"
+                },
+                {
+                    "name": "get_pt_rejections"
+                }
+            ]
+        },
+        {
             "name": "screens",
             "type": "all",
             "ownerManagedAccess": false,
@@ -1576,6 +1747,26 @@
         {
             "name": "get_dried_out_ro_data",
             "displayName": "get_dried_out_ro_data"
+        },
+        {
+            "name": "get_productions_rate",
+            "displayName": "get_productions_rate"
+        },
+        {
+            "name": "get_productivity_rate",
+            "displayName": "get_productivity_rate"
+        },
+        {
+            "name": "get_cs_rejections",
+            "displayName": "get_cs_rejections"
+        },
+        {
+            "name": "get_gd_rejections",
+            "displayName": "get_gd_rejections"
+        },
+        {
+            "name": "get_pt_rejections",
+            "displayName": "get_pt_rejections"
         }
     ]
 }

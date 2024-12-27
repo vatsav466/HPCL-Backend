@@ -691,6 +691,59 @@ Model IndentDryOut {
     }
 }
 
+Model LpgOperations {
+    is_additional_carousel float
+    short_name str
+    name str
+    zone str
+    carousel float
+    filling_heads float
+    carousel_count float    
+    bottling_14_2kg float
+    bottling_19kg float
+    bottling_total float
+    productivity_normal_production float
+    productivity_normal_stoppages float
+    productivity_normal_productivity float
+    productivity_break_production float
+    productivity_break_net_hours float
+    productivity_break_productivity float
+    productivity_overtime_production float
+    productivity_overtime_net_hours float
+    productivity_overtime_productivity float
+    rejection_eld_percent float
+    rejection_ort_percent float
+    rejection_cs_percent float
+    process_date datetime
+
+    Action=> get_productions_rate {        
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
+    }
+    Action=> get_productivity_rate {
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
+    }
+}
+
+Model LpgRejections {
+    Action=> get_cs_rejections {
+        days str
+    }
+    Action=> get_gd_rejections {
+        days str
+    }
+    Action=> get_pt_rejections {
+        days str
+    }
+}
+
 Model Screens {
     screen_title str
     dashboards list int

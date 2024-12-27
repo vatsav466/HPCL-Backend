@@ -1401,6 +1401,162 @@ class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 
 
+class LpgOperationsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_operations'
+    
+    is_additional_carousel: Mapped[float] = mapped_column("is_additional_carousel", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    short_name: Mapped[str] = mapped_column("short_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    carousel: Mapped[float] = mapped_column("carousel", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    filling_heads: Mapped[float] = mapped_column("filling_heads", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    carousel_count: Mapped[float] = mapped_column("carousel_count", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bottling_14_2kg: Mapped[float] = mapped_column("bottling_14_2kg", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bottling_19kg: Mapped[float] = mapped_column("bottling_19kg", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bottling_total: Mapped[float] = mapped_column("bottling_total", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_normal_production: Mapped[float] = mapped_column("productivity_normal_production", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_normal_stoppages: Mapped[float] = mapped_column("productivity_normal_stoppages", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_normal_productivity: Mapped[float] = mapped_column("productivity_normal_productivity", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_break_production: Mapped[float] = mapped_column("productivity_break_production", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_break_net_hours: Mapped[float] = mapped_column("productivity_break_net_hours", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_break_productivity: Mapped[float] = mapped_column("productivity_break_productivity", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_overtime_production: Mapped[float] = mapped_column("productivity_overtime_production", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_overtime_net_hours: Mapped[float] = mapped_column("productivity_overtime_net_hours", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    productivity_overtime_productivity: Mapped[float] = mapped_column("productivity_overtime_productivity", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    rejection_eld_percent: Mapped[float] = mapped_column("rejection_eld_percent", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    rejection_ort_percent: Mapped[float] = mapped_column("rejection_ort_percent", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    rejection_cs_percent: Mapped[float] = mapped_column("rejection_cs_percent", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    process_date: Mapped[datetime.datetime] = mapped_column("process_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgOperationsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_operations'
+    
+    is_additional_carousel: float
+    short_name: str
+    name: str
+    zone: str
+    carousel: float
+    filling_heads: float
+    carousel_count: float
+    bottling_14_2kg: float
+    bottling_19kg: float
+    bottling_total: float
+    productivity_normal_production: float
+    productivity_normal_stoppages: float
+    productivity_normal_productivity: float
+    productivity_break_production: float
+    productivity_break_net_hours: float
+    productivity_break_productivity: float
+    productivity_overtime_production: float
+    productivity_overtime_net_hours: float
+    productivity_overtime_productivity: float
+    rejection_eld_percent: float
+    rejection_ort_percent: float
+    rejection_cs_percent: float
+    process_date: datetime.datetime
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgOperationsSchema
+        upsert_keys = []
+
+
+class LpgOperations(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_operations'
+    
+    is_additional_carousel: typing.Optional[float] | None = None
+    short_name: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    carousel: typing.Optional[float] | None = None
+    filling_heads: typing.Optional[float] | None = None
+    carousel_count: typing.Optional[float] | None = None
+    bottling_14_2kg: typing.Optional[float] | None = None
+    bottling_19kg: typing.Optional[float] | None = None
+    bottling_total: typing.Optional[float] | None = None
+    productivity_normal_production: typing.Optional[float] | None = None
+    productivity_normal_stoppages: typing.Optional[float] | None = None
+    productivity_normal_productivity: typing.Optional[float] | None = None
+    productivity_break_production: typing.Optional[float] | None = None
+    productivity_break_net_hours: typing.Optional[float] | None = None
+    productivity_break_productivity: typing.Optional[float] | None = None
+    productivity_overtime_production: typing.Optional[float] | None = None
+    productivity_overtime_net_hours: typing.Optional[float] | None = None
+    productivity_overtime_productivity: typing.Optional[float] | None = None
+    rejection_eld_percent: typing.Optional[float] | None = None
+    rejection_ort_percent: typing.Optional[float] | None = None
+    rejection_cs_percent: typing.Optional[float] | None = None
+    process_date: typing.Optional[datetime.datetime] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgOperationsSchema
+        upsert_keys = []
+
+
+class LpgOperationsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgOperations]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Lpgoperations_Get_Productions_RateParams(pydantic.BaseModel):
+    dimension: str
+    daywise: bool
+    days: int
+    top: typing.Optional[int] = pydantic.Field(0, **{})
+    bottom: typing.Optional[int] = pydantic.Field(0, **{})
+
+
+class Lpgoperations_Get_Productivity_RateParams(pydantic.BaseModel):
+    dimension: str
+    daywise: bool
+    days: int
+    top: typing.Optional[int] = pydantic.Field(0, **{})
+    bottom: typing.Optional[int] = pydantic.Field(0, **{})
+
+
+class LpgRejectionsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_rejections'
+
+
+class LpgRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_rejections'
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgRejectionsSchema
+        upsert_keys = []
+
+
+class LpgRejections(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_rejections'
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgRejectionsSchema
+        upsert_keys = []
+
+
+class LpgRejectionsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgRejections]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Lpgrejections_Get_Cs_RejectionsParams(pydantic.BaseModel):
+    days: str
+
+
+class Lpgrejections_Get_Gd_RejectionsParams(pydantic.BaseModel):
+    days: str
+
+
+class Lpgrejections_Get_Pt_RejectionsParams(pydantic.BaseModel):
+    days: str
+
+
 class ScreensSchema(UrdhvaPostgresBase):
     __tablename__ = 'screens'
     
