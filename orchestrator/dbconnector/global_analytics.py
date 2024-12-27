@@ -319,35 +319,67 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
-        sales_performance_query_ = sales_performance_query
 
-        conditions = []
-        for rec in filters:
-            # Default condition for other keys
-            # if len(rec.value) == 1:
-            if isinstance(rec.value, str):
-                condition = f"{rec.key} = '{rec.value}'"
-                conditions.append(condition)
-            else:
-                condition = f"{rec.key} in {tuple(rec.value)}"
-                conditions.append(condition)
-        if conditions:
-            sales_performance_query_ += ' WHERE '
-            sales_performance_query_ += ' AND '.join(conditions)
+        if filters:
+            sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
+            sales_performance_query_ = sales_performance_query
+            conditions = []
 
+            for rec in filters:
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                sales_performance_query_ += ' WHERE '
+                sales_performance_query_ += ' AND '.join(conditions)
+        else:
+            # Fallback query if no filters are provided
+            sales_performance_query_ = '''
+                SELECT 
+                    SUM("M60_LEVEL_SALES"."NETWEIGHT_TMT") AS "ACTUAL_TMT_SALES",
+                    SUM("M60_LEVEL_SALES"."TARGET_QTY_TMT") AS "TARGET_TMT_SALES",
+                    "M60_LEVEL_SALES"."fy_month" AS "fy_month",
+                    "M60_LEVEL_SALES"."month_name" AS "month_name" 
+                FROM
+                    "hpcl_ceg"."public"."M60_LEVEL_SALES" 
+                GROUP BY
+                    "M60_LEVEL_SALES"."fy_month", "M60_LEVEL_SALES"."month_name" 
+                ORDER BY
+                    "M60_LEVEL_SALES"."fy_month" ASC
+            '''
+            resp = await function(query=sales_performance_query_)
+            return {"status": True, "message": "success", "data": resp}
+
+        # Execute the query
         resp = await function(query=sales_performance_query_)
+        # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        for each_float_col in ["TARGET_QTY_TMT", "Prediction_Value", "Product_Achievement", 
-                                "Zone_Region_Achievement", "Rate_Per_Day_Required_MMT", 
-                                "Rate_per_day_current_MMT", "FinalSum", "FinalActualSum", "NETWEIGHT_TMT"]:
-            resp[each_float_col] = resp[each_float_col].fillna(0.0)
-        for each_str_col in ["SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
-                            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
-                            "month_year", "month_name"]:
-            resp[each_float_col] = resp[each_float_col].fillna('')
+
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "TARGET_QTY_TMT", "Prediction_Value", "Product_Achievement", 
+            "Zone_Region_Achievement", "Rate_Per_Day_Required_MMT", 
+            "Rate_per_day_current_MMT", "FinalSum", "FinalActualSum", "NETWEIGHT_TMT"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
+            "month_year", "month_name"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('')
+
+        # Print and return the processed result
         print("resp -->  ", resp)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
 
     
     @staticmethod
@@ -362,35 +394,6 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        # sales_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
-        # sales_growth_query_ = sales_growth_query
-
-        # conditions = []
-        # for rec in filters:
-        #     # Default condition for other keys
-        #     # if len(rec.value) == 1:
-        #     if isinstance(rec.value, str):
-        #         condition = f"{rec.key} = '{rec.value}'"
-        #         conditions.append(condition)
-        #     else:
-        #         condition = f"{rec.key} in {tuple(rec.value)}"
-        #         conditions.append(condition)
-        # if conditions:
-        #     sales_growth_query_ += ' WHERE '
-        #     sales_growth_query_ += ' AND '.join(conditions)
-
-        # resp = await function(query=sales_growth_query_)
-        # resp = pd.DataFrame(resp)
-        # for each_float_col in ["sum_total_sales", "total_sales"]:
-        #     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-        # for each_str_col in ["month_name", "fiscal_month", "SBU_CD", "ZONE_CD", "RO_CD", "SA_CD", "MATERIAL_CD", 
-        #                     "fiscal_year", "month_year", "percentage_change"]:
-        #     resp[each_float_col] = resp[each_float_col].fillna('')
-        # print("resp -->  ", resp)
-        # return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -414,7 +417,7 @@ class GlobalAnalytics:
             # Fallback query if no filters are provided
             sales_growth_query_ = """
                 SELECT 
-                    MAX("MOM_LEVEL_FINAL_SALES"."sum_total_sales") AS "sum_total_sales",
+                    MAX(ROUND("MOM_LEVEL_FINAL_SALES"."sum_total_sales")) AS "total_sales",
                     "MOM_LEVEL_FINAL_SALES"."fiscal_year" AS "fiscal_year",
                     "MOM_LEVEL_FINAL_SALES"."month_name" AS "month_name"
                 FROM
@@ -425,6 +428,8 @@ class GlobalAnalytics:
                     "MOM_LEVEL_FINAL_SALES"."fiscal_year" ASC
             """
 
+            resp = await function(query=sales_growth_query_)
+            return {"status": True, "message": "success", "data": resp}
         resp = await function(query=sales_growth_query_)
         resp = pd.DataFrame(resp)
 
