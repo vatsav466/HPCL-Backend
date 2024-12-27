@@ -6,34 +6,30 @@ import psycopg2
 import datetime
 import pandas as pd
 import polars as pl
+import utilities.connection_mapping as connection_mapping
+from charts_actions import charts_connection_vault_routing
+from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
 router = fastapi.APIRouter(prefix='/lpgoperations')
-
-
-def get_data(query):
-    pg_conn = psycopg2.connect(urdhva_base.settings.db_urls["postgres_async"][0])
-    cursor = pg_conn.cursor()
-    cursor.execute(query)    
-    data = cursor.fetchall()    
-    columns = [column[0] for column in cursor.description]
-    data = pd.DataFrame.from_records(data, columns=columns)
-    if data.empty:        
-        return pl.DataFrame()
-    data = pl.from_pandas(data)
-    return data
 
 
 # Action get_productions_rate
 @router.post('/get_productions_rate', tags=['LpgOperations'])
 async def lpgoperations_get_productions_rate(data: Lpgoperations_Get_Productions_RateParams):
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     query = """ SELECT * FROM lpg_operations """
     if not data.days == 0:
         start_date = (datetime.datetime.now() - datetime.timedelta(days=data.days)).strftime('%Y-%m-%d')
-        query = f""" SELECT * FROM lpg_operations WHERE process_date >= '{start_date}' """
-    df = get_data(query)    
-    df = df.rename({"short_name":"plant"})
+        query = f""" SELECT * FROM lpg_operations WHERE process_date >= '{start_date}' """    
+    resp = await function(
+        query=query
+    )
+    df = pl.DataFrame(resp)
     if df.is_empty():
         return {"data": []}
+    df = df.rename({"short_name":"plant"})
     group_col = [data.dimension]
     if data.daywise == True:
         group_col = ["process_date", data.dimension]
@@ -52,14 +48,21 @@ async def lpgoperations_get_productions_rate(data: Lpgoperations_Get_Productions
 # Action get_productivity_rate
 @router.post('/get_productivity_rate', tags=['LpgOperations'])
 async def lpgoperations_get_productivity_rate(data: Lpgoperations_Get_Productivity_RateParams):
-    query = """ SELECT * FROM lpg_operations """
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    query = """ SELECT * FROM lpg_operations """            
     if not data.days == 0:
         start_date = (datetime.datetime.now() - datetime.timedelta(days=data.days)).strftime('%Y-%m-%d')
         query = f""" SELECT * FROM lpg_operations WHERE process_date >= '{start_date}' """
-    df = get_data(query)   
-    df = df.rename({"short_name":"plant"})
+    
+    resp = await function(
+        query=query
+    )
+    df = pl.DataFrame(resp)    
     if df.is_empty():
         return {"data": []}
+    df = df.rename({"short_name":"plant"})
     if data.daywise == True:
         group_col = ["process_date", data.dimension]
     df = df.group_by(group_col
