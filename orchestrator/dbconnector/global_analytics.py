@@ -1,12 +1,17 @@
 import urdhva_base
+import json
+import psycopg2
+import polars as pl
+from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
-import orchestrator.dbconnector.connector_factory as connector_factory
-import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
-from orchestrator.dashboard.chart_factory import charts_functions as execution_helpers
+import utilities.connection_mapping as connection_mapping
+from charts_actions import charts_connection_vault_routing
 from orchestrator.dbconnector.widget_actions import widget_actions
-import psycopg2
-from psycopg2 import sql, errors
+import orchestrator.dbconnector.connector_factory as connector_factory
+from api_manager.charts_actions import charts_connection_vault_routing
+from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 
 class GlobalAnalytics:
     @staticmethod
@@ -311,18 +316,30 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
         sales_performance_query_ = sales_performance_query
-        if filters:
-            sales_performance_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(sales_performance_query, filters, drill_state)
-        try:
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(sales_performance_query_)
-        except psycopg2.errors.UndefinedColumn as e:
-            print(e)
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(sales_performance_query)
-        sales_performance_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        # print("sales_performance_data -> ", sales_performance_data)
-        return {"status": True, "message": "success", "data": sales_performance_data}
+
+        conditions = []
+        for rec in filters:
+            # Default condition for other keys
+            # if len(rec.value) == 1:
+            if isinstance(rec.value, str):
+                condition = f"{rec.key} = '{rec.value}'"
+                conditions.append(condition)
+            else:
+                condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+        if conditions:
+            sales_performance_query_ += ' WHERE '
+            sales_performance_query_ += ' AND '.join(conditions)
+
+        resp = await function(query=sales_performance_query_)
+        print("resp -->  ", resp)
+        return {"status": True, "message": "success", "data": resp}
+
     
     @staticmethod
     async def sales_growth(filters, drill_state):
@@ -336,19 +353,26 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         sales_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
         sales_growth_query_ = sales_growth_query
-        if filters:
-            sales_growth_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(sales_growth_query, filters, drill_state)
-        try:
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(sales_growth_query_)
-        except psycopg2.errors.UndefinedColumn as e:
-            print(e)
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(sales_growth_query)
-        sales_growth_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        # print("sales_growth_data -> ", sales_growth_data)
-        return {"status": True, "message": "success", "data": sales_growth_data}
 
+        conditions = []
+        for rec in filters:
+            # Default condition for other keys
+            # if len(rec.value) == 1:
+            if isinstance(rec.value, str):
+                condition = f"{rec.key} = '{rec.value}'"
+                conditions.append(condition)
+            else:
+                condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+        if conditions:
+            sales_growth_query_ += ' WHERE '
+            sales_growth_query_ += ' AND '.join(conditions)
 
-    
-        
+        resp = await function(query=sales_growth_query_)
+        print("resp -->  ", resp)
+        return {"status": True, "message": "success", "data": resp}
