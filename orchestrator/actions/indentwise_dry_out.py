@@ -356,7 +356,7 @@ class IndentDryOut:
         if not resp_1:
             return await self.send_alert_action(is_raised=False)
         resp_1 = resp_1[0]
-        if resp.get("count") > 0 & resp_1.get("count") == resp.get("count"):
+        if resp.get("count") > 0 and resp_1.get("count") == resp.get("count"):
             input_data["action_msg"] = "Indent Cancelled"
             input_data["action_type"] = "Cancelled"
             input_data["event_tags"]["is_cancelled"] = True
