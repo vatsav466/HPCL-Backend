@@ -377,7 +377,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     ).unique().shape[0]
 
     potential_dry_out = dry_out_data.filter(
-        pl.col("status") > 2).select(
+        pl.col("status").is_in(3, 4)).select(
         [pl.col("rosapcode")]
     ).unique().shape[0]
 
@@ -532,7 +532,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
             "when severity = 'Low' then '4' " \
             "else severity " \
             "end as dry_out_days " \
-            f"from alerts where {conditions}"
+            f"from alerts where {conditions} limit 500"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
