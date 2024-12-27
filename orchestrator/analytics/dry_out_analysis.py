@@ -4,6 +4,7 @@ import pandas as pd
 import hpcl_ceg_model
 import urdhva_base.redispool
 import utilities.helpers as helpers
+from utilities.connection_mapping import product_code_mapping
 
 req_keys = {
     "TAS": ["zone", "sap_id", "name", "category"],
@@ -115,6 +116,9 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
             if rec["sap_id"]:
                 final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
                                                          "category": check_category(rec['category'])}
+
+    # adding products
+    final_data["products"] = [{"name": key, "id": val} for val, key in product_code_mapping.items()]
 
     for key, details in final_data.items():
         final_data[key] = list(details.values())
