@@ -43,7 +43,7 @@ dry_out_bottom_x_axis = [
     ]
 
 creds_type = {
-    "3": {"cred_model": "Databases", 'cred_type': "PostgreSQL"},
-    "2": {"cred_model": "Databases", 'cred_type': "Oracle"},
+    "2": {"cred_model": "Databases", 'cred_type': "PostgreSQL"},
+    "3": {"cred_model": "Databases", 'cred_type': "Oracle"},
     "1": {"cred_model": "Databases", 'cred_type': "PostgreSQL"}
 }
