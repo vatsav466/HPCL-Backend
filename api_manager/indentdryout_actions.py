@@ -377,7 +377,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     ).unique().shape[0]
 
     potential_dry_out = dry_out_data.filter(
-        pl.col("status").is_in(3, 4)).select(
+        pl.col("status").is_in([3])).select(
         [pl.col("rosapcode")]
     ).unique().shape[0]
 
@@ -448,10 +448,6 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
     result["total_count"] = total_count
     # Return the final result
     return result
-  
-    
-
-
 
 
 # Action get_dried_out_ro
@@ -493,6 +489,20 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
              for key, value in stats.items() if key <= len(top_x_axis)]
+    stats.append(
+        {
+            "section": "Indent Placed",
+            "value": sum(item['value'] for item in stats if 2 <= item['serial'] <= 10),
+            "serial": 12, "condition": "=", "group": "not_raised"
+        }
+    )
+    stats.append(
+        {
+            "section": "Valid \\ WIP Indents",
+            "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
+            "serial": 13, "condition": "=", "group": "not_raised"
+        }
+    )
     stats = sorted(stats, key=lambda x: x['serial'])
     return {
         "status": True, "message": "Success", "stats": stats,

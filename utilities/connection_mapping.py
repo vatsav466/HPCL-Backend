@@ -47,3 +47,13 @@ creds_type = {
     "3": {"cred_model": "Databases", 'cred_type': "Oracle"},
     "1": {"cred_model": "Databases", 'cred_type': "PostgreSQL"}
 }
+
+product_code_mapping = {
+            "MS": "2811000",
+            "HSD": "2812000",
+            "TURBO": "3912000",
+            "E20": "2822000",
+            "POWER 95": "3672000",
+            "POWER 99": "2816000",
+            "POWER 100": "3373000"
+        }
