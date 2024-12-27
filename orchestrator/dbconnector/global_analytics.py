@@ -6,7 +6,6 @@ from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
 import utilities.connection_mapping as connection_mapping
-from charts_actions import charts_connection_vault_routing
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.connector_factory as connector_factory
 from api_manager.charts_actions import charts_connection_vault_routing
