@@ -350,7 +350,24 @@ class GlobalAnalytics:
                 ORDER BY
                     "M60_LEVEL_SALES"."fy_month" ASC
             '''
+
             resp = await function(query=sales_performance_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "ACTUAL_TMT_SALES", "TARGET_TMT_SALES"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "fy_month", "month_name"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('')
             return {"status": True, "message": "success", "data": resp}
 
         # Execute the query
