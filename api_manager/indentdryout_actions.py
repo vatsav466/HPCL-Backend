@@ -473,7 +473,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
     stats_query = "select sap_id, min(progress_rate) as present_stage " \
-                  f"from alerts where {conditions} " \
+                  f"from alerts where {conditions} and indent_status != 'Cancelled' " \
                   f"group by sap_id"
     stats_resp = await function(
         query=stats_query
@@ -489,20 +489,19 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
              for key, value in stats.items() if key <= len(top_x_axis)]
-    stats.append(
-        {
+    stats.extend([{
             "section": "Indent Raised",
             "value": sum(item['value'] for item in stats if 2 <= item['serial'] <= 10),
             "serial": 12, "condition": "=", "group": "not_raised"
-        }
-    )
-    stats.append(
-        {
+        },{
             "section": "Valid \\ WIP Indents",
             "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
             "serial": 13, "condition": "=", "group": "not_raised"
-        }
-    )
+        }])
+    stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "truck_details"}
+                  for x in connection_mapping.truck_details])
+    stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
+                  for x in connection_mapping.dryout_aging])
     stats = sorted(stats, key=lambda x: x['serial'])
     return {
         "status": True, "message": "Success", "stats": stats,
