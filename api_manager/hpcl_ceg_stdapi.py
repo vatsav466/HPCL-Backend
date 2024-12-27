@@ -207,6 +207,56 @@ async def delete(id: str):
     return await IndentDryOut.delete(id)
 
 
+@router.post('/lpgoperations', response_model=LpgOperations, tags=['LpgOperations'])
+async def create(inputObj: LpgOperationsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgoperations', response_model=LpgOperations, tags=['LpgOperations'])
+async def update(inputObj: LpgOperations):
+    return await inputObj.modify()
+
+
+@router.get('/lpgoperations/{id}', response_model=LpgOperations, tags=['LpgOperations'])
+async def get(id: str):
+    return await LpgOperations.get(id, skip_secrets=True)
+
+
+@router.get('/lpgoperations', response_model=LpgOperationsGetResp, tags=['LpgOperations'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgOperations.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgoperations/{id}', tags=['LpgOperations'])
+async def delete(id: str):
+    return await LpgOperations.delete(id)
+
+
+@router.post('/lpgrejections', response_model=LpgRejections, tags=['LpgRejections'])
+async def create(inputObj: LpgRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgrejections', response_model=LpgRejections, tags=['LpgRejections'])
+async def update(inputObj: LpgRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpgrejections/{id}', response_model=LpgRejections, tags=['LpgRejections'])
+async def get(id: str):
+    return await LpgRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpgrejections', response_model=LpgRejectionsGetResp, tags=['LpgRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgrejections/{id}', tags=['LpgRejections'])
+async def delete(id: str):
+    return await LpgRejections.delete(id)
+
+
 @router.post('/screens', response_model=Screens, tags=['Screens'])
 async def create(inputObj: ScreensCreate):
     return await inputObj.create()
