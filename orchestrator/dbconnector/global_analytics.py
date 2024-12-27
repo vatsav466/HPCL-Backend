@@ -339,8 +339,8 @@ class GlobalAnalytics:
             # Fallback query if no filters are provided
             sales_performance_query_ = '''
                 SELECT 
-                    SUM("M60_LEVEL_SALES"."NETWEIGHT_TMT") AS "ACTUAL_TMT_SALES",
-                    SUM("M60_LEVEL_SALES"."TARGET_QTY_TMT") AS "TARGET_TMT_SALES",
+                    SUM(ROUND("M60_LEVEL_SALES"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
+                    SUM(ROUND("M60_LEVEL_SALES"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_SALES"."fy_month" AS "fy_month",
                     "M60_LEVEL_SALES"."month_name" AS "month_name" 
                 FROM
@@ -367,7 +367,7 @@ class GlobalAnalytics:
                 "fy_month", "month_name"
             ]:
                 if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('')
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
 
         # Execute the query
@@ -391,7 +391,7 @@ class GlobalAnalytics:
             "month_year", "month_name"
         ]:
             if each_str_col in resp.columns:
-                resp[each_str_col] = resp[each_str_col].fillna('')
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
         # Print and return the processed result
         print("resp -->  ", resp)
@@ -459,7 +459,7 @@ class GlobalAnalytics:
             "month_name", "fiscal_month", "SBU_CD", "ZONE_CD", "RO_CD", "SA_CD", 
             "MATERIAL_CD", "fiscal_year", "month_year", "percentage_change"
         ]:
-            resp[each_str_col] = resp[each_str_col].fillna('')
+            resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
         print("resp -->  ", resp)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
