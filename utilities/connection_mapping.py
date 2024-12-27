@@ -39,6 +39,10 @@ dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"},
                   {"name": "R3 Swiped", "group": "wip"}, {"name": "VTS", "group": "wip"},
                   {"name": "Indent Delivered", "group": "delivered"}]
 
+truck_details = ["Dealer TT", "TT Available", "Empty Dealer TT Return", "Empty Transporter Return"]
+
+dryout_aging = ["DryOut < 2 Days", "DryOut < 7 Days", "DryOut < 15 Days", "DryOut < 30 Days"]
+
 dry_out_bottom_x_axis = [
         "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "SO\nRM"
     ]
