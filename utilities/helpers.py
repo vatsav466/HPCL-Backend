@@ -3,6 +3,7 @@ import base64
 import string
 import hashlib
 import datetime
+import urdhva_base.redispool
 try:
     from secrets import choice
 except ImportError:
@@ -113,3 +114,24 @@ def normalize_string(input_value):
     if isinstance(input_value, bytes):
         return input_value.decode()
     return input_value
+
+
+async def get_alert_camunda_url(alert_id, base_url):
+    """
+    API to get camunda based on the alertid
+    :param alert_id:
+    :return:
+    """
+    redis_ins = urdhva_base.redispool.get_synchronous_redis_connection()
+    try:
+        if redis_ins.hexists("alert_camunda_url", f"{alert_id}"):
+            url = redis_ins.hget("alert_camunda_url", f"{alert_id}")
+            return url.decode() if isinstance(url, bytes) else url
+        return base_url
+    except:
+        return base_url
+    finally:
+        try:
+            redis_ins.close()
+        except:
+            ...
