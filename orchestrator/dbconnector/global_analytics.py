@@ -320,6 +320,83 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
+        # if filters:
+        #     sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
+        #     sales_performance_query_ = sales_performance_query
+        #     conditions = []
+
+        #     for rec in filters:
+        #         if isinstance(rec.value, str):
+        #             condition = f"{rec.key} = '{rec.value}'"
+        #         else:
+        #             condition = f"{rec.key} in {tuple(rec.value)}"
+        #         conditions.append(condition)
+
+        #     if conditions:
+        #         sales_performance_query_ += ' WHERE '
+        #         sales_performance_query_ += ' AND '.join(conditions)
+
+        # else:
+        #     # Fallback query if no filters are provided
+        #     sales_performance_query_ = '''
+        #         SELECT 
+        #             SUM(ROUND("M60_LEVEL_SALES"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
+        #             SUM(ROUND("M60_LEVEL_SALES"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
+        #             "M60_LEVEL_SALES"."fy_month" AS "fy_month",
+        #             "M60_LEVEL_SALES"."month_name" AS "month_name" 
+        #         FROM
+        #             "hpcl_ceg"."public"."M60_LEVEL_SALES" 
+        #         GROUP BY
+        #             "M60_LEVEL_SALES"."fy_month", "M60_LEVEL_SALES"."month_name" 
+        #         ORDER BY
+        #             "M60_LEVEL_SALES"."fy_month" ASC
+        #     '''
+
+            # resp = await function(query=sales_performance_query_)
+            # # Convert the response to a DataFrame for further processing
+            # resp = pd.DataFrame(resp)
+
+            # # Fill missing values for numerical columns
+            # for each_float_col in [
+            #     "ACTUAL_TMT_SALES", "TARGET_TMT_SALES"
+            # ]:
+            #     if each_float_col in resp.columns:
+            #         resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # # Fill missing values for string columns
+            # for each_str_col in [
+            #     "fy_month", "month_name"
+            # ]:
+            #     if each_str_col in resp.columns:
+            #         resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            # return {"status": True, "message": "success", "data": resp}
+
+        # # Execute the query
+        # resp = await function(query=sales_performance_query_)
+        # # Convert the response to a DataFrame for further processing
+        # resp = pd.DataFrame(resp)
+
+        # # Fill missing values for numerical columns
+        # for each_float_col in [
+        #     "TARGET_QTY_TMT", "Prediction_Value", "Product_Achievement", 
+        #     "Zone_Region_Achievement", "Rate_Per_Day_Required_MMT", 
+        #     "Rate_per_day_current_MMT", "FinalSum", "FinalActualSum", "NETWEIGHT_TMT"
+        # ]:
+        #     if each_float_col in resp.columns:
+        #         resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # # Fill missing values for string columns
+        # for each_str_col in [
+        #     "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+        #     "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
+        #     "month_year", "month_name"
+        # ]:
+        #     if each_str_col in resp.columns:
+        #         resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        # # Print and return the processed result
+        # print("resp -->  ", resp)
+        # return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
         if filters:
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
@@ -342,7 +419,7 @@ class GlobalAnalytics:
                     SUM(ROUND("M60_LEVEL_SALES"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
                     SUM(ROUND("M60_LEVEL_SALES"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_SALES"."fy_month" AS "fy_month",
-                    "M60_LEVEL_SALES"."month_name" AS "month_name" 
+                    "M60_LEVEL_SALES"."month_name" AS "month_name"
                 FROM
                     "hpcl_ceg"."public"."M60_LEVEL_SALES" 
                 GROUP BY
@@ -350,7 +427,6 @@ class GlobalAnalytics:
                 ORDER BY
                     "M60_LEVEL_SALES"."fy_month" ASC
             '''
-
             resp = await function(query=sales_performance_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -393,8 +469,45 @@ class GlobalAnalytics:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
-        # Print and return the processed result
-        print("resp -->  ", resp)
+        # Apply grouping logic based on filters
+        if filters:
+            grouped_resp = None
+
+            if "month_name" in [rec.key for rec in filters] and "ZONE" not in [rec.key for rec in filters]:
+                # Group by Zone
+                grouped_resp = resp.groupby(["ZONE", "Zone_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+
+            elif "month_name" in [rec.key for rec in filters] and "ZONE" in [rec.key for rec in filters] and "REGION" not in [rec.key for rec in filters]:
+                # Group by Region
+                grouped_resp = resp.groupby(["REGION", "Region_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+
+            elif "month_name" in [rec.key for rec in filters] and "ZONE" in [rec.key for rec.key in filters] and "REGION" in [rec.key for rec in filters] and "SA" not in [rec.key for rec in filters]:
+                # Group by Sales Area
+                grouped_resp = resp.groupby(["SA", "SalesArea_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum",
+                })
+            
+            elif "month_name" in [rec.key for rec in filters] and "ZONE" in [rec.key for rec.key in filters] and "REGION" in [rec.key for rec in filters] and "SA" in [rec.key for rec in filters]:
+                # Group by Product
+                grouped_resp = resp.groupby(["PRODUCT", "ProductName"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum",
+                })
+
+            # Return grouped response
+            if grouped_resp is not None:
+                print("Grouped Response -->", grouped_resp)
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # If no filters are applied, return the default response
+        print("Default Response -->", resp)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
 
