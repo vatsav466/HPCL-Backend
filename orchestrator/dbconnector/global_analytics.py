@@ -362,32 +362,82 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
+        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # sales_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
+        # sales_growth_query_ = sales_growth_query
+
+        # conditions = []
+        # for rec in filters:
+        #     # Default condition for other keys
+        #     # if len(rec.value) == 1:
+        #     if isinstance(rec.value, str):
+        #         condition = f"{rec.key} = '{rec.value}'"
+        #         conditions.append(condition)
+        #     else:
+        #         condition = f"{rec.key} in {tuple(rec.value)}"
+        #         conditions.append(condition)
+        # if conditions:
+        #     sales_growth_query_ += ' WHERE '
+        #     sales_growth_query_ += ' AND '.join(conditions)
+
+        # resp = await function(query=sales_growth_query_)
+        # resp = pd.DataFrame(resp)
+        # for each_float_col in ["sum_total_sales", "total_sales"]:
+        #     resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        # for each_str_col in ["month_name", "fiscal_month", "SBU_CD", "ZONE_CD", "RO_CD", "SA_CD", "MATERIAL_CD", 
+        #                     "fiscal_year", "month_year", "percentage_change"]:
+        #     resp[each_float_col] = resp[each_float_col].fillna('')
+        # print("resp -->  ", resp)
+        # return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        sales_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
-        sales_growth_query_ = sales_growth_query
 
-        conditions = []
-        for rec in filters:
-            # Default condition for other keys
-            # if len(rec.value) == 1:
-            if isinstance(rec.value, str):
-                condition = f"{rec.key} = '{rec.value}'"
+        if filters:
+            sales_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
+            sales_growth_query_ = sales_growth_query
+
+            conditions = []
+            for rec in filters:
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
-            else:
-                condition = f"{rec.key} in {tuple(rec.value)}"
-                conditions.append(condition)
-        if conditions:
-            sales_growth_query_ += ' WHERE '
-            sales_growth_query_ += ' AND '.join(conditions)
+
+            if conditions:
+                sales_growth_query_ += ' WHERE '
+                sales_growth_query_ += ' AND '.join(conditions)
+        else:
+            # Fallback query if no filters are provided
+            sales_growth_query_ = """
+                SELECT 
+                    MAX("MOM_LEVEL_FINAL_SALES"."sum_total_sales") AS "sum_total_sales",
+                    "MOM_LEVEL_FINAL_SALES"."fiscal_year" AS "fiscal_year",
+                    "MOM_LEVEL_FINAL_SALES"."month_name" AS "month_name"
+                FROM
+                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_SALES"
+                GROUP BY
+                    "MOM_LEVEL_FINAL_SALES"."fiscal_year", "MOM_LEVEL_FINAL_SALES"."month_name"
+                ORDER BY
+                    "MOM_LEVEL_FINAL_SALES"."fiscal_year" ASC
+            """
 
         resp = await function(query=sales_growth_query_)
         resp = pd.DataFrame(resp)
+
+        # Fill missing values for numeric columns
         for each_float_col in ["sum_total_sales", "total_sales"]:
             resp[each_float_col] = resp[each_float_col].fillna(0.0)
-        for each_str_col in ["month_name", "fiscal_month", "SBU_CD", "ZONE_CD", "RO_CD", "SA_CD", "MATERIAL_CD", 
-                            "fiscal_year", "month_year", "percentage_change"]:
-            resp[each_float_col] = resp[each_float_col].fillna('')
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "month_name", "fiscal_month", "SBU_CD", "ZONE_CD", "RO_CD", "SA_CD", 
+            "MATERIAL_CD", "fiscal_year", "month_year", "percentage_change"
+        ]:
+            resp[each_str_col] = resp[each_str_col].fillna('')
+
         print("resp -->  ", resp)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
