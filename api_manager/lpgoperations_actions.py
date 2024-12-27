@@ -2,9 +2,7 @@ import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
-import psycopg2
 import datetime
-import pandas as pd
 import polars as pl
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
@@ -59,10 +57,11 @@ async def lpgoperations_get_productivity_rate(data: Lpgoperations_Get_Productivi
     resp = await function(
         query=query
     )
-    df = pl.DataFrame(resp)    
+    df = pl.DataFrame(resp)
     if df.is_empty():
         return {"data": []}
     df = df.rename({"short_name":"plant"})
+    group_col = [data.dimension]
     if data.daywise == True:
         group_col = ["process_date", data.dimension]
     df = df.group_by(group_col

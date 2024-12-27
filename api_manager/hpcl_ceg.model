@@ -733,14 +733,33 @@ Model LpgOperations {
 }
 
 Model LpgRejections {
+    Action=> get_rejections {
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
+    }
     Action=> get_cs_rejections {
-        days str
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
     }
     Action=> get_gd_rejections {
-        days str
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
     }
     Action=> get_pt_rejections {
-        days str
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
     }
 }
 

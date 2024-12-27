@@ -1545,16 +1545,36 @@ class LpgRejectionsGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Lpgrejections_Get_RejectionsParams(pydantic.BaseModel):
+    dimension: str
+    daywise: bool
+    days: int
+    top: typing.Optional[int] = pydantic.Field(0, **{})
+    bottom: typing.Optional[int] = pydantic.Field(0, **{})
+
+
 class Lpgrejections_Get_Cs_RejectionsParams(pydantic.BaseModel):
-    days: str
+    dimension: str
+    daywise: bool
+    days: int
+    top: typing.Optional[int] = pydantic.Field(0, **{})
+    bottom: typing.Optional[int] = pydantic.Field(0, **{})
 
 
 class Lpgrejections_Get_Gd_RejectionsParams(pydantic.BaseModel):
-    days: str
+    dimension: str
+    daywise: bool
+    days: int
+    top: typing.Optional[int] = pydantic.Field(0, **{})
+    bottom: typing.Optional[int] = pydantic.Field(0, **{})
 
 
 class Lpgrejections_Get_Pt_RejectionsParams(pydantic.BaseModel):
-    days: str
+    dimension: str
+    daywise: bool
+    days: int
+    top: typing.Optional[int] = pydantic.Field(0, **{})
+    bottom: typing.Optional[int] = pydantic.Field(0, **{})
 
 
 class ScreensSchema(UrdhvaPostgresBase):
