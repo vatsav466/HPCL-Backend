@@ -3,6 +3,7 @@ import datetime
 import requests
 import charts_actions
 import hpcl_ceg_model
+import utilities.helpers as helpers
 from hpcl_ceg_enum import AlertState as AlertState
 from hpcl_ceg_enum import AlertStatus as AlertStatus
 from hpcl_ceg_enum import IndentStatus as IndentStatus
@@ -932,7 +933,9 @@ class IndentDryOut:
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
         instance_id = alert_data.get("workflow_instance_id")
-        CAMUNDA_URL = f"{urdhva_base.settings.camunda_url}/engine-rest"
+        CAMUNDA_URL = await helpers.get_alert_camunda_url(self.params["alert_id"],
+                                                          f"{urdhva_base.settings.camunda_url}/engine-rest")
+
         headers = {"Content-Type": "application/json"}
         url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
         payload = {
