@@ -238,7 +238,7 @@ class AlertFactory:
                 # Modify Alert if found
                 if alert_data_list:
                     alert = alert_data_list[0]
-                    alert['severity'] = alert_data.get('severity', "Critical").capitalize()
+                    alert['severity'] = alert_data.get('severity', "Medium").capitalize()
                     alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                     alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                     alert['interlock_name'] = alert_data.get('interlock_name', '')
