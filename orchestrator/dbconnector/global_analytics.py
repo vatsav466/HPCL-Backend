@@ -469,35 +469,36 @@ class GlobalAnalytics:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
+        print("resp.columns --> ", resp.columns)
         # Apply grouping logic based on filters
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            print("Filter Keys:", filter_keys)  # Debugging
+            print("Filter Keys:", filter_keys)  # Debugginkg
 
-            if "month_name" in filter_keys and "ZONE" not in filter_keys:
-                # Group by Zone
+            if "month_name" in filter_keys:
+                print("Group by Zone")
                 grouped_resp = resp.groupby(["ZONE", "Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "month_name" in filter_keys and "ZONE" in filter_keys and "REGION" not in filter_keys:
-                # Group by Region
+            elif "month_name" in filter_keys and "ZONE" in filter_keys:
+                print("Group by Region")
                 grouped_resp = resp.groupby(["REGION", "Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "month_name" in filter_keys and "ZONE" in [rec.key for rec.key in filters] and "REGION" in filter_keys and "SA" not in filter_keys:
-                # Group by Sales Area
+            elif "month_name" in filter_keys and "ZONE" in [rec.key for rec.key in filters] and "REGION" in filter_keys:
+                print("Condition: Grouping by mzr")
                 grouped_resp = resp.groupby(["SA", "SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
-            
+
             elif "month_name" in filter_keys and "ZONE" in [rec.key for rec.key in filters] and "REGION" in filter_keys and "SA" in filter_keys:
-                # Group by Product
+                print("Group by Product")
                 grouped_resp = resp.groupby(["PRODUCT", "ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
@@ -507,6 +508,7 @@ class GlobalAnalytics:
             if grouped_resp is not None:
                 print("Grouped Response -->", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
 
         # If no filters are applied, return the default response
         print("Default Response -->", resp)
