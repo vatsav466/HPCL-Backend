@@ -540,13 +540,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
-            "indent_no as indent_no, product_code as product_code, " \
-            "case when severity = 'Critical' then '1' " \
-            "when severity = 'High' then '2' " \
-            "when severity = 'Medium' then '3' " \
-            "when severity = 'Low' then '4' " \
-            "else severity " \
-            "end as dry_out_days " \
+            "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
             f"from alerts where {conditions} limit 500"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
