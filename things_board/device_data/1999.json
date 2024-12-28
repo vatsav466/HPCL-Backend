@@ -1,0 +1,26 @@
+{
+    "data": [
+        {
+            "device_name": "Tank111@Dharmapuri",
+            "device_id": "ea6c6700-c4cc-11ef-89d8-8bef67f22d63",
+            "device_type": "Tank",
+            "device_key": "zePqnCyix3BQyeRXGDU6",
+            "entity_id": "19749ae0-b6db-11ef-9885-2bbeb78b885f",
+            "sensors": [
+                {
+                    "sensor_name": "ROSOV OPEN STATUS IL",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.RSV0101_ZSL"
+                },
+                {
+                    "sensor_name": "LEVEL SWITCH",
+                    "sensor_tag": "SAFETY_PLC.SCS0101.LSHHH0101"
+                }
+                
+            ]
+        }
+        
+    ],
+    "location_id": "1999",
+    "bu": "TAS",
+    "location_name": "Dharmapuri"
+  }
