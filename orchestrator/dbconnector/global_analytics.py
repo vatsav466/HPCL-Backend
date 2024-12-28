@@ -566,6 +566,9 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         # Get the filter keys from the filters list
         filter_keys = [rec.key.strip('"') for rec in filters]
         print("Filter Keys:", filter_keys)  # Debugginkg
