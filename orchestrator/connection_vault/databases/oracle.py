@@ -418,6 +418,7 @@ class Oracle(BaseAction):
             column_names = [desc[0] for desc in cursor.description]
             records = {column: [record[i] for record in records] for i, column in enumerate(column_names)}
             records = pd.DataFrame(records)
+            print("query resp: ", records)
             await self.close_connection(connection)
             return records.to_dict(orient='records')
         except cx_Oracle.Error as err:

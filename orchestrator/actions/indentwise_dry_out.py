@@ -253,7 +253,6 @@ class IndentDryOut:
 
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
-            print("resp: ", resp)
             if not resp:
                 return await self.send_alert_action(is_raised=False)
         input_data = {
@@ -298,7 +297,6 @@ class IndentDryOut:
                 f"AND CANCEL_INDENT IS NULL AND TRUCK_REGNO IS NOT NULL"
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        print("resp: ", resp)
         input_data = {
             "action_msg": "",
             "event_tags": {
@@ -427,7 +425,6 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
-        print("params1111: ", self.params)
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -492,7 +489,6 @@ class IndentDryOut:
                 "is_raised": False
             }
         }
-        print(resp)
         if not resp:
             return await self.send_alert_action(is_raised=False)
         resp = resp[0]
@@ -527,14 +523,12 @@ class IndentDryOut:
                     GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        print(resp)
         input_data = {
             "action_msg": "",
             "event_tags": {
                 "is_r1_swipe": False
             }
         }
-        print(resp)
         if not resp:
             return await self.send_alert_action(is_r1_swipe=False)
         resp = resp[0]
@@ -569,14 +563,12 @@ class IndentDryOut:
                             GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        print(resp)
         input_data = {
             "action_msg": "",
             "event_tags": {
                 "is_r2_swipe": False
             }
         }
-        print(resp)
         if not resp:
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
@@ -611,14 +603,12 @@ class IndentDryOut:
                             GROUP BY a.INDENT_NO, a.LOCN_CODE, a.TRUCK_REGNO, b.CARD_STATUS, b.LOADED_ON"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        print(resp)
         input_data = {
             "action_msg": "",
             "event_tags": {
                 "is_r3_swipe": False
             }
         }
-        print(resp)
         if not resp:
             return await self.send_alert_action(is_r3_swipe=False)
         resp = resp[0]
@@ -872,7 +862,6 @@ class IndentDryOut:
 
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        print("resp: ", resp)
         if not resp:
             return False, {}
         result = {}
