@@ -723,4 +723,5 @@ LIMIT 10000;''',
                             FROM public."M60_LEVEL_METADATA"''',
 
     "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_SALES"'''
+
 }

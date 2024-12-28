@@ -555,7 +555,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def sales_yearly_preformance(filters, drill_state):
+    async def sales_yearly_performance(filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -570,7 +570,7 @@ class GlobalAnalytics:
         filter_keys = [rec.key.strip('"') for rec in filters]
         print("Filter Keys:", filter_keys)  # Debugginkg
 
-        sales_yearly_preformance_query = lpg_plant_queries.lpg_plant_query.get("sales_preformance")
+        sales_yearly_preformance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
         sales_yearly_preformance_query_ = sales_yearly_preformance_query
         
         if filters:
