@@ -1,3 +1,4 @@
+import pandas as pd
 import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
@@ -561,3 +562,34 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     return {"status": True, "message": "Success", "data": formatted_data,
             "top_x_axis": [rec['name'] for rec in top_x_axis],
             "bottom_x_axis": bottom_x_axis}
+
+
+# Action get_distinct_ro_name
+@router.post('/get_distinct_ro_name', tags=['IndentDryOut'])
+async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_NameParams):
+    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    for record in data.filters:
+        if record.key == "progress_rate":
+            where_clause.append(f"progress_rate={int(record.value[0])}")
+        else:
+            if record.value:
+                if record.key == "plant":
+                    record.key = "terminal_plant_id"
+                if len(record.value) == 1:
+                    where_clause.append(f"{record.key}='{record.value[0]}'")
+                else:
+                    where_clause.append(f"{record.key} in {tuple(record.value)}")
+    conditions = ' AND '.join(where_clause)
+    query = f'''select dealer_id, location_name
+                from public.alerts where {conditions}'
+                group by dealer_id, location_name'''
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+
+    resp = pd.DataFrame(resp)
+    resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
+    return {"customer": resp}

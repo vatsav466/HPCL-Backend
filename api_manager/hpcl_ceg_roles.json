@@ -1209,6 +1209,9 @@
                 },
                 {
                     "name": "get_dried_out_ro_data"
+                },
+                {
+                    "name": "get_distinct_ro_name"
                 }
             ]
         },
@@ -1257,6 +1260,9 @@
                 },
                 {
                     "name": "get_dried_out_ro_data"
+                },
+                {
+                    "name": "get_distinct_ro_name"
                 }
             ]
         },
@@ -1323,6 +1329,9 @@
                 },
                 {
                     "name": "get_dried_out_ro_data"
+                },
+                {
+                    "name": "get_distinct_ro_name"
                 }
             ]
         },
@@ -1955,6 +1964,10 @@
         {
             "name": "get_dried_out_ro_data",
             "displayName": "get_dried_out_ro_data"
+        },
+        {
+            "name": "get_distinct_ro_name",
+            "displayName": "get_distinct_ro_name"
         },
         {
             "name": "get_productions_rate",

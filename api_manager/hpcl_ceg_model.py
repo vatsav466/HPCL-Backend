@@ -1521,6 +1521,10 @@ class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 
 
+class Indentdryout_Get_Distinct_Ro_NameParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+
+
 class LpgOperationsSchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_operations'
     
