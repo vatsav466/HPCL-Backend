@@ -553,3 +553,154 @@ class GlobalAnalytics:
 
         print("resp -->  ", resp)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
+    @staticmethod
+    async def sales_yearly_preformance(filters, drill_state):
+        """
+        Fetches the sales performance data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the sales performance data.
+        """
+        # Get the filter keys from the filters list
+        filter_keys = [rec.key.strip('"') for rec in filters]
+        print("Filter Keys:", filter_keys)  # Debugginkg
+
+        sales_yearly_preformance_query = lpg_plant_queries.lpg_plant_query.get("sales_preformance")
+        sales_yearly_preformance_query_ = sales_yearly_preformance_query
+        
+        if filters:
+            sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
+            sales_performance_query_ = sales_performance_query
+            conditions = []
+            for rec in filters:
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                sales_performance_query_ += ' WHERE '
+                sales_performance_query_ += ' AND '.join(conditions)
+        
+        else:
+            sales_performance_query_ = f'''
+                SELECT
+                    SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
+                    SUM(ROUND("M60_LEVEL_METADATA"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
+                FROM
+                    "hpcl_ceg"."public"."M60_LEVEL_METADATA"
+                GROUP BY
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR"
+                ORDER BY
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR" ASC
+            '''
+
+            resp = await function(query=sales_performance_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "ACTUAL_TMT_SALES", "TARGET_TMT_SALES"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "FISCAL_YEAR"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+        
+        # Execute the query
+        resp = await function(query=sales_performance_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        print("resp df", resp)
+
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "TARGET_QTY_TMT", "Prediction_Value", "Product_Achievement", 
+            "Zone_Region_Achievement", "Rate_Per_Day_Required_MMT", 
+            "Rate_per_day_current_MMT", "FinalSum", "FinalActualSum", "NETWEIGHT_TMT"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
+            "month_year", "month_name"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        print("resp.columns --> ", resp.columns)
+        # Apply grouping logic based on filters
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            print("Filter Keys:", filter_keys)  # Debugginkg
+
+            if "FISCAL_YEAR" in filter_keys:
+                grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU" not in filter_keys:
+                grouped_resp = resp.groupby(["SBU", "SBU_Name", "FISCAL_YEAR"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU" in filter_keys and "ZONE" not in filter_keys:
+                print("Group by Zone")
+                grouped_resp = resp.groupby(["ZONE", "Zone_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU" in filter_keys and "ZONE" in filter_keys and "REGION" not in filter_keys:
+                print("Group by Region")
+                grouped_resp = resp.groupby(["REGION", "Region_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU" in filter_keys and "ZONE" in filter_keys \
+                                    and "REGION" in filter_keys and "SA" not in filter_keys:
+                print("Condition: Grouping by mzr")
+                grouped_resp = resp.groupby(["SA", "SalesArea_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum",
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU" in filter_keys and "ZONE" in filter_keys and \
+                                    "REGION" in filter_keys and "SA" in filter_keys and "PRODUCT" not in filter_keys:
+                print("Group by Product")
+                grouped_resp = resp.groupby(["PRODUCT", "ProductName"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum",
+                })
+
+            # Return grouped response
+            if grouped_resp is not None:
+                print("Grouped Response -->", grouped_resp)
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+
+        # If no filters are applied, return the default response
+        print("Default Response -->", resp)
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
