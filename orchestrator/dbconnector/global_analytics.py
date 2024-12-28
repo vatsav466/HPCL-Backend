@@ -345,21 +345,21 @@ class GlobalAnalytics:
             else:  # January to March
                 fiscal_year_start = current_year - 1
             # Fallback query if no filters are provided
-            sales_performance_query_ = '''
+            sales_performance_query_ = f'''
                 SELECT 
-                    SUM(ROUND("M60_LEVEL_SALES"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
-                    SUM(ROUND("M60_LEVEL_SALES"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
-                    "M60_LEVEL_SALES"."fy_month" AS "fy_month",
-                    "M60_LEVEL_SALES"."month_name" AS "month_name",
-                    "M60_LEVEL_SALES"."FISCAL_YEAR" AS "FISCAL_YEAR"
+                    SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
+                    SUM(ROUND("M60_LEVEL_METADATA"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
+                    "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
+                    "M60_LEVEL_METADATA"."month_name" AS "month_name",
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
-                    "hpcl_ceg"."public"."M60_LEVEL_SALES" 
+                    "hpcl_ceg"."public"."M60_LEVEL_METADATA" 
                 WHERE
-                    "M60_LEVEL_SALES"."FISCAL_YEAR" = {fiscal_year_start}
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
                 GROUP BY
-                    "M60_LEVEL_SALES"."fy_month", "M60_LEVEL_SALES"."month_name", "M60_LEVEL_SALES"."FISCAL_YEAR"
+                    "M60_LEVEL_METADATA"."fy_month", "M60_LEVEL_METADATA"."month_name", "M60_LEVEL_METADATA"."FISCAL_YEAR"
                 ORDER BY
-                    "M60_LEVEL_SALES"."fy_month" ASC
+                    "M60_LEVEL_METADATA"."fy_month" ASC
             '''
             resp = await function(query=sales_performance_query_)
             # Convert the response to a DataFrame for further processing
