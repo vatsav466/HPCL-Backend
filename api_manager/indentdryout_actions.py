@@ -479,7 +479,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         query=stats_query
     )
 
-    dealer_tt = pl.read_csv("utilities/DealerOwnedTrucks.csv", infer_schema_length=0)['DEALERID'].to_list()
+    dealer_tt = pl.read_csv("/opt/ceg/algo/utilities/DealerOwnedTrucks.csv", infer_schema_length=0)['DEALERID'].to_list()
 
     stats = {i + 1: 0 for i, _ in enumerate(top_x_axis)}
     dealer_tt_count = {x: 0 for x in connection_mapping.truck_details}
@@ -489,7 +489,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         if rec['present_stage'] not in stats:
             stats[rec['present_stage']] = 0
         stats[rec['present_stage']] += 1
-        if str(stats_resp['sap_id']) in dealer_tt:
+        if str(rec['sap_id']) in dealer_tt:
             dealer_tt_count['Dealer TT'] += 1
 
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
