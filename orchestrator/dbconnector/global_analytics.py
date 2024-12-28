@@ -350,7 +350,7 @@ class GlobalAnalytics:
                     SUM(ROUND("M60_LEVEL_SALES"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
                     SUM(ROUND("M60_LEVEL_SALES"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_SALES"."fy_month" AS "fy_month",
-                    "M60_LEVEL_SALES"."month_name" AS "month_name"
+                    "M60_LEVEL_SALES"."month_name" AS "month_name",
                     "M60_LEVEL_SALES"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
                     "hpcl_ceg"."public"."M60_LEVEL_SALES" 
