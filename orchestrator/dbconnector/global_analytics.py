@@ -472,29 +472,31 @@ class GlobalAnalytics:
         # Apply grouping logic based on filters
         if filters:
             grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            print("Filter Keys:", filter_keys)  # Debugging
 
-            if "month_name" in [rec.key for rec in filters] and "ZONE" not in [rec.key for rec in filters]:
+            if "month_name" in filter_keys and "ZONE" not in filter_keys:
                 # Group by Zone
                 grouped_resp = resp.groupby(["ZONE", "Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "month_name" in [rec.key for rec in filters] and "ZONE" in [rec.key for rec in filters] and "REGION" not in [rec.key for rec in filters]:
+            elif "month_name" in filter_keys and "ZONE" in filter_keys and "REGION" not in filter_keys:
                 # Group by Region
                 grouped_resp = resp.groupby(["REGION", "Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "month_name" in [rec.key for rec in filters] and "ZONE" in [rec.key for rec.key in filters] and "REGION" in [rec.key for rec in filters] and "SA" not in [rec.key for rec in filters]:
+            elif "month_name" in filter_keys and "ZONE" in [rec.key for rec.key in filters] and "REGION" in filter_keys and "SA" not in filter_keys:
                 # Group by Sales Area
                 grouped_resp = resp.groupby(["SA", "SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
             
-            elif "month_name" in [rec.key for rec in filters] and "ZONE" in [rec.key for rec.key in filters] and "REGION" in [rec.key for rec in filters] and "SA" in [rec.key for rec in filters]:
+            elif "month_name" in filter_keys and "ZONE" in [rec.key for rec.key in filters] and "REGION" in filter_keys and "SA" in filter_keys:
                 # Group by Product
                 grouped_resp = resp.groupby(["PRODUCT", "ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
