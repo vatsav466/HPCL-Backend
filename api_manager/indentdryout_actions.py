@@ -381,7 +381,10 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
         [pl.col("rosapcode")]
     ).unique().shape[0]
 
-    return {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+    return {
+        "dry_out": dry_out, "intraday_dry_out": intraday_dry_out,
+        "potential_dry_out": potential_dry_out, "aging_analysis": "-"
+    }
 
 
 # Action get_filtered_location_data

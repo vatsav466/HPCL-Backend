@@ -1,6 +1,7 @@
 import urdhva_base
 import datetime
 import requests
+import pandas as pd
 import charts_actions
 import hpcl_ceg_model
 import utilities.helpers as helpers
@@ -151,7 +152,7 @@ class IndentDryOut:
             # Check Alert Exists for same Scenario or not
             query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                      f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
-                     f"indent_no='' and alert_status='Open' and product_code='{self.params['product_code']}'")
+                     f"indent_no='' and alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
             alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
             if not alerts_data['data']:
                 await create_alert(self.params, camunda_url)
@@ -685,6 +686,78 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dealer_code = str(self.params.get("dealer_id"))
+        indent_no = "','".join(self.params.get("indent_no").split(","))
+        alert_id = self.params.get("alert_id")
+        query = f'''select item_name, rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, 
+                case when sum(pumpable_Stock) <=0 then 1
+                when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
+                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
+                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
+                else 5 end status
+                from "HPCL_HOS".sch_inventory_forecast_dashboard sch
+                where 1=1 and sch.volume>0 and rosapcode = '{dealer_code}'
+                group by item_name, rosapcode, product_no
+                order by item_name, rosapcode, product_no'''
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        cris_resp = await function(query=query)
+        cris_resp = pd.DataFrame(cris_resp)
+
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        query = f'''SELECT product_code, 
+                    dry_out_in_days FROM public.alerts
+                    where id = '{alert_id}' '''
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        ceg_resp = await function(query=query)
+        ceg_resp = ceg_resp[0]
+        product_code = ceg_resp.get("product_code")
+        dry_out_in_days = ceg_resp.get("dry_out_in_days")
+        # ceg_resp = pd.DataFrame(ceg_resp)
+
+        _prod_map = await self.prod_code_mapping()
+        cris_resp.replace({"item_name": _prod_map}, inplace=True)
+        cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        cris_resp = cris_resp.to_dict("records")
+        print("cris_resp: ", cris_resp)
+        if cris_resp:
+            cris_resp = cris_resp[0]
+        else:
+            cris_resp = {}
+        if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
+            input_data = {
+                "action_msg": "",
+                "event_tags": {
+                    "is_delivered": False
+                }
+            }
+            input_data["action_msg"] = "Indent Delivered"
+            input_data["action_type"] = "Created"
+            input_data["event_tags"]["is_delivered"] = True
+
+            await self.update_alert_status(
+                indent_status=IndentStatus.Completed,
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                input_data=input_data,
+                progress_rate="11"
+            )
+            await self.close_supply_chain_alert(
+                alert_id=self.params.get("alert_id"),
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                indent_status=IndentStatus.Completed
+            )
+            # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
+            return await self.send_alert_action(is_delivered=True)
+        return await self.send_alert_action(is_delivered=False)
+
+    async def _is_product_delivered(self, params: dict):
+        if not self.params:
+            self.params = params
+            await self.get_connection_name()
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -931,6 +1004,7 @@ class IndentDryOut:
 
         headers = {"Content-Type": "application/json"}
         url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
+        print("URL: ", url)
         payload = {
             "indent_no": {"value": indent_no, "type": "String"},
             "terminal_plant_id": {"value": loc_code, "type": "String"},
