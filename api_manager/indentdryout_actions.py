@@ -583,7 +583,7 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
     query = f'''select dealer_id, location_name
-                from public.alerts where {conditions}'
+                from public.alerts where {conditions}
                 group by dealer_id, location_name'''
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
