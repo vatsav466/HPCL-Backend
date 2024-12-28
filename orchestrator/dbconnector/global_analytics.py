@@ -342,10 +342,10 @@ class GlobalAnalytics:
             current_month = current_date.month
             # Determine the current financial year
             if current_month >= 4:  # April or later
-                fiscal_year_start = f"FY {current_year} - {next_year}"
+                fiscal_year_start = f"FY {current_year}-{next_year}"
             else:  # January to March
                 previous_year = current_year - 1
-                fiscal_year_start = f"FY {previous_year} - {current_year}"
+                fiscal_year_start = f"FY {previous_year}-{current_year}"
             # Fallback query if no filters are provided
             sales_performance_query_ = f'''
                 SELECT 
