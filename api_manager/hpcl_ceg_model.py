@@ -70,6 +70,49 @@ class Roles_Get_All_PagesParams(pydantic.BaseModel):
     pass
 
 
+class UsersSchema(UrdhvaPostgresBase):
+    __tablename__ = 'users'
+    
+    user_name: Mapped[str] = mapped_column("user_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    password: Mapped[urdhva_base.types.Secret] = mapped_column("password", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    role: Mapped[typing.List[str]] = mapped_column("role", ARRAY(String), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'users'
+    
+    user_name: str
+    password: urdhva_base.types.Secret
+    role: typing.List[str]
+    status: bool
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = UsersSchema
+        upsert_keys = []
+
+
+class Users(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'users'
+    
+    user_name: typing.Optional[str] | None = None
+    password: typing.Optional[urdhva_base.types.Secret] | None = None
+    role: typing.Optional[typing.List[str]] | None = None
+    status: typing.Optional[bool] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = UsersSchema
+        upsert_keys = []
+
+
+class UsersGetResp(pydantic.BaseModel):
+    data: typing.List[Users]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class Users_Fetch_UsersParams(pydantic.BaseModel):
     search_string: str
     limit: typing.Optional[int] = pydantic.Field(100, **{})
@@ -1444,6 +1487,7 @@ class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
     zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    plant: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
 
 class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):

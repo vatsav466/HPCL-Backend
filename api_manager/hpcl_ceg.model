@@ -723,6 +723,7 @@ Model IndentDryOut {
         zone optional list str
         region optional list str
         sales_area optional list str
+        plant optional list str
     }
 
     Action=> create_dry_out_alert {

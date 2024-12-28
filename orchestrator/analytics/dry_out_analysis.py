@@ -12,7 +12,7 @@ req_keys = {
 }
 
 
-async def get_locations(bu, zone=[], region=[], sales_area=[]):
+async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -21,6 +21,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
     :param zone:
     :param region:
     :param sales_area:
+    :param plant:
     :return:
     """
     bu = bu.upper()
@@ -42,7 +43,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
         terminal_name_mapping = {rec['sap_id']: rec['name'] for rec in tas_data}
         bu_data['terminal_plant_name'] = bu_data['terminal_plant_id'].apply(lambda x: terminal_name_mapping.get(x, x))
         bu_data = bu_data[bu_data['terminal_plant_name'].notna()]
-    final_data = {"zone": {}, "plant": {}}
+    final_data = {"zone": {}, "plant": {}, "customer": {}}
     if bu.upper() == "RO":
         final_data.update({"region": {}, "sales_area": {}, "customer": {}})
 
@@ -71,6 +72,23 @@ async def get_locations(bu, zone=[], region=[], sales_area=[]):
                 continue
             if rec["sap_id"]:
                 final_data["plant"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
+        bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
+                      if helpers.normalize_string(key).startswith(f"RO_")]
+        bu_data_ro = pd.DataFrame(bu_data_ro)
+        if plant:
+            key_mapping["terminal_plant_id"] = zone
+        for rec in bu_data_ro.to_dict(orient='records'):
+            skip_record = False
+            if key_mapping:
+                for key, value in key_mapping.items():
+                    if rec.get(key) not in value:
+                        skip_record = True
+                        break
+            if skip_record or not rec["sap_id"]:
+                continue
+            if rec["sap_id"]:
+                final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
+                                                         "category": check_category(rec['category'])}
     else:
         if region:
             key_mapping["region"] = region
