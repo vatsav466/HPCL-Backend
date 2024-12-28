@@ -9,7 +9,7 @@ logger = urdhva_base.logger.Logger.getInstance("lpg_alert_processing")
 
 class LPGAlertManager(alert_factory.AlertFactory):
     @classmethod
-    async def create_bu_alert(cls, alert_data):
+    async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
         """
         Create a business unit level alert
 
@@ -24,6 +24,7 @@ class LPGAlertManager(alert_factory.AlertFactory):
                 - severity (str): Severity of the alert
                 - message (str): Alert message
                 - alertHistory (list): List of alert history messages
+            camunda_url:
 
         Returns:
             dict: A dictionary containing the status, message and the created alert document

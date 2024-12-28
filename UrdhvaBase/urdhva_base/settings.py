@@ -108,7 +108,7 @@ class Settings(pydantic_settings.BaseSettings):
     superset_password: str = 'password'
 
     # camunda
-    camunda_url: str = 'http://10.90.38.166:8080'
+    camunda_url: str = 'http://10.90.38.167:8080'
     camunda_default_config: typing.Dict[str, int] = {
         "maxTasks": 1,
         "lockDuration": 10000,

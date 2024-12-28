@@ -30,6 +30,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                 - severity (str): Severity of the alert
                 - message (str): Alert message
                 - alertHistory (list): List of alert history messages
+            camunda_url:
 
         Returns:
             dict: A dictionary containing the status, message and the created alert document

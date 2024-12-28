@@ -14,7 +14,7 @@ logger = urdhva_base.logger.Logger.getInstance('alert_factory_log')
 
 class AlertFactory:
     @classmethod
-    async def create_bu_alert(cls, alert_data):
+    async def create_bu_alert(cls, alert_data, camunda_url=None):
         """
         For translating bu level data into unique alert format
         """
