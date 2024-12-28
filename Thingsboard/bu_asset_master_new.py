@@ -9,10 +9,91 @@ import hpcl_ceg_model
 
 
 
-def load_bu_asset_master(file_path, bu,location_id,location_name, force_delete = False):
+# def load_bu_asset_master(file_path, bu,location_id,location_name, force_delete = False):
+#     """
+#     Load and process asset data from an Excel file containing multiple sheets.
+#     Captures all columns before 'Normal Value' columns as sensor names.
+
+#     Args:
+#         file_path: Path to the Excel file
+#         bu: Type of BU
+#         location_id: SAP ID of the location
+#         location_name: Name of the location
+#         force_delete: Placeholder for future functionality (default: False)
+
+#     Returns:
+#         Dictionary containing processed device data and metadata
+#     """
+#     try:
+#         all_sheets = pd.read_excel(file_path, engine="openpyxl", sheet_name=None)
+#     except Exception as e:
+#         print(f"Error reading Excel file: {e}")
+#         return {}
+
+#     devices_data = []
+    
+#     for sheet_name, df in all_sheets.items():
+#         if df.empty:
+#             print(f"Sheet '{sheet_name}' is empty. Skipping.")
+#             continue
+
+#         print(f"\nProcessing Sheet: {sheet_name}")
+#         device_type = sheet_name.replace(" Master", "").strip()
+        
+#         # Find indices of columns containing "Normal Value"
+#         normal_value_indices = [i for i, col in enumerate(df.columns) 
+#                               if 'normal value' in str(col).lower()]
+        
+#         # Get all columns that come before "Normal Value" columns and their corresponding Normal Value columns
+#         sensor_columns = []
+#         for idx in normal_value_indices:
+#             if idx > 0:
+#                 sensor_columns.append((idx - 1, idx))  # Store pairs of (sensor column, normal value column)
+        
+#         # Add the first three columns (assuming they're metadata)
+#         metadata_columns = list(range(3))
+        
+#         # Process each row
+#         for _, row in df.iterrows():
+#             device_name = str(row.iloc[2]).strip()
+#             if not device_name:
+#                 continue
+                
+#             # Process sensors with their normal values
+#             sensors = []
+#             for sensor_idx, normal_value_idx in sensor_columns:
+#                 sensor_name = str(df.columns[sensor_idx]).strip()
+#                 sensor_tag = str(row.iloc[sensor_idx]).strip()
+#                 normal_value = str(row.iloc[normal_value_idx]).strip()
+                
+#                 if sensor_tag.lower() != 'nan':
+#                     sensors.append({
+#                         "sensor_name": sensor_name,
+#                         "sensor_tag": sensor_tag,
+#                         "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
+#                     })
+#                 else:
+#                     sensors.append({
+#                         "sensor_name": sensor_name,
+#                         "sensor_tag": "",
+#                         "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
+#                     })
+#             if sensors:
+#                 devices_data.append({
+#                     "device_name": device_name,
+#                     "device_id": "",
+#                     "device_type": device_type,
+#                     "device_key": "",
+#                     "entity_id": "",
+#                     "sensors": sensors
+#                 })
+    
+#     return {"data": devices_data, "location_id": location_id, "bu": bu, "location_name": location_name}
+
+
+def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete=False):
     """
-    Load and process asset data from an Excel file containing multiple sheets.
-    Captures all columns before 'Normal Value' columns as sensor names.
+    Load and process asset data from the first sheet of an Excel file.
 
     Args:
         file_path: Path to the Excel file
@@ -25,70 +106,89 @@ def load_bu_asset_master(file_path, bu,location_id,location_name, force_delete =
         Dictionary containing processed device data and metadata
     """
     try:
-        all_sheets = pd.read_excel(file_path, engine="openpyxl", sheet_name=None)
+        # Read only the first sheet
+        df = pd.read_excel(file_path, engine="openpyxl", sheet_name=0)
     except Exception as e:
         print(f"Error reading Excel file: {e}")
         return {}
 
+    if df.empty:
+        print("The first sheet is empty. No data to process.")
+        return {}
+
+    try:
+        sheet_name = pd.ExcelFile(file_path, engine="openpyxl").sheet_names[0]
+        device_type = sheet_name.replace(" Master", "").strip()
+    except Exception as e:
+        print(f"Error determining sheet name: {e}")
+        device_type = "Unknown Device Type"
+
+    print(f"\nProcessing the first sheet: {sheet_name} (Device Type: {device_type})")
+
+    # Find indices of columns containing "Normal Value"
+    normal_value_indices = [i for i, col in enumerate(df.columns)
+                            if 'normal value' in str(col).lower()]
+
+    # Get all columns that come before "Normal Value" columns and their corresponding Normal Value columns
+    sensor_columns = []
+    for idx in normal_value_indices:
+        if idx > 0:
+            sensor_columns.append((idx - 1, idx))  # Store pairs of (sensor column, normal value column)
+
     devices_data = []
-    
-    for sheet_name, df in all_sheets.items():
-        if df.empty:
-            print(f"Sheet '{sheet_name}' is empty. Skipping.")
+
+    def normalize_value(value):
+        def is_float(string):
+            try:
+                # float() is a built-in function
+                float(string)
+                return True
+            except ValueError:
+                return False
+        if value.isnumeric():
+            return str(int(value))
+        elif is_float(value):
+            if len(value.split(".")[-1]) == 1:
+                return str(int(float(value)))
+        return str(value)
+
+    # Process each row
+    for _, row in df.iterrows():
+        device_name = str(row.iloc[2]).strip()
+        if not device_name:
             continue
 
-        print(f"\nProcessing Sheet: {sheet_name}")
-        device_type = sheet_name.replace(" Master", "").strip()
-        
-        # Find indices of columns containing "Normal Value"
-        normal_value_indices = [i for i, col in enumerate(df.columns) 
-                              if 'normal value' in str(col).lower()]
-        
-        # Get all columns that come before "Normal Value" columns and their corresponding Normal Value columns
-        sensor_columns = []
-        for idx in normal_value_indices:
-            if idx > 0:
-                sensor_columns.append((idx - 1, idx))  # Store pairs of (sensor column, normal value column)
-        
-        # Add the first three columns (assuming they're metadata)
-        metadata_columns = list(range(3))
-        
-        # Process each row
-        for _, row in df.iterrows():
-            device_name = str(row.iloc[2]).strip()
-            if not device_name:
-                continue
-                
-            # Process sensors with their normal values
-            sensors = []
-            for sensor_idx, normal_value_idx in sensor_columns:
-                sensor_name = str(df.columns[sensor_idx]).strip()
-                sensor_tag = str(row.iloc[sensor_idx]).strip()
-                normal_value = str(row.iloc[normal_value_idx]).strip()
-                
-                if sensor_tag.lower() != 'nan':
-                    sensors.append({
-                        "sensor_name": sensor_name,
-                        "sensor_tag": sensor_tag,
-                        "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
-                    })
-                else:
-                    sensors.append({
-                        "sensor_name": sensor_name,
-                        "sensor_tag": "",
-                        "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
-                    })
-            if sensors:
-                devices_data.append({
-                    "device_name": device_name,
-                    "device_id": "",
-                    "device_type": device_type,
-                    "device_key": "",
-                    "entity_id": "",
-                    "sensors": sensors
+        # Process sensors with their normal values
+        sensors = []
+        for sensor_idx, normal_value_idx in sensor_columns:
+            sensor_name = str(df.columns[sensor_idx]).strip()
+            sensor_tag = str(row.iloc[sensor_idx]).strip()
+            normal_value = normalize_value(str(row.iloc[normal_value_idx]).strip())
+
+            if sensor_tag.lower() != 'nan':
+                sensors.append({
+                    "sensor_name": sensor_name,
+                    "sensor_tag": sensor_tag,
+                    "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
                 })
-    
+            else:
+                sensors.append({
+                    "sensor_name": sensor_name,
+                    "sensor_tag": "",
+                    "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
+                })
+        if sensors:
+            devices_data.append({
+                "device_name": device_name,
+                "device_id": "",
+                "device_type": device_type,
+                "device_key": "",
+                "entity_id": "",
+                "sensors": sensors
+            })
+
     return {"data": devices_data, "location_id": location_id, "bu": bu, "location_name": location_name}
+
 
     
 
@@ -417,7 +517,7 @@ class ThingsBoardInterface:
 
 
 if __name__ == "__main__":
-    file_path = "/Users/manohar/Downloads/Dharmapuri.xlsx"
+    file_path = "/Users/manohar/Downloads/Asset Master Tags details_Dharmapuri_Tank.xlsx"
     ThingsBoardInterface().create_bu_devices("TAS", "1999", "Dharmapuri", file_path)
 
 
