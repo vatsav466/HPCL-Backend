@@ -756,6 +756,10 @@ Model IndentDryOut {
     Action=> get_dried_out_ro_data {
         filters list IndentDryOutDataFilters
     }
+
+    Action=> get_distinct_ro_name {
+        filters list IndentDryOutDataFilters
+    }
 }
 
 Model LpgOperations {
