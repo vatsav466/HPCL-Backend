@@ -16,6 +16,82 @@ from sqlalchemy.orm import *
 from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
+class RolesSchema(UrdhvaPostgresBase):
+    __tablename__ = 'roles'
+    
+    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    allowed_pages: Mapped[typing.Optional[typing.List[str]]] = mapped_column("allowed_pages", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class RolesCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'roles'
+    
+    name: str
+    status: bool
+    allowed_pages: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = RolesSchema
+        upsert_keys = []
+
+
+class Roles(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'roles'
+    
+    name: typing.Optional[str] | None = None
+    status: typing.Optional[bool] | None = None
+    allowed_pages: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = RolesSchema
+        upsert_keys = []
+
+
+class RolesGetResp(pydantic.BaseModel):
+    data: typing.List[Roles]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Roles_Create_RoleParams(pydantic.BaseModel):
+    name: str
+    allowed_pages: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+
+class Roles_Update_Role_StatusParams(pydantic.BaseModel):
+    enable: bool
+    role_name: str
+
+
+class Roles_Get_All_PagesParams(pydantic.BaseModel):
+    pass
+
+
+class Users_Fetch_UsersParams(pydantic.BaseModel):
+    search_string: str
+    limit: typing.Optional[int] = pydantic.Field(100, **{})
+    skip: typing.Optional[int] = pydantic.Field(0, **{})
+
+
+class Users_Create_UserParams(pydantic.BaseModel):
+    user_name: str
+    password: str
+    role: typing.List[str]
+
+
+class Users_Update_Role_StatusParams(pydantic.BaseModel):
+    enable: bool
+    user_name: str
+
+
+class Users_LoginParams(pydantic.BaseModel):
+    user_name: str
+    password: str
+
+
 class DataFiltersCreate(pydantic.BaseModel):
     key: str
     cond: str

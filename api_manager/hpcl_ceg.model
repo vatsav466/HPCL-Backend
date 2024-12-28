@@ -94,6 +94,72 @@ Enum IndentStatus str {
     Delivered='Delivered'
 }
 
+// System role master with allowed pages
+Model Roles {
+    name str
+    status bool
+    allowed_pages optional list str
+
+    // API to create system role
+    Action=> create_role {
+        name str
+        allowed_pages optional list str
+    }
+
+    // API to Enable/Disable system role
+    Action=> update_role_status {
+        enable bool
+        role_name str
+    }
+
+    // API to fetch list of pages available for configuring role
+    Action=> get_all_pages {
+
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model Users {
+    user_name str
+    password secret
+    role list str
+    status bool
+
+    // API to list out created users
+    Action=> fetch_users {
+        search_string str
+        limit optional default=100 int
+        skip optional default=0 int
+    }
+
+    // API to create user
+    Action=> create_user {
+        user_name str
+        password str
+        role list str
+    }
+
+    // API to Enable/Disable system user
+    Action=> update_role_status {
+        enable bool
+        user_name str
+    }
+
+    // API for user login
+    Action=> login {
+        user_name str
+        password str
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+
+}
+
 Model DataFilters internal {
     key str
     cond str

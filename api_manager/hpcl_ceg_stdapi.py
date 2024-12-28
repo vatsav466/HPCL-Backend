@@ -7,6 +7,16 @@ import fastapi
 router = fastapi.APIRouter()
 
 
+@router.get('/roles/{id}', response_model=Roles, tags=['Roles'])
+async def get(id: str):
+    return await Roles.get(id, skip_secrets=True)
+
+
+@router.get('/roles', response_model=RolesGetResp, tags=['Roles'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await Roles.get_all(params, skip_secrets=True)
+
+
 @router.get('/locationmaster/{id}', response_model=LocationMaster, tags=['LocationMaster'])
 async def get(id: str):
     return await LocationMaster.get(id, skip_secrets=True)

@@ -4,6 +4,177 @@
     "decisionStrategy": "AFFIRMATIVE",
     "resources": [
         {
+            "name": "roles",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Roles",
+            "attributes": {},
+            "uris": [
+                "/api/roles/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_role"
+                },
+                {
+                    "name": "update_role_status"
+                },
+                {
+                    "name": "get_all_pages"
+                }
+            ]
+        },
+        {
+            "name": "roles_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Roles_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/roles/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_all_pages"
+                }
+            ]
+        },
+        {
+            "name": "roles_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Roles_admin",
+            "attributes": {},
+            "uris": [
+                "/api/roles/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_role"
+                },
+                {
+                    "name": "update_role_status"
+                },
+                {
+                    "name": "get_all_pages"
+                }
+            ]
+        },
+        {
+            "name": "users",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Users",
+            "attributes": {},
+            "uris": [
+                "/api/users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "fetch_users"
+                },
+                {
+                    "name": "create_user"
+                },
+                {
+                    "name": "update_role_status"
+                },
+                {
+                    "name": "login"
+                }
+            ]
+        },
+        {
+            "name": "users_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Users_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "users_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Users_admin",
+            "attributes": {},
+            "uris": [
+                "/api/users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "fetch_users"
+                },
+                {
+                    "name": "create_user"
+                },
+                {
+                    "name": "update_role_status"
+                },
+                {
+                    "name": "login"
+                }
+            ]
+        },
+        {
             "name": "locationmaster",
             "type": "all",
             "ownerManagedAccess": false,
@@ -1600,6 +1771,34 @@
         {
             "name": "delete",
             "displayName": "delete"
+        },
+        {
+            "name": "create_role",
+            "displayName": "create_role"
+        },
+        {
+            "name": "update_role_status",
+            "displayName": "update_role_status"
+        },
+        {
+            "name": "get_all_pages",
+            "displayName": "get_all_pages"
+        },
+        {
+            "name": "fetch_users",
+            "displayName": "fetch_users"
+        },
+        {
+            "name": "create_user",
+            "displayName": "create_user"
+        },
+        {
+            "name": "update_role_status",
+            "displayName": "update_role_status"
+        },
+        {
+            "name": "login",
+            "displayName": "login"
         },
         {
             "name": "upload_location_master",
