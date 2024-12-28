@@ -421,21 +421,21 @@ class GlobalAnalytics:
                 })
 
             elif "month_name" in filter_keys and "SBU_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["SBU", "SBU_Name", "month_name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["SBU_Name", "month_name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 print("Group by Zone")
-                grouped_resp = resp.groupby(["ZONE", "Zone_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 print("Group by Region")
-                grouped_resp = resp.groupby(["REGION", "Region_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
@@ -443,7 +443,7 @@ class GlobalAnalytics:
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 print("Condition: Grouping by mzr")
-                grouped_resp = resp.groupby(["SA", "SalesArea_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
@@ -451,7 +451,7 @@ class GlobalAnalytics:
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
                 print("Group by Product")
-                grouped_resp = resp.groupby(["PRODUCT", "ProductName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
@@ -657,47 +657,48 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
             print("Filter Keys:", filter_keys)  # Debugginkg
 
-            if "FISCAL_YEAR" in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
+            if "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys:
+                grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["SBU", "SBU_Name", "FISCAL_YEAR"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 print("Group by Zone")
-                grouped_resp = resp.groupby(["ZONE", "Zone_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 print("Group by Region")
-                grouped_resp = resp.groupby(["REGION", "Region_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
-                                    and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
+                    and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 print("Condition: Grouping by mzr")
-                grouped_resp = resp.groupby(["SA", "SalesArea_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
-                                    "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
+                    "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
                 print("Group by Product")
-                grouped_resp = resp.groupby(["PRODUCT", "ProductName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
+
 
             # Return grouped response
             if grouped_resp is not None:
