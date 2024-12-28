@@ -594,8 +594,8 @@ class GlobalAnalytics:
         else:
             sales_performance_query_ = f'''
                 SELECT
-                    SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
-                    SUM(ROUND("M60_LEVEL_METADATA"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::NUMERIC, 2) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::NUMERIC, 2) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
                     "hpcl_ceg"."public"."M60_LEVEL_METADATA"
@@ -603,6 +603,7 @@ class GlobalAnalytics:
                     "M60_LEVEL_METADATA"."FISCAL_YEAR"
                 ORDER BY
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" ASC
+
             '''
 
             resp = await function(query=sales_performance_query_)
