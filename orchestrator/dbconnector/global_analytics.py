@@ -421,7 +421,7 @@ class GlobalAnalytics:
                 })
 
             elif "month_name" in filter_keys and "SBU" not in filter_keys:
-                grouped_resp = resp.groupby(["SBU", "month_name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["SBU", "SBU_Name", "month_name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
