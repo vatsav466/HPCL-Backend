@@ -3,6 +3,7 @@ import json
 import psycopg2
 import polars as pl
 import pandas as pd
+from datetime import datetime
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
@@ -335,6 +336,14 @@ class GlobalAnalytics:
                 sales_performance_query_ += ' WHERE '
                 sales_performance_query_ += ' AND '.join(conditions)
         else:
+            current_date = datetime.now()
+            current_year = current_date.year
+            current_month = current_date.month
+            # Determine the current financial year
+            if current_month >= 4:  # April or later
+                fiscal_year_start = current_year
+            else:  # January to March
+                fiscal_year_start = current_year - 1
             # Fallback query if no filters are provided
             sales_performance_query_ = '''
                 SELECT 
@@ -342,10 +351,13 @@ class GlobalAnalytics:
                     SUM(ROUND("M60_LEVEL_SALES"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_SALES"."fy_month" AS "fy_month",
                     "M60_LEVEL_SALES"."month_name" AS "month_name"
+                    "M60_LEVEL_SALES"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
                     "hpcl_ceg"."public"."M60_LEVEL_SALES" 
+                WHERE
+                    "M60_LEVEL_SALES"."FISCAL_YEAR" = {fiscal_year_start}
                 GROUP BY
-                    "M60_LEVEL_SALES"."fy_month", "M60_LEVEL_SALES"."month_name" 
+                    "M60_LEVEL_SALES"."fy_month", "M60_LEVEL_SALES"."month_name", "M60_LEVEL_SALES"."FISCAL_YEAR"
                 ORDER BY
                     "M60_LEVEL_SALES"."fy_month" ASC
             '''
@@ -366,6 +378,7 @@ class GlobalAnalytics:
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
             return {"status": True, "message": "success", "data": resp}
 
         # Execute the query
@@ -399,14 +412,8 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
             print("Filter Keys:", filter_keys)  # Debugginkg
 
-            if "FISCALYEAR" in filter_keys:
+            if "FISCAL_YEAR" in filter_keys:
                 grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
-                    "NETWEIGHT_TMT": "sum",
-                    "TARGET_QTY_TMT": "sum"
-                })
-
-            elif "month_name" in filter_keys:
-                grouped_resp = resp.groupby(["month_name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
