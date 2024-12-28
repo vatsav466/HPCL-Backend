@@ -512,6 +512,12 @@ class GlobalAnalytics:
                     "sum_total_sales": lambda x: round(x.max()),
                 })
             
+            elif "month_name" in filter_keys and "ZONE_CD" in filter_keys and "RO_CD" not in filter_keys:
+                print("Group by fiscal_year and RO_CD")
+                grouped_resp = resp.groupby(["fiscal_year", "RO_CD"], as_index=False).agg({
+                    "sum_total_sales": lambda x: round(x.max()),
+                })
+            
             if grouped_resp is not None:
                 print("Grouped Response -->", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
