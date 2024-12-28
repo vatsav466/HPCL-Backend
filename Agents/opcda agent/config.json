@@ -1,0 +1,15 @@
+{
+  "location_id": "1999",
+  "conn_host": "140.245.238.142",
+  "conn_port": "5672",
+  "conn_channel": "command_listener_",
+  "conn_exchange": "",
+  "conn_user": "hpcl_ceg",
+  "conn_vhost": "hpcl_ceg",
+  "conn_secret": "algo@4321",
+  "OpcIpAddresses": [ "192.168.1.10", "192.168.1.11","192.168.1.12","192.168.1.13" ],
+  "connection_parameter": "30",
+  "ProgramId": "OPC.Server.Sample",
+  "central_server": "",
+  "Api_Key": ""
+}
