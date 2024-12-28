@@ -463,7 +463,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         if record.key == "progress_rate":
-            where_clause.append(f"progress_rate={int(record.value[0]) - 1}")
+            where_clause.append(f"progress_rate={int(record.value[0])}")
         else:
             if record.value:
                 if record.key == "plant":
@@ -505,7 +505,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         },{
             "section": "Valid \\ WIP Indents",
             "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
-            "serial": 13, "condition": "=", "group": "not_raised"
+            "serial": 13, "condition": "=", "group": "pending"
         }])
     stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
                   for x in connection_mapping.truck_details])
@@ -532,7 +532,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         if record.key == "progress_rate":
-            where_clause.append(f"progress_rate={int(record.value[0]) - 1}")
+            where_clause.append(f"progress_rate={int(record.value[0])}")
         else:
             if record.value:
                 if record.key == "plant":
