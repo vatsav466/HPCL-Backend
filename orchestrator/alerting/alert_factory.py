@@ -52,9 +52,7 @@ class AlertFactory:
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
             interlock_name = alert_data.get('interlock_name', '')
-            print("sop_id --> ", sop_id)
             status, location_data = await alert_helper.get_location_details(bu, sap_id)
-            print("status --> ", status)
             print("location_data --> ", location_data)
             # if not status:
             #     return False, location_data
@@ -105,7 +103,6 @@ class AlertFactory:
                                                         'dry_out_in_days': str(alert_data.get('dry_out_in_days', '1')),
                                                         'progress_rate': 1,
                                                         'raw_data': {}}).create()
-            print("resp ---> ", alert_resp)
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
@@ -150,11 +147,8 @@ class AlertFactory:
 
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
-                print("interlock_name-->", interlock_name)
                 workflowid =interlock_name.get("workflow_name", "")
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
-                print("workflow_id: ", workflow_id)
-                print("workflow_id ", workflow_id)
                 print("payload: ", payload)
                 if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
@@ -188,7 +182,7 @@ class AlertFactory:
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
         """
-        print("alert_data ---> ", alert_data)
+        print("alert_data close ---> ", alert_data)
         try:
             # il_data = None
             # al_data = None

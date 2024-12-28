@@ -489,6 +489,7 @@ class Postgresql(BaseAction):
             data = pd.DataFrame(data, columns=columns)
             # await connection.close()
             await self.close_connection(connection)
+            print("query resp: ", data)
             return data.to_dict(orient='records')
         except Exception as err:
             print(err)

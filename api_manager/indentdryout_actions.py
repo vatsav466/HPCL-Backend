@@ -479,13 +479,19 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         query=stats_query
     )
 
+    dealer_tt = pl.read_csv("utilities/DealerOwnedTrucks.csv", infer_schema_length=0)['DEALERID'].to_list()
+
     stats = {i + 1: 0 for i, _ in enumerate(top_x_axis)}
+    dealer_tt_count = {x: 0 for x in connection_mapping.truck_details}
     for rec in stats_resp:
         if rec['present_stage'] == 0:
             rec['present_stage'] = 1
         if rec['present_stage'] not in stats:
             stats[rec['present_stage']] = 0
         stats[rec['present_stage']] += 1
+        if str(stats_resp['sap_id']) in dealer_tt:
+            dealer_tt_count['Dealer TT'] += 1
+
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
              for key, value in stats.items() if key <= len(top_x_axis)]
@@ -498,7 +504,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
             "serial": 13, "condition": "=", "group": "not_raised"
         }])
-    stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "truck_details"}
+    stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
                   for x in connection_mapping.dryout_aging])
