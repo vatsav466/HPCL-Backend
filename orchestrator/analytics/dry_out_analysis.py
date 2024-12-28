@@ -76,7 +76,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
                       if helpers.normalize_string(key).startswith(f"RO_")]
         bu_data_ro = pd.DataFrame(bu_data_ro)
         if plant:
-            key_mapping["terminal_plant_id"] = zone
+            key_mapping["terminal_plant_id"] = plant
         for rec in bu_data_ro.to_dict(orient='records'):
             skip_record = False
             if key_mapping:
