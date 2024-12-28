@@ -77,7 +77,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
         bu_data_ro = pd.DataFrame(bu_data_ro)
         if plant:
             key_mapping["terminal_plant_id"] = plant
-        for rec in bu_data_ro.head(5000).to_dict(orient='records'):
+        for rec in bu_data_ro.head(500).to_dict(orient='records'):
             skip_record = False
             if key_mapping:
                 for key, value in key_mapping.items():
