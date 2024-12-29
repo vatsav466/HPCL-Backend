@@ -496,15 +496,21 @@ class GlobalAnalytics:
 
             conditions = []
             for rec in filters:
+                rec.value = rec.value.split(",")
+                # result = [value.strip() for value in rec.value.split(",")]
+
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
                 else:
-                    condition = f"{rec.key} in {tuple(rec.value)}"
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
             if conditions:
-                sales_growth_query_ += ' WHERE '
-                sales_growth_query_ += ' AND '.join(conditions)
+                sales_performance_query_ += ' WHERE '
+                sales_performance_query_ += ' AND '.join(conditions)
         else:
             # Fallback query if no filters are provided
             sales_growth_query_ = """
@@ -587,10 +593,16 @@ class GlobalAnalytics:
             sales_performance_query_ = sales_performance_query
             conditions = []
             for rec in filters:
+                rec.value = rec.value.split(",")
+                # result = [value.strip() for value in rec.value.split(",")]
+
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
                 else:
-                    condition = f"{rec.key} in {tuple(rec.value)}"
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
             if conditions:
