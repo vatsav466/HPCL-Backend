@@ -6,6 +6,7 @@ from requests.auth import HTTPBasicAuth
 import asyncio
 import datetime
 import hpcl_ceg_model
+import orchestrator.alerting.alert_manager as alert_manager
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 
@@ -55,7 +56,7 @@ class SendSapCommand:
 
         if flag == 'U':
             await asyncio.sleep(4)
-            query = (f"vehicle_number='{vehicle_number}' and violation_type='{alert_data['violation_type']}'"
+            query = (f"vehicle_number='{vehicle_number}' and device_type='{alert_data['device_type']}'"
                      f"and alert_status ='{'Open'}'")
             ndata = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
             if len(ndata['data']):
@@ -63,11 +64,10 @@ class SendSapCommand:
                 for fdata in udata1:
                     unblocks.append(fdata['id'])
             if len(unblocks) > 1:
-                '''alert_history = alert_data.get('alert_history')
-                alert_history.append(
-                    'Another voilations are existing for this lorry:%s :%s-%s' % (vehicle_number, unblocks, currtime))
-                data_object = hpcl_ceg_model.Alerts(**alert_data)
-                await data_object.modify()'''
+                sap_msg = (f"Another voilations are existing for this lorry: {vehicle_number} : {unblocks}-{currtime}")
+                alert_data["action_msg"] = sap_msg
+                alert_data["action_type"] = "SentToSap"
+                await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                 return True, {"sapcommandsent": True}
         
         process_code = processcodemap.get(processkey, '')
@@ -82,7 +82,7 @@ class SendSapCommand:
         reason = alert_data.get('msg', 'IRIS')
         blocks = []
 
-        query = (f"vehicle_number='{vehicle_number}' and violation_type='{alert_data['violation_type']}'"
+        query = (f"vehicle_number='{vehicle_number}' and device_type='{alert_data['device_type']}'"
                      f"and alert_status ='{'Open'}'")
         aldata2 = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
 
@@ -148,12 +148,10 @@ class SendSapCommand:
                 }
         
         elif flag == 'B' and interuptName == 'block' and len(blocks) > 1:
-            alert_history = alert_data.get('alert_history',[])
-            alert_history.append(
-                'Another voilations are existing for this lorry:%s :%s-%s' % (vehicle_number, blocks, currtime))
-            alert_data['alert_history'] = [alert_history]
-            #data_object = hpcl_ceg_model.Alerts(**alert_data)
-            #await data_object.modify()
+            sap_msg = (f"Another voilations are existing for this lorry:{vehicle_number} :{blocks}-{currtime}")
+            alert_data["action_msg"] = sap_msg
+            alert_data["action_type"] = "SentToSap"
+            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
             return True, {"sapcommandsent": True}
         
         exceptionOcr, exceptionStr = False, ''
@@ -184,9 +182,10 @@ class SendSapCommand:
             else:
                 msg = 'Failed'
         
-        #alert_data['alert_history'].append('%s - SAP Response:%s' % (currtime, msg))
-        #alert_data['block'] = True 
-        #await hpcl_ceg_model.Alerts(**alert_data).modify()
+        sap_msg = (f"{currtime} - SAP Response: {msg}")
+        alert_data["action_msg"] = sap_msg
+        alert_data["action_type"] = "SentToSap"
+        await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
 
         if exceptionOcr:
             return True, {"sapcommandsent": False}
