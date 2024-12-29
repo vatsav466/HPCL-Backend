@@ -36,8 +36,10 @@ class CheckViolationCount:
                      f"and created_at >= '{start_date_time}'")
             
             # Fetch the count of violations matching the query
-            count = await hpcl_ceg_model.Alerts.count(urdhva_base.queryparams.QueryParams(q=query))
+            data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query))
             print("count-------->", count)
+            if data['count']==0:
+                data['count']=1
             return count
 
         except Exception as e:
@@ -64,7 +66,8 @@ class CheckViolationCount:
         finalresp = {}
         try:
             query = f"bu='{bu}' and sap_id='{sap_id}' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}'"
-            count = await hpcl_ceg_model.Alerts.count(urdhva_base.queryparams.QueryParams(q=query))
+            count = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query))
+            print("count-------->", count)
             finalresp[violation_type] = count
         
         except Exception as e:
