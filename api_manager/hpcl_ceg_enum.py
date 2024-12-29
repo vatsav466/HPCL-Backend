@@ -104,6 +104,7 @@ class AlertActionType(str, enum.Enum):
     R1Swipe = 'R1Swipe'
     R2Swipe = 'R2Swipe'
     R3Swipe = 'R3Swipe'
+    VTS = 'VTS'
     Delivered = 'Delivered'
     Tripped = 'Tripped'
     InterlockCleared = 'InterlockCleared'
@@ -136,6 +137,7 @@ class IndentStatus(str, enum.Enum):
     R1Swipe = 'R1Swipe'
     R2Swipe = 'R2Swipe'
     R3Swipe = 'R3Swipe'
+    VTS = 'VTS'
     Delivered = 'Delivered'
 
 
