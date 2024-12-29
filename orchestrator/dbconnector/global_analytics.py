@@ -657,14 +657,8 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
             print("Filter Keys:", filter_keys)  # Debugginkg
 
-            if "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys:
+            if "FISCAL_YEAR" in filter_keys and "SBU_Name" not in filter_keys:
                 grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name"], as_index=False).agg({
-                    "NETWEIGHT_TMT": "sum",
-                    "TARGET_QTY_TMT": "sum"
-                })
-
-            elif "FISCAL_YEAR" in filter_keys and "SBU_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
