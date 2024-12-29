@@ -258,8 +258,10 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             return "-"
 
     if resp:
-        alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
-                                    "state": resp["state"], "indent_status": resp["indent_status"],
+        alert_history["details"] = {"interlock_name": resp['interlock_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
+                                    "state": resp["state"], "indent_status": resp["indent_status"], "device_name": resp["device_id"] + " Tank",
+                                    "city": resp['city'], "region": resp["region"], "location_name": resp["location_name"],
+                                    "severity": resp['severity'], "alert_status": resp["alert_status"], "alert_section": resp["bu"],
                                     "indent_raised_date": convert_time_read_format(str(resp['indent_raised_date']))}
         alert_history["data"].append({"action_msg": "Dry-out Location Identified",
                                       "allocated_time": convert_time_read_format(str(resp['created_at'])),
