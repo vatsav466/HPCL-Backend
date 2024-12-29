@@ -9,7 +9,7 @@ logger = urdhva_base.logger.Logger.getInstance("tas_alert_processing")
 
 class TASAlertManager(alert_factory.AlertFactory):
     @classmethod
-    async def create_bu_alert(cls, alert_data):
+    async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
         """
         Create a business unit level alert
 
@@ -24,6 +24,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                 - severity (str): Severity of the alert
                 - message (str): Alert message
                 - alertHistory (list): List of alert history messages
+            camunda_url:
 
         Returns:
             dict: A dictionary containing the status, message and the created alert document
@@ -31,7 +32,7 @@ class TASAlertManager(alert_factory.AlertFactory):
         try:
             logger.info(f"alert_data received to create alert {alert_data}")
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['bu'],sap_id=alert_data['sap_id'])
+            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['bu'], sap_id=alert_data['sap_id'])
             if status:
                 alert_data['location_data'] = loc_dt
             return await cls.create_alert(alert_data)

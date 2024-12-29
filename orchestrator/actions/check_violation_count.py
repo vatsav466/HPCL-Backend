@@ -45,3 +45,31 @@ class CheckViolationCount:
             print(traceback.format_exc())
             logger.error(e)
             return None
+
+    async def check_violation_all_count(self,sap_id, bu, vehicle_number, violation_type):
+        """
+        This method is used to get the violation count for a given vehicle from the DB
+        based on the given violation type, SAP ID, business unit, and vehicle number.
+
+        Parameters:
+        sap_id (str): The SAP ID of the vehicle.
+        bu (str): The Business Unit of the vehicle.
+        vehicle_number (str): The vehicle number for which violation count is to be fetched.
+        violation_type (str): The type of violation for which count is to be fetched.
+
+        Returns:
+        dict: A dictionary with the violation type as the key and the violation count as the value.
+            If an error occurs, the value will be None.
+        """
+        finalresp = {}
+        try:
+            query = f"bu='{bu}' and sap_id='{sap_id}' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}'"
+            count = await hpcl_ceg_model.Alerts.count(urdhva_base.queryparams.QueryParams(q=query))
+            finalresp[violation_type] = count
+        
+        except Exception as e:
+            # Log the error and return None
+            print(traceback.format_exc())
+            logger.error(e)
+            finalresp[violation_type] = None
+        return finalresp

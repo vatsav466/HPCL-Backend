@@ -15,7 +15,7 @@ logger = urdhva_base.logger.Logger.getInstance("va_alert_processing")
 
 class VAAlertManager(alert_factory.AlertFactory):
     @classmethod
-    async def create_bu_alert(cls, alert_data):
+    async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
         """
         Create a business unit level alert
 
@@ -30,6 +30,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                 - severity (str): Severity of the alert
                 - message (str): Alert message
                 - alertHistory (list): List of alert history messages
+            camunda_url:
 
         Returns:
             dict: A dictionary containing the status, message and the created alert document
@@ -89,7 +90,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "alert_section": "VA"
                                               })
 
-                    await cls.create_alert(interlock_details)
+                    await cls.create_alert(interlock_details, None)
                 except Exception as e:
                     print(traceback.format_exc())
                     logger.error(f"Exception in processing alert data {e}, Traceback "

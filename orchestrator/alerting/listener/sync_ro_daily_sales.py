@@ -23,7 +23,7 @@ async def indent_dryout_sync_ro_daily_sales(since, until):
             end_date = helpers.get_time_stamp_by_delta(parser.parse(start_date), days=1, 
                                                        ascending=True, 
                                                        with_month_start_day=False)
-            where_clause = f'''"transaction_date" BETWEEN '{start_date}' AND '{end_date}'''
+            where_clause = f""""transaction_date" BETWEEN '{start_date}' AND '{end_date}'"""
             if (parser.parse(until) - parser.parse(since)).days == 0:
                 where_clause = f'''"transaction_date"='{start_date}' '''
             print(f"Query executing from {start_date} to {end_date}")

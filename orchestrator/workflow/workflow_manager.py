@@ -75,15 +75,15 @@ async def main():
     # etw = ExternalTaskWorker(10, base_url=ENGINE_LOCAL_BASE_URL, config=default_config)
     topics = ['workflow_consumer']
     loop = asyncio.get_event_loop()
-    executor = ThreadPoolExecutor(max_workers=40)  # Adjust the number of workers as needed
+    executor = ThreadPoolExecutor(max_workers=400)  # Adjust the number of workers as needed
     tasks = []
-    count = 0
     for topic in topics:
-        etw = ExternalTaskWorker(count, base_url=engine_local_base_url, config=urdhva_base.settings.camunda_default_config)
-        count += 1
-        tasks.append(loop.run_in_executor(
-            executor, lambda: etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task)))
-        )
+        for i in range(1, 200):
+            etw = ExternalTaskWorker(i, base_url=engine_local_base_url,
+                                     config=urdhva_base.settings.camunda_default_config)
+            tasks.append(loop.run_in_executor(
+                executor, lambda: etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task)))
+            )
     await asyncio.gather(*tasks)
 
 # Run the asyncio event loop

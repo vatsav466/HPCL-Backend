@@ -4,6 +4,177 @@
     "decisionStrategy": "AFFIRMATIVE",
     "resources": [
         {
+            "name": "roles",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Roles",
+            "attributes": {},
+            "uris": [
+                "/api/roles/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_role"
+                },
+                {
+                    "name": "update_role_status"
+                },
+                {
+                    "name": "get_all_pages"
+                }
+            ]
+        },
+        {
+            "name": "roles_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Roles_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/roles/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_all_pages"
+                }
+            ]
+        },
+        {
+            "name": "roles_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Roles_admin",
+            "attributes": {},
+            "uris": [
+                "/api/roles/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "create_role"
+                },
+                {
+                    "name": "update_role_status"
+                },
+                {
+                    "name": "get_all_pages"
+                }
+            ]
+        },
+        {
+            "name": "users",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "Users",
+            "attributes": {},
+            "uris": [
+                "/api/users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "fetch_users"
+                },
+                {
+                    "name": "create_user"
+                },
+                {
+                    "name": "update_role_status"
+                },
+                {
+                    "name": "login"
+                }
+            ]
+        },
+        {
+            "name": "users_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "Users_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "users_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "Users_admin",
+            "attributes": {},
+            "uris": [
+                "/api/users/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "fetch_users"
+                },
+                {
+                    "name": "create_user"
+                },
+                {
+                    "name": "update_role_status"
+                },
+                {
+                    "name": "login"
+                }
+            ]
+        },
+        {
             "name": "locationmaster",
             "type": "all",
             "ownerManagedAccess": false,
@@ -36,6 +207,9 @@
                 },
                 {
                     "name": "download_template"
+                },
+                {
+                    "name": "upload_tags_data"
                 }
             ]
         },
@@ -87,6 +261,9 @@
                 },
                 {
                     "name": "download_template"
+                },
+                {
+                    "name": "upload_tags_data"
                 }
             ]
         },
@@ -907,6 +1084,69 @@
             ]
         },
         {
+            "name": "dryouthistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutHistory",
+            "attributes": {},
+            "uris": [
+                "/api/dryouthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "dryouthistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dryouthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dryouthistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dryouthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "indentdryout",
             "type": "all",
             "ownerManagedAccess": false,
@@ -957,6 +1197,21 @@
                 },
                 {
                     "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
+                },
+                {
+                    "name": "get_indent_data"
+                },
+                {
+                    "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_data"
+                },
+                {
+                    "name": "get_distinct_ro_name"
                 }
             ]
         },
@@ -993,6 +1248,21 @@
                 },
                 {
                     "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
+                },
+                {
+                    "name": "get_indent_data"
+                },
+                {
+                    "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_data"
+                },
+                {
+                    "name": "get_distinct_ro_name"
                 }
             ]
         },
@@ -1047,6 +1317,201 @@
                 },
                 {
                     "name": "get_dry_out_count"
+                },
+                {
+                    "name": "get_filtered_location_data"
+                },
+                {
+                    "name": "get_indent_data"
+                },
+                {
+                    "name": "get_dried_out_ro"
+                },
+                {
+                    "name": "get_dried_out_ro_data"
+                },
+                {
+                    "name": "get_distinct_ro_name"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperations",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperations",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_productions_rate"
+                },
+                {
+                    "name": "get_productivity_rate"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperations_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperations_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_productions_rate"
+                },
+                {
+                    "name": "get_productivity_rate"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperations_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperations_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperations/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_productions_rate"
+                },
+                {
+                    "name": "get_productivity_rate"
+                }
+            ]
+        },
+        {
+            "name": "lpgrejections",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgRejections",
+            "attributes": {},
+            "uris": [
+                "/api/lpgrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_rejections"
+                },
+                {
+                    "name": "get_cs_rejections"
+                },
+                {
+                    "name": "get_gd_rejections"
+                },
+                {
+                    "name": "get_pt_rejections"
+                }
+            ]
+        },
+        {
+            "name": "lpgrejections_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgRejections_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_rejections"
+                },
+                {
+                    "name": "get_cs_rejections"
+                },
+                {
+                    "name": "get_gd_rejections"
+                },
+                {
+                    "name": "get_pt_rejections"
+                }
+            ]
+        },
+        {
+            "name": "lpgrejections_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgRejections_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_rejections"
+                },
+                {
+                    "name": "get_cs_rejections"
+                },
+                {
+                    "name": "get_gd_rejections"
+                },
+                {
+                    "name": "get_pt_rejections"
                 }
             ]
         },
@@ -1175,6 +1640,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "vtsalerthistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VtsAlertHistory",
+            "attributes": {},
+            "uris": [
+                "/api/vtsalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vtsalerthistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VtsAlertHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vtsalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vtsalerthistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VtsAlertHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vtsalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
@@ -1254,6 +1782,34 @@
             "displayName": "delete"
         },
         {
+            "name": "create_role",
+            "displayName": "create_role"
+        },
+        {
+            "name": "update_role_status",
+            "displayName": "update_role_status"
+        },
+        {
+            "name": "get_all_pages",
+            "displayName": "get_all_pages"
+        },
+        {
+            "name": "fetch_users",
+            "displayName": "fetch_users"
+        },
+        {
+            "name": "create_user",
+            "displayName": "create_user"
+        },
+        {
+            "name": "update_role_status",
+            "displayName": "update_role_status"
+        },
+        {
+            "name": "login",
+            "displayName": "login"
+        },
+        {
             "name": "upload_location_master",
             "displayName": "upload_location_master"
         },
@@ -1268,6 +1824,10 @@
         {
             "name": "download_template",
             "displayName": "download_template"
+        },
+        {
+            "name": "upload_tags_data",
+            "displayName": "upload_tags_data"
         },
         {
             "name": "upload_role_master",
@@ -1388,6 +1948,50 @@
         {
             "name": "get_dry_out_count",
             "displayName": "get_dry_out_count"
+        },
+        {
+            "name": "get_filtered_location_data",
+            "displayName": "get_filtered_location_data"
+        },
+        {
+            "name": "get_indent_data",
+            "displayName": "get_indent_data"
+        },
+        {
+            "name": "get_dried_out_ro",
+            "displayName": "get_dried_out_ro"
+        },
+        {
+            "name": "get_dried_out_ro_data",
+            "displayName": "get_dried_out_ro_data"
+        },
+        {
+            "name": "get_distinct_ro_name",
+            "displayName": "get_distinct_ro_name"
+        },
+        {
+            "name": "get_productions_rate",
+            "displayName": "get_productions_rate"
+        },
+        {
+            "name": "get_productivity_rate",
+            "displayName": "get_productivity_rate"
+        },
+        {
+            "name": "get_rejections",
+            "displayName": "get_rejections"
+        },
+        {
+            "name": "get_cs_rejections",
+            "displayName": "get_cs_rejections"
+        },
+        {
+            "name": "get_gd_rejections",
+            "displayName": "get_gd_rejections"
+        },
+        {
+            "name": "get_pt_rejections",
+            "displayName": "get_pt_rejections"
         }
     ]
 }

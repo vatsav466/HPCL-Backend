@@ -94,6 +94,72 @@ Enum IndentStatus str {
     Delivered='Delivered'
 }
 
+// System role master with allowed pages
+Model Roles {
+    name str
+    status bool
+    allowed_pages optional list str
+
+    // API to create system role
+    Action=> create_role {
+        name str
+        allowed_pages optional list str
+    }
+
+    // API to Enable/Disable system role
+    Action=> update_role_status {
+        enable bool
+        role_name str
+    }
+
+    // API to fetch list of pages available for configuring role
+    Action=> get_all_pages {
+
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model Users {
+    user_name str
+    password secret
+    role list str
+    status bool
+
+    // API to list out created users
+    Action=> fetch_users {
+        search_string str
+        limit optional default=100 int
+        skip optional default=0 int
+    }
+
+    // API to create user
+    Action=> create_user {
+        user_name str
+        password str
+        role list str
+    }
+
+    // API to Enable/Disable system user
+    Action=> update_role_status {
+        enable bool
+        user_name str
+    }
+
+    // API for user login
+    Action=> login {
+        user_name str
+        password str
+    }
+
+    Config=> {
+        crud_operations='read'
+    }
+
+}
+
 Model DataFilters internal {
     key str
     cond str
@@ -147,6 +213,9 @@ Model LocationMaster {
     }
 
     Action=> download_template {
+    }
+
+    Action=> upload_tags_data {
     }
 
     Config=> {
@@ -441,6 +510,8 @@ Model Alerts {
     terminal_plant_name optional str
     progress_rate optional int
     category optional str
+    indent_raised_date optional datetime
+    dry_out_in_days optional str
 
     Action=> alert_action {
         action_type AlertActionType
@@ -575,6 +646,24 @@ Model IndentDryOutDataFilters internal {
     value list str
 }
 
+// Model for dry-out analysis, Per product one will get created
+// It will get closed if no open alerts for the product and it was out of dry-out.
+Model DryOutHistory {
+    bu index_field primary_key str
+    sap_id index_field str      // location id
+    start_time optional datetime
+    end_time optional datetime
+    product_no index_field str   //product no
+    item_name str                // product name
+    plant_id index_field str
+    plant_name str
+    status index_field AlertStatus // To Check whether Dry-out in Open or Closed
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
 Model IndentDryOut {
     bu unique_field index_field primary_key str
     site_id str      // location id
@@ -634,6 +723,7 @@ Model IndentDryOut {
         zone optional list str
         region optional list str
         sales_area optional list str
+        plant optional list str
     }
 
     Action=> create_dry_out_alert {
@@ -647,6 +737,100 @@ Model IndentDryOut {
 
     Action=> get_dry_out_count {
 
+    }
+
+    Action=> get_filtered_location_data {
+        request_parameter str
+        bu str
+        filters optional list IndentDryOutDataFilters
+    }
+
+    Action=> get_indent_data {
+        filters list DataFilters
+    }
+
+    Action=> get_dried_out_ro {
+        filters list IndentDryOutDataFilters
+    }
+
+    Action=> get_dried_out_ro_data {
+        filters list IndentDryOutDataFilters
+    }
+
+    Action=> get_distinct_ro_name {
+        filters list IndentDryOutDataFilters
+    }
+}
+
+Model LpgOperations {
+    is_additional_carousel float
+    short_name str
+    name str
+    zone str
+    carousel float
+    filling_heads float
+    carousel_count float    
+    bottling_14_2kg float
+    bottling_19kg float
+    bottling_total float
+    productivity_normal_production float
+    productivity_normal_stoppages float
+    productivity_normal_productivity float
+    productivity_break_production float
+    productivity_break_net_hours float
+    productivity_break_productivity float
+    productivity_overtime_production float
+    productivity_overtime_net_hours float
+    productivity_overtime_productivity float
+    rejection_eld_percent float
+    rejection_ort_percent float
+    rejection_cs_percent float
+    process_date datetime
+
+    Action=> get_productions_rate {        
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
+    }
+    Action=> get_productivity_rate {
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
+    }
+}
+
+Model LpgRejections {
+    Action=> get_rejections {
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
+    }
+    Action=> get_cs_rejections {
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
+    }
+    Action=> get_gd_rejections {
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
+    }
+    Action=> get_pt_rejections {
+        dimension str
+        daywise bool
+        days int        
+        top optional int
+        bottom optional int
     }
 }
 
@@ -677,6 +861,28 @@ Model DeviceMaster {
     nozzle_no optional int
     global_nozzle_no optional int
     product_type str
+
+    Config=> {
+        crud_operations='read'
+    }
+}
+
+Model VtsAlertHistory {
+    vendor_id optional str
+    location_id optional str
+    location_type optional str
+    tl_number str
+    report_duration optional str
+    total_trips optional int
+    stoppage_violations_count optional int
+    route_deviation_count optional int
+    speed_violation_count optional int
+    main_supply_removal_count optional int
+    night_driving_count optional int
+    no_halt_zone_count optional int
+    device_offline_count optional int
+    device_tamper_count optional int
+    approved_by optional str
 
     Config=> {
         crud_operations='read'

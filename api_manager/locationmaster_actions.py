@@ -144,3 +144,39 @@ async def locationmaster_download_template(data: Locationmaster_Download_Templat
         media_type="application/octet-stream",
         filename="location_master_template.csv"
     )
+
+
+# Action upload_tags_data
+@router.post('/upload_tags_data', tags=['LocationMaster'])
+async def locationmaster_upload_tags_data(upload_file: fastapi.UploadFile = fastapi.File(None)):
+    """
+    Upload Tags Data.
+
+    This API endpoint accepts a JSON file and returns its content as a JSON response.
+
+    Args:
+        upload_file (fastapi.UploadFile): The JSON file to be uploaded.
+
+    Returns:
+        Dict[str, Any]: A JSON response containing the status and data.
+
+    Raises:
+        HTTPException: If there is an error processing the JSON file.
+    """
+    try:
+        # Read the file content
+        file_content = await upload_file.read()
+
+        # Parse the JSON content
+        data = json.loads(file_content)
+
+        return data
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to decode JSON file: {e}")
+        return {"status": False, "message": "Invalid JSON file. Please upload a valid JSON."}
+
+    except Exception as e:
+        logger.error(f"An error occurred while processing the JSON file: {traceback.format_exc()}")
+        return {"status": False, "message": f"An error occurred: {e}"}
+    

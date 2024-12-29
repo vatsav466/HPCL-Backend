@@ -280,16 +280,28 @@ class BasePostgresModel(pydantic.BaseModel):
             query_params.append(cls.Config.standard_query)
         if params and params.q and len(params.q) > 0:
             query_params.append(params.q)
-        if params and params.q:
+        # if params and params.q:
+        #     search_conditions = []
+        #     if hasattr(cls.Config, 'search_fields') and cls.Config.search_fields:
+        #         for field in cls.Config.search_fields:
+        #             if params.search_text:
+        #                 search_conditions.append(f"{cls.__tablename__}.{field} ILIKE '%{params.search_text}%'")
+                
+        #         if search_conditions:
+        #             print("search_conditions --> ", search_conditions)
+        #             query_params.append(f"({' OR '.join(search_conditions)})")
+        
+        if params and params.search_text and isinstance(params.search_text, str) and params.search_text.strip():
             search_conditions = []
             if hasattr(cls.Config, 'search_fields') and cls.Config.search_fields:
                 for field in cls.Config.search_fields:
-                    if params.search_text:
-                        search_conditions.append(f"{cls.__tablename__}.{field} ILIKE '%{params.search_text}%'")
-                
-                if search_conditions:
-                    print("search_conditions --> ", search_conditions)
-                    query_params.append(f"({' OR '.join(search_conditions)})")
+                    search_text = params.search_text.strip()  # Strip leading/trailing whitespace
+                    print("search text --> ", search_text)
+                    search_conditions.append(f"{cls.__tablename__}.{field} ILIKE '%{search_text}%'")
+
+            if search_conditions:
+                print("search_conditions --> ", search_conditions)
+                query_params.append(f"({' OR '.join(search_conditions)})")
         if len(query_params):
             query.append("where " + " AND ".join(query_params))
 

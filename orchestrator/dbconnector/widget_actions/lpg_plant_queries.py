@@ -602,25 +602,37 @@ LIMIT 10000;''',
                            ORDER BY no_of_terminals DESC''',
 
     "alert_ageing": f'''SELECT DISTINCT
-                                CASE 
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
-                                    WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '6 to 10 Days'
-                                    ELSE 'Older than 10 Days'
-                                END AS alert_ageing,
-                                COUNT(*) OVER (
-                                    PARTITION BY 
-                                    CASE 
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
-                                        WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 6 AND 10 THEN '6 to 10 Days'
-                                        ELSE 'Older than 10 Days'
-                                    END
-                                ) AS alert_count
-                            FROM 
-                                alerts
-                            ORDER BY 
-                                alert_ageing''',
+                        CASE 
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN '5 to 7 Days'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN '7 to 10 Days'
+                            ELSE 'Older than 10 Days'
+                        END AS alert_ageing,
+                        COUNT(*) OVER (
+                            PARTITION BY 
+                            CASE 
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN '5 to 7 Days'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN '7 to 10 Days'
+                                ELSE 'Older than 10 Days'
+                            END
+                        ) AS alert_count,
+                        CASE 
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 1
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN 2
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN 3
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN 4
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 7 AND 10 THEN 5
+                            ELSE 6
+                        END AS alert_ageing_order
+                    FROM 
+                        alerts
+                    ORDER BY 
+                        alert_ageing_order''',
 
     "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count 
                                FROM public.alerts 
@@ -643,10 +655,11 @@ LIMIT 10000;''',
 
     "day_wise_alerts": f'''SELECT 
                             DATE(created_at) AS alert_date,
+                            interlock_name,
                             severity,
                             COUNT(*) AS total_alerts
                         FROM alerts
-                        GROUP BY DATE(created_at), severity
+                        GROUP BY DATE(created_at), interlock_name, severity
                         ORDER BY alert_date, severity;
                         ''',
     
@@ -687,5 +700,28 @@ LIMIT 10000;''',
                         ON 
                             lm.sap_id = a.sap_id AND lm.bu = a.bu
                         GROUP BY 
-                            lm.sap_id, lm.bu, lm.state, lm.region, lm.zone, lm.name, lm.latitude, lm.longitude;'''
+                            lm.sap_id, lm.bu, lm.state, lm.region, lm.zone, lm.name, lm.latitude, lm.longitude;''',
+    
+    "hourly_alerts": f'''SELECT 
+                                DATE_TRUNC('hour', created_at) AS alert_hour, interlock_name,
+                                COUNT(*) AS alert_count
+                            FROM 
+                                alerts
+                            WHERE 
+                                created_at >= CURRENT_TIMESTAMP - INTERVAL '24 hours'
+                            GROUP BY 
+                                DATE_TRUNC('hour', created_at), interlock_name
+                            ORDER BY 
+                                alert_hour;''',
+    
+    "sales_performance": f'''SELECT "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+                                    "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "INVOICE_DT", 
+                                    "TARGET_QTY_TMT", "FISCAL_YEAR", "NETWEIGHT_TMT", "FinalSum", 
+                                    "FinalActualSum", "Rate_Per_Day_Required_MMT", "Rate_per_day_current_MMT", 
+                                    "month_year", "month_name", "Prediction_Value", "Zone_Region_Achievement",  
+                                    "Product_Achievement" 
+                            FROM public."M60_LEVEL_METADATA"''',
+
+    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_SALES"'''
+
 }

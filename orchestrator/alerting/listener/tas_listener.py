@@ -6,9 +6,20 @@ import traceback
 from orchestrator.alerting.alert_manager import create_alert, close_alert
 
 
+def fix_additional_info(additional_info):
+    for key, value in {"interlockName": "interlock_name", "BU": "bu", "sopid": "sop_id",
+                       "plantlocationid": "sap_id", "deviceId": "device_id", "deviceType": "device_type",
+                       "deviceName": "device_name"}.items():
+        if key in additional_info:
+            additional_info[value] = additional_info[key]
+    return additional_info
+
+
 async def tas_listener(rmsg):
     print(rmsg)
     try:
+        if rmsg.get("details") and rmsg["details"].get("additionalInfo"):
+            rmsg["details"]["additionalInfo"] = fix_additional_info(rmsg["details"]["additionalInfo"])
         print('-' * 12)
         if rmsg['status'] == 'ACTIVE_UNACK':
             alertdata = rmsg['details']['additionalInfo']

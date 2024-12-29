@@ -52,15 +52,19 @@ class DBConnectorFactory(ABC):
                 elif condition == 'oneof' and isinstance(value, list):
                     values = "', '".join(map(str, value))
                     conditions.append(f"{key} IN ('{values}')")
+                elif condition == 'pattern':
+                    conditions.append(f"{key} ILIKE '%{value}%'")
                 elif condition == 'date_filter':
-                    if value == '1d':
-                        conditions.append(f"a.{key} = CURRENT_DATE - INTERVAL '1 DAY'")
+                    if value == '24h':
+                        conditions.append(f"{key} >= CURRENT_TIMESTAMP - INTERVAL '24 hours'")
+                    elif value == '1d':
+                        conditions.append(f"{key}::DATE = CURRENT_DATE - INTERVAL '1 DAY'")
                     elif value == '1w':
-                        conditions.append(f"a.{key} >= CURRENT_DATE - INTERVAL '7 DAY'")
+                        conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '7 DAY'")
                     elif value == '15d':
-                        conditions.append(f"a.{key} >= CURRENT_DATE - INTERVAL '15 DAY'")
+                        conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '15 DAY'")
                     elif value == '1m':
-                        conditions.append(f"a.{key} >= CURRENT_DATE - INTERVAL '1 MONTH'") 
+                        conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '1 MONTH'") 
                 else:
                     raise ValueError(f"Unsupported condition: {condition}")
         return "WHERE " + " AND ".join(f"{col} = '{val}'" for col, val in filters.items())

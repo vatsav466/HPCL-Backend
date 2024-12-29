@@ -47,6 +47,7 @@ class Settings(pydantic_settings.BaseSettings):
     default_index: str = "hpcl_ceg"
     multi_tenant_support: bool = True
     password_salt: str = "hpcl_ceg_dnc"
+    max_redis_connections: int = 10
 
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
@@ -107,7 +108,7 @@ class Settings(pydantic_settings.BaseSettings):
     superset_password: str = 'password'
 
     # camunda
-    camunda_url: str = 'http://10.90.38.166:8080'
+    camunda_url: str = 'http://10.90.38.167:8080'
     camunda_default_config: typing.Dict[str, int] = {
         "maxTasks": 1,
         "lockDuration": 10000,
@@ -115,6 +116,9 @@ class Settings(pydantic_settings.BaseSettings):
         "retries": 3,
         "retryTimeout": 5000,
         "sleepSeconds": 30
+    }
+    camunda_url_config: typing.Dict[str, pydantic.AnyUrl] = {
+
     }
 
     # RabbitMQ

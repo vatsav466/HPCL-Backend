@@ -1,11 +1,14 @@
 import urdhva_base
 import sys
+import json
+import base64
 import typing
 import cx_Oracle
 import traceback
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
+import urdhva_base.redispool
 from sshtunnel import SSHTunnelForwarder
 
 
@@ -34,7 +37,22 @@ class Oracle(BaseAction):
 
     async def get_connection(self):
         if 'connection_name' in self.params.keys():
+            # redis_ins = urdhva_base.redispool.get_synchronous_redis_connection()
+            # redis_key = f"cred_store_{self.params['connection_name']}"
+            # try:
+            #     if redis_ins.exists(f"cred_store_{self.params['connection_name']}"):
+            #         self.params = json.loads(base64.b64decode(redis_ins.get(redis_key)))
+            #     else:
+            #         self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+            #         redis_ins.setex(redis_key, 24 * 60 * 60,
+            #                               base64.b64encode(json.dumps(self.params, default=str).encode()).decode())
+            # except:
             self.params = await hpcl_ceg_model.CredsModel.get(self.params['connection_name'])
+            # finally:
+            #     try:
+            #         redis_ins.close()
+            #     except:
+            #         ...
         if not isinstance(self.params, dict):
             self.params = self.params.__dict__
         if 'credentials' in self.params.keys():
@@ -400,6 +418,7 @@ class Oracle(BaseAction):
             column_names = [desc[0] for desc in cursor.description]
             records = {column: [record[i] for record in records] for i, column in enumerate(column_names)}
             records = pd.DataFrame(records)
+            print("query resp: ", records)
             await self.close_connection(connection)
             return records.to_dict(orient='records')
         except cx_Oracle.Error as err:

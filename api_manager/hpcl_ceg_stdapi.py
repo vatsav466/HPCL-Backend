@@ -7,6 +7,26 @@ import fastapi
 router = fastapi.APIRouter()
 
 
+@router.get('/roles/{id}', response_model=Roles, tags=['Roles'])
+async def get(id: str):
+    return await Roles.get(id, skip_secrets=True)
+
+
+@router.get('/roles', response_model=RolesGetResp, tags=['Roles'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await Roles.get_all(params, skip_secrets=True)
+
+
+@router.get('/users/{id}', response_model=Users, tags=['Users'])
+async def get(id: str):
+    return await Users.get(id, skip_secrets=True)
+
+
+@router.get('/users', response_model=UsersGetResp, tags=['Users'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await Users.get_all(params, skip_secrets=True)
+
+
 @router.get('/locationmaster/{id}', response_model=LocationMaster, tags=['LocationMaster'])
 async def get(id: str):
     return await LocationMaster.get(id, skip_secrets=True)
@@ -172,6 +192,16 @@ async def delete(id: str):
     return await CredsModel.delete(id)
 
 
+@router.get('/dryouthistory/{id}', response_model=DryOutHistory, tags=['DryOutHistory'])
+async def get(id: str):
+    return await DryOutHistory.get(id, skip_secrets=True)
+
+
+@router.get('/dryouthistory', response_model=DryOutHistoryGetResp, tags=['DryOutHistory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await DryOutHistory.get_all(params, skip_secrets=True)
+
+
 @router.post('/indentdryout', response_model=IndentDryOut, tags=['IndentDryOut'])
 async def create(inputObj: IndentDryOutCreate):
     return await inputObj.create()
@@ -195,6 +225,56 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/indentdryout/{id}', tags=['IndentDryOut'])
 async def delete(id: str):
     return await IndentDryOut.delete(id)
+
+
+@router.post('/lpgoperations', response_model=LpgOperations, tags=['LpgOperations'])
+async def create(inputObj: LpgOperationsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgoperations', response_model=LpgOperations, tags=['LpgOperations'])
+async def update(inputObj: LpgOperations):
+    return await inputObj.modify()
+
+
+@router.get('/lpgoperations/{id}', response_model=LpgOperations, tags=['LpgOperations'])
+async def get(id: str):
+    return await LpgOperations.get(id, skip_secrets=True)
+
+
+@router.get('/lpgoperations', response_model=LpgOperationsGetResp, tags=['LpgOperations'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgOperations.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgoperations/{id}', tags=['LpgOperations'])
+async def delete(id: str):
+    return await LpgOperations.delete(id)
+
+
+@router.post('/lpgrejections', response_model=LpgRejections, tags=['LpgRejections'])
+async def create(inputObj: LpgRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgrejections', response_model=LpgRejections, tags=['LpgRejections'])
+async def update(inputObj: LpgRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpgrejections/{id}', response_model=LpgRejections, tags=['LpgRejections'])
+async def get(id: str):
+    return await LpgRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpgrejections', response_model=LpgRejectionsGetResp, tags=['LpgRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgrejections/{id}', tags=['LpgRejections'])
+async def delete(id: str):
+    return await LpgRejections.delete(id)
 
 
 @router.post('/screens', response_model=Screens, tags=['Screens'])
@@ -230,4 +310,14 @@ async def get(id: str):
 @router.get('/devicemaster', response_model=DeviceMasterGetResp, tags=['DeviceMaster'])
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await DeviceMaster.get_all(params, skip_secrets=True)
+
+
+@router.get('/vtsalerthistory/{id}', response_model=VtsAlertHistory, tags=['VtsAlertHistory'])
+async def get(id: str):
+    return await VtsAlertHistory.get(id, skip_secrets=True)
+
+
+@router.get('/vtsalerthistory', response_model=VtsAlertHistoryGetResp, tags=['VtsAlertHistory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await VtsAlertHistory.get_all(params, skip_secrets=True)
 

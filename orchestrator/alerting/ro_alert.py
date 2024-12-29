@@ -9,7 +9,7 @@ logger = urdhva_base.logger.Logger.getInstance("ro_alert_processing")
 
 class ROAlertManager(alert_factory.AlertFactory):
     @classmethod
-    async def create_bu_alert(cls, alert_data):
+    async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
         """
         Create a business unit level alert
 
@@ -24,12 +24,12 @@ class ROAlertManager(alert_factory.AlertFactory):
                 - severity (str): Severity of the alert
                 - message (str): Alert message
                 - alertHistory (list): List of alert history messages
+            camunda_url (String): Camunda connection URL
 
         Returns:
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
-            print("RO Alert Data", alert_data)
             logger.info(f"alert_data received to create alert {alert_data}")
             # alert_alert_data = await hpcl_ceg_model.Alerts.get_all()
             bu_location_type = alert_data['bu']
@@ -53,7 +53,7 @@ class ROAlertManager(alert_factory.AlertFactory):
             # if status:
             #     alert_data['location_data'] = loc_dt
         
-            return await cls.create_alert(alert_data)
+            return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
             logger.error(e)

@@ -3,12 +3,12 @@ import base64
 import string
 import hashlib
 import datetime
+import urdhva_base.redispool
 try:
     from secrets import choice
 except ImportError:
     from random import choice
 from dateutil.relativedelta import relativedelta
-
 
 
 def password_generator(password_length=16, special_characters_allowed=True, case_sensitive=True):
@@ -103,3 +103,35 @@ def encrypt_file(file_path):
             encrypted_file.write(file_data)  # Save encrypted data
     file_path = str(urdhva_base.types.Secret().validate(encrypted_file_path, ''))
     return base64.b64encode(file_path.encode()).decode()
+
+
+def normalize_string(input_value):
+    """
+    Normalizes provided string, If binary convert to string and return else return string
+    :param input_value:
+    :return:
+    """
+    if isinstance(input_value, bytes):
+        return input_value.decode()
+    return input_value
+
+
+async def get_alert_camunda_url(alert_id, base_url):
+    """
+    API to get camunda based on the alertid
+    :param alert_id:
+    :return:
+    """
+    redis_ins = urdhva_base.redispool.get_synchronous_redis_connection()
+    try:
+        if redis_ins.hexists("alert_camunda_url", f"{alert_id}"):
+            url = redis_ins.hget("alert_camunda_url", f"{alert_id}")
+            return url.decode() if isinstance(url, bytes) else url
+        return base_url
+    except:
+        return base_url
+    finally:
+        try:
+            redis_ins.close()
+        except:
+            ...
