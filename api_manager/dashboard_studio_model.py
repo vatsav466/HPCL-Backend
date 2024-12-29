@@ -116,7 +116,7 @@ class filtered_keysCreate(pydantic.BaseModel):
 class WidgetFiltersCreate(pydantic.BaseModel):
     key: str
     cond: str
-    value: str
+    value: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class ChartsSchema(UrdhvaPostgresBase):

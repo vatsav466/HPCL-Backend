@@ -326,10 +326,14 @@ class GlobalAnalytics:
             conditions = []
 
             for rec in filters:
+                rec.value = rec.value.split(",")
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
                 else:
-                    condition = f"{rec.key} in {tuple(rec.value)}"
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
             if conditions:
