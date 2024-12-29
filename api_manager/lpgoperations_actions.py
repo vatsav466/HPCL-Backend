@@ -17,10 +17,10 @@ async def lpgoperations_get_productions_rate(data: Lpgoperations_Get_Productions
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    query = """ SELECT * FROM lpg_operations """
+    query = """ SELECT * FROM "LPG_OPERATIONS_SUMMARY_DATA" """
     if not data.days == 0:
         start_date = (datetime.datetime.now() - datetime.timedelta(days=data.days)).strftime('%Y-%m-%d')
-        query = f""" SELECT * FROM lpg_operations WHERE process_date >= '{start_date}' """    
+        query = f""" SELECT * FROM "LPG_OPERATIONS_SUMMARY_DATA" WHERE process_date >= '{start_date}' """
     resp = await function(
         query=query
     )
@@ -32,8 +32,8 @@ async def lpgoperations_get_productions_rate(data: Lpgoperations_Get_Productions
     if data.daywise == True:
         group_col = ["process_date", data.dimension]
     df = df.group_by(group_col
-                     ).agg(pl.col("productivity_normal_production"
-                                  ).mean().round(2)).rename({"productivity_normal_production": "production"})
+                     ).agg(pl.col("productivity.normal.production"
+                                  ).mean().round(2)).rename({"productivity.normal.production": "production"})
     _sort = ["production"] + group_col
     df = df.sort(_sort, descending=True)
     if not data.top == 0:
@@ -49,10 +49,10 @@ async def lpgoperations_get_productivity_rate(data: Lpgoperations_Get_Productivi
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    query = """ SELECT * FROM lpg_operations """            
+    query = """ SELECT * FROM "LPG_OPERATIONS_SUMMARY_DATA" """            
     if not data.days == 0:
         start_date = (datetime.datetime.now() - datetime.timedelta(days=data.days)).strftime('%Y-%m-%d')
-        query = f""" SELECT * FROM lpg_operations WHERE process_date >= '{start_date}' """
+        query = f""" SELECT * FROM "LPG_OPERATIONS_SUMMARY_DATA" WHERE process_date >= '{start_date}' """
     
     resp = await function(
         query=query
@@ -65,8 +65,8 @@ async def lpgoperations_get_productivity_rate(data: Lpgoperations_Get_Productivi
     if data.daywise == True:
         group_col = ["process_date", data.dimension]
     df = df.group_by(group_col
-                     ).agg(pl.col("productivity_normal_productivity"
-                                  ).mean().round(2)).rename({"productivity_normal_productivity": "productivity"})
+                     ).agg(pl.col("productivity.normal.productivity"
+                                  ).mean().round(2)).rename({"productivity.normal.productivity": "productivity"})
     _sort = ["productivity"] + group_col
     df = df.sort(_sort, descending=True)
     if not data.top == 0:
