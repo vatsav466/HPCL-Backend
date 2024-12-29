@@ -65,6 +65,8 @@ class DBConnectorFactory(ABC):
                         conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '15 DAY'")
                     elif value == '1m':
                         conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '1 MONTH'") 
+                    elif value == '3m':
+                        conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'") 
                 else:
                     raise ValueError(f"Unsupported condition: {condition}")
         return "WHERE " + " AND ".join(f"{col} = '{val}'" for col, val in filters.items())
