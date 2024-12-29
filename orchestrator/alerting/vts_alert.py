@@ -91,38 +91,53 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             resp = await hpcl_ceg_model.VTSCreate(**vts_data).create()
                             vts_data['id'] = resp['id']
                         if vts_data['violation_count'] > details['alert_threshold']:
-                            count = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
+                            altcount = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
                                                                                                             record['location_type'],
                                                                                                             record['tl_number'], key)
+                            previousaltCount = await check_violation_count.CheckViolationCount().check_violation_all_count(record['location_id'],
+                                                                                                            record['location_type'],
+                                                                                                            record['tl_number'], key)
+                            alertmsg =[]
+                            for key,values in previousaltCount.items():
+                                alertmsg.append(key+"Count :%s"% values)
+                                                                                                                                                                                                                        
                             # TODO Previous month history quarterly 
                             # check all violation function to be implemented                                                                                                           
                             max_limit = int(max(list(details['alerting_rules'].keys())))
 
                             # If already reached to peak state, don't create new alerts
-                            if count > max_limit:
+                            if altcount > max_limit:
+                                alert_history = [
+                                {
+                                    "action_msg": "Count Already Exits",
+                                    "action_type": "Created",  # Replace with an appropriate value
+                                    "alert_status": "Open",  # Replace with the correct alert status
+                                }]
                                 print("alert_aleady exists")
                                 continue
 
-                            alert_message = (f"{details['alerting_rules'][str(count)]['interlock_name']} ALert for Vehicle: "
-                                             f"{record['tl_number']} Vendor: {record['vendor_id']} Report_Duration: " 
-                                             f"{record['report_duration']} {key}: {vts_data['violation_count']}")
-                            # alert_history = [
-                            #     {
-                            #         "action_msg": alert_message,
-                            #         "action_type": "Created",  # Replace with an appropriate value
-                            #         "alert_status": "Open",  # Replace with the correct alert status
-                            #     }]
-
+                            previous_alert_summary = "; ".join(alertmsg)
+                            alert_message = (
+                                f"{details['alerting_rules'][str(altcount)]['interlock_name']} Alert for Vehicle: "
+                                f"{record['tl_number']} Vendor: {record['vendor_id']} Report_Duration: "
+                                f"{record['report_duration']} {key}: {vts_data['violation_count']} "
+                                f"Previous Alert Summary: {previous_alert_summary}"
+                            )
+                            alert_history = [
+                                {
+                                    "action_msg": alert_message,
+                                    "action_type": "Created",  # Replace with an appropriate value
+                                    "alert_status": "Open",  # Replace with the correct alert status
+                                }]
                             vts_alert_data = copy.deepcopy(vts_data)
                             interlock_details = utilities.interlock_mapping.get_interlock_name(
-                                alert_data['location_type'], details['alerting_rules'][str(count)]['interlock_name'])
+                                alert_data['location_type'], details['alerting_rules'][str(altcount)]['interlock_name'])
                             if not interlock_details:
                                 continue
                             vts_alert_data.update(interlock_details)
                             vts_alert_data['alert_section'] = 'VTS'
-                            #TODO : import alert history from vts action api
-                            # vts_alert_data['alert_history'] = alert_history
-                            vts_alert_data['clear_count'] = details['alerting_rules'][str(count)]['clear_count']
+                            vts_alert_data['alert_history'] = alert_history
+                            vts_alert_data['clear_count'] = details['alerting_rules'][str(altcount)]['clear_count']
                             await cls.create_alert(vts_alert_data, camunda_url)
                 except Exception as e:
                     print(traceback.format_exc())
