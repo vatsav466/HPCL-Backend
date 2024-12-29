@@ -327,6 +327,8 @@ class GlobalAnalytics:
 
             for rec in filters:
                 rec.value = rec.value.split(",")
+                # result = [value.strip() for value in rec.value.split(",")]
+
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
                 else:
