@@ -448,7 +448,7 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
 
-            if "FISCAL_YEAR" in filter_keys:
+            if "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
                 grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
