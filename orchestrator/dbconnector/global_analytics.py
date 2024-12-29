@@ -345,6 +345,8 @@ class GlobalAnalytics:
 
             for rec in filters:
                 rec.value = rec.value.split(",")
+                if rec.key == '"month_name"' and rec.value in month_mapping:
+                    rec.value = month_mapping.get(rec.value, rec.value)
                 # result = [value.strip() for value in rec.value.split(",")]
 
                 if isinstance(rec.value, str):
