@@ -665,14 +665,14 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 print("Group by Zone")
-                grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 print("Group by Region")
-                grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
@@ -680,7 +680,7 @@ class GlobalAnalytics:
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 print("Condition: Grouping by mzr")
-                grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
@@ -688,7 +688,7 @@ class GlobalAnalytics:
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
                 print("Group by Product")
-                grouped_resp = resp.groupby(["ProductName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name","ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
