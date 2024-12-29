@@ -100,27 +100,31 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             alertmsg =[]
                             for key,values in previousaltCount.items():
                                 alertmsg.append(key+"Count :%s"% values)
-                                                                                                                                                                                                                        
+
+                            altcount = data['count']
+                            print("altcount",altcount)                                                                                                                                                
                             # TODO Previous month history quarterly 
                             # check all violation function to be implemented                                                                                                           
                             max_limit = int(max(list(details['alerting_rules'].keys())))
 
                             # If already reached to peak state, don't create new alerts
                             if altcount > max_limit:
-                                alert_history = [
-                                {
-                                    "action_msg": "Count Already Exits",
-                                    "action_type": "Created",  # Replace with an appropriate value
-                                    "alert_status": "Open",  # Replace with the correct alert status
-                                }]
+                                alert_data1 = data['data'][0]
                                 print("alert_aleady exists")
+                                alert_message = (f"New ALert for Vehicle: "
+                                             f"{record['tl_number']} Vendor: {alert_data['vendor_id']} Report_Duration: " 
+                                             f"{record['report_duration']} {key}: {altcount}")
+                                
+                                alert_data["action_msg"] = alert_message
+                                alert_data["action_type"] = "Created"
+                                await alert_manager.AlertAction().update_alert_history(input_data=alert_data1, alert_data=alert_data1) 
                                 continue
 
                             previous_alert_summary = "; ".join(alertmsg)
                             alert_message = (
                                 f"{details['alerting_rules'][str(altcount)]['interlock_name']} Alert for Vehicle: "
                                 f"{record['tl_number']} Vendor: {record['vendor_id']} Report_Duration: "
-                                f"{record['report_duration']} {key}: {vts_data['violation_count']} "
+                                f"{record['report_duration']} {key}: {altcount} "
                                 f"Previous Alert Summary: {previous_alert_summary}"
                             )
                             alert_history = [
