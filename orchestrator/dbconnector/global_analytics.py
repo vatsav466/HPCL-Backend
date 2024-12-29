@@ -379,16 +379,18 @@ class GlobalAnalytics:
                     SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
                     SUM(ROUND("M60_LEVEL_METADATA"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
-                    "M60_LEVEL_METADATA"."month_name" AS "month_name",
+                    TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
-                    "hpcl_ceg"."public"."M60_LEVEL_METADATA"
+                    "M60_LEVEL_METADATA"
                 WHERE
-                    "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR" = 'FY 2024-2025'
                 GROUP BY
-                    "M60_LEVEL_METADATA"."fy_month", "M60_LEVEL_METADATA"."month_name", "M60_LEVEL_METADATA"."FISCAL_YEAR"
+                    "M60_LEVEL_METADATA"."fy_month",
+                    TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR"
                 ORDER BY
-                    "M60_LEVEL_METADATA"."fy_month" ASC
+                    "M60_LEVEL_METADATA"."fy_month" ASC;
             '''
             resp = await function(query=sales_performance_query_)
             # Convert the response to a DataFrame for further processing
