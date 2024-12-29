@@ -58,7 +58,7 @@ class AlertAction:
                         "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert",
                         "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
-                        "Created": "created_alert", "Tripped": "tripped_alert"}
+                        "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -132,6 +132,7 @@ class AlertAction:
                             "is_r1_swipe": event_tags.get("is_r1_swipe", False),
                             "is_r2_swipe": event_tags.get("is_r2_swipe", False),
                             "is_r3_swipe": event_tags.get("is_r3_swipe", False),
+                            "is_vts": event_tags.get("is_vts", False),
                             "is_delivered": event_tags.get("is_delivered", False),
                             "is_tripped": event_tags.get("is_tripped", False)        
                         })
@@ -172,6 +173,7 @@ class AlertAction:
                    "is_r1_swipe": {"name": "r1Swipe", "type": "Boolean"},
                    "is_r2_swipe": {"name": "r2Swipe", "type": "Boolean"},
                    "is_r3_swipe": {"name": "r3Swipe", "type": "Boolean"},
+                   "is_vts": {"name": "VTS", "type": "Boolean"},
                    "is_delivered": {"name": "delivered", "type": "Boolean"},
                    "is_tripped": {"name": "tripped", "type": "Boolean"},
                    }
@@ -399,3 +401,12 @@ class AlertAction:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "Tripped")
 
+    @classmethod
+    async def vts_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "VTS")

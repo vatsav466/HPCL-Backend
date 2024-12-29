@@ -661,6 +661,7 @@ class tagsCreate(pydantic.BaseModel):
     is_r1_swipe: typing.Optional[bool] = pydantic.Field(False, )
     is_r2_swipe: typing.Optional[bool] = pydantic.Field(False, )
     is_r3_swipe: typing.Optional[bool] = pydantic.Field(False, )
+    is_vts: typing.Optional[bool] = pydantic.Field(False, )
     is_delivered: typing.Optional[bool] = pydantic.Field(False, )
     is_tripped: typing.Optional[bool] = pydantic.Field(False, )
 

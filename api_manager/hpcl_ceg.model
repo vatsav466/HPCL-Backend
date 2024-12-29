@@ -64,6 +64,7 @@ Enum AlertActionType str {
     R1Swipe='R1Swipe'
     R2Swipe='R2Swipe'
     R3Swipe='R3Swipe'
+    VTS='VTS'
     Delivered='Delivered'
     Tripped='Tripped'
     InterlockCleared='InterlockCleared'
@@ -91,6 +92,7 @@ Enum IndentStatus str {
     R1Swipe='R1Swipe'
     R2Swipe='R2Swipe'
     R3Swipe='R3Swipe'
+    VTS='VTS'
     Delivered='Delivered'
 }
 
@@ -390,6 +392,7 @@ Model tags internal {
     isR1Swipe optional bool
     isR2Swipe optional bool
     isR3Swipe optional bool
+    isVTS optional bool
     isDelivered optional bool
     isTripped optional bool
 }

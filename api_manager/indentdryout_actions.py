@@ -466,7 +466,8 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         if record.key == "progress_rate":
-            where_clause.append(f"progress_rate={int(record.value[0])}")
+            if record.value:
+                where_clause.append(f"progress_rate={int(record.value[0])}")
         else:
             if record.value:
                 if record.key == "plant":
@@ -535,7 +536,8 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         if record.key == "progress_rate":
-            where_clause.append(f"progress_rate={int(record.value[0])}")
+            if record.value:
+                where_clause.append(f"progress_rate={int(record.value[0])}")
         else:
             if record.value:
                 if record.key == "plant":
