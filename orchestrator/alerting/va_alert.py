@@ -57,16 +57,22 @@ class VAAlertManager(alert_factory.AlertFactory):
                     alert_id = helpers.generate_hash(keys)
                     redis_ins = await urdhva_base.redispool.get_redis_connection()
                     if await redis_ins.hexists("alert_mapping", alert_id):
-                        logger.info("Alert already exists")
+                        print("Alert already exists")
                         continue
 
-                    exception_msg = (f"alert_type - {record['alert_type']},"
-                                     f"alert_description - {record['alert_description']},"
-                                     f"device_id - {record['device_id']},"
-                                     f"video_url - {record['video_url']},"
-                                     f"Exception Date - {recv_time}")
+                    exception_msg = " ".join([
+                        f"New Alert created at {recv_time} for",
+                        f"alert_type - {record['alert_type']},",
+                        f"alert_description - {record['alert_description']},",
+                        f"device_id - {record['device_id']},",
+                        f"video_url - {record['video_url']}"
+                        ])
 
-                    print("Exception Message", exception_msg)
+                    alert_history = [{
+                        "action_msg": exception_msg,
+                        "action_type": "Created",
+                        "alert_status": "Open"
+                        }]
 
                     va_alert_data = va_alert_mapping.VA_Alert_Mapping[alert_data['location_type'].value].get(
                         record['alert_type'], {})
@@ -81,16 +87,16 @@ class VAAlertManager(alert_factory.AlertFactory):
                     interlock_details.update({"bu": alert_data['location_type'].value,
                                               "location_name": loc_dt['name'],
                                               "sap_id": location_id,
-                                              "alert_history": [exception_msg],
                                               "device_id": record['device_id'],
                                               "device_name": record['device_id'],
                                               "message": record['video_url'],
                                               "severity": va_alert_data["severity"],
                                               "alert_id": alert_id,
-                                              "alert_section": "VA"
+                                              "alert_section": "VA",
+                                              "alert_history":alert_history
                                               })
 
-                    await cls.create_alert(interlock_details, None)
+                    await cls.create_alert(interlock_details, camunda_url)
                 except Exception as e:
                     print(traceback.format_exc())
                     logger.error(f"Exception in processing alert data {e}, Traceback "
