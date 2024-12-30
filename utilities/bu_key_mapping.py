@@ -19,7 +19,9 @@ Location = {
     "SalesArea": "sales_area",
     "DeliveryPlantID": "terminal_plant_id",
     "DeliveryPlantName": "terminal_plant_name",
-    "Category": "category"
+    "Category": "category",
+    "DistributorCode": "distributor_code",
+    "DistributorName": "distributor_name",
 }
 
 LPG = {

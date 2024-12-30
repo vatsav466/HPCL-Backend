@@ -252,31 +252,59 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             utc_time = utc.localize(utc_timestamp)
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
-            formatted_ist_time = ist_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
+            formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
             return formatted_ist_time
         except:
             return "-"
 
     if resp:
-        alert_history["details"] = {"interlock_name": resp['interlock_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
-                                    "state": resp["state"], "indent_status": resp["indent_status"], "device_name": resp["device_id"] + " Tank",
-                                    "city": resp['city'], "region": resp["region"], "location_name": resp["location_name"],
-                                    "severity": resp['severity'], "alert_status": resp["alert_status"], "alert_section": resp["bu"],
-                                    "indent_raised_date": convert_time_read_format(str(resp['indent_raised_date']))}
-        alert_history["data"].append({"action_msg": "Dry-out Location Identified",
-                                      "allocated_time": convert_time_read_format(str(resp['created_at'])),
-                                      "processed_time": convert_time_read_format(str(resp['created_at']))})
+        # resp = resp[0]
+        alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
+                                    "state": resp["state"], "indent_status": resp["indent_status"]}
+        alert_history["data"].append(f"Dry-out Location Identified at "
+                                     f"{convert_time_read_format(str(resp['created_at']))}")
+
         for history in resp.get("alert_history", []):
-            alert_history["data"].append({"action_msg": history['action_msg'],
-                                          "allocated_time": convert_time_read_format(str(history['allocated_time'])),
-                                          "processed_time": convert_time_read_format(str(history['processed_time']))})
-        # alert_history["data"].append(f"Dry-out Location Identified at "
-        #                              f"{convert_time_read_format(str(resp['created_at']))}")
-        # for history in resp.get("alert_history", []):
-        #     alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
-        #                                  f" {convert_time_read_format(str(history['allocated_time']))}, "
-        #                                  f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+            alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
+                                         f" {convert_time_read_format(str(history['allocated_time']))}, "
+                                         f"Processed at {convert_time_read_format(str(history['processed_time']))}")
     return alert_history
+
+    # def convert_time_read_format(date_time):
+    #     try:
+    #         utc_timestamp = parser.parse(date_time).replace(tzinfo=None)
+    #         # Define UTC and IST timezones
+    #         utc = pytz.utc
+    #         ist = pytz.timezone('Asia/Kolkata')
+    #         # Localize the UTC timestamp and convert it to IST
+    #         utc_time = utc.localize(utc_timestamp)
+    #         ist_time = utc_time.astimezone(ist)
+    #         # Format the IST timestamp in the desired format
+    #         formatted_ist_time = ist_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
+    #         return formatted_ist_time
+    #     except:
+    #         return "-"
+    #
+    # if resp:
+    #     alert_history["details"] = {"interlock_name": resp['interlock_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
+    #                                 "state": resp["state"], "indent_status": resp["indent_status"], "device_name": resp["device_id"] + " Tank",
+    #                                 "city": resp['city'], "region": resp["region"], "location_name": resp["location_name"],
+    #                                 "severity": resp['severity'], "alert_status": resp["alert_status"], "alert_section": resp["bu"],
+    #                                 "indent_raised_date": convert_time_read_format(str(resp['indent_raised_date']))}
+    #     alert_history["data"].append({"action_msg": "Dry-out Location Identified",
+    #                                   "allocated_time": convert_time_read_format(str(resp['created_at'])),
+    #                                   "processed_time": convert_time_read_format(str(resp['created_at']))})
+    #     for history in resp.get("alert_history", []):
+    #         alert_history["data"].append({"action_msg": history['action_msg'],
+    #                                       "allocated_time": convert_time_read_format(str(history['allocated_time'])),
+    #                                       "processed_time": convert_time_read_format(str(history['processed_time']))})
+    #     # alert_history["data"].append(f"Dry-out Location Identified at "
+    #     #                              f"{convert_time_read_format(str(resp['created_at']))}")
+    #     # for history in resp.get("alert_history", []):
+    #     #     alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
+    #     #                                  f" {convert_time_read_format(str(history['allocated_time']))}, "
+    #     #                                  f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+    # return alert_history
 
 
 # Action get_distinct_plant
@@ -351,38 +379,54 @@ async def indentdryout_get_indent_analysis(data: Indentdryout_Get_Indent_Analysi
 # Action get_dry_out_count
 @router.post('/get_dry_out_count', tags=['IndentDryOut'])
 async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountParams):
-    schema = connection_mapping.schema_mapping.get("cris")
-    table = connection_mapping.table_mapping.get("dry_out")
-    query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-                rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, 
-                case when sum(pumpable_Stock) <=0 then 1
-                when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
-                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
-                else 5 end status
-                from "{schema}".{table} sch
-                where 1=1 and sch.volume>0
-                group by site_id, fcc_code, item_name, rosapcode, product_no
-                order by site_id, fcc_code, item_name, rosapcode, product_no'''
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "1")
+    # schema = connection_mapping.schema_mapping.get("cris")
+    # table = connection_mapping.table_mapping.get("dry_out")
+    # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
+    #             rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
+    #             case when sum(pumpable_Stock) <=0 then 1
+    #             when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
+    #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
+    #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
+    #             else 5 end status
+    #             from "{schema}".{table} sch
+    #             where 1=1 and sch.volume>0
+    #             group by site_id, fcc_code, item_name, rosapcode, product_no
+    #             order by site_id, fcc_code, item_name, rosapcode, product_no'''
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # dry_out_data = await function(query=query)
+    # dry_out_data = pl.DataFrame(dry_out_data)
+    # dry_out = dry_out_data.filter(
+    #     pl.col("status") == 1).select(
+    #     [pl.col("rosapcode")]
+    # ).unique().shape[0]
+    #
+    # intraday_dry_out = dry_out_data.filter(
+    #     pl.col("status") == 2).select(
+    #     [pl.col("rosapcode")]
+    # ).unique().shape[0]
+    #
+    # potential_dry_out = dry_out_data.filter(
+    #     pl.col("status").is_in([3])).select(
+    #     [pl.col("rosapcode")]
+    # ).unique().shape[0]
+
+    query = f'''select dry_out_in_days,  count(distinct dealer_id) from alerts 
+            where interlock_name = 'Dry Out Each Indent Wise MainFlow' 
+            group by dry_out_in_days order by dry_out_in_days'''
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     dry_out_data = await function(query=query)
-    dry_out_data = pl.DataFrame(dry_out_data)
-    dry_out = dry_out_data.filter(
-        pl.col("status") == 1).select(
-        [pl.col("rosapcode")]
-    ).unique().shape[0]
-
-    intraday_dry_out = dry_out_data.filter(
-        pl.col("status") == 2).select(
-        [pl.col("rosapcode")]
-    ).unique().shape[0]
-
-    potential_dry_out = dry_out_data.filter(
-        pl.col("status").is_in([3])).select(
-        [pl.col("rosapcode")]
-    ).unique().shape[0]
+    dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
+    for each_dryout in dry_out_data:
+        if each_dryout["dry_out_in_days"] == '1':
+            dry_out = each_dryout["count"]
+        if each_dryout["dry_out_in_days"] == '2':
+            intraday_dry_out = each_dryout["count"]
+        if each_dryout["dry_out_in_days"] == '3':
+            potential_dry_out = each_dryout["count"]
 
     return {
         "dry_out": dry_out, "intraday_dry_out": intraday_dry_out,
@@ -479,7 +523,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     conditions = ' AND '.join(where_clause)
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
-    stats_query = "select sap_id, min(progress_rate) as present_stage " \
+    stats_query = "select distinct sap_id, max(progress_rate) as present_stage " \
                   f"from alerts where {conditions} and indent_status != 'Cancelled' " \
                   f"group by sap_id"
     stats_resp = await function(

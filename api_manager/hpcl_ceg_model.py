@@ -192,6 +192,8 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    distributor_code: Mapped[typing.Optional[str]] = mapped_column("distributor_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    distributor_name: Mapped[typing.Optional[str]] = mapped_column("distributor_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -231,6 +233,8 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
+    distributor_code: typing.Optional[str] = pydantic.Field("", **{})
+    distributor_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -275,6 +279,8 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
+    distributor_code: typing.Optional[str] = pydantic.Field("", **{})
+    distributor_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
