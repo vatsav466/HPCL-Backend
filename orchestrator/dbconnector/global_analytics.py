@@ -592,7 +592,7 @@ class GlobalAnalytics:
                 SELECT 
                     MAX(ROUND("MOM_LEVEL_FINAL_TEST1"."sum_total_sales")) AS "total_sales",
                     "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year",
-                    TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name",
+                    TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
                 FROM
                     "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
                 GROUP BY
