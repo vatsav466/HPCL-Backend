@@ -723,6 +723,6 @@ LIMIT 10000;''',
                                     "Product_Achievement" 
                             FROM public."M60_LEVEL_METADATA"''',
 
-    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_SALES"'''
+    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_TEST1" where "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') '''
 
 }
