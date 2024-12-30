@@ -98,8 +98,8 @@ class DryoutCollector:
                 alert_data['severity'] = 'Critical'
             alert_data['indent_no'] = ''
             alert_data['dealer_id'] = _dry['rosapcode']
-            alert_data['workflow_datetime'] = datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[
-                                              :-3] + "Z"
+            alert_data['workflow_datetime'] = (datetime.datetime.now(datetime.UTC).strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
+                                               + "Z")
             alert_data['terminal_plant_id'] = ''
             alert_data['camunda_host'] = _dry['camunda_listener']['host']
             alert_data['camunda_port'] = _dry['camunda_listener']['port']

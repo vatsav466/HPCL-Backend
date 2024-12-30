@@ -68,6 +68,7 @@ Enum AlertActionType str {
     VTS='VTS'
     Delivered='Delivered'
     Tripped='Tripped'
+    InterlockCreated='InterlockCreated'
     InterlockCleared='InterlockCleared'
     InterlockNotCleared='InterlockNotCleared'
     UnderMaintenance='UnderMaintenance'

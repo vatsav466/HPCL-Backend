@@ -108,6 +108,7 @@ class AlertActionType(str, enum.Enum):
     VTS = 'VTS'
     Delivered = 'Delivered'
     Tripped = 'Tripped'
+    InterlockCreated = 'InterlockCreated'
     InterlockCleared = 'InterlockCleared'
     InterlockNotCleared = 'InterlockNotCleared'
     UnderMaintenance = 'UnderMaintenance'

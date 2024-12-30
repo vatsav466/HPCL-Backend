@@ -172,7 +172,7 @@ class IndentDryOut:
                          f"indent_no='{each_indent['INDENT_NO']}' and "
                          f"alert_status in ('Open', 'Close', 'InProgress') and "
                          f"product_code='{each_indent['PROD']}'")
-                alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
+                alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
                 if not alerts_data['data']:
                     self.params['indent_no'] = str(each_indent['INDENT_NO'])
                     self.params['terminal_plant_id'] = str(each_indent['LOCN_CODE'])
