@@ -95,11 +95,11 @@ class TASAlertManager(alert_factory.AlertFactory):
                     break
             device_data = f"{alert_data['device_name']}({", ".join(device_keys)})"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
-            alert_data["alert_history"] = [{"processed_time": processed_time.isoformat(),
-                                            "allocated_time": processed_time.isoformat(),
-                                            "action_msg": f"{alert_data['interlock_name']} Interlock "
-                                                          f"cleared for device {device_data}",
-                                            "action_type": "InterlockCleared"}]
+            alert_data["alert_history"] = {"processed_time": processed_time.isoformat(),
+                                           "allocated_time": processed_time.isoformat(),
+                                           "action_msg": f"{alert_data['interlock_name']} Interlock "
+                                                         f"cleared for device {device_data}",
+                                           "action_type": "InterlockCleared"}
             return await cls.close_alert(alert_data)
             
         except Exception as e:
