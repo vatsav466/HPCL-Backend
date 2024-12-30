@@ -9,6 +9,7 @@ class BusinessUnit(str, enum.Enum):
     LPG = 'LPG'
     RDI = 'RDI'
     CP = 'CP'
+    CDCMS = 'CDCMS'
 
 
 

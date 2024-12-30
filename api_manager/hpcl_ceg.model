@@ -4,6 +4,7 @@ Enum BusinessUnit str {
     LPG='LPG'
     RDI='RDI'
     CP='CP'
+    CDCMS='CDCMS'
 }
 
 Enum DeviceType str {
