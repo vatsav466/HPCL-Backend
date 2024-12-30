@@ -577,22 +577,43 @@ class GlobalAnalytics:
         else:
             # Fallback query if no filters are provided
             sales_growth_query_ = """
-                    SELECT 
-                        MAX(ROUND("MOM_LEVEL_FINAL_TEST1"."sum_total_sales")) AS "total_sales",
-                        "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year",
-                        TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
-                    FROM
-                        "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
-                    WHERE
-                        "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
-                    GROUP BY
-                        "MOM_LEVEL_FINAL_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon')
-                    ORDER BY
-                        "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
-                """
+
+
+
+
+                   SELECT 
+                       MAX(ROUND("MOM_LEVEL_FINAL_TEST1"."sum_total_sales")) AS "total_sales",
+                       "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year",
+                       TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
+                   FROM
+                       "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
+                   WHERE
+                       "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
+                   GROUP BY
+                       "MOM_LEVEL_FINAL_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon')
+                   ORDER BY
+                       "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
+               """
 
             resp = await function(query=sales_growth_query_)
-            return {"status": True, "message": "success", "data": resp}
+            month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
+                         'Dec': '8', 'Jan': '9', 'Feb': '10', 'Mar': '11'}
+            d = {"2023-2024": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
+                               "11": 0},
+                 "2024-2025": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
+                               "11": 0},
+                 "fy_month": {"0": "1", "1": "2", "2": "3", "3": "4", "4": "5", "5": "6", "6": "7", "7": "8", "8": "9",
+                              "9": "10", "10": "11", "11": "12"},
+                 "month_name": {"0": "Apr", "1": "May", "2": "Jun", "3": "Jul", "4": "Aug", "5": "Sep", "6": "Oct",
+                                "7": "Nov", "8": "Dec", "9": "Jan", "10": "Feb", "11": "Mar"}}
+
+            for rec in resp:
+                if rec['fiscal_year'] == "2024-2025":
+                    d['2024-2025'][month_map[rec['month_name']]] = rec['total_sales']
+                else:
+                    d['2023-2024'][month_map[rec['month_name']]] = rec['total_sales']
+            return {"status": True, "message": "success", "data": d}
+
         resp = await function(query=sales_growth_query_)
         resp = pd.DataFrame(resp)
 
@@ -610,46 +631,48 @@ class GlobalAnalytics:
             resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
         if filters:
-            grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
 
             resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
+            grouped_keys = ["fiscal_year", "month_name"]
 
             if "month_name" in filter_keys and "SBU_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name"], as_index=False).agg({
-                    "total_sales": lambda x: sum(round(x)),
-                })
-                resp.to_csv('resp.csv', index=False)
-
+                grouped_keys.append("SBU_Name")
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(
-                    {
-                        "total_sales": lambda x: sum(round(x)),
-                    })
-
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name"],
-                                            as_index=False).agg({
-                    "total_sales": lambda x: sum(round(x)),
-                })
-
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                grouped_resp = resp.groupby(
-                    ["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"],
-                    as_index=False).agg({
-                    "total_sales": lambda x: sum(round(x)),
-                })
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys:
-                grouped_resp = resp.groupby(
-                    ["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"],
-                    as_index=False).agg({
-                    "total_sales": lambda x: sum(round(x)),
-                })
-
+                grouped_keys.extend(["SBU_Name", "Zone_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and
+                  "Region_Name" not in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys
+                  and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and
+                  "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"])
+            grouped_resp = resp.groupby(grouped_keys, as_index=False).agg({
+                "total_sales": lambda x: sum(round(x)),
+            })
+            print("grouped_keys->>", grouped_keys)
             if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+                sub_name = list(set(rec['SBU_Name'] for rec in grouped_resp.to_dict(orient='records')))
+                transformed_data = []
+                data = grouped_resp.to_dict(orient='records')
+                for sbu_name in sub_name:
+                    entry = {
+                        "month_name": "Jan",
+                        "SBU_Name": sbu_name,
+                        "2024-2025": next((item['total_sales'] for item in data if
+                                           item['SBU_Name'] == sbu_name and item['fiscal_year'] == '2024-2025'), 0),
+                        "2023-2024": next((item['total_sales'] for item in data if
+                                           item['SBU_Name'] == sbu_name and item['fiscal_year'] == '2023-2024'), 0)
+                    }
+                    for key in ["Zone_Name", "Region_Name", "SalesArea_Name"]:
+                        if key in grouped_keys:
+                            entry[key] = next((item[key] for item in data if item['SBU_Name'] == sbu_name), None)
+                    transformed_data.append(entry)
+                return {"status": True, "message": "success", "data": transformed_data}
 
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
