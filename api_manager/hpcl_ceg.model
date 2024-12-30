@@ -512,6 +512,8 @@ Model Alerts {
     category optional str
     indent_raised_date optional datetime
     dry_out_in_days optional str
+    origin_altid optional str
+    alert_message optional str
 
     Action=> alert_action {
         action_type AlertActionType
@@ -521,7 +523,10 @@ Model Alerts {
         justificationType optional str
         event_tags optional tags
     }
-
+    Action=> intitiate_vts_exception {
+        alert_id str
+        excep_msg optional str
+    }
     Action=> get_performance_index {
         bu str
         skip optional int
