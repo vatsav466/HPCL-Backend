@@ -86,6 +86,7 @@ class AlertFactory:
                                                         'clear_count': alert_data.get('clear_count',False),
                                                         'alert_history': alert_data.get('alert_history',[]),
                                                         'device_msg': alert_data.get('message', ''),
+                                                        'alert_message': alert_data.get('alert_message',''),
                                                         'last_sms_to': [], 'last_mailed_to': [],
                                                         'last_escalated_to': [],
                                                         'last_notified_to': [], 'assigned_to': '',
@@ -102,7 +103,9 @@ class AlertFactory:
                                                         'indent_raised_date': alert_data.get('indent_raised_date', None),
                                                         'dry_out_in_days': str(alert_data.get('dry_out_in_days', '1')),
                                                         'progress_rate': 1,
+                                                        'origin_altid': alert_data.get('origin_altid',''),
                                                         'raw_data': {}}).create()
+            print("alert_resp--->", alert_resp)
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,

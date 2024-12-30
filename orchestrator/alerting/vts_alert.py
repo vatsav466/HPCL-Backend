@@ -7,6 +7,7 @@ import hpcl_ceg_model
 import utilities.interlock_mapping
 import utilities.vts_mapping as vts_mapping
 import orchestrator.alerting.alert_helper as alert_helper
+import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
 
@@ -101,25 +102,13 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             for key,values in previousaltCount.items():
                                 alertmsg.append(key+"Count :%s"% values)
 
-                            altcount = data['count']
+                            altcount = altcount['count']
                             print("altcount",altcount)                                                                                                                                                
                             # TODO Previous month history quarterly 
                             # check all violation function to be implemented                                                                                                           
                             max_limit = int(max(list(details['alerting_rules'].keys())))
-
-                            # If already reached to peak state, don't create new alerts
                             if altcount > max_limit:
-                                alert_data1 = data['data'][0]
-                                print("alert_aleady exists")
-                                alert_message = (f"New ALert for Vehicle: "
-                                             f"{record['tl_number']} Vendor: {alert_data['vendor_id']} Report_Duration: " 
-                                             f"{record['report_duration']} {key}: {altcount}")
-                                
-                                alert_data["action_msg"] = alert_message
-                                alert_data["action_type"] = "Created"
-                                await alert_manager.AlertAction().update_alert_history(input_data=alert_data1, alert_data=alert_data1) 
-                                continue
-
+                                altcount = max_limit
                             previous_alert_summary = "; ".join(alertmsg)
                             alert_message = (
                                 f"{details['alerting_rules'][str(altcount)]['interlock_name']} Alert for Vehicle: "
@@ -139,6 +128,13 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             if not interlock_details:
                                 continue
                             vts_alert_data.update(interlock_details)
+                            interlocknamecheck = await check_violation_count.CheckViolationCount().check_interlock(record['location_id'],
+                                                                                                            record['location_type'],
+                                                                                                            record['tl_number'], interlock_details.get("interlock_name",""),key)
+                            print("interlock_name_check", interlocknamecheck['interlock_name'])
+                            print("interlock_name---->",interlock_details["interlock_name"])
+                            if interlocknamecheck and interlocknamecheck['interlock_name']==interlock_details["interlock_name"]:
+                                continue
                             vts_alert_data['alert_section'] = 'VTS'
                             vts_alert_data['alert_history'] = alert_history
                             vts_alert_data['clear_count'] = details['alerting_rules'][str(altcount)]['clear_count']

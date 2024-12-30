@@ -806,6 +806,9 @@
                     "name": "alert_action"
                 },
                 {
+                    "name": "intitiate_vts_exception"
+                },
+                {
                     "name": "get_performance_index"
                 },
                 {
@@ -855,6 +858,9 @@
                 },
                 {
                     "name": "alert_action"
+                },
+                {
+                    "name": "intitiate_vts_exception"
                 },
                 {
                     "name": "get_performance_index"
@@ -1880,6 +1886,10 @@
         {
             "name": "alert_action",
             "displayName": "alert_action"
+        },
+        {
+            "name": "intitiate_vts_exception",
+            "displayName": "intitiate_vts_exception"
         },
         {
             "name": "get_performance_index",
