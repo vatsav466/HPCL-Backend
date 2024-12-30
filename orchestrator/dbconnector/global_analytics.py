@@ -448,31 +448,31 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
 
-            if len(filter) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
+            if len(filters) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
                 grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
             
-            elif len(filter) == 2 and "month_name" in filter_keys and "ZONE_Name" in filter_keys:
+            elif len(filters) == 2 and "month_name" in filter_keys and "ZONE_Name" in filter_keys:
                 grouped_resp = resp.groupby(["month_name", "ZONE_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
             
-            elif len(filter) == 2 and "month_name" in filter_keys and "REGION_Name" in filter_keys:
+            elif len(filters) == 2 and "month_name" in filter_keys and "REGION_Name" in filter_keys:
                 grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
             
-            elif len(filter) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
+            elif len(filters) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
                 grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
             
-            elif len(filter) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
+            elif len(filters) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
                 grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
@@ -590,15 +590,15 @@ class GlobalAnalytics:
             # Fallback query if no filters are provided
             sales_growth_query_ = """
                 SELECT 
-                    MAX(ROUND("MOM_LEVEL_FINAL_SALES"."sum_total_sales")) AS "total_sales",
-                    "MOM_LEVEL_FINAL_SALES"."fiscal_year" AS "fiscal_year",
-                    TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_SALES"."month_name", 'Month'), 'Mon') AS "month_name",
+                    MAX(ROUND("MOM_LEVEL_FINAL_TEST1"."sum_total_sales")) AS "total_sales",
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year",
+                    TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name",
                 FROM
-                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_SALES"
+                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
                 GROUP BY
-                    "MOM_LEVEL_FINAL_SALES"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_SALES"."month_name", 'Month'), 'Mon')
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon')
                 ORDER BY
-                    "MOM_LEVEL_FINAL_SALES"."fiscal_year" ASC
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
             """
 
             resp = await function(query=sales_growth_query_)
@@ -626,33 +626,27 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
             
-            if "month_name" in filter_keys and "SBU_CD" not in filter_keys:
-                print("Group by fiscal_year and month_name and SBU_CD")
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_CD"], as_index=False).agg({
+            if "month_name" in filter_keys and "SBU_Name" not in filter_keys:
+                print("Group by fiscal_year and month_name and SBU_Name")
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name"], as_index=False).agg({
                     "sum_total_sales": lambda x: round(x.max()),
                 })
 
-            elif "month_name" in filter_keys and "SBU_CD" in filter_keys and "ZONE_CD" not in filter_keys:
-                print("Group by fiscal_year and ZONE_CD")
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_CD", "ZONE_CD"], as_index=False).agg({
+            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "ZONE_Name" not in filter_keys:
+                print("Group by fiscal_year and ZONE_Name")
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "ZONE_Name"], as_index=False).agg({
                     "sum_total_sales": lambda x: round(x.max()),
                 })
             
-            elif "month_name" in filter_keys and "SBU_CD" in filter_keys and "ZONE_CD" in filter_keys and "RO_CD" not in filter_keys:
-                print("Group by fiscal_year and RO_CD")
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_CD", "ZONE_CD", "RO_CD"], as_index=False).agg({
+            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "ZONE_Name" in filter_keys and "Region_Name" not in filter_keys:
+                print("Group by fiscal_year and Region_Name")
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "ZONE_Name", "Region_Name"], as_index=False).agg({
                     "sum_total_sales": lambda x: round(x.max()),
                 })
             
-            elif "month_name" in filter_keys and "SBU_CD" in filter_keys and "ZONE_CD" in filter_keys and "RO_CD" in filter_keys and "SA_CD" not in filter_keys:
-                print("Group by fiscal_year and RO_CD")
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_CD", "ZONE_CD", "RO_CD", "SA_CD"], as_index=False).agg({
-                    "sum_total_sales": lambda x: round(x.max()),
-                })
-            
-            elif "month_name" in filter_keys and "SBU_CD" in filter_keys and "ZONE_CD" in filter_keys and "RO_CD" in filter_keys and "SA_CD" in filter_keys and "MATERIAL_CD" not in filter_keys:
-                print("Group by fiscal_year and RO_CD")
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_CD", "ZONE_CD", "RO_CD", "SA_CD", "MATERIAL_CD"], as_index=False).agg({
+            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "ZONE_Name" in filter_keys and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
+                print("Group by fiscal_year and Region_Name")
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "ZONE_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg({
                     "sum_total_sales": lambda x: round(x.max()),
                 })
             
