@@ -79,7 +79,10 @@ async def lpgrejections_get_rejections(data: Lpgrejections_Get_RejectionsParams)
         if rejections[col].dtype == pl.Float64:
             rejections = rejections.with_columns(pl.col(col).fill_null(0).cast(pl.Utf8).str.replace("NaN",0).cast(pl.Float64).round(2).alias(col))
     rejections = rejections.with_columns((pl.col("cs_rejection") + pl.col("gd_rejection") + pl.col("pt_rejection")).alias("TotalRejections"))
-    rejections = rejections.sort("TotalRejections", descending=True)
+    if data.daywise == True:
+        rejections = rejections.sort("process_date")
+    else:
+        rejections = rejections.sort("TotalRejections", descending=True)
     if not data.top == 0:
         rejections = rejections.head(data.top)
     if not data.bottom == 0:
