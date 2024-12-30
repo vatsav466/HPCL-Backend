@@ -320,16 +320,43 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        month_mapping = {
+                            "Jan": "January",
+                            "Feb": "February",
+                            "Mar": "March",
+                            "Apr": "April",
+                            "May": "May",
+                            "Jun": "June",
+                            "Jul": "July",
+                            "Aug": "August",
+                            "Sep": "September",
+                            "Oct": "October",
+                            "Nov": "November",
+                            "Dec": "December"
+                    }
+
+# Reverse mapping (for returning the short form)
+        reverse_month_mapping = {v: k for k, v in month_mapping.items()}
+
         if filters:
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
             conditions = []
 
             for rec in filters:
+                rec.value = rec.value.split(",")
+                if rec.key == '"month_name"':  # Only handle the month_name case separately
+                    # Check if any value in rec.value is in month_mapping
+                    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                
+                # Now handle other cases
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
                 else:
-                    condition = f"{rec.key} in {tuple(rec.value)}"
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
             if conditions:
@@ -352,16 +379,18 @@ class GlobalAnalytics:
                     SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
                     SUM(ROUND("M60_LEVEL_METADATA"."TARGET_QTY_TMT")) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
-                    "M60_LEVEL_METADATA"."month_name" AS "month_name",
+                    TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
-                    "hpcl_ceg"."public"."M60_LEVEL_METADATA"
+                    "M60_LEVEL_METADATA"
                 WHERE
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
                 GROUP BY
-                    "M60_LEVEL_METADATA"."fy_month", "M60_LEVEL_METADATA"."month_name", "M60_LEVEL_METADATA"."FISCAL_YEAR"
+                    "M60_LEVEL_METADATA"."fy_month",
+                    TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR"
                 ORDER BY
-                    "M60_LEVEL_METADATA"."fy_month" ASC
+                    "M60_LEVEL_METADATA"."fy_month" ASC;
             '''
             resp = await function(query=sales_performance_query_)
             # Convert the response to a DataFrame for further processing
@@ -413,45 +442,51 @@ class GlobalAnalytics:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
             print("Filter Keys:", filter_keys)  # Debugginkg
+            if "month_name" in filter_keys:
+            # Convert full month names to short form (e.g., "January" -> "Jan")
+                resp["month_name"] = resp["month_name"].apply(
+                lambda x: reverse_month_mapping.get(x, x)
+            )
 
-            if "FISCAL_YEAR" in filter_keys:
+            if "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
                 grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "month_name" in filter_keys and "SBU_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["SBU_Name", "month_name"], as_index=False).agg({
+            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
+                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
+            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 print("Group by Zone")
-                grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
+            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 print("Group by Region")
-                grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
+            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 print("Condition: Grouping by mzr")
-                grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
 
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
+            elif "FISCAL_YEAR" in filter_keys and \
+            "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
                 print("Group by Product")
-                grouped_resp = resp.groupby(["ProductName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
@@ -490,15 +525,21 @@ class GlobalAnalytics:
 
             conditions = []
             for rec in filters:
+                rec.value = rec.value.split(",")
+                # result = [value.strip() for value in rec.value.split(",")]
+
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
                 else:
-                    condition = f"{rec.key} in {tuple(rec.value)}"
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
             if conditions:
-                sales_growth_query_ += ' WHERE '
-                sales_growth_query_ += ' AND '.join(conditions)
+                sales_performance_query_ += ' WHERE '
+                sales_performance_query_ += ' AND '.join(conditions)
         else:
             # Fallback query if no filters are provided
             sales_growth_query_ = """
@@ -581,10 +622,16 @@ class GlobalAnalytics:
             sales_performance_query_ = sales_performance_query
             conditions = []
             for rec in filters:
+                rec.value = rec.value.split(",")
+                # result = [value.strip() for value in rec.value.split(",")]
+
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
                 else:
-                    condition = f"{rec.key} in {tuple(rec.value)}"
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
             if conditions:
@@ -665,14 +712,14 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 print("Group by Zone")
-                grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 print("Group by Region")
-                grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
@@ -680,7 +727,7 @@ class GlobalAnalytics:
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 print("Condition: Grouping by mzr")
-                grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
@@ -688,7 +735,7 @@ class GlobalAnalytics:
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
                 print("Group by Product")
-                grouped_resp = resp.groupby(["ProductName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name","ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })

@@ -116,7 +116,7 @@ Model filtered_keys internal {
 Model WidgetFilters internal {
     key str
     cond str
-    value str
+    value optional str
 }
 
 Model Charts {
