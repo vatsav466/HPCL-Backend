@@ -155,6 +155,8 @@ class WidgetActions:
             elif condition == 'date_filter':
                 if value == '24h':
                     conditions.append(f"{key} >= CURRENT_TIMESTAMP - INTERVAL '24 hours'")
+                elif value == 't':
+                    conditions.append(f"{key}::DATE = CURRENT_DATE")
                 elif value == '1d':
                     conditions.append(f"{key}::DATE = CURRENT_DATE - INTERVAL '1 DAY'")
                 elif value == '1w':
@@ -162,7 +164,9 @@ class WidgetActions:
                 elif value == '15d':
                     conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '15 DAY'")
                 elif value == '1m':
-                    conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '1 MONTH'")
+                    conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '1 MONTH'") 
+                elif value == '3m':
+                    conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'")
             else:
                 raise ValueError(f"Unsupported condition: {condition}")
         conditions_ = " AND ".join(conditions)
