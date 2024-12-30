@@ -454,26 +454,26 @@ class GlobalAnalytics:
                     "NETWEIGHT_TMT": "sum"
                 })
             
-            elif len(filters) == 2 and "month_name" in filter_keys and "ZONE_Name" in filter_keys:
-                grouped_resp = resp.groupby(["month_name", "ZONE_Name"], as_index=False).agg({
+            elif len(filters) == 2 and "month_name" in filter_keys and "Zone_Name" in filter_keys:
+                grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
             
-            elif len(filters) == 2 and "month_name" in filter_keys and "REGION_Name" in filter_keys:
-                grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
-                    "TARGET_QTY_TMT": "sum",
-                    "NETWEIGHT_TMT": "sum"
-                })
-            
-            elif len(filters) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
-                grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
+            elif len(filters) == 2 and "month_name" in filter_keys and "Region_Name" in filter_keys:
+                grouped_resp = resp.groupby(["month_name", "Region_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
             
             elif len(filters) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
-                grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["month_name", "SalesArea_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+            
+            elif len(filters) == 2 and "month_name" in filter_keys and "ProductName" in filter_keys:
+                grouped_resp = resp.groupby(["month_name", "ProductName"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
