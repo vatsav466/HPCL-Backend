@@ -252,31 +252,59 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             utc_time = utc.localize(utc_timestamp)
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
-            formatted_ist_time = ist_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
+            formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
             return formatted_ist_time
         except:
             return "-"
 
     if resp:
-        alert_history["details"] = {"interlock_name": resp['interlock_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
-                                    "state": resp["state"], "indent_status": resp["indent_status"], "device_name": resp["device_id"] + " Tank",
-                                    "city": resp['city'], "region": resp["region"], "location_name": resp["location_name"],
-                                    "severity": resp['severity'], "alert_status": resp["alert_status"], "alert_section": resp["bu"],
-                                    "indent_raised_date": convert_time_read_format(str(resp['indent_raised_date']))}
-        alert_history["data"].append({"action_msg": "Dry-out Location Identified",
-                                      "allocated_time": convert_time_read_format(str(resp['created_at'])),
-                                      "processed_time": convert_time_read_format(str(resp['created_at']))})
+        # resp = resp[0]
+        alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
+                                    "state": resp["state"], "indent_status": resp["indent_status"]}
+        alert_history["data"].append(f"Dry-out Location Identified at "
+                                     f"{convert_time_read_format(str(resp['created_at']))}")
+
         for history in resp.get("alert_history", []):
-            alert_history["data"].append({"action_msg": history['action_msg'],
-                                          "allocated_time": convert_time_read_format(str(history['allocated_time'])),
-                                          "processed_time": convert_time_read_format(str(history['processed_time']))})
-        # alert_history["data"].append(f"Dry-out Location Identified at "
-        #                              f"{convert_time_read_format(str(resp['created_at']))}")
-        # for history in resp.get("alert_history", []):
-        #     alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
-        #                                  f" {convert_time_read_format(str(history['allocated_time']))}, "
-        #                                  f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+            alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
+                                         f" {convert_time_read_format(str(history['allocated_time']))}, "
+                                         f"Processed at {convert_time_read_format(str(history['processed_time']))}")
     return alert_history
+
+    # def convert_time_read_format(date_time):
+    #     try:
+    #         utc_timestamp = parser.parse(date_time).replace(tzinfo=None)
+    #         # Define UTC and IST timezones
+    #         utc = pytz.utc
+    #         ist = pytz.timezone('Asia/Kolkata')
+    #         # Localize the UTC timestamp and convert it to IST
+    #         utc_time = utc.localize(utc_timestamp)
+    #         ist_time = utc_time.astimezone(ist)
+    #         # Format the IST timestamp in the desired format
+    #         formatted_ist_time = ist_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
+    #         return formatted_ist_time
+    #     except:
+    #         return "-"
+    #
+    # if resp:
+    #     alert_history["details"] = {"interlock_name": resp['interlock_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
+    #                                 "state": resp["state"], "indent_status": resp["indent_status"], "device_name": resp["device_id"] + " Tank",
+    #                                 "city": resp['city'], "region": resp["region"], "location_name": resp["location_name"],
+    #                                 "severity": resp['severity'], "alert_status": resp["alert_status"], "alert_section": resp["bu"],
+    #                                 "indent_raised_date": convert_time_read_format(str(resp['indent_raised_date']))}
+    #     alert_history["data"].append({"action_msg": "Dry-out Location Identified",
+    #                                   "allocated_time": convert_time_read_format(str(resp['created_at'])),
+    #                                   "processed_time": convert_time_read_format(str(resp['created_at']))})
+    #     for history in resp.get("alert_history", []):
+    #         alert_history["data"].append({"action_msg": history['action_msg'],
+    #                                       "allocated_time": convert_time_read_format(str(history['allocated_time'])),
+    #                                       "processed_time": convert_time_read_format(str(history['processed_time']))})
+    #     # alert_history["data"].append(f"Dry-out Location Identified at "
+    #     #                              f"{convert_time_read_format(str(resp['created_at']))}")
+    #     # for history in resp.get("alert_history", []):
+    #     #     alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
+    #     #                                  f" {convert_time_read_format(str(history['allocated_time']))}, "
+    #     #                                  f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+    # return alert_history
 
 
 # Action get_distinct_plant
@@ -479,7 +507,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     conditions = ' AND '.join(where_clause)
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
-    stats_query = "select sap_id, min(progress_rate) as present_stage " \
+    stats_query = "select sap_id, max(progress_rate) as present_stage " \
                   f"from alerts where {conditions} and indent_status != 'Cancelled' " \
                   f"group by sap_id"
     stats_resp = await function(
