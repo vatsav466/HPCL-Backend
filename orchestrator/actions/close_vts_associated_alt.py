@@ -10,9 +10,9 @@ class CloseVtsAssociatedAlert:
     async def get_required_variables(self):
         return ["alert_id"]
     
-    async def closeWorkflow(original_altid):
+    async def closeWorkflow(self, original_altid):
         url = urdhva_base.settings.camunda_url + "/engine-rest/message"
-        alert_data = await hpcl_ceg_model.Alerts.get(original_altid)
+        alert_data = await hpcl_ceg_model.Alerts.get(int(original_altid))
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
         
