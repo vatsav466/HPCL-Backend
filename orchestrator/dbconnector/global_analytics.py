@@ -65,11 +65,7 @@ class GlobalAnalytics:
                     filter_.key = f"a.{filter_.key}"
                 
             # After modifying the filters, send the updated filters to apply_filter_drilldown
-            print("Updated filters --> ", filters)
             analytics_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(analytics_query, filters, drill_state)
-
-            print("analytics_query_ --> ", analytics_query_)
-
         try:
             # Execute the query
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(analytics_query_)
@@ -203,7 +199,6 @@ class GlobalAnalytics:
 
         if filters:
             for filter_ in filters:
-                print("filter_ --> ", filter_)
                 if filter_.key == "bu":
                     # Explicitly qualify the column with the correct table alias
                     filter_key = f"a.{filter_.key}"  # Assuming "a" is the alias for the table containing "bu"
@@ -245,7 +240,6 @@ class GlobalAnalytics:
             print(e)
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(no_of_locations_query)
         no_of_locations_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        print("no_of_locations_query_ -> ", no_of_locations_query_)
         return {"status": True, "message": "success", "data": no_of_locations_data}
 
     @staticmethod
@@ -276,7 +270,6 @@ class GlobalAnalytics:
         severity_count_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         for item in severity_count_data:
             item['operability_index'] = 99
-        print("severity_count_query_ -> ", severity_count_query_)
         return {"status": True, "message": "success", "data": severity_count_data}
     
     @staticmethod
@@ -301,7 +294,6 @@ class GlobalAnalytics:
             print(e)
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query)
         hourly_alerts_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        print("hourly_alerts_data -> ", hourly_alerts_data)
         return {"status": True, "message": "success", "data": hourly_alerts_data}
 
 
@@ -416,7 +408,6 @@ class GlobalAnalytics:
         resp = await function(query=sales_performance_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        print("resp df", resp)
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -436,12 +427,10 @@ class GlobalAnalytics:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
-        print("resp.columns --> ", resp.columns)
         # Apply grouping logic based on filters
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            print("Filter Keys:", filter_keys)  # Debugginkg
             if "month_name" in filter_keys:
             # Convert full month names to short form (e.g., "January" -> "Jan")
                 resp["month_name"] = resp["month_name"].apply(
@@ -491,14 +480,12 @@ class GlobalAnalytics:
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                print("Group by Zone")
                 grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
-                print("Group by Region")
                 grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
@@ -506,7 +493,6 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                print("Condition: Grouping by mzr")
                 grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
@@ -515,7 +501,6 @@ class GlobalAnalytics:
             elif "FISCAL_YEAR" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
-                print("Group by Product")
                 grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
@@ -523,11 +508,9 @@ class GlobalAnalytics:
 
             # Return grouped response
             if grouped_resp is not None:
-                print("Grouped Response -->", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
         # If no filters are applied, return the default response
-        print("Default Response -->", resp)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
 
@@ -620,41 +603,34 @@ class GlobalAnalytics:
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            print(  "Filter Keys:", filter_keys)  # Debugginkg
 
             resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
             
             if "month_name" in filter_keys and "SBU_Name" not in filter_keys:
-                print("Group by fiscal_year and month_name and SBU_Name")
                 grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name"], as_index=False).agg({
                     "sum_total_sales": lambda x: round(x.max()),
                 })
 
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "ZONE_Name" not in filter_keys:
-                print("Group by fiscal_year and ZONE_Name")
                 grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "ZONE_Name"], as_index=False).agg({
                     "sum_total_sales": lambda x: round(x.max()),
                 })
             
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "ZONE_Name" in filter_keys and "Region_Name" not in filter_keys:
-                print("Group by fiscal_year and Region_Name")
                 grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "ZONE_Name", "Region_Name"], as_index=False).agg({
                     "sum_total_sales": lambda x: round(x.max()),
                 })
             
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "ZONE_Name" in filter_keys and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                print("Group by fiscal_year and Region_Name")
                 grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "ZONE_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg({
                     "sum_total_sales": lambda x: round(x.max()),
                 })
             
             if grouped_resp is not None:
-                print("Grouped Response -->", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
-        print("resp -->  ", resp)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
@@ -674,7 +650,6 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         # Get the filter keys from the filters list
         filter_keys = [rec.key.strip('"') for rec in filters]
-        print("Filter Keys:", filter_keys)  # Debugginkg
 
         sales_yearly_preformance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
         sales_yearly_preformance_query_ = sales_yearly_preformance_query
@@ -739,7 +714,6 @@ class GlobalAnalytics:
         resp = await function(query=sales_performance_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        print("resp df", resp)
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -759,12 +733,10 @@ class GlobalAnalytics:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
-        print("resp.columns --> ", resp.columns)
         # Apply grouping logic based on filters
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            print("Filter Keys:", filter_keys)  # Debugginkg
 
             if "FISCAL_YEAR" in filter_keys and "SBU_Name" not in filter_keys:
                 grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name"], as_index=False).agg({
@@ -773,14 +745,12 @@ class GlobalAnalytics:
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                print("Group by Zone")
                 grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
-                print("Group by Region")
                 grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
@@ -788,7 +758,6 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                print("Condition: Grouping by mzr")
                 grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
@@ -796,7 +765,6 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
-                print("Group by Product")
                 grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name","ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
@@ -805,10 +773,8 @@ class GlobalAnalytics:
 
             # Return grouped response
             if grouped_resp is not None:
-                print("Grouped Response -->", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
 
         # If no filters are applied, return the default response
-        print("Default Response -->", resp)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
