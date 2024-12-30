@@ -448,7 +448,37 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
 
-            if "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
+            if len(filter) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
+                grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+            
+            elif len(filter) == 2 and "month_name" in filter_keys and "ZONE_Name" in filter_keys:
+                grouped_resp = resp.groupby(["month_name", "ZONE_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+            
+            elif len(filter) == 2 and "month_name" in filter_keys and "REGION_Name" in filter_keys:
+                grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+            
+            elif len(filter) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
+                grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+            
+            elif len(filter) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
+                grouped_resp = resp.groupby(["month_name", "REGION_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
                 grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
@@ -495,7 +525,6 @@ class GlobalAnalytics:
             if grouped_resp is not None:
                 print("Grouped Response -->", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-
 
         # If no filters are applied, return the default response
         print("Default Response -->", resp)
