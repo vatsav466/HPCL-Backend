@@ -413,7 +413,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     # ).unique().shape[0]
 
     query = f'''select dry_out_in_days,  count(distinct dealer_id) from alerts 
-            where interlock_name = 'Dry Out Each Indent Wise MainFlow' and indent_status not in ('Completed', 'Cancelled')  
+            where interlock_name = 'Dry Out Each Indent Wise MainFlow' 
             group by dry_out_in_days order by dry_out_in_days'''
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
