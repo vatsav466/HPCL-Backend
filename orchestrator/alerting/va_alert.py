@@ -52,14 +52,6 @@ class VAAlertManager(alert_factory.AlertFactory):
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
             for record in alert_data['data']:
                 try:
-                    keys = [location_id, alert_data['location_type'].value, "VA", record['device_id'],
-                            record['alert_type']]
-                    alert_id = helpers.generate_hash(keys)
-                    redis_ins = await urdhva_base.redispool.get_redis_connection()
-                    if await redis_ins.hexists("alert_mapping", alert_id):
-                        print("Alert already exists")
-                        continue
-
                     exception_msg = " ".join([
                         f"New Alert created at {recv_time} for",
                         f"alert_type - {record['alert_type']},",
@@ -78,6 +70,16 @@ class VAAlertManager(alert_factory.AlertFactory):
                         record['alert_type'], {})
                     if not va_alert_data:
                         logger.info("interlock_details not found")
+                        continue
+
+                    keys = [location_id, alert_data['location_type'].value, "VA", record['device_id'],
+                            va_alert_data['name']]
+                    print("key------->",keys)
+                    alert_id = helpers.generate_hash(keys)
+                    print("alert_id---->",alert_id)
+                    redis_ins = await urdhva_base.redispool.get_redis_connection()
+                    if await redis_ins.hexists("alert_mapping", alert_id):
+                        print("Alert already exists")
                         continue
 
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
