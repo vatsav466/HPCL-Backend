@@ -998,7 +998,7 @@ class GlobalAnalytics:
     
 
     @staticmethod
-    def lpg_cdcms(filters, drill_state):
+    async def lpg_cdcms(filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
