@@ -1117,10 +1117,16 @@ class GlobalAnalytics:
 
             if "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.groupby(["ZOName","ROName"], as_index=False).agg({
+                    "BookingReceivedYesterday": "sum",
+                    "TotalSalesYesterday": "sum",
+                    "Total_Pending": "sum"
                 })
 
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.groupby(["ZOName","ROName","SAName"], as_index=False).agg({
+                    "BookingReceivedYesterday": "sum",
+                    "TotalSalesYesterday": "sum",
+                    "Total_Pending": "sum"
                 })
 
             if grouped_resp is not None:
