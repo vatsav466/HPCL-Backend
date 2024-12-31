@@ -1116,11 +1116,11 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
 
             if "ZOName" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.groupby(["ROName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["ZOName","ROName"], as_index=False).agg({
                 })
 
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.groupby(["SAName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["ZOName","ROName","SAName"], as_index=False).agg({
                 })
 
             if grouped_resp is not None:
