@@ -1094,6 +1094,8 @@ class GlobalAnalytics:
         resp = await function(query=lpg_cdcms_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        yesterday = datetime.datetime.now() - relativedelta(days=1)
+        resp = resp[resp["Execution_Date"].astype(str) == yesterday.strftime("%Y-%m-%d")]
 
         # Fill missing values for numerical columns
         for each_float_col in [
