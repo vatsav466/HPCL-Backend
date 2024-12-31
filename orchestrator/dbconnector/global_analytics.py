@@ -377,7 +377,6 @@ class GlobalAnalytics:
                     "M60_LEVEL_METADATA"
                 WHERE
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
-                    #"M60_LEVEL_METADATA"."FISCAL_YEAR" in ('2023-2024','2024-2025')
                 GROUP BY
                     "M60_LEVEL_METADATA"."fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
