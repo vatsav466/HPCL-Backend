@@ -586,17 +586,17 @@ class GlobalAnalytics:
                     
                     
                 SELECT 
-                    MAX(ROUND("MOM_LEVEL_FINAL_TEST1"."sum_total_sales")) AS "total_sales",
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year",
-                    TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
+                    MAX(ROUND("MOM_LEVEL_SALES_TEST1"."sum_total_sales")) AS "total_sales",
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" AS "fiscal_year",
+                    TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
                 FROM
-                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
+                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_TEST1"
                 WHERE
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
                 GROUP BY
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon')
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon')
                 ORDER BY
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" ASC
             """
 
             resp = await function(query=sales_growth_query_)
@@ -890,17 +890,17 @@ class GlobalAnalytics:
         else:
             sales_yearly_growth_query_ = f'''
                 SELECT
-                    ROUND(SUM("MOM_LEVEL_FINAL_TEST1"."total_sales")::NUMERIC, 2) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("MOM_LEVEL_SALES_TEST1"."total_sales")::NUMERIC, 2) AS "ACTUAL_TMT_SALES",
                     
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year"
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" AS "fiscal_year"
                 FROM
-                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
+                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_TEST1"
                 WHERE 
                     "fiscal_year" in ('2023-2024','2024-2025')
                 GROUP BY
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year"
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year"
                 ORDER BY
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" ASC
 
             '''
             
