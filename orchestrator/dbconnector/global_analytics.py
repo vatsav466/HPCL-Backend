@@ -7,6 +7,7 @@ from datetime import datetime
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
+from dateutil.relativedelta import relativedelta
 import utilities.connection_mapping as connection_mapping
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.connector_factory as connector_factory
@@ -996,3 +997,141 @@ class GlobalAnalytics:
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
+
+    @staticmethod
+    async def lpg_cdcms(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # month_mapping = {
+        #                     "Jan": "January",
+        #                     "Feb": "February",
+        #                     "Mar": "March",
+        #                     "Apr": "April",
+        #                     "May": "May",
+        #                     "Jun": "June",
+        #                     "Jul": "July",
+        #                     "Aug": "August",
+        #                     "Sep": "September",
+        #                     "Oct": "October",
+        #                     "Nov": "November",
+        #                     "Dec": "December"
+        #             }
+
+        # # Reverse mapping (for returning the short form)
+        # reverse_month_mapping = {v: k for k, v in month_mapping.items()}
+
+        if filters:
+            lpg_cdcms_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
+            lpg_cdcms_query_ = lpg_cdcms_query
+            conditions = []
+
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # if rec.key == '"ZOName"':  # Only handle the month_name case separately
+                #     # Check if any value in rec.value is in month_mapping
+                #     rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_cdcms_query_ += ' WHERE '
+                lpg_cdcms_query_ += ' AND '.join(conditions)
+        else:
+            # current_date = datetime.now()
+            # current_year = current_date.year
+            # next_year = current_year + 1
+            # current_month = current_date.month
+            # # Determine the current financial year
+            # if current_month >= 4:  # April or later
+            #     fiscal_year_start = f"'FY {current_year}-{next_year}'"
+            # else:  # January to March
+            #     previous_year = current_year - 1
+            #     fiscal_year_start = f"'FY {previous_year}-{current_year}'"
+            # # Fallback query if no filters are provided
+            lpg_cdcms_query_ = f'''
+                select 
+                    sum("BookingReceivedYesterday") as "Bookings",
+                    sum("LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday") as "Sales",
+                    sum("Total_Pending") as "Pending",
+                    "ZOName" as "ZOName" 
+                from
+                    "LPG_SALES_SUMMARY_DATA" 
+                where
+                    ("LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ('Null') AND CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '2024-12-30') 
+                group by
+                    "ZOName" 
+                limit 1000
+            '''
+            resp = await function(query=lpg_cdcms_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "BookingReceivedYesterday", "TotalSalesYesterday", "Total_Pending"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+        
+        # Execute the query
+        resp = await function(query=lpg_cdcms_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        yesterday = datetime.now() - relativedelta(days=1)
+        resp = resp[resp["Execution_Date"].astype(str) == yesterday.strftime("%Y-%m-%d")]
+
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "BookingReceivedYesterday", "TotalSalesYesterday", "Total_Pending"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "ZOName"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+
+            if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZOName","ROName"], as_index=False).agg({
+                    "BookingReceivedYesterday": "sum",
+                    "TotalSalesYesterday": "sum",
+                    "Total_Pending": "sum"
+                })
+
+            elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZOName","ROName","SAName"], as_index=False).agg({
+                    "BookingReceivedYesterday": "sum",
+                    "TotalSalesYesterday": "sum",
+                    "Total_Pending": "sum"
+                })
+
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
