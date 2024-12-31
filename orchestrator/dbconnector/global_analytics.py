@@ -505,7 +505,8 @@ class GlobalAnalytics:
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
-
+            grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(2)
+            grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(2)
             # Return grouped response
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
