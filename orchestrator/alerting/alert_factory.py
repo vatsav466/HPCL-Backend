@@ -152,6 +152,7 @@ class AlertFactory:
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 workflowid =interlock_name.get("workflow_name", "interlock_name")
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
+                print("workflow_id --> ", workflow_id)
                 print("payload: ", payload)
                 if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
@@ -235,6 +236,12 @@ class AlertFactory:
                 # Modify Alert if found
                 if alert_data_list:
                     alert = alert_data_list[0]
+                    if alert_data.get("alert_history"):
+                        if not alert.get("alert_history"):
+                            alert["alert_history"] = alert_data["alert_history"]
+                        else:
+                            alert_data["alert_history"]["allocated_time"] = alert["alert_history"][-1].get("processed_time")
+                            alert["alert_history"].append(alert_data["alert_history"])
                     alert['severity'] = alert_data.get('severity', "Medium").capitalize()
                     alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                     alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value

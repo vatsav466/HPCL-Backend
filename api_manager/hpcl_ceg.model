@@ -4,6 +4,7 @@ Enum BusinessUnit str {
     LPG='LPG'
     RDI='RDI'
     CP='CP'
+    CDCMS='CDCMS'
 }
 
 Enum DeviceType str {
@@ -67,6 +68,7 @@ Enum AlertActionType str {
     VTS='VTS'
     Delivered='Delivered'
     Tripped='Tripped'
+    InterlockCreated='InterlockCreated'
     InterlockCleared='InterlockCleared'
     InterlockNotCleared='InterlockNotCleared'
     UnderMaintenance='UnderMaintenance'
@@ -98,7 +100,7 @@ Enum IndentStatus str {
 
 // System role master with allowed pages
 Model Roles {
-    name str
+    name index_field str
     status bool
     allowed_pages optional list str
 
@@ -125,8 +127,11 @@ Model Roles {
 }
 
 Model Users {
-    user_name str
+    username index_field unique_field str
     password secret
+    employee_id index_field unique_field str
+    first_name str
+    last_name str
     role list str
     status bool
 
@@ -139,20 +144,23 @@ Model Users {
 
     // API to create user
     Action=> create_user {
-        user_name str
+        username str
         password str
+        first_name str
+        last_name str
+        employee_id str
         role list str
     }
 
     // API to Enable/Disable system user
-    Action=> update_role_status {
+    Action=> update_user_status {
         enable bool
-        user_name str
+        username str
     }
 
     // API for user login
     Action=> login {
-        user_name str
+        username str
         password str
     }
 
@@ -203,6 +211,8 @@ Model LocationMaster {
     terminal_plant_id optional str
     terminal_plant_name optional str
     category optional str
+    distributor_code optional str
+    distributor_name optional str
 
     Action=> upload_location_master {
     }

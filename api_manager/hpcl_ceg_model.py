@@ -19,7 +19,7 @@ from urdhva_base.postgresmodel import UrdhvaPostgresBase
 class RolesSchema(UrdhvaPostgresBase):
     __tablename__ = 'roles'
     
-    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     allowed_pages: Mapped[typing.Optional[typing.List[str]]] = mapped_column("allowed_pages", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
@@ -73,38 +73,49 @@ class Roles_Get_All_PagesParams(pydantic.BaseModel):
 class UsersSchema(UrdhvaPostgresBase):
     __tablename__ = 'users'
     
-    user_name: Mapped[str] = mapped_column("user_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    username: Mapped[str] = mapped_column("username", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     password: Mapped[urdhva_base.types.Secret] = mapped_column("password", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    first_name: Mapped[str] = mapped_column("first_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    last_name: Mapped[str] = mapped_column("last_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     role: Mapped[typing.List[str]] = mapped_column("role", ARRAY(String), index=False, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
 
 
 class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'users'
     
-    user_name: str
+    username: str
     password: urdhva_base.types.Secret
+    employee_id: str
+    first_name: str
+    last_name: str
     role: typing.List[str]
     status: bool
 
     class Config:
         collection_name = 'data_flow'
         schema_class = UsersSchema
-        upsert_keys = []
+        upsert_keys = ['username', 'employee_id']
 
 
 class Users(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'users'
     
-    user_name: typing.Optional[str] | None = None
+    username: typing.Optional[str] | None = None
     password: typing.Optional[urdhva_base.types.Secret] | None = None
+    employee_id: typing.Optional[str] | None = None
+    first_name: typing.Optional[str] | None = None
+    last_name: typing.Optional[str] | None = None
     role: typing.Optional[typing.List[str]] | None = None
     status: typing.Optional[bool] | None = None
 
     class Config:
         collection_name = 'data_flow'
         schema_class = UsersSchema
-        upsert_keys = []
+        upsert_keys = ['username', 'employee_id']
 
 
 class UsersGetResp(pydantic.BaseModel):
@@ -120,18 +131,21 @@ class Users_Fetch_UsersParams(pydantic.BaseModel):
 
 
 class Users_Create_UserParams(pydantic.BaseModel):
-    user_name: str
+    username: str
     password: str
+    first_name: str
+    last_name: str
+    employee_id: str
     role: typing.List[str]
 
 
-class Users_Update_Role_StatusParams(pydantic.BaseModel):
+class Users_Update_User_StatusParams(pydantic.BaseModel):
     enable: bool
-    user_name: str
+    username: str
 
 
 class Users_LoginParams(pydantic.BaseModel):
-    user_name: str
+    username: str
     password: str
 
 
@@ -178,6 +192,8 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    distributor_code: Mapped[typing.Optional[str]] = mapped_column("distributor_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    distributor_name: Mapped[typing.Optional[str]] = mapped_column("distributor_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -217,6 +233,8 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
+    distributor_code: typing.Optional[str] = pydantic.Field("", **{})
+    distributor_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -261,6 +279,8 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
+    distributor_code: typing.Optional[str] = pydantic.Field("", **{})
+    distributor_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

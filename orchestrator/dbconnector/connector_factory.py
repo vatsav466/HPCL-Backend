@@ -57,6 +57,8 @@ class DBConnectorFactory(ABC):
                 elif condition == 'date_filter':
                     if value == '24h':
                         conditions.append(f"{key} >= CURRENT_TIMESTAMP - INTERVAL '24 hours'")
+                    elif value == 't':
+                        conditions.append(f"{key}::DATE = CURRENT_DATE")
                     elif value == '1d':
                         conditions.append(f"{key}::DATE = CURRENT_DATE - INTERVAL '1 DAY'")
                     elif value == '1w':
@@ -67,6 +69,12 @@ class DBConnectorFactory(ABC):
                         conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '1 MONTH'") 
                     elif value == '3m':
                         conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'") 
+                elif condition == 'date_range':
+                    if isinstance(value, list):
+                        start, end = value
+                        conditions.append(f"{key}::DATE BETWEEN '{start}' AND '{end}'")
+                    else:
+                        conditions.append(f"{key}::DATE = '{value}'")
                 else:
                     raise ValueError(f"Unsupported condition: {condition}")
         return "WHERE " + " AND ".join(f"{col} = '{val}'" for col, val in filters.items())

@@ -9,6 +9,7 @@ class BusinessUnit(str, enum.Enum):
     LPG = 'LPG'
     RDI = 'RDI'
     CP = 'CP'
+    CDCMS = 'CDCMS'
 
 
 
@@ -107,6 +108,7 @@ class AlertActionType(str, enum.Enum):
     VTS = 'VTS'
     Delivered = 'Delivered'
     Tripped = 'Tripped'
+    InterlockCreated = 'InterlockCreated'
     InterlockCleared = 'InterlockCleared'
     InterlockNotCleared = 'InterlockNotCleared'
     UnderMaintenance = 'UnderMaintenance'

@@ -116,7 +116,7 @@
                     "name": "create_user"
                 },
                 {
-                    "name": "update_role_status"
+                    "name": "update_user_status"
                 },
                 {
                     "name": "login"
@@ -167,7 +167,7 @@
                     "name": "create_user"
                 },
                 {
-                    "name": "update_role_status"
+                    "name": "update_user_status"
                 },
                 {
                     "name": "login"
@@ -1808,8 +1808,8 @@
             "displayName": "create_user"
         },
         {
-            "name": "update_role_status",
-            "displayName": "update_role_status"
+            "name": "update_user_status",
+            "displayName": "update_user_status"
         },
         {
             "name": "login",

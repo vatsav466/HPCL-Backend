@@ -18,6 +18,7 @@ from hpcl_ceg_enum import AlertActionType as AlertActionType
 from alerts_actions import alerts_alert_action as alerts_alert_action
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
+logger = urdhva_base.logger.Logger.getInstance("dry-out-logging")
 
 class IndentDryOut:
     def __init__(self):
@@ -172,7 +173,7 @@ class IndentDryOut:
                          f"indent_no='{each_indent['INDENT_NO']}' and "
                          f"alert_status in ('Open', 'Close', 'InProgress') and "
                          f"product_code='{each_indent['PROD']}'")
-                alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
+                alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
                 if not alerts_data['data']:
                     self.params['indent_no'] = str(each_indent['INDENT_NO'])
                     self.params['terminal_plant_id'] = str(each_indent['LOCN_CODE'])
@@ -227,12 +228,18 @@ class IndentDryOut:
                 if count == 1:
                     self.params['indent_no'] = str(each_indent.get('INDENT_NO'))
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
-                    self.params['indent_raised_date'] = each_indent.get('INDENT_DATE')
+                    self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+                    logger.info(f"Updateding to existing workflow: {self.params}")
                     await self.update_indent_no(
                         str(self.params['indent_no']),
                         str(each_indent.get("LOCN_CODE")),
                         each_indent.get("INDENT_DATE")
                     )
+                    query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
+                             f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
+                             f"""terminal_plant_id='{self.params["terminal_plant_id"]}' """
+                             f"""where id='{self.params["alert_id"]}'""")
+                    await hpcl_ceg_model.Alerts.update_by_query(query)
                     count += 1
                 else:
                     self.params['sop_id'] = 'SOP292'
@@ -242,6 +249,7 @@ class IndentDryOut:
                     self.params['indent_no'] = str(each_indent.get('INDENT_NO'))
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+                    logger.info(f"Multiple Indents: {self.params}")
                     await create_alert(self.params)
 
         else:
