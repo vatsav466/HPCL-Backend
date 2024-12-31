@@ -730,7 +730,8 @@ LIMIT 10000;''',
                             "Total_Pending" as "Pending",
                             "ZOName" as "ZOName",
                             "ROName" as "ROName",
-                            "SAName" as "SAName" 
+                            "SAName" as "SAName",
+                            "Execution_Date" as "Execution_Date"
                     from
                         "LPG_SALES_SUMMARY_DATA"'''
 
