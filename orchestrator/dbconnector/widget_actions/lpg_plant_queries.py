@@ -725,9 +725,9 @@ LIMIT 10000;''',
 
     "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_TEST1" where "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') ''',
 
-    "lpg_cdcms": f'''select sum("BookingReceivedYesterday") as "Bookings", 
-                            sum("LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday") as "Sales",
-                            sum("Total_Pending") as "Pending",
+    "lpg_cdcms": f'''select "BookingReceivedYesterday" as "Bookings", 
+                            "LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday" as "Sales",
+                            "Total_Pending" as "Pending",
                             "ZOName" as "ZOName",
                             "ROName" as "ROName",
                             "SAName" as "SAName" 
