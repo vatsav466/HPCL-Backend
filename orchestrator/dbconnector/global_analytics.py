@@ -1097,7 +1097,9 @@ class GlobalAnalytics:
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
         yesterday = datetime.now() - relativedelta(days=1)
-        resp = resp[resp["Execution_Date"].astype(str) == yesterday.strftime("%Y-%m-%d")]
+        yesterday_date = yesterday.date()
+        # Filter rows where Execution_Date matches yesterday
+        resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
 
         # Fill missing values for numerical columns
         for each_float_col in [
