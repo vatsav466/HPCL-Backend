@@ -379,38 +379,38 @@ async def indentdryout_get_indent_analysis(data: Indentdryout_Get_Indent_Analysi
 # Action get_dry_out_count
 @router.post('/get_dry_out_count', tags=['IndentDryOut'])
 async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountParams):
-    schema = connection_mapping.schema_mapping.get("cris")
-    table = connection_mapping.table_mapping.get("dry_out")
-    query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-                rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
-                case when sum(pumpable_Stock) <=0 then 1
-                when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
-                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
-                else 5 end status
-                from "{schema}".{table} sch
-                where 1=1 and sch.volume>0
-                group by site_id, fcc_code, item_name, rosapcode, product_no
-                order by site_id, fcc_code, item_name, rosapcode, product_no'''
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    dry_out_data = await function(query=query)
-    dry_out_data = pl.DataFrame(dry_out_data)
-    dry_out = dry_out_data.filter(
-        pl.col("status") == 1).select(
-        [pl.col("rosapcode")]
-    ).unique().shape[0]
-    
-    intraday_dry_out = dry_out_data.filter(
-        pl.col("status") == 2).select(
-        [pl.col("rosapcode")]
-    ).unique().shape[0]
-    
-    potential_dry_out = dry_out_data.filter(
-        pl.col("status").is_in([3])).select(
-        [pl.col("rosapcode")]
-    ).unique().shape[0]
+    # schema = connection_mapping.schema_mapping.get("cris")
+    # table = connection_mapping.table_mapping.get("dry_out")
+    # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
+    #             rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
+    #             case when sum(pumpable_Stock) <=0 then 1
+    #             when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
+    #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
+    #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
+    #             else 5 end status
+    #             from "{schema}".{table} sch
+    #             where 1=1 and sch.volume>0
+    #             group by site_id, fcc_code, item_name, rosapcode, product_no
+    #             order by site_id, fcc_code, item_name, rosapcode, product_no'''
+    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "1")
+    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # dry_out_data = await function(query=query)
+    # dry_out_data = pl.DataFrame(dry_out_data)
+    # dry_out = dry_out_data.filter(
+    #     pl.col("status") == 1).select(
+    #     [pl.col("rosapcode")]
+    # ).unique().shape[0]
+    #
+    # intraday_dry_out = dry_out_data.filter(
+    #     pl.col("status") == 2).select(
+    #     [pl.col("rosapcode")]
+    # ).unique().shape[0]
+    #
+    # potential_dry_out = dry_out_data.filter(
+    #     pl.col("status").is_in([3])).select(
+    #     [pl.col("rosapcode")]
+    # ).unique().shape[0]
 
     # query = f'''select dry_out_in_days,  count(distinct dealer_id) from alerts 
     #         where interlock_name = 'Dry Out Each Indent Wise MainFlow' 
@@ -427,6 +427,45 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     #         intraday_dry_out = each_dryout["count"]
     #     if each_dryout["dry_out_in_days"] == '3':
     #         potential_dry_out = each_dryout["count"]
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    stats_query = f"""WITH max_progress_rate AS (
+                        SELECT 
+                            sap_id, 
+                            MAX(progress_rate) AS present_stage,
+                            dry_out_in_days
+                        FROM alerts
+                        WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                          AND indent_status NOT IN ('Cancelled')
+                        GROUP BY sap_id, dry_out_in_days
+                    )
+                    SELECT 
+                        dry_out_in_days,
+                        SUM(unique_count) AS total_unique_count
+                    FROM (
+                        SELECT 
+                            dry_out_in_days, 
+                            present_stage, 
+                            COUNT(DISTINCT sap_id) AS unique_count
+                        FROM max_progress_rate
+                        WHERE present_stage != '11'
+                        GROUP BY dry_out_in_days, present_stage
+                    ) subquery
+                    GROUP BY dry_out_in_days
+                    ORDER BY dry_out_in_days;"""
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    dry_out_data = await function(
+        query=stats_query
+    )
+    dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
+    for each_dryout in dry_out_data:
+        if each_dryout["dry_out_in_days"] == '1':
+            dry_out = each_dryout["total_unique_count"]
+        if each_dryout["dry_out_in_days"] == '2':
+            intraday_dry_out = each_dryout["total_unique_count"]
+        if each_dryout["dry_out_in_days"] == '3':
+            potential_dry_out = each_dryout["total_unique_count"]
 
     return {
         "dry_out": dry_out, "intraday_dry_out": intraday_dry_out,
