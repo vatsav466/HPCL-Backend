@@ -236,12 +236,12 @@ class AlertFactory:
                 # Modify Alert if found
                 if alert_data_list:
                     alert = alert_data_list[0]
-                    if alert_data.get("history"):
-                        if not alert.get("history"):
-                            alert["history"] = alert_data["history"]
+                    if alert_data.get("alert_history"):
+                        if not alert.get("alert_history"):
+                            alert["alert_history"] = alert_data["alert_history"]
                         else:
-                            alert_data["history"]["allocated_time"] = alert["history"][-1].get("processed_time")
-                            alert["history"].append(alert_data["history"])
+                            alert_data["alert_history"]["allocated_time"] = alert["alert_history"][-1].get("processed_time")
+                            alert["alert_history"].append(alert_data["alert_history"])
                     alert['severity'] = alert_data.get('severity', "Medium").capitalize()
                     alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                     alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value

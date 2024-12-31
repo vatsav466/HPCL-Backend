@@ -505,7 +505,8 @@ class GlobalAnalytics:
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
-
+            grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(2)
+            grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(2)
             # Return grouped response
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
@@ -513,6 +514,8 @@ class GlobalAnalytics:
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
+
+    
     @staticmethod
     async def sales_growth(filters, drill_state):
         """
@@ -529,19 +532,19 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         month_mapping = {
-            "Jan": "January",
-            "Feb": "February",
-            "Mar": "March",
-            "Apr": "April",
-            "May": "May",
-            "Jun": "June",
-            "Jul": "July",
-            "Aug": "August",
-            "Sep": "September",
-            "Oct": "October",
-            "Nov": "November",
-            "Dec": "December"
-        }
+                            "Jan": "January",
+                            "Feb": "February",
+                            "Mar": "March",
+                            "Apr": "April",
+                            "May": "May",
+                            "Jun": "June",
+                            "Jul": "July",
+                            "Aug": "August",
+                            "Sep": "September",
+                            "Oct": "October",
+                            "Nov": "November",
+                            "Dec": "December"
+                    }
 
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
@@ -549,7 +552,7 @@ class GlobalAnalytics:
         if filters:
             sales_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
             sales_growth_query_ = sales_growth_query
-            print("sales_growth_query_", sales_growth_query_)
+            print("sales_growth_query_",sales_growth_query_)
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -572,27 +575,48 @@ class GlobalAnalytics:
                 conditions.append(condition)
 
             if conditions:
-                # sales_growth_query_ += ' WHERE '
+                #sales_growth_query_ += ' WHERE '
                 sales_growth_query_ += ''.join(conditions)
         else:
             # Fallback query if no filters are provided
             sales_growth_query_ = """
-                    SELECT 
-                        MAX(ROUND("MOM_LEVEL_FINAL_TEST1"."sum_total_sales")) AS "total_sales",
-                        "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year",
-                        TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
-                    FROM
-                        "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
-                    WHERE
-                        "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
-                    GROUP BY
-                        "MOM_LEVEL_FINAL_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon')
-                    ORDER BY
-                        "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
-                """
+            
+            
+                    
+                    
+                SELECT 
+                    MAX(ROUND("MOM_LEVEL_FINAL_TEST1"."sum_total_sales")) AS "total_sales",
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year",
+                    TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
+                FROM
+                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
+                WHERE
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
+                GROUP BY
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon')
+                ORDER BY
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
+            """
 
             resp = await function(query=sales_growth_query_)
-            return {"status": True, "message": "success", "data": resp}
+            month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
+                         'Dec': '8', 'Jan': '9', 'Feb': '10', 'Mar': '11'}
+            d = {"2023-2024": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
+                               "11": 0},
+                 "2024-2025": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
+                               "11": 0},
+                 "fy_month": {"0": "1", "1": "2", "2": "3", "3": "4", "4": "5", "5": "6", "6": "7", "7": "8", "8": "9",
+                              "9": "10", "10": "11", "11": "12"},
+                 "month_name": {"0": "Apr", "1": "May", "2": "Jun", "3": "Jul", "4": "Aug", "5": "Sep", "6": "Oct",
+                                "7": "Nov", "8": "Dec", "9": "Jan", "10": "Feb", "11": "Mar"}}
+
+            for rec in resp:
+                if rec['fiscal_year'] == "2024-2025":
+                    d['2024-2025'][month_map[rec['month_name']]] = rec['total_sales']
+                else:
+                    d['2023-2024'][month_map[rec['month_name']]] = rec['total_sales']
+            return {"status": True, "message": "success", "data": d}
+        
         resp = await function(query=sales_growth_query_)
         resp = pd.DataFrame(resp)
 
@@ -602,54 +626,75 @@ class GlobalAnalytics:
 
         # Fill missing values for string columns
         for each_str_col in [
-            "month_name", "fiscal_month", "SBU", "ZONE", "REGION", "SA",
+            "month_name", "fiscal_month", "SBU", "ZONE", "REGION", "SA", 
             "MATERIAL_CD", "fiscal_year", "month_year",
             "Zone_Name", "Region_Name", "SalesArea_Name", "fiscal_year",
             "month_year", "month_name"
         ]:
             resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
+        
         if filters:
-            grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-
+            
             resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
+            grouped_keys = ["fiscal_year", "month_name"]
 
             if "month_name" in filter_keys and "SBU_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name"], as_index=False).agg({
-                    "total_sales": lambda x: sum(round(x)),
-                })
-                resp.to_csv('resp.csv', index=False)
-
+                grouped_keys.append("SBU_Name")
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(
-                    {
-                        "total_sales": lambda x: sum(round(x)),
-                    })
-
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name"],
-                                            as_index=False).agg({
-                    "total_sales": lambda x: sum(round(x)),
-                })
-
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                grouped_resp = resp.groupby(
-                    ["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"],
-                    as_index=False).agg({
-                    "total_sales": lambda x: sum(round(x)),
-                })
-            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys:
-                grouped_resp = resp.groupby(
-                    ["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"],
-                    as_index=False).agg({
-                    "total_sales": lambda x: sum(round(x)),
-                })
-
+                grouped_keys.extend(["SBU_Name", "Zone_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and
+                  "Region_Name" not in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys
+                  and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and
+                  "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"])
+            grouped_resp = resp.groupby(grouped_keys, as_index=False).agg({
+                "total_sales": lambda x: sum(round(x)),
+            })
+            print("grouped_keys->>",grouped_keys)
             if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+                sub_name = list(set(rec['SBU_Name'] for rec in grouped_resp.to_dict(orient='records')))
+                transformed_data = []
+                data = grouped_resp.to_dict(orient='records')
+                print("data-->>",data)
+                '''
+                for sbu_name in sub_name:
+                    entry = {
+                        "month_name": "Jan",
+                        "SBU_Name": sbu_name,
+                        "2024-2025": next((item['total_sales'] for item in data if
+                                           item['SBU_Name'] == sbu_name and item['fiscal_year'] == '2024-2025'), 0),
+                        "2023-2024": next((item['total_sales'] for item in data if
+                                           item['SBU_Name'] == sbu_name and item['fiscal_year'] == '2023-2024'), 0)
+                    }
+                    for key in ["Zone_Name", "Region_Name", "SalesArea_Name"]:
+                        if key in grouped_keys:
+                            if key in data[0]:
+                            entry[key] = next((item[key] for item in data if item['SBU_Name'] == sbu_name), None)
+                    
+                    transformed_data.append(entry)
+                return {"status": True, "message": "success", "data": transformed_data}
+                '''
+                # added the below lines from 685 to 696 for dorrect drill data from backend 
+                for record in data:
+                    entry = {
+                        "month_name": record["month_name"],
+                        "SBU_Name": record["SBU_Name"],
+                        "2024-2025": record["total_sales"] if record["fiscal_year"] == "2024-2025" else 0,
+                        "2023-2024": record["total_sales"] if record["fiscal_year"] == "2023-2024" else 0,
+                        "fiscal_year": record["fiscal_year"]
+                    }
+                    for key in grouped_keys:
+                        if key in record:
+                            entry[key] = record[key]
+                    transformed_data.append(entry)
+                return {"status": True, "message": "success", "data": transformed_data}
 
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
@@ -798,3 +843,156 @@ class GlobalAnalytics:
 
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def sales_yearly_growth(filters, drill_state):
+        """
+        Fetches the sales performance data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the sales performance data.
+        """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Get the filter keys from the filters list
+        filter_keys = [rec.key.strip('"') for rec in filters]
+
+        sales_yearly_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
+        sales_yearly_growth_query_ = sales_yearly_growth_query
+        
+        if filters:
+            sales_yearly_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
+            sales_yearly_growth_query_ = sales_yearly_growth_query
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # result = [value.strip() for value in rec.value.split(",")]
+
+                if isinstance(rec.value, str):
+                    condition = f" and {rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f" and {rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                #sales_performance_query_ += ' WHERE '
+                sales_yearly_growth_query_ += ' AND '.join(conditions)
+        
+        else:
+            sales_yearly_growth_query_ = f'''
+                SELECT
+                    ROUND(SUM("MOM_LEVEL_FINAL_TEST1"."total_sales")::NUMERIC, 2) AS "ACTUAL_TMT_SALES",
+                    
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year"
+                FROM
+                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
+                WHERE 
+                    "fiscal_year" in ('2023-2024','2024-2025')
+                GROUP BY
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year"
+                ORDER BY
+                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
+
+            '''
+            
+            resp = await function(query=sales_yearly_growth_query_)
+            return {"status": True, "message": "success", "data": resp}
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "ACTUAL_TMT_SALES", "TARGET_TMT_SALES"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "FISCAL_YEAR"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+        
+        # Execute the query
+        resp = await function(query=sales_yearly_growth_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "TARGET_QTY_TMT", "Prediction_Value", "Product_Achievement", 
+            "Zone_Region_Achievement", "Rate_Per_Day_Required_MMT", 
+            "Rate_per_day_current_MMT", "FinalSum", "FinalActualSum", "NETWEIGHT_TMT"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
+            "month_year", "month_name"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        # Apply grouping logic based on filters
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+
+            if "FISCAL_YEAR" in filter_keys and "SBU_Name" not in filter_keys:
+                grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name"], as_index=False).agg({
+                    "total_sales": lambda x: sum(round(x)),
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum"
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
+                    and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum",
+                })
+
+            elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
+                    "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
+                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name","ProductName"], as_index=False).agg({
+                    "NETWEIGHT_TMT": "sum",
+                    "TARGET_QTY_TMT": "sum",
+                })
+
+
+            # Return grouped response
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    

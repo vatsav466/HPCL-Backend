@@ -601,7 +601,7 @@ LIMIT 10000;''',
                            GROUP BY bu 
                            ORDER BY no_of_terminals DESC''',
 
-    "alert_ageing": f'''SELECT DISTINCT bu,
+    "alert_ageing": f'''SELECT DISTINCT bu, alert_section,
                         CASE 
                             WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
                             WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
@@ -612,7 +612,7 @@ LIMIT 10000;''',
                         END AS alert_ageing,
                         COUNT(*) OVER (
                             PARTITION BY 
-                            bu,
+                            bu, alert_section,
                             CASE 
                                 WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
                                 WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
@@ -632,7 +632,7 @@ LIMIT 10000;''',
                         END AS alert_ageing_order
                     FROM 
                         alerts
-                    ORDER BY bu,
+                    ORDER BY bu, alert_section,
                         alert_ageing_order''',
 
     "alert_distributions": f'''SELECT severity, COUNT(*) AS alert_count 
