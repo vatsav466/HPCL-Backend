@@ -1118,20 +1118,24 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
 
             if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                print("grouped_resp ZOName--> ")    
                 grouped_resp = resp.groupby(["ZOName","ROName"], as_index=False).agg({
-                    "BookingReceivedYesterday": "sum",
-                    "TotalSalesYesterday": "sum",
-                    "Total_Pending": "sum"
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
                 })
 
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                print("grouped_resp  elif ZOName--> ")    
                 grouped_resp = resp.groupby(["ZOName","ROName","SAName"], as_index=False).agg({
-                    "BookingReceivedYesterday": "sum",
-                    "TotalSalesYesterday": "sum",
-                    "Total_Pending": "sum"
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
                 })
 
+            print("grouped_resp --> ", grouped_resp)
             if grouped_resp is not None:
+                print("grouped_resp  -> ", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
         # If no filters are applied, return the default response
