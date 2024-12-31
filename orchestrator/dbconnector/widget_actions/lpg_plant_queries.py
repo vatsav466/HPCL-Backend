@@ -732,9 +732,6 @@ LIMIT 10000;''',
                             "ROName" as "ROName",
                             "SAName" as "SAName" 
                     from
-                        "LPG_SALES_SUMMARY_DATA" 
-                    group by
-                        "JDEDistributorCode", "ROName", "SAName", "ZOName"
-                    limit 1000'''
+                        "LPG_SALES_SUMMARY_DATA"'''
 
 }

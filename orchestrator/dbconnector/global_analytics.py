@@ -1091,7 +1091,7 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
         
         # Execute the query
-        resp = await function(query=sales_performance_query_)
+        resp = await function(query=lpg_cdcms_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
 
@@ -1114,11 +1114,11 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
 
             if "ZOName" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.groupby(["JDEDistributorCode", "Zone_Name", "ROName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["ROName"], as_index=False).agg({
                 })
 
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.groupby(["JDEDistributorCode", "Zone_Name", "ROName", "SAName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["SAName"], as_index=False).agg({
                 })
 
             if grouped_resp is not None:
