@@ -1057,6 +1057,7 @@ class GlobalAnalytics:
             #     previous_year = current_year - 1
             #     fiscal_year_start = f"'FY {previous_year}-{current_year}'"
             # # Fallback query if no filters are provided
+            yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_query_ = f'''
                 select 
                     sum("BookingReceivedYesterday") as "Bookings",
@@ -1066,7 +1067,7 @@ class GlobalAnalytics:
                 from
                     "LPG_SALES_SUMMARY_DATA" 
                 where
-                    ("LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ('Null') AND CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '2024-12-30') 
+                    ("LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ('Null') AND CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '{yesterday.strftime("%Y-%m-%d")}') 
                 group by
                     "ZOName" 
                 limit 1000
