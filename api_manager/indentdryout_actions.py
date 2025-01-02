@@ -9,6 +9,7 @@ import fastapi
 import datetime
 import polars as pl
 import dateutil.parser as parser
+import orchestrator.alerting.alert_helper as alert_helper
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from orchestrator.alerting.alert_manager import create_alert
@@ -260,7 +261,12 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
     if resp:
         # resp = resp[0]
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
-                                    "state": resp["state"], "indent_status": resp["indent_status"]}
+                                    "state": resp["state"], "indent_status": resp["indent_status"],
+                                    "plant_id": resp["terminal_plant_id"], "plant_name": resp['terminal_plant_name']}
+        if not resp['terminal_plant_name']:
+            status, location_data = await alert_helper.get_location_details("TAS", resp['terminal_plant_id'])
+            if status:
+                resp['terminal_plant_name'] = location_data['name']
         alert_history["data"].append(f"Dry-out Location Identified at "
                                      f"{convert_time_read_format(str(resp['created_at']))}")
 
