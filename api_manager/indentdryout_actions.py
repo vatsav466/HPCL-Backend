@@ -262,7 +262,8 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
         # resp = resp[0]
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
                                     "state": resp["state"], "indent_status": resp["indent_status"],
-                                    "plant_id": resp["terminal_plant_id"], "plant_name": resp['terminal_plant_name']}
+                                    "plant_id": resp["terminal_plant_id"], "plant_name": resp['terminal_plant_name'],
+                                    "indent_no": resp["indent_no"]}
         if not resp['terminal_plant_name']:
             status, location_data = await alert_helper.get_location_details("TAS", resp['terminal_plant_id'])
             if status:
