@@ -586,17 +586,17 @@ class GlobalAnalytics:
                     
                     
                 SELECT 
-                    MAX(ROUND("MOM_LEVEL_FINAL_TEST1"."sum_total_sales")) AS "total_sales",
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year",
-                    TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
+                    MAX(ROUND("MOM_LEVEL_SALES_TEST1"."sum_total_sales")) AS "total_sales",
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" AS "fiscal_year",
+                    TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
                 FROM
-                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
+                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_TEST1"
                 WHERE
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
                 GROUP BY
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_FINAL_TEST1"."month_name", 'Month'), 'Mon')
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon')
                 ORDER BY
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" ASC
             """
 
             resp = await function(query=sales_growth_query_)
@@ -890,17 +890,17 @@ class GlobalAnalytics:
         else:
             sales_yearly_growth_query_ = f'''
                 SELECT
-                    ROUND(SUM("MOM_LEVEL_FINAL_TEST1"."total_sales")::NUMERIC, 2) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("MOM_LEVEL_SALES_TEST1"."total_sales")::NUMERIC, 2) AS "ACTUAL_TMT_SALES",
                     
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" AS "fiscal_year"
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" AS "fiscal_year"
                 FROM
-                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_TEST1"
+                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_TEST1"
                 WHERE 
                     "fiscal_year" in ('2023-2024','2024-2025')
                 GROUP BY
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year"
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year"
                 ORDER BY
-                    "MOM_LEVEL_FINAL_TEST1"."fiscal_year" ASC
+                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" ASC
 
             '''
             
@@ -1057,6 +1057,7 @@ class GlobalAnalytics:
             #     previous_year = current_year - 1
             #     fiscal_year_start = f"'FY {previous_year}-{current_year}'"
             # # Fallback query if no filters are provided
+            yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_query_ = f'''
                 select 
                     sum("BookingReceivedYesterday") as "Bookings",
@@ -1066,7 +1067,7 @@ class GlobalAnalytics:
                 from
                     "LPG_SALES_SUMMARY_DATA" 
                 where
-                    ("LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ('Null') AND CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '2024-12-30') 
+                    ("LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ('Null') AND CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '{yesterday.strftime("%Y-%m-%d")}') 
                 group by
                     "ZOName" 
                 limit 1000
@@ -1096,7 +1097,9 @@ class GlobalAnalytics:
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
         yesterday = datetime.now() - relativedelta(days=1)
-        resp = resp[resp["Execution_Date"].astype(str) == yesterday.strftime("%Y-%m-%d")]
+        yesterday_date = yesterday.date()
+        # Filter rows where Execution_Date matches yesterday
+        resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -1117,20 +1120,24 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
 
             if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                print("grouped_resp ZOName--> ")    
                 grouped_resp = resp.groupby(["ZOName","ROName"], as_index=False).agg({
-                    "BookingReceivedYesterday": "sum",
-                    "TotalSalesYesterday": "sum",
-                    "Total_Pending": "sum"
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
                 })
 
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                print("grouped_resp  elif ZOName--> ")    
                 grouped_resp = resp.groupby(["ZOName","ROName","SAName"], as_index=False).agg({
-                    "BookingReceivedYesterday": "sum",
-                    "TotalSalesYesterday": "sum",
-                    "Total_Pending": "sum"
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
                 })
 
+            print("grouped_resp --> ", grouped_resp)
             if grouped_resp is not None:
+                print("grouped_resp  -> ", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
         # If no filters are applied, return the default response

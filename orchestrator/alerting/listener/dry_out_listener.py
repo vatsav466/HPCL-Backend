@@ -64,7 +64,7 @@ class DryoutCollector:
         records = records.filter(pl.col('status') <= 3)
         records = cls.assign_values_to_dataframe(records,
                                                  list(connection_mapping.camunda_listener_mapping.values()))
-        records = records.head(10).to_dicts()
+        records = records.to_dicts()
 
         alert_data = {
             'bu': 'RO',
