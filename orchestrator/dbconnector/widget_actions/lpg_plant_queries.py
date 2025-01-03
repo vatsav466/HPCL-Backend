@@ -723,7 +723,7 @@ LIMIT 10000;''',
                                     "Product_Achievement" 
                             FROM public."M60_LEVEL_METADATA"''',
 
-    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_SALES_TEST1" where "MOM_LEVEL_SALES_TEST1"."fiscal_year" in ('2023-2024','2024-2025') ''',
+    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_SALES_SYNC" where "MOM_LEVEL_SALES_SYNC"."fiscal_year" in ('2023-2024','2024-2025') ''',
     
     "lpg_cdcms": f'''select "BookingReceivedYesterday" as "Bookings", 
                             "LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday" as "Sales",
@@ -732,8 +732,18 @@ LIMIT 10000;''',
                             "ROName" as "ROName",
                             "SAName" as "SAName",
                             "Execution_Date" as "Execution_Date",
-                            "JDEDistributorCode" as "JDEDistributorCode",
+                            "JDEDistributorCode" as "JDEDistributorCode"
                     from
-                        "LPG_SALES_SUMMARY_DATA"'''
-
+                        "LPG_SALES_SUMMARY_DATA"''',
+    
+    "lpg_cdcms_month": f'''select
+                                EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date") as "Month_No",
+                                "Execution_Month",
+                                "TotalSalesYesterday" as "Total Sales",
+                                "ZOName" as "ZOName",
+                                "ROName" as "ROName",
+                                "SAName" as "SAName",
+                                "JDEDistributorCode" as "JDEDistributorCode"
+                            from
+                                "LPG_SALES_SUMMARY_DATA"''' 
 }

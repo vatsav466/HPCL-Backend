@@ -275,6 +275,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
                                          f" {convert_time_read_format(str(history['allocated_time']))}, "
                                          f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+        alert_history["data"] = alert_history["data"][::-1]
     return alert_history
 
     # def convert_time_read_format(date_time):
@@ -437,43 +438,91 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
 
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    stats_query = f"""WITH max_progress_rate AS (
-                        SELECT 
-                            sap_id, 
-                            MAX(progress_rate) AS present_stage,
-                            dry_out_in_days
-                        FROM alerts
-                        WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                          AND indent_status NOT IN ('Cancelled')
-                        GROUP BY sap_id, dry_out_in_days
-                    )
-                    SELECT 
-                        dry_out_in_days,
-                        SUM(unique_count) AS total_unique_count
+    # stats_query = f"""WITH max_progress_rate AS (
+    #                     SELECT
+    #                         sap_id,
+    #                         MAX(progress_rate) AS present_stage,
+    #                         dry_out_in_days
+    #                     FROM alerts
+    #                     WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    #                       AND indent_status NOT IN ('Cancelled')
+    #                     GROUP BY sap_id, dry_out_in_days
+    #                 )
+    #                 SELECT
+    #                     dry_out_in_days,
+    #                     SUM(unique_count) AS total_unique_count
+    #                 FROM (
+    #                     SELECT
+    #                         dry_out_in_days,
+    #                         present_stage,
+    #                         COUNT(DISTINCT sap_id) AS unique_count
+    #                     FROM max_progress_rate
+    #                     WHERE present_stage != '11'
+    #                     GROUP BY dry_out_in_days, present_stage
+    #                 ) subquery
+    #                 GROUP BY dry_out_in_days
+    #                 ORDER BY dry_out_in_days;"""
+    stats_query = f"""SELECT 
+                        "title",
+                        "value" AS "Site_Count",
+                        "prodvalue",
+                        "tankvalue",
+                        SUM("value") OVER (PARTITION BY 1) AS "totalvalue"
                     FROM (
                         SELECT 
-                            dry_out_in_days, 
-                            present_stage, 
-                            COUNT(DISTINCT sap_id) AS unique_count
-                        FROM max_progress_rate
-                        WHERE present_stage != '11'
-                        GROUP BY dry_out_in_days, present_stage
-                    ) subquery
-                    GROUP BY dry_out_in_days
-                    ORDER BY dry_out_in_days;"""
+                            CASE 
+                                WHEN status = 1 THEN 'DRY OUT'
+                                WHEN status = 2 THEN 'INTRADAY DRY OUT'
+                                WHEN status = 3 THEN '1-3 Days'
+                                WHEN status = 4 THEN '4-6 Days' 
+                            END AS "title",
+                            status AS seqno,
+                            COUNT(DISTINCT site_id || fcc_code) AS "value",
+                            COUNT(DISTINCT site_id || fcc_code || item_name) AS "prodvalue",
+                            SUM(tank_cnt) AS "tankvalue"
+                        FROM (
+                            SELECT 
+                                site_id, 
+                                fcc_code,
+                                product_grp AS item_name,
+                                COUNT(DISTINCT tank_no) AS tank_cnt,
+                                CASE 
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7) 
+                                         AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3 
+                                         AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
+                                    ELSE 6 
+                                END AS status
+                            FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                            WHERE sch.volume > 0
+                            GROUP BY site_id, fcc_code, product_grp
+                            ORDER BY site_id, fcc_code, product_grp
+                        ) AS result1
+                        WHERE status < 6
+                        GROUP BY status
+                        ORDER BY seqno
+                    ) AS result2"""
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     dry_out_data = await function(
         query=stats_query
     )
     dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
+    # for each_dryout in dry_out_data:
+    #     if each_dryout["dry_out_in_days"] == '1':
+    #         dry_out = each_dryout["total_unique_count"]
+    #     if each_dryout["dry_out_in_days"] == '2':
+    #         intraday_dry_out = each_dryout["total_unique_count"]
+    #     if each_dryout["dry_out_in_days"] == '3':
+    #         potential_dry_out = each_dryout["total_unique_count"]
     for each_dryout in dry_out_data:
-        if each_dryout["dry_out_in_days"] == '1':
-            dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] == '2':
-            intraday_dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] == '3':
-            potential_dry_out = each_dryout["total_unique_count"]
-
+        if each_dryout["title"] == 'DRY OUT':
+            dry_out = each_dryout["Site_Count"]
+        if each_dryout["title"] == 'INTRADAY DRY OUT':
+            intraday_dry_out = each_dryout["Site_Count"]
+        if each_dryout["title"] == '1-3 Days':
+            potential_dry_out = each_dryout["Site_Count"]
     return {
         "dry_out": dry_out, "intraday_dry_out": intraday_dry_out,
         "potential_dry_out": potential_dry_out, "aging_analysis": "-"
@@ -595,11 +644,11 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     stats.extend([{
             "section": "Indent Raised",
             "value": sum(item['value'] for item in stats if 2 <= item['serial'] <= 10),
-            "serial": 12, "condition": "=", "group": "not_raised"
+            "serial": ["2","3","4","5","6","7","8","9","10"], "condition": "=", "group": "not_raised"
         },{
             "section": "Valid \\ WIP Indents",
             "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
-            "serial": 13, "condition": "=", "group": "pending"
+            "serial": ["4","5","6","7","8","9","10"], "condition": "=", "group": "pending"
         }])
     stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
                   for x in connection_mapping.truck_details])
@@ -639,7 +688,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-            f"from alerts where {conditions} limit 500"
+            f"from alerts where indent_status != 'Cancelled' and {conditions} limit 500"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query

@@ -14,6 +14,7 @@ import orchestrator.dbconnector.connector_factory as connector_factory
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
+from collections import defaultdict
 
 class GlobalAnalytics:
     @staticmethod
@@ -515,7 +516,6 @@ class GlobalAnalytics:
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
-
     
     @staticmethod
     async def sales_growth(filters, drill_state):
@@ -580,23 +580,19 @@ class GlobalAnalytics:
                 sales_growth_query_ += ''.join(conditions)
         else:
             # Fallback query if no filters are provided
-            sales_growth_query_ = """
-            
-            
-                    
-                    
+            sales_growth_query_ = """  
                 SELECT 
-                    MAX(ROUND("MOM_LEVEL_SALES_TEST1"."sum_total_sales")) AS "total_sales",
-                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" AS "fiscal_year",
-                    TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
+                    MAX(ROUND("MOM_LEVEL_SALES_SYNC"."sum_total_sales")) AS "total_sales",
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" AS "fiscal_year",
+                    TO_CHAR(TO_DATE("MOM_LEVEL_SALES_SYNC"."month_name", 'Month'), 'Mon') AS "month_name"
                 FROM
-                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_TEST1"
+                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_SYNC"
                 WHERE
-                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" in ('2023-2024','2024-2025') 
                 GROUP BY
-                    "MOM_LEVEL_SALES_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon')
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_SYNC"."month_name", 'Month'), 'Mon')
                 ORDER BY
-                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" ASC
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" ASC
             """
 
             resp = await function(query=sales_growth_query_)
@@ -683,6 +679,7 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": transformed_data}
                 '''
                 # added the below lines from 685 to 696 for dorrect drill data from backend 
+                '''
                 for record in data:
                     entry = {
                         "month_name": record["month_name"],
@@ -695,6 +692,25 @@ class GlobalAnalytics:
                         if key in record:
                             entry[key] = record[key]
                     transformed_data.append(entry)
+                '''
+                grouped_data = defaultdict(lambda: {"2023-2024": 0, "2024-2025": 0})
+                for record in data:
+                    key = (record["month_name"], record["SBU_Name"])
+                    grouped_data[key]["month_name"] = record["month_name"]
+                    grouped_data[key]["SBU_Name"] = record["SBU_Name"]
+                    grouped_data[key][record["fiscal_year"]] = record["total_sales"]
+                transformed_data = [
+                    {
+                        "month_name": entry["month_name"],
+                        "SBU_Name": entry["SBU_Name"],
+                        "2023-2024": entry["2023-2024"],
+                        "2024-2025": entry["2024-2025"],
+                    }
+                    for entry in grouped_data.values()
+                ]
+                for entry in transformed_data:
+                    for key in grouped_keys:
+                        entry[key] = next((rec[key] for rec in data if rec["SBU_Name"] == entry["SBU_Name"] and key in rec), None)
                 return {"status": True, "message": "success", "data": transformed_data}
 
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
@@ -1003,7 +1019,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/Users/mac_1/Downloads/DistributorMappings.csv")
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
 
         if filters:
             lpg_cdcms_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
@@ -1026,8 +1042,8 @@ class GlobalAnalytics:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
             yesterday = datetime.now() - relativedelta(days=1)
-            lpg_cdcms_query_ += f" AND date = '{yesterday.strftime('%Y-%m-%d')}'"
-            lpg_cdcms_query_ += ' GROUP BY "ZOName"'
+            lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
+            lpg_cdcms_query_ += ' GROUP BY "Bookings", "Sales", "Pending", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
             yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_query_ = f'''
@@ -1116,6 +1132,155 @@ class GlobalAnalytics:
                     "Bookings": "sum",
                     "Sales": "sum",
                     "Pending": "sum"
+                    })
+
+            print("grouped_resp --> ", grouped_resp)
+            if grouped_resp is not None:
+                print("grouped_resp  -> ", grouped_resp)
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def lpg_cdcms_month(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+
+        month_mapping = {
+                            "Jan": "January",
+                            "Feb": "February",
+                            "Mar": "March",
+                            "Apr": "April",
+                            "May": "May",
+                            "Jun": "June",
+                            "Jul": "July",
+                            "Aug": "August",
+                            "Sep": "September",
+                            "Oct": "October",
+                            "Nov": "November",
+                            "Dec": "December"
+                    }
+
+        # Reverse mapping (for returning the short form)
+        reverse_month_mapping = {v: k for k, v in month_mapping.items()}
+
+        if filters:
+            lpg_cdcms_month_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_month")
+            lpg_cdcms_month_query_ = lpg_cdcms_month_query
+            conditions = []
+
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if rec.key == '"Execution_Month"':  # Only handle the month_name case separately
+                    # Check if any value in rec.value is in month_mapping
+                    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_cdcms_month_query_ += ' WHERE '
+                lpg_cdcms_month_query_ += ' AND '.join(conditions)
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "Total Sales", "ZOName", "ROName", "SAName"'
+        else:
+            yesterday = datetime.now() - relativedelta(days=1)
+            lpg_cdcms_month_query_ = f'''
+                select
+                    EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date") as "Month_No",
+                    TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon') AS "Execution_Month",
+                    sum("TotalSalesYesterday")/10000000 as "Total Sales"
+                from
+                    "LPG_SALES_SUMMARY_DATA"
+                group by
+                        EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date"), 
+                        TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon')
+            '''
+            resp = await function(query=lpg_cdcms_month_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total Sales"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "Month_No", "Execution_Month", "ZOName"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+        
+        # Execute the query
+        resp = await function(query=lpg_cdcms_month_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+        print("resp for DistributorName --> ", resp['DistributorName'])
+        # yesterday = datetime.now() - relativedelta(days=1)
+        # yesterday_date = yesterday.date()
+        # # Filter rows where Execution_Date matches yesterday
+        # resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
+
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "Total Sales"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "Month_No", "Execution_Month", "ZOName"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "Execution_Month" in filter_keys:
+            # Convert full month names to short form (e.g., "January" -> "Jan")
+                resp["Execution_Month"] = resp["Execution_Month"].apply(
+                lambda x: reverse_month_mapping.get(x, x)
+            )
+
+            if "Execution_Month" in filter_keys and "ZOName" not in filter_keys:
+                print("grouped_resp ZOName--> ")    
+                grouped_resp = resp.groupby(["Execution_Month", "ZOName", "ROName"], as_index=False).agg({
+                    "Total Sales": lambda x: x.sum() / 10000000
+                })
+
+            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                print("grouped_resp ZOName--> ")    
+                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName"], as_index=False).agg({
+                    "Total Sales": lambda x: x.sum() / 10000000
+                })
+
+            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                print("grouped_resp  elif ZOName--> ")    
+                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName"], as_index=False).agg({
+                    "Total Sales": lambda x: x.sum() / 10000000
+                })
+            
+            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                print("grouped_resp  elif ZOName--> ")
+                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName","DistributorName"],
+                as_index=False).agg({
+                    "Total Sales": lambda x: x.sum() / 10000000
                     })
 
             print("grouped_resp --> ", grouped_resp)

@@ -996,9 +996,9 @@ class IndentDryOut:
                 f"""WHERE "site_id" = '{alert_data['sap_id']}' """ \
                 f"""AND "fcc_code" = '{alert_data['sap_id']}' """ \
                 f"""AND "product_no" = '{alert_data['product_code']}' """
-        await function(
-            query=query
-        )
+        # await function(
+        #     query=query
+        # )
         return
 
     async def update_indent_no(self, indent_no: str, loc_code: str, indent_raised_date):
