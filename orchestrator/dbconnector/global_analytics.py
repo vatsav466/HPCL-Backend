@@ -1190,7 +1190,7 @@ class GlobalAnalytics:
             if conditions:
                 lpg_cdcms_month_query_ += ' WHERE '
                 lpg_cdcms_month_query_ += ' AND '.join(conditions)
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "Total Sales"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month"'
         else:
             yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_month_query_ = f'''
@@ -1267,26 +1267,20 @@ class GlobalAnalytics:
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 print("grouped_resp ZOName--> ")    
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName"], as_index=False).agg({
-                    "Bookings": "sum",
-                    "Sales": "sum",
-                    "Pending": "sum"
+                    "Total Sales": "sum"
                 })
 
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 print("grouped_resp  elif ZOName--> ")    
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName"], as_index=False).agg({
-                    "Bookings": "sum",
-                    "Sales": "sum",
-                    "Pending": "sum"
+                    "Total Sales": "sum"
                 })
             
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
                 print("grouped_resp  elif ZOName--> ")
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
-                    "Bookings": "sum",
-                    "Sales": "sum",
-                    "Pending": "sum"
+                    "Total Sales": "sum"
                     })
 
             print("grouped_resp --> ", grouped_resp)
