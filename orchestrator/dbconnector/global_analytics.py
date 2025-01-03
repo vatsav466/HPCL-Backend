@@ -14,6 +14,7 @@ import orchestrator.dbconnector.connector_factory as connector_factory
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
+from collections import defaultdict
 
 class GlobalAnalytics:
     @staticmethod
@@ -586,17 +587,17 @@ class GlobalAnalytics:
                     
                     
                 SELECT 
-                    MAX(ROUND("MOM_LEVEL_SALES_TEST1"."sum_total_sales")) AS "total_sales",
-                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" AS "fiscal_year",
-                    TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon') AS "month_name"
+                    MAX(ROUND("MOM_LEVEL_SALES_SYNC"."sum_total_sales")) AS "total_sales",
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" AS "fiscal_year",
+                    TO_CHAR(TO_DATE("MOM_LEVEL_SALES_SYNC"."month_name", 'Month'), 'Mon') AS "month_name"
                 FROM
-                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_TEST1"
+                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_SYNC"
                 WHERE
-                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" in ('2023-2024','2024-2025') 
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" in ('2023-2024','2024-2025') 
                 GROUP BY
-                    "MOM_LEVEL_SALES_TEST1"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon')
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon')
                 ORDER BY
-                    "MOM_LEVEL_SALES_TEST1"."fiscal_year" ASC
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" ASC
             """
 
             resp = await function(query=sales_growth_query_)
@@ -683,6 +684,7 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": transformed_data}
                 '''
                 # added the below lines from 685 to 696 for dorrect drill data from backend 
+                '''
                 for record in data:
                     entry = {
                         "month_name": record["month_name"],
@@ -695,6 +697,25 @@ class GlobalAnalytics:
                         if key in record:
                             entry[key] = record[key]
                     transformed_data.append(entry)
+                '''
+                grouped_data = defaultdict(lambda: {"2023-2024": 0, "2024-2025": 0})
+                for record in data:
+                    key = (record["month_name"], record["SBU_Name"])
+                    grouped_data[key]["month_name"] = record["month_name"]
+                    grouped_data[key]["SBU_Name"] = record["SBU_Name"]
+                    grouped_data[key][record["fiscal_year"]] = record["total_sales"]
+                transformed_data = [
+                    {
+                        "month_name": entry["month_name"],
+                        "SBU_Name": entry["SBU_Name"],
+                        "2023-2024": entry["2023-2024"],
+                        "2024-2025": entry["2024-2025"],
+                    }
+                    for entry in grouped_data.values()
+                ]
+                for entry in transformed_data:
+                    for key in grouped_keys:
+                        entry[key] = next((rec[key] for rec in data if rec["SBU_Name"] == entry["SBU_Name"] and key in rec), None)
                 return {"status": True, "message": "success", "data": transformed_data}
 
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
