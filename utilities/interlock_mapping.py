@@ -7,7 +7,7 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_SecondTime_2years"},
 
                          {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_FirstTime_90days"},
-                         {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
+                         {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Deviation_SecondTime_2years"},
 
                          {"sop_id": "SOP001", "interlock_name": "VTS PowerDisconnect", "model": "VTS", "workflow_name": "Tas_Vts_PermanantBlock"},                         
                          {"sop_id": "SOP001", "interlock_name": "VTS Device Tampering", "model": "VTS", "workflow_name": "Tas_Vts_PermanantBlock"},
@@ -93,7 +93,53 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP291", "interlock_name": "Indent Dry Out", "workflow_name": ""}]
 
 # Interlock name and sop mapping for RO Alerts
-ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlock"},
+ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_90days"},
+                        {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_SecondTime_2years"},
+
+                        {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_90days"},
+                        {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_SecondTime_2years"},
+
+                        {"sop_id": "SOP001", "interlock_name": "VTS PowerDisconnect", "model": "VTS", "workflow_name": "Ro_Vts_PermanantBlock"},                         
+                        {"sop_id": "SOP001", "interlock_name": "VTS Device Tampering", "model": "VTS", "workflow_name": "Ro_Vts_PermanantBlock"},
+
+                        {"sop_id": "SOP001", "interlock_name": "VTS Offline FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_90days"},
+                        {"sop_id": "SOP001", "interlock_name": "VTS Offline SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_SecondTime_2years"},
+
+                        {"sop_id": "SOP001", "interlock_name": "Night Driving FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_7days"},
+                        {"sop_id": "SOP001", "interlock_name": "Night Driving SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_90days"},
+                        {"sop_id": "SOP001", "interlock_name": "Night Driving ThirdTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_SecondTime_2years"},
+
+                        {"sop_id": "SOP001", "interlock_name": "Speed Violation FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_7days"},
+                        {"sop_id": "SOP001", "interlock_name": "Speed Violation SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_90days"},
+                        {"sop_id": "SOP001", "interlock_name": "Speed Violation ThirdTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_SecondTime_2years"},
+
+                        {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_90days"},
+                        {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_SecondTime_2years"},
+
+                        {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_FirstTime_7days"},
+                        {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_ThirdTime_2years"},
+
+                        {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_FirstTime_7days"},
+                        {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_ThirdTime_2years"},
+
+                        {"sop_id": "SOP001E", "interlock_name": "VTS PowerDisconnect Exception", "model": "VTS", "workflow_name": "Ro_Vts_Exception_ThirdTime_2years"},
+                        {"sop_id": "SOP001E", "interlock_name": "VTS device Tampering Exception", "model": "VTS", "workflow_name": "Ro_Vts_Exception_ThirdTime_2years"},
+
+                        {"sop_id": "SOP001E", "interlock_name": "VTS offline Exception FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_FirstTime_7days"},
+                        {"sop_id": "SOP001E", "interlock_name": "VTS Offline Exception SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_ThirdTime_2years"},
+                         
+                        {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_FirstTime_7days"},
+                        {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_SecondTime_90days"},
+                        {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception ThirdTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_ThirdTime_2years"},
+
+
+                        {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_FirstTime_7days"},
+                        {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_SecondTime_90days"},
+                        {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception ThirdTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_ThirdTime_2years"},
+
+                        {"sop_id": "SOP001E", "interlock_name": "NoHalt zone Exception FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_FirstTime_7days"},
+                        {"sop_id": "SOP001E", "interlock_name": "NoHalt Zone Exception SecondTime", "model": "VTS", "workflow_name": "Ro_Vts_Exception_ThirdTime_2years"},
+
                         {"sop_id": "SOP001", "interlock_name": "Auto RSP Interlock"},
                         {"sop_id": "SOP002", "interlock_name": "Auto RSP Mismatch Interlock"},
                         {"sop_id": "SOP003", "interlock_name": "Testing Interlock"},
@@ -117,42 +163,57 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Auto RSP Interlo
                         {"sop_id": "SOP999", "interlock_name": "Bay Interlock"},
                         {"sop_id": "SOP291", "interlock_name": "Indent Dry Out", "workflow_name": "Indent Dry Out"},
                         {"sop_id": "SOP292", "interlock_name": "Dry Out Each Indent Wise MainFlow", "workflow_name": "Dry Out Each Indent Wise MainFlow"},
-                        {"sop_id": "SOP293", "interlock_name": "Dry Out Triggering Flow"},]
+                        {"sop_id": "SOP293", "interlock_name": "Dry Out Triggering Flow"}]
 
 # Interlock name and sop mapping for LPG Alerts
 lpg_interlock_mapping = [
-    {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "VTS PowerDisconnect", "model": "VTS", "workflow_name": ""},                         
-    {"sop_id": "SOP001", "interlock_name": "VTS Device Tampering", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "VTS Offline FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "VTS Offline SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "Night Driving FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "Night Driving SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "Night Driving ThirdTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "Speed Violation FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "Speed Violation SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "Speed Violation ThirdTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "VTS PowerDisconnect Exception", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "VTS device Tampering Exception", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "VTS offline Exception FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "VTS Offline Exception SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception ThirdTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception SecondTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception ThirdTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "NoHalt zone Exception FirstTime", "model": "VTS", "workflow_name": ""},
-    {"sop_id": "SOP001E", "interlock_name": "NoHalt Zone Exception SecondTime", "model": "VTS", "workflow_name": ""},
+    {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_FirstTime_90days"},
+    {"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_SecondTime_2years"},
+
+    {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_FirstTime_90days"},
+    {"sop_id": "SOP001", "interlock_name": "Unauthorized Stoppage SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_SecondTime_2years"},
+
+    {"sop_id": "SOP001", "interlock_name": "VTS PowerDisconnect", "model": "VTS", "workflow_name": "Lpg_Vts_PermanantBlock"},                         
+    {"sop_id": "SOP001", "interlock_name": "VTS Device Tampering", "model": "VTS", "workflow_name": "Lpg_Vts_PermanantBlock"},
+
+    {"sop_id": "SOP001", "interlock_name": "VTS Offline FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_FirstTime_90days"},
+    {"sop_id": "SOP001", "interlock_name": "VTS Offline SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_SecondTime_2years"},
+
+    {"sop_id": "SOP001", "interlock_name": "Night Driving FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_FirstTime_7days"},
+    {"sop_id": "SOP001", "interlock_name": "Night Driving SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_FirstTime_90days"},
+    {"sop_id": "SOP001", "interlock_name": "Night Driving ThirdTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_SecondTime_2years"},
+
+    {"sop_id": "SOP001", "interlock_name": "Speed Violation FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_FirstTime_7days"},
+    {"sop_id": "SOP001", "interlock_name": "Speed Violation SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_FirstTime_90days"},
+    {"sop_id": "SOP001", "interlock_name": "Speed Violation ThirdTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_SecondTime_2years"},
+
+    {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_FirstTime_90days"},
+    {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Deviation_SecondTime_2years"},
+
+    {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_FirstTime_7days"},
+    {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
+
+    {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_FirstTime_7days"},
+    {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
+
+    {"sop_id": "SOP001E", "interlock_name": "VTS PowerDisconnect Exception", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
+    {"sop_id": "SOP001E", "interlock_name": "VTS device Tampering Exception", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
+
+    {"sop_id": "SOP001E", "interlock_name": "VTS offline Exception FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_FirstTime_7days"},
+    {"sop_id": "SOP001E", "interlock_name": "VTS Offline Exception SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
+    
+    {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_FirstTime_7days"},
+    {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_SecondTime_90days"},
+    {"sop_id": "SOP001E", "interlock_name": "Night Driving Exception ThirdTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
+
+
+    {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_FirstTime_7days"},
+    {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_SecondTime_90days"},
+    {"sop_id": "SOP001E", "interlock_name": "Speed Violation Exception ThirdTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
+
+    {"sop_id": "SOP001E", "interlock_name": "NoHalt zone Exception FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_FirstTime_7days"},
+    {"sop_id": "SOP001E", "interlock_name": "NoHalt Zone Exception SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
+
     {"sop_id": "SOP001", "interlock_name": "Healthy Status of High level alarm interlock loops for vessels"},
     {"sop_id": "SOP002", "interlock_name": "Health status of Plant ESD level Interlock loops"},
     {"sop_id": "SOP003", "interlock_name": "Health status of Plant MCP level Interlock loops"},
