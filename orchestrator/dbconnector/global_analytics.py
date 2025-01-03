@@ -1190,7 +1190,7 @@ class GlobalAnalytics:
             if conditions:
                 lpg_cdcms_month_query_ += ' WHERE '
                 lpg_cdcms_month_query_ += ' AND '.join(conditions)
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "Total Sales", "ZOName", "ROName", "SAName"'
         else:
             yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_month_query_ = f'''
