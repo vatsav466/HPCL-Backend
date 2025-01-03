@@ -595,7 +595,7 @@ class GlobalAnalytics:
                 WHERE
                     "MOM_LEVEL_SALES_SYNC"."fiscal_year" in ('2023-2024','2024-2025') 
                 GROUP BY
-                    "MOM_LEVEL_SALES_SYNC"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_TEST1"."month_name", 'Month'), 'Mon')
+                    "MOM_LEVEL_SALES_SYNC"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_SYNC"."month_name", 'Month'), 'Mon')
                 ORDER BY
                     "MOM_LEVEL_SALES_SYNC"."fiscal_year" ASC
             """
