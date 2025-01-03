@@ -1190,7 +1190,7 @@ class GlobalAnalytics:
             if conditions:
                 lpg_cdcms_month_query_ += ' WHERE '
                 lpg_cdcms_month_query_ += ' AND '.join(conditions)
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
         else:
             yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_month_query_ = f'''
@@ -1260,27 +1260,27 @@ class GlobalAnalytics:
 
             if "Execution_Month" in filter_keys and "ZOName" not in filter_keys:
                 print("grouped_resp ZOName--> ")    
-                grouped_resp = resp.groupby(["Execution_Month","ZOName", "ROName"], as_index=False).agg({
-                    
+                grouped_resp = resp.groupby(["Execution_Month", "ZOName", "ROName"], as_index=False).agg({
+                    "Total Sales": lambda x: x.sum() / 10000000
                 })
 
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 print("grouped_resp ZOName--> ")    
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName"], as_index=False).agg({
-                    "Total Sales": "sum"
+                    "Total Sales": lambda x: x.sum() / 10000000
                 })
 
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 print("grouped_resp  elif ZOName--> ")    
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName"], as_index=False).agg({
-                    "Total Sales": "sum"
+                    "Total Sales": lambda x: x.sum() / 10000000
                 })
             
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
                 print("grouped_resp  elif ZOName--> ")
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
-                    "Total Sales": "sum"
+                    "Total Sales": lambda x: x.sum() / 10000000
                     })
 
             print("grouped_resp --> ", grouped_resp)

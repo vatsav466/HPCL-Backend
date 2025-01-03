@@ -739,7 +739,11 @@ LIMIT 10000;''',
     "lpg_cdcms_month": f'''select
                                 EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date") as "Month_No",
                                 "Execution_Month",
-                                sum("TotalSalesYesterday")/10000000 as "Total Sales"
+                                sum("TotalSalesYesterday")/10000000 as "Total Sales",
+                                "ZOName" as "ZOName",
+                                "ROName" as "ROName",
+                                "SAName" as "SAName",
+                                "JDEDistributorCode" as "JDEDistributorCode"
                             from
                                 "LPG_SALES_SUMMARY_DATA"''' 
 }
