@@ -1168,8 +1168,8 @@ class GlobalAnalytics:
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
 
         if filters:
-            lpg_cdcms_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
-            lpg_cdcms_query_ = lpg_cdcms_query
+            lpg_cdcms_month_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_month")
+            lpg_cdcms_month_query_ = lpg_cdcms_month_query
             conditions = []
 
             for rec in filters:
@@ -1188,12 +1188,12 @@ class GlobalAnalytics:
                 conditions.append(condition)
 
             if conditions:
-                lpg_cdcms_query_ += ' WHERE '
-                lpg_cdcms_query_ += ' AND '.join(conditions)
-            lpg_cdcms_query_ += ' GROUP BY "Month_No", "Execution_Month", "Total Sales"'
+                lpg_cdcms_month_query_ += ' WHERE '
+                lpg_cdcms_month_query_ += ' AND '.join(conditions)
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "Total Sales"'
         else:
             yesterday = datetime.now() - relativedelta(days=1)
-            lpg_cdcms_query_ = f'''
+            lpg_cdcms_month_query_ = f'''
                 select
                     EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date") as "Month_No",
                     TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon') AS "Execution_Month",
@@ -1204,7 +1204,7 @@ class GlobalAnalytics:
                         EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date"), 
                         TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon')
             '''
-            resp = await function(query=lpg_cdcms_query_)
+            resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
 
@@ -1225,7 +1225,7 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
         
         # Execute the query
-        resp = await function(query=lpg_cdcms_query_)
+        resp = await function(query=lpg_cdcms_month_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
