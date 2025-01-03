@@ -723,18 +723,16 @@ LIMIT 10000;''',
                                     "Product_Achievement" 
                             FROM public."M60_LEVEL_METADATA"''',
 
-    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_TEST1" where "MOM_LEVEL_FINAL_TEST1"."fiscal_year" in ('2023-2024','2024-2025') ''',
-
-    "lpg_cdcms": f'''select sum("BookingReceivedYesterday") as "Bookings", 
-                            sum("LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday") as "Sales",
-                            sum("Total_Pending") as "Pending",
+    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_SALES_TEST1" where "MOM_LEVEL_SALES_TEST1"."fiscal_year" in ('2023-2024','2024-2025') ''',
+    
+    "lpg_cdcms": f'''select "BookingReceivedYesterday" as "Bookings", 
+                            "LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday" as "Sales",
+                            "Total_Pending" as "Pending",
                             "ZOName" as "ZOName",
                             "ROName" as "ROName",
-                            "SAName" as "SAName" 
+                            "SAName" as "SAName",
+                            "Execution_Date" as "Execution_Date"
                     from
-                        "LPG_SALES_SUMMARY_DATA" 
-                    group by
-                        "JDEDistributorCode", "ROName", "SAName", "ZOName"
-                    limit 1000'''
+                        "LPG_SALES_SUMMARY_DATA"'''
 
 }

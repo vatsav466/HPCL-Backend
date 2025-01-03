@@ -43,6 +43,8 @@ class DBConnectorFactory(ABC):
 
                 if condition == 'equals':
                     conditions.append(f"{key} = '{value}'")
+                elif condition == 'date':
+                    conditions.append(f"{key}::DATE = '{value}'")
                 elif condition == 'prefix':
                     conditions.append(f"{key} LIKE '{value}%'")
                 elif condition == 'contains':

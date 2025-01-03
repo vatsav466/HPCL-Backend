@@ -143,6 +143,8 @@ class WidgetActions:
 
             if condition == 'equals':
                 conditions.append(f"{key} = '{value}'")
+            elif condition == 'date':
+                conditions.append(f"{key}::DATE = '{value}'")
             elif condition == 'prefix':
                 conditions.append(f"{key} LIKE '{value}%'")
             elif condition == 'contains':
@@ -159,7 +161,7 @@ class WidgetActions:
                     conditions.append(f"{key} >= CURRENT_TIMESTAMP - INTERVAL '24 hours'")
                 elif value == 't':
                     conditions.append(f"{key}::DATE = CURRENT_DATE")
-                elif value == '1d':
+                elif value == '1d' or value == '1y':
                     conditions.append(f"{key}::DATE = CURRENT_DATE - INTERVAL '1 DAY'")
                 elif value == '1w':
                     conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '7 DAY'")
