@@ -275,6 +275,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
                                          f" {convert_time_read_format(str(history['allocated_time']))}, "
                                          f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+        alert_history["data"] = alert_history["data"][::-1]
     return alert_history
 
     # def convert_time_read_format(date_time):
@@ -639,7 +640,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-            f"from alerts where {conditions} limit 500"
+            f"from alerts where indent_status != 'Cancelled' and {conditions} limit 500"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
