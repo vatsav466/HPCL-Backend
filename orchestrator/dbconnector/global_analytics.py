@@ -516,7 +516,6 @@ class GlobalAnalytics:
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
-
     
     @staticmethod
     async def sales_growth(filters, drill_state):
@@ -581,11 +580,7 @@ class GlobalAnalytics:
                 sales_growth_query_ += ''.join(conditions)
         else:
             # Fallback query if no filters are provided
-            sales_growth_query_ = """
-            
-            
-                    
-                    
+            sales_growth_query_ = """  
                 SELECT 
                     MAX(ROUND("MOM_LEVEL_SALES_SYNC"."sum_total_sales")) AS "total_sales",
                     "MOM_LEVEL_SALES_SYNC"."fiscal_year" AS "fiscal_year",
@@ -1133,6 +1128,161 @@ class GlobalAnalytics:
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
                 print("grouped_resp  elif ZOName--> ")
                 grouped_resp = resp.groupby(["ZOName","ROName","SAName","DistributorName"],
+                as_index=False).agg({
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
+                    })
+
+            print("grouped_resp --> ", grouped_resp)
+            if grouped_resp is not None:
+                print("grouped_resp  -> ", grouped_resp)
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def lpg_cdcms_month(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+
+        month_mapping = {
+                            "Jan": "January",
+                            "Feb": "February",
+                            "Mar": "March",
+                            "Apr": "April",
+                            "May": "May",
+                            "Jun": "June",
+                            "Jul": "July",
+                            "Aug": "August",
+                            "Sep": "September",
+                            "Oct": "October",
+                            "Nov": "November",
+                            "Dec": "December"
+                    }
+
+        # Reverse mapping (for returning the short form)
+        reverse_month_mapping = {v: k for k, v in month_mapping.items()}
+
+        if filters:
+            lpg_cdcms_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
+            lpg_cdcms_query_ = lpg_cdcms_query
+            conditions = []
+
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if rec.key == '"Execution_Month"':  # Only handle the month_name case separately
+                    # Check if any value in rec.value is in month_mapping
+                    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_cdcms_query_ += ' WHERE '
+                lpg_cdcms_query_ += ' AND '.join(conditions)
+            lpg_cdcms_query_ += ' GROUP BY "Month_No", "Execution_Month", "Total Sales"'
+        else:
+            yesterday = datetime.now() - relativedelta(days=1)
+            lpg_cdcms_query_ = f'''
+                select
+                    EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date") as "Month_No",
+                    TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon') AS "Execution_Month",
+                    sum("TotalSalesYesterday")/10000000 as "Total Sales"
+                from
+                    "LPG_SALES_SUMMARY_DATA"
+                group by
+                        EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date"), 
+                        TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon')
+            '''
+            resp = await function(query=lpg_cdcms_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total Sales"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "Month_No", "Execution_Month", "ZOName"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+        
+        # Execute the query
+        resp = await function(query=lpg_cdcms_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+        print("resp for DistributorName --> ", resp['DistributorName'])
+        # yesterday = datetime.now() - relativedelta(days=1)
+        # yesterday_date = yesterday.date()
+        # # Filter rows where Execution_Date matches yesterday
+        # resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
+
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "Total Sales"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "Month_No", "Execution_Month", "ZOName"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "Execution_Month" in filter_keys:
+            # Convert full month names to short form (e.g., "January" -> "Jan")
+                resp["Execution_Month"] = resp["Execution_Month"].apply(
+                lambda x: reverse_month_mapping.get(x, x)
+            )
+
+            if "Execution_Month" in filter_keys and "ZOName" not in filter_keys:
+                print("grouped_resp ZOName--> ")    
+                grouped_resp = resp.groupby(["Execution_Month","ZOName", "ROName"], as_index=False).agg({
+                    
+                })
+
+            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                print("grouped_resp ZOName--> ")    
+                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName"], as_index=False).agg({
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
+                })
+
+            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                print("grouped_resp  elif ZOName--> ")    
+                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName"], as_index=False).agg({
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
+                })
+            
+            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                print("grouped_resp  elif ZOName--> ")
+                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
                     "Bookings": "sum",
                     "Sales": "sum",

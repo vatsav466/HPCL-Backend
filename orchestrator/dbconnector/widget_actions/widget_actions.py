@@ -40,6 +40,7 @@ lpg_dashboard_actions = [
     'sales_growth',
     'sales_yearly_performance',
     'lpg_cdcms',
+    'lpg_cdcms_month'
 ]
 
 # Todo:- import all widget action modules here
@@ -82,6 +83,7 @@ widget_mapping = {
     'sales_growth': {},
     'sales_yearly_performance': {},
     'lpg_cdcms': {},
+    'lpg_cdcms_month': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''}
 }
