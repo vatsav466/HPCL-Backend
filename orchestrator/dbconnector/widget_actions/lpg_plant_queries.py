@@ -732,7 +732,7 @@ LIMIT 10000;''',
                             "ROName" as "ROName",
                             "SAName" as "SAName",
                             "Execution_Date" as "Execution_Date",
-                            "JDEDistributorCode" as "JDEDistributorCode",
+                            "JDEDistributorCode" as "JDEDistributorCode"
                     from
                         "LPG_SALES_SUMMARY_DATA"'''
 

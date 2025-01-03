@@ -1003,7 +1003,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/Users/mac_1/Downloads/DistributorMappings.csv")
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
 
         if filters:
             lpg_cdcms_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
@@ -1026,8 +1026,8 @@ class GlobalAnalytics:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
             yesterday = datetime.now() - relativedelta(days=1)
-            lpg_cdcms_query_ += f" AND date = '{yesterday.strftime('%Y-%m-%d')}'"
-            lpg_cdcms_query_ += ' GROUP BY "ZOName"'
+            lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
+            lpg_cdcms_query_ += ' GROUP BY "Bookings", "Sales", "Pending", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
             yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_query_ = f'''
