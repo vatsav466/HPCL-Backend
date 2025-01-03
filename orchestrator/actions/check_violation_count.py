@@ -35,7 +35,7 @@ class CheckViolationCount:
 
             # Construct the query
             query = (f"sap_id='{sap_id}' and bu='{bu}' and vehicle_number='{vehicle_number}' "
-                     f"and violation_type='{violation_type}' "
+                     f"and violation_type='{violation_type}' and sop_id='SOP001' "
                      f"and created_at >= '{start_date_time}'")
             
             # Fetch the count of violations matching the query
@@ -66,7 +66,7 @@ class CheckViolationCount:
         """
         finalresp = {}
         try:
-            query = f"bu='{bu}' and sap_id='{sap_id}' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}'"
+            query = f"bu='{bu}' and sap_id='{sap_id}' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}' and sop_id='SOP001'"
             count = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
             print("count-------->", count)
             finalresp[violation_type] = count
@@ -93,7 +93,7 @@ class CheckViolationCount:
             If an error occurs, the value will be None.
         """
         try:
-            query = f"bu='{bu}' and sap_id='{sap_id}' and interlock_name='{interlockname}' and alert_status='Open' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}'"
+            query = f"bu='{bu}' and sap_id='{sap_id}' and interlock_name='{interlockname}' and alert_status='Open' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}' and sop_id='SOP001'"
             data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
             print("data-------->", data)
             if len(data['data']):

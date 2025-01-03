@@ -271,10 +271,10 @@ class AlertFactory:
                 redis_ins = await urdhva_base.redispool.get_redis_connection()
                 if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
                     await redis_ins.hdel("alert_mapping", al_data['external_id'])
-                await redis_ins.close()
                 data_obj = hpcl_ceg_model.Alerts(**al_data)
                 await data_obj.modify()
                 await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
+                await redis_ins.close()
 
             return True, {"status": "Alert Closed"}
         

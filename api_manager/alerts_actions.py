@@ -97,6 +97,7 @@ async def alerts_upload_image(upload_file: fastapi.UploadFile = fastapi.File(Non
 @router.post('/intitiate_vts_exception', tags=['Alerts'])
 async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionParams):
     data=data.dict()
+    print("data --> ", data)
     alert_id = data["alert_id"]
     IST = pytz.timezone('Asia/Kolkata')
     current_time = datetime.datetime.now(IST).strftime('%d-%m-%Y %H:%M:%S')
@@ -111,7 +112,7 @@ async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionPar
                                                                                     alert_data['vehicle_number'], alert_data['violation_type'], alert_data["created_at"])
     altcount = altcount['count']
     print("altcount------>",altcount)
-    details=vts_mapping.vts_exception_interlock_mapping[data['violation_type']]
+    details=vts_mapping.vts_exception_interlock_mapping[alert_data['violation_type']]
     max_limit = int(max(list(details['alerting_rules'].keys())))
     if altcount > max_limit:
         altcount = max_limit
@@ -134,7 +135,7 @@ async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionPar
             "alert_status": "Open",  # Replace with the correct alert status
         }]
     interlock_details = utilities.interlock_mapping.get_interlock_name(
-        data['location_type'], details['alerting_rules'][str(altcount)]['interlock_name'])
+        alert_data['bu'], details['alerting_rules'][str(altcount)]['interlock_name'])
     if not interlock_details:
         return false, "interlock name not found "
     vts_alert_data={"bu": alert_data["bu"],
@@ -144,15 +145,18 @@ async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionPar
                     "sop_id":"SOP001E", "alert_message": "exception","sap_id":alert_data['sap_id'], 
                     "interlock_name": interlock_details["interlock_name"],
                     "origin_altid": data["alert_id"],
-                    "location_name": alert_data['name']}
+                    "vehicle_number": alert_data["vehicle_number"],
+                    "violation_type": alert_data["violation_type"],
+                    "location_name": alert_data['location_name']}
     
     query = (f"sap_id='{alert_data["sap_id"]}' and bu='{alert_data["bu"]}' and vehicle_number='{alert_data["vehicle_number"]}' "
-             f"and sop_id='SOP001E' and interlock_name='{alert_data["interlock_name"]}' and alert_status='Open' "
-             f"and origin_altid='{alert_data["origin_altid"]}'")
-    
+             f"and sop_id='SOP001E' and alert_status='Open' and origin_altid='{alert_id}' and interlock_name='{interlock_details["interlock_name"]}'")
+    print("query---->",query)
     data = await Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query),resp_type='plain')
+    print("data----->", data)
     if data['total']!=0:
         logger.info("exist:%s" % (vts_alert_data))
+        print("already alert exists")
         return True, "Exception already raised"
     else:
         camunda_url=urdhva_base.settings.camunda_url

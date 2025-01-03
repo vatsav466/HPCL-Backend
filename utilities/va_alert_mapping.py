@@ -19,7 +19,7 @@ VA_Alert_Mapping = {
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {"name": "Absence Of Fire Extinguisher Tt Operations", "severity": "High"},
         "PPE_HELMET": {"name": "Person not wearing Safety Helmet TAS", "severity": "Medium"},
         "LINE_OF_FIRE": {"name": "Intrusion", "severity": "Critical"},
-        "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt", "severity": "Critical"},
+        "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt TAS", "severity": "Critical"},
         "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock TAS", "severity": "High"}
     },
     "LPG": {
@@ -31,8 +31,8 @@ VA_Alert_Mapping = {
         "Intrusion-PersonAtPerimeter": {"name": "Intrusion Person At Perimeter", "severity": "Critical"},
         "LPGLeak-FillingGun": {"name": "Lpg Leakage Filling Gun",  "severity": "Critical"},
         "LPGLeak-Detection": {"name": "Lpg Leakage Detection",  "severity": "Critical"},
-        "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt",  "severity": "Medium"},
-        "PPE_HELMET": {"name": "Person not wearing Safety Helmet", "severity": "Medium"},
+        "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt LPG",  "severity": "Medium"},
+        "PPE_HELMET": {"name": "Person not wearing Safety Helmet LPG", "severity": "Medium"},
         "ABSENCE OF WHEELCHOCK": {"name": "Missing Wheel Chock", "severity": "High"}
     }
 }

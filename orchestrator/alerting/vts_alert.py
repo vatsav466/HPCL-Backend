@@ -131,9 +131,10 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             interlocknamecheck = await check_violation_count.CheckViolationCount().check_interlock(record['location_id'],
                                                                                                             record['location_type'],
                                                                                                             record['tl_number'], interlock_details.get("interlock_name",""),key)
-                            print("interlock_name_check", interlocknamecheck['interlock_name'])
+                            print("interlock_name_check", interlocknamecheck)
                             print("interlock_name---->",interlock_details["interlock_name"])
                             if interlocknamecheck and interlocknamecheck['interlock_name']==interlock_details["interlock_name"]:
+                                print("alert already exists")
                                 continue
                             vts_alert_data['alert_section'] = 'VTS'
                             vts_alert_data['alert_history'] = alert_history
