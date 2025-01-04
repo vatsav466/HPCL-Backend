@@ -97,7 +97,6 @@ async def alerts_upload_image(upload_file: fastapi.UploadFile = fastapi.File(Non
 @router.post('/intitiate_vts_exception', tags=['Alerts'])
 async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionParams):
     data=data.dict()
-    print("data --> ", data)
     alert_id = data["alert_id"]
     IST = pytz.timezone('Asia/Kolkata')
     current_time = datetime.datetime.now(IST).strftime('%d-%m-%Y %H:%M:%S')
@@ -151,12 +150,9 @@ async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionPar
     
     query = (f"sap_id='{alert_data["sap_id"]}' and bu='{alert_data["bu"]}' and vehicle_number='{alert_data["vehicle_number"]}' "
              f"and sop_id='SOP001E' and alert_status='Open' and origin_altid='{alert_id}' and interlock_name='{interlock_details["interlock_name"]}'")
-    print("query---->",query)
     data = await Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query),resp_type='plain')
-    print("data----->", data)
     if data['total']!=0:
         logger.info("exist:%s" % (vts_alert_data))
-        print("already alert exists")
         return True, "Exception already raised"
     else:
         camunda_url=urdhva_base.settings.camunda_url
