@@ -31,7 +31,6 @@ class Postgresql(BaseAction):
 
     async def get_connection(self):
         if 'connection_name' in self.params.keys() and self.params['connection_name']:
-            print("connection_name_: ", self.params['connection_name'])
             # redis_ins = urdhva_base.redispool.get_synchronous_redis_connection()
             # try:
             #     redis_key = f"cred_store_{self.params['connection_name']}"
@@ -451,7 +450,6 @@ class Postgresql(BaseAction):
                     where_query = where_query[:-5]
                     if where_query:
                         query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
-                print("query_: ", query)
                 stmt = await connection.prepare(
                     query
                 )
@@ -482,14 +480,13 @@ class Postgresql(BaseAction):
         """
         try:
             connection = await self.get_connection()
-            print("query: ", query)
+            print("execute query: ", query)
             stmt = await connection.prepare(query)
             columns = [a.name for a in stmt.get_attributes()]
             data = await stmt.fetch()
             data = pd.DataFrame(data, columns=columns)
             # await connection.close()
             await self.close_connection(connection)
-            print("query resp: ", data)
             return data.to_dict(orient='records')
         except Exception as err:
             print(err)
@@ -528,8 +525,6 @@ class Postgresql(BaseAction):
             ON CONFLICT ({conflict_clause}) DO UPDATE
             SET {updates};
         """
-
-        print(sql_query)
         for batch in self.chunked_iterable(records.to_dicts(), BATCH_SIZE):
             # values = [[value for value in project.values()] for project in batch]
             rows = [tuple(row[col] for col in all_columns) for row in batch]

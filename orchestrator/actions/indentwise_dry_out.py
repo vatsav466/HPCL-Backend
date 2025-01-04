@@ -120,7 +120,6 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
-        print("Params: ", self.params)
         self.params['sop_id'] = 'SOP292'
         self.params['alert_type'] = 'RO'
         self.params['bu'] = 'RO'
@@ -147,7 +146,6 @@ class IndentDryOut:
 
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         total_indent = await function(query=query)
-        print("total_indent: ", total_indent)
 
         if not total_indent:
             # Check Alert Exists for same Scenario or not
@@ -167,7 +165,6 @@ class IndentDryOut:
                         await hpcl_ceg_model.Alerts.update_by_query(query)
         else:
             for each_indent in total_indent:
-                print(each_indent)
                 query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                          f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
                          f"indent_no='{each_indent['INDENT_NO']}' and "
@@ -194,7 +191,6 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
-        print("Params: ", self.params)
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -219,7 +215,6 @@ class IndentDryOut:
                     f"""GROUP BY a.INDENT_NO, b.PROD, a.LOCN_CODE, a.INDENT_DATE ORDER BY a.INDENT_NO DESC"""
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
-            print("In If condition: ", resp)
             if not resp:
                 return await self.send_alert_action(is_raised=False)
 
@@ -361,7 +356,6 @@ class IndentDryOut:
 
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        print("self.params['connection_name']: ", self.params['connection_name'])
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp_1 = await function(query=query)
         if not resp_1:
@@ -729,7 +723,6 @@ class IndentDryOut:
         cris_resp.replace({"item_name": _prod_map}, inplace=True)
         cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
         cris_resp = cris_resp.to_dict("records")
-        print("cris_resp: ", cris_resp)
         if cris_resp:
             cris_resp = cris_resp[0]
         else:
@@ -913,7 +906,6 @@ class IndentDryOut:
             alert_data['alert_state'] = alert_state
             if str(progress_rate) != "0":
                 alert_data['progress_rate'] = str(progress_rate)
-            print("alert_data: ", alert_data)
             alert_data = Alerts(**alert_data)
             await alert_data.modify()
 
@@ -1012,7 +1004,6 @@ class IndentDryOut:
 
         headers = {"Content-Type": "application/json"}
         url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
-        print("URL: ", url)
         payload = {
             "indent_no": {"value": indent_no, "type": "String"},
             "terminal_plant_id": {"value": loc_code, "type": "String"},
