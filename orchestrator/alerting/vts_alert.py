@@ -92,6 +92,9 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             resp = await hpcl_ceg_model.VTSCreate(**vts_data).create()
                             vts_data['id'] = resp['id']
                         if vts_data['violation_count'] > details['alert_threshold']:
+                            vts_data['violation_count'] = 0
+                            await hpcl_ceg_model.VTS(**vts_data).modify()
+
                             altcount = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
                                                                                                             record['location_type'],
                                                                                                             record['tl_number'], key)
