@@ -436,6 +436,21 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     #     if each_dryout["dry_out_in_days"] == '3':
     #         potential_dry_out = each_dryout["count"]
 
+    where_clause = ["present_stage != '11'"]
+    for record in data.filters:
+        if record.key == "progress_rate":
+            if record.value:
+                where_clause.append(f"progress_rate={int(record.value[0])}")
+        else:
+            if record.value:
+                if record.key == "plant":
+                    record.key = "terminal_plant_id"
+                if len(record.value) == 1:
+                    where_clause.append(f"{record.key} {record.cond} '{record.value[0]}'")
+                else:
+                    where_clause.append(f"{record.key} in {tuple(record.value)}")
+    conditions = ' AND '.join(where_clause)
+
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     stats_query = f"""WITH max_progress_rate AS (
@@ -457,7 +472,8 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
                             present_stage,
                             COUNT(DISTINCT sap_id) AS unique_count
                         FROM max_progress_rate
-                        WHERE present_stage != '11'
+--                         WHERE present_stage != '11'
+                        WHERE {conditions} 
                         GROUP BY dry_out_in_days, present_stage
                     ) subquery
                     GROUP BY dry_out_in_days
