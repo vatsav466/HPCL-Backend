@@ -459,7 +459,10 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
                         SELECT
                             sap_id,
                             MAX(progress_rate) AS present_stage,
-                            dry_out_in_days
+                            dry_out_in_days,
+                            interlock_name,
+                            zone, plant, dealer_id, product_code,
+                            region, sales_area, category
                         FROM alerts
                         WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
                           AND indent_status NOT IN ('Cancelled')
