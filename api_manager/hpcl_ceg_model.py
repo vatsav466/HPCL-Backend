@@ -1532,7 +1532,7 @@ class Indentdryout_Sync_Ro_Daily_SalesParams(pydantic.BaseModel):
 
 
 class Indentdryout_Get_Dry_Out_CountParams(pydantic.BaseModel):
-    pass
+    filters: typing.List[IndentDryOutDataFiltersCreate]
 
 
 class Indentdryout_Get_Filtered_Location_DataParams(pydantic.BaseModel):
