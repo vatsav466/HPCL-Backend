@@ -637,7 +637,16 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
             grouped_keys = ["fiscal_year", "month_name"]
-
+            # this is for getting all the months data for the specific SBU and fiscal year
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SBU_Name' in filter_keys:
+                grouped_keys.extend(["SBU_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Zone_Name' in filter_keys:
+                grouped_keys.extend(["Zone_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Region_Name' in filter_keys:
+                grouped_keys.extend(["Region_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SalesArea_Name' in filter_keys:
+                grouped_keys.extend(["SalesArea_Name"])
+            
             if "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 grouped_keys.append("SBU_Name")
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
@@ -656,7 +665,8 @@ class GlobalAnalytics:
             })
             print("grouped_keys->>",grouped_keys)
             if grouped_resp is not None:
-                sub_name = list(set(rec['SBU_Name'] for rec in grouped_resp.to_dict(orient='records')))
+                if "sbu_name" in resp.columns.tolist():
+                    sub_name = list(set(rec['SBU_Name'] for rec in grouped_resp.to_dict(orient='records')))
                 transformed_data = []
                 data = grouped_resp.to_dict(orient='records')
                 print("data-->>",data)
@@ -693,7 +703,10 @@ class GlobalAnalytics:
                             entry[key] = record[key]
                     transformed_data.append(entry)
                 '''
-                grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': '', 'SBU_Name': ''})
+                if "sbu_name" in resp.columns.tolist():
+                    grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': '', 'SBU_Name': ''})
+                else:
+                    grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': ''})
                 #grouped_keys =  ['fiscal_year', 'month_name', 'SBU_Name']
                 key_fields = [key for key in grouped_keys if key != 'fiscal_year']  # Exclude 'fiscal_year'
 
