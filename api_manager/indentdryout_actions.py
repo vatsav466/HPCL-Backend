@@ -644,11 +644,11 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     stats.extend([{
             "section": "Indent Raised",
             "value": sum(item['value'] for item in stats if 2 <= item['serial'] <= 10),
-            "serial": ["2","3","4","5","6","7","8","9","10"], "condition": "=", "group": "not_raised"
+            "serial": 13, "condition": "=", "group": "not_raised"
         },{
             "section": "Valid \\ WIP Indents",
             "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
-            "serial": ["4","5","6","7","8","9","10"], "condition": "=", "group": "pending"
+            "serial": 14, "condition": "=", "group": "pending"
         }])
     stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
                   for x in connection_mapping.truck_details])
