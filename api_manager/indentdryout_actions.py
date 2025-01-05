@@ -437,6 +437,8 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     #         potential_dry_out = each_dryout["count"]
 
     where_clause = ["present_stage != '11'"]
+    if not data.filters:
+        data.filters = []
     for record in data.filters:
         if record.key == "progress_rate":
             if record.value:
