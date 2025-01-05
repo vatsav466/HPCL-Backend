@@ -457,11 +457,11 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     stats_query = f"""WITH max_progress_rate AS (
                         SELECT
-                            sap_id,
+                            sap_id as dealer_id,
                             MAX(progress_rate) AS present_stage,
                             dry_out_in_days,
                             interlock_name,
-                            zone, plant, dealer_id, product_code,
+                            zone, terminal_plant_id, product_code,
                             region, sales_area, category
                         FROM alerts
                         WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
@@ -475,7 +475,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
                         SELECT
                             dry_out_in_days,
                             present_stage,
-                            COUNT(DISTINCT sap_id) AS unique_count
+                            COUNT(DISTINCT dealer_id) AS unique_count
                         FROM max_progress_rate
 --                         WHERE present_stage != '11'
                         WHERE {conditions} 
