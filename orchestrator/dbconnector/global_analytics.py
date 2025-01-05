@@ -693,25 +693,18 @@ class GlobalAnalytics:
                             entry[key] = record[key]
                     transformed_data.append(entry)
                 '''
-                grouped_data = defaultdict(lambda: {"2023-2024": 0, "2024-2025": 0})
+                grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': '', 'SBU_Name': ''})
+                grouped_keys =  ['fiscal_year', 'month_name', 'SBU_Name']
+                key_fields = [key for key in grouped_keys if key != 'fiscal_year']  # Exclude 'fiscal_year'
+
                 for record in data:
-                    key = (record["month_name"], record["SBU_Name"])
-                    grouped_data[key]["month_name"] = record["month_name"]
-                    grouped_data[key]["SBU_Name"] = record["SBU_Name"]
-                    grouped_data[key][record["fiscal_year"]] = record["total_sales"]
-                transformed_data = [
-                    {
-                        "month_name": entry["month_name"],
-                        "SBU_Name": entry["SBU_Name"],
-                        "2023-2024": entry["2023-2024"],
-                        "2024-2025": entry["2024-2025"],
-                    }
-                    for entry in grouped_data.values()
-                ]
-                for entry in transformed_data:
-                    for key in grouped_keys:
-                        entry[key] = next((rec[key] for rec in data if rec["SBU_Name"] == entry["SBU_Name"] and key in rec), None)
-                return {"status": True, "message": "success", "data": transformed_data}
+                    key = tuple(record[field] for field in key_fields)    
+                    #key = (record['month_name'], record['SBU_Name'],record['Zone_Name'])
+                    for field in key_fields:
+                        grouped_data[key][field] = record.get(field, '')
+                    grouped_data[key][record['fiscal_year']] = record['total_sales']
+                result = list(grouped_data.values())
+                return {"status": True, "message": "success", "data": result}
 
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
