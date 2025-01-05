@@ -745,5 +745,13 @@ LIMIT 10000;''',
                                 "SAName" as "SAName",
                                 "JDEDistributorCode" as "JDEDistributorCode"
                             from
-                                "LPG_SALES_SUMMARY_DATA"''' 
+                                "LPG_SALES_SUMMARY_DATA"''',
+
+    "carry_forward_analysis": f'''select 
+                                        SUM(total_indents) as "total_indents", 
+                                        SUM(indents_executed) as "indents_executed", 
+                                        SUM(cf_indents) as "cf_indents", SUM(dry_out_locations) as "dry_out_locations",
+                                        SUM(dry_out_cat_a) as "dry_out_cat_a", DATE(execution_date)
+                                  from 
+                                        "carry_forward_indents" GROUP BY execution_date'''
 }

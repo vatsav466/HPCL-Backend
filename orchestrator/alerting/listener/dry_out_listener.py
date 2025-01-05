@@ -106,6 +106,10 @@ class DryoutCollector:
             alert_data['dry_out_in_days'] = str(_dry['status'])
             await redis_queue.put(json.dumps(alert_data))
 
+        # Get all open dry out history details
+        # Compare with dry out records -> if not there for product and location id close and update end_time
+        # Closed alerts day wise unique by sap_id and product -> Create Close
+
 
 if __name__ == "__main__":
     print(f"Executing dry-out alert creation at {datetime.datetime.now(datetime.timezone.utc)}")

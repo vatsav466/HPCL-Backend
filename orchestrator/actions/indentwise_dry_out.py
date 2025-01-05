@@ -184,7 +184,7 @@ class IndentDryOut:
                             query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
                                      f"where id='{record['id']}'")
                             await hpcl_ceg_model.Alerts.update_by_query(query)
-
+        # Todo:- Dry out location created or not for this product, if not create
         return True, {"msg": "Alert raised"}
 
     async def check_indent_status(self, params: dict):

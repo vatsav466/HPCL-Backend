@@ -1283,3 +1283,32 @@ class GlobalAnalytics:
 
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
+    @staticmethod
+    async def carry_forward_analysis(filters, drill_state):
+        """
+        For Dry Out and Indent Carry Forward Analysis
+        :param filters:
+        :param drill_state:
+        :return:
+        """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        query = lpg_plant_queries.lpg_plant_query.get("carry_forward_analysis")
+        conditions = []
+        for rec in filters:
+            rec.value = rec.value.split(",")
+            if isinstance(rec.value, str):
+                condition = f"{rec.key} = '{rec.value}'"
+            else:
+                if len(rec.value) == 1:
+                    condition = f"{rec.key} = '{rec.value[0]}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
+            conditions.append(condition)
+        if conditions:
+            query += f" WHERE {' AND '.join(conditions)}"
+        query += " GROUP BY total_indents,indents_executed,cf_indents,dry_out_cat_a,execution_date"
+        resp = await function(query=query)
+        return resp
