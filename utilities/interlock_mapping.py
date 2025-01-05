@@ -90,7 +90,6 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP031", "interlock_name": "Person not wearing Protective Clothing", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          {"sop_id": "SOP032", "interlock_name": "Camera is offline", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          {"sop_id": "SOP033", "interlock_name": "Work Beyond time", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
-                         {"sop_id": "SOP034", "interlock_name": "Tas Loss of communication VA", "model": "VA", "workflow_name": "tas_Loss_of_Comm_Btw_IRIS_And_EdgeDevice"},
                          {"sop_id": "SOP291", "interlock_name": "Indent Dry Out", "workflow_name": ""}]
 
 # Interlock name and sop mapping for RO Alerts
