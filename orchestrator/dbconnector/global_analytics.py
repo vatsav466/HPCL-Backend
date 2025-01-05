@@ -694,7 +694,7 @@ class GlobalAnalytics:
                     transformed_data.append(entry)
                 '''
                 grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': '', 'SBU_Name': ''})
-                grouped_keys =  ['fiscal_year', 'month_name', 'SBU_Name']
+                #grouped_keys =  ['fiscal_year', 'month_name', 'SBU_Name']
                 key_fields = [key for key in grouped_keys if key != 'fiscal_year']  # Exclude 'fiscal_year'
 
                 for record in data:
