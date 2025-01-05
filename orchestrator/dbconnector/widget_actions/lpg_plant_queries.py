@@ -753,5 +753,5 @@ LIMIT 10000;''',
                                         SUM(cf_indents) as "cf_indents", SUM(dry_out_locations) as "dry_out_locations",
                                         SUM(dry_out_cat_a) as "dry_out_cat_a", DATE(execution_date)
                                   from 
-                                        "carry_forward_indents" GROUP BY execution_date'''
+                                        "carry_forward_indents"'''
 }

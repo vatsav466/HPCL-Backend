@@ -1322,6 +1322,6 @@ class GlobalAnalytics:
             conditions.append(condition)
         if conditions:
             query += f" WHERE {' AND '.join(conditions)}"
-        query += " GROUP BY total_indents,indents_executed,cf_indents,dry_out_cat_a,execution_date"
+        query += " GROUP BY execution_date"
         resp = await function(query=query)
         return resp
