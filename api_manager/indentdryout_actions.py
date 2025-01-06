@@ -411,7 +411,10 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     for record in data.filters:
         if record.key == "progress_rate":
             if record.value:
-                where_clause.append(f"progress_rate={int(record.value[0])}")
+                if len(record.value) == 1:
+                    where_clause.append(f"progress_rate={int(record.value[0])}")
+                else:
+                    where_clause.append(f"progress_rate in {tuple(record.value)}")
         else:
             if record.value:
                 if record.key == 'dry_out_in_days':
