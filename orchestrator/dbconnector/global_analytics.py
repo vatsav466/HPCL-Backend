@@ -574,11 +574,18 @@ class GlobalAnalytics:
             sales_performance_query_ = sales_performance_query
             conditions = []
 
+            # Define keys to exclude from the WHERE clause
+            excluded_keys = {"A", "H", "T", "BE", "RI"}
+            
             for rec in filters:
                 rec.value = rec.value.split(",")
                 if rec.key == '"month_name"':  # Only handle the month_name case separately
                     # Check if any value in rec.value is in month_mapping
                     rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                
+                # Skip keys that should not be added to the WHERE clause
+                if rec.key in excluded_keys:
+                    continue
                 
                 # Now handle other cases
                 if isinstance(rec.value, str):
