@@ -1186,6 +1186,150 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
+    # async def sales_yearly_performance(filters, drill_state):
+    #     """
+    #     Fetches the sales performance data for the given filters and drill state.
+
+    #     Parameters:
+    #         filters (list): List of filter objects to apply to the query.
+    #         drill_state (dict): Current drill state for processing the query.
+
+    #     Returns:
+    #         dict: Contains the status, a success message, and the sales performance data.
+    #     """
+    #     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    #     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    #     # Get the filter keys from the filters list
+    #     filter_keys = [rec.key.strip('"') for rec in filters]
+
+    #     sales_yearly_preformance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
+    #     sales_yearly_preformance_query_ = sales_yearly_preformance_query
+        
+    #     if filters:
+    #         sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
+    #         sales_performance_query_ = sales_performance_query
+    #         conditions = []
+    #         for rec in filters:
+    #             rec.value = rec.value.split(",")
+    #             # result = [value.strip() for value in rec.value.split(",")]
+
+    #             if isinstance(rec.value, str):
+    #                 condition = f"{rec.key} = '{rec.value}'"
+    #             else:
+    #                 if len(rec.value) == 1:
+    #                     condition = f"{rec.key} = '{rec.value[0]}'"
+    #                 else:
+    #                     condition = f"{rec.key} in {tuple(rec.value)}"
+    #             conditions.append(condition)
+
+    #         if conditions:
+    #             sales_performance_query_ += ' WHERE '
+    #             sales_performance_query_ += ' AND '.join(conditions)
+        
+    #     else:
+    #         sales_performance_query_ = f'''
+    #             SELECT
+    #                 ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::NUMERIC, 2) AS "ACTUAL_TMT_SALES",
+    #                 ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::NUMERIC, 2) AS "TARGET_TMT_SALES",
+    #                 "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
+    #             FROM
+    #                 "hpcl_ceg"."public"."M60_LEVEL_METADATA"
+    #             GROUP BY
+    #                 "M60_LEVEL_METADATA"."FISCAL_YEAR"
+    #             ORDER BY
+    #                 "M60_LEVEL_METADATA"."FISCAL_YEAR" ASC
+
+    #         '''
+
+    #         resp = await function(query=sales_performance_query_)
+    #         # Convert the response to a DataFrame for further processing
+    #         resp = pd.DataFrame(resp)
+
+    #         # Fill missing values for numerical columns
+    #         for each_float_col in [
+    #             "ACTUAL_TMT_SALES", "TARGET_TMT_SALES"
+    #         ]:
+    #             if each_float_col in resp.columns:
+    #                 resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+    #         # Fill missing values for string columns
+    #         for each_str_col in [
+    #             "FISCAL_YEAR"
+    #         ]:
+    #             if each_str_col in resp.columns:
+    #                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+    #         return {"status": True, "message": "success", "data": resp}
+        
+    #     # Execute the query
+    #     resp = await function(query=sales_performance_query_)
+    #     # Convert the response to a DataFrame for further processing
+    #     resp = pd.DataFrame(resp)
+
+    #     # Fill missing values for numerical columns
+    #     for each_float_col in [
+    #         "TARGET_QTY_TMT", "Prediction_Value", "Product_Achievement", 
+    #         "Zone_Region_Achievement", "Rate_Per_Day_Required_MMT", 
+    #         "Rate_per_day_current_MMT", "FinalSum", "FinalActualSum", "NETWEIGHT_TMT"
+    #     ]:
+    #         if each_float_col in resp.columns:
+    #             resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+    #     # Fill missing values for string columns
+    #     for each_str_col in [
+    #         "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
+    #         "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
+    #         "month_year", "month_name"
+    #     ]:
+    #         if each_str_col in resp.columns:
+    #             resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+    #     # Apply grouping logic based on filters
+    #     if filters:
+    #         grouped_resp = None
+    #         filter_keys = [rec.key.strip('"') for rec in filters]
+
+    #         if "FISCAL_YEAR" in filter_keys and "SBU_Name" not in filter_keys:
+    #             grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name"], as_index=False).agg({
+    #                 "NETWEIGHT_TMT": "sum",
+    #                 "TARGET_QTY_TMT": "sum"
+    #             })
+
+    #         elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
+    #             grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name"], as_index=False).agg({
+    #                 "NETWEIGHT_TMT": "sum",
+    #                 "TARGET_QTY_TMT": "sum"
+    #             })
+
+    #         elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
+    #             grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name"], as_index=False).agg({
+    #                 "NETWEIGHT_TMT": "sum",
+    #                 "TARGET_QTY_TMT": "sum"
+    #             })
+
+    #         elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
+    #                 and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
+    #             grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name"], as_index=False).agg({
+    #                 "NETWEIGHT_TMT": "sum",
+    #                 "TARGET_QTY_TMT": "sum",
+    #             })
+
+    #         elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
+    #                 "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
+    #             grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name","ProductName"], as_index=False).agg({
+    #                 "NETWEIGHT_TMT": "sum",
+    #                 "TARGET_QTY_TMT": "sum",
+    #             })
+
+
+    #         # Return grouped response
+    #         if grouped_resp is not None:
+    #             return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+
+    #     # If no filters are applied, return the default response
+    #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     async def sales_yearly_performance(filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
@@ -1210,10 +1354,21 @@ class GlobalAnalytics:
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
             conditions = []
+            
+            # Define keys to exclude from the WHERE clause
+            excluded_keys = {"A", "H", "T", "BE", "RI"}
+            
             for rec in filters:
                 rec.value = rec.value.split(",")
-                # result = [value.strip() for value in rec.value.split(",")]
-
+                if rec.key == '"month_name"':  # Only handle the month_name case separately
+                    # Check if any value in rec.value is in month_mapping
+                    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                
+                # Skip keys that should not be added to the WHERE clause
+                if rec.key in excluded_keys:
+                    continue
+                
+                # Now handle other cases
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
                 else:
@@ -1231,7 +1386,6 @@ class GlobalAnalytics:
             sales_performance_query_ = f'''
                 SELECT
                     ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::NUMERIC, 2) AS "ACTUAL_TMT_SALES",
-                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::NUMERIC, 2) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
                     "hpcl_ceg"."public"."M60_LEVEL_METADATA"
@@ -1248,7 +1402,7 @@ class GlobalAnalytics:
 
             # Fill missing values for numerical columns
             for each_float_col in [
-                "ACTUAL_TMT_SALES", "TARGET_TMT_SALES"
+                "ACTUAL_TMT_SALES"
             ]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
@@ -1291,37 +1445,101 @@ class GlobalAnalytics:
             filter_keys = [rec.key.strip('"') for rec in filters]
 
             if "FISCAL_YEAR" in filter_keys and "SBU_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name"], as_index=False).agg({
-                    "NETWEIGHT_TMT": "sum",
-                    "TARGET_QTY_TMT": "sum"
-                })
+                # Define the set of valid keys
+                valid_keys = {"A", "H", "T", "BE", "RI"}
+                
+                # Extract user-selected keys with `value == 'true'`
+                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
+                
+                # Define the aggregation dictionary dynamically
+                agg_dict = {"NETWEIGHT_TMT": "sum"}
+                
+                if "T" in selected_keys:
+                    agg_dict["TARGET_QTY_TMT"] = "sum"
+                
+                # If any valid keys are selected, group the data
+                if selected_keys:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name"], as_index=False).agg(agg_dict)
+                else:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name"], as_index=False).agg({
-                    "NETWEIGHT_TMT": "sum",
-                    "TARGET_QTY_TMT": "sum"
-                })
+                # Define the set of valid keys
+                valid_keys = {"A", "H", "T", "BE", "RI"}
+                
+                # Extract user-selected keys with `value == 'true'`
+                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
+                
+                # Define the aggregation dictionary dynamically
+                agg_dict = {"NETWEIGHT_TMT": "sum"}
+                
+                if "T" in selected_keys:
+                    agg_dict["TARGET_QTY_TMT"] = "sum"
+                
+                # If any valid keys are selected, group the data
+                if selected_keys:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
+                else:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name"], as_index=False).agg({
-                    "NETWEIGHT_TMT": "sum",
-                    "TARGET_QTY_TMT": "sum"
-                })
+                # Define the set of valid keys
+                valid_keys = {"A", "H", "T", "BE", "RI"}
+                
+                # Extract user-selected keys with `value == 'true'`
+                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
+                
+                # Define the aggregation dictionary dynamically
+                agg_dict = {"NETWEIGHT_TMT": "sum"}
+                
+                if "T" in selected_keys:
+                    agg_dict["TARGET_QTY_TMT"] = "sum"
+                
+                # If any valid keys are selected, group the data
+                if selected_keys:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
+                else:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name"], as_index=False).agg({
-                    "NETWEIGHT_TMT": "sum",
-                    "TARGET_QTY_TMT": "sum",
-                })
+                # Define the set of valid keys
+                valid_keys = {"A", "H", "T", "BE", "RI"}
+                
+                # Extract user-selected keys with `value == 'true'`
+                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
+                
+                # Define the aggregation dictionary dynamically
+                agg_dict = {"NETWEIGHT_TMT": "sum"}
+                
+                if "T" in selected_keys:
+                    agg_dict["TARGET_QTY_TMT"] = "sum"
+                
+                # If any valid keys are selected, group the data
+                if selected_keys:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
+                else:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR","SBU_Name","Zone_Name","Region_Name","SalesArea_Name","ProductName"], as_index=False).agg({
-                    "NETWEIGHT_TMT": "sum",
-                    "TARGET_QTY_TMT": "sum",
-                })
-
+                # Define the set of valid keys
+                valid_keys = {"A", "H", "T", "BE", "RI"}
+                
+                # Extract user-selected keys with `value == 'true'`
+                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
+                
+                # Define the aggregation dictionary dynamically
+                agg_dict = {"NETWEIGHT_TMT": "sum"}
+                
+                if "T" in selected_keys:
+                    agg_dict["TARGET_QTY_TMT"] = "sum"
+                
+                # If any valid keys are selected, group the data
+                if selected_keys:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
+                else:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
 
             # Return grouped response
             if grouped_resp is not None:
