@@ -53,7 +53,7 @@ class AlertFactory:
             sap_id = alert_data['sap_id']
             interlock_name = alert_data.get('interlock_name', '')
             status, location_data = await alert_helper.get_location_details(bu, sap_id)
-            print("location_data --> ", location_data)
+            # print("location_data --> ", location_data)
             # if not status:
             #     return False, location_data
             base_data = {
@@ -183,7 +183,7 @@ class AlertFactory:
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
         """
-        print("alert_data close ---> ", alert_data)
+        # print("alert_data close ---> ", alert_data)
         try:
             # il_data = None
             # al_data = None
