@@ -1325,3 +1325,18 @@ class GlobalAnalytics:
         query += " GROUP BY execution_date"
         resp = await function(query=query)
         return resp
+
+    @staticmethod
+    async def location_wise_distribution(filters, drill_state):
+        location_wise_distribution_query = lpg_plant_queries.lpg_plant_query.get("location_wise_distribution")
+        location_wise_distribution_query_ = location_wise_distribution_query
+        if filters:
+            location_wise_distribution_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_wise_distribution_query, filters, drill_state)
+        try:
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query_)
+        except psycopg2.errors.UndefinedColumn as e:
+            print(e)
+            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query)
+        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        return {"status": True, "message": "success", "data": data}
+        

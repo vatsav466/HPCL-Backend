@@ -753,5 +753,19 @@ LIMIT 10000;''',
                                         SUM(cf_indents) as "cf_indents", SUM(dry_out_locations) as "dry_out_locations",
                                         SUM(dry_out_cat_a) as "dry_out_cat_a", DATE(execution_date)
                                   from 
-                                        "carry_forward_indents"'''
+                                        "carry_forward_indents"''',
+    
+    "location_wise_distribution": f'''SELECT 
+                                            bu,
+                                            alert_section,
+                                            interlock_name,
+                                            location_name,
+                                            severity,
+                                            COUNT(*) AS alert_count
+                                        FROM 
+                                            alerts
+                                        GROUP BY 
+                                            bu, alert_section, interlock_name, location_name, severity
+                                        ORDER BY 
+                                        bu, alert_section, interlock_name, location_name, severity;'''
 }
