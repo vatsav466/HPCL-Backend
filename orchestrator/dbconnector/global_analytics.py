@@ -637,7 +637,16 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
             grouped_keys = ["fiscal_year", "month_name"]
-
+            # this is for getting all the months data for the specific SBU and fiscal year
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SBU_Name' in filter_keys:
+                grouped_keys.extend(["SBU_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Zone_Name' in filter_keys:
+                grouped_keys.extend(["Zone_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Region_Name' in filter_keys:
+                grouped_keys.extend(["Region_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SalesArea_Name' in filter_keys:
+                grouped_keys.extend(["SalesArea_Name"])
+            
             if "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 grouped_keys.append("SBU_Name")
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
@@ -656,7 +665,8 @@ class GlobalAnalytics:
             })
             print("grouped_keys->>",grouped_keys)
             if grouped_resp is not None:
-                sub_name = list(set(rec['SBU_Name'] for rec in grouped_resp.to_dict(orient='records')))
+                if "sbu_name" in resp.columns.tolist():
+                    sub_name = list(set(rec['SBU_Name'] for rec in grouped_resp.to_dict(orient='records')))
                 transformed_data = []
                 data = grouped_resp.to_dict(orient='records')
                 print("data-->>",data)
@@ -693,25 +703,21 @@ class GlobalAnalytics:
                             entry[key] = record[key]
                     transformed_data.append(entry)
                 '''
-                grouped_data = defaultdict(lambda: {"2023-2024": 0, "2024-2025": 0})
+                if "sbu_name" in resp.columns.tolist():
+                    grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': '', 'SBU_Name': ''})
+                else:
+                    grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': ''})
+                #grouped_keys =  ['fiscal_year', 'month_name', 'SBU_Name']
+                key_fields = [key for key in grouped_keys if key != 'fiscal_year']  # Exclude 'fiscal_year'
+
                 for record in data:
-                    key = (record["month_name"], record["SBU_Name"])
-                    grouped_data[key]["month_name"] = record["month_name"]
-                    grouped_data[key]["SBU_Name"] = record["SBU_Name"]
-                    grouped_data[key][record["fiscal_year"]] = record["total_sales"]
-                transformed_data = [
-                    {
-                        "month_name": entry["month_name"],
-                        "SBU_Name": entry["SBU_Name"],
-                        "2023-2024": entry["2023-2024"],
-                        "2024-2025": entry["2024-2025"],
-                    }
-                    for entry in grouped_data.values()
-                ]
-                for entry in transformed_data:
-                    for key in grouped_keys:
-                        entry[key] = next((rec[key] for rec in data if rec["SBU_Name"] == entry["SBU_Name"] and key in rec), None)
-                return {"status": True, "message": "success", "data": transformed_data}
+                    key = tuple(record[field] for field in key_fields)    
+                    #key = (record['month_name'], record['SBU_Name'],record['Zone_Name'])
+                    for field in key_fields:
+                        grouped_data[key][field] = record.get(field, '')
+                    grouped_data[key][record['fiscal_year']] = record['total_sales']
+                result = list(grouped_data.values())
+                return {"status": True, "message": "success", "data": result}
 
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
@@ -1290,3 +1296,32 @@ class GlobalAnalytics:
 
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
+    @staticmethod
+    async def carry_forward_analysis(filters, drill_state):
+        """
+        For Dry Out and Indent Carry Forward Analysis
+        :param filters:
+        :param drill_state:
+        :return:
+        """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        query = lpg_plant_queries.lpg_plant_query.get("carry_forward_analysis")
+        conditions = []
+        for rec in filters:
+            rec.value = rec.value.split(",")
+            if isinstance(rec.value, str):
+                condition = f"{rec.key} = '{rec.value}'"
+            else:
+                if len(rec.value) == 1:
+                    condition = f"{rec.key} = '{rec.value[0]}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
+            conditions.append(condition)
+        if conditions:
+            query += f" WHERE {' AND '.join(conditions)}"
+        query += " GROUP BY execution_date"
+        resp = await function(query=query)
+        return resp
