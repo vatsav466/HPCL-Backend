@@ -603,7 +603,7 @@ LIMIT 10000;''',
 
     "alert_ageing": f'''SELECT DISTINCT bu, alert_section,
                         CASE 
-                            WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
+                            WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN '1 Day'
                             WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
                             WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
                             WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN '5 to 7 Days'
@@ -614,7 +614,7 @@ LIMIT 10000;''',
                             PARTITION BY 
                             bu, alert_section,
                             CASE 
-                                WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN 'Last 1 Day'
+                                WHEN DATE_PART('day', CURRENT_DATE - created_at) <= 1 THEN '1 Day'
                                 WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 1 AND 2 THEN '1 to 2 Days'
                                 WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 2 AND 5 THEN '2 to 5 Days'
                                 WHEN DATE_PART('day', CURRENT_DATE - created_at) BETWEEN 5 AND 7 THEN '5 to 7 Days'
