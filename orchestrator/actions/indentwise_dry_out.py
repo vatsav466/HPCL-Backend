@@ -188,7 +188,7 @@ class IndentDryOut:
                                      f"where id='{record['id']}'")
                             await hpcl_ceg_model.Alerts.update_by_query(query)
         # Todo:- Dry out location created or not for this product, if not create
-        await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code, "")
+        await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code, connection_mapping.item_name_mapping.get(prod_code, ""))
         return True, {"msg": "Alert raised"}
 
     @classmethod
@@ -207,11 +207,11 @@ class IndentDryOut:
         if not resp['data']:
             _, loc_dt = await alert_helper.get_location_details('RO', location_id)
             data = {'sap_id': location_id, "product_no": product_code, "item_name": item_name,
-                    "name": loc_dt["name"], "plant_id": loc_dt['terminal_plant_id'],
-                    "plant_name": loc_dt['terminal_plant_name'], "bu": "RO",
+                    "name": loc_dt.get("name", ""), "plant_id": loc_dt.get('terminal_plant_id', ''),
+                    "plant_name": loc_dt.get('terminal_plant_name',''), "bu": "RO",
                     "category": loc_dt.get('category', ""), "status": "Open",
                     "start_time": datetime.datetime.now(tz=datetime.timezone.utc)}
-            await hpcl_ceg_model.DryOutHistory(**data).create()
+            await hpcl_ceg_model.DryOutHistoryCreate(**data).create()
 
     async def check_indent_status(self, params: dict):
         if not self.params:

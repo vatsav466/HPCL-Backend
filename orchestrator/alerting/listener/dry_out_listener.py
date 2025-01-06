@@ -115,7 +115,7 @@ class DryoutCollector:
         dry_out_hist_data = {f"{rec['sap_id']}_{rec['product_no']}": rec for rec in dry_out_history['data']}
         dry_out_alert = {f"{rec['rosapcode']}_{rec['product_no']}": rec for rec in records}
         closed_alerts = list(set(list(dry_out_hist_data.keys())) - set(list(dry_out_alert.keys())))
-        closed_ids = {dry_out_hist_data[key]['id'] for key in closed_alerts}
+        closed_ids = list({dry_out_hist_data[key]['id'] for key in closed_alerts})
         for index in range(0, len(closed_ids), 1000):
             ids = [f"{key}" for key in closed_ids[index:index+1000]]
             conditions = [f"id in {tuple(ids)}" if len(ids) > 1 else f"id={ids[0]}"]
