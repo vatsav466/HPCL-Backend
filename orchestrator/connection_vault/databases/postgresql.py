@@ -514,7 +514,7 @@ class Postgresql(BaseAction):
         columns = ', '.join(f'"{key}"' for key in all_columns)
         conflict_clause = ', '.join(f'"{key}"' for key in conflict_columns)
         placeholders = ', '.join([f'${i + 1}' for i in range(len(all_columns))])
-        updates = ', '.join([f"{column} = EXCLUDED.{column}" for column in all_columns if column not in conflict_columns])
+        updates = ', '.join([f'"{column}" = EXCLUDED."{column}"' for column in all_columns if column not in conflict_columns])
 
         result = await self.create_table(schema_name, table_name, records.head(10), unique_key=conflict_columns)
         if schema_name:
