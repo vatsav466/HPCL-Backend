@@ -474,7 +474,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
                     FROM (
                         SELECT
                             dry_out_in_days,
-                            present_stage,
+                            progress_rate,
                             COUNT(DISTINCT dealer_id) AS unique_count
                         FROM max_progress_rate
 --                         WHERE present_stage != '11'
