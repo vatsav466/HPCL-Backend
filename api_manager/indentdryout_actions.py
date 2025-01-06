@@ -436,7 +436,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     #     if each_dryout["dry_out_in_days"] == '3':
     #         potential_dry_out = each_dryout["count"]
 
-    where_clause = ["present_stage != '11'"]
+    where_clause = ["progress_rate != '11'"]
     if not data.filters:
         data.filters = []
     for record in data.filters:
@@ -458,7 +458,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     stats_query = f"""WITH max_progress_rate AS (
                         SELECT
                             sap_id as dealer_id,
-                            MAX(progress_rate) AS present_stage,
+                            MAX(progress_rate) AS progress_rate,
                             dry_out_in_days,
                             interlock_name,
                             zone, terminal_plant_id, product_code,
@@ -474,12 +474,12 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
                     FROM (
                         SELECT
                             dry_out_in_days,
-                            present_stage,
+                            progress_rate,
                             COUNT(DISTINCT dealer_id) AS unique_count
                         FROM max_progress_rate
 --                         WHERE present_stage != '11'
                         WHERE {conditions} 
-                        GROUP BY dry_out_in_days, present_stage
+                        GROUP BY dry_out_in_days, progress_rate
                     ) subquery
                     GROUP BY dry_out_in_days
                     ORDER BY dry_out_in_days;"""
@@ -544,10 +544,8 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     #         intraday_dry_out = each_dryout["Site_Count"]
     #     if each_dryout["title"] == '1-3 Days':
     #         potential_dry_out = each_dryout["Site_Count"]
-    return {
-        "dry_out": dry_out, "intraday_dry_out": intraday_dry_out,
-        "potential_dry_out": potential_dry_out, "aging_analysis": "-"
-    }
+    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out, "aging_analysis": "-"}
+    return {"status": True, "message": "Success", "data": _data}
 
 
 # Action get_filtered_location_data
@@ -746,14 +744,18 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
                 else:
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
-    query = f'''select dealer_id, location_name
+    query = f'''select dealer_id, location_name, terminal_plant_id, terminal_plant_name
                 from public.alerts where {conditions}
-                group by dealer_id, location_name'''
+                group by dealer_id, location_name, terminal_plant_id, terminal_plant_name'''
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
     )
 
     resp = pd.DataFrame(resp)
-    resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
-    return {"customer": resp}
+    # resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
+    result = {
+        "customer": [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
+        "plant": [{"name": row['terminal_plant_name'], "id": row['terminal_plant_id']} for _, row in resp.iterrows()]
+    }
+    return {"status": True, "message": "Success", "data": result}

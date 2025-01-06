@@ -54,11 +54,64 @@ creds_type = {
 }
 
 product_code_mapping = {
-            "MS": "2811000",
-            "HSD": "2812000",
-            "TURBO": "3912000",
-            "E20": "2822000",
-            "POWER 95": "3672000",
-            "POWER 99": "2816000",
-            "POWER 100": "3373000"
-        }
+    "MS": "2811000",
+    "HSD": "2812000",
+    "TURBO": "3912000",
+    "E20": "2822000",
+    "POWER 95": "3672000",
+    "POWER 99": "2816000",
+    "POWER 100": "3373000"
+}
+
+item_name_mapping = {
+    "2811000": "MS",
+    "2812000": "HSD",
+    "3912000": "TURBO",
+    "2822000": "E20",
+    "3672000": "POWER 95",
+    "2816000": "POWER 99",
+    "3373000": "POWER 100"
+}
+
+dry_out_query = f"""SELECT
+                        "title",
+                        "value" AS "Site_Count",
+                        "prodvalue",
+                        "tankvalue",
+                        SUM("value") OVER (PARTITION BY 1) AS "totalvalue"
+                    FROM (
+                        SELECT
+                            CASE
+                                WHEN status = 1 THEN 'DRY OUT'
+                                WHEN status = 2 THEN 'INTRADAY DRY OUT'
+                                WHEN status = 3 THEN '1-3 Days'
+                                WHEN status = 4 THEN '4-6 Days'
+                            END AS "title",
+                            status AS seqno,
+                            COUNT(DISTINCT site_id || fcc_code) AS "value",
+                            COUNT(DISTINCT site_id || fcc_code || item_name) AS "prodvalue",
+                            SUM(tank_cnt) AS "tankvalue"
+                        FROM (
+                            SELECT
+                                site_id,
+                                fcc_code,
+                                product_grp AS item_name,
+                                COUNT(DISTINCT tank_no) AS tank_cnt,
+                                CASE
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
+                                         AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
+                                         AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
+                                    ELSE 6
+                                END AS status
+                            FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                            WHERE sch.volume > 0
+                            GROUP BY site_id, fcc_code, product_grp
+                            ORDER BY site_id, fcc_code, product_grp
+                        ) AS result1
+                        WHERE status < 6
+                        GROUP BY status
+                        ORDER BY seqno
+                    ) AS result2"""

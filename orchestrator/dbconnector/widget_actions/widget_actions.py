@@ -40,7 +40,8 @@ lpg_dashboard_actions = [
     'sales_growth',
     'sales_yearly_performance',
     'lpg_cdcms',
-    'lpg_cdcms_month'
+    'lpg_cdcms_month',
+    'location_wise_distribution'
 ]
 
 # Todo:- import all widget action modules here
@@ -84,6 +85,7 @@ widget_mapping = {
     'sales_yearly_performance': {},
     'lpg_cdcms': {},
     'lpg_cdcms_month': {},
+    'location_wise_distribution': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''}
 }
@@ -173,7 +175,6 @@ class WidgetActions:
                     conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'")
             elif condition == 'date_range':
                 value = value.split(",")
-                print("value --> ", value)
                 start, end = value
                 if not isinstance(value, str):
                     if len(value) == 1:
