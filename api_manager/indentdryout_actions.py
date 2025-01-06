@@ -387,22 +387,6 @@ async def indentdryout_get_indent_analysis(data: Indentdryout_Get_Indent_Analysi
 # Action get_dry_out_count
 @router.post('/get_dry_out_count', tags=['IndentDryOut'])
 async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountParams):
-    # where_clause = ["progress_rate != '11'"]
-    # if not data.filters:
-    #     data.filters = []
-    # for record in data.filters:
-    #     if record.key == "progress_rate":
-    #         if record.value:
-    #             where_clause.append(f"progress_rate={int(record.value[0])}")
-    #     else:
-    #         if record.value:
-    #             if record.key == "plant":
-    #                 record.key = "terminal_plant_id"
-    #             if len(record.value) == 1:
-    #                 where_clause.append(f"{record.key} {record.cond} '{record.value[0]}'")
-    #             else:
-    #                 where_clause.append(f"{record.key} in {tuple(record.value)}")
-    # conditions = ' AND '.join(where_clause)
     basic_condtion = ["progress_rate != '11'"]
     where_clause = []
     dry_out_in_days = '1'
@@ -429,105 +413,47 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     condition_1 = ' AND '.join(basic_condtion + ["dry_out_in_days = '1'"] + where_clause) if dry_out_in_days == '1' else ' AND '.join(basic_condtion + ["dry_out_in_days = '1'"])
     condition_2 = ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"] + where_clause) if dry_out_in_days == '2' else ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"])
     condition_3 = ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"] + where_clause) if dry_out_in_days == '3' else ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"])
-    print("condition_1: ", condition_1)
-    print("condition_2: ", condition_2)
-    print("condition_3: ", condition_3)
+    # print("condition_1: ", condition_1)
+    # print("condition_2: ", condition_2)
+    # print("condition_3: ", condition_3)
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
-    condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow'"
-    if where_clause:
-        condition += " AND " + " AND ".join(where_clause)
+    condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow' AND indent_status NOT IN ('Cancelled')"
+    dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
+    # For DryOut
     stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
-    WHERE {condition} GROUP BY dry_out_in_days
+    WHERE {condition} AND {condition_1} AND dry_out_in_days='1' GROUP BY dry_out_in_days
     """
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     dry_out_data = await function(
         query=stats_query
     )
-    dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
-    for each_dryout in dry_out_data:
-        if each_dryout["dry_out_in_days"] in [1, '1']:
-            dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] in [2, '2']:
-            intraday_dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] in [3, '3']:
-            potential_dry_out = each_dryout["total_unique_count"]
+    if dry_out_data:
+        dry_out = dry_out_data[0]["total_unique_count"]
+    # For DryOut
+    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
+        WHERE {condition} AND {condition_2} AND dry_out_in_days='2' GROUP BY dry_out_in_days
+        """
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    dry_out_data = await function(
+        query=stats_query
+    )
+    if dry_out_data:
+        intraday_dry_out = dry_out_data[0]["total_unique_count"]
+    # For DryOut
+    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
+        WHERE {condition} AND {condition_3} AND dry_out_in_days='3' GROUP BY dry_out_in_days
+        """
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    dry_out_data = await function(
+        query=stats_query
+    )
+    if dry_out_data:
+        potential_dry_out = dry_out_data[0]["total_unique_count"]
 
     _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
     return {"status": True, "message": "Success", "data": _data}
-    # stats_query = f"""WITH max_progress_rate AS (
-    #                             SELECT
-    #                                 sap_id AS dealer_id,
-    #                                 MAX(progress_rate) AS progress_rate,
-    #                                 dry_out_in_days,
-    #                                 interlock_name,
-    #                                 zone, terminal_plant_id, product_code,
-    #                                 region, sales_area, category
-    #                             FROM alerts
-    #                             WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
-    #                               AND indent_status NOT IN ('Cancelled')
-    #                             GROUP BY sap_id, dry_out_in_days, interlock_name, zone, terminal_plant_id, product_code, region, sales_area, category
-    #                         )
-    #                         SELECT
-    #                             1 AS dry_out_in_days,
-    #                             SUM(unique_count) AS total_unique_count
-    #                         FROM (
-    #                             SELECT
-    #                                 dry_out_in_days,
-    #                                 progress_rate,
-    #                                 COUNT(DISTINCT dealer_id) AS unique_count
-    #                             FROM max_progress_rate
-    #                             WHERE {condition_1}
-    #                             GROUP BY dry_out_in_days, progress_rate
-    #                         ) subquery
-    #                         GROUP BY dry_out_in_days
-    #
-    #                         UNION ALL
-    #                         SELECT
-    #                             2 AS dry_out_in_days,
-    #                             SUM(unique_count) AS total_unique_count
-    #                         FROM (
-    #                             SELECT
-    #                                 dry_out_in_days,
-    #                                 progress_rate,
-    #                                 COUNT(DISTINCT dealer_id) AS unique_count
-    #                             FROM max_progress_rate
-    #                             WHERE {condition_2}
-    #                             GROUP BY dry_out_in_days, progress_rate
-    #                         ) subquery
-    #                         GROUP BY dry_out_in_days
-    #
-    #                         UNION ALL
-    #                         SELECT
-    #                             3 AS dry_out_in_days,
-    #                             SUM(unique_count) AS total_unique_count
-    #                         FROM (
-    #                             SELECT
-    #                                 dry_out_in_days,
-    #                                 progress_rate,
-    #                                 COUNT(DISTINCT dealer_id) AS unique_count
-    #                             FROM max_progress_rate
-    #                             WHERE {condition_3}
-    #                             GROUP BY dry_out_in_days, progress_rate
-    #                         ) subquery
-    #                         GROUP BY dry_out_in_days"""
-    #
-    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    # dry_out_data = await function(
-    #     query=stats_query
-    # )
-    # dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
-    # for each_dryout in dry_out_data:
-    #     if each_dryout["dry_out_in_days"] == 1:
-    #         dry_out = each_dryout["total_unique_count"]
-    #     if each_dryout["dry_out_in_days"] == 2:
-    #         intraday_dry_out = each_dryout["total_unique_count"]
-    #     if each_dryout["dry_out_in_days"] == 3:
-    #         potential_dry_out = each_dryout["total_unique_count"]
-    #
-    # _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
-    # return {"status": True, "message": "Success", "data": _data}
 
 
 # Action get_filtered_location_data
@@ -693,17 +619,13 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
-        if record.key == "progress_rate":
-            if record.value:
-                where_clause.append(f"progress_rate={int(record.value[0])}")
-        else:
-            if record.value:
-                if record.key == "plant":
-                    record.key = "terminal_plant_id"
-                if len(record.value) == 1:
-                    where_clause.append(f"{record.key}='{record.value[0]}'")
-                else:
-                    where_clause.append(f"{record.key} in {tuple(record.value)}")
+        if record.value:
+            if record.key == "plant":
+                record.key = "terminal_plant_id"
+            if len(record.value) == 1:
+                where_clause.append(f"{record.key}='{record.value[0]}'")
+            else:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
