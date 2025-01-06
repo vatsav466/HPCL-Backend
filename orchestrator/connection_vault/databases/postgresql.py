@@ -480,7 +480,7 @@ class Postgresql(BaseAction):
         """
         try:
             connection = await self.get_connection()
-            print("execute query: ", query)
+            # print("execute query: ", query)
             stmt = await connection.prepare(query)
             columns = [a.name for a in stmt.get_attributes()]
             data = await stmt.fetch()

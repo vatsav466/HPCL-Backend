@@ -412,7 +412,7 @@ class Oracle(BaseAction):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            print("execute query: ", query)
+            # print("execute query: ", query)
             cursor.execute(query)
             records = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
