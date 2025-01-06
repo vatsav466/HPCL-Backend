@@ -80,10 +80,10 @@ async def main(camunda_connector_name):
     engine_local_base_url = f"http://{conn['host']}:{conn['port']}/engine-rest"
     topics = ['dryout_indentwise_consumer']
     loop = asyncio.get_event_loop()
-    executor = ThreadPoolExecutor(max_workers=400)  # Adjust the number of workers as needed
+    executor = ThreadPoolExecutor(max_workers=200)  # Adjust the number of workers as needed
     tasks = []
     for topic in topics:
-        for i in range(1, 100):
+        for i in range(1, 50):
             etw = ExternalTaskWorker(i, base_url=engine_local_base_url,
                                      config=urdhva_base.settings.camunda_default_config)
             tasks.append(loop.run_in_executor(
