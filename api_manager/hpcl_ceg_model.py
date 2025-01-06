@@ -74,11 +74,20 @@ class UsersSchema(UrdhvaPostgresBase):
     __tablename__ = 'users'
     
     username: Mapped[str] = mapped_column("username", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    password: Mapped[urdhva_base.types.Secret] = mapped_column("password", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    email: Mapped[str] = mapped_column("email", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     first_name: Mapped[str] = mapped_column("first_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     last_name: Mapped[str] = mapped_column("last_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    role: Mapped[typing.List[str]] = mapped_column("role", ARRAY(String), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    password: Mapped[urdhva_base.types.Secret] = mapped_column("password", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    system_role: Mapped[str] = mapped_column("system_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    novex_role: Mapped[str] = mapped_column("novex_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[typing.Optional[typing.List[str]]] = mapped_column("region", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.List[str]] = mapped_column("state", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[typing.List[str]] = mapped_column("zone", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sales_area: Mapped[typing.List[str]] = mapped_column("sales_area", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    escalation_level: Mapped[typing.Optional[typing.Any]] = mapped_column("escalation_level", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
@@ -88,11 +97,20 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'users'
     
     username: str
-    password: urdhva_base.types.Secret
-    employee_id: str
+    email: str
     first_name: str
     last_name: str
-    role: typing.List[str]
+    password: urdhva_base.types.Secret
+    employee_id: str
+    bu: typing.List[hpcl_ceg_enum.BusinessUnit]
+    sap_id: typing.List[str]
+    system_role: str
+    novex_role: str
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.List[str]
+    zone: typing.List[str]
+    sales_area: typing.List[str]
+    escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
     status: bool
 
     class Config:
@@ -105,11 +123,20 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'users'
     
     username: typing.Optional[str] | None = None
-    password: typing.Optional[urdhva_base.types.Secret] | None = None
-    employee_id: typing.Optional[str] | None = None
+    email: typing.Optional[str] | None = None
     first_name: typing.Optional[str] | None = None
     last_name: typing.Optional[str] | None = None
-    role: typing.Optional[typing.List[str]] | None = None
+    password: typing.Optional[urdhva_base.types.Secret] | None = None
+    employee_id: typing.Optional[str] | None = None
+    bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
+    sap_id: typing.Optional[typing.List[str]] | None = None
+    system_role: typing.Optional[str] | None = None
+    novex_role: typing.Optional[str] | None = None
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] | None = None
+    zone: typing.Optional[typing.List[str]] | None = None
+    sales_area: typing.Optional[typing.List[str]] | None = None
+    escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
     status: typing.Optional[bool] | None = None
 
     class Config:
@@ -147,6 +174,10 @@ class Users_Update_User_StatusParams(pydantic.BaseModel):
 class Users_LoginParams(pydantic.BaseModel):
     username: str
     password: str
+
+
+class Users_LogoutParams(pydantic.BaseModel):
+    pass
 
 
 class DataFiltersCreate(pydantic.BaseModel):
@@ -194,6 +225,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     distributor_code: Mapped[typing.Optional[str]] = mapped_column("distributor_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     distributor_name: Mapped[typing.Optional[str]] = mapped_column("distributor_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    round_trip_distance: Mapped[typing.Optional[int]] = mapped_column("round_trip_distance", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
 
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -235,6 +267,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     category: typing.Optional[str] = pydantic.Field("", **{})
     distributor_code: typing.Optional[str] = pydantic.Field("", **{})
     distributor_name: typing.Optional[str] = pydantic.Field("", **{})
+    round_trip_distance: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -281,6 +314,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     category: typing.Optional[str] = pydantic.Field("", **{})
     distributor_code: typing.Optional[str] = pydantic.Field("", **{})
     distributor_name: typing.Optional[str] = pydantic.Field("", **{})
+    round_trip_distance: typing.Optional[int] = pydantic.Field(0, **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -317,36 +351,36 @@ class Locationmaster_Upload_Tags_DataParams(pydantic.BaseModel):
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
-    bu: Mapped[typing.Any] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     user_name: Mapped[typing.Optional[str]] = mapped_column("user_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    role: Mapped[str] = mapped_column("role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    employee_id: Mapped[str] = mapped_column("employee_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    system_role: Mapped[str] = mapped_column("system_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    novex_role: Mapped[str] = mapped_column("novex_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     email: Mapped[str] = mapped_column("email", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     phone_no: Mapped[str] = mapped_column("phone_no", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    city: Mapped[str] = mapped_column("city", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    state: Mapped[str] = mapped_column("state", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[typing.Optional[typing.List[str]]] = mapped_column("region", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    state: Mapped[typing.List[str]] = mapped_column("state", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[typing.List[str]] = mapped_column("zone", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     escalation_level: Mapped[typing.Optional[typing.Any]] = mapped_column("escalation_level", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class RoleMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'role_master'
     
-    bu: hpcl_ceg_enum.BusinessUnit
-    sap_id: str
+    bu: typing.List[hpcl_ceg_enum.BusinessUnit]
+    sap_id: typing.List[str]
     location_name: str
     user_name: typing.Optional[str] = pydantic.Field("", **{})
-    role: str
+    employee_id: str
+    system_role: str
+    novex_role: str
     email: str
     phone_no: str
-    city: str
-    district: typing.Optional[str] = pydantic.Field("", **{})
-    region: typing.Optional[str] = pydantic.Field("", **{})
-    state: str
-    zone: str
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.List[str]
+    zone: typing.List[str]
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
 
     class Config:
@@ -358,18 +392,18 @@ class RoleMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 class RoleMaster(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'role_master'
     
-    bu: typing.Optional[hpcl_ceg_enum.BusinessUnit] | None = None
-    sap_id: typing.Optional[str] | None = None
+    bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
+    sap_id: typing.Optional[typing.List[str]] | None = None
     location_name: typing.Optional[str] | None = None
     user_name: typing.Optional[str] = pydantic.Field("", **{})
-    role: typing.Optional[str] | None = None
+    employee_id: typing.Optional[str] | None = None
+    system_role: typing.Optional[str] | None = None
+    novex_role: typing.Optional[str] | None = None
     email: typing.Optional[str] | None = None
     phone_no: typing.Optional[str] | None = None
-    city: typing.Optional[str] | None = None
-    district: typing.Optional[str] = pydantic.Field("", **{})
-    region: typing.Optional[str] = pydantic.Field("", **{})
-    state: typing.Optional[str] | None = None
-    zone: typing.Optional[str] | None = None
+    region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    state: typing.Optional[typing.List[str]] | None = None
+    zone: typing.Optional[typing.List[str]] | None = None
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
 
     class Config:
@@ -1334,12 +1368,14 @@ class DryOutHistorySchema(UrdhvaPostgresBase):
     
     bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=True, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     start_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("start_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     product_no: Mapped[str] = mapped_column("product_no", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     item_name: Mapped[str] = mapped_column("item_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     plant_id: Mapped[str] = mapped_column("plant_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     plant_name: Mapped[str] = mapped_column("plant_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     status: Mapped[typing.Any] = mapped_column("status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
 
 
@@ -1348,12 +1384,14 @@ class DryOutHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     
     bu: str
     sap_id: str
+    name: str
     start_time: typing.Optional[datetime.datetime] | None = None
     end_time: typing.Optional[datetime.datetime] | None = None
     product_no: str
     item_name: str
     plant_id: str
     plant_name: str
+    category: typing.Optional[str] = pydantic.Field("", **{})
     status: hpcl_ceg_enum.AlertStatus
 
     class Config:
@@ -1367,12 +1405,14 @@ class DryOutHistory(urdhva_base.postgresmodel.PostgresModel):
     
     bu: typing.Optional[str] | None = None
     sap_id: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
     start_time: typing.Optional[datetime.datetime] | None = None
     end_time: typing.Optional[datetime.datetime] | None = None
     product_no: typing.Optional[str] | None = None
     item_name: typing.Optional[str] | None = None
     plant_id: typing.Optional[str] | None = None
     plant_name: typing.Optional[str] | None = None
+    category: typing.Optional[str] = pydantic.Field("", **{})
     status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
 
     class Config:

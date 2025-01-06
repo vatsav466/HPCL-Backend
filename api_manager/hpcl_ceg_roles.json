@@ -120,6 +120,9 @@
                 },
                 {
                     "name": "login"
+                },
+                {
+                    "name": "logout"
                 }
             ]
         },
@@ -171,6 +174,9 @@
                 },
                 {
                     "name": "login"
+                },
+                {
+                    "name": "logout"
                 }
             ]
         },
@@ -1814,6 +1820,10 @@
         {
             "name": "login",
             "displayName": "login"
+        },
+        {
+            "name": "logout",
+            "displayName": "logout"
         },
         {
             "name": "upload_location_master",

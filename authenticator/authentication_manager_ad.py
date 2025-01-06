@@ -1,6 +1,12 @@
 import urdhva_base
+import uuid
+import ldap
 import json
+import base64
 import hpcl_ceg_model
+import urdhva_base.settings
+import urdhva_base.redispool
+from cryptography.fernet import Fernet
 
 
 class AuthenticationManager:
@@ -9,9 +15,9 @@ class AuthenticationManager:
     """
 
     @classmethod
-    async def login(cls, username, password):
+    async def validate_ldap_auth(cls, username, password):
         """
-        Authenticates a user based on their username and password.
+        Authenticates a user based on their username and password in ad
 
         Args:
             username (str): The username of the user.
@@ -20,12 +26,64 @@ class AuthenticationManager:
         Returns:
             bool: True if authentication is successful, False otherwise.
         """
-        data = hpcl_ceg_model.Users.get_aggr_data(f"select * from users where "
-                                                  f"lower(username)='{username.lower()}'", skip_total=True)
-        # If provided password not equals to db password, skip authentication
-        if not data["data"] or urdhva_base.types.Secret(data["data"]["password"]).get_secret() != password:
-            return False, "Invalid user or wrong password"
-        return True, "Success"
+        try:
+            # build a client
+            ldap_client = ldap.initialize(f"ldap://{urdhva_base.settings.ldap_host}:{urdhva_base.settings.ldap_port}")
+            # perform a synchronous bind
+            ldap_client.set_option(ldap.OPT_REFERRALS, 0)
+            ldap_client.simple_bind_s(f"{username}:{urdhva_base.settings.ldap_domain}", f"{password}")
+            print("User Successfully Valid...")
+            return True
+        except ldap.INVALID_CREDENTIALS as e:
+            ldap_client.unbind()
+            print(f"User Validation Failed {e}")
+            return False
+
+    @classmethod
+    async def login(cls, username, password):
+        """
+        Authenticates a user based on their username and password(LDAP or Local Authentication)
+
+        Args:
+            username (str): The username of the user.
+            password (str): The password of the user.
+
+        Returns:
+            bool: True if authentication is successful, False otherwise.
+        """
+        # Checking whether user exists in ceg local database or not, If not return Invalid else proceed further
+        user_data = hpcl_ceg_model.Users.get_aggr_data(f"select * from users where "
+                                                       f"lower(username)='{username.lower()}'", skip_total=True)
+        if not user_data["data"]:
+            return False, "Invalid Login Credentials"
+        user_info = user_data['data'][0]
+
+        # If ldap authentication enabled allow user to validate with LDAP, else check local login
+        if urdhva_base.settings.ldap_auth_enabled:
+            # Validating user in with LDAP.
+            status = cls.validate_ldap_auth(username, password)
+            if not status:
+                return False, "Invalid Login Credentials"
+        else:
+            # If provided password not equals to db password, skip authentication
+            if urdhva_base.types.Secret(user_info["password"]).get_secret() != password:
+                return False, "Invalid Login Credentials"
+        # Adding session data
+        return True, cls.generate_cookie(user_info)
+
+    @classmethod
+    async def generate_cookie(cls, cookie_data):
+        cookie_id = str(uuid.uuid4())
+        if "password" in cookie_data:
+            del cookie_data["password"]
+        redis_client = await urdhva_base.redispool.get_redis_connection()
+        rkey = f"Novex_SessionData_{cookie_id}"
+        f = Fernet(urdhva_base.settings.fernet_key)
+        d = {"entity_id": "Novex", "cookie_id": cookie_id}
+        cookie_key = f.encrypt(json.dumps(d).encode()).decode()
+        time = 24 * 60 * 60
+        await redis_client.setex(rkey, time, base64.b64encode(json.dumps(cookie_data, default=str).encode()).decode())
+        return cookie_key
 
     @classmethod
     async def create_user(cls, username, password, role, first_name, last_name, employee_id, status=True):
