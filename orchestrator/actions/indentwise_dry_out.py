@@ -731,8 +731,11 @@ class IndentDryOut:
                 order by item_name, rosapcode, product_no'''
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
-        cris_resp = pd.DataFrame(cris_resp)
-        # print("cris_resp: ", cris_resp)
+        if not cris_resp:
+            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": []})
+        else:
+            cris_resp = pd.DataFrame(cris_resp)
+        print("cris_resp: ", cris_resp)
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
