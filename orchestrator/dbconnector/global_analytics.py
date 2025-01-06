@@ -578,9 +578,10 @@ class GlobalAnalytics:
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
-                if rec.key == '"month_name"':  # Only handle the month_name case separately
+                #commenting this as the lastest table is having month_name as Jan,Feb etc
+                #if rec.key == '"month_name"':  # Only handle the month_name case separately
                     # Check if any value in rec.value is in month_mapping
-                    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                #    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
 
                 # result = [value.strip() for value in rec.value.split(",")]
 
@@ -695,7 +696,7 @@ class GlobalAnalytics:
                   "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys):
                 grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name","MATERIALGROUPNAME"])
             grouped_resp = resp.groupby(grouped_keys, as_index=False).agg({
-                "total_sales": lambda x: sum(round(x)),
+                "total_sales": lambda x: round(sum(x),2),
             })
             print("grouped_keys->>",grouped_keys)
             if grouped_resp is not None:
