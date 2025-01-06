@@ -436,7 +436,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     #     if each_dryout["dry_out_in_days"] == '3':
     #         potential_dry_out = each_dryout["count"]
 
-    where_clause = ["present_stage != '11'"]
+    where_clause = ["progress_rate != '11'"]
     if not data.filters:
         data.filters = []
     for record in data.filters:
@@ -458,7 +458,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     stats_query = f"""WITH max_progress_rate AS (
                         SELECT
                             sap_id as dealer_id,
-                            MAX(progress_rate) AS present_stage,
+                            MAX(progress_rate) AS progress_rate,
                             dry_out_in_days,
                             interlock_name,
                             zone, terminal_plant_id, product_code,
