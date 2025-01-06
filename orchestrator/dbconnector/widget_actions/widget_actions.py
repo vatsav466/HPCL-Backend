@@ -173,7 +173,6 @@ class WidgetActions:
                     conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'")
             elif condition == 'date_range':
                 value = value.split(",")
-                print("value --> ", value)
                 start, end = value
                 if not isinstance(value, str):
                     if len(value) == 1:

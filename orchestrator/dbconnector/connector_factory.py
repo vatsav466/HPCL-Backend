@@ -71,14 +71,12 @@ class DBConnectorFactory(ABC):
                         conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'") 
                 elif condition == 'date_range':
                     value = value.split(",")
-                    print("value --> ", value)
                     start, end = value
                     if not isinstance(value, str):
                         if len(value) == 1:
                             conditions.append(f"{key}::DATE = '{value}'")
                         else:
                             conditions.append(f"{key}::DATE BETWEEN '{start}' AND '{end}'")
-                            conditions.append(f"{key}::DATE = '{value}'")
                 else:
                     raise ValueError(f"Unsupported condition: {condition}")
         return "WHERE " + " AND ".join(f"{col} = '{val}'" for col, val in filters.items())
