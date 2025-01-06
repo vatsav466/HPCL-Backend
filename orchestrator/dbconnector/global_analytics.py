@@ -439,6 +439,27 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
 
+            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
+                grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
+                grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Region_Name' in filter_keys:
+                grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SalesArea_Name' in filter_keys:
+                grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg({
+                    "TARGET_QTY_TMT": "sum",
+                    "NETWEIGHT_TMT": "sum"
+                })
+
             if len(filters) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
                 grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
