@@ -435,163 +435,99 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
-    ### query from CRIS ###
-    # stats_query = f"""SELECT
-    #                     "title",
-    #                     "value" AS "Site_Count",
-    #                     "prodvalue",
-    #                     "tankvalue",
-    #                     SUM("value") OVER (PARTITION BY 1) AS "totalvalue"
-    #                 FROM (
-    #                     SELECT
-    #                         CASE
-    #                             WHEN status = 1 THEN 'DRY OUT'
-    #                             WHEN status = 2 THEN 'INTRADAY DRY OUT'
-    #                             WHEN status = 3 THEN '1-3 Days'
-    #                             WHEN status = 4 THEN '4-6 Days'
-    #                         END AS "title",
-    #                         status AS seqno,
-    #                         COUNT(DISTINCT site_id || fcc_code) AS "value",
-    #                         COUNT(DISTINCT site_id || fcc_code || item_name) AS "prodvalue",
-    #                         SUM(tank_cnt) AS "tankvalue"
-    #                     FROM (
-    #                         SELECT
-    #                             site_id,
-    #                             fcc_code,
-    #                             product_grp AS item_name,
-    #                             COUNT(DISTINCT tank_no) AS tank_cnt,
-    #                             CASE
-    #                                 WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
-    #                                 WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
-    #                                 WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
-    #                                      AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
-    #                                 WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
-    #                                      AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
-    #                                 ELSE 6
-    #                             END AS status
-    #                         FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
-    #                         WHERE sch.volume > 0
-    #                         GROUP BY site_id, fcc_code, product_grp
-    #                         ORDER BY site_id, fcc_code, product_grp
-    #                     ) AS result1
-    #                     WHERE status < 6
-    #                     GROUP BY status
-    #                     ORDER BY seqno
-    #                 ) AS result2"""
-
-    # for each_dryout in dry_out_data:
-    #     if each_dryout["title"] == 'DRY OUT':
-    #         dry_out = each_dryout["Site_Count"]
-    #     if each_dryout["title"] == 'INTRADAY DRY OUT':
-    #         intraday_dry_out = each_dryout["Site_Count"]
-    #     if each_dryout["title"] == '1-3 Days':
-    #         potential_dry_out = each_dryout["Site_Count"]
-    ### query from CRIS ###
-
-    ### query from ALERTS ###
-    # stats_query = f"""WITH max_progress_rate AS (
-    #                         SELECT
-    #                             sap_id as dealer_id,
-    #                             MAX(progress_rate) AS progress_rate,
-    #                             dry_out_in_days,
-    #                             interlock_name,
-    #                             zone, terminal_plant_id, product_code,
-    #                             region, sales_area, category
-    #                         FROM alerts
-    #                         WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
-    #                           AND indent_status NOT IN ('Cancelled')
-    #                         GROUP BY sap_id, dry_out_in_days, interlock_name, zone, terminal_plant_id, product_code, region, sales_area, category
-    #                     )
-    #                     SELECT
-    #                         dry_out_in_days,
-    #                         SUM(unique_count) AS total_unique_count
-    #                     FROM (
-    #                         SELECT
-    #                             dry_out_in_days,
-    #                             progress_rate,
-    #                             COUNT(DISTINCT dealer_id) AS unique_count
-    #                         FROM max_progress_rate
-    # --                         WHERE present_stage != '11'
-    #                         WHERE {conditions}
-    #                         GROUP BY dry_out_in_days, progress_rate
-    #                     ) subquery
-    #                     GROUP BY dry_out_in_days
-    #                     ORDER BY dry_out_in_days;"""
-    ### query from ALERTS ###
-
-    ### query from ALERTS LOOP###
-    stats_query = f"""WITH max_progress_rate AS (
-                                SELECT
-                                    sap_id AS dealer_id,
-                                    MAX(progress_rate) AS progress_rate,
-                                    dry_out_in_days,
-                                    interlock_name,
-                                    zone, terminal_plant_id, product_code,
-                                    region, sales_area, category
-                                FROM alerts
-                                WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                                  AND indent_status NOT IN ('Cancelled')
-                                GROUP BY sap_id, dry_out_in_days, interlock_name, zone, terminal_plant_id, product_code, region, sales_area, category
-                            )
-                            SELECT
-                                1 AS dry_out_in_days,
-                                SUM(unique_count) AS total_unique_count
-                            FROM (
-                                SELECT
-                                    dry_out_in_days,
-                                    progress_rate,
-                                    COUNT(DISTINCT dealer_id) AS unique_count
-                                FROM max_progress_rate
-                                WHERE {condition_1}
-                                GROUP BY dry_out_in_days, progress_rate
-                            ) subquery
-                            GROUP BY dry_out_in_days
-                        
-                            UNION ALL
-                            SELECT
-                                2 AS dry_out_in_days,
-                                SUM(unique_count) AS total_unique_count
-                            FROM (
-                                SELECT
-                                    dry_out_in_days,
-                                    progress_rate,
-                                    COUNT(DISTINCT dealer_id) AS unique_count
-                                FROM max_progress_rate
-                                WHERE {condition_2}
-                                GROUP BY dry_out_in_days, progress_rate
-                            ) subquery
-                            GROUP BY dry_out_in_days
-                        
-                            UNION ALL
-                            SELECT
-                                3 AS dry_out_in_days,
-                                SUM(unique_count) AS total_unique_count
-                            FROM (
-                                SELECT
-                                    dry_out_in_days,
-                                    progress_rate,
-                                    COUNT(DISTINCT dealer_id) AS unique_count
-                                FROM max_progress_rate
-                                WHERE {condition_3}
-                                GROUP BY dry_out_in_days, progress_rate
-                            ) subquery
-                            GROUP BY dry_out_in_days"""
-
+    condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow'"
+    if where_clause:
+        condition += " AND " + " AND ".join(where_clause)
+    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
+    WHERE {condition} GROUP BY dry_out_in_days
+    """
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     dry_out_data = await function(
         query=stats_query
     )
     dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
     for each_dryout in dry_out_data:
-        if each_dryout["dry_out_in_days"] == 1:
+        if each_dryout["dry_out_in_days"] in [1, '1']:
             dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] == 2:
+        if each_dryout["dry_out_in_days"] in [2, '2']:
             intraday_dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] == 3:
+        if each_dryout["dry_out_in_days"] in [3, '3']:
             potential_dry_out = each_dryout["total_unique_count"]
 
     _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
     return {"status": True, "message": "Success", "data": _data}
+    # stats_query = f"""WITH max_progress_rate AS (
+    #                             SELECT
+    #                                 sap_id AS dealer_id,
+    #                                 MAX(progress_rate) AS progress_rate,
+    #                                 dry_out_in_days,
+    #                                 interlock_name,
+    #                                 zone, terminal_plant_id, product_code,
+    #                                 region, sales_area, category
+    #                             FROM alerts
+    #                             WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    #                               AND indent_status NOT IN ('Cancelled')
+    #                             GROUP BY sap_id, dry_out_in_days, interlock_name, zone, terminal_plant_id, product_code, region, sales_area, category
+    #                         )
+    #                         SELECT
+    #                             1 AS dry_out_in_days,
+    #                             SUM(unique_count) AS total_unique_count
+    #                         FROM (
+    #                             SELECT
+    #                                 dry_out_in_days,
+    #                                 progress_rate,
+    #                                 COUNT(DISTINCT dealer_id) AS unique_count
+    #                             FROM max_progress_rate
+    #                             WHERE {condition_1}
+    #                             GROUP BY dry_out_in_days, progress_rate
+    #                         ) subquery
+    #                         GROUP BY dry_out_in_days
+    #
+    #                         UNION ALL
+    #                         SELECT
+    #                             2 AS dry_out_in_days,
+    #                             SUM(unique_count) AS total_unique_count
+    #                         FROM (
+    #                             SELECT
+    #                                 dry_out_in_days,
+    #                                 progress_rate,
+    #                                 COUNT(DISTINCT dealer_id) AS unique_count
+    #                             FROM max_progress_rate
+    #                             WHERE {condition_2}
+    #                             GROUP BY dry_out_in_days, progress_rate
+    #                         ) subquery
+    #                         GROUP BY dry_out_in_days
+    #
+    #                         UNION ALL
+    #                         SELECT
+    #                             3 AS dry_out_in_days,
+    #                             SUM(unique_count) AS total_unique_count
+    #                         FROM (
+    #                             SELECT
+    #                                 dry_out_in_days,
+    #                                 progress_rate,
+    #                                 COUNT(DISTINCT dealer_id) AS unique_count
+    #                             FROM max_progress_rate
+    #                             WHERE {condition_3}
+    #                             GROUP BY dry_out_in_days, progress_rate
+    #                         ) subquery
+    #                         GROUP BY dry_out_in_days"""
+    #
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # dry_out_data = await function(
+    #     query=stats_query
+    # )
+    # dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
+    # for each_dryout in dry_out_data:
+    #     if each_dryout["dry_out_in_days"] == 1:
+    #         dry_out = each_dryout["total_unique_count"]
+    #     if each_dryout["dry_out_in_days"] == 2:
+    #         intraday_dry_out = each_dryout["total_unique_count"]
+    #     if each_dryout["dry_out_in_days"] == 3:
+    #         potential_dry_out = each_dryout["total_unique_count"]
+    #
+    # _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+    # return {"status": True, "message": "Success", "data": _data}
 
 
 # Action get_filtered_location_data
