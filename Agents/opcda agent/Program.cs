@@ -9,6 +9,9 @@ using TitaniumAS.Opc.Client.Common;
 using TitaniumAS.Opc.Client.Da.Browsing;
 using System.Linq;
 using System.Diagnostics;
+using System.Data.Odbc;
+using System.Threading.Channels;
+using System.Runtime.Remoting.Channels;
 
 namespace OpcdaSimulator
 {
@@ -72,13 +75,16 @@ namespace OpcdaSimulator
 
         private static readonly bool Debug = false;
 
+        private static IConnection rabbitConnection = null;
+        private static IModel channel = null;
+
         /// <summary>
         /// Logs a message to both file and console with timestamp
         /// Ensures consistent logging format across the application
         /// </summary>
         /// <param name="message">The message to be logged</param>
-        
-        
+
+
         static void LogToFile(string message)
         {
             string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}";
@@ -111,13 +117,15 @@ namespace OpcdaSimulator
         /// <param name="channel">Output parameter that receives the configured channel</param>
         /// <returns>Active RabbitMQ connection object</returns>
         /// <exception cref="Exception">Thrown when connection fails</exception>
-        static IConnection ConnectToRabbitMq(ConnectionConfig config, out IModel channel)
+        static bool TryConnectToRabbitMq(ConnectionConfig config, out IConnection connection, out IModel channel)
         {
+            connection = null;
+            channel = null;
+
             try
             {
-                LogToFile("Initiating connection to data sending server...");
+                LogToFile("Attempting to connect to data sending server...");
 
-                // Configure connection factory with provided settings
                 var factory = new ConnectionFactory
                 {
                     HostName = config.conn_host,
@@ -127,29 +135,19 @@ namespace OpcdaSimulator
                     VirtualHost = config.conn_vhost
                 };
 
-                // Create connection and channel
-                var connection = factory.CreateConnection();
+                connection = factory.CreateConnection();
                 channel = connection.CreateModel();
 
-                // Define queue with location-specific name
                 string queueName = $"{config.conn_channel}{config.location_id}";
+                channel.QueueDeclare(queue: queueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
 
-                // Declare a durable queue that survives broker restarts
-                channel.QueueDeclare(
-                    queue: queueName,
-                    durable: true,        // Queue survives broker restart
-                    exclusive: false,      // Queue can be used by multiple connections
-                    autoDelete: false,     // Queue remains when consumers disconnect
-                    arguments: null        // No special arguments
-                );
-
-                LogToFile($"Successfully connected to data sending server ");
-                return connection;
+                LogToFile("Successfully connected to data sending server");
+                return true;
             }
             catch (Exception ex)
             {
-                LogToFile($"Failed to connect to Data sending: {ex.Message}");
-                throw;
+                LogToFile($"Failed to connect to Data sending server: {ex.Message}");
+                return false;
             }
         }
 
@@ -166,7 +164,7 @@ namespace OpcdaSimulator
                 // Validate configuration
                 if (string.IsNullOrEmpty(config.OpcIpAddress))
                     throw new Exception("OPC DA IP address is not configured in settings.");
-                
+
                 LogToFile($"Initiating connection to OPC DA server at {config.OpcIpAddress}...");
 
                 // Construct OPC DA URL
@@ -174,14 +172,14 @@ namespace OpcdaSimulator
 
                 // Create and connect server instance
                 var server = new OpcDaServer(new Uri(primaryUrl));
-                server.Connect();
-                Console.WriteLine($"OPCDA Connected - {config.OpcIpAddress}");
-               
-                return server;
+                 server.Connect();
+                 Console.WriteLine($"OPCDA Connected - {config.OpcIpAddress}");
+                 return server;
+
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed OPCDA Connect - {config.OpcIpAddress}");
+                Console.WriteLine($"OPCDA Failed - {config.OpcIpAddress}");
                 LogToFile($"Failed to connect to OPC DA server: {ex.Message}");
                 throw;
             }
@@ -218,7 +216,7 @@ namespace OpcdaSimulator
 
                     // Filter out sensors with empty tags
                     var validSensors = sensors.Where(s => !string.IsNullOrEmpty(s.sensor_tag)).ToList();
-                   // LogToFile($"Processing {validSensors.Count} valid sensors out of {sensors.Count} total");
+                    // LogToFile($"Processing {validSensors.Count} valid sensors out of {sensors.Count} total");
 
                     // Create OPC DA item definitions for each sensor
                     var itemDefinitions = validSensors
@@ -232,7 +230,7 @@ namespace OpcdaSimulator
 
                     if (itemDefinitions.Count == 0)
                     {
-                       // LogToFile("No valid tag definitions found after filtering");
+                        // LogToFile("No valid tag definitions found after filtering");
                         return tagsData;
                     }
 
@@ -249,7 +247,7 @@ namespace OpcdaSimulator
                         if (result.Error.Succeeded)
                         {
                             validItems.Add(result.Item);
-                           // LogToFile($"Successfully added item: {sensor.sensor_tag}");
+                            // LogToFile($"Successfully added item: {sensor.sensor_tag}");
                         }
                         else
                         {
@@ -283,7 +281,7 @@ namespace OpcdaSimulator
                                         {
                                             if (previousValue == valueString)
                                             {
-                                               // LogToFile($"Skipping unchanged tag {item.ItemId} with value {valueString}");
+                                                // LogToFile($"Skipping unchanged tag {item.ItemId} with value {valueString}");
                                                 continue;
                                             }
                                         }
@@ -291,7 +289,7 @@ namespace OpcdaSimulator
                                         // Update cache and record new value
                                         previousTagValues[item.ItemId] = valueString;
                                         tagsData[item.ItemId] = valueString;
-                                       // LogToFile($"Successfully read {item.ItemId}: {valueString}");
+                                        // LogToFile($"Successfully read {item.ItemId}: {valueString}");
                                     }
                                     catch (Exception ex)
                                     {
@@ -355,7 +353,7 @@ namespace OpcdaSimulator
                     }
                 }
 
-               // LogToFile($"Successfully loaded {tagsData.Count} simulated tags");
+                // LogToFile($"Successfully loaded {tagsData.Count} simulated tags");
             }
             catch (Exception ex)
             {
@@ -374,7 +372,7 @@ namespace OpcdaSimulator
         {
             try
             {
-                
+
                 LogToFile($"Loading device configuration ");
                 var json = File.ReadAllText(filePath);
                 using (JsonDocument doc = JsonDocument.Parse(json))
@@ -480,113 +478,82 @@ namespace OpcdaSimulator
         {
             try
             {
-                // LogToFile("Starting OPC DA data collection service");
-
-                // Load initial configuration
-                //LogToFile("Loading initial configuration...");
-
                 var config = LoadConfig("config.json");
-                // LogToFile($"Configuration loaded for location: {config.location_id}");
+
                 Console.WriteLine($"OPCDA Server - {config.OpcIpAddress}");
-                // Establish RabbitMQ connection
-                using (var rabbitConnection = ConnectToRabbitMq(config, out var channel))
+
+                bool isRabbitMqConnected = TryConnectToRabbitMq(config, out rabbitConnection, out channel);
+
+                while (true)
                 {
-                    //LogToFile("Entering main monitoring loop");
-
-                    // Continuous monitoring loop
-                    while (true)
+                    try
                     {
-                        try
+                        var devices = LoadDevices($"{config.location_id}.json");
+                        var allTagsData = new Dictionary<string, string>();
+
+                        if ((config.opc_simulator_file.Length > 0) && File.Exists(config.opc_simulator_file))
                         {
-                            // Load current device configurations
-                            var devices = LoadDevices($"{config.location_id}.json");
-                            //LogToFile($"Loaded configuration for {devices.Count} devices");
-
-                            // Collection for all tag data in this cycle
-                            var allTagsData = new Dictionary<string, string>();
-
-                            // Conditioning dtaa based on opc_simulator_file file
-                            if ((config.opc_simulator_file.Length > 0) && File.Exists(config.opc_simulator_file))
+                            allTagsData = ReadSimulatedTags(config.opc_simulator_file);
+                        }
+                        else
+                        {
+                            using (var opcServer = ConnectToOpcServer(config))
                             {
-
-                               // LogToFile($"Using simulator file: {config.opc_simulator_file}");
-                                allTagsData = ReadSimulatedTags(config.opc_simulator_file);
-                            }
-                            else
-                            {
-
-                                // Connect to OPC server and read data
-                                using (var opcServer = ConnectToOpcServer(config))
+                                foreach (var device in devices)
                                 {
-                                    // Process each configured device
-                                    foreach (var device in devices)
+                                    var deviceTagsData = ReadDeviceTags(opcServer, device.sensors);
+                                    foreach (var tagData in deviceTagsData)
                                     {
-                                       // LogToFile($"Processing device: {device.device_name}");
-
-                                        // Read all tags for current device
-                                        var deviceTagsData = ReadDeviceTags(opcServer, device.sensors);
-
-                                        // Merge device data into main collection
-                                        foreach (var tagData in deviceTagsData)
-                                        {
-                                            allTagsData[tagData.Key] = tagData.Value;
-                                        }
+                                        allTagsData[tagData.Key] = tagData.Value;
                                     }
                                 }
                             }
-
-                            // Construct queue name using configuration
-                            string queueName = $"{config.conn_channel}{config.location_id}";
-
-                            // Send collected data to RabbitMQ
-                            SendToRabbitMq(
-                                channel,
-                                config.location_id,
-                                allTagsData,
-                                queueName
-                            );
-
-                            // Prepare data for local storage
-                            var outputData = new
-                            {
-                                location_id = config.location_id,
-                                tags_data = allTagsData
-                            };
-
-                            // Generate output file path
-                            var outputPath = Path.Combine(
-                                AppDomain.CurrentDomain.BaseDirectory,
-                                $"{config.location_id}_data.json"
-                            );
-
-                            // Save data to local JSON file
-                            File.WriteAllText(
-                                outputPath,
-                                JsonSerializer.Serialize(outputData)
-                            );
-
-                            //LogToFile($"Data saved to file: {outputPath}");
                         }
-                        catch (Exception ex)
+
+                        // Always save to local file
+                        var outputData = new
                         {
-                            LogToFile($"Error during monitoring cycle: {ex.Message}");
-                            // Continue to next cycle despite errors
-                        }
+                            location_id = config.location_id,
+                            tags_data = allTagsData
+                        };
 
-                        // Wait before next cycle (30 seconds)
-                        LogToFile("Waiting for 30 seconds before next monitoring cycle...");
-                        System.Threading.Thread.Sleep(30000);
+                        var outputPath = Path.Combine(
+                            AppDomain.CurrentDomain.BaseDirectory,
+                            $"{config.location_id}_data.json"
+                        );
+
+                        File.WriteAllText(
+                            outputPath,
+                            JsonSerializer.Serialize(outputData)
+                        );
+
+                        // Only attempt to send to RabbitMQ if connected
+                        if (isRabbitMqConnected && channel != null && channel.IsOpen)
+                        {
+                            string queueName = $"{config.conn_channel}{config.location_id}";
+                            SendToRabbitMq(channel, config.location_id, allTagsData, queueName);
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        LogToFile($"Error during monitoring cycle: {ex.Message}");
+                    }
+
+                    LogToFile("Waiting for 30 seconds before next monitoring cycle...");
+                    System.Threading.Thread.Sleep(30000);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine();
-                // Log critical errors that cause the application to exit
+                Console.WriteLine($"Critical error: {ex.Message}");
                 LogToFile($"Critical error - application stopping: {ex.Message}");
                 LogToFile($"Stack trace: {ex.StackTrace}");
-                // Throw the exception to ensure it's captured by any external monitoring
                 throw;
+            }
+            finally
+            {
+                channel?.Dispose();
+                rabbitConnection?.Dispose();
             }
         }
     }
