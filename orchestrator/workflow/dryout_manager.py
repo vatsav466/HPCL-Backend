@@ -22,7 +22,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     It also handles the failure scenario and returns the appropriate task result.
     """
     variables = task.get_variables()
-    print("variables --> ", variables)
+    # print("variables --> ", variables)
     module_name = variables.pop('module_name', None)
     class_name = variables.pop('class_name', None)
     function_name = variables.pop('function_name', None)
@@ -31,11 +31,11 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         class_instance = getattr(module, class_name)()
         req_variables = await class_instance.get_required_variables()
         function = getattr(class_instance, function_name)
-        print("req_variables --> ", req_variables)
-        print("variables --> ", variables)
+        # print("req_variables --> ", req_variables)
+        # print("variables --> ", variables)
         status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
-        print("status: ", status)
-        print("data: ", data)
+        # print("status: ", status)
+        # print("data: ", data)
         if status:
             if data:
                 return task.complete(global_variables=data)
