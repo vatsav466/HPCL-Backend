@@ -479,7 +479,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
                         FROM max_progress_rate
 --                         WHERE present_stage != '11'
                         WHERE {conditions} 
-                        GROUP BY dry_out_in_days, present_stage
+                        GROUP BY dry_out_in_days, progress_rate
                     ) subquery
                     GROUP BY dry_out_in_days
                     ORDER BY dry_out_in_days;"""
