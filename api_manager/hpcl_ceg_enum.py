@@ -10,6 +10,7 @@ class BusinessUnit(str, enum.Enum):
     RDI = 'RDI'
     CP = 'CP'
     CDCMS = 'CDCMS'
+    ALL = 'ALL'
 
 
 

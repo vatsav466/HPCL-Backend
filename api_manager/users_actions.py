@@ -22,11 +22,24 @@ async def users_create_user(data: Users_Create_UserParams):
 
 # Action login
 @router.post('/login', tags=['Users'])
-async def users_login(data: Users_LoginParams):
-    ...
+async def users_login(request: fastapi.Request, data: Users_LoginParams):
+    status, resp = auth_manager.AuthenticationManager.login(data.username, data.password)
+    if not status:
+        response = fastapi.responses.JSONResponse({"status": resp}, 401)
+    else:
+        response = fastapi.responses.JSONResponse({"status": "Logged in Successfully"}, 200)
+        response.set_cookie(urdhva_base.settings.cookie_name, resp, httponly=urdhva_base.settings.session_httponly,
+                            secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
+    return response
 
 
 # Action update_user_status
 @router.post('/update_user_status', tags=['Users'])
 async def users_update_user_status(data: Users_Update_User_StatusParams):
+    ...
+
+
+# Action logout
+@router.post('/logout', tags=['Users'])
+async def users_logout(data: Users_LogoutParams):
     ...

@@ -1,3 +1,4 @@
+import hpcl_ceg_model
 import urdhva_base
 import asyncio
 import math
@@ -109,6 +110,19 @@ class DryoutCollector:
         # Get all open dry out history details
         # Compare with dry out records -> if not there for product and location id close and update end_time
         # Closed alerts day wise unique by sap_id and product -> Create Close
+        query = f"SELECT id, sap_id, product_no from dry_out_history where status='Open'"
+        dry_out_history = await hpcl_ceg_model.DryOutHistory.get_aggr_data(query, limit=50000)
+        dry_out_hist_data = {f"{rec['sap_id']}_{rec['product_no']}": rec for rec in dry_out_history['data']}
+        dry_out_alert = {f"{rec['rosapcode']}_{rec['product_no']}": rec for rec in records}
+        closed_alerts = list(set(list(dry_out_hist_data.keys())) - set(list(dry_out_alert.keys())))
+        closed_ids = {dry_out_hist_data[key]['id'] for key in closed_alerts}
+        for index in range(0, len(closed_ids), 1000):
+            ids = [f"{key}" for key in closed_ids[index:index+1000]]
+            conditions = [f"id in {tuple(ids)}" if len(ids) > 1 else f"id={ids[0]}"]
+            query = (f"Update dry_out_history set "
+                     f"status='Close',end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+                     f"where {' AND '.join(conditions)}")
+            await hpcl_ceg_model.DryOutHistory.update_by_query(query)
 
 
 if __name__ == "__main__":
