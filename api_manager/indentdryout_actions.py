@@ -684,11 +684,28 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
     stats_query = "select distinct sap_id, max(progress_rate) as present_stage " \
-                  f"from alerts where {conditions} and indent_status != 'Cancelled' " \
+                  f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed') " \
                   f"group by sap_id"
     stats_resp = await function(
         query=stats_query
     )
+    _date = datetime.datetime.now().strftime("%Y-%m-%d")
+    delivered_query = f"""SELECT SUM(distinct_count) AS total_count
+                        FROM (
+                            SELECT COUNT(DISTINCT sap_id) AS distinct_count
+                            FROM alerts
+                            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                            AND indent_status = 'Completed'
+                            AND DATE(updated_at) = '{_date}'  -- Use TRUNC to ignore the time part
+                            GROUP BY sap_id
+                        ) AS subquery"""
+    delivered_count = await function(
+        query=stats_query
+    )
+    if delivered_count:
+        delivered_count = delivered_count[0].get("total_count", 0) if delivered_count[0].get("total_count") else 0
+    else:
+        delivered_count = 0
 
     dealer_tt = pl.read_csv("/opt/ceg/algo/utilities/DealerOwnedTrucks.csv", infer_schema_length=0)['DEALERID'].to_list()
 
@@ -719,6 +736,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
                   for x in connection_mapping.dryout_aging])
+    stats.extend([{"section": "", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"}])
     stats = sorted(stats, key=lambda x: x['serial'])
     return {
         "status": True, "message": "Success", "stats": stats,
@@ -753,7 +771,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-            f"from alerts where indent_status != 'Cancelled' and {conditions} limit 500"
+            f"from alerts where indent_status != 'Cancelled' and {conditions}"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
