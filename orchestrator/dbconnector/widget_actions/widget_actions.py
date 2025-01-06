@@ -145,8 +145,6 @@ class WidgetActions:
 
             if condition == 'equals':
                 conditions.append(f"{key} = '{value}'")
-            elif condition == 'date':
-                conditions.append(f"{key}::DATE = '{value}'")
             elif condition == 'prefix':
                 conditions.append(f"{key} LIKE '{value}%'")
             elif condition == 'contains':
@@ -174,11 +172,14 @@ class WidgetActions:
                 elif value == '3m':
                     conditions.append(f"{key}::DATE >= CURRENT_DATE - INTERVAL '3 MONTH'")
             elif condition == 'date_range':
-                if isinstance(value, list):
-                    start, end = value
-                    conditions.append(f"{key}::DATE BETWEEN '{start}' AND '{end}'")
-                else:
-                    conditions.append(f"{key}::DATE = '{value}'")        
+                value = value.split(",")
+                print("value --> ", value)
+                start, end = value
+                if not isinstance(value, str):
+                    if len(value) == 1:
+                        conditions.append(f"{key}::DATE = '{value}'")
+                    else:
+                        conditions.append(f"{key}::DATE BETWEEN '{start}' AND '{end}'")   
             else:
                 raise ValueError(f"Unsupported condition: {condition}")
         conditions_ = " AND ".join(conditions)
