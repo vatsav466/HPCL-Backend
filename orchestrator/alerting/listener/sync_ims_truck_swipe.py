@@ -42,7 +42,7 @@ async def sync_ims_indent_truck_swipe():
         resp = await function(
             schema_name="IMS_SAP",
             table_name="TRUCK_SWIPE_ENTRY_SAP",
-            records=ro_data.to_dicts(),
+            records=ro_data,
             conflict_columns=["LOCN_CODE", "READER_ID", "SWIPE_SEQ"]
         )
         return {"status": True, "message": "Data Synced Successfully", "data": []}

@@ -345,7 +345,7 @@ class Postgresql(BaseAction):
         col_dtype = {col: sample_records[col].dtype for col in sample_records.columns}
         print("col_dtype: ", col_dtype)
         for col, dty in col_dtype.items():
-            dty = dtype_dict.get(str(dty))
+            dty = dtype_dict.get(str(dty), 'text')
             if col == 'Json Data':
                 dty = str('jsonb')
             if col == 'DC_AMOUNT':

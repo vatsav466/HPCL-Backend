@@ -82,7 +82,7 @@ async def sync_ims_indent_products():
         resp = await function(
             schema_name="IMS_SAP",
             table_name="INDENT_PRODUCTS",
-            records=ro_data.to_dicts(),
+            records=ro_data,
             conflict_columns=["LOCN_CODE", "INDENT_NO", "PROD"]
         )
         return {"status": True, "message": "Data Synced Successfully", "data": []}
