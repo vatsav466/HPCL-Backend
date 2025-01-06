@@ -590,7 +590,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
         if each_dryout["dry_out_in_days"] == 3:
             potential_dry_out = each_dryout["total_unique_count"]
 
-    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out, "aging_analysis": "-"}
+    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
     return {"status": True, "message": "Success", "data": _data}
 
 
