@@ -544,10 +544,8 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     #         intraday_dry_out = each_dryout["Site_Count"]
     #     if each_dryout["title"] == '1-3 Days':
     #         potential_dry_out = each_dryout["Site_Count"]
-    return {
-        "dry_out": dry_out, "intraday_dry_out": intraday_dry_out,
-        "potential_dry_out": potential_dry_out, "aging_analysis": "-"
-    }
+    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out, "aging_analysis": "-"}
+    return {"status": True, "message": "Success", "data": _data}
 
 
 # Action get_filtered_location_data
@@ -746,14 +744,18 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
                 else:
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
-    query = f'''select dealer_id, location_name
+    query = f'''select dealer_id, location_name, terminal_plant_id, terminal_plant_name
                 from public.alerts where {conditions}
-                group by dealer_id, location_name'''
+                group by dealer_id, location_name, terminal_plant_id, terminal_plant_name'''
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
     )
 
     resp = pd.DataFrame(resp)
-    resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
-    return {"customer": resp}
+    # resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
+    result = {
+        "customer": [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
+        "plant": [{"name": row['terminal_plant_name'], "id": row['terminal_plant_id']} for _, row in resp.iterrows()]
+    }
+    return {"status": True, "message": "Success", "data": result}
