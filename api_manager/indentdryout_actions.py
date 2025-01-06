@@ -580,11 +580,11 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     )
     dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
     for each_dryout in dry_out_data:
-        if each_dryout["dry_out_in_days"] == '1':
+        if each_dryout["dry_out_in_days"] == 1:
             dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] == '2':
+        if each_dryout["dry_out_in_days"] == 2:
             intraday_dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] == '3':
+        if each_dryout["dry_out_in_days"] == 3:
             potential_dry_out = each_dryout["total_unique_count"]
 
     _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out, "aging_analysis": "-"}
