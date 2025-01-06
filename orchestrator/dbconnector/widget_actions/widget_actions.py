@@ -108,13 +108,13 @@ class WidgetActions:
                 print(f"Function {func_name} found in GlobalAnalytics.")
             else:
                 # List available functions in each module for debugging
-                print(f"Available functions in LPGPlantActions: {dir(lpg_plant.LPGPlantActions)}")
-                print(f"Available functions in GlobalAnalytics: {dir(global_analytics.GlobalAnalytics)}")
+                #print(f"Available functions in LPGPlantActions: {dir(lpg_plant.LPGPlantActions)}")
+                #print(f"Available functions in GlobalAnalytics: {dir(global_analytics.GlobalAnalytics)}")
                 raise AttributeError(f"Function {func_name} not found in either module.")
 
             # Retrieve the function from the resolved module
             func = getattr(module, func_name)
-            print(f"Resolved function: {dir(func)}")
+            # print(f"Resolved function: {dir(func)}")
 
             # Execute the function asynchronously
             return await func(filters, drill_state)
@@ -184,7 +184,7 @@ class WidgetActions:
             else:
                 raise ValueError(f"Unsupported condition: {condition}")
         conditions_ = " AND ".join(conditions)
-        print("conditions_: ", conditions_)
+        # print("conditions_: ", conditions_)
         return conditions_
     
     @staticmethod
