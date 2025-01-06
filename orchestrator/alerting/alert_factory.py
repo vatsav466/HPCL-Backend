@@ -47,7 +47,7 @@ class AlertFactory:
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
-            print(" into create alert func", alert_data)
+            print("Alert data:", alert_data)
             bu = alert_data['bu']
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
@@ -105,7 +105,7 @@ class AlertFactory:
                                                         'progress_rate': 1,
                                                         'origin_altid': alert_data.get('origin_altid',''),
                                                         'raw_data': {}}).create()
-            print("alert_resp--->", alert_resp)
+
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
@@ -152,13 +152,10 @@ class AlertFactory:
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 workflowid =interlock_name.get("workflow_name", "interlock_name")
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
-                print("workflow_id --> ", workflow_id)
-                print("payload: ", payload)
                 if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
                 else:
-                    print("into else")
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:
@@ -271,10 +268,10 @@ class AlertFactory:
                 redis_ins = await urdhva_base.redispool.get_redis_connection()
                 if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
                     await redis_ins.hdel("alert_mapping", al_data['external_id'])
-                await redis_ins.close()
                 data_obj = hpcl_ceg_model.Alerts(**al_data)
                 await data_obj.modify()
                 await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
+                await redis_ins.close()
 
             return True, {"status": "Alert Closed"}
         

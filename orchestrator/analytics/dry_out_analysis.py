@@ -2,9 +2,11 @@ import urdhva_base
 import json
 import pandas as pd
 import hpcl_ceg_model
+import charts_actions
 import urdhva_base.redispool
+import dashboard_studio_model
 import utilities.helpers as helpers
-from utilities.connection_mapping import product_code_mapping
+from utilities.connection_mapping import product_code_mapping, connection_mapping
 
 req_keys = {
     "TAS": ["zone", "sap_id", "name", "category"],
@@ -227,3 +229,107 @@ async def get_filtered_location_data(bu, request_parameter, filters):
             resp = [rec for rec in resp if rec['id'] in dry_out_locations]
         return resp
 
+async def get_carry_fwd_indent():
+    query = f"""SELECT DISTINCT 
+                    LOCN_CODE, 
+                    SUBSTR(DEALER_CODE, 3, 8) AS DEALER_CODE
+                FROM 
+                    "IMS_SAP"."INDENT_REQUEST"
+                WHERE 
+                    PROD_REQD_DT < SYSDATE
+                    AND TRUCK_REGNO IS NULL
+                    AND CANCEL_INDENT IS NULL
+                    AND VALID_INDENT IN ('Y', 'H')
+                ORDER BY 
+                    LOCN_CODE"""
+
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("ims", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    data = await function(query=query)
+    data = pd.DataFrame(data)
+    return data['DEALER_CODE'].unique().tolist()
+
+async def get_indent_pattern(is_cat_a: bool, dealer_code: str = None):
+    if is_cat_a:
+        dealer_code_condition = []
+        dealer_code_condition = ", ".join(f"'{code}'" for code in dealer_code_condition)
+        where_clause = f"""
+            WHERE 
+                SUBSTR(a.DEALER_CODE, 1, 10) = '{dealer_code_condition}'
+                AND a.CANCEL_INDENT IS NULL 
+                AND a.VALID_INDENT != 'N'
+                AND a.INDENT_DATE >= ADD_MONTHS(SYSDATE, -3)
+            """
+    elif dealer_code:
+        # dealer_codes = ", ".join(f"'{code}'" for code in dealer_code)
+        where_clause = f"""
+            WHERE 
+                SUBSTR(a.DEALER_CODE, 1, 10) = '{dealer_code}'
+                AND a.CANCEL_INDENT IS NULL 
+                AND a.VALID_INDENT != 'N'
+                AND a.INDENT_DATE >= ADD_MONTHS(SYSDATE, -3)
+            """
+    else:
+        where_clause = """
+            WHERE 
+                a.CANCEL_INDENT IS NULL 
+                AND a.VALID_INDENT != 'N'
+                AND a.INDENT_DATE >= ADD_MONTHS(SYSDATE, -3)
+            """
+    query = f"""WITH base_data AS (
+                    SELECT 
+                        TRUNC(a.INDENT_DATE) AS INDENT_DATE, 
+                        a.INDENT_NO, 
+                        a.DEALER_CODE, 
+                        a.LOCN_CODE, 
+                        b.PROD
+                    FROM 
+                        IMS_SAP.INDENT_REQUEST a
+                    INNER JOIN 
+                        IMS_SAP.INDENT_PRODUCTS b
+                    ON 
+                        a.INDENT_NO = b.INDENT_NO AND a.LOCN_CODE = b.LOCN_CODE
+                    {where_clause}
+                ),
+                frequency_calculation AS (
+                    SELECT 
+                        INDENT_DATE, 
+                        INDENT_NO, 
+                        PROD,
+                        LEAD(INDENT_DATE) OVER (PARTITION BY DEALER_CODE, PROD ORDER BY INDENT_DATE) AS NEXT_INDENT_DATE,
+                        DEALER_CODE, 
+                        LOCN_CODE
+                    FROM 
+                        base_data
+                )
+                SELECT 
+                    b.INDENT_DATE, 
+                    f.NEXT_INDENT_DATE,
+                    b.DEALER_CODE, 
+                    b.LOCN_CODE, 
+                    b.PROD,
+                    b.INDENT_NO,
+                    CASE 
+                        WHEN f.NEXT_INDENT_DATE IS NOT NULL THEN f.NEXT_INDENT_DATE - b.INDENT_DATE
+                        ELSE NULL
+                    END AS frequency_in_days
+                FROM 
+                    base_data b
+                INNER JOIN 
+                    frequency_calculation f
+                ON 
+                    b.LOCN_CODE = f.LOCN_CODE 
+                    AND b.INDENT_NO = f.INDENT_NO
+                    AND b.PROD = f.PROD
+                ORDER BY 
+                    b.INDENT_DATE DESC, b.PROD"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("ims", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    data = await function(query=query)
+    return data
+
+async def get_ro_with_no_indent_in_ims():
+    ...

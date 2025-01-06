@@ -128,12 +128,24 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             if not interlock_details:
                                 continue
                             vts_alert_data.update(interlock_details)
+                            tripinterlockname = await check_violation_count.CheckViolationCount().checktripcount(record['location_id'],
+                                                                                                                 record['location_type'],
+                                                                                                                 record['tl_number'],key)
+                            if tripinterlockname and tripinterlockname["violation_type"]==key:
+                                print("tripinterlockname ------->",tripinterlockname["violation_type"])
+                                print("alert already exists")
+                                continue
+                            vts_data['violation_count'] = 0
+                            await hpcl_ceg_model.VTS(**vts_data).modify()
                             interlocknamecheck = await check_violation_count.CheckViolationCount().check_interlock(record['location_id'],
-                                                                                                            record['location_type'],
-                                                                                                            record['tl_number'], interlock_details.get("interlock_name",""),key)
-                            print("interlock_name_check", interlocknamecheck['interlock_name'])
+                                                                                                                   record['location_type'],
+                                                                                                                   record['tl_number'],
+                                                                                                                   interlock_details.get("interlock_name",""),
+                                                                                                                   key)
+                            print("interlock_name_check", interlocknamecheck)
                             print("interlock_name---->",interlock_details["interlock_name"])
                             if interlocknamecheck and interlocknamecheck['interlock_name']==interlock_details["interlock_name"]:
+                                print("alert already exists")
                                 continue
                             vts_alert_data['alert_section'] = 'VTS'
                             vts_alert_data['alert_history'] = alert_history

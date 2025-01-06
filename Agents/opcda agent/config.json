@@ -4,12 +4,11 @@
   "conn_port": "5672",
   "conn_channel": "command_listener_",
   "conn_exchange": "",
+  "debug_enabled": false,
+  "opc_simulator_file": "C:\\Users\\manoh\\source\\repos\\OpcdaSimulator\\OpcdaSimulator\\opcsimulator.json",
   "conn_user": "hpcl_ceg",
   "conn_vhost": "hpcl_ceg",
   "conn_secret": "algo@4321",
-  "OpcIpAddresses": [ "192.168.1.10", "192.168.1.11","192.168.1.12","192.168.1.13" ],
-  "connection_parameter": "30",
-  "ProgramId": "OPC.Server.Sample",
-  "central_server": "",
-  "Api_Key": ""
+  "OpcIpAddress": "10.4.83.141",
+  "ProgramId": "Yokogawa.FastToolsOpcDas.13"
 }

@@ -1,3 +1,4 @@
+import hpcl_ceg_model
 import urdhva_base
 import asyncio
 import math
@@ -43,19 +44,41 @@ class DryoutCollector:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         schema = connection_mapping.schema_mapping.get("cris", "public")
         table = connection_mapping.table_mapping.get("dry_out", "")
-        query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-                    rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, 
-                    case when sum(pumpable_Stock) <=0 then 1
-                    when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-                    when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and 
-                    (sum(sch.avgsales_7days)/7)*3 then 3
-                    when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and 
-                    (sum(sch.avgsales_7days)/7)*6 then 4
-                    else 5 end status
-                    from "{schema}".{table} sch
-                    where 1=1 and sch.volume>0
-                    group by site_id, fcc_code, item_name, rosapcode, product_no
-                    order by site_id, fcc_code, item_name, rosapcode, product_no'''
+        query = f"""SELECT
+                        site_id,
+                        fcc_code,
+                        rosapcode,
+                        item_name,
+                        product_grp AS product_grp,
+                        product_no,
+                        COUNT(DISTINCT tank_no) AS tank_cnt,
+                        STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
+                        CASE
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
+                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
+                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
+                            ELSE 6
+                        END AS status
+                    FROM "{schema}".{table} as sch
+                    WHERE sch.volume > 0
+                    GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
+                    ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
+        # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
+        #             rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
+        #             case when sum(pumpable_Stock) <=0 then 1
+        #             when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
+        #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and
+        #             (sum(sch.avgsales_7days)/7)*3 then 3
+        #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and
+        #             (sum(sch.avgsales_7days)/7)*6 then 4
+        #             else 5 end status
+        #             from "{schema}".{table} sch
+        #             where 1=1 and sch.volume>0
+        #             group by site_id, fcc_code, item_name, rosapcode, product_no
+        #             order by site_id, fcc_code, item_name, rosapcode, product_no'''
         # records = await function(schema_name=schema, table_name=table, query=query)
         records = await function(query=query)
         records = pl.DataFrame(records)
@@ -105,6 +128,23 @@ class DryoutCollector:
             alert_data['camunda_port'] = _dry['camunda_listener']['port']
             alert_data['dry_out_in_days'] = str(_dry['status'])
             await redis_queue.put(json.dumps(alert_data))
+
+        # Get all open dry out history details
+        # Compare with dry out records -> if not there for product and location id close and update end_time
+        # Closed alerts day wise unique by sap_id and product -> Create Close
+        query = f"SELECT id, sap_id, product_no from dry_out_history where status='Open'"
+        dry_out_history = await hpcl_ceg_model.DryOutHistory.get_aggr_data(query, limit=50000)
+        dry_out_hist_data = {f"{rec['sap_id']}_{rec['product_no']}": rec for rec in dry_out_history['data']}
+        dry_out_alert = {f"{rec['rosapcode']}_{rec['product_no']}": rec for rec in records}
+        closed_alerts = list(set(list(dry_out_hist_data.keys())) - set(list(dry_out_alert.keys())))
+        closed_ids = list({dry_out_hist_data[key]['id'] for key in closed_alerts})
+        for index in range(0, len(closed_ids), 1000):
+            ids = [f"{key}" for key in closed_ids[index:index+1000]]
+            conditions = [f"id in {tuple(ids)}" if len(ids) > 1 else f"id={ids[0]}"]
+            query = (f"Update dry_out_history set "
+                     f"status='Close',end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
+                     f"where {' AND '.join(conditions)}")
+            await hpcl_ceg_model.DryOutHistory.update_by_query(query)
 
 
 if __name__ == "__main__":

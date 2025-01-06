@@ -202,7 +202,6 @@ class Mssql(BaseAction):
             batch_size = 1000000
             count = 0
 
-            print(datetime.datetime.now())
             final_df = pd.DataFrame()
             while True:
                 rows = cursor.fetchmany(batch_size)

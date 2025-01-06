@@ -5,6 +5,7 @@ Enum BusinessUnit str {
     RDI='RDI'
     CP='CP'
     CDCMS='CDCMS'
+    ALL='ALL'
 }
 
 Enum DeviceType str {
@@ -127,12 +128,25 @@ Model Roles {
 }
 
 Model Users {
+    // User Information
     username index_field unique_field str
-    password secret
-    employee_id index_field unique_field str
+    email index_field str
     first_name str
     last_name str
-    role list str
+    password secret
+    employee_id index_field unique_field str
+    // Allocated Role
+    // ALL for all
+    bu index_field list BusinessUnit
+    // ALL for all
+    sap_id index_field list str
+    system_role index_field str
+    novex_role index_field str
+    region optional list str
+    state index_field list str
+    zone index_field list str
+    sales_area index_field list str
+    escalation_level optional NotificationLevel
     status bool
 
     // API to list out created users
@@ -162,6 +176,10 @@ Model Users {
     Action=> login {
         username str
         password str
+    }
+
+    // API for user logout
+    Action=> logout {
     }
 
     Config=> {
@@ -213,6 +231,9 @@ Model LocationMaster {
     category optional str
     distributor_code optional str
     distributor_name optional str
+    // For getting what was the round trip time from Plant to Dealer Location and then to Plant
+    // This field applicable for Outlets
+    round_trip_distance optional int
 
     Action=> upload_location_master {
     }
@@ -235,19 +256,22 @@ Model LocationMaster {
     }
 }
 
+// For Users and their roles
 Model RoleMaster {
-    bu index_field BusinessUnit
-    sap_id index_field str
+    bu index_field list BusinessUnit
+    sap_id index_field list str
     location_name str
     user_name optional str
-    role index_field str
+    employee_id str
+    system_role index_field str
+    novex_role index_field str
     email str
     phone_no str
-    city index_field str
-    district optional str
-    region optional str
-    state index_field str
-    zone index_field str
+    // city index_field str
+    // district optional str
+    region optional list str
+    state index_field list str
+    zone index_field list str
     escalation_level optional NotificationLevel
 
     Action=> upload_role_master {
@@ -669,12 +693,14 @@ Model IndentDryOutDataFilters internal {
 Model DryOutHistory {
     bu index_field primary_key str
     sap_id index_field str      // location id
+    name index_field str        // Dealer Name
     start_time optional datetime
     end_time optional datetime
     product_no index_field str   //product no
     item_name str                // product name
     plant_id index_field str
     plant_name str
+    category optional str          // For category filter
     status index_field AlertStatus // To Check whether Dry-out in Open or Closed
 
     Config=> {
@@ -754,7 +780,7 @@ Model IndentDryOut {
     }
 
     Action=> get_dry_out_count {
-
+        filters optional list IndentDryOutDataFilters
     }
 
     Action=> get_filtered_location_data {

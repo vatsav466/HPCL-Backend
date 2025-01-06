@@ -1,131 +1,123 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 using RabbitMQ.Client;
+using TitaniumAS.Opc.Client;
 using TitaniumAS.Opc.Client.Da;
 using TitaniumAS.Opc.Client.Common;
+using TitaniumAS.Opc.Client.Da.Browsing;
+using System.Linq;
+using System.Diagnostics;
 
 namespace OpcdaSimulator
 {
-    // Connection Configuration Class
+    /// <summary>
+    /// Configuration class that holds all connection settings for both OPC DA and RabbitMQ servers
+    /// This class is populated from a JSON configuration file
+    /// </summary>
     public class ConnectionConfig
     {
+        // Unique identifier for the location/facility being monitored
         public string location_id { get; set; }
-        public string conn_host { get; set; }
-        public string conn_port { get; set; }
-        public string conn_channel { get; set; }
-        public string conn_exchange { get; set; }
-        public string conn_user { get; set; }
-        public string conn_vhost { get; set; }
-        public string conn_secret { get; set; }
-        public string[] OpcIpAddresses { get; set; }
-        public string connection_parameter { get; set; }
-        public string ProgramId { get; set; }
-        public string central_server { get; set; }
-        public string Api_Key { get; set; }
+
+        // RabbitMQ connection parameters
+        public string conn_host { get; set; }        // Hostname or IP address of RabbitMQ server
+        public string conn_port { get; set; }        // Port number for RabbitMQ connection (typically 5672)
+        public string conn_channel { get; set; }     // Channel prefix used for queue naming
+        public string conn_exchange { get; set; }    // Exchange name for message routing
+        public string conn_user { get; set; }        // Username for RabbitMQ authentication
+        public string conn_vhost { get; set; }       // Virtual host in RabbitMQ
+        public string conn_secret { get; set; }      // Password for RabbitMQ authentication
+
+        // OPC DA connection parameters
+        public string OpcIpAddress { get; set; }     // IP address of the OPC DA server
+        public string ProgramId { get; set; }        // Program ID registered for OPC DA server
+
+        public string opc_simulator_file { get; set; } // To Verify whether to simulate data from file or using OPC
     }
 
-    // Sensor Data Class
-    public class SensorData
+    /// <summary>
+    /// Represents a physical or logical device that contains multiple sensors
+    /// Each device can have multiple sensors monitoring different parameters
+    /// </summary>
+    public class Device
     {
-        public string sensor_tag { get; set; }
+        public string device_name { get; set; }      // Friendly name of the device for identification
+        public List<Sensor> sensors { get; set; }    // Collection of sensors attached to this device
     }
 
-    // Main Program Class
+    /// <summary>
+    /// Represents an individual sensor within a device
+    /// Each sensor corresponds to a specific OPC DA tag that provides real-time data
+    /// </summary>
+    public class Sensor
+    {
+        public string sensor_name { get; set; }      //  name of the sensor for identification
+        public string sensor_tag { get; set; }       //  OPC DA tag ID used to read sensor data
+    }
+
+    /// <summary>
+    /// Main program class that handles the OPC DA data collection and RabbitMQ publishing
+    /// Implements a continuous monitoring cycle with configurable polling interval
+    /// </summary>
     internal class Program
     {
+        // File path for logging with timestamp to ensure unique log files for each run
         private static readonly string logFilePath = $"log_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
-        private static readonly HttpClient httpClient = new HttpClient();
 
-        // Download JSON from central server
-        static async Task<string> DownloadLocationJson(ConnectionConfig config, string locationId)
+        // Cache to store previous tag values for change detection
+        // Key: OPC DA tag name, Value: Last recorded value
+        private static readonly Dictionary<string, string> previousTagValues = new Dictionary<string, string>();
+
+        private static readonly bool Debug = false;
+
+        /// <summary>
+        /// Logs a message to both file and console with timestamp
+        /// Ensures consistent logging format across the application
+        /// </summary>
+        /// <param name="message">The message to be logged</param>
+        
+        
+        static void LogToFile(string message)
         {
-            try
+            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}";
+            File.AppendAllText(logFilePath, logMessage + Environment.NewLine);
+            if (Debug)
             {
-                LogToFile($"Attempting to download JSON for location {locationId} from central server...");
-
-                // Construct the full URL
-                string fullUrl = $"{config.central_server}?location_id={locationId}";
-
-                // Create the request with API key
-                using (var request = new HttpRequestMessage(HttpMethod.Get, fullUrl))
-                {
-                    request.Headers.Add("X-API-Key", config.Api_Key);
-
-                    using (var response = await httpClient.SendAsync(request))
-                    {
-                        response.EnsureSuccessStatusCode();
-                        string jsonContent = await response.Content.ReadAsStringAsync();
-
-                        // Determine the application base directory
-                        string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-
-                        // Construct the output file path
-                        string outputFilePath = Path.Combine(baseDirectory, $"{locationId}.json");
-
-                        // Save the downloaded JSON to a local file
-                        File.WriteAllText(outputFilePath, jsonContent);
-
-                        LogToFile($"Successfully downloaded JSON for location {locationId} at {outputFilePath}");
-                        return outputFilePath;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogToFile($"Error downloading JSON from API: {ex.Message}");
-                throw;
+                Console.WriteLine(logMessage);
             }
         }
 
-        static List<SensorData> LoadSensorTags(string filePath)
-        {
-            LogToFile($"Loading sensor tags from {filePath}");
-            try
-            {
-                var json = File.ReadAllText(filePath);
-                using (JsonDocument doc = JsonDocument.Parse(json))
-                {
-                    var sensorTags = new List<SensorData>();
-                    foreach (var device in doc.RootElement.GetProperty("data").EnumerateArray())
-                    {
-                        if (device.TryGetProperty("sensors", out var sensorsArray))
-                        {
-                            foreach (var sensor in sensorsArray.EnumerateArray())
-                            {
-                                var sensorTag = sensor.GetProperty("sensor_tag").GetString();
-                                sensorTags.Add(new SensorData { sensor_tag = sensorTag });
-                            }
-                        }
-                    }
-                    return sensorTags;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogToFile($"Error reading sensor tags from {filePath}: {ex.Message}");
-                return new List<SensorData>();
-            }
-        }
-
+        /// <summary>
+        /// Loads and deserializes the application configuration from a JSON file
+        /// </summary>
+        /// <param name="filePath">Path to the configuration JSON file</param>
+        /// <returns>Populated ConnectionConfig object with all settings</returns>
+        /// <exception cref="JsonException">Thrown when JSON parsing fails</exception>
+        /// <exception cref="FileNotFoundException">Thrown when config file is missing</exception>
         static ConnectionConfig LoadConfig(string filePath)
         {
-            LogToFile($"Loading configuration...");
+            LogToFile($"Loading configuration ");
             var json = File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<ConnectionConfig>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            return JsonSerializer.Deserialize<ConnectionConfig>(json);
         }
 
+        /// <summary>
+        /// Establishes connection to RabbitMQ server using provided configuration
+        /// Creates and configures a channel for message publishing
+        /// </summary>
+        /// <param name="config">Connection configuration object</param>
+        /// <param name="channel">Output parameter that receives the configured channel</param>
+        /// <returns>Active RabbitMQ connection object</returns>
+        /// <exception cref="Exception">Thrown when connection fails</exception>
         static IConnection ConnectToRabbitMq(ConnectionConfig config, out IModel channel)
         {
             try
             {
-                LogToFile("Connecting to RabbitMQ...");
+                LogToFile("Initiating connection to data sending server...");
+
+                // Configure connection factory with provided settings
                 var factory = new ConnectionFactory
                 {
                     HostName = config.conn_host,
@@ -135,151 +127,467 @@ namespace OpcdaSimulator
                     VirtualHost = config.conn_vhost
                 };
 
+                // Create connection and channel
                 var connection = factory.CreateConnection();
                 channel = connection.CreateModel();
-                channel.QueueDeclare(queue: $"{config.conn_channel}{config.location_id}", durable: true, exclusive: false, autoDelete: false);
+
+                // Define queue with location-specific name
+                string queueName = $"{config.conn_channel}{config.location_id}";
+
+                // Declare a durable queue that survives broker restarts
+                channel.QueueDeclare(
+                    queue: queueName,
+                    durable: true,        // Queue survives broker restart
+                    exclusive: false,      // Queue can be used by multiple connections
+                    autoDelete: false,     // Queue remains when consumers disconnect
+                    arguments: null        // No special arguments
+                );
+
+                LogToFile($"Successfully connected to data sending server ");
                 return connection;
             }
             catch (Exception ex)
             {
-                LogToFile($"Failed to connect to RabbitMQ: {ex.Message}");
+                LogToFile($"Failed to connect to Data sending: {ex.Message}");
                 throw;
             }
         }
 
+        /// <summary>
+        /// Establishes connection to OPC DA server using provided configuration
+        /// </summary>
+        /// <param name="config">Connection configuration object</param>
+        /// <returns>Connected OPC DA server object</returns>
+        /// <exception cref="Exception">Thrown when connection fails or configuration is invalid</exception>
         static OpcDaServer ConnectToOpcServer(ConnectionConfig config)
         {
-            if (config.OpcIpAddresses == null || config.OpcIpAddresses.Length == 0)
+            try
             {
-                throw new Exception("No OPC DA IP addresses configured.");
+                // Validate configuration
+                if (string.IsNullOrEmpty(config.OpcIpAddress))
+                    throw new Exception("OPC DA IP address is not configured in settings.");
+                
+                LogToFile($"Initiating connection to OPC DA server at {config.OpcIpAddress}...");
+
+                // Construct OPC DA URL
+                var primaryUrl = $"opcda://{config.OpcIpAddress}/{config.ProgramId}";
+
+                // Create and connect server instance
+                var server = new OpcDaServer(new Uri(primaryUrl));
+                server.Connect();
+                Console.WriteLine($"OPCDA Connected - {config.OpcIpAddress}");
+               
+                return server;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed OPCDA Connect - {config.OpcIpAddress}");
+                LogToFile($"Failed to connect to OPC DA server: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Reads values from OPC DA tags for the provided list of sensors
+        /// Implements change detection to only record updated values
+        /// </summary>
+        /// <param name="server">Connected OPC DA server instance</param>
+        /// <param name="sensors">List of sensors to read data from</param>
+        /// <returns>Dictionary containing tag values keyed by tag name</returns>
+        static Dictionary<string, string> ReadDeviceTags(OpcDaServer server, List<Sensor> sensors)
+        {
+            var tagsData = new Dictionary<string, string>();
+
+            // Validate input parameters
+            if (sensors == null || sensors.Count == 0)
+            {
+                LogToFile("No sensors provided for reading");
+                return tagsData;
             }
 
-            foreach (var ipAddress in config.OpcIpAddresses)
+            try
             {
-                try
+                // Create a unique group name using timestamp to avoid conflicts
+                string uniqueGroupName = $"ReadGroup_{DateTime.Now.Ticks}";
+
+                using (var group = server.AddGroup(uniqueGroupName))
                 {
-                    LogToFile($"Trying to connect to OPC DA server at {ipAddress} with timeout {config.connection_parameter} seconds...");
+                    // Configure group properties for real-time data acquisition
+                    group.UpdateRate = TimeSpan.FromMilliseconds(1000);  // 1 second update rate
+                    group.IsActive = true;                               // Activate the group
 
-                    var primaryUrl = $"opcda://{ipAddress}/{config.ProgramId}";
+                    // Filter out sensors with empty tags
+                    var validSensors = sensors.Where(s => !string.IsNullOrEmpty(s.sensor_tag)).ToList();
+                   // LogToFile($"Processing {validSensors.Count} valid sensors out of {sensors.Count} total");
 
-                    // Create a new OPC DA server instance
-                    var server = new OpcDaServer(new Uri(primaryUrl));
+                    // Create OPC DA item definitions for each sensor
+                    var itemDefinitions = validSensors
+                        .Select(sensor => new OpcDaItemDefinition
+                        {
+                            ItemId = sensor.sensor_tag,    // OPC DA tag ID
+                            IsActive = true,               // Enable the item
+                            AccessPath = string.Empty      // No specific access path needed
+                        })
+                        .ToList();
 
-                    // Set a timeout for the connection attempt
-                    using (var cancellationTokenSource = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(int.Parse(config.connection_parameter))))
+                    if (itemDefinitions.Count == 0)
                     {
-                        server.Connect(); 
+                       // LogToFile("No valid tag definitions found after filtering");
+                        return tagsData;
                     }
 
-                    LogToFile($"Successfully connected to OPC DA server at {ipAddress}");
-                    return server;
-                }
-                catch (Exception ex)
-                {
-                    LogToFile($"Failed to connect to OPC DA server at {ipAddress}: {ex.Message}");
-                }
-            }
+                    // Add items to the group and track successful additions
+                    var addResults = group.AddItems(itemDefinitions);
+                    var validItems = new List<OpcDaItem>();
 
-            // If all connection attempts fail
-            LogToFile("Failed to connect to any configured OPC DA servers.");
-            throw new Exception("Failed to connect to any configured OPC DA servers.");
-        }
-
-
-        static object ReadOpcValue(OpcDaServer server, string sensorTag)
-        {
-            try
-            {
-                var group = server.AddGroup("ReadGroup");
-                var itemDefinition = new OpcDaItemDefinition { ItemId = sensorTag };
-                var items = new List<OpcDaItemDefinition> { itemDefinition };
-                group.AddItems(items);
-                var values = group.Read(group.Items, OpcDaDataSource.Device);
-                return values?.Length > 0 ? values[0]?.Value : null;
-            }
-            catch (Exception ex)
-            {
-                LogToFile($"Error reading OPC value for {sensorTag}: {ex.Message}");
-                return null;
-            }
-        }
-
-        static Dictionary<string, object> LoadFallbackData(List<SensorData> sensorTags, string filePath)
-        {
-            var jsonData = File.ReadAllText(filePath);
-            var data = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonData);
-            var fallbackData = new Dictionary<string, object>();
-            foreach (var sensor in sensorTags)
-            {
-                if (data != null && data.TryGetValue(sensor.sensor_tag, out var value))
-                {
-                    fallbackData[sensor.sensor_tag] = value;
-                }
-            }
-            return fallbackData;
-        }
-
-        static void SendToRabbitMq(IModel channel, object data, string queueName)
-        {
-            try
-            {
-                var messageBody = JsonSerializer.Serialize(data);
-                var body = System.Text.Encoding.UTF8.GetBytes(messageBody);
-                channel.BasicPublish(exchange: "", routingKey: queueName, basicProperties: null, body: body);
-            }
-            catch (Exception ex)
-            {
-                LogToFile($"Failed to send data to RabbitMQ: {ex.Message}");
-            }
-        }
-
-        static void LogToFile(string message)
-        {
-            string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}";
-            File.AppendAllText(logFilePath, logMessage + Environment.NewLine);
-            Console.WriteLine(logMessage);
-        }
-
-        static async Task MainAsync(string[] args)
-        {
-            try
-            {
-                var config = LoadConfig("C:\\Users\\manoh\\source\\repos\\OpcdaSimulator\\OpcdaSimulator\\config.json");
-                string jsonFilePath = await DownloadLocationJson(config, config.location_id);
-                var sensorTags = LoadSensorTags(jsonFilePath);
-
-                using (var rabbitConnection = ConnectToRabbitMq(config, out var channel))
-                {
-                    var tagsData = new Dictionary<string, object>();
-                    try
+                    // Process the results of adding items
+                    for (int i = 0; i < addResults.Length; i++)
                     {
-                        using (var opcServer = ConnectToOpcServer(config))
+                        var result = addResults[i];
+                        var sensor = validSensors[i];
+
+                        if (result.Error.Succeeded)
                         {
-                            foreach (var sensor in sensorTags)
+                            validItems.Add(result.Item);
+                           // LogToFile($"Successfully added item: {sensor.sensor_tag}");
+                        }
+                        else
+                        {
+                            LogToFile($"Failed to add item {sensor.sensor_tag}: {result.Error}");
+                            tagsData[sensor.sensor_tag] = "-99";  // Error indicator value
+                        }
+                    }
+
+                    // Read values for successfully added items
+                    if (validItems.Count > 0)
+                    {
+                        try
+                        {
+                            // Perform synchronous read from device
+                            var readValues = group.Read(validItems, OpcDaDataSource.Device);
+
+                            // Process each read result
+                            for (int i = 0; i < readValues.Length; i++)
                             {
-                                var value = ReadOpcValue(opcServer, sensor.sensor_tag);
-                                if (value != null) tagsData[sensor.sensor_tag] = value;
+                                var item = validItems[i];
+                                var value = readValues[i];
+
+                                if (value.Error.Succeeded && value.Value != null)
+                                {
+                                    try
+                                    {
+                                        var valueString = Convert.ToString(value.Value);
+
+                                        // Implement change detection
+                                        if (previousTagValues.TryGetValue(item.ItemId, out var previousValue))
+                                        {
+                                            if (previousValue == valueString)
+                                            {
+                                               // LogToFile($"Skipping unchanged tag {item.ItemId} with value {valueString}");
+                                                continue;
+                                            }
+                                        }
+
+                                        // Update cache and record new value
+                                        previousTagValues[item.ItemId] = valueString;
+                                        tagsData[item.ItemId] = valueString;
+                                       // LogToFile($"Successfully read {item.ItemId}: {valueString}");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        LogToFile($"Error converting value for {item.ItemId}: {ex.Message}");
+                                        tagsData[item.ItemId] = "-99";  // Error indicator value
+                                    }
+                                }
+                                else
+                                {
+                                    LogToFile($"Error reading {item.ItemId}: {value.Error}");
+                                    tagsData[item.ItemId] = "-99";  // Error indicator value
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            LogToFile($"Error during read operation: {ex.Message}");
+                            // Mark all items as error in case of group read failure
+                            foreach (var item in validItems)
+                            {
+                                tagsData[item.ItemId] = "-99";  // Error indicator value
                             }
                         }
                     }
-                    catch
-                    {
-                        tagsData = LoadFallbackData(sensorTags, "data.json");
-                    }
-
-                    var dataToSend = new { location_id = config.location_id, tags_data = tagsData };
-                    SendToRabbitMq(channel, dataToSend, $"{config.conn_channel}{config.location_id}");
                 }
             }
             catch (Exception ex)
             {
-                LogToFile($"Error: {ex.Message}");
+                LogToFile($"Error reading device tags: {ex.Message}");
+                // Mark all sensors as error in case of general failure
+                foreach (var sensor in sensors.Where(s => !string.IsNullOrEmpty(s.sensor_tag)))
+                {
+                    tagsData[sensor.sensor_tag] = "-99";  // Error indicator value
+                }
+            }
+
+            return tagsData;
+        }
+
+
+        /// <summary>
+        /// Reads simulated tag values from a JSON file
+        /// File format: { "tags": { "tag1": "value1", "tag2": "value2", ... } }
+        /// </summary>
+        /// <param name="filePath">Path to the simulator JSON file</param>
+        /// <returns>Dictionary containing tag values keyed by tag name</returns>
+        static Dictionary<string, string> ReadSimulatedTags(string filePath)
+        {
+            var tagsData = new Dictionary<string, string>();
+            try
+            {
+                LogToFile($"Reading simulated tags ");
+                var json = File.ReadAllText(filePath);
+
+                using (JsonDocument doc = JsonDocument.Parse(json))
+                {
+                    var tagsElement = doc.RootElement.GetProperty("tags");
+                    foreach (var tag in tagsElement.EnumerateObject())
+                    {
+                        tagsData[tag.Name] = tag.Value.GetString() ?? "-99";
+                    }
+                }
+
+               // LogToFile($"Successfully loaded {tagsData.Count} simulated tags");
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"Error reading simulator file: {ex.Message}");
+            }
+            return tagsData;
+        }
+
+        /// <summary>
+        /// Loads device and sensor configurations from JSON file
+        /// File format: { "data": [ { "device_name": "...", "sensors": [ { "sensor_name": "...", "sensor_tag": "..." } ] } ] }
+        /// </summary>
+        /// <param name="filePath">Path to the devices configuration file</param>
+        /// <returns>List of configured devices with their sensors</returns>
+        static List<Device> LoadDevices(string filePath)
+        {
+            try
+            {
+                
+                LogToFile($"Loading device configuration ");
+                var json = File.ReadAllText(filePath);
+                using (JsonDocument doc = JsonDocument.Parse(json))
+                {
+                    var devices = new List<Device>();
+                    var dataArray = doc.RootElement.GetProperty("data");
+
+                    // Parse each device entry
+                    foreach (var deviceElement in dataArray.EnumerateArray())
+                    {
+                        var device = new Device
+                        {
+                            device_name = deviceElement.GetProperty("device_name").GetString(),
+                            sensors = new List<Sensor>()
+                        };
+
+                        // Parse sensors for current device
+                        var sensorsArray = deviceElement.GetProperty("sensors");
+                        foreach (var sensorElement in sensorsArray.EnumerateArray())
+                        {
+                            var sensorTag = sensorElement.GetProperty("sensor_tag").GetString();
+                            // Only add sensors with valid tags
+                            if (!string.IsNullOrEmpty(sensorTag))
+                            {
+                                device.sensors.Add(new Sensor
+                                {
+                                    sensor_name = sensorElement.GetProperty("sensor_name").GetString(),
+                                    sensor_tag = sensorTag
+                                });
+                            }
+                        }
+
+                        devices.Add(device);
+                    }
+
+                    //LogToFile($"Successfully loaded {devices.Count} devices");
+                    return devices;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogToFile($"Error loading devices configuration: {ex.Message}");
+                return new List<Device>();
             }
         }
 
+
+        /// <summary>
+        /// Publishes collected tag data to RabbitMQ queue
+        /// Message format: { "location_id": "...", "tags_data": { "tag1": "value1", ... } }
+        /// </summary>
+        /// <param name="channel">Active RabbitMQ channel</param>
+        /// <param name="locationId">Location identifier</param>
+        /// <param name="tagsData">Dictionary of tag values to publish</param>
+        /// <param name="queueName">Target queue name</param>
+        static void SendToRabbitMq(IModel channel, string locationId, Dictionary<string, string> tagsData, string queueName)
+        {
+            try
+            {
+                // Create message payload with location ID and tag data
+                var data = new { location_id = locationId, tags_data = tagsData };
+
+                // Serialize the payload to JSON
+                var messageBody = JsonSerializer.Serialize(data);
+
+                // Convert message to bytes for transmission
+                var body = System.Text.Encoding.UTF8.GetBytes(messageBody);
+
+                // Publish message to RabbitMQ queue
+                // Using default exchange ("") with queue name as routing key
+                channel.BasicPublish(
+                    exchange: "",             // Use default exchange
+                    routingKey: queueName,    // Queue name acts as routing key
+                    basicProperties: null,     // No special message properties
+                    body: body                // Message content
+                );
+                Console.WriteLine("Tags data are posted to DATA RECEIVER");
+                LogToFile($"Successfully published  tags to Data Receiving server");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Failed to send the data to DATA RECEIVER");
+                LogToFile($"Failed to send data to : {ex.Message}");
+                // Don't rethrow - allow the application to continue running
+            }
+        }
+
+        /// <summary>
+        /// Main entry point of the application
+        /// Implements continuous monitoring cycle:
+        /// 1. Load configuration
+        /// 2. Connect to RabbitMQ
+        /// 3. For each cycle:
+        ///    - Load device configuration
+        ///    - Connect to OPC DA server
+        ///    - Read device data
+        ///    - Publish to RabbitMQ
+        ///    - Save to local file
+        ///    - Wait for next cycle
+        /// </summary>
+        /// <param name="args">Command line arguments (not used)</param>
         static void Main(string[] args)
         {
-            MainAsync(args).GetAwaiter().GetResult();
+            try
+            {
+                // LogToFile("Starting OPC DA data collection service");
+
+                // Load initial configuration
+                //LogToFile("Loading initial configuration...");
+
+                var config = LoadConfig("config.json");
+                // LogToFile($"Configuration loaded for location: {config.location_id}");
+                Console.WriteLine($"OPCDA Server - {config.OpcIpAddress}");
+                // Establish RabbitMQ connection
+                using (var rabbitConnection = ConnectToRabbitMq(config, out var channel))
+                {
+                    //LogToFile("Entering main monitoring loop");
+
+                    // Continuous monitoring loop
+                    while (true)
+                    {
+                        try
+                        {
+                            // Load current device configurations
+                            var devices = LoadDevices($"{config.location_id}.json");
+                            //LogToFile($"Loaded configuration for {devices.Count} devices");
+
+                            // Collection for all tag data in this cycle
+                            var allTagsData = new Dictionary<string, string>();
+
+                            // Conditioning dtaa based on opc_simulator_file file
+                            if ((config.opc_simulator_file.Length > 0) && File.Exists(config.opc_simulator_file))
+                            {
+
+                               // LogToFile($"Using simulator file: {config.opc_simulator_file}");
+                                allTagsData = ReadSimulatedTags(config.opc_simulator_file);
+                            }
+                            else
+                            {
+
+                                // Connect to OPC server and read data
+                                using (var opcServer = ConnectToOpcServer(config))
+                                {
+                                    // Process each configured device
+                                    foreach (var device in devices)
+                                    {
+                                       // LogToFile($"Processing device: {device.device_name}");
+
+                                        // Read all tags for current device
+                                        var deviceTagsData = ReadDeviceTags(opcServer, device.sensors);
+
+                                        // Merge device data into main collection
+                                        foreach (var tagData in deviceTagsData)
+                                        {
+                                            allTagsData[tagData.Key] = tagData.Value;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Construct queue name using configuration
+                            string queueName = $"{config.conn_channel}{config.location_id}";
+
+                            // Send collected data to RabbitMQ
+                            SendToRabbitMq(
+                                channel,
+                                config.location_id,
+                                allTagsData,
+                                queueName
+                            );
+
+                            // Prepare data for local storage
+                            var outputData = new
+                            {
+                                location_id = config.location_id,
+                                tags_data = allTagsData
+                            };
+
+                            // Generate output file path
+                            var outputPath = Path.Combine(
+                                AppDomain.CurrentDomain.BaseDirectory,
+                                $"{config.location_id}_data.json"
+                            );
+
+                            // Save data to local JSON file
+                            File.WriteAllText(
+                                outputPath,
+                                JsonSerializer.Serialize(outputData)
+                            );
+
+                            //LogToFile($"Data saved to file: {outputPath}");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogToFile($"Error during monitoring cycle: {ex.Message}");
+                            // Continue to next cycle despite errors
+                        }
+
+                        // Wait before next cycle (30 seconds)
+                        LogToFile("Waiting for 30 seconds before next monitoring cycle...");
+                        System.Threading.Thread.Sleep(30000);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine();
+                // Log critical errors that cause the application to exit
+                LogToFile($"Critical error - application stopping: {ex.Message}");
+                LogToFile($"Stack trace: {ex.StackTrace}");
+                // Throw the exception to ensure it's captured by any external monitoring
+                throw;
+            }
         }
     }
 }
