@@ -35,7 +35,6 @@ class DryOutCamundaListener:
         await IndentDryOut().check_raised_indent(task)
 
 
-
 def usage():
     print(f"Usage:- python {sys.argv[0]} <connector_name> <queue_name>{sys.argv[0]}")
 

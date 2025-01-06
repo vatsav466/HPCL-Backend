@@ -36,6 +36,19 @@ class DryoutCollector:
         return df
 
     @classmethod
+    def get_product_codes(cls, product_name):
+        _mapping_code = {
+            "MS": "2811000",
+            "HSD": "2812000",
+            "TURBO": "3912000",
+            "E20": "2822000",
+            "POWER 95": "3672000",
+            "POWER 99": "2816000",
+            "POWER 100": "3373000"
+        }
+        return _mapping_code.get(product_name.upper(), "")
+
+    @classmethod
     async def get_dry_out_data(cls):
         redis_queue = urdhva_base.redispool.RedisQueue('dry_out_camunda_queue')
         # Query to fetch dry out locations, intraday dry-out and potential dry out location
@@ -44,47 +57,34 @@ class DryoutCollector:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         schema = connection_mapping.schema_mapping.get("cris", "public")
         table = connection_mapping.table_mapping.get("dry_out", "")
-        query = f"""SELECT
-                        site_id,
-                        fcc_code,
-                        rosapcode,
-                        item_name,
-                        product_grp AS product_grp,
-                        product_no,
-                        COUNT(DISTINCT tank_no) AS tank_cnt,
-                        STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
-                        CASE
-                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
-                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
-                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
-                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
-                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
-                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
-                            ELSE 6
-                        END AS status
-                    FROM "{schema}".{table} as sch
-                    WHERE sch.volume > 0
-                    GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
-                    ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
-        # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-        #             rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
-        #             case when sum(pumpable_Stock) <=0 then 1
-        #             when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-        #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and
-        #             (sum(sch.avgsales_7days)/7)*3 then 3
-        #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and
-        #             (sum(sch.avgsales_7days)/7)*6 then 4
-        #             else 5 end status
-        #             from "{schema}".{table} sch
-        #             where 1=1 and sch.volume>0
-        #             group by site_id, fcc_code, item_name, rosapcode, product_no
-        #             order by site_id, fcc_code, item_name, rosapcode, product_no'''
+        query = f'''select site_id, fcc_code, item_name,item_name product_grp, rosapcode, tank_no, status, tank_cnt
+                    from (
+                            select site_id, fcc_code,product_grp item_name,count(distinct tank_no) tank_cnt, 
+                            rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no,
+                            case when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) <=0 then 1 
+                            when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) < 
+                            (sum(sch.avgsales_7days)/7) then 2
+                            when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) >= 
+                            (sum(sch.avgsales_7days)/7) and sum(case when pumpable_Stock>=0 
+                            then pumpable_Stock else 0 end) <= (sum(sch.avgsales_7days)/7)*3 then 3
+                            when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) > 
+                            (sum(sch.avgsales_7days)/7)*3 and sum(case when pumpable_Stock>=0 then 
+                            pumpable_Stock else 0 end) <=(sum(sch.avgsales_7days)/7)*6 then 4 
+                            else 5 end status
+                            from "{schema}".{table} sch
+                            where sch.volume>0
+                            group by site_id, fcc_code, product_grp,rosapcode
+                            order by site_id, fcc_code, product_grp
+                        ) result1
+        '''
         # records = await function(schema_name=schema, table_name=table, query=query)
         records = await function(query=query)
+        for rec in records:
+            rec['product_no'] = cls.get_product_codes(rec['item_name'])
         records = pl.DataFrame(records)
         # records = records.filter(~pl.col("indent_status").is_in(['Raised', 'Completed']))
         records = records.unique(subset=['site_id', 'fcc_code', 'item_name', 'product_no'], keep='first')
-        records = records.filter(pl.col('status') <= 3)
+        records = records.filter(pl.col('status') <= 2)
         records = cls.assign_values_to_dataframe(records,
                                                  list(connection_mapping.camunda_listener_mapping.values()))
         records = records.to_dicts()
