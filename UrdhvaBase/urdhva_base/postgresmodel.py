@@ -114,11 +114,16 @@ class BasePostgresModel(pydantic.BaseModel):
                 key.split(":")[0].strip(): key.split(":")[1].strip() if ":" in key else key.split(":")[0].strip()
                 for key in key_mapping
             }
-            print(mapped_data)
             for key, value in mapped_data.items():
                 rpt = urdhva_base.context.context.get('rpt', {})
                 if value in rpt:
-                    where_clause.append(f"{key}='{rpt[value]}'")
+                    if isinstance(rpt[value], list):
+                        if len(rpt[value]) == 1:
+                            where_clause.append(f"{key}='{rpt[value][0]}'")
+                        else:
+                            where_clause.append(f"{key} in {tuple(rpt[value])}")
+                    else:
+                        where_clause.append(f"{key}='{rpt[value]}'")
         return where_clause
 
     @classmethod

@@ -99,6 +99,11 @@ Enum IndentStatus str {
     Delivered='Delivered'
 }
 
+Model RoleMapper internal {
+     menu_name str
+     allowed_sub_menus optional list str
+}
+
 // System role master with allowed pages
 Model Roles {
     name index_field str
@@ -108,7 +113,7 @@ Model Roles {
     // API to create system role
     Action=> create_role {
         name str
-        allowed_pages optional list str
+        allowed_pages optional list RoleMapper
     }
 
     // API to Enable/Disable system role

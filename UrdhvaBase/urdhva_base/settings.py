@@ -123,6 +123,7 @@ class Settings(pydantic_settings.BaseSettings):
     ldap_auth_enabled: bool = False
 
     # camunda
+    # Default Camunda
     camunda_url: str = 'http://10.90.38.167:8080'
     camunda_default_config: typing.Dict[str, int] = {
         "maxTasks": 1,
@@ -146,12 +147,11 @@ class Settings(pydantic_settings.BaseSettings):
     rabbitmq_queue: str = "tagsdata"
     rabbitmq_auto_ack: bool = True
 
-    #Thingsboard
+    # Thingsboard
     things_board_url: str = "http://localhost:8080"
     things_board_username: str = "admin"
     things_board_password: str = "password"
 
-    
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \
                 self.db_multi_tenancy_model == MultiTenancyMode.SingleServerMultiDb:
