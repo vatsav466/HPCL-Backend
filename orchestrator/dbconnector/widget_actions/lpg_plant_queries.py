@@ -778,5 +778,16 @@ LIMIT 10000;''',
                                     "Execution_Date" as "Execution_Date",
 	                                "BookingReceivedYesterday" as "Total_Bookings"
                                 from
-	                                "LPG_SALES_SUMMARY_DATA"'''
+	                                "LPG_SALES_SUMMARY_DATA"''',
+    
+    "cumulative_sales_pmuy_npmuy": f'''select
+                                            "ConsumerType" as "ConsumerType",
+                                            "JDEDistributorCode" as "JDEDistributorCode",
+                                            "ZOName" as "ZOName",
+                                            "ROName" as "ROName",
+                                            "SAName" as "SAName",
+                                            "Execution_Date" as "Execution_Date",
+                                            "TotalSalesYesterday" as "Sales"
+                                        from
+                                            "LPG_SALES_SUMMARY_DATA"'''
 }

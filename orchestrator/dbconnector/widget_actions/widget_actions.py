@@ -42,6 +42,7 @@ lpg_dashboard_actions = [
     'lpg_cdcms',
     'cdcms_order_source',
     'lpg_cdcms_month',
+    'cumulative_sales_pmuy_npmuy',
     'location_wise_distribution',
     'm60_performance',
     'yearly_sales_performance'
@@ -89,6 +90,7 @@ widget_mapping = {
     'lpg_cdcms': {},
     'cdcms_order_source': {},
     'lpg_cdcms_month': {},
+    'cumulative_sales_pmuy_npmuy': {},
     'location_wise_distribution': {},
     'm60_performance': {},
     'yearly_sales_performance': {},

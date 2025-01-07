@@ -2688,7 +2688,6 @@ class GlobalAnalytics:
 	                CAST("Execution_Date" AS DATE) = '{yesterday.strftime("%Y-%m-%d")}' AND "ZOName"  NOT IN ( 'Null')
                 group by
 	                "OrderSourceName"
-                limit 1000
             '''
 
             resp = await function(query=cdcms_order_source_query_)
@@ -2813,4 +2812,154 @@ class GlobalAnalytics:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query)
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         return {"status": True, "message": "success", "data": data}
+    
+    @staticmethod
+    async def cumulative_sales_pmuy_npmuy(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+
+        if filters:
+            cumulative_sales_pmuy_npmuy_query = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
+            cumulative_sales_pmuy_npmuy_query_ = cumulative_sales_pmuy_npmuy_query
+            conditions = []
+
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                cumulative_sales_pmuy_npmuy_query_ += ' WHERE '
+                cumulative_sales_pmuy_npmuy_query_ += ' AND '.join(conditions)
+            current_date = datetime.now()
+            # Determine the financial year start and end
+            if current_date.month >= 4:  # If April or later, financial year starts this year
+                start_year = current_date.year
+                end_year = current_date.year + 1
+            else:  # If before April, financial year started last year
+                start_year = current_date.year - 1
+                end_year = current_date.year
+            # Define financial year start and end dates
+            financial_year_start = f"{start_year}-04-01 00:00:00"
+            financial_year_end = f"{end_year}-03-31 23:59:59"
+            cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "Sales", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+        else:
+            current_date = datetime.now()
+            # Determine the financial year start and end
+            if current_date.month >= 4:  # If April or later, financial year starts this year
+                start_year = current_date.year
+                end_year = current_date.year + 1
+            else:  # If before April, financial year started last year
+                start_year = current_date.year - 1
+                end_year = current_date.year
+            # Define financial year start and end dates
+            financial_year_start = f"{start_year}-04-01 00:00:00"
+            financial_year_end = f"{end_year}-03-31 23:59:59"
+
+            cumulative_sales_pmuy_npmuy_query_ = f'''
+                    select 
+                        "ConsumerType" as "ConsumerType",
+                        sum("TotalSalesYesterday")/10000000 as "Sales" 
+                    from
+                        "LPG_SALES_SUMMARY_DATA" 
+                    where
+                        "Execution_Date"::TIMESTAMP BETWEEN '{financial_year_start}' AND '{financial_year_end}'
+                        AND "ZOName" NOT IN ('Null')
+                    group by
+                        "ConsumerType"
+            '''
+
+            resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Sales"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ConsumerType"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
         
+        # Execute the query
+        resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+        current_date = datetime.now()
+        # Determine the financial year start and end
+        if current_date.month >= 4:  # If April or later, financial year starts this year
+            start_year = current_date.year
+            end_year = current_date.year + 1
+        else:  # If before April, financial year started last year
+            start_year = current_date.year - 1
+            end_year = current_date.year
+        # Define financial year start and end dates
+        financial_year_start = f"{start_year}-04-01 00:00:00"
+        financial_year_end = f"{end_year}-03-31 23:59:59"
+        resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
+        resp = resp[
+            (resp["Execution_Date"] >= financial_year_start) &
+            (resp["Execution_Date"] <= financial_year_end)
+        ]
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "Sales"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "ConsumerType","ZOName","ROName","SAName","JDEDistributorCode"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+
+            if "ConsumerType" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName"], as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                })
+
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName"], as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                })
+            
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName","SAName"],
+                as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                    })
+            
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName","SAName","JDEDistributorCode"],
+                as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                    })
+
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
