@@ -1,4 +1,5 @@
 import urdhva_base
+import time
 import datetime
 import requests
 import pandas as pd
@@ -52,10 +53,10 @@ class IndentDryOut:
         return _mapping_code
 
     async def get_connection_name(self):
-        # self.params['connection_name'] = connection_mapping.connection_mapping.get(
-        #     self.params['connection_name'], self.params['connection_name']
-        # )
-        self.params['connection_name'] = '3'
+        self.params['connection_name'] = connection_mapping.connection_mapping.get(
+            self.params['connection_name'], self.params['connection_name']
+        )
+        # self.params['connection_name'] = '3'
 
     async def get_required_variables(self):
         """
@@ -459,6 +460,17 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = "','".join(self.params.get("indent_no").split(","))
+        if not indent_no:
+            alert_resp = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])
+            if alert_resp:
+                if not isinstance(alert_resp, dict):
+                    alert_resp = alert_resp.__dict__
+                if alert_resp['indent_no']:
+                    await self.update_indent_no(
+                        str(alert_resp['indent_no']),
+                        str(alert_resp["terminal_plant_id"]),
+                        alert_resp['indent_raised_date']
+                    )
         # now = (datetime.datetime.now() - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         # now = (self.params.get("workflow_datetime") - datetime.timedelta(days=0)).strftime("%Y-%m-%d")
         now = (
@@ -1047,6 +1059,8 @@ class IndentDryOut:
         return
 
     async def update_indent_no(self, indent_no: str, loc_code: str, indent_raised_date):
+        MAX_RETRIES = 5
+        RETRY_DELAY = 5
         alert_data = await Alerts.get(self.params["alert_id"])
 
         if not isinstance(alert_data, dict):
@@ -1056,33 +1070,72 @@ class IndentDryOut:
                                                           f"{urdhva_base.settings.camunda_url}/engine-rest")
 
         headers = {"Content-Type": "application/json"}
-        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
-        payload = {
+        # url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
+        # payload = {
+        #     "indent_no": {"value": indent_no, "type": "String"},
+        #     "terminal_plant_id": {"value": loc_code, "type": "String"},
+        # }
+        # payload = {"value": indent_no, "type": "String"}
+        #
+        # response = requests.put(url, json=payload, headers=headers)
+        # if response.status_code != 200:
+        #     print("Error updating indent no", response.text)
+        # else:
+        #     print("Indent no updated successfully")
+        #
+        # url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/terminal_plant_id"
+        # payload = {"value": loc_code, "type": "String"}
+        # response = requests.put(url, json=payload, headers=headers)
+        # if response.status_code != 200:
+        #     print("Error updating indent no", response.text)
+        # else:
+        #     print("Indent no updated successfully")
+        #
+        # url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_raised_date"
+        # payload = {"value": indent_raised_date.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z", "type": "String"}
+        # response = requests.put(url, json=payload, headers=headers)
+        # if response.status_code != 200:
+        #     print("Error updating indent no", response.text)
+        # else:
+        #     print("Indent no updated successfully")
+        #
+        # return True
+        variables = {
             "indent_no": {"value": indent_no, "type": "String"},
             "terminal_plant_id": {"value": loc_code, "type": "String"},
+            "indent_raised_date": {
+                "value": indent_raised_date.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z",
+                "type": "String"
+            },
         }
-        payload = {"value": indent_no, "type": "String"}
 
-        response = requests.put(url, json=payload, headers=headers)
-        if response.status_code != 200:
-            print("Error updating indent no", response.text)
-        else:
-            print("Indent no updated successfully")
+        for var_name, payload in variables.items():
+            url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/{var_name}"
 
-        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/terminal_plant_id"
-        payload = {"value": loc_code, "type": "String"}
-        response = requests.put(url, json=payload, headers=headers)
-        if response.status_code != 200:
-            print("Error updating indent no", response.text)
-        else:
-            print("Indent no updated successfully")
+            for attempt in range(MAX_RETRIES):
+                try:
+                    response = requests.put(url, json=payload, headers=headers)
 
-        url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_raised_date"
-        payload = {"value": indent_raised_date.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z", "type": "String"}
-        response = requests.put(url, json=payload, headers=headers)
-        if response.status_code != 200:
-            print("Error updating indent no", response.text)
-        else:
-            print("Indent no updated successfully")
+                    if response.status_code == 204:  # Success in Camunda
+                        print(f"{var_name} updated successfully.")
+                        logger.info(f"{var_name} updated successfully.")
+                        break
+                    else:
+                        print(
+                            f"Error updating {var_name} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+                        logger.info(
+                            f"Error updating {var_name} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+
+                except requests.RequestException as e:
+                    print(f"Request error for {var_name} (attempt {attempt + 1}): {e}")
+                    logger.info(f"Request error for {var_name} (attempt {attempt + 1}): {e}")
+
+                # Retry logic with exponential backoff
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAY * (2 ** attempt))
+                else:
+                    print(f"Failed to update {var_name} after {MAX_RETRIES} retries.")
+                    logger.info(f"Failed to update {var_name} after {MAX_RETRIES} retries.")
+                    return False
 
         return True
