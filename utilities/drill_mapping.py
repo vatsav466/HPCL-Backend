@@ -25,7 +25,7 @@ mapping = {
     'DS': [
         {'level': 1, 'drill_level': 'Org', 'key': '', 'display_name': '', 'drill_available': True},
         {'level': 2, 'drill_level': 'SBU', 'key': 'SBU_Name', 'display_name': 'SBU', 'drill_available': True},
-        {'level': 3, 'drill_level': 'Zone', 'key': 'Zone_Name', 'display_name': 'Zone', 'drill_available': True},
+        {'level': 3, 'drill_level': 'Zone', 'key': 'Region_Name', 'display_name': 'Zone', 'drill_available': True},
         {'level': 4, 'drill_level': 'SA', 'key': 'SalesArea_Name', 'display_name': 'SA', 'drill_available': True},
         {'level': 5, 'drill_level': 'Product', 'key': 'Product_Name', 'display_name': 'Product_Name', 'drill_available': False}
     ],
