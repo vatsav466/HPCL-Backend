@@ -1841,6 +1841,132 @@
                     "name": "delete"
                 }
             ]
+        },
+{
+            "name": "m60levelmetadata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "M60LevelMetaData",
+            "attributes": {},
+            "uris": [
+                "/api/m60levelmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "m60levelmetadata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "M60LevelMetaData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/m60levelmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "m60levelmetadata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "M60LevelMetaData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/m60levelmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "momlevelfinalmetadata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "MomLevelFinalMetaData",
+            "attributes": {},
+            "uris": [
+                "/api/momlevelfinalmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "momlevelfinalmetadata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "MomLevelFinalMetaData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/momlevelfinalmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "momlevelfinalmetadata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "MomLevelFinalMetaData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/momlevelfinalmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
