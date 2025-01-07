@@ -7,6 +7,7 @@ from datetime import datetime
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
+import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
 import utilities.connection_mapping as connection_mapping
 from orchestrator.dbconnector.widget_actions import widget_actions
@@ -14,7 +15,7 @@ import orchestrator.dbconnector.connector_factory as connector_factory
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
-from collections import defaultdict
+
 
 class GlobalAnalytics:
     @staticmethod
@@ -576,18 +577,17 @@ class GlobalAnalytics:
             conditions = []
 
             # Define keys to exclude from the WHERE clause
-            excluded_keys = {"A", "H", "T", "BE", "RI"}
-            
+            excluded_keys = {'"A"', '"H"', '"T"', '"BE"', '"RI"'}
+
             for rec in filters:
                 rec.value = rec.value.split(",")
                 if rec.key == '"month_name"':  # Only handle the month_name case separately
                     # Check if any value in rec.value is in month_mapping
                     rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
-                
+
                 # Skip keys that should not be added to the WHERE clause
                 if rec.key in excluded_keys:
                     continue
-                
                 # Now handle other cases
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
@@ -597,10 +597,10 @@ class GlobalAnalytics:
                     else:
                         condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
-
             if conditions:
                 sales_performance_query_ += ' WHERE '
                 sales_performance_query_ += ' AND '.join(conditions)
+
         else:
             current_date = datetime.now()
             current_year = current_date.year
@@ -684,56 +684,74 @@ class GlobalAnalytics:
             )
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
-                
+                print("selected keys ", selected_keys)
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)  
-                
+                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
+ 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
-                
+                print("selected keys ", selected_keys)
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)                    
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Region_Name' in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
-                
+                print("selected keys ", selected_keys)
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
@@ -741,18 +759,24 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SalesArea_Name' in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
-                
+                print("selected keys ", selected_keys)
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
@@ -760,55 +784,71 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
 
             if len(filters) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
-                
-                # If any valid keys are selected, group the data
+                print("selected keys ", selected_keys)
+
                 if selected_keys:
                     grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "Zone_Name" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
-                
-                # If any valid keys are selected, group the data
+                print("selected keys ", selected_keys)
+
                 if selected_keys:
                     grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "Region_Name" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -817,17 +857,23 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["month_name", "Region_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -836,17 +882,23 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["month_name", "SalesArea_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "ProductName" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -855,17 +907,23 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["month_name", "ProductName"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -874,18 +932,53 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)  
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
@@ -893,17 +986,23 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -912,17 +1011,23 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -932,17 +1037,23 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -953,17 +1064,23 @@ class GlobalAnalytics:
             elif "FISCAL_YEAR" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
