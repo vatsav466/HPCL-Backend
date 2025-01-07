@@ -767,5 +767,16 @@ LIMIT 10000;''',
                                         GROUP BY 
                                             bu, alert_section, interlock_name, location_name, severity
                                         ORDER BY 
-                                        bu, alert_section, interlock_name, location_name, severity;'''
+                                        bu, alert_section, interlock_name, location_name, severity;''',
+    
+    "cdcms_order_source": f'''select
+                                    "OrderSourceName" as "OrderSourceName",
+                                    "JDEDistributorCode" as "JDEDistributorCode",
+	                                "ZOName" as "ZOName",
+	                                "ROName" as "ROName",
+	                                "SAName" as "SAName",
+                                    "Execution_Date" as "Execution_Date",
+	                                "BookingReceivedYesterday" as "Total_Bookings"
+                                from
+	                                "LPG_SALES_SUMMARY_DATA"'''
 }

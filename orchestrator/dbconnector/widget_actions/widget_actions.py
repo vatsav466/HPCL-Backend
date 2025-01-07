@@ -40,6 +40,7 @@ lpg_dashboard_actions = [
     'sales_growth',
     'sales_yearly_performance',
     'lpg_cdcms',
+    'cdcms_order_source',
     'lpg_cdcms_month',
     'location_wise_distribution'
 ]
@@ -84,6 +85,7 @@ widget_mapping = {
     'sales_growth': {},
     'sales_yearly_performance': {},
     'lpg_cdcms': {},
+    'cdcms_order_source': {},
     'lpg_cdcms_month': {},
     'location_wise_distribution': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
