@@ -108,7 +108,7 @@ Model RoleMapper internal {
 Model Roles {
     name index_field str
     status bool
-    allowed_pages optional list str
+    allowed_pages optional list RoleMapper
 
     // API to create system role
     Action=> create_role {
