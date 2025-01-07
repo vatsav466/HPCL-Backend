@@ -486,7 +486,7 @@ class IndentDryOut:
             await self.update_alert_status(indent_status=IndentStatus.ValidIndent, input_data=input_data, progress_rate="3")
             return await self.send_alert_action(is_raised=True)
 
-        input_data["action_msg"] = "Invalid Is On Hold"
+        input_data["action_msg"] = "Indent Is On Hold"
         input_data["action_type"] = "Message"
         input_data["event_tags"]["is_raised"] = False
         await self.update_alert_status(indent_status=IndentStatus.IndentOnHold, input_data=input_data, progress_rate="2")
@@ -719,19 +719,44 @@ class IndentDryOut:
         dealer_code = str(self.params.get("dealer_id"))
         indent_no = "','".join(self.params.get("indent_no").split(","))
         alert_id = self.params.get("alert_id")
-        query = f'''select item_name, rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no, 
-                case when sum(pumpable_Stock) <=0 then 1
-                when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
-                when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
-                else 5 end status
-                from "HPCL_HOS".sch_inventory_forecast_dashboard sch
-                where 1=1 and sch.volume>0 and rosapcode = '{dealer_code}'
-                group by item_name, rosapcode, product_no
-                order by item_name, rosapcode, product_no'''
+        # query = f'''select item_name, rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
+        #         case when sum(pumpable_Stock) <=0 then 1
+        #         when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
+        #         when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
+        #         when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
+        #         else 5 end status
+        #         from "HPCL_HOS".sch_inventory_forecast_dashboard sch
+        #         where 1=1 and sch.volume>0 and rosapcode = '{dealer_code}'
+        #         group by item_name, rosapcode, product_no
+        #         order by item_name, rosapcode, product_no'''
+        query = f"""SELECT
+                        site_id,
+                        fcc_code,
+                        rosapcode,
+                        item_name,
+                        product_grp AS product_grp,
+                        product_no,
+                        COUNT(DISTINCT tank_no) AS tank_cnt,
+                        STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
+                        CASE
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
+                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
+                            WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
+                                 AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
+                            ELSE 6
+                        END AS status
+                    FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                    WHERE sch.volume > 0
+                    GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
+                    ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
-        cris_resp = pd.DataFrame(cris_resp)
+        if not cris_resp:
+            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": []})
+        else:
+            cris_resp = pd.DataFrame(cris_resp)
         print("cris_resp: ", cris_resp)
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")

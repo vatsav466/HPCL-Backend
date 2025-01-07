@@ -97,10 +97,10 @@ class AlertAction:
         """
         # Todo:- here we have to write all the generic functionality like updating the alert data,
         #  history, fetching users, roles, ...
-        print("input_data for alert--> ", input_data)
+        # print("input_data for alert--> ", input_data)
         alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data, 'alert_history', [])
         # alert_history = alert_data.alert_history
-        print("alert_history --> ", alert_history)
+        # print("alert_history --> ", alert_history)
         # allocated_time = alert_data.updated_at
         if isinstance(alert_data, dict):
             allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
@@ -136,7 +136,7 @@ class AlertAction:
                             "is_delivered": event_tags.get("is_delivered", False),
                             "is_tripped": event_tags.get("is_tripped", False)        
                         })
-        print("alert_history before update --> ", alert_history)
+        # print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
         # Handle alert_data based on whether it is a dictionary or object
         alert_id = alert_data.get('id') if isinstance(alert_data, dict) else getattr(alert_data, 'id', None)
@@ -199,7 +199,7 @@ class AlertAction:
             "businessKey": alert_data.unique_id,
             "processVariables": process_variables
         }
-        print("messaged_data: ", messaged_data)
+        # print("messaged_data: ", messaged_data)
         # Posting data to camunda
         url = urdhva_base.settings.camunda_url + "/engine-rest/message"
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)

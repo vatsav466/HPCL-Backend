@@ -22,7 +22,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     It also handles the failure scenario and returns the appropriate task result.
     """
     variables = task.get_variables()
-    print("variables --> ", variables)
+    # print("variables --> ", variables)
     module_name = variables.pop('module_name', None)
     class_name = variables.pop('class_name', None)
     function_name = variables.pop('function_name', None)
@@ -31,11 +31,11 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         class_instance = getattr(module, class_name)()
         req_variables = await class_instance.get_required_variables()
         function = getattr(class_instance, function_name)
-        print("req_variables --> ", req_variables)
-        print("variables --> ", variables)
+        # print("req_variables --> ", req_variables)
+        # print("variables --> ", variables)
         status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
-        print("status: ", status)
-        print("data: ", data)
+        # print("status: ", status)
+        # print("data: ", data)
         if status:
             if data:
                 return task.complete(global_variables=data)
@@ -80,10 +80,10 @@ async def main(camunda_connector_name):
     engine_local_base_url = f"http://{conn['host']}:{conn['port']}/engine-rest"
     topics = ['dryout_indentwise_consumer']
     loop = asyncio.get_event_loop()
-    executor = ThreadPoolExecutor(max_workers=400)  # Adjust the number of workers as needed
+    executor = ThreadPoolExecutor(max_workers=200)  # Adjust the number of workers as needed
     tasks = []
     for topic in topics:
-        for i in range(1, 100):
+        for i in range(1, 50):
             etw = ExternalTaskWorker(i, base_url=engine_local_base_url,
                                      config=urdhva_base.settings.camunda_default_config)
             tasks.append(loop.run_in_executor(
