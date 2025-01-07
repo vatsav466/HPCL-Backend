@@ -2018,14 +2018,14 @@ class GlobalAnalytics:
             if "T" in selected_keys:
                 select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::NUMERIC, 2) AS "TARGET_TMT_SALES"')
 
+            where_clause = f"WHERE {' AND '.join(where_conditions)}" if where_conditions else ""
             # Construct the query dynamically
             sales_performance_query_ = f'''
                 SELECT
                     {', '.join(select_columns)}
                 FROM
                     "M60_LEVEL_METADATA"
-                WHERE
-                    {" AND ".join(where_conditions)}
+                {where_clause}
                 GROUP BY
                     {', '.join(group_by_columns)}
                 ORDER BY
