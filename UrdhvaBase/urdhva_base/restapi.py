@@ -78,11 +78,15 @@ async def get_baseurl(request: fastapi.Request, redirect_type="RedirectionUrl", 
 
 async def get_permission():
     rpt = urdhva_base.context.context.get('rpt', {})
-    data = {"me": ['read'], "logout": ["read"]}
-    data.update({permission['rsname'].lower().split("_")[0]: permission.get('scopes', []) for permission in
-                 rpt.get('authorization', {}).get('permissions', [])})
-    data['includes'] = rpt.get('includes', '')
-    data['excludes'] = rpt.get('excludes', '')
+    data = {"is_authenticated": False, "allowed_roles": []}
+    if rpt.get("username") and rpt.get("system_role") and rpt.get("novex_role"):
+        data['is_authenticated'] = True
+        data["allowed_roles"] = rpt.get("allowed_roles", [])
+    # data = {"me": ['read'], "logout": ["read"]}
+    # data.update({permission['rsname'].lower().split("_")[0]: permission.get('scopes', []) for permission in
+    #              rpt.get('authorization', {}).get('permissions', [])})
+    # data['includes'] = rpt.get('includes', '')
+    # data['excludes'] = rpt.get('excludes', '')
     return data
 
 
@@ -378,38 +382,53 @@ async def login(request: fastapi.Request, code: typing.Optional[str] = None,
 
 @app.get("/api/logout")
 async def logout(request: fastapi.Request):
-    org_extension = await get_customer_authentication_extension(urdhva_base.ctx['entity_id'])
-    redis_client = await urdhva_base.redispool.get_redis_connection()
-    if await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname):
-        data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
-        url = json.loads(data)["base_url"]
-        redirect_url = f"https://{url}/{org_extension}/realms/{urdhva_base.ctx['entity_id']}" \
-                       f"/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F" \
-                       f"{request.base_url.hostname}%2F"
-    else:
-        redirect_url = f"https://{await get_baseurl(request)}/{org_extension}/realms/" \
-                       f"{urdhva_base.ctx['entity_id']}/protocol/openid-connect/" \
-                       f"logout?post_logout_redirect_uri=https%3A%2F%2F{request.base_url.hostname}%2F"
-    id_auth_token = urdhva_base.context.context.get('id_auth_token', "")
-    if id_auth_token:
-        redirect_url += f"&id_token_hint={id_auth_token}"
-    response = fastapi.responses.JSONResponse({'url': redirect_url}, 401)
+    response = fastapi.responses.JSONResponse({'url': f"{request.base_url}/login"}, 401)
     cookie_id = request.cookies.get(cookie_name, None)
     if cookie_id:
         try:
             f = Fernet(urdhva_base.settings.fernet_key)
             d = json.loads(f.decrypt(cookie_id.encode()).decode())
-            # print(d)
-            entity_id = d["entity_id"]
             cookie_id = d["cookie_id"]
         except:
-            entity_id = request.base_url.hostname.split('.')[0]
+            ...
         redis_client = await urdhva_base.redispool.get_redis_connection()
-        rkey = f"{entity_id}_SessionData_{cookie_id}"
+        rkey = f"Novex_SessionData_{cookie_id}"
         await redis_client.delete(rkey)
     response.delete_cookie(cookie_name)
     # todo:- Need to clear dashboard sessions
     return response
+    # org_extension = await get_customer_authentication_extension(urdhva_base.ctx['entity_id'])
+    # redis_client = await urdhva_base.redispool.get_redis_connection()
+    # if await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname):
+    #     data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
+    #     url = json.loads(data)["base_url"]
+    #     redirect_url = f"https://{url}/{org_extension}/realms/{urdhva_base.ctx['entity_id']}" \
+    #                    f"/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F" \
+    #                    f"{request.base_url.hostname}%2F"
+    # else:
+    #     redirect_url = f"https://{await get_baseurl(request)}/{org_extension}/realms/" \
+    #                    f"{urdhva_base.ctx['entity_id']}/protocol/openid-connect/" \
+    #                    f"logout?post_logout_redirect_uri=https%3A%2F%2F{request.base_url.hostname}%2F"
+    # id_auth_token = urdhva_base.context.context.get('id_auth_token', "")
+    # if id_auth_token:
+    #     redirect_url += f"&id_token_hint={id_auth_token}"
+    # response = fastapi.responses.JSONResponse({'url': redirect_url}, 401)
+    # cookie_id = request.cookies.get(cookie_name, None)
+    # if cookie_id:
+    #     try:
+    #         f = Fernet(urdhva_base.settings.fernet_key)
+    #         d = json.loads(f.decrypt(cookie_id.encode()).decode())
+    #         # print(d)
+    #         entity_id = d["entity_id"]
+    #         cookie_id = d["cookie_id"]
+    #     except:
+    #         entity_id = request.base_url.hostname.split('.')[0]
+    #     redis_client = await urdhva_base.redispool.get_redis_connection()
+    #     rkey = f"{entity_id}_SessionData_{cookie_id}"
+    #     await redis_client.delete(rkey)
+    # response.delete_cookie(cookie_name)
+    # # todo:- Need to clear dashboard sessions
+    # return response
 
 
 @app.get("/api/{entity_id}/authorize")
@@ -434,20 +453,14 @@ async def authorize(request: fastapi.Request, entity_id: str):
 @app.get("/api/session/me")
 async def me(request: fastapi.Request):
     rpt = urdhva_base.context.context.get('rpt', {})
-    resp = {'permissions': await get_permission(), 'given_name': rpt.get('given_name', '-'),
-            'family_name': rpt.get('family_name', '-'), 'email': rpt.get('email', '-'),
-            'entity_id': urdhva_base.ctx["entity_id"] if urdhva_base.ctx.exists() else '',
-            "base_url": "", "fqdn_ipaddress": "", "is_poc_user": False, "organizations_permitted": "",
-            "organizations_prohibited": "", "credentials_permitted": "", "credentials_prohibited": ""}
-    redis_client = await urdhva_base.redispool.get_redis_connection()
-    resp.update({"dateFormat": await redis_client.hget("dateformat_mapping", urdhva_base.ctx["entity_id"])})
-    if rpt.get('email') and await redis_client.hexists(f"access_restrictions_{urdhva_base.ctx['entity_id']}", rpt['email']):
-        data = json.loads(await redis_client.hget(f"access_restrictions_{urdhva_base.ctx['entity_id']}",
-                                                  rpt['email']))
-        for key in ["organizations_permitted", "organizations_prohibited", "credentials_permitted",
-                    "credentials_prohibited", "is_poc_user"]:
-            if key in data:
-                resp[key] = data[key]
+    resp = {"is_authenticated": False}
+    permission_data = await get_permission()
+    if permission_data["is_authenticated"]:
+        resp = {"permissions": permission_data["allowed_roles"], "is_authenticated": True}
+        base_keys = ["first_name", "last_name", "system_role", "allowed_roles", "email", "employee_id", "novex_role"]
+        permission_keys = ["bu", "region", "zone", "state", "sales_area"]
+        resp.update({key: rpt.get(key, '') for key in base_keys})
+        resp.update({key: rpt.get(key, []) for key in permission_keys})
     return resp
 
 

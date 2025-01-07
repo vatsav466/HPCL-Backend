@@ -84,7 +84,7 @@ class UsersSchema(UrdhvaPostgresBase):
     last_name: Mapped[str] = mapped_column("last_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     password: Mapped[urdhva_base.types.Secret] = mapped_column("password", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     system_role: Mapped[str] = mapped_column("system_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     novex_role: Mapped[str] = mapped_column("novex_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -356,7 +356,7 @@ class Locationmaster_Upload_Tags_DataParams(pydantic.BaseModel):
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
-    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     user_name: Mapped[typing.Optional[str]] = mapped_column("user_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)

@@ -2,6 +2,7 @@ import urdhva_base
 import uuid
 import ldap
 import json
+import fastapi
 import base64
 import hpcl_ceg_model
 import urdhva_base.settings
@@ -88,6 +89,24 @@ class AuthenticationManager:
         await redis_client.setex(rkey, time,
                                  base64.urlsafe_b64encode(json.dumps(cookie_data, default=str).encode()).decode())
         return cookie_key
+
+    @classmethod
+    async def logout(cls, request: fastapi.Request):
+        response = fastapi.responses.JSONResponse({'url': f"{request.base_url}/login"}, 401)
+        cookie_id = request.cookies.get(urdhva_base.settings.cookie_name, None)
+        if cookie_id:
+            try:
+                f = Fernet(urdhva_base.settings.fernet_key)
+                d = json.loads(f.decrypt(cookie_id.encode()).decode())
+                cookie_id = d["cookie_id"]
+            except:
+                ...
+            redis_client = await urdhva_base.redispool.get_redis_connection()
+            rkey = f"Novex_SessionData_{cookie_id}"
+            await redis_client.delete(rkey)
+        response.delete_cookie(urdhva_base.settings.cookie_name)
+        # todo:- Need to clear dashboard sessions
+        return response
 
     @classmethod
     async def create_user(cls, username, password, role, first_name, last_name, employee_id, status=True):
