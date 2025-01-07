@@ -878,6 +878,90 @@ Model LpgRejections {
     }
 }
 
+Model LpgSalesSummaryData {
+    JDEDistributorCode int
+    ConsumerType str
+    IsPrepaid str
+    CylType str
+    OrderSourceCode str
+    Pending_0D int
+    Pending_1D int
+    Pending_2D int
+    Pending_3D int
+    Pending_4D int
+    Pending_5D int
+    Pending_6D int
+    Pending_7D int
+    Pending_8D int
+    Pending_9D int
+    Pending_10D int
+    Pending_11D int
+    Pending_12D int
+    Pending_13D int
+    Pending_14D int
+    Pending_15D int
+    Pending_Beyond15D int
+    BookingReceivedYesterday int
+    TotalSalesYesterday int
+    BookingReceivedToday int
+    TotalSalesToday int
+    SACode int
+    StateCode str
+    DistrictCode int
+    TalukaCode str
+    CityCode str
+    ROCode int
+    SAName str
+    ZOCode str
+    ROName str
+    ZOName str
+    OrderSourceName str
+    Total_Pending int
+    pending_1_3_days int
+    pending_4_7_days int
+    pending_8_15_days int
+    Execution_Date datetime
+    Execution_Month str
+    Execution_Year int
+    Month_Year str
+}
+
+Model LpgConsumersSummary {
+    DistributorCode int
+    RelationshipStatus str
+    RelationshipSubStatus str
+    ConsumerCategory str
+    TypeofConsumer int
+    MainSchemeCategory int
+    SchemeCode int
+    ConnectionType str
+    CylinderType str
+    ConsumerCount int
+    eKYCCompleted int
+    SuvidhaClub int
+    HIGOptOut int
+    SubsidyGiveItUp int
+    ACTCCount int
+    BCTCCount int
+    NCTCCount int
+    SafetyCheckPending int
+    HPPayConsumerCount int
+    JDEDistributorCode int
+    SACode int
+    StateCode str
+    ROCode int
+    SAName str
+    ZOCode str
+    ROName str
+    ZOName str
+    Category str
+    SubCategory str
+    CategoryStatus str
+    eKYCPending int
+    ZoneNames str
+}
+
+
 Model Screens {
     screen_title str
     dashboards list int

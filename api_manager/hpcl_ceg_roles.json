@@ -1528,6 +1528,132 @@
             ]
         },
         {
+            "name": "lpgsalessummarydata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSalesSummaryData",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsalessummarydata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgsalessummarydata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSalesSummaryData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsalessummarydata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgsalessummarydata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSalesSummaryData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsalessummarydata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgconsumerssummary",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgConsumersSummary",
+            "attributes": {},
+            "uris": [
+                "/api/lpgconsumerssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgconsumerssummary_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgConsumersSummary_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgconsumerssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgconsumerssummary_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgConsumersSummary_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgconsumerssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "screens",
             "type": "all",
             "ownerManagedAccess": false,
