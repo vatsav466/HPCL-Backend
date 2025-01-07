@@ -264,7 +264,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
                                     "state": resp["state"], "indent_status": resp["indent_status"],
                                     "plant_id": resp["terminal_plant_id"], "plant_name": resp['terminal_plant_name'],
-                                    "indent_no": resp["indent_no"], "Product": prod_code_mapping.get(str(resp['product_code']), str(resp['product_code']))}
+                                    "indent_no": resp["indent_no"], "product": prod_code_mapping.get(str(resp['product_code']), str(resp['product_code']))}
         if not resp['terminal_plant_name']:
             status, location_data = await alert_helper.get_location_details("TAS", resp['terminal_plant_id'])
             if status:
@@ -616,6 +616,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
 @router.post('/get_dried_out_ro_data', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro_DataParams):
     top_x_axis = connection_mapping.dry_out_top_x_axis
+    top_x_axis.extend([{"name": "Indent Delivered", "group": "delivered"}])
     bottom_x_axis = connection_mapping.dry_out_bottom_x_axis
 
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
