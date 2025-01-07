@@ -254,16 +254,17 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
             formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
+            formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
             return formatted_ist_time
         except:
             return "-"
-
+    prod_code_mapping = connection_mapping.item_name_mapping
     if resp:
         # resp = resp[0]
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
                                     "state": resp["state"], "indent_status": resp["indent_status"],
                                     "plant_id": resp["terminal_plant_id"], "plant_name": resp['terminal_plant_name'],
-                                    "indent_no": resp["indent_no"]}
+                                    "indent_no": resp["indent_no"], "product": prod_code_mapping.get(str(resp['product_code']), str(resp['product_code']))}
         if not resp['terminal_plant_name']:
             status, location_data = await alert_helper.get_location_details("TAS", resp['terminal_plant_id'])
             if status:
@@ -272,6 +273,8 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
                                      f"{convert_time_read_format(str(resp['created_at']))}")
 
         for history in resp.get("alert_history", []):
+            if history['action_msg'] == "Invalid Is On Hold":
+                history['action_msg'] = "Indent Is On Hold"
             alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
                                          f" {convert_time_read_format(str(history['allocated_time']))}, "
                                          f"Processed at {convert_time_read_format(str(history['processed_time']))}")
@@ -387,164 +390,72 @@ async def indentdryout_get_indent_analysis(data: Indentdryout_Get_Indent_Analysi
 # Action get_dry_out_count
 @router.post('/get_dry_out_count', tags=['IndentDryOut'])
 async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountParams):
-    # schema = connection_mapping.schema_mapping.get("cris")
-    # table = connection_mapping.table_mapping.get("dry_out")
-    # query = f'''select site_id, fcc_code, item_name,count(distinct tank_no) tank_cnt,
-    #             rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no, product_no,
-    #             case when sum(pumpable_Stock) <=0 then 1
-    #             when sum(pumpable_Stock) <(sum(sch.avgsales_7days)/7) then 2
-    #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7) and (sum(sch.avgsales_7days)/7)*3 then 3
-    #             when sum(pumpable_Stock) between (sum(sch.avgsales_7days)/7)*3 and (sum(sch.avgsales_7days)/7)*6 then 4
-    #             else 5 end status
-    #             from "{schema}".{table} sch
-    #             where 1=1 and sch.volume>0
-    #             group by site_id, fcc_code, item_name, rosapcode, product_no
-    #             order by site_id, fcc_code, item_name, rosapcode, product_no'''
-    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris", "1")
-    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    # dry_out_data = await function(query=query)
-    # dry_out_data = pl.DataFrame(dry_out_data)
-    # dry_out = dry_out_data.filter(
-    #     pl.col("status") == 1).select(
-    #     [pl.col("rosapcode")]
-    # ).unique().shape[0]
-    #
-    # intraday_dry_out = dry_out_data.filter(
-    #     pl.col("status") == 2).select(
-    #     [pl.col("rosapcode")]
-    # ).unique().shape[0]
-    #
-    # potential_dry_out = dry_out_data.filter(
-    #     pl.col("status").is_in([3])).select(
-    #     [pl.col("rosapcode")]
-    # ).unique().shape[0]
-
-    # query = f'''select dry_out_in_days,  count(distinct dealer_id) from alerts 
-    #         where interlock_name = 'Dry Out Each Indent Wise MainFlow' 
-    #         group by dry_out_in_days order by dry_out_in_days'''
-    # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    # dry_out_data = await function(query=query)
-    # dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
-    # for each_dryout in dry_out_data:
-    #     if each_dryout["dry_out_in_days"] == '1':
-    #         dry_out = each_dryout["count"]
-    #     if each_dryout["dry_out_in_days"] == '2':
-    #         intraday_dry_out = each_dryout["count"]
-    #     if each_dryout["dry_out_in_days"] == '3':
-    #         potential_dry_out = each_dryout["count"]
-
-    where_clause = ["progress_rate != '11'"]
+    basic_condtion = ["progress_rate != '11'"]
+    where_clause = []
+    dry_out_in_days = '1'
     if not data.filters:
         data.filters = []
     for record in data.filters:
         if record.key == "progress_rate":
             if record.value:
-                where_clause.append(f"progress_rate={int(record.value[0])}")
+                if len(record.value) == 1:
+                    where_clause.append(f"progress_rate={int(record.value[0])}")
+                else:
+                    where_clause.append(f"progress_rate in {tuple(record.value)}")
         else:
             if record.value:
+                if record.key == 'dry_out_in_days':
+                    dry_out_in_days = str(record.value[0])
                 if record.key == "plant":
                     record.key = "terminal_plant_id"
                 if len(record.value) == 1:
                     where_clause.append(f"{record.key} {record.cond} '{record.value[0]}'")
                 else:
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
-    conditions = ' AND '.join(where_clause)
-
+    print("dry_out_in_days: ", dry_out_in_days)
+    condition_1 = ' AND '.join(basic_condtion + ["dry_out_in_days = '1'"] + where_clause) if dry_out_in_days == '1' else ' AND '.join(basic_condtion + ["dry_out_in_days = '1'"])
+    condition_2 = ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"] + where_clause) if dry_out_in_days == '2' else ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"])
+    condition_3 = ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"] + where_clause) if dry_out_in_days == '3' else ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"])
+    # print("condition_1: ", condition_1)
+    # print("condition_2: ", condition_2)
+    # print("condition_3: ", condition_3)
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    stats_query = f"""WITH max_progress_rate AS (
-                        SELECT
-                            sap_id as dealer_id,
-                            MAX(progress_rate) AS progress_rate,
-                            dry_out_in_days,
-                            interlock_name,
-                            zone, terminal_plant_id, product_code,
-                            region, sales_area, category
-                        FROM alerts
-                        WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                          AND indent_status NOT IN ('Cancelled')
-                        GROUP BY sap_id, dry_out_in_days, interlock_name, zone, terminal_plant_id, product_code, region, sales_area, category
-                    )
-                    SELECT
-                        dry_out_in_days,
-                        SUM(unique_count) AS total_unique_count
-                    FROM (
-                        SELECT
-                            dry_out_in_days,
-                            progress_rate,
-                            COUNT(DISTINCT dealer_id) AS unique_count
-                        FROM max_progress_rate
---                         WHERE present_stage != '11'
-                        WHERE {conditions} 
-                        GROUP BY dry_out_in_days, progress_rate
-                    ) subquery
-                    GROUP BY dry_out_in_days
-                    ORDER BY dry_out_in_days;"""
-    # stats_query = f"""SELECT
-    #                     "title",
-    #                     "value" AS "Site_Count",
-    #                     "prodvalue",
-    #                     "tankvalue",
-    #                     SUM("value") OVER (PARTITION BY 1) AS "totalvalue"
-    #                 FROM (
-    #                     SELECT
-    #                         CASE
-    #                             WHEN status = 1 THEN 'DRY OUT'
-    #                             WHEN status = 2 THEN 'INTRADAY DRY OUT'
-    #                             WHEN status = 3 THEN '1-3 Days'
-    #                             WHEN status = 4 THEN '4-6 Days'
-    #                         END AS "title",
-    #                         status AS seqno,
-    #                         COUNT(DISTINCT site_id || fcc_code) AS "value",
-    #                         COUNT(DISTINCT site_id || fcc_code || item_name) AS "prodvalue",
-    #                         SUM(tank_cnt) AS "tankvalue"
-    #                     FROM (
-    #                         SELECT
-    #                             site_id,
-    #                             fcc_code,
-    #                             product_grp AS item_name,
-    #                             COUNT(DISTINCT tank_no) AS tank_cnt,
-    #                             CASE
-    #                                 WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
-    #                                 WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
-    #                                 WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
-    #                                      AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
-    #                                 WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
-    #                                      AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
-    #                                 ELSE 6
-    #                             END AS status
-    #                         FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
-    #                         WHERE sch.volume > 0
-    #                         GROUP BY site_id, fcc_code, product_grp
-    #                         ORDER BY site_id, fcc_code, product_grp
-    #                     ) AS result1
-    #                     WHERE status < 6
-    #                     GROUP BY status
-    #                     ORDER BY seqno
-    #                 ) AS result2"""
+
+    condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow' AND indent_status NOT IN ('Cancelled')"
+    dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
+    # For DryOut
+    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
+    WHERE {condition} AND {condition_1} AND dry_out_in_days='1' GROUP BY dry_out_in_days
+    """
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     dry_out_data = await function(
         query=stats_query
     )
-    dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
-    for each_dryout in dry_out_data:
-        if each_dryout["dry_out_in_days"] == '1':
-            dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] == '2':
-            intraday_dry_out = each_dryout["total_unique_count"]
-        if each_dryout["dry_out_in_days"] == '3':
-            potential_dry_out = each_dryout["total_unique_count"]
-    # for each_dryout in dry_out_data:
-    #     if each_dryout["title"] == 'DRY OUT':
-    #         dry_out = each_dryout["Site_Count"]
-    #     if each_dryout["title"] == 'INTRADAY DRY OUT':
-    #         intraday_dry_out = each_dryout["Site_Count"]
-    #     if each_dryout["title"] == '1-3 Days':
-    #         potential_dry_out = each_dryout["Site_Count"]
-    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out, "aging_analysis": "-"}
+    if dry_out_data:
+        dry_out = dry_out_data[0]["total_unique_count"]
+    # For DryOut
+    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
+        WHERE {condition} AND {condition_2} AND dry_out_in_days='2' GROUP BY dry_out_in_days
+        """
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    dry_out_data = await function(
+        query=stats_query
+    )
+    if dry_out_data:
+        intraday_dry_out = dry_out_data[0]["total_unique_count"]
+    # For DryOut
+    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
+        WHERE {condition} AND {condition_3} AND dry_out_in_days='3' GROUP BY dry_out_in_days
+        """
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    dry_out_data = await function(
+        query=stats_query
+    )
+    if dry_out_data:
+        potential_dry_out = dry_out_data[0]["total_unique_count"]
+
+    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
     return {"status": True, "message": "Success", "data": _data}
 
 
@@ -638,11 +549,28 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
     stats_query = "select distinct sap_id, max(progress_rate) as present_stage " \
-                  f"from alerts where {conditions} and indent_status != 'Cancelled' " \
+                  f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed') " \
                   f"group by sap_id"
     stats_resp = await function(
         query=stats_query
     )
+    _date = datetime.datetime.now().strftime("%Y-%m-%d")
+    delivered_query = f"""SELECT SUM(distinct_count) AS total_count
+                        FROM (
+                            SELECT COUNT(DISTINCT sap_id) AS distinct_count
+                            FROM alerts
+                            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                            AND indent_status = 'Completed'
+                            AND DATE(updated_at) = '{_date}'  -- Use TRUNC to ignore the time part
+                            GROUP BY sap_id
+                        ) AS subquery"""
+    delivered_count = await function(
+        query=delivered_query
+    )
+    if delivered_count:
+        delivered_count = delivered_count[0].get("total_count", 0) if delivered_count[0].get("total_count") else 0
+    else:
+        delivered_count = 0
 
     dealer_tt = pl.read_csv("/opt/ceg/algo/utilities/DealerOwnedTrucks.csv", infer_schema_length=0)['DEALERID'].to_list()
 
@@ -673,9 +601,15 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
                   for x in connection_mapping.dryout_aging])
+    # stats.append({"section": "Indent Delivered", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"})
     stats = sorted(stats, key=lambda x: x['serial'])
+    updated_stats = []
+    for each_stats in stats:
+        if each_stats['section'] == 'Indent Delivered':
+            each_stats['value'] = delivered_count
+        updated_stats.append(each_stats)
     return {
-        "status": True, "message": "Success", "stats": stats,
+        "status": True, "message": "Success", "stats": updated_stats,
         "valid_indents": {
             "section": "Valid Indents", "value": sum([rec['value'] for rec in stats[3:-1]]),
             "serial": stats[3]['serial'], "condition": ">", "group": "valid_indents"
@@ -693,21 +627,17 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
-        if record.key == "progress_rate":
-            if record.value:
-                where_clause.append(f"progress_rate={int(record.value[0])}")
-        else:
-            if record.value:
-                if record.key == "plant":
-                    record.key = "terminal_plant_id"
-                if len(record.value) == 1:
-                    where_clause.append(f"{record.key}='{record.value[0]}'")
-                else:
-                    where_clause.append(f"{record.key} in {tuple(record.value)}")
+        if record.value:
+            if record.key == "plant":
+                record.key = "terminal_plant_id"
+            if len(record.value) == 1:
+                where_clause.append(f"{record.key}='{record.value[0]}'")
+            else:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-            f"from alerts where indent_status != 'Cancelled' and {conditions} limit 500"
+            f"from alerts where indent_status != 'Cancelled' and {conditions}"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query

@@ -345,7 +345,7 @@ class Postgresql(BaseAction):
         col_dtype = {col: sample_records[col].dtype for col in sample_records.columns}
         print("col_dtype: ", col_dtype)
         for col, dty in col_dtype.items():
-            dty = dtype_dict.get(str(dty))
+            dty = dtype_dict.get(str(dty), 'text')
             if col == 'Json Data':
                 dty = str('jsonb')
             if col == 'DC_AMOUNT':
@@ -480,7 +480,7 @@ class Postgresql(BaseAction):
         """
         try:
             connection = await self.get_connection()
-            print("execute query: ", query)
+            # print("execute query: ", query)
             stmt = await connection.prepare(query)
             columns = [a.name for a in stmt.get_attributes()]
             data = await stmt.fetch()
@@ -514,7 +514,7 @@ class Postgresql(BaseAction):
         columns = ', '.join(f'"{key}"' for key in all_columns)
         conflict_clause = ', '.join(f'"{key}"' for key in conflict_columns)
         placeholders = ', '.join([f'${i + 1}' for i in range(len(all_columns))])
-        updates = ', '.join([f"{column} = EXCLUDED.{column}" for column in all_columns if column not in conflict_columns])
+        updates = ', '.join([f'"{column}" = EXCLUDED."{column}"' for column in all_columns if column not in conflict_columns])
 
         result = await self.create_table(schema_name, table_name, records.head(10), unique_key=conflict_columns)
         if schema_name:

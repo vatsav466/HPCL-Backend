@@ -723,7 +723,7 @@ LIMIT 10000;''',
                                     "Product_Achievement" 
                             FROM public."M60_LEVEL_METADATA"''',
 
-    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_SALES_SYNC" where "MOM_LEVEL_SALES_SYNC"."fiscal_year" in ('2023-2024','2024-2025') ''',
+    "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_DATA" where "MOM_LEVEL_FINAL_DATA"."fiscal_year" in ('2023-2024','2024-2025') ''',
     
     "lpg_cdcms": f'''select "BookingReceivedYesterday" as "Bookings", 
                             "LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday" as "Sales",
@@ -767,5 +767,16 @@ LIMIT 10000;''',
                                         GROUP BY 
                                             bu, alert_section, interlock_name, location_name, severity
                                         ORDER BY 
-                                        bu, alert_section, interlock_name, location_name, severity;'''
+                                        bu, alert_section, interlock_name, location_name, severity;''',
+    
+    "cdcms_order_source": f'''select
+                                    "OrderSourceName" as "OrderSourceName",
+                                    "JDEDistributorCode" as "JDEDistributorCode",
+	                                "ZOName" as "ZOName",
+	                                "ROName" as "ROName",
+	                                "SAName" as "SAName",
+                                    "Execution_Date" as "Execution_Date",
+	                                "BookingReceivedYesterday" as "Total_Bookings"
+                                from
+	                                "LPG_SALES_SUMMARY_DATA"'''
 }

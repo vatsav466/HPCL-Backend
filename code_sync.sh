@@ -68,4 +68,5 @@ systemctl start nginx
 
 # systemctl start dry_out_cammunda_processor@{camunda_dryout_01,camunda_dryout_02,camunda_dryout_03,camunda_dryout_04,camunda_dryout_05,camunda_dryout_06,camunda_dryout_07,camunda_dryout_08,camunda_dryout_09,camunda_dryout_10}.service
 # systemctl start dryout_manager@{camunda_dryout_01,camunda_dryout_02,camunda_dryout_03,camunda_dryout_04,camunda_dryout_05,camunda_dryout_06,camunda_dryout_07,camunda_dryout_08,camunda_dryout_09,camunda_dryout_10}.service
+#  apt-get install libsasl2-dev python-dev-is-python3 libldap2-dev libssl-dev
 echo "Code Sync Completed"
