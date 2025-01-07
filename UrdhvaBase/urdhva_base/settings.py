@@ -42,11 +42,11 @@ def configure_db_urls(db_urls):
 class Settings(pydantic_settings.BaseSettings):
     model_config = pydantic_settings.SettingsConfigDict(env_file=EnvConfigFile, extra='ignore')
     # Domain defaults
-    app_name: str = "hpcl_ceg"
-    cookie_name: str = "hpcl_ceg"
-    default_index: str = "hpcl_ceg"
+    app_name: str = "hpcl_novex"
+    cookie_name: str = "hpcl_novex"
+    default_index: str = "hpcl_novex"
     multi_tenant_support: bool = True
-    password_salt: str = "hpcl_ceg_dnc"
+    password_salt: str = "hpcl_novex_dnc"
     max_redis_connections: int = 10
 
     # Header based authentication Enabled or Not
@@ -106,6 +106,21 @@ class Settings(pydantic_settings.BaseSettings):
     superset_external_url: str = 'http://localhost:8088'
     superset_user: str = "admin"
     superset_password: str = 'password'
+
+    # SMTP
+    smtp_host: str = "smtp.hpcl.co.in"
+    smtp_port: int = 25
+    smtp_from_url: str = "novex@hpcl.co.in"
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_tls_enabled: bool = False
+    smtp_ssl_enabled: bool = False
+
+    # LDAP Settings
+    ldap_host: str = ""
+    ldap_port: str = ""
+    ldap_domain: str = ""
+    ldap_auth_enabled: bool = False
 
     # camunda
     camunda_url: str = 'http://10.90.38.167:8080'

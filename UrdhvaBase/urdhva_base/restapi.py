@@ -200,7 +200,7 @@ async def contextMiddleware(request: fastapi.Request, call_next):
     data = {}
     cookie_id = request.cookies.get(cookie_name, None)
     redis_client = await urdhva_base.redispool.get_redis_connection()
-    entity_id = ""
+    entity_id = "Novex"
     if cookie_id:
         try:
             f = Fernet(urdhva_base.settings.fernet_key)
@@ -222,13 +222,16 @@ async def contextMiddleware(request: fastapi.Request, call_next):
     data['entity_obj'] = urdhva_base.entity.Entity()
     data['entity_id'] = entity_id
     if cookie_id:
-        rkey = f"{entity_id}_SessionData_{cookie_id}"
+        rkey = f"Novex_SessionData_{cookie_id}"
         cookie = await redis_client.get(rkey)
         if cookie:
             if isinstance(cookie, bytes):
                 cookie = cookie.decode()
             cookie = cookie.split("$$_##_##_$$")
-            data['rpt'] = json.loads(base64.urlsafe_b64decode(cookie[0].split('.')[1] + '=====').decode())
+            if "=====" in cookie[0]:
+                data['rpt'] = json.loads(base64.urlsafe_b64decode(cookie[0].split('.')[1] + '=====').decode())
+            else:
+                data['rpt'] = json.loads(base64.urlsafe_b64decode(cookie[0]).decode())
             data['id_auth_token'] = cookie[1] if len(cookie) > 1 else ""
         else:
             data["base_url"] = await get_baseurl(request, "OAUTH_RedirectUrl", entity_id)

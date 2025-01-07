@@ -91,6 +91,9 @@ class {{input.name}}Create({%- if not input.is_internal -%}{{input.dbbase[1]}}{%
         {% if input.config.search_fields is defined and input.config.search_fields -%}
         search_fields = {{input.config.search_fields.split(',')}}
         {% endif -%}
+        {% if input.config.access_key_mapping is defined and input.config.access_key_mapping -%}
+        access_key_mapping = {{input.config.access_key_mapping.split(',')}}
+        {% endif -%}
         {% if input.config.upsert_skip_keys is defined and input.config.upsert_skip_keys -%}
         upsert_skip_keys = {{input.config.upsert_skip_keys.split(',')}}
         {% endif -%}
@@ -140,6 +143,9 @@ class {{input.name}}({{input.dbbase[2]}}):
         {% endif -%}
         {% if input.config.search_fields is defined and input.config.search_fields -%}
         search_fields = {{input.config.search_fields.split(',')}}
+        {% endif -%}
+        {% if input.config.access_key_mapping is defined and input.config.access_key_mapping -%}
+        access_key_mapping = {{input.config.access_key_mapping.split(',')}}
         {% endif -%}
         {% if input.config.upsert_skip_keys is defined and input.config.upsert_skip_keys -%}
         upsert_skip_keys = {{input.config.upsert_skip_keys.split(',')}}
