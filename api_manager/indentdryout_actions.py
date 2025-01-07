@@ -254,16 +254,17 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
             formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
+            formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
             return formatted_ist_time
         except:
             return "-"
-
+    prod_code_mapping = connection_mapping.item_name_mapping
     if resp:
         # resp = resp[0]
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
                                     "state": resp["state"], "indent_status": resp["indent_status"],
                                     "plant_id": resp["terminal_plant_id"], "plant_name": resp['terminal_plant_name'],
-                                    "indent_no": resp["indent_no"]}
+                                    "indent_no": resp["indent_no"], "Product": prod_code_mapping.get(str(resp['product_code']), str(resp['product_code']))}
         if not resp['terminal_plant_name']:
             status, location_data = await alert_helper.get_location_details("TAS", resp['terminal_plant_id'])
             if status:
@@ -564,7 +565,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                             GROUP BY sap_id
                         ) AS subquery"""
     delivered_count = await function(
-        query=stats_query
+        query=delivered_query
     )
     if delivered_count:
         delivered_count = delivered_count[0].get("total_count", 0) if delivered_count[0].get("total_count") else 0
@@ -600,7 +601,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
                   for x in connection_mapping.dryout_aging])
-    stats.extend([{"section": "", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"}])
+    stats.extend([{"section": "Indent Delivered", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"}])
     stats = sorted(stats, key=lambda x: x['serial'])
     return {
         "status": True, "message": "Success", "stats": stats,
