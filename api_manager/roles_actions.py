@@ -1,3 +1,4 @@
+import hpcl_ceg_model
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
@@ -8,7 +9,11 @@ router = fastapi.APIRouter(prefix='/roles')
 # Action create_role
 @router.post('/create_role', tags=['Roles'])
 async def roles_create_role(data: Roles_Create_RoleParams):
-    ...
+    role_data = {"name": data.name, "status": True, "allowed_pages": [{'menu_name': rec.menu_name,
+                                                                       "allowed_sub_menus": rec.allowed_sub_menus}
+                                                                      for rec in data.allowed_pages]}
+    await hpcl_ceg_model.RolesCreate(**role_data).create()
+    return True, f"Role {data.name} created successfully"
 
 
 # Action update_role_status
