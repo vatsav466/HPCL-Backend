@@ -1110,7 +1110,7 @@ class IndentDryOut:
         }
 
         for var_name, payload in variables.items():
-            url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/{var_name}"
+            url = f"{CAMUNDA_URL}/engine-rest/process-instance/{instance_id}/variables/{var_name}"
 
             for attempt in range(MAX_RETRIES):
                 try:

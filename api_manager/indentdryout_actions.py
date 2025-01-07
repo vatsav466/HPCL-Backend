@@ -601,7 +601,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
                   for x in connection_mapping.dryout_aging])
-    stats.extend([{"section": "Indent Delivered", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"}])
+    stats.append({"section": "Indent Delivered", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"})
     stats = sorted(stats, key=lambda x: x['serial'])
     return {
         "status": True, "message": "Success", "stats": stats,
@@ -616,7 +616,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
 @router.post('/get_dried_out_ro_data', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro_DataParams):
     top_x_axis = connection_mapping.dry_out_top_x_axis
-    top_x_axis.extend([{"name": "Indent Delivered", "group": "delivered"}])
+    top_x_axis.append({"name": "Indent Delivered", "group": "delivered"})
     bottom_x_axis = connection_mapping.dry_out_bottom_x_axis
 
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
