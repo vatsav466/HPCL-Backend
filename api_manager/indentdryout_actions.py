@@ -272,6 +272,8 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
                                      f"{convert_time_read_format(str(resp['created_at']))}")
 
         for history in resp.get("alert_history", []):
+            if history['action_msg'] == "Invalid Is On Hold":
+                history['action_msg'] = "Indent Is On Hold"
             alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
                                          f" {convert_time_read_format(str(history['allocated_time']))}, "
                                          f"Processed at {convert_time_read_format(str(history['processed_time']))}")
