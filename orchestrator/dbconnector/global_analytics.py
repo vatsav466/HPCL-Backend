@@ -1022,9 +1022,10 @@ class GlobalAnalytics:
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
-                if rec.key == '"month_name"':  # Only handle the month_name case separately
+                #commenting this as the lastest table is having month_name as Jan,Feb etc
+                #if rec.key == '"month_name"':  # Only handle the month_name case separately
                     # Check if any value in rec.value is in month_mapping
-                    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                #    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
 
                 # result = [value.strip() for value in rec.value.split(",")]
 
@@ -1034,6 +1035,15 @@ class GlobalAnalytics:
                 else:
                     if len(rec.value) == 1:
                         print("if in else")
+                        if rec.key =='"SBU_Name"':
+                            rec.key = '"ORGSBUNAME"'
+                        elif rec.key == '"Zone_Name"':
+                            rec.key = '"ORGZONENAME"'
+                        elif rec.key == '"SalesArea_Name"':
+                            rec.key = '"ORGSANAME"'
+                        elif rec.key == '"Region_Name"':
+                            rec.key = '"ORGRONAME"'
+
                         condition = f" and {rec.key} = '{rec.value[0]}'"
                     else:
                         print("else in else")
@@ -1046,18 +1056,19 @@ class GlobalAnalytics:
         else:
             # Fallback query if no filters are provided
             sales_growth_query_ = """  
-                SELECT 
-                    MAX(ROUND("MOM_LEVEL_SALES_SYNC"."sum_total_sales")) AS "total_sales",
-                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" AS "fiscal_year",
-                    TO_CHAR(TO_DATE("MOM_LEVEL_SALES_SYNC"."month_name", 'Month'), 'Mon') AS "month_name"
+                SELECT
+                    ROUND(SUM("MOM_LEVEL_FINAL_DATA"."NETWEIGHT_TMT")) AS "total_sales",
+                    "MOM_LEVEL_FINAL_DATA"."fiscal_year" AS "fiscal_year",
+                    "MOM_LEVEL_FINAL_DATA"."month_name"
                 FROM
-                    "hpcl_ceg"."public"."MOM_LEVEL_SALES_SYNC"
+                    "hpcl_ceg"."public"."MOM_LEVEL_FINAL_DATA"
                 WHERE
-                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" in ('2023-2024','2024-2025') 
+                    "MOM_LEVEL_FINAL_DATA"."fiscal_year" in ('2023-2024','2024-2025')
                 GROUP BY
-                    "MOM_LEVEL_SALES_SYNC"."fiscal_year", TO_CHAR(TO_DATE("MOM_LEVEL_SALES_SYNC"."month_name", 'Month'), 'Mon')
+                  "MOM_LEVEL_FINAL_DATA"."fiscal_year","MOM_LEVEL_FINAL_DATA"."month_name"
                 ORDER BY
-                    "MOM_LEVEL_SALES_SYNC"."fiscal_year" ASC
+                    "MOM_LEVEL_FINAL_DATA"."fiscal_year" ASC
+
             """
 
             resp = await function(query=sales_growth_query_)
@@ -1081,23 +1092,26 @@ class GlobalAnalytics:
         
         resp = await function(query=sales_growth_query_)
         resp = pd.DataFrame(resp)
+        resp =resp.rename(columns = {'ORGSBUCD':'SBU','ORGSBUNAME':'SBU_Name','ORGZONECD':'ZONE','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
+            'NETWEIGHT_TMT':'total_sales', 'ORGSANAME':'SalesArea_Name',"ORGSACD":"SA","ORGROCD":"REGION"})
 
         # Fill missing values for numeric columns
         for each_float_col in ["sum_total_sales", "total_sales"]:
-            resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            if each_float_col in resp.columns.tolist():
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
 
         # Fill missing values for string columns
         for each_str_col in [
-            "month_name", "fiscal_month", "SBU", "ZONE", "REGION", "SA", 
-            "MATERIAL_CD", "fiscal_year", "month_year",
+             "month_name", "SBU", "ZONE", "REGION", "SA",
+
             "Zone_Name", "Region_Name", "SalesArea_Name", "fiscal_year",
-            "month_year", "month_name"
+            "month_name"
         ]:
             resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
         
         if filters:
             filter_keys = [rec.key.strip('"') for rec in filters]
-            
+            filter_keys = [x.replace('ORGSBUNAME', 'SBU_Name') if 'ORGSBUNAME' in x else x.replace('ORGZONENAME', 'Zone_Name') if 'ORGZONENAME' in x else x.replace('ORGSANAME','SalesArea_Name') if 'ORGSANAME'in x else x.replace('ORGRONAME','Region_Name') if 'ORGRONAME' in x else x for x in filter_keys]
             resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
@@ -1124,9 +1138,9 @@ class GlobalAnalytics:
                 grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"])
             elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and
                   "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys):
-                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"])
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name","MATERIALGROUPNAME"])
             grouped_resp = resp.groupby(grouped_keys, as_index=False).agg({
-                "total_sales": lambda x: sum(round(x)),
+                "total_sales": lambda x: round(sum(x),2),
             })
             print("grouped_keys->>",grouped_keys)
             if grouped_resp is not None:
