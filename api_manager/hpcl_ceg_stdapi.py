@@ -370,4 +370,51 @@ async def get(id: str):
 @router.get('/vtsalerthistory', response_model=VtsAlertHistoryGetResp, tags=['VtsAlertHistory'])
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await VtsAlertHistory.get_all(params, skip_secrets=True)
+@router.post('/m60levelmetadata', response_model=M60LevelMetaData, tags=['M60LevelMetaData'])
+async def create(inputObj: M60LevelMetaDataCreate):
+    return await inputObj.create()
 
+
+@router.put('/m60levelmetadata', response_model=M60LevelMetaData, tags=['M60LevelMetaData'])
+async def update(inputObj: M60LevelMetaData):
+    return await inputObj.modify()
+
+
+@router.get('/m60levelmetadata/{id}', response_model=M60LevelMetaData, tags=['M60LevelMetaData'])
+async def get(id: str):
+    return await M60LevelMetaData.get(id, skip_secrets=True)
+
+
+@router.get('/m60levelmetadata', response_model=M60LevelMetaDataGetResp, tags=['M60LevelMetaData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await M60LevelMetaData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/m60levelmetadata/{id}', tags=['M60LevelMetaData'])
+async def delete(id: str):
+    return await M60LevelMetaData.delete(id)
+
+
+@router.post('/momlevelfinalmetadata', response_model=MomLevelFinalMetaData, tags=['MomLevelFinalMetaData'])
+async def create(inputObj: MomLevelFinalMetaDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/momlevelfinalmetadata', response_model=MomLevelFinalMetaData, tags=['MomLevelFinalMetaData'])
+async def update(inputObj: MomLevelFinalMetaData):
+    return await inputObj.modify()
+
+
+@router.get('/momlevelfinalmetadata/{id}', response_model=MomLevelFinalMetaData, tags=['MomLevelFinalMetaData'])
+async def get(id: str):
+    return await MomLevelFinalMetaData.get(id, skip_secrets=True)
+
+
+@router.get('/momlevelfinalmetadata', response_model=MomLevelFinalMetaDataGetResp, tags=['MomLevelFinalMetaData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await MomLevelFinalMetaData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/momlevelfinalmetadata/{id}', tags=['MomLevelFinalMetaData'])
+async def delete(id: str):
+    return await MomLevelFinalMetaData.delete(id)

@@ -1016,3 +1016,89 @@ Model VtsAlertHistory {
         crud_operations='read'
     }
 }
+
+Model M60LevelMetaData{
+
+    SBU optional str
+    SBU_Name optional str
+    ZONE optional str
+    Zone_Name optional str
+    REGION optional str
+    Region_Name optional str
+    SA optional str
+    SalesArea_Name optional str
+    PRODUCT optional str
+    ProductName optional str
+    UOM optional str
+    INVOICE_DT optional str
+    TARGET_QTY_KL optional float
+    TARGET_QTY_TMT optional float
+    FISCAL_YEAR optional str
+    CUR_FISCAL_YEAR optional str
+    ORGSBUCD optional str
+    ORGSBUNAME optional str
+    ORGZONECD optional str
+    ORGZONENAME optional str
+    ORGROCD optional str
+    ORGRONAME optional str
+    ORGSACD optional str
+    ORGSANAME optional str
+    PRODUCTCODE optional str
+    MATERIALGROUPNAME optional str
+    CURFISCALYEAR optional str
+    FISCALYEAR optional str
+    YEARMONTH optional str
+    NETWEIGHT_UOM optional float
+    NETWEIGHT_KG optional float
+    NETWEIGHT_TMT optional float
+    Total_Days_Till_PresentDay optional int
+    Number_Of_Sundays_Till_PresentDay optional int
+    TARGET_ROUND optional int 
+    Actual_ROUND optional int
+    FinalSum optional float
+    FinalActualSum optional float
+    MaxPendingDays optional int
+    Working_Days_Till_PresentDay_WithoutSundays optional int
+    Rate_Per_Day_Required_MMT optional float
+    Rate_per_day_current_MMT optional float
+    Total_Days_in_FY optional int
+    Pending_Days optional int
+    month_year optional int
+    month_name optional str
+    fy_month optional int
+    year_monthname optional date
+    Target_Quantity_TMTT optional float
+    Prediction_Value optional float
+    Act_Tgt_Achievement optional float
+    Zone_Region_Achievement optional float
+    Product_Achievement optional float
+    engine_id optional str
+
+
+
+}
+
+
+
+Model MomLevelFinalMetaData {
+    ORGSBUCD optional str
+    ORGSBUNAME optional str
+    ORGZONECD optional str
+    ORGZONENAME optional str
+    ORGROCD optional str
+    ORGRONAME optional str
+    ORGSACD optional str
+    ORGSANAME optional str
+    PRODUCTCODE optional str
+    MATERIALGROUPNAME optional str
+    CURFISCALYEAR optional str
+    FISCALYEAR optional str
+    YEARMONTH optional str
+    NETWEIGHT_UOM optional float
+    NETWEIGHT_KG optional float
+    NETWEIGHT_TMT optional float
+    fiscal_year optional str
+    engine_id optional str
+    month_name optional str
+
+}
