@@ -32,7 +32,7 @@ class AuthenticationManager:
             ldap_client = ldap.initialize(f"ldap://{urdhva_base.settings.ldap_host}:{urdhva_base.settings.ldap_port}")
             # perform a synchronous bind
             ldap_client.set_option(ldap.OPT_REFERRALS, 0)
-            ldap_client.simple_bind_s(f"{username}:{urdhva_base.settings.ldap_domain}", f"{password}")
+            ldap_client.simple_bind_s(f"{username}@{urdhva_base.settings.ldap_domain}", f"{password}")
             print("User Successfully Valid...")
             return True
         except ldap.INVALID_CREDENTIALS as e:
@@ -62,7 +62,7 @@ class AuthenticationManager:
         # If ldap authentication enabled allow user to validate with LDAP, else check local login
         if user_info.get('is_ad_user'): #urdhva_base.settings.ldap_auth_enabled:
             # Validating user in with LDAP.
-            status = cls.validate_ldap_auth(username, password)
+            status = await cls.validate_ldap_auth(username, password)
             if not status:
                 return False, "Invalid Login Credentials"
         else:
