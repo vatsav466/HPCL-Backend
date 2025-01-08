@@ -638,6 +638,16 @@ class IndentDryOut:
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
                                                progress_rate="7")
                 return await self.send_alert_action(is_r2_swipe=True)
+            elif await self._is_indent_delivered():
+                logger.info("R2, R3 Not Swiped But Indent Delivered")
+                logger.info(f"alert_id: {self.params.get('alert_id')}")
+                logger.info(f"params: {self.params}")
+                input_data["action_msg"] = "R2, R3 Not Swiped But Indent Delivered"
+                input_data["action_type"] = "R2Swipe"
+                input_data["event_tags"]["is_r2_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
+                                               progress_rate="7")
+                return await self.send_alert_action(is_r3_swipe=True)
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
         if resp.get("count") > 0:
@@ -821,7 +831,7 @@ class IndentDryOut:
             cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
-        print("cris_resp: ", cris_resp)
+        print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status"]])
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -838,7 +848,7 @@ class IndentDryOut:
         _prod_map = await self.prod_code_mapping()
         cris_resp.replace({"item_name": _prod_map}, inplace=True)
         cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
-        print("cris_resp: ", cris_resp)
+        print("cris_resp after filter: ", cris_resp[["item_name", "rosapcode", "status"]])
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
