@@ -1,7 +1,8 @@
 import urdhva_base
 import re
 from orchestrator.dbconnector import global_analytics
-from orchestrator.dbconnector.widget_actions import lpg_plant
+from orchestrator.dbconnector.widget_actions import lpg_plant, model_mapping, lpg_plant_queries
+import hpcl_ceg_model
 
 lpg_dashboard_actions = [
     'get_production_details',
@@ -52,8 +53,8 @@ lpg_dashboard_actions = [
 
 # Todo:- import all widget action modules here
 widget_mapping = {
-    'lpg_production': {'module_name': 'lpg_plant', 'func_name': 'LPGPlantActions.get_production_details'},
-    'lpg_productivity_cyl_per_hour':{'module_name': 'lpg_plant', 'func_name': 'LPGPlantActions.get_productivity_cyl_per_hour'},
+    'lpg_production': {},
+    'lpg_productivity_cyl_per_hour':{},
     'get_production_details': {},
     'get_productivity_cyl_per_hour': {},
     'get_rejections_by_zones':{},
@@ -107,7 +108,7 @@ class WidgetActions:
     @staticmethod
     # Safely resolve the module and function
     async def execute_widget_action(func_name, filters, drill_state):
-        try:
+        try:                       
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
 
@@ -123,13 +124,31 @@ class WidgetActions:
                 #print(f"Available functions in LPGPlantActions: {dir(lpg_plant.LPGPlantActions)}")
                 #print(f"Available functions in GlobalAnalytics: {dir(global_analytics.GlobalAnalytics)}")
                 raise AttributeError(f"Function {func_name} not found in either module.")
+                
+
+            for model_, model_actions in model_mapping.modelMapping.items():
+                if func_name in model_actions:
+                    where_clause = await eval(f"hpcl_ceg_model.{model_}.get_clause_conditions()")
+                    print("where_clause: ", where_clause)
+                    action_query = lpg_plant_queries.lpg_plant_query.get(func_name)
+                    print("query before: ",action_query)
+                    widget_mapping[func_name] = {'filter_applied': action_query}
+                    if where_clause:
+                        action_query_ = await WidgetActions.get_not_join_query(action_query, where_clause,"")
+                    else:
+                        action_query_ = action_query
+                    lpg_plant_queries.lpg_plant_query[func_name] = action_query_
+                    print("query after: ", lpg_plant_queries.lpg_plant_query[func_name],'\n','%'*50)
+
 
             # Retrieve the function from the resolved module
             func = getattr(module, func_name)
             # print(f"Resolved function: {dir(func)}")
 
             # Execute the function asynchronously
-            return await func(filters, drill_state)
+            res = await func(filters, drill_state)
+            lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
+            return res
         
         except AttributeError as e:
             # Handle case where the function name is invalid
@@ -152,22 +171,26 @@ class WidgetActions:
     async def generate_filter_clause(filters):
         conditions = []
         for filter_item in filters:
-            filter_item = filter_item.dict()
+            if not isinstance(filter_item, dict):
+                filter_item = filter_item.dict()
             key = filter_item['key']
             condition = filter_item['cond']
             value = filter_item['value']
 
             if condition == 'equals':
-                conditions.append(f"{key} = '{value}'")
+                if isinstance(value, int):
+                    conditions.append(f''' "{key}" = {value} ''')
+                else:
+                    conditions.append(f''' "{key}" = '{value}' ''')
             elif condition == 'prefix':
                 conditions.append(f"{key} LIKE '{value}%'")
             elif condition == 'contains':
                 conditions.append(f"{key} LIKE '%{value}%'")
             elif condition == 'suffix':
                 conditions.append(f"{key} LIKE '%{value}'")
-            elif condition == 'oneof' and isinstance(value, list):
+            elif condition == ' ' and isinstance(value, list):
                 values = "', '".join(map(str, value))
-                conditions.append(f"{key} IN ('{values}')")
+                conditions.append(f''' "{key}" IN ('{values}') ''')
             elif condition == 'pattern':
                 conditions.append(f"{key} ILIKE '%{value}%'")
             elif condition == 'date_filter':

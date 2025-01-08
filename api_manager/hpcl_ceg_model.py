@@ -16,12 +16,17 @@ from sqlalchemy.orm import *
 from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
+class RoleMapperCreate(pydantic.BaseModel):
+    menu_name: str
+    allowed_sub_menus: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+
 class RolesSchema(UrdhvaPostgresBase):
     __tablename__ = 'roles'
     
     name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    allowed_pages: Mapped[typing.Optional[typing.List[str]]] = mapped_column("allowed_pages", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    allowed_pages: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("allowed_pages", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class RolesCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -29,7 +34,7 @@ class RolesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     
     name: str
     status: bool
-    allowed_pages: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    allowed_pages: typing.Optional[typing.List[RoleMapperCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -42,7 +47,7 @@ class Roles(urdhva_base.postgresmodel.PostgresModel):
     
     name: typing.Optional[str] | None = None
     status: typing.Optional[bool] | None = None
-    allowed_pages: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    allowed_pages: typing.Optional[typing.List[RoleMapperCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -58,7 +63,7 @@ class RolesGetResp(pydantic.BaseModel):
 
 class Roles_Create_RoleParams(pydantic.BaseModel):
     name: str
-    allowed_pages: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    allowed_pages: typing.Optional[typing.List[RoleMapperCreate]] | None = None
 
 
 class Roles_Update_Role_StatusParams(pydantic.BaseModel):
@@ -77,9 +82,9 @@ class UsersSchema(UrdhvaPostgresBase):
     email: Mapped[str] = mapped_column("email", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     first_name: Mapped[str] = mapped_column("first_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     last_name: Mapped[str] = mapped_column("last_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    password: Mapped[urdhva_base.types.Secret] = mapped_column("password", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    password: Mapped[typing.Optional[urdhva_base.types.Secret]] = mapped_column("password", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     system_role: Mapped[str] = mapped_column("system_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     novex_role: Mapped[str] = mapped_column("novex_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -88,6 +93,7 @@ class UsersSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.List[str]] = mapped_column("zone", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sales_area: Mapped[typing.List[str]] = mapped_column("sales_area", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     escalation_level: Mapped[typing.Optional[typing.Any]] = mapped_column("escalation_level", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    is_ad_user: Mapped[bool] = mapped_column("is_ad_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
@@ -100,7 +106,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     email: str
     first_name: str
     last_name: str
-    password: urdhva_base.types.Secret
+    password: typing.Optional[urdhva_base.types.Secret] | None = None
     employee_id: str
     bu: typing.List[hpcl_ceg_enum.BusinessUnit]
     sap_id: typing.List[str]
@@ -111,6 +117,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.List[str]
     sales_area: typing.List[str]
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
+    is_ad_user: bool
     status: bool
 
     class Config:
@@ -137,6 +144,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[typing.List[str]] | None = None
     sales_area: typing.Optional[typing.List[str]] | None = None
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
+    is_ad_user: typing.Optional[bool] | None = None
     status: typing.Optional[bool] | None = None
 
     class Config:
@@ -351,7 +359,7 @@ class Locationmaster_Upload_Tags_DataParams(pydantic.BaseModel):
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
-    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[str] = mapped_column("location_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     user_name: Mapped[typing.Optional[str]] = mapped_column("user_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -465,6 +473,7 @@ class ROAssetMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = ROAssetMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id', 'region']
 
 
 class ROAssetMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -486,6 +495,7 @@ class ROAssetMaster(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = ROAssetMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id', 'region']
 
 
 class ROAssetMasterGetResp(pydantic.BaseModel):
@@ -541,6 +551,7 @@ class TASAssetMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = TASAssetMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id', 'region']
 
 
 class TASAssetMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -562,6 +573,7 @@ class TASAssetMaster(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = TASAssetMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id', 'region']
 
 
 class TASAssetMasterGetResp(pydantic.BaseModel):
@@ -617,6 +629,7 @@ class LPGAssetMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = LPGAssetMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id', 'region']
 
 
 class LPGAssetMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -638,6 +651,7 @@ class LPGAssetMaster(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = LPGAssetMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id', 'region']
 
 
 class LPGAssetMasterGetResp(pydantic.BaseModel):
@@ -757,6 +771,7 @@ class InterlockCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = InterlockSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id', 'zone']
 
 
 class Interlock(urdhva_base.postgresmodel.PostgresModel):
@@ -779,6 +794,7 @@ class Interlock(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = InterlockSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id', 'zone']
 
 
 class InterlockGetResp(pydantic.BaseModel):
@@ -818,6 +834,7 @@ class EMLockCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = EMLockSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
 
 
 class EMLock(urdhva_base.postgresmodel.PostgresModel):
@@ -837,6 +854,7 @@ class EMLock(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = EMLockSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
 
 
 class EMLockGetResp(pydantic.BaseModel):
@@ -884,6 +902,7 @@ class VTSCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = VTSSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
 
 
 class VTS(urdhva_base.postgresmodel.PostgresModel):
@@ -907,6 +926,7 @@ class VTS(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = VTSSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
 
 
 class VTSGetResp(pydantic.BaseModel):
@@ -1035,6 +1055,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         schema_class = AlertsSchema
         upsert_keys = []
         search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class Alerts(urdhva_base.postgresmodel.PostgresModel):
@@ -1099,6 +1120,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
         schema_class = AlertsSchema
         upsert_keys = []
         search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class AlertsGetResp(pydantic.BaseModel):
@@ -1169,6 +1191,7 @@ class CEMSLocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = CEMSLocationMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'location_id:sap_id']
 
 
 class CEMSLocationMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -1191,6 +1214,7 @@ class CEMSLocationMaster(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = CEMSLocationMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'location_id:sap_id']
 
 
 class CEMSLocationMasterGetResp(pydantic.BaseModel):
@@ -1398,6 +1422,7 @@ class DryOutHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = DryOutHistorySchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
 
 
 class DryOutHistory(urdhva_base.postgresmodel.PostgresModel):
@@ -1419,6 +1444,7 @@ class DryOutHistory(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = DryOutHistorySchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
 
 
 class DryOutHistoryGetResp(pydantic.BaseModel):
@@ -1539,6 +1565,7 @@ class IndentDryOutCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = IndentDryOutSchema
         upsert_keys = ['bu', 'product_no', 'rosapcode']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'site_id:sap_id']
 
 
 class IndentDryOut(urdhva_base.postgresmodel.PostgresModel):
@@ -1570,6 +1597,7 @@ class IndentDryOut(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = IndentDryOutSchema
         upsert_keys = ['bu', 'product_no', 'rosapcode']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'site_id:sap_id']
 
 
 class IndentDryOutGetResp(pydantic.BaseModel):
@@ -1715,6 +1743,7 @@ class LpgOperationsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = LpgOperationsSchema
         upsert_keys = []
+        access_key_mapping = ['zone']
 
 
 class LpgOperations(urdhva_base.postgresmodel.PostgresModel):
@@ -1748,6 +1777,7 @@ class LpgOperations(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = LpgOperationsSchema
         upsert_keys = []
+        access_key_mapping = ['zone']
 
 
 class LpgOperationsGetResp(pydantic.BaseModel):
@@ -1935,6 +1965,7 @@ class LpgSalesSummaryDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = LpgSalesSummaryDataSchema
         upsert_keys = []
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
 
 
 class LpgSalesSummaryData(urdhva_base.postgresmodel.PostgresModel):
@@ -1990,6 +2021,7 @@ class LpgSalesSummaryData(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = LpgSalesSummaryDataSchema
         upsert_keys = []
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
 
 
 class LpgSalesSummaryDataGetResp(pydantic.BaseModel):
@@ -2075,6 +2107,7 @@ class LpgConsumersSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = LpgConsumersSummarySchema
         upsert_keys = []
+        access_key_mapping = ['DistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
 
 
 class LpgConsumersSummary(urdhva_base.postgresmodel.PostgresModel):
@@ -2117,6 +2150,7 @@ class LpgConsumersSummary(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = LpgConsumersSummarySchema
         upsert_keys = []
+        access_key_mapping = ['DistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
 
 
 class LpgConsumersSummaryGetResp(pydantic.BaseModel):
@@ -2223,6 +2257,7 @@ class DeviceMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = DeviceMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
 
 
 class DeviceMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -2245,6 +2280,7 @@ class DeviceMaster(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = DeviceMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
 
 
 class DeviceMasterGetResp(pydantic.BaseModel):
@@ -2296,6 +2332,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = VtsAlertHistorySchema
         upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
 
 
 class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
@@ -2321,6 +2358,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = VtsAlertHistorySchema
         upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
 
 
 class VtsAlertHistoryGetResp(pydantic.BaseModel):
@@ -2450,6 +2488,7 @@ class M60LevelMetaDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = M60LevelMetaDataSchema
         upsert_keys = []
+        access_key_mapping = ['SBU_NAME:bu', 'Zone:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
 
 
 class M60LevelMetaData(urdhva_base.postgresmodel.PostgresModel):
@@ -2514,6 +2553,7 @@ class M60LevelMetaData(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = M60LevelMetaDataSchema
         upsert_keys = []
+        access_key_mapping = ['SBU_NAME:bu', 'Zone:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
 
 
 class M60LevelMetaDataGetResp(pydantic.BaseModel):
@@ -2573,6 +2613,7 @@ class MomLevelFinalMetaDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = MomLevelFinalMetaDataSchema
         upsert_keys = []
+        access_key_mapping = ['ORGSBUNAME:bu', 'ORGZONENAME:zone', 'ORGSANAME:sales_area']
 
 
 class MomLevelFinalMetaData(urdhva_base.postgresmodel.PostgresModel):
@@ -2602,6 +2643,7 @@ class MomLevelFinalMetaData(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = MomLevelFinalMetaDataSchema
         upsert_keys = []
+        access_key_mapping = ['ORGSBUNAME:bu', 'ORGZONENAME:zone', 'ORGSANAME:sales_area']
 
 
 class MomLevelFinalMetaDataGetResp(pydantic.BaseModel):
