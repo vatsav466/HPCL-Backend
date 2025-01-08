@@ -455,7 +455,8 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     if dry_out_data:
         potential_dry_out = dry_out_data[0]["total_unique_count"]
 
-    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+    # _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out}
     return {"status": True, "message": "Success", "data": _data}
 
 
@@ -685,7 +686,7 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
     resp = pd.DataFrame(resp)
     # resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
     result = {
-        "customer": [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
+        "customer": [{"name": str(row['dealer_id']) + " - " + row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
         "plant": [{"name": row['terminal_plant_name'], "id": row['terminal_plant_id']} for _, row in resp.iterrows()]
     }
     return {"status": True, "message": "Success", "data": result}
