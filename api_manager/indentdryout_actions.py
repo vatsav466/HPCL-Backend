@@ -607,9 +607,36 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     ist = pytz.timezone('Asia/Kolkata')
     carry_fwd_indent_date = datetime.datetime.now(ist).strftime("%H")
     if int(carry_fwd_indent_date) > 14:
-        list_of_carry_fwd_indents = await dry_out_analysis.get_carry_fwd_indent(get_only_dry_out_ro=False)
-        carry_fwd_indent['value'] = len(list_of_carry_fwd_indents)
-    stats.append(carry_fwd_indent)
+        # list_of_carry_fwd_indents = await dry_out_analysis.get_carry_fwd_indent(get_only_dry_out_ro=False)
+        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        carry_fwd_data = pd.DataFrame(carry_fwd_data)
+        stats.extend([{
+            "section": "Carry Fwd Indent",
+            "value": len(carry_fwd_data),
+            "serial": 15, "condition": "=", "group": "not_raised"
+        }, {
+            "section": "DryOut Carry Fwd Indent",
+            "value": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != '']),
+            "serial": 16, "condition": "=", "group": "not_raised"
+        }, {
+            "section": "CATA Carry Fwd Indent",
+            "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']),
+            "serial": 17, "condition": "=", "group": "not_raised"
+        }])
+    else:
+        stats.extend([{
+            "section": "Carry Fwd Indent",
+            "value": 0,
+            "serial": 15, "condition": "=", "group": "not_raised"
+        },{
+            "section": "DryOut Carry Fwd Indent",
+            "value": 0,
+            "serial": 16, "condition": "=", "group": "not_raised"
+        },{
+            "section": "CATA Carry Fwd Indent",
+            "value": 0,
+            "serial": 17, "condition": "=", "group": "not_raised"
+        }])
     stats = sorted(stats, key=lambda x: x['serial'])
     updated_stats = []
     for each_stats in stats:
