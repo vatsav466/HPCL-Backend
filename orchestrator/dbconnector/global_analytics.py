@@ -2738,7 +2738,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/Users/apple/Desktop/DistributorMappings.csv")
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         if filters:
             lpg_pending_query = lpg_plant_queries.lpg_plant_query.get("overall_pending_pmuy_nmpuy")
             lpg_pending_query_ = lpg_pending_query
@@ -2863,7 +2863,7 @@ class GlobalAnalytics:
             Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
             Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-            df = pd.read_csv("/Users/admin/Downloads/DistributorMappings.csv")
+            df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
             if filters:
                 lpg_pending_query = lpg_plant_queries.lpg_plant_query.get("pending_1_3_days")
                 lpg_pending_query_ = lpg_pending_query
@@ -2969,6 +2969,108 @@ class GlobalAnalytics:
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
             # If no filters are applied, return the default response
             return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def total_suvidha(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        total_suvidha_query_ = lpg_plant_queries.lpg_plant_query.get("total_suvidha")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                total_suvidha_query_  += ' WHERE '
+                total_suvidha_query_  += ' AND '.join(conditions)
+            total_suvidha_query_ +=  ' AND "Category" = \'Domestic\' AND "ZOCode" NOT IN (\'Null\') AND "SubCategory" IN (\'NPMUY\',\'PMUY\')'
+            total_suvidha_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "SubCategory", "Category", "JDEDistributorCode"'
+        else:
+            if "where" not in total_suvidha_query_.lower():
+                total_suvidha_query_ +=  ' WHERE "Category" = \'Domestic\''
+            total_suvidha_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "SubCategory", "Category", "JDEDistributorCode"'
+            
+            resp = await function(query=total_suvidha_query_)
+            resp = pd.DataFrame(resp)
+            resp = resp.groupby(["SubCategory"], as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })
+            for each_float_col in [
+                "SuvidhaClub"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "SubCategory",
+                "Category"
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+
+        resp = await function(query=total_suvidha_query_)
+        if resp:
+            resp = pd.DataFrame(resp)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            
+            for each_float_col in [
+                "SuvidhaClub"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "SubCategory",
+                "Category",
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "SubCategory" in filter_keys and "ZOName" not in filter_keys:
+                    grouped_resp = resp.groupby(["SubCategory", "ZOName"], as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })
+                if "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName"], as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })
+                elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })  
+                elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })                    
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
 
     @staticmethod
