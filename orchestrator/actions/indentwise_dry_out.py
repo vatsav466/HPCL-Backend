@@ -1233,6 +1233,7 @@ class IndentDryOut:
                                         AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
                                     GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        logger.info(f"Query: {query}")
         resp = await function(query=query)
         if not resp:
             return False
