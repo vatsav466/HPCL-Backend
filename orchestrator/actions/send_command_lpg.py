@@ -82,7 +82,7 @@ class SendCommandLpg:
                     except Exception as e:
                         print("Exception updating isTripped Error:%s Traceback %s" % (e, traceback.format_exc()))
                         await asyncio.sleep(10)
-            elif params.get('interupt','') == "UnTripPlant":
+            elif params.get('interrupt','') == "UnTripPlant":
                 if str(tagValue) in ["0", "1"]:
                     if str(tagValue) == "0":
                         tagValue = 1
