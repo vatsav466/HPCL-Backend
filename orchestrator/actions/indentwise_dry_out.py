@@ -626,6 +626,14 @@ class IndentDryOut:
             }
         }
         if not resp:
+            if await self._is_r3_swiped():
+                logger.info("R2 Not Swiped But R3 Swiped")
+                input_data["action_msg"] = "R2 Not Swiped But R3 Swiped"
+                input_data["action_type"] = "R2Swipe"
+                input_data["event_tags"]["is_r2_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
+                                               progress_rate="7")
+                return await self.send_alert_action(is_r2_swipe=True)
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
         if resp.get("count") > 0:
@@ -679,6 +687,14 @@ class IndentDryOut:
             }
         }
         if not resp:
+            if await self._is_indent_delivered():
+                logger.info("R3 Not Swiped But Indent Delivered")
+                input_data["action_msg"] = "R3 Not Swiped But Indent Delivered"
+                input_data["action_type"] = "R3Swipe"
+                input_data["event_tags"]["is_r3_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data,
+                                               progress_rate="9")
+                return await self.send_alert_action(is_r3_swipe=True)
             return await self.send_alert_action(is_r3_swipe=False)
         resp = resp[0]
         if resp.get("count") > 0:
@@ -788,7 +804,7 @@ class IndentDryOut:
                             ELSE 6
                         END AS status
                     FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
-                    WHERE sch.volume > 0
+                    WHERE sch.volume > 0 and rosapcode = '{dealer_code}'
                     GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
                     ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -814,6 +830,7 @@ class IndentDryOut:
         _prod_map = await self.prod_code_mapping()
         cris_resp.replace({"item_name": _prod_map}, inplace=True)
         cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        print("cris_resp: ", cris_resp)
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
@@ -1166,3 +1183,101 @@ class IndentDryOut:
                     return False
 
         return True
+
+    async def _is_r3_swiped(self):
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dealer_code = str(self.params.get("dealer_id")).zfill(10)
+        indent_no = self.params.get("indent_no")
+        locn_code = self.params.get("terminal_plant_id")
+        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        if 'prod_reqd_dt' in self.params.keys():
+            prod_reqd_dt = self.params['prod_reqd_dt'].split("T")[0]
+        else:
+            query = f"""SELECT "PROD_REQD_DT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE "INDENT_NO" = '{indent_no}' """ \
+                    f"""AND "LOCN_CODE" = '{locn_code}' """
+            function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            resp = await function(query=query)
+            if resp:
+                prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d")
+            else:
+                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d")
+        query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
+                                    FROM 
+                                        "IMS_SAP"."INDENT_REQUEST" a, 
+                                        "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" b
+                                    WHERE 
+                                        SUBSTR(a."DEALER_CODE", 1, 10) = '{dealer_code}'
+                                        AND a."INDENT_NO" = '{indent_no}'
+                                        AND a."LOCN_CODE" = b."LOCN_CODE"
+                                        AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
+                                        AND b."CARD_STATUS" = 'O'
+                                        AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
+                                    GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+        if not resp:
+            return False
+        resp = resp[0]
+        if resp.get("count") > 0:
+            return True
+        return False
+
+    async def _is_indent_delivered(self):
+        dealer_code = str(self.params.get("dealer_id"))
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        alert_id = self.params.get("alert_id")
+        query = f"""SELECT
+                                site_id,
+                                fcc_code,
+                                rosapcode,
+                                item_name,
+                                product_grp AS product_grp,
+                                product_no,
+                                COUNT(DISTINCT tank_no) AS tank_cnt,
+                                STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
+                                CASE
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
+                                         AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
+                                    WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
+                                         AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
+                                    ELSE 6
+                                END AS status
+                            FROM "HPCL_HOS".sch_inventory_forecast_dashboard as sch
+                            WHERE sch.volume > 0 and rosapcode = '{dealer_code}'
+                            GROUP BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name
+                            ORDER BY site_id, fcc_code, product_grp, rosapcode, product_no, item_name"""
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        cris_resp = await function(query=query)
+        if not cris_resp:
+            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": []})
+        else:
+            cris_resp = pd.DataFrame(cris_resp)
+        print("cris_resp: ", cris_resp)
+
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        query = f'''SELECT product_code, 
+                            dry_out_in_days FROM public.alerts
+                            where id = '{alert_id}' '''
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        ceg_resp = await function(query=query)
+        ceg_resp = ceg_resp[0]
+        product_code = ceg_resp.get("product_code")
+        dry_out_in_days = ceg_resp.get("dry_out_in_days")
+        # ceg_resp = pd.DataFrame(ceg_resp)
+
+        _prod_map = await self.prod_code_mapping()
+        cris_resp.replace({"item_name": _prod_map}, inplace=True)
+        cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        cris_resp = cris_resp.to_dict("records")
+        if cris_resp:
+            cris_resp = cris_resp[0]
+        else:
+            cris_resp = {}
+        if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
+            return True
+        return False
