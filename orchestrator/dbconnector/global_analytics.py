@@ -2375,12 +2375,10 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-
+        lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
+        yesterday = datetime.now() - relativedelta(days=1)
         if filters:
-            lpg_cdcms_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
-            lpg_cdcms_query_ = lpg_cdcms_query
             conditions = []
-
             for rec in filters:
                 rec.value = rec.value.split(",")
                 # Now handle other cases
@@ -2396,35 +2394,30 @@ class GlobalAnalytics:
             if conditions:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
-            yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
-            yesterday = datetime.now() - relativedelta(days=1)
-            lpg_cdcms_query_ = f'''
-                select 
-                    sum("BookingReceivedYesterday") as "Bookings",
-                    sum("LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday") as "Sales",
-                    sum("Total_Pending") as "Pending",
-                    "ZOName" as "ZOName" 
-                from
-                    "LPG_SALES_SUMMARY_DATA" 
-                where
-                    ("LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ('Null') AND CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '{yesterday.strftime("%Y-%m-%d")}') 
-                group by
-                    "ZOName" 
-                limit 1000
-            '''
+            if "where" not in lpg_cdcms_query_.lower():
+                lpg_cdcms_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+                                            
             resp = await function(query=lpg_cdcms_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["ZOName"], as_index=False).agg({
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
+                })
 
             # Fill missing values for numerical columns
             for each_float_col in [
-                "BookingReceivedYesterday", "TotalSalesYesterday", "Total_Pending"
+                "Bookings", "Sales", "Pending"
             ]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
 
             # Fill missing values for string columns
             for each_str_col in [
@@ -2432,22 +2425,21 @@ class GlobalAnalytics:
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
             return {"status": True, "message": "success", "data": resp}
         
         # Execute the query
         resp = await function(query=lpg_cdcms_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-        yesterday = datetime.now() - relativedelta(days=1)
-        yesterday_date = yesterday.date()
         # Filter rows where Execution_Date matches yesterday
-        resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
+        resp = resp[resp["Execution_Date"].dt.date == yesterday.date()]
 
         # Fill missing values for numerical columns
         for each_float_col in [
-            "BookingReceivedYesterday", "TotalSalesYesterday", "Total_Pending"
+            "Bookings", "Sales", "Pending"
         ]:
             if each_float_col in resp.columns:
                 resp[each_float_col] = resp[each_float_col].fillna(0.0)
@@ -2458,13 +2450,10 @@ class GlobalAnalytics:
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-
             if "ZOName" in filter_keys and "ROName" not in filter_keys:
-                print("grouped_resp ZOName--> ")    
                 grouped_resp = resp.groupby(["ZOName","ROName"], as_index=False).agg({
                     "Bookings": "sum",
                     "Sales": "sum",
@@ -2477,7 +2466,6 @@ class GlobalAnalytics:
                     "Pending": "sum"
                 })        
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                print("grouped_resp  elif ZOName--> ")
                 grouped_resp = resp.groupby(["ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
                     "Bookings": "sum",
@@ -2486,9 +2474,9 @@ class GlobalAnalytics:
                     })
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
     
     @staticmethod
     async def lpg_cdcms_month(filters, drill_state):
@@ -2496,7 +2484,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-
         month_mapping = {
                             "Jan": "January",
                             "Feb": "February",
@@ -2548,8 +2535,8 @@ class GlobalAnalytics:
                 from
                     "LPG_SALES_SUMMARY_DATA"
                 group by
-                        EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date"), 
-                        TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon')
+                    EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date"), 
+                    TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon')
             '''
             resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
@@ -2578,7 +2565,7 @@ class GlobalAnalytics:
         resp = await function(query=lpg_cdcms_month_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')        
+        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -2620,6 +2607,7 @@ class GlobalAnalytics:
                     "Total Sales": lambda x: x.sum() / 10000000
                     })
             if grouped_resp is not None:
+                grouped_resp['Total Sales'] = grouped_resp['Total Sales'].round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
