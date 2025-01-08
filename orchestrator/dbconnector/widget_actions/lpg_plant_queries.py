@@ -791,7 +791,7 @@ LIMIT 10000;''',
                                     sum("Total_Pending") as "Total_pending" 
                                 from
                                     "LPG_SALES_SUMMARY_DATA" ''',
-    "pending_1_3_days" : f'''
+    "lpg_cdcms_ageing" : f'''
                         select 
                             "ZOName" ,
                             "ROName",
