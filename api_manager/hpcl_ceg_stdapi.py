@@ -370,6 +370,8 @@ async def get(id: str):
 @router.get('/vtsalerthistory', response_model=VtsAlertHistoryGetResp, tags=['VtsAlertHistory'])
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await VtsAlertHistory.get_all(params, skip_secrets=True)
+
+
 @router.post('/m60levelmetadata', response_model=M60LevelMetaData, tags=['M60LevelMetaData'])
 async def create(inputObj: M60LevelMetaDataCreate):
     return await inputObj.create()

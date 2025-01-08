@@ -317,6 +317,7 @@ Model ROAssetMaster {
 
     Config=> {
         crud_operations='read'
+        access_key_mapping='bu,sap_id,region'
     }
 }
 
@@ -344,6 +345,7 @@ Model TASAssetMaster {
 
     Config=> {
         crud_operations='read'
+        access_key_mapping='bu,sap_id,region'
     }
 }
 
@@ -371,6 +373,7 @@ Model LPGAssetMaster {
 
     Config=> {
         crud_operations='read'
+        access_key_mapping='bu,sap_id,region'
     }
 }
 
@@ -452,6 +455,7 @@ Model Interlock {
 
     Config=> {
         crud_operations='read'
+        access_key_mapping='bu,sap_id,zone'
     }
 }
 
@@ -468,6 +472,7 @@ Model EMLock {
 
     Config=> {
         crud_operations='read'
+        access_key_mapping='bu,sap_id'
     }
 }
 
@@ -488,6 +493,7 @@ Model VTS {
 
     Config=> {
         crud_operations='read'
+        access_key_mapping='bu,sap_id'
     }
 }
 
@@ -612,6 +618,10 @@ Model CEMSLocationMaster {
 
     Action=> download_template {
     }
+
+    Config=> {
+        access_key_mapping='bu,zone,region,location_id:sap_id'
+    }
 }
 
 Model CEMSQuantityMaster {
@@ -715,7 +725,7 @@ Model DryOutHistory {
 
     Config=> {
         crud_operations='read'
-        access_key_mapping='bu,zone,region,sales_area,sap_id'
+        access_key_mapping='bu,sap_id'
     }
 }
 
@@ -943,6 +953,10 @@ Model LpgSalesSummaryData {
     Execution_Month str
     Execution_Year int
     Month_Year str
+
+    Config=> {
+        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone'
+    }
 }
 
 Model LpgConsumersSummary {
@@ -978,6 +992,10 @@ Model LpgConsumersSummary {
     CategoryStatus str
     eKYCPending int
     ZoneNames str
+
+    Config=> {
+        access_key_mapping='DistributorCode:sap_id,SAName:sales_area,ZOName:zone'
+    }
 }
 
 
@@ -1095,7 +1113,9 @@ Model M60LevelMetaData{
     Product_Achievement optional float
     engine_id optional str
 
-
+    Config=> {
+        access_key_mapping='SBU_NAME:bu,Zone:zone,SalesArea_Name:sales_area,Region_Name:region'
+    }
 
 }
 
@@ -1121,5 +1141,9 @@ Model MomLevelFinalMetaData {
     fiscal_year optional str
     engine_id optional str
     month_name optional str
+
+    Config=> {
+        access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'
+    }
 
 }
