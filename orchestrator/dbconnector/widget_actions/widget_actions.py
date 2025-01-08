@@ -1,7 +1,8 @@
 import urdhva_base
 import re
 from orchestrator.dbconnector import global_analytics
-from orchestrator.dbconnector.widget_actions import lpg_plant
+from orchestrator.dbconnector.widget_actions import lpg_plant, model_mapping, lpg_plant_queries
+import hpcl_ceg_model
 
 lpg_dashboard_actions = [
     'get_production_details',
@@ -101,7 +102,7 @@ class WidgetActions:
     @staticmethod
     # Safely resolve the module and function
     async def execute_widget_action(func_name, filters, drill_state):
-        try:
+        try:                       
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
 
@@ -117,6 +118,17 @@ class WidgetActions:
                 #print(f"Available functions in LPGPlantActions: {dir(lpg_plant.LPGPlantActions)}")
                 #print(f"Available functions in GlobalAnalytics: {dir(global_analytics.GlobalAnalytics)}")
                 raise AttributeError(f"Function {func_name} not found in either module.")
+                
+
+            for model_, model_actions in model_mapping.modelMapping.items():
+                if func_name in model_actions:
+                    where_clause = await eval(f"hpcl_ceg_model.{model_}.get_clause_conditions()")
+                    print("where_clause: ", where_clause)
+                    action_query = lpg_plant_queries.lpg_plant_query.get(func_name)
+                    print("query before: ",action_query)
+                    action_query_ = await WidgetActions.get_not_join_query(action_query, where_clause,"")
+                    lpg_plant_queries.lpg_plant_query[func_name] = action_query_
+                    print("query after: ", lpg_plant_queries.lpg_plant_query[func_name])
 
             # Retrieve the function from the resolved module
             func = getattr(module, func_name)
@@ -146,7 +158,8 @@ class WidgetActions:
     async def generate_filter_clause(filters):
         conditions = []
         for filter_item in filters:
-            filter_item = filter_item.dict()
+            if not isinstance(filter_item, dict):
+                filter_item = filter_item.dict()
             key = filter_item['key']
             condition = filter_item['cond']
             value = filter_item['value']

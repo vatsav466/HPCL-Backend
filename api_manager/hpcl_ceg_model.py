@@ -1035,7 +1035,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         schema_class = AlertsSchema
         upsert_keys = []
         search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
-        access_key_mapping = ['SBU_NAME:bu', 'zone', 'region', 'sales_area', 'sap_id']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class Alerts(urdhva_base.postgresmodel.PostgresModel):
@@ -1100,7 +1100,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
         schema_class = AlertsSchema
         upsert_keys = []
         search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
-        access_key_mapping = ['SBU_NAME:bu', 'zone', 'region', 'sales_area', 'sap_id']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class AlertsGetResp(pydantic.BaseModel):
@@ -1400,6 +1400,7 @@ class DryOutHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = DryOutHistorySchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class DryOutHistory(urdhva_base.postgresmodel.PostgresModel):
@@ -1421,6 +1422,7 @@ class DryOutHistory(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = DryOutHistorySchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class DryOutHistoryGetResp(pydantic.BaseModel):
@@ -1946,6 +1948,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = VtsAlertHistorySchema
         upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
 
 
 class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
@@ -1971,6 +1974,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = VtsAlertHistorySchema
         upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
 
 
 class VtsAlertHistoryGetResp(pydantic.BaseModel):
