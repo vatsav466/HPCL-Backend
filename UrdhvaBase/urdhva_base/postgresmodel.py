@@ -106,7 +106,7 @@ class BasePostgresModel(pydantic.BaseModel):
         ...
 
     @classmethod
-    async def get_clause_conditions(cls):
+    async def get_clause_conditions(cls, formated=False):
         where_clause = []
         if urdhva_base.ctx.exists() and hasattr(cls.Config, "access_key_mapping"):
             key_mapping = cls.Config.access_key_mapping
@@ -119,11 +119,20 @@ class BasePostgresModel(pydantic.BaseModel):
                 if value in rpt and rpt.get(value):
                     if isinstance(rpt[value], list):
                         if len(rpt[value]) == 1:
-                            where_clause.append(f"{key}='{rpt[value][0]}'")
+                            if formated:
+                                where_clause.append({'key': key, "cond": 'equals', "value": rpt[value][0]})
+                            else:
+                                where_clause.append(f"{key}='{rpt[value][0]}'")
                         else:
-                            where_clause.append(f"{key} in {tuple(rpt[value])}")
+                            if formated:
+                                where_clause.append({'key': key, "cond": ' ', "value": rpt[value]})
+                            else:
+                                where_clause.append(f"{key} in {tuple(rpt[value])}")
                     else:
-                        where_clause.append(f"{key}='{rpt[value]}'")
+                        if formated:
+                            where_clause.append({'key': key, "cond": 'equals', "value": rpt[value]})
+                        else:
+                            where_clause.append(f"{key}='{rpt[value]}'")
         return where_clause
 
     @classmethod
@@ -323,6 +332,7 @@ class BasePostgresModel(pydantic.BaseModel):
             if search_conditions:
                 print("search_conditions --> ", search_conditions)
                 query_params.append(f"({' OR '.join(search_conditions)})")
+        query_params.extend(await cls.get_clause_conditions())
         if len(query_params):
             query.append("where " + " AND ".join(query_params))
 

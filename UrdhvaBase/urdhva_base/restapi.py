@@ -448,7 +448,7 @@ async def me(request: fastapi.Request):
     if permission_data["is_authenticated"]:
         resp = {"permissions": permission_data["allowed_roles"], "is_authenticated": True}
         base_keys = ["first_name", "last_name", "system_role", "allowed_roles", "email", "employee_id", "novex_role"]
-        permission_keys = ["bu", "region", "zone", "state", "sales_area"]
+        permission_keys = ["bu", "region", "zone", "state", "sales_area", "sap_id"]
         resp.update({key: rpt.get(key, '') for key in base_keys})
         resp.update({key: rpt.get(key, []) for key in permission_keys})
     return resp

@@ -3,6 +3,8 @@ import json
 import psycopg2
 import polars as pl
 import pandas as pd
+import hpcl_ceg_model
+import dashboard_studio_model
 from datetime import datetime
 from psycopg2 import sql, errors
 from collections import defaultdict
@@ -62,6 +64,8 @@ class GlobalAnalytics:
         analytics_query_ = analytics_query
 
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
             for filter_ in filters:
                 if filter_.key:
                     # Update the key of the filter to include the alias 'a.'
