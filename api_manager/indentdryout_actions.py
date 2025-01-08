@@ -606,7 +606,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     carry_fwd_indent = {"section": "Carry Fwd Indent", "value": 0, "serial": 12, "condition": "=", "group": "carry_fwd_indent"}
     ist = pytz.timezone('Asia/Kolkata')
     carry_fwd_indent_date = datetime.datetime.now(ist).strftime("%H")
-    if int(carry_fwd_indent_date) > 14:
+    if int(carry_fwd_indent_date) > 0:
         # list_of_carry_fwd_indents = await dry_out_analysis.get_carry_fwd_indent(get_only_dry_out_ro=False)
         carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
         carry_fwd_data = pd.DataFrame(carry_fwd_data)
