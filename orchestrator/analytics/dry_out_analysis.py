@@ -376,5 +376,81 @@ async def get_category_sync():
         schema_name="IMS_SAP",
         table_name="DEALER_DETAILS_CATA",
         records=data.to_dict(orient="records"),
-        conflict_columns=data.conflict_columns
+        conflict_columns=["DEALER_CODE"]
     )
+
+async def sync_carry_fwd_indent(insert_to_db: bool):
+    query = f"""WITH INDENT_DATA AS (
+                    SELECT DISTINCT 
+                        SUBSTR("DEALER_CODE", 3, 8) AS sap_id, 
+                        "PROD_REQD_DT" AS prod_reqd_dt,
+                        "INDENT_NO" AS indent_no
+                    FROM 
+                        "IMS_SAP"."INDENT_REQUEST"
+                    WHERE 
+                        "PROD_REQD_DT" < NOW()
+                        AND "TRUCK_REGNO" IS NULL
+                        AND "CANCEL_INDENT" IS NULL
+                        AND "VALID_INDENT" IN ('Y', 'H')
+                ),
+                ALERT_DATA AS (
+                    SELECT DISTINCT ON (sap_id, 
+                        "indent_no", 
+                        "terminal_plant_id")
+                        sap_id, 
+                        "indent_no", 
+                        "terminal_plant_id",
+                        dry_out_in_days, 
+                        TRUE AS dried_out
+                    FROM 
+                        "alerts"
+                    WHERE
+                        alert_status != 'Close' AND indent_status NOT IN ('Cancelled', 'Completed')
+                ),
+                COMBINED_DATA AS (
+                    SELECT 
+                        i.sap_id, 
+                        a.terminal_plant_id, 
+                        i.indent_no, 
+                        i.prod_reqd_dt,
+                        NOW() AS reported_date,
+                        a.dry_out_in_days, 
+                        a.dried_out
+                    FROM 
+                        INDENT_DATA i
+                    LEFT JOIN 
+                        ALERT_DATA a 
+                    ON 
+                        i.sap_id::TEXT = a.sap_id::TEXT AND TRIM(i.indent_no::TEXT) = TRIM(a.indent_no::TEXT)
+                )
+                SELECT 
+                    cd.sap_id, 
+                    cd.terminal_plant_id, 
+                    cd.indent_no, 
+                    cd.prod_reqd_dt, 
+                    cd.reported_date, 
+                    cd.dry_out_in_days, 
+                    cd.dried_out, 
+                    d."CATEGORY1" AS category
+                FROM 
+                    COMBINED_DATA cd
+                LEFT JOIN 
+                    "IMS_SAP"."DEALER_DETAILS_CATA" d
+                ON 
+                    d."DEALER_CODE" = cd.sap_id
+                ORDER BY 
+                    cd.sap_id;"""
+
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    data = await function(query=query)
+    data = pd.DataFrame(data)
+
+    if not insert_to_db:
+        return data.to_dict(orient="records")
+
+    for each_record in data.to_dict(orient="records"):
+        await hpcl_ceg_model.CarryFwdIndentCreate(**each_record)
+    return
