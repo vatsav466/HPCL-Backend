@@ -93,6 +93,7 @@ class UsersSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.List[str]] = mapped_column("zone", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sales_area: Mapped[typing.List[str]] = mapped_column("sales_area", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     escalation_level: Mapped[typing.Optional[typing.Any]] = mapped_column("escalation_level", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    is_ad_user: Mapped[bool] = mapped_column("is_ad_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
@@ -116,6 +117,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.List[str]
     sales_area: typing.List[str]
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
+    is_ad_user: bool
     status: bool
 
     class Config:
@@ -142,6 +144,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[typing.List[str]] | None = None
     sales_area: typing.Optional[typing.List[str]] | None = None
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
+    is_ad_user: typing.Optional[bool] | None = None
     status: typing.Optional[bool] | None = None
 
     class Config:

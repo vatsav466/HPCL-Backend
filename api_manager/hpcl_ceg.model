@@ -152,6 +152,8 @@ Model Users {
     zone index_field list str
     sales_area index_field list str
     escalation_level optional NotificationLevel
+    // User authentication type
+    is_ad_user bool
     status bool
 
     // API to list out created users
