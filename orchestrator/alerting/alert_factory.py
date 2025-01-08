@@ -125,6 +125,7 @@ class AlertFactory:
                                      "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
                                      "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
                                      "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
+                                     "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
                                     "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}}
 
             # Create Interlock
