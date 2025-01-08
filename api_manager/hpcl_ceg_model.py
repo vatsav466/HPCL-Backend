@@ -82,7 +82,7 @@ class UsersSchema(UrdhvaPostgresBase):
     email: Mapped[str] = mapped_column("email", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     first_name: Mapped[str] = mapped_column("first_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     last_name: Mapped[str] = mapped_column("last_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    password: Mapped[urdhva_base.types.Secret] = mapped_column("password", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    password: Mapped[typing.Optional[urdhva_base.types.Secret]] = mapped_column("password", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -106,7 +106,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     email: str
     first_name: str
     last_name: str
-    password: urdhva_base.types.Secret
+    password: typing.Optional[urdhva_base.types.Secret] | None = None
     employee_id: str
     bu: typing.List[hpcl_ceg_enum.BusinessUnit]
     sap_id: typing.List[str]

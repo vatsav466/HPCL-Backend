@@ -138,7 +138,7 @@ Model Users {
     email index_field str
     first_name str
     last_name str
-    password secret
+    password optional secret
     employee_id index_field unique_field str
     // Allocated Role
     // ALL for all
@@ -845,6 +845,7 @@ Model IndentDryOut {
     
      Config=> {
         access_key_mapping='bu,zone,region,sales_area,site_id:sap_id'
+     }
 }
 
 Model LpgOperations {

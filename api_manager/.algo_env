@@ -1,3 +1,0 @@
-enable_header_auth=true
-db_urls={"postgres_async": ["postgresql+asyncpg://140.245.238.142:5432/hpcl_ceg?user=ceg_user&password=TTNqetkiJLPM50jC"], "redis": ["redis://localhost:6379"]}
-import_paths={"base_path": "/Users/appleair/PycharmProjects/hpcl_project/dnc_backend_v2", "api_manager": "/Users/appleair/PycharmProjects/hpcl_project/dnc_backend_v2/api_manager"}
