@@ -613,29 +613,29 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         stats.extend([{
             "section": "Carry Fwd Indent",
             "value": len(carry_fwd_data),
-            "serial": 15, "condition": "=", "group": "not_raised"
+            "serial": 15, "condition": "=", "group": "carry_fwd_indent"
         }, {
             "section": "DryOut Carry Fwd Indent",
             "value": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != '']),
-            "serial": 16, "condition": "=", "group": "not_raised"
+            "serial": 16, "condition": "=", "group": "carry_fwd_indent"
         }, {
             "section": "CATA Carry Fwd Indent",
             "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']),
-            "serial": 17, "condition": "=", "group": "not_raised"
+            "serial": 17, "condition": "=", "group": "carry_fwd_indent"
         }])
     else:
         stats.extend([{
             "section": "Carry Fwd Indent",
             "value": 0,
-            "serial": 15, "condition": "=", "group": "not_raised"
+            "serial": 15, "condition": "=", "group": "carry_fwd_indent"
         },{
             "section": "DryOut Carry Fwd Indent",
             "value": 0,
-            "serial": 16, "condition": "=", "group": "not_raised"
+            "serial": 16, "condition": "=", "group": "carry_fwd_indent"
         },{
             "section": "CATA Carry Fwd Indent",
             "value": 0,
-            "serial": 17, "condition": "=", "group": "not_raised"
+            "serial": 17, "condition": "=", "group": "carry_fwd_indent"
         }])
     stats = sorted(stats, key=lambda x: x['serial'])
     updated_stats = []
