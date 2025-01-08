@@ -801,5 +801,16 @@ LIMIT 10000;''',
                             "Execution_Date",
                             sum("pending_1_3_days") as "Pending 1-3 days" 
                         from
-                            "hpcl_ceg"."public"."LPG_SALES_SUMMARY_DATA" '''
+                            "LPG_SALES_SUMMARY_DATA" ''',
+    
+    "total_suvidha": f'''select
+                            "ZOName",
+                            "ROName",
+                            "SAName",
+                            "JDEDistributorCode",
+                            "SubCategory",
+                            "Category",
+                            sum("SuvidhaClub") as "SuvidhaClub" 
+                        from
+                            "LPG_CONSUMERS_SUMMARY" '''
 }
