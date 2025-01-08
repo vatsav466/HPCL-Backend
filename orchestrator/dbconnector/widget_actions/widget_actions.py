@@ -124,20 +124,17 @@ class WidgetActions:
                 #print(f"Available functions in LPGPlantActions: {dir(lpg_plant.LPGPlantActions)}")
                 #print(f"Available functions in GlobalAnalytics: {dir(global_analytics.GlobalAnalytics)}")
                 raise AttributeError(f"Function {func_name} not found in either module.")
-                
 
+            action_query = lpg_plant_queries.lpg_plant_query.get(func_name)
             for model_, model_actions in model_mapping.modelMapping.items():
                 if func_name in model_actions:
                     where_clause = await eval(f"hpcl_ceg_model.{model_}.get_clause_conditions()")
                     print("where_clause: ", where_clause)
-                    action_query = lpg_plant_queries.lpg_plant_query.get(func_name)
                     print("query before: ",action_query)
                     widget_mapping[func_name] = {'filter_applied': action_query}
                     if where_clause:
-                        action_query_ = await WidgetActions.get_not_join_query(action_query, where_clause,"")
-                    else:
-                        action_query_ = action_query
-                    lpg_plant_queries.lpg_plant_query[func_name] = action_query_
+                        action_query = await WidgetActions.get_not_join_query(action_query, where_clause,"")
+                    lpg_plant_queries.lpg_plant_query[func_name] = action_query
                     print("query after: ", lpg_plant_queries.lpg_plant_query[func_name],'\n','%'*50)
 
 
@@ -179,9 +176,9 @@ class WidgetActions:
 
             if condition == 'equals':
                 if isinstance(value, int):
-                    conditions.append(f''' "{key}" = {value} ''')
+                    conditions.append(f''' {key} = {value} ''')
                 else:
-                    conditions.append(f''' "{key}" = '{value}' ''')
+                    conditions.append(f''' {key} = '{value}' ''')
             elif condition == 'prefix':
                 conditions.append(f"{key} LIKE '{value}%'")
             elif condition == 'contains':

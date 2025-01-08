@@ -51,7 +51,7 @@ async def sync_users(file_path):
     for record in data:
         for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area']:
             record[key] = [rec.strip() for rec in record[key].split(",")] if record[key] else []
-    await hpcl_ceg_model.Users.bulk_update(data)
+    await hpcl_ceg_model.Users.bulk_update(data, upsert=True)
 
 
 if __name__ == "__main__":

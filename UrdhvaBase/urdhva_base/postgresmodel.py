@@ -114,9 +114,9 @@ class BasePostgresModel(pydantic.BaseModel):
                 key.split(":")[0].strip(): key.split(":")[1].strip() if ":" in key else key.split(":")[0].strip()
                 for key in key_mapping
             }
+            rpt = urdhva_base.context.context.get('rpt', {})
             for key, value in mapped_data.items():
-                rpt = urdhva_base.context.context.get('rpt', {})
-                if value in rpt:
+                if value in rpt and rpt.get(value):
                     if isinstance(rpt[value], list):
                         if len(rpt[value]) == 1:
                             where_clause.append(f"{key}='{rpt[value][0]}'")
@@ -449,6 +449,8 @@ class BasePostgresModel(pydantic.BaseModel):
         record = result.one()
         if len(record):
             for key, value in self.model_dump(exclude_none=True, exclude_unset=True).items():
+                if key == 'updated_at':
+                    continue
                 setattr(record[0], key, value)
             await session.commit()
             await asyncio.shield(session.close())

@@ -161,11 +161,12 @@ async def authMiddleware(request: fastapi.Request, call_next):
         return await call_next(request)
     elif not status and resp:
         return resp
-    return await call_next(request)
+    # return await call_next(request)
     response = fastapi.Response(None, 403)
-    if request.url.path in ['/docs', '/openapi.json', '/api/login'] + urdhva_base.settings.noauth_urls or \
+    if (request.url.path in ['/docs', '/openapi.json', '/api/login', '/api/session/me', '/api/users/login'] +
+            urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
-            or re.match(r"/api/[\S\s\w]*authorize", request.url.path):
+            or re.match(r"/api/[\S\s\w]*authorize", request.url.path)):
         return await call_next(request)
     rpt = urdhva_base.context.context.get('rpt', {})
     cookie = request.cookies.get(cookie_name, None)
@@ -174,18 +175,7 @@ async def authMiddleware(request: fastapi.Request, call_next):
         if not base_url:
             response = fastapi.responses.JSONResponse("Provided entity is Invalid", 403)
             return response
-        org_extension = await get_customer_authentication_extension(urdhva_base.ctx["entity_id"])
-        redirect_url = f'https://{base_url}/{org_extension}/realms/{urdhva_base.ctx["entity_id"]}/protocol/' \
-                       f'openid-connect/auth?client_id={urdhva_base.ctx["entity_id"]}_client&' \
-                       f'response_type=code&redirect_uri={urdhva_base.ctx["oauth_redirect"]}&scope=email openid&state=123'
-        redis_client = await urdhva_base.redispool.get_redis_connection()
-        data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
-        if data:
-            temp_url = json.loads(data)["base_url"]
-            redirect_url = f'https://{temp_url}/{org_extension}/realms/{urdhva_base.ctx["entity_id"]}/protocol/' \
-                           f'openid-connect/auth?client_id={urdhva_base.ctx["entity_id"]}_client&' \
-                           f'response_type=code&redirect_uri={urdhva_base.ctx["oauth_redirect"]}' \
-                           f'&scope=email openid&state=123'
+        redirect_url = f"{request.base_url}login"
         resp_dict = {"url": redirect_url}
         response = fastapi.responses.JSONResponse(resp_dict, 401)
     elif cookie or rpt:
@@ -382,7 +372,7 @@ async def login(request: fastapi.Request, code: typing.Optional[str] = None,
 
 @app.get("/api/logout")
 async def logout(request: fastapi.Request):
-    response = fastapi.responses.JSONResponse({'url': f"{request.base_url}/login"}, 401)
+    response = fastapi.responses.JSONResponse({'url': f"{request.base_url}login"}, 401)
     cookie_id = request.cookies.get(cookie_name, None)
     if cookie_id:
         try:
