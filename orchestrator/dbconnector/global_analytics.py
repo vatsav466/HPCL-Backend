@@ -2739,7 +2739,6 @@ class GlobalAnalytics:
                     "Total_Bookings": "sum"
                     })
             if grouped_resp is not None:
-                print("grouped_resp  -> ", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
         # If no filters are applied, return the default response
@@ -2869,6 +2868,119 @@ class GlobalAnalytics:
         else:
             return {"status": True, "message":"success", "data":[]}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def pending_1_3_days(filters, drill_state):
+            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            df = pd.read_csv("/Users/admin/Downloads/DistributorMappings.csv")
+            if filters:
+                lpg_pending_query = lpg_plant_queries.lpg_plant_query.get("pending_1_3_days")
+                lpg_pending_query_ = lpg_pending_query
+                conditions = []
+                for rec in filters:
+                    rec.value = rec.value.split(",")
+                    # Now handle other cases
+                    if isinstance(rec.value, str):
+                        condition = f"{rec.key} = '{rec.value}'"
+                    else:
+                        if len(rec.value) == 1:
+                            condition = f"{rec.key} = '{rec.value[0]}'"
+                        else:
+                            condition = f"{rec.key} in {tuple(rec.value)}"
+                    conditions.append(condition)
+                if conditions:
+                    lpg_pending_query_  += ' WHERE '
+                    lpg_pending_query_  += ' AND '.join(conditions)
+                yesterday = datetime.now() - relativedelta(days=1)
+                lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN ( \'Null\')'
+                lpg_pending_query_  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
+            else:
+                yesterday = datetime.now() - relativedelta(days=1)
+                lpg_pending_query_  = f'''
+                        select 
+                            "LPG_SALES_SUMMARY_DATA"."ConsumerType" as "ConsumerType",
+                            sum("LPG_SALES_SUMMARY_DATA"."pending_1_3_days") as "Ageing" 
+                        from
+                            "hpcl_ceg"."public"."LPG_SALES_SUMMARY_DATA" 
+                        where
+                            CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '{yesterday.strftime("%Y-%m-%d")}' AND "LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ( 'Null')
+                        group by
+                            "LPG_SALES_SUMMARY_DATA"."ConsumerType"
+                    '''
+                resp = await function(query=lpg_pending_query_ )
+                # Convert the response to a DataFrame for further processing
+                resp = pd.DataFrame(resp)
+
+                # Fill missing values for numerical columns
+                for each_float_col in [
+                    "Ageing"
+                ]:
+                    if each_float_col in resp.columns:
+                        resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+                # Fill missing values for string columns
+                for each_str_col in [
+                    "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"
+                ]:
+                    if each_str_col in resp.columns:
+                        resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+                return {"status": True, "message": "success", "data": resp}
+
+            # Execute the query
+            print("*"*50)
+            print("lpg_pending_query_ :", lpg_pending_query_)
+            print("*"*50)
+            resp = await function(query=lpg_pending_query_ )
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            yesterday = datetime.now() - relativedelta(days=6)
+            yesterday_date = yesterday.date()
+            # Filter rows where Execution_Date matches yesterday
+            resp['Execution_Date'] = pd.to_datetime(resp['Execution_Date'])
+            resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Pending 1-3 days"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName","ROName","SAName","ConsumerType","JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "ConsumerType" in filter_keys and "ZOName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                        "Pending 1-3 days": "sum"
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                        "Pending 1-3 days": "sum",
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                                as_index=False).agg({
+                        "Pending 1-3 days": "sum",
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                                as_index=False).agg({
+                        "Pending 1-3 days": "sum",
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+            # If no filters are applied, return the default response
+            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
 
     @staticmethod
