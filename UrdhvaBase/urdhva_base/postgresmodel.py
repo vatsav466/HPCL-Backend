@@ -192,6 +192,7 @@ class BasePostgresModel(pydantic.BaseModel):
                         query_params.append(f"organization_id in {permitted_org}")
         if hasattr(cls.Config, 'standard_query'):
             query_params.append(cls.Config.standard_query)
+        query_params.extend(await cls.get_clause_conditions())
         if params and params.q and len(params.q) > 0:
             query_params.append(params.q)
         if len(query_params):
