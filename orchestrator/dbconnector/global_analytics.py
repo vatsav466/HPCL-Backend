@@ -3091,4 +3091,384 @@ class GlobalAnalytics:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query)
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         return {"status": True, "message": "success", "data": data}
+    
+    @staticmethod
+    async def cumulative_sales_pmuy_npmuy(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        current_date = datetime.now()
+        if current_date.month >= 4:  # If April or later, financial year starts this year
+            start_year = current_date.year
+            end_year = current_date.year + 1
+        else:  # If before April, financial year started last year
+            start_year = current_date.year - 1
+            end_year = current_date.year
+        # Define financial year start and end dates
+        financial_year_start = f"{start_year}-04-01 00:00:00"
+        financial_year_end = f"{end_year}-03-31 23:59:59"
+
+        if filters:
+            cumulative_sales_pmuy_npmuy_query = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
+            cumulative_sales_pmuy_npmuy_query_ = cumulative_sales_pmuy_npmuy_query
+            conditions = []
+
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                cumulative_sales_pmuy_npmuy_query_ += ' WHERE '
+                cumulative_sales_pmuy_npmuy_query_ += ' AND '.join(conditions)
+            
+            cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+        else:
+            current_date = datetime.now()
+            # Determine the financial year start and end
+            if current_date.month >= 4:  # If April or later, financial year starts this year
+                start_year = current_date.year
+                end_year = current_date.year + 1
+            else:  # If before April, financial year started last year
+                start_year = current_date.year - 1
+                end_year = current_date.year
+            # Define financial year start and end dates
+            financial_year_start = f"{start_year}-04-01 00:00:00"
+            financial_year_end = f"{end_year}-03-31 23:59:59"
+
+            cumulative_sales_pmuy_npmuy_query_ = f'''
+                    select 
+                        "ConsumerType" as "ConsumerType",
+                        sum("TotalSalesYesterday")/10000000 as "Sales" 
+                    from
+                        "LPG_SALES_SUMMARY_DATA" 
+                    where
+                        "Execution_Date"::TIMESTAMP BETWEEN '{financial_year_start}' AND '{financial_year_end}'
+                        AND "ZOName" NOT IN ('Null')
+                    group by
+                        "ConsumerType"
+            '''
+
+            resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Sales"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ConsumerType"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
         
+        # Execute the query
+        resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')        
+        resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
+        resp = resp[
+            (resp["Execution_Date"] >= financial_year_start) &
+            (resp["Execution_Date"] <= financial_year_end)
+        ]
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "Sales"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "ConsumerType","ZOName","ROName","SAName","JDEDistributorCode"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+
+            if "ConsumerType" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName"], as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                })
+
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName"], as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                })
+            
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName","SAName"],
+                as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                    })
+            
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName","SAName","JDEDistributorCode"],
+                as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                    })
+
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def overall_ctc_statistics(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        if filters:
+            overall_ctc_statistics_query = lpg_plant_queries.lpg_plant_query.get("overall_ctc_statistics")
+            overall_ctc_statistics_query_ = overall_ctc_statistics_query
+            conditions = []
+
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                overall_ctc_statistics_query_ += ' WHERE '
+                overall_ctc_statistics_query_ += ' AND '.join(conditions)
+            overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
+            overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
+        else:
+            #yesterday = datetime.now() - relativedelta(days=1)
+            overall_ctc_statistics_query_ = f'''
+                select 
+                    sum("ACTCCount") as "ACTC",
+                    sum("BCTCCount") as "BCTC",
+                    sum("NCTCCount") as "NCTC",
+                    "Category" as "Category" 
+                from
+	                "LPG_CONSUMERS_SUMMARY" 
+                where
+	                "Category"  IN ('Domestic') AND "CategoryStatus"  IN ('Active') AND "ZOName"  NOT IN ('Null')
+                group by
+	                "Category"
+            '''
+            print("overall_ctc_statistics_query_",overall_ctc_statistics_query_)
+            resp = await function(query=overall_ctc_statistics_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "ACTC","BCTC","NCTC"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "Category"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+        
+        # Execute the query
+        print("overall_ctc_statistics_query_---->",overall_ctc_statistics_query_)
+        resp = await function(query=overall_ctc_statistics_query_)        
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        print("resp :", resp)
+        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "ACTC","BCTC","NCTC"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "Category","ZOName","ROName","SAName","JDEDistributorCode"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+
+            if "Category" in filter_keys and "ZOName" not in filter_keys:    
+                grouped_resp = resp.groupby(["Category","ZOName"], as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                })
+
+            elif "Category" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["Category","ZOName","ROName"], as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                })
+            
+            elif "Category" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["Category","ZOName","ROName","SAName"],
+                as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                    })
+            
+            elif "Category" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
+                grouped_resp = resp.groupby(["Category","ZOName","ROName","SAName","JDEDistributorCode"],
+                as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                    })
+            
+            print("grouped_resp --> ", grouped_resp)
+            if grouped_resp is not None:
+                print("grouped_resp  -> ", grouped_resp)
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
+    @staticmethod
+    async def overall_safety_check_pending(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+
+        if filters:
+            overall_safety_check_pending_query = lpg_plant_queries.lpg_plant_query.get("overall_safety_check_pending")
+            overall_safety_check_pending_query_ = overall_safety_check_pending_query
+            conditions = []
+
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                overall_safety_check_pending_query_ += ' WHERE '
+                overall_safety_check_pending_query_ += ' AND '.join(conditions)
+            overall_safety_check_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\')'
+            overall_safety_check_pending_query_ += ' GROUP BY "SubCategory", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
+        else:
+            #yesterday = datetime.now() - relativedelta(days=1)
+            overall_safety_check_pending_query_ = f'''
+                select 
+                    sum("SafetyCheckPending") as "SafetyCheckPending",
+                    "SubCategory"
+                from
+	                "LPG_CONSUMERS_SUMMARY" 
+                where
+	                "Category" IN ('Domestic') AND "ZOName"  NOT IN ('Null')
+                group by
+	                "SubCategory"
+            '''
+            resp = await function(query=overall_safety_check_pending_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "SafetyCheckPending"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "SubCategory"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+        
+        # Execute the query
+        resp = await function(query=overall_safety_check_pending_query_)        
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+        # Fill missing values for numerical columns
+        for each_float_col in [
+            "SafetyCheckPending"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+            "SubCategory","ZOName","ROName","SAName","JDEDistributorCode"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+
+            if "SubCategory" in filter_keys and "ZOName" not in filter_keys:    
+                grouped_resp = resp.groupby(["SubCategory","ZOName"], as_index=False).agg({
+                    "SafetyCheckPending": "sum"
+                })
+
+            elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["SubCategory","ZOName","ROName"], as_index=False).agg({
+                    "SafetyCheckPending": "sum"
+                })
+            
+            elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["SubCategory","ZOName","ROName","SAName"],
+                as_index=False).agg({
+                    "SafetyCheckPending": "sum"
+                    })
+            
+            elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
+                grouped_resp = resp.groupby(["SubCategory","ZOName","ROName","SAName","JDEDistributorCode"],
+                as_index=False).agg({
+                    "SafetyCheckPending": "sum"
+                    })
+            
+            if grouped_resp is not None:
+                print("grouped_resp  -> ", grouped_resp)
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}

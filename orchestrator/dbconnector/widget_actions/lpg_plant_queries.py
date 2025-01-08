@@ -801,16 +801,38 @@ LIMIT 10000;''',
                             "Execution_Date",
                             sum("pending_1_3_days") as "Pending 1-3 days" 
                         from
-                            "LPG_SALES_SUMMARY_DATA" ''',
+                            "hpcl_ceg"."public"."LPG_SALES_SUMMARY_DATA" ''',
     
-    "total_suvidha": f'''select
-                            "ZOName",
-                            "ROName",
-                            "SAName",
-                            "JDEDistributorCode",
-                            "SubCategory",
-                            "Category",
-                            sum("SuvidhaClub") as "SuvidhaClub" 
-                        from
-                            "LPG_CONSUMERS_SUMMARY" '''
+    "cumulative_sales_pmuy_npmuy": f'''select
+                                            "ConsumerType",
+                                            "JDEDistributorCode",
+                                            "ZOName",
+                                            "ROName",
+                                            "SAName",
+                                            "Execution_Date",
+                                            sum("TotalSalesYesterday") as "Sales"
+                                        from
+                                            "LPG_SALES_SUMMARY_DATA"''',
+    
+    "overall_ctc_statistics": f'''select
+                                        "Category",
+                                        "JDEDistributorCode",
+                                        "ZOName",
+                                        "ROName",
+                                        "SAName",
+                                        sum("ACTCCount") as "ACTC",
+                                        sum("BCTCCount") as "BCTC",
+                                        sum("NCTCCount") as "NCTC"
+                                    from
+                                        "LPG_CONSUMERS_SUMMARY"''',
+
+    'overall_safety_check_pending': f'''select
+                                            "SubCategory",
+                                            "JDEDistributorCode",
+                                            "ZOName",
+                                            "ROName",
+                                            "SAName",
+                                            sum("SafetyCheckPending") as "SafetyCheckPending"
+                                        from
+                                            "LPG_CONSUMERS_SUMMARY"'''
 }

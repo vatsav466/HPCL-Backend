@@ -46,7 +46,6 @@ class SendCommandLpg:
                 print("sap_id : %s Not Enabled for Write Command" % str(sap_id))
                 return True, {"sendcommand": True}
             key = "LPG-" + sap_id + "-tripCount"
-            #tripCmdCount = await redis_client.hget(key, "LPG")
             altHistory = alert_data['alert_history']
             IST = pytz.timezone('Asia/Kolkata')
             currentTime = datetime.datetime.now(IST).strftime("%d-%m-%Y %H:%M:%S")
@@ -60,7 +59,7 @@ class SendCommandLpg:
                     tagpath = key
                     tagValue = val
             
-            if params.get('interuptName','') == "TripPlant":
+            if params.get('interrupt','') == "TripPlant":
                 messageBody = {"tagsData": {tagpath: tagValue}}
                 # await self.sendRQMessage(sap_id, messageBody)
 
@@ -83,7 +82,7 @@ class SendCommandLpg:
                     except Exception as e:
                         print("Exception updating isTripped Error:%s Traceback %s" % (e, traceback.format_exc()))
                         await asyncio.sleep(10)
-            elif params.get('interuptName','') == "UnTripPlant":
+            elif params.get('interrupt','') == "UnTripPlant":
                 if str(tagValue) in ["0", "1"]:
                     if str(tagValue) == "0":
                         tagValue = 1

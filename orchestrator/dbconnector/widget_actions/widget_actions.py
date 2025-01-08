@@ -41,10 +41,13 @@ lpg_dashboard_actions = [
     'sales_yearly_performance',
     'lpg_cdcms',
     'cdcms_order_source',
+    'overall_ctc_statistics',
     'lpg_cdcms_month',
+    'cumulative_sales_pmuy_npmuy',
     'location_wise_distribution',
     'm60_performance',
-    'yearly_sales_performance'
+    'yearly_sales_performance',
+    'overall_safety_check_pending'
 ]
 
 # Todo:- import all widget action modules here
@@ -89,9 +92,12 @@ widget_mapping = {
     'lpg_cdcms': {},
     'cdcms_order_source': {},
     'lpg_cdcms_month': {},
+    'cumulative_sales_pmuy_npmuy': {},
+    'overall_ctc_statistics': {},
     'location_wise_distribution': {},
     'm60_performance': {},
     'yearly_sales_performance': {},
+    'overall_safety_check_pending': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''}
 }
