@@ -646,6 +646,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
 
     grouped_data = {}
     for entry in resp:
+        entry['name'] = str(entry["sap_id"]) + ' - ' + (entry['name'])
         sap_id = entry["sap_id"]
         if sap_id not in grouped_data:
             grouped_data[sap_id] = []
