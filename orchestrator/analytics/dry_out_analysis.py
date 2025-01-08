@@ -250,7 +250,7 @@ async def get_carry_fwd_indent(get_only_dry_out_ro: bool):
     function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)
     data = pd.DataFrame(data)
-    data['DEALER_CODE'] = data['DEALER_CODE'] + '-' + data['INDENT_NO']
+    data['DEALER_CODE'] = str(data['DEALER_CODE']) + '-' + str(data['INDENT_NO'])
 
     if get_only_dry_out_ro:
         query = f"""SELECT DISTINCT 
@@ -447,10 +447,11 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)
     data = pd.DataFrame(data)
+    data['indent_no'] = data['indent_no'].astype(str)
 
     if not insert_to_db:
         return data.to_dict(orient="records")
 
     for each_record in data.to_dict(orient="records"):
-        await hpcl_ceg_model.CarryFwdIndentCreate(**each_record)
+        await hpcl_ceg_model.CarryFwdIndentCreate(**each_record).create()
     return
