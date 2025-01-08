@@ -455,3 +455,18 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
     for each_record in data.to_dict(orient="records"):
         await hpcl_ceg_model.CarryFwdIndentCreate(**each_record).create()
     return
+
+async def ro_not_in_ims():
+    query = f"""SELECT DISTINCT a.sap_id
+                FROM alerts a
+                WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND a.sap_id NOT IN (
+                    SELECT DISTINCT SUBSTR("DEALER_CODE", 3, 8)
+                    FROM "IMS_SAP"."INDENT_REQUEST"
+                );"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    data = await function(query=query)
+    data = pd.DataFrame(data)
+    return data['sap_id'].unique().tolist()
