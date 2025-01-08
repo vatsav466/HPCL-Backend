@@ -7,6 +7,7 @@ from datetime import datetime
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
+import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
 import utilities.connection_mapping as connection_mapping
 from orchestrator.dbconnector.widget_actions import widget_actions
@@ -14,7 +15,7 @@ import orchestrator.dbconnector.connector_factory as connector_factory
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
-from collections import defaultdict
+
 
 class GlobalAnalytics:
     @staticmethod
@@ -503,7 +504,13 @@ class GlobalAnalytics:
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg({
+                if "DS" in filters[-1].value[0] or 'Lubes' in filters[-1].value[0] or 'DS Lubes' in filters[-1].value[0]:
+                        grouped_resp = resp.groupby(["month_name", "SBU_Name","Region_Name"], as_index=False).agg({
+                        "TARGET_QTY_TMT": "sum",
+                        "NETWEIGHT_TMT": "sum"
+                    })
+                else:    
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
@@ -570,24 +577,24 @@ class GlobalAnalytics:
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
 
-        if filters:
+        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"'] for rec in filters):
+            print("into only filters")
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
             conditions = []
 
             # Define keys to exclude from the WHERE clause
-            excluded_keys = {"A", "H", "T", "BE", "RI"}
-            
+            excluded_keys = {'"A"', '"H"', '"T"', '"BE"', '"RI"'}
+
             for rec in filters:
                 rec.value = rec.value.split(",")
                 if rec.key == '"month_name"':  # Only handle the month_name case separately
                     # Check if any value in rec.value is in month_mapping
                     rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
-                
+
                 # Skip keys that should not be added to the WHERE clause
                 if rec.key in excluded_keys:
                     continue
-                
                 # Now handle other cases
                 if isinstance(rec.value, str):
                     condition = f"{rec.key} = '{rec.value}'"
@@ -597,10 +604,78 @@ class GlobalAnalytics:
                     else:
                         condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
-
             if conditions:
                 sales_performance_query_ += ' WHERE '
                 sales_performance_query_ += ' AND '.join(conditions)
+
+        elif len(filters) >= 1 and (filters[0].key in ['"H"', '"T"', '"BE"', '"RI"', '"A"']):
+            print("into elif")
+            selected_keys = [rec.key.strip('"') for rec in filters]
+            current_date = datetime.now()
+            current_year = current_date.year
+            next_year = current_year + 1
+            current_month = current_date.month
+            # Determine the current financial year
+            if current_month >= 4:  # April or later
+                fiscal_year_start = f"'FY {current_year}-{next_year}'"
+            else:  # January to March
+                previous_year = current_year - 1
+                fiscal_year_start = f"'FY {previous_year}-{current_year}'"
+
+            # Initialize the dynamic parts of the query
+            where_conditions = [f'"M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}']
+            select_columns = [
+                'SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES"',
+                '"M60_LEVEL_METADATA"."fy_month" AS "fy_month"',
+                'TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", \'Month\'), \'Mon\') AS "month_name"',
+                '"M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"',
+            ]
+            group_by_columns = [
+                '"M60_LEVEL_METADATA"."fy_month"',
+                'TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", \'Month\'), \'Mon\')',
+                '"M60_LEVEL_METADATA"."FISCAL_YEAR"',
+            ]
+
+            # Build conditions based on selected keys
+            if "H" in selected_keys:
+                previous_year = current_year - 1
+                where_conditions.append(f'"M60_LEVEL_METADATA"."FISCAL_YEAR" IN (\'FY {previous_year}-{current_year}\', \'FY {current_year}-{next_year}\')')
+
+            if "T" in selected_keys:
+                select_columns.append('SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT") AS "TARGET_QTY_TMT"')
+
+            # Construct the query dynamically
+            sales_performance_query_ = f'''
+                SELECT
+                    {', '.join(select_columns)}
+                FROM
+                    "M60_LEVEL_METADATA"
+                WHERE
+                    {" AND ".join(where_conditions)}
+                GROUP BY
+                    {', '.join(group_by_columns)}
+                ORDER BY
+                    "M60_LEVEL_METADATA"."fy_month" ASC;
+            '''
+
+            print("Generated Query:", sales_performance_query_)  # Debugging: Print the generated query
+
+            resp = await function(query=sales_performance_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in ["ACTUAL_TMT_SALES", "TARGET_QTY_TMT"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in ["fy_month", "month_name"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+
         else:
             current_date = datetime.now()
             current_year = current_date.year
@@ -684,56 +759,158 @@ class GlobalAnalytics:
             )
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
                 
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)  
-                
+                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
+ 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
                 
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)                    
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Region_Name' in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
                 
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
@@ -741,18 +918,52 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SalesArea_Name' in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
                 
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
@@ -760,55 +971,155 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
 
             if len(filters) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
                 
-                # If any valid keys are selected, group the data
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
                 if selected_keys:
                     grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "Zone_Name" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
                 
-                # If any valid keys are selected, group the data
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
                 if selected_keys:
                     grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "Region_Name" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -817,17 +1128,51 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["month_name", "Region_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -836,17 +1181,51 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["month_name", "SalesArea_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "ProductName" in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -855,17 +1234,51 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["month_name", "ProductName"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+            
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -874,18 +1287,53 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)  
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
@@ -893,17 +1341,51 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -912,17 +1394,51 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -932,18 +1448,52 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
@@ -953,18 +1503,52 @@ class GlobalAnalytics:
             elif "FISCAL_YEAR" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
-                # Define the set of valid keys
-                valid_keys = {"A", "H", "T", "BE", "RI"}
-                
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
                 # Extract user-selected keys with `value == 'true'`
-                selected_keys = {rec.key for rec in filters if rec.key in valid_keys and rec.value == 'true'}
-                
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
                 # Define the aggregation dictionary dynamically
                 agg_dict = {"NETWEIGHT_TMT": "sum"}
-                
-                if "T" in selected_keys:
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
                     agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
                 
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
@@ -1129,7 +1713,10 @@ class GlobalAnalytics:
             if "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 grouped_keys.append("SBU_Name")
             elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                grouped_keys.extend(["SBU_Name", "Zone_Name"])
+                if "DS Lubes" in filters[-1].value[0] or 'DS' in filters[-1].value[0] or 'Lubes' in filters[-1].value[0]:
+                    grouped_keys.extend(["SBU_Name", "Region_Name"])
+                else:
+                    grouped_keys.extend(["SBU_Name", "Zone_Name"])
             elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and
                   "Region_Name" not in filter_keys):
                 grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name"])
@@ -1367,7 +1954,7 @@ class GlobalAnalytics:
         sales_yearly_preformance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
         sales_yearly_preformance_query_ = sales_yearly_preformance_query
         
-        if filters:
+        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"'] for rec in filters):
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
             conditions = []
@@ -1397,8 +1984,72 @@ class GlobalAnalytics:
 
             if conditions:
                 sales_performance_query_ += ' WHERE '
-                sales_performance_query_ += ' AND '.join(conditions)
-        
+                sales_performance_query_ += ' AND '.join(conditions) 
+
+        elif len(filters) >= 1 and (filters[0].key in ['"H"', '"T"', '"BE"', '"RI"', '"A"']):
+            print("into elif")
+            selected_keys = [rec.key.strip('"') for rec in filters]
+            current_date = datetime.now()
+            current_year = current_date.year
+            next_year = current_year + 1
+            current_month = current_date.month
+            # Determine the current financial year
+            if current_month >= 4:  # April or later
+                fiscal_year_start = f"'FY {current_year}-{next_year}'"
+            else:  # January to March
+                previous_year = current_year - 1
+                fiscal_year_start = f"'FY {previous_year}-{current_year}'"
+
+            # Initialize the dynamic parts of the query
+            where_conditions = []
+            select_columns = [
+                'ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::NUMERIC, 2) AS "ACTUAL_TMT_SALES"',
+                '"M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"',
+            ]
+            group_by_columns = [
+                '"M60_LEVEL_METADATA"."FISCAL_YEAR"',
+            ]
+
+            # Build conditions based on selected keys
+            if "H" in selected_keys:
+                previous_year = current_year - 1
+                where_conditions.append(f'"M60_LEVEL_METADATA"."FISCAL_YEAR" IN (\'FY {previous_year}-{current_year}\', \'FY {current_year}-{next_year}\')')
+
+            if "T" in selected_keys:
+                select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::NUMERIC, 2) AS "TARGET_TMT_SALES"')
+
+            where_clause = f"WHERE {' AND '.join(where_conditions)}" if where_conditions else ""
+            # Construct the query dynamically
+            sales_performance_query_ = f'''
+                SELECT
+                    {', '.join(select_columns)}
+                FROM
+                    "M60_LEVEL_METADATA"
+                {where_clause}
+                GROUP BY
+                    {', '.join(group_by_columns)}
+                ORDER BY
+                    "M60_LEVEL_METADATA"."FISCAL_YEAR" ASC
+            '''
+            
+            print("Generated Query:", sales_performance_query_)  # Debugging: Print the generated query
+
+            resp = await function(query=sales_performance_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in ["ACTUAL_TMT_SALES", "TARGET_QTY_TMT"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in ["fy_month", "month_name"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+            
         else:
             sales_performance_query_ = f'''
                 SELECT
@@ -1410,7 +2061,6 @@ class GlobalAnalytics:
                     "M60_LEVEL_METADATA"."FISCAL_YEAR"
                 ORDER BY
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" ASC
-
             '''
 
             resp = await function(query=sales_performance_query_)
@@ -1725,12 +2375,10 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-
+        lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
+        yesterday = datetime.now() - relativedelta(days=1)
         if filters:
-            lpg_cdcms_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
-            lpg_cdcms_query_ = lpg_cdcms_query
             conditions = []
-
             for rec in filters:
                 rec.value = rec.value.split(",")
                 # Now handle other cases
@@ -1746,35 +2394,30 @@ class GlobalAnalytics:
             if conditions:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
-            yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "Bookings", "Sales", "Pending", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
-            yesterday = datetime.now() - relativedelta(days=1)
-            lpg_cdcms_query_ = f'''
-                select 
-                    sum("BookingReceivedYesterday") as "Bookings",
-                    sum("LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday") as "Sales",
-                    sum("Total_Pending") as "Pending",
-                    "ZOName" as "ZOName" 
-                from
-                    "LPG_SALES_SUMMARY_DATA" 
-                where
-                    ("LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ('Null') AND CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '{yesterday.strftime("%Y-%m-%d")}') 
-                group by
-                    "ZOName" 
-                limit 1000
-            '''
+            if "where" not in lpg_cdcms_query_.lower():
+                lpg_cdcms_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+                                            
             resp = await function(query=lpg_cdcms_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["ZOName"], as_index=False).agg({
+                    "Bookings": "sum",
+                    "Sales": "sum",
+                    "Pending": "sum"
+                })
 
             # Fill missing values for numerical columns
             for each_float_col in [
-                "BookingReceivedYesterday", "TotalSalesYesterday", "Total_Pending"
+                "Bookings", "Sales", "Pending"
             ]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
 
             # Fill missing values for string columns
             for each_str_col in [
@@ -1782,23 +2425,21 @@ class GlobalAnalytics:
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
             return {"status": True, "message": "success", "data": resp}
         
         # Execute the query
         resp = await function(query=lpg_cdcms_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-        print("resp for DistributorName --> ", resp['DistributorName'])
-        yesterday = datetime.now() - relativedelta(days=1)
-        yesterday_date = yesterday.date()
         # Filter rows where Execution_Date matches yesterday
-        resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
+        resp = resp[resp["Execution_Date"].dt.date == yesterday.date()]
 
         # Fill missing values for numerical columns
         for each_float_col in [
-            "BookingReceivedYesterday", "TotalSalesYesterday", "Total_Pending"
+            "Bookings", "Sales", "Pending"
         ]:
             if each_float_col in resp.columns:
                 resp[each_float_col] = resp[each_float_col].fillna(0.0)
@@ -1809,43 +2450,33 @@ class GlobalAnalytics:
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-
             if "ZOName" in filter_keys and "ROName" not in filter_keys:
-                print("grouped_resp ZOName--> ")    
                 grouped_resp = resp.groupby(["ZOName","ROName"], as_index=False).agg({
                     "Bookings": "sum",
                     "Sales": "sum",
                     "Pending": "sum"
                 })
-
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                print("grouped_resp  elif ZOName--> ")    
                 grouped_resp = resp.groupby(["ZOName","ROName","SAName"], as_index=False).agg({
                     "Bookings": "sum",
                     "Sales": "sum",
                     "Pending": "sum"
-                })
-            
+                })        
             elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                print("grouped_resp  elif ZOName--> ")
                 grouped_resp = resp.groupby(["ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
                     "Bookings": "sum",
                     "Sales": "sum",
                     "Pending": "sum"
                     })
-
-            print("grouped_resp --> ", grouped_resp)
             if grouped_resp is not None:
-                print("grouped_resp  -> ", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
     
     @staticmethod
     async def lpg_cdcms_month(filters, drill_state):
@@ -1853,7 +2484,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-
         month_mapping = {
                             "Jan": "January",
                             "Feb": "February",
@@ -1895,9 +2525,8 @@ class GlobalAnalytics:
             if conditions:
                 lpg_cdcms_month_query_ += ' WHERE '
                 lpg_cdcms_month_query_ += ' AND '.join(conditions)
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "Total Sales", "ZOName", "ROName", "SAName"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
         else:
-            yesterday = datetime.now() - relativedelta(days=1)
             lpg_cdcms_month_query_ = f'''
                 select
                     EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date") as "Month_No",
@@ -1906,8 +2535,8 @@ class GlobalAnalytics:
                 from
                     "LPG_SALES_SUMMARY_DATA"
                 group by
-                        EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date"), 
-                        TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon')
+                    EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date"), 
+                    TO_CHAR(TO_DATE("LPG_SALES_SUMMARY_DATA"."Execution_Month", 'Month'), 'Mon')
             '''
             resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
@@ -1929,16 +2558,14 @@ class GlobalAnalytics:
 
             return {"status": True, "message": "success", "data": resp}
         
+        print("*"*50)
+        print("BaseQuery :",lpg_cdcms_month_query_)
+        print("*"*50)
         # Execute the query
         resp = await function(query=lpg_cdcms_month_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-        print("resp for DistributorName --> ", resp['DistributorName'])
-        # yesterday = datetime.now() - relativedelta(days=1)
-        # yesterday_date = yesterday.date()
-        # # Filter rows where Execution_Date matches yesterday
-        # resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -1962,37 +2589,26 @@ class GlobalAnalytics:
                 resp["Execution_Month"] = resp["Execution_Month"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
-
             if "Execution_Month" in filter_keys and "ZOName" not in filter_keys:
-                print("grouped_resp ZOName--> ")    
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName", "ROName"], as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
                 })
-
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                print("grouped_resp ZOName--> ")    
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName"], as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
                 })
-
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                print("grouped_resp  elif ZOName--> ")    
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName"], as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
-                })
-            
+                })            
             elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                print("grouped_resp  elif ZOName--> ")
                 grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
                     })
-
-            print("grouped_resp --> ", grouped_resp)
             if grouped_resp is not None:
-                print("grouped_resp  -> ", grouped_resp)
+                grouped_resp['Total Sales'] = grouped_resp['Total Sales'].round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
@@ -2025,7 +2641,7 @@ class GlobalAnalytics:
                 cdcms_order_source_query_ += ' AND '.join(conditions)
             yesterday = datetime.now() - relativedelta(days=1)
             cdcms_order_source_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            cdcms_order_source_query_ += ' GROUP BY "Total_Bookings", "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
             yesterday = datetime.now() - relativedelta(days=1)
             cdcms_order_source_query_ = f'''
@@ -2065,7 +2681,6 @@ class GlobalAnalytics:
         resp = await function(query=cdcms_order_source_query_)        
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        print("resp :", resp)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         yesterday = datetime.now() - relativedelta(days=1)
         yesterday_date = yesterday.date()
@@ -2106,20 +2721,357 @@ class GlobalAnalytics:
                 as_index=False).agg({
                     "Total_Bookings": "sum"
                     })
-            
             elif "OrderSourceName" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
                 grouped_resp = resp.groupby(["OrderSourceName","ZOName","ROName","SAName","JDEDistributorCode"],
                 as_index=False).agg({
                     "Total_Bookings": "sum"
                     })
-            
-            print("grouped_resp --> ", grouped_resp)
             if grouped_resp is not None:
-                print("grouped_resp  -> ", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def overall_pending_pmuy_nmpuy(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        if filters:
+            lpg_pending_query = lpg_plant_queries.lpg_plant_query.get("overall_pending_pmuy_nmpuy")
+            lpg_pending_query_ = lpg_pending_query
+            conditions = []
+
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_pending_query_  += ' WHERE '
+                lpg_pending_query_  += ' AND '.join(conditions)
+            yesterday = datetime.now() - relativedelta(days=5)
+            lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
+            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"'
+        else:
+            yesterday = datetime.now() - relativedelta(days=5)
+            lpg_pending_query_  = f'''
+                                    select 
+                                        "ConsumerType" as "ConsumerType",
+                                        "ZOName" as "ZOName",
+                                        sum("Total_Pending") as "Total_pending" 
+                                    from
+                                        "LPG_SALES_SUMMARY_DATA" 
+                                    where
+                                        CAST("Execution_Date" AS DATE) = '{yesterday.strftime("%Y-%m-%d")}' AND "ZOName"  NOT IN ( 'Null') 
+                                    group by
+                                        "ConsumerType", "ZOName" 
+                                    order by
+                                        sum("Total_Pending") desc  
+                                    '''
+            resp = await function(query=lpg_pending_query_ )
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total_pending"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "ConsumerType",
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+
+        # Execute the query
+        resp = await function(query=lpg_pending_query_ )
+        if resp:
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
+            yesterday = datetime.now() - relativedelta(days=5)
+            yesterday_date = yesterday.date()
+            # Filter rows where Execution_Date matches yesterday
+            resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
+
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total_pending"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "ConsumerType",
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "ConsumerType" in filter_keys and "ZOName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+                if "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType","ZOName", "ROName"], as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType","ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType","ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def pending_1_3_days(filters, drill_state):
+            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+            if filters:
+                lpg_pending_query = lpg_plant_queries.lpg_plant_query.get("pending_1_3_days")
+                lpg_pending_query_ = lpg_pending_query
+                conditions = []
+                for rec in filters:
+                    rec.value = rec.value.split(",")
+                    # Now handle other cases
+                    if isinstance(rec.value, str):
+                        condition = f"{rec.key} = '{rec.value}'"
+                    else:
+                        if len(rec.value) == 1:
+                            condition = f"{rec.key} = '{rec.value[0]}'"
+                        else:
+                            condition = f"{rec.key} in {tuple(rec.value)}"
+                    conditions.append(condition)
+                if conditions:
+                    lpg_pending_query_  += ' WHERE '
+                    lpg_pending_query_  += ' AND '.join(conditions)
+                yesterday = datetime.now() - relativedelta(days=1)
+                lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN ( \'Null\')'
+                lpg_pending_query_  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
+            else:
+                yesterday = datetime.now() - relativedelta(days=1)
+                lpg_pending_query_  = f'''
+                        select 
+                            "LPG_SALES_SUMMARY_DATA"."ConsumerType" as "ConsumerType",
+                            sum("LPG_SALES_SUMMARY_DATA"."pending_1_3_days") as "Ageing" 
+                        from
+                            "hpcl_ceg"."public"."LPG_SALES_SUMMARY_DATA" 
+                        where
+                            CAST("LPG_SALES_SUMMARY_DATA"."Execution_Date" AS DATE) = '{yesterday.strftime("%Y-%m-%d")}' AND "LPG_SALES_SUMMARY_DATA"."ZOName"  NOT IN ( 'Null')
+                        group by
+                            "LPG_SALES_SUMMARY_DATA"."ConsumerType"
+                    '''
+                resp = await function(query=lpg_pending_query_ )
+                # Convert the response to a DataFrame for further processing
+                resp = pd.DataFrame(resp)
+
+                # Fill missing values for numerical columns
+                for each_float_col in [
+                    "Ageing"
+                ]:
+                    if each_float_col in resp.columns:
+                        resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+                # Fill missing values for string columns
+                for each_str_col in [
+                    "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"
+                ]:
+                    if each_str_col in resp.columns:
+                        resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+                return {"status": True, "message": "success", "data": resp}
+
+            # Execute the query
+            print("*"*50)
+            print("lpg_pending_query_ :", lpg_pending_query_)
+            print("*"*50)
+            resp = await function(query=lpg_pending_query_ )
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            yesterday = datetime.now() - relativedelta(days=6)
+            yesterday_date = yesterday.date()
+            # Filter rows where Execution_Date matches yesterday
+            resp['Execution_Date'] = pd.to_datetime(resp['Execution_Date'])
+            resp = resp[resp["Execution_Date"].dt.date == yesterday_date]
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Pending 1-3 days"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName","ROName","SAName","ConsumerType","JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "ConsumerType" in filter_keys and "ZOName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                        "Pending 1-3 days": "sum"
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                        "Pending 1-3 days": "sum",
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                                as_index=False).agg({
+                        "Pending 1-3 days": "sum",
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                                as_index=False).agg({
+                        "Pending 1-3 days": "sum",
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+            # If no filters are applied, return the default response
+            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def total_suvidha(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        total_suvidha_query_ = lpg_plant_queries.lpg_plant_query.get("total_suvidha")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                total_suvidha_query_  += ' WHERE '
+                total_suvidha_query_  += ' AND '.join(conditions)
+            total_suvidha_query_ +=  ' AND "Category" = \'Domestic\' AND "ZOCode" NOT IN (\'Null\') AND "SubCategory" IN (\'NPMUY\',\'PMUY\')'
+            total_suvidha_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "SubCategory", "Category", "JDEDistributorCode"'
+        else:
+            if "where" not in total_suvidha_query_.lower():
+                total_suvidha_query_ +=  ' WHERE "Category" = \'Domestic\''
+            total_suvidha_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "SubCategory", "Category", "JDEDistributorCode"'
+            
+            resp = await function(query=total_suvidha_query_)
+            resp = pd.DataFrame(resp)
+            resp = resp.groupby(["SubCategory"], as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })
+            for each_float_col in [
+                "SuvidhaClub"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "SubCategory",
+                "Category"
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+
+        resp = await function(query=total_suvidha_query_)
+        if resp:
+            resp = pd.DataFrame(resp)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            
+            for each_float_col in [
+                "SuvidhaClub"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "SubCategory",
+                "Category",
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "SubCategory" in filter_keys and "ZOName" not in filter_keys:
+                    grouped_resp = resp.groupby(["SubCategory", "ZOName"], as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })
+                if "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName"], as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })
+                elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })  
+                elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({
+                        "SuvidhaClub": "sum",
+                    })                    
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
 
     @staticmethod
     async def carry_forward_analysis(filters, drill_state):

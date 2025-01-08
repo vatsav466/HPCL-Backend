@@ -202,6 +202,31 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await DryOutHistory.get_all(params, skip_secrets=True)
 
 
+@router.post('/carryfwdindent', response_model=CarryFwdIndent, tags=['CarryFwdIndent'])
+async def create(inputObj: CarryFwdIndentCreate):
+    return await inputObj.create()
+
+
+@router.put('/carryfwdindent', response_model=CarryFwdIndent, tags=['CarryFwdIndent'])
+async def update(inputObj: CarryFwdIndent):
+    return await inputObj.modify()
+
+
+@router.get('/carryfwdindent/{id}', response_model=CarryFwdIndent, tags=['CarryFwdIndent'])
+async def get(id: str):
+    return await CarryFwdIndent.get(id, skip_secrets=True)
+
+
+@router.get('/carryfwdindent', response_model=CarryFwdIndentGetResp, tags=['CarryFwdIndent'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CarryFwdIndent.get_all(params, skip_secrets=True)
+
+
+@router.delete('/carryfwdindent/{id}', tags=['CarryFwdIndent'])
+async def delete(id: str):
+    return await CarryFwdIndent.delete(id)
+
+
 @router.post('/indentdryout', response_model=IndentDryOut, tags=['IndentDryOut'])
 async def create(inputObj: IndentDryOutCreate):
     return await inputObj.create()
@@ -277,6 +302,56 @@ async def delete(id: str):
     return await LpgRejections.delete(id)
 
 
+@router.post('/lpgsalessummarydata', response_model=LpgSalesSummaryData, tags=['LpgSalesSummaryData'])
+async def create(inputObj: LpgSalesSummaryDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgsalessummarydata', response_model=LpgSalesSummaryData, tags=['LpgSalesSummaryData'])
+async def update(inputObj: LpgSalesSummaryData):
+    return await inputObj.modify()
+
+
+@router.get('/lpgsalessummarydata/{id}', response_model=LpgSalesSummaryData, tags=['LpgSalesSummaryData'])
+async def get(id: str):
+    return await LpgSalesSummaryData.get(id, skip_secrets=True)
+
+
+@router.get('/lpgsalessummarydata', response_model=LpgSalesSummaryDataGetResp, tags=['LpgSalesSummaryData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgSalesSummaryData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgsalessummarydata/{id}', tags=['LpgSalesSummaryData'])
+async def delete(id: str):
+    return await LpgSalesSummaryData.delete(id)
+
+
+@router.post('/lpgconsumerssummary', response_model=LpgConsumersSummary, tags=['LpgConsumersSummary'])
+async def create(inputObj: LpgConsumersSummaryCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgconsumerssummary', response_model=LpgConsumersSummary, tags=['LpgConsumersSummary'])
+async def update(inputObj: LpgConsumersSummary):
+    return await inputObj.modify()
+
+
+@router.get('/lpgconsumerssummary/{id}', response_model=LpgConsumersSummary, tags=['LpgConsumersSummary'])
+async def get(id: str):
+    return await LpgConsumersSummary.get(id, skip_secrets=True)
+
+
+@router.get('/lpgconsumerssummary', response_model=LpgConsumersSummaryGetResp, tags=['LpgConsumersSummary'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgConsumersSummary.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgconsumerssummary/{id}', tags=['LpgConsumersSummary'])
+async def delete(id: str):
+    return await LpgConsumersSummary.delete(id)
+
+
 @router.post('/screens', response_model=Screens, tags=['Screens'])
 async def create(inputObj: ScreensCreate):
     return await inputObj.create()
@@ -321,3 +396,52 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await VtsAlertHistory.get_all(params, skip_secrets=True)
 
+
+@router.post('/m60levelmetadata', response_model=M60LevelMetaData, tags=['M60LevelMetaData'])
+async def create(inputObj: M60LevelMetaDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/m60levelmetadata', response_model=M60LevelMetaData, tags=['M60LevelMetaData'])
+async def update(inputObj: M60LevelMetaData):
+    return await inputObj.modify()
+
+
+@router.get('/m60levelmetadata/{id}', response_model=M60LevelMetaData, tags=['M60LevelMetaData'])
+async def get(id: str):
+    return await M60LevelMetaData.get(id, skip_secrets=True)
+
+
+@router.get('/m60levelmetadata', response_model=M60LevelMetaDataGetResp, tags=['M60LevelMetaData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await M60LevelMetaData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/m60levelmetadata/{id}', tags=['M60LevelMetaData'])
+async def delete(id: str):
+    return await M60LevelMetaData.delete(id)
+
+
+@router.post('/momlevelfinalmetadata', response_model=MomLevelFinalMetaData, tags=['MomLevelFinalMetaData'])
+async def create(inputObj: MomLevelFinalMetaDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/momlevelfinalmetadata', response_model=MomLevelFinalMetaData, tags=['MomLevelFinalMetaData'])
+async def update(inputObj: MomLevelFinalMetaData):
+    return await inputObj.modify()
+
+
+@router.get('/momlevelfinalmetadata/{id}', response_model=MomLevelFinalMetaData, tags=['MomLevelFinalMetaData'])
+async def get(id: str):
+    return await MomLevelFinalMetaData.get(id, skip_secrets=True)
+
+
+@router.get('/momlevelfinalmetadata', response_model=MomLevelFinalMetaDataGetResp, tags=['MomLevelFinalMetaData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await MomLevelFinalMetaData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/momlevelfinalmetadata/{id}', tags=['MomLevelFinalMetaData'])
+async def delete(id: str):
+    return await MomLevelFinalMetaData.delete(id)

@@ -254,16 +254,17 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
             formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
+            # formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
             return formatted_ist_time
         except:
             return "-"
-
+    prod_code_mapping = connection_mapping.item_name_mapping
     if resp:
         # resp = resp[0]
         alert_history["details"] = {"name": resp['location_name'], "sap_id": resp['sap_id'], "zone": resp["zone"],
                                     "state": resp["state"], "indent_status": resp["indent_status"],
                                     "plant_id": resp["terminal_plant_id"], "plant_name": resp['terminal_plant_name'],
-                                    "indent_no": resp["indent_no"]}
+                                    "indent_no": resp["indent_no"], "product": prod_code_mapping.get(str(resp['product_code']), str(resp['product_code']))}
         if not resp['terminal_plant_name']:
             status, location_data = await alert_helper.get_location_details("TAS", resp['terminal_plant_id'])
             if status:
@@ -454,7 +455,8 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     if dry_out_data:
         potential_dry_out = dry_out_data[0]["total_unique_count"]
 
-    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+    # _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out}
     return {"status": True, "message": "Success", "data": _data}
 
 
@@ -564,7 +566,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                             GROUP BY sap_id
                         ) AS subquery"""
     delivered_count = await function(
-        query=stats_query
+        query=delivered_query
     )
     if delivered_count:
         delivered_count = delivered_count[0].get("total_count", 0) if delivered_count[0].get("total_count") else 0
@@ -600,10 +602,22 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
                   for x in connection_mapping.dryout_aging])
-    stats.extend([{"section": "", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"}])
+    # stats.append({"section": "Indent Delivered", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"})
+    carry_fwd_indent = {"section": "Carry Fwd Indent", "value": 0, "serial": 12, "condition": "=", "group": "carry_fwd_indent"}
+    ist = pytz.timezone('Asia/Kolkata')
+    carry_fwd_indent_date = datetime.datetime.now(ist).strftime("%H")
+    if int(carry_fwd_indent_date) > 14:
+        list_of_carry_fwd_indents = await dry_out_analysis.get_carry_fwd_indent(get_only_dry_out_ro=False)
+        carry_fwd_indent['value'] = len(list_of_carry_fwd_indents)
+    stats.append(carry_fwd_indent)
     stats = sorted(stats, key=lambda x: x['serial'])
+    updated_stats = []
+    for each_stats in stats:
+        if each_stats['section'] == 'Indent Delivered':
+            each_stats['value'] = delivered_count
+        updated_stats.append(each_stats)
     return {
-        "status": True, "message": "Success", "stats": stats,
+        "status": True, "message": "Success", "stats": updated_stats,
         "valid_indents": {
             "section": "Valid Indents", "value": sum([rec['value'] for rec in stats[3:-1]]),
             "serial": stats[3]['serial'], "condition": ">", "group": "valid_indents"
@@ -639,6 +653,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
 
     grouped_data = {}
     for entry in resp:
+        entry['name'] = str(entry["sap_id"]) + ' - ' + (entry['name'])
         sap_id = entry["sap_id"]
         if sap_id not in grouped_data:
             grouped_data[sap_id] = []
@@ -679,7 +694,13 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
     resp = pd.DataFrame(resp)
     # resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
     result = {
-        "customer": [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
+        "customer": [{"name": str(row['dealer_id']) + " - " + row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
         "plant": [{"name": row['terminal_plant_name'], "id": row['terminal_plant_id']} for _, row in resp.iterrows()]
     }
     return {"status": True, "message": "Success", "data": result}
+
+
+# Action get_carry_fwd_indents
+@router.post('/get_carry_fwd_indents', tags=['IndentDryOut'])
+async def indentdryout_get_carry_fwd_indents(data: Indentdryout_Get_Carry_Fwd_IndentsParams):
+    ...

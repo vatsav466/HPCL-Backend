@@ -1159,6 +1159,69 @@
             ]
         },
         {
+            "name": "carryfwdindent",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CarryFwdIndent",
+            "attributes": {},
+            "uris": [
+                "/api/carryfwdindent/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "carryfwdindent_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CarryFwdIndent_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/carryfwdindent/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "carryfwdindent_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CarryFwdIndent_admin",
+            "attributes": {},
+            "uris": [
+                "/api/carryfwdindent/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "indentdryout",
             "type": "all",
             "ownerManagedAccess": false,
@@ -1224,6 +1287,9 @@
                 },
                 {
                     "name": "get_distinct_ro_name"
+                },
+                {
+                    "name": "get_carry_fwd_indents"
                 }
             ]
         },
@@ -1275,6 +1341,9 @@
                 },
                 {
                     "name": "get_distinct_ro_name"
+                },
+                {
+                    "name": "get_carry_fwd_indents"
                 }
             ]
         },
@@ -1344,6 +1413,9 @@
                 },
                 {
                     "name": "get_distinct_ro_name"
+                },
+                {
+                    "name": "get_carry_fwd_indents"
                 }
             ]
         },
@@ -1528,6 +1600,132 @@
             ]
         },
         {
+            "name": "lpgsalessummarydata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSalesSummaryData",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsalessummarydata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgsalessummarydata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSalesSummaryData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsalessummarydata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgsalessummarydata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSalesSummaryData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsalessummarydata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgconsumerssummary",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgConsumersSummary",
+            "attributes": {},
+            "uris": [
+                "/api/lpgconsumerssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgconsumerssummary_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgConsumersSummary_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgconsumerssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgconsumerssummary_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgConsumersSummary_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgconsumerssummary/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "screens",
             "type": "all",
             "ownerManagedAccess": false,
@@ -1700,6 +1898,132 @@
             "attributes": {},
             "uris": [
                 "/api/vtsalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "m60levelmetadata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "M60LevelMetaData",
+            "attributes": {},
+            "uris": [
+                "/api/m60levelmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "m60levelmetadata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "M60LevelMetaData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/m60levelmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "m60levelmetadata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "M60LevelMetaData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/m60levelmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "momlevelfinalmetadata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "MomLevelFinalMetaData",
+            "attributes": {},
+            "uris": [
+                "/api/momlevelfinalmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "momlevelfinalmetadata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "MomLevelFinalMetaData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/momlevelfinalmetadata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "momlevelfinalmetadata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "MomLevelFinalMetaData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/momlevelfinalmetadata/*"
             ],
             "scopes": [
                 {
@@ -1988,6 +2312,10 @@
         {
             "name": "get_distinct_ro_name",
             "displayName": "get_distinct_ro_name"
+        },
+        {
+            "name": "get_carry_fwd_indents",
+            "displayName": "get_carry_fwd_indents"
         },
         {
             "name": "get_productions_rate",
