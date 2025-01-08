@@ -1159,6 +1159,69 @@
             ]
         },
         {
+            "name": "carryfwdindent",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CarryFwdIndent",
+            "attributes": {},
+            "uris": [
+                "/api/carryfwdindent/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "carryfwdindent_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CarryFwdIndent_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/carryfwdindent/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "carryfwdindent_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CarryFwdIndent_admin",
+            "attributes": {},
+            "uris": [
+                "/api/carryfwdindent/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "indentdryout",
             "type": "all",
             "ownerManagedAccess": false,
@@ -1224,6 +1287,9 @@
                 },
                 {
                     "name": "get_distinct_ro_name"
+                },
+                {
+                    "name": "get_carry_fwd_indents"
                 }
             ]
         },
@@ -1275,6 +1341,9 @@
                 },
                 {
                     "name": "get_distinct_ro_name"
+                },
+                {
+                    "name": "get_carry_fwd_indents"
                 }
             ]
         },
@@ -1344,6 +1413,9 @@
                 },
                 {
                     "name": "get_distinct_ro_name"
+                },
+                {
+                    "name": "get_carry_fwd_indents"
                 }
             ]
         },
@@ -2240,6 +2312,10 @@
         {
             "name": "get_distinct_ro_name",
             "displayName": "get_distinct_ro_name"
+        },
+        {
+            "name": "get_carry_fwd_indents",
+            "displayName": "get_carry_fwd_indents"
         },
         {
             "name": "get_productions_rate",

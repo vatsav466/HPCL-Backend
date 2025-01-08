@@ -729,6 +729,17 @@ Model DryOutHistory {
     }
 }
 
+Model CarryFwdIndent {
+    sap_id str
+    terminal_plant_id optional str
+    indent_no str
+    prod_reqd_dt datetime
+    reported_date datetime
+    dry_out_in_days optional str
+    dried_out optional bool
+    category optional str
+}
+
 Model IndentDryOut {
     bu unique_field index_field primary_key str
     site_id str      // location id
@@ -826,9 +837,12 @@ Model IndentDryOut {
         filters list IndentDryOutDataFilters
     }
 
-    Config=> {
-        access_key_mapping='bu,zone,region,sales_area,site_id:sap_id'
+    Action=> get_carry_fwd_indents {
+
     }
+    
+     Config=> {
+        access_key_mapping='bu,zone,region,sales_area,site_id:sap_id'
 }
 
 Model LpgOperations {

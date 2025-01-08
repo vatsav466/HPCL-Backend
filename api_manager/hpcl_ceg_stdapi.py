@@ -202,6 +202,31 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await DryOutHistory.get_all(params, skip_secrets=True)
 
 
+@router.post('/carryfwdindent', response_model=CarryFwdIndent, tags=['CarryFwdIndent'])
+async def create(inputObj: CarryFwdIndentCreate):
+    return await inputObj.create()
+
+
+@router.put('/carryfwdindent', response_model=CarryFwdIndent, tags=['CarryFwdIndent'])
+async def update(inputObj: CarryFwdIndent):
+    return await inputObj.modify()
+
+
+@router.get('/carryfwdindent/{id}', response_model=CarryFwdIndent, tags=['CarryFwdIndent'])
+async def get(id: str):
+    return await CarryFwdIndent.get(id, skip_secrets=True)
+
+
+@router.get('/carryfwdindent', response_model=CarryFwdIndentGetResp, tags=['CarryFwdIndent'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CarryFwdIndent.get_all(params, skip_secrets=True)
+
+
+@router.delete('/carryfwdindent/{id}', tags=['CarryFwdIndent'])
+async def delete(id: str):
+    return await CarryFwdIndent.delete(id)
+
+
 @router.post('/indentdryout', response_model=IndentDryOut, tags=['IndentDryOut'])
 async def create(inputObj: IndentDryOutCreate):
     return await inputObj.create()

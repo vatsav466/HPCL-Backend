@@ -1450,6 +1450,61 @@ class DryOutHistoryGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class CarryFwdIndentSchema(UrdhvaPostgresBase):
+    __tablename__ = 'carry_fwd_indent'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    indent_no: Mapped[str] = mapped_column("indent_no", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    prod_reqd_dt: Mapped[datetime.datetime] = mapped_column("prod_reqd_dt", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    reported_date: Mapped[datetime.datetime] = mapped_column("reported_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    dry_out_in_days: Mapped[typing.Optional[str]] = mapped_column("dry_out_in_days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dried_out: Mapped[typing.Optional[bool]] = mapped_column("dried_out", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class CarryFwdIndentCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'carry_fwd_indent'
+    
+    sap_id: str
+    terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: str
+    prod_reqd_dt: datetime.datetime
+    reported_date: datetime.datetime
+    dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
+    dried_out: typing.Optional[bool] = pydantic.Field(False, )
+    category: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CarryFwdIndentSchema
+        upsert_keys = []
+
+
+class CarryFwdIndent(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'carry_fwd_indent'
+    
+    sap_id: typing.Optional[str] | None = None
+    terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
+    indent_no: typing.Optional[str] | None = None
+    prod_reqd_dt: typing.Optional[datetime.datetime] | None = None
+    reported_date: typing.Optional[datetime.datetime] | None = None
+    dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
+    dried_out: typing.Optional[bool] = pydantic.Field(False, )
+    category: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = CarryFwdIndentSchema
+        upsert_keys = []
+
+
+class CarryFwdIndentGetResp(pydantic.BaseModel):
+    data: typing.List[CarryFwdIndent]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class IndentDryOutSchema(UrdhvaPostgresBase):
     __tablename__ = 'indent_dry_out'
     
@@ -1620,6 +1675,10 @@ class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
 
 class Indentdryout_Get_Distinct_Ro_NameParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
+
+
+class Indentdryout_Get_Carry_Fwd_IndentsParams(pydantic.BaseModel):
+    pass
 
 
 class LpgOperationsSchema(UrdhvaPostgresBase):
