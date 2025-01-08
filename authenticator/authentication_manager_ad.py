@@ -60,7 +60,7 @@ class AuthenticationManager:
         user_info = user_data['data'][0]
 
         # If ldap authentication enabled allow user to validate with LDAP, else check local login
-        if urdhva_base.settings.ldap_auth_enabled:
+        if user_info.get('is_ad_user'): #urdhva_base.settings.ldap_auth_enabled:
             # Validating user in with LDAP.
             status = cls.validate_ldap_auth(username, password)
             if not status:

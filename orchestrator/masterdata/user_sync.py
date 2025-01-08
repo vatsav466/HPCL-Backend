@@ -32,11 +32,13 @@ async def sync_users(file_path):
     df['system_role'] = df['ROLE_NAME']
     df['novex_role'] = df['Novex Role']
     df['is_ad_user'] = True
+    df['status'] = True
     df['bu'] = df['BU']
+    df = df.drop_duplicates(subset=['employee_id'], keep=False)
     for key in ['region', 'state', 'zone', 'sales_area', 'escalation_level']:
         df[key] = ''
     df = df[['region', 'state', 'zone', 'sales_area', 'escalation_level', 'username', 'employee_id', 'sap_id', 'email',
-             'first_name', 'last_name', 'system_role', 'novex_role', 'bu']]
+             'first_name', 'last_name', 'system_role', 'novex_role', 'bu', 'status', 'is_ad_user']]
     df = df[df['employee_id'] != '']
     data = df.to_dict(orient='records')
     for record in data:
