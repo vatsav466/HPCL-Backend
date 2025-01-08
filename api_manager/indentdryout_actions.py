@@ -603,6 +603,40 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
                   for x in connection_mapping.dryout_aging])
     # stats.append({"section": "Indent Delivered", "value": delivered_count, "serial": 11, "condition": "=", "group": "delivered"})
+    carry_fwd_indent = {"section": "Carry Fwd Indent", "value": 0, "serial": 12, "condition": "=", "group": "carry_fwd_indent"}
+    ist = pytz.timezone('Asia/Kolkata')
+    carry_fwd_indent_date = datetime.datetime.now(ist).strftime("%H")
+    if int(carry_fwd_indent_date) > 14:
+        # list_of_carry_fwd_indents = await dry_out_analysis.get_carry_fwd_indent(get_only_dry_out_ro=False)
+        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        carry_fwd_data = pd.DataFrame(carry_fwd_data)
+        stats.extend([{
+            "section": "Carry Fwd Indent",
+            "value": len(carry_fwd_data),
+            "serial": 15, "condition": "=", "group": "carry_fwd_indent"
+        }, {
+            "section": "DryOut Carry Fwd Indent",
+            "value": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != '']),
+            "serial": 16, "condition": "=", "group": "carry_fwd_indent"
+        }, {
+            "section": "CATA Carry Fwd Indent",
+            "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']),
+            "serial": 17, "condition": "=", "group": "carry_fwd_indent"
+        }])
+    else:
+        stats.extend([{
+            "section": "Carry Fwd Indent",
+            "value": 0,
+            "serial": 15, "condition": "=", "group": "carry_fwd_indent"
+        },{
+            "section": "DryOut Carry Fwd Indent",
+            "value": 0,
+            "serial": 16, "condition": "=", "group": "carry_fwd_indent"
+        },{
+            "section": "CATA Carry Fwd Indent",
+            "value": 0,
+            "serial": 17, "condition": "=", "group": "carry_fwd_indent"
+        }])
     stats = sorted(stats, key=lambda x: x['serial'])
     updated_stats = []
     for each_stats in stats:
@@ -691,3 +725,9 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
         "plant": [{"name": row['terminal_plant_name'], "id": row['terminal_plant_id']} for _, row in resp.iterrows()]
     }
     return {"status": True, "message": "Success", "data": result}
+
+
+# Action get_carry_fwd_indents
+@router.post('/get_carry_fwd_indents', tags=['IndentDryOut'])
+async def indentdryout_get_carry_fwd_indents(data: Indentdryout_Get_Carry_Fwd_IndentsParams):
+    ...
