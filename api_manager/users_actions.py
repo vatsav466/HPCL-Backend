@@ -26,9 +26,10 @@ async def users_create_user(data: Users_Create_UserParams):
 async def users_login(request: fastapi.Request, data: Users_LoginParams):
     status, resp = await auth_manager.AuthenticationManager.login(data.username, data.password)
     if not status:
-        response = fastapi.responses.JSONResponse({"status": resp}, 401)
+        response = fastapi.responses.JSONResponse({"status": False, "msg": resp}, 401)
     else:
-        response = fastapi.responses.JSONResponse({"status": "Logged in Successfully"}, 200)
+        response = fastapi.responses.JSONResponse({"status": True, "msg": "Logged in Successfully"},
+                                                  200)
         response.set_cookie(urdhva_base.settings.cookie_name, resp, httponly=urdhva_base.settings.session_httponly,
                             secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
     return response
@@ -44,4 +45,4 @@ async def users_update_user_status(data: Users_Update_User_StatusParams):
 @router.post('/logout', tags=['Users'])
 async def users_logout(request: fastapi.Request, data: Users_LogoutParams):
     # Clearing the session
-    return await auth_manager.AuthenticationManager.login(request)
+    return await auth_manager.AuthenticationManager.logout(request)
