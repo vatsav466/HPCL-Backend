@@ -619,6 +619,8 @@ class IndentDryOut:
                             GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
+        logger.info(f"Query: {query}")
+        logger.info(f"Resp: {resp}")
         input_data = {
             "action_msg": "",
             "event_tags": {
@@ -682,6 +684,8 @@ class IndentDryOut:
                             GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
+        logger.info(f"Query: {query}")
+        logger.info(f"Resp: {resp}")
         input_data = {
             "action_msg": "",
             "event_tags": {

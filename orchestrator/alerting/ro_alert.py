@@ -77,7 +77,7 @@ class ROAlertManager(alert_factory.AlertFactory):
             dict: A dictionary containing the status, message and the closed alert document
         """        
         try:
-            logger.info(f"Alert data received to close alert: {alert_data}")
+            # logger.info(f"Alert data received to close alert: {alert_data}")
             return await cls.close_alert(alert_data)
             
         except Exception as e:

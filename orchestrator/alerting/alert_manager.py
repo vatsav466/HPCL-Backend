@@ -39,7 +39,7 @@ async def close_alert(alert_data):
     Returns:
         dict: A dictionary containing the status, message and the closed alert document.
     """
-    print("alert_data for close alert", alert_data)
+    # print("alert_data for close alert", alert_data)
     alert_type = alert_data['alert_type']
     return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").close_bu_alert(alert_data)
 
