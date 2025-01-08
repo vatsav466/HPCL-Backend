@@ -724,29 +724,7 @@ LIMIT 10000;''',
                             FROM public."M60_LEVEL_METADATA"''',
 
     "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_DATA" where "MOM_LEVEL_FINAL_DATA"."fiscal_year" in ('2023-2024','2024-2025') ''',
-    
-    "lpg_cdcms": f'''select "BookingReceivedYesterday" as "Bookings", 
-                            "LPG_SALES_SUMMARY_DATA"."TotalSalesYesterday" as "Sales",
-                            "Total_Pending" as "Pending",
-                            "ZOName" as "ZOName",
-                            "ROName" as "ROName",
-                            "SAName" as "SAName",
-                            "Execution_Date" as "Execution_Date",
-                            "JDEDistributorCode" as "JDEDistributorCode"
-                    from
-                        "LPG_SALES_SUMMARY_DATA"''',
-    
-    "lpg_cdcms_month": f'''select
-                                EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date") as "Month_No",
-                                "Execution_Month",
-                                "TotalSalesYesterday" as "Total Sales",
-                                "ZOName" as "ZOName",
-                                "ROName" as "ROName",
-                                "SAName" as "SAName",
-                                "JDEDistributorCode" as "JDEDistributorCode"
-                            from
-                                "LPG_SALES_SUMMARY_DATA"''',
-
+        
     "carry_forward_analysis": f'''select 
                                         SUM(total_indents) as "total_indents", 
                                         SUM(indents_executed) as "indents_executed", 
@@ -769,14 +747,59 @@ LIMIT 10000;''',
                                         ORDER BY 
                                         bu, alert_section, interlock_name, location_name, severity;''',
     
+    "lpg_cdcms": f'''select sum("BookingReceivedYesterday") as "Bookings", 
+                            sum("TotalSalesYesterday") as "Sales",
+                            sum("Total_Pending") as "Pending",
+                            "ZOName" as "ZOName",
+                            "ROName" as "ROName",
+                            "SAName" as "SAName",
+                            "Execution_Date" as "Execution_Date",
+                            "JDEDistributorCode" as "JDEDistributorCode"
+                    from
+                        "LPG_SALES_SUMMARY_DATA"''',
+    
+    "lpg_cdcms_month": f'''select
+                                sum("TotalSalesYesterday") as "Total Sales",
+                                EXTRACT(MONTH FROM "LPG_SALES_SUMMARY_DATA"."Execution_Date") as "Month_No",
+                                "Execution_Month",                                
+                                "ZOName" as "ZOName",
+                                "ROName" as "ROName",
+                                "SAName" as "SAName",
+                                "JDEDistributorCode" as "JDEDistributorCode"
+                            from
+                                "LPG_SALES_SUMMARY_DATA"''',
+    
     "cdcms_order_source": f'''select
-                                    "OrderSourceName" as "OrderSourceName",
-                                    "JDEDistributorCode" as "JDEDistributorCode",
-	                                "ZOName" as "ZOName",
-	                                "ROName" as "ROName",
-	                                "SAName" as "SAName",
-                                    "Execution_Date" as "Execution_Date",
-	                                "BookingReceivedYesterday" as "Total_Bookings"
+                                    "OrderSourceName",
+                                    "JDEDistributorCode",
+	                                "ZOName",
+	                                "ROName",
+	                                "SAName",
+                                    "Execution_Date",
+	                                sum("BookingReceivedYesterday") as "Total_Bookings"
                                 from
-	                                "LPG_SALES_SUMMARY_DATA"'''
+	                                "LPG_SALES_SUMMARY_DATA"''',
+                                 
+    "overall_pending_pmuy_nmpuy": f'''
+                                select 
+                                    "ZOName",
+                                    "ROName",
+                                    "SAName",
+                                    "ConsumerType",
+                                    "JDEDistributorCode",
+                                    "Execution_Date",
+                                    sum("Total_Pending") as "Total_pending" 
+                                from
+                                    "LPG_SALES_SUMMARY_DATA" ''',
+    "pending_1_3_days" : f'''
+                        select 
+                            "ZOName" ,
+                            "ROName",
+                            "SAName",
+                            "ConsumerType" ,
+                            "JDEDistributorCode",
+                            "Execution_Date",
+                            sum("pending_1_3_days") as "Pending 1-3 days" 
+                        from
+                            "hpcl_ceg"."public"."LPG_SALES_SUMMARY_DATA" '''
 }
