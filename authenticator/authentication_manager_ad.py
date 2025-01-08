@@ -2,6 +2,7 @@ import urdhva_base
 import uuid
 import ldap
 import json
+import fastapi
 import base64
 import hpcl_ceg_model
 import urdhva_base.settings
@@ -52,8 +53,8 @@ class AuthenticationManager:
             bool: True if authentication is successful, False otherwise.
         """
         # Checking whether user exists in ceg local database or not, If not return Invalid else proceed further
-        user_data = hpcl_ceg_model.Users.get_aggr_data(f"select * from users where "
-                                                       f"lower(username)='{username.lower()}'", skip_total=True)
+        user_data = await hpcl_ceg_model.Users.get_aggr_data(f"select * from users where "
+                                                             f"lower(username)='{username.lower()}'", skip_total=True)
         if not user_data["data"]:
             return False, "Invalid Login Credentials"
         user_info = user_data['data'][0]
@@ -68,8 +69,11 @@ class AuthenticationManager:
             # If provided password not equals to db password, skip authentication
             if urdhva_base.types.Secret(user_info["password"]).get_secret() != password:
                 return False, "Invalid Login Credentials"
+        role = await hpcl_ceg_model.Roles.get_aggr_data(f"select * from roles where name='{user_info['novex_role']}'")
+        if role["data"]:
+            user_info["allowed_roles"] = role["data"][0]["allowed_pages"]
         # Adding session data
-        return True, cls.generate_cookie(user_info)
+        return True, await cls.generate_cookie(user_info)
 
     @classmethod
     async def generate_cookie(cls, cookie_data):
@@ -82,8 +86,27 @@ class AuthenticationManager:
         d = {"entity_id": "Novex", "cookie_id": cookie_id}
         cookie_key = f.encrypt(json.dumps(d).encode()).decode()
         time = 24 * 60 * 60
-        await redis_client.setex(rkey, time, base64.b64encode(json.dumps(cookie_data, default=str).encode()).decode())
+        await redis_client.setex(rkey, time,
+                                 base64.urlsafe_b64encode(json.dumps(cookie_data, default=str).encode()).decode())
         return cookie_key
+
+    @classmethod
+    async def logout(cls, request: fastapi.Request):
+        response = fastapi.responses.JSONResponse({'url': f"{request.base_url}/login"}, 401)
+        cookie_id = request.cookies.get(urdhva_base.settings.cookie_name, None)
+        if cookie_id:
+            try:
+                f = Fernet(urdhva_base.settings.fernet_key)
+                d = json.loads(f.decrypt(cookie_id.encode()).decode())
+                cookie_id = d["cookie_id"]
+            except:
+                ...
+            redis_client = await urdhva_base.redispool.get_redis_connection()
+            rkey = f"Novex_SessionData_{cookie_id}"
+            await redis_client.delete(rkey)
+        response.delete_cookie(urdhva_base.settings.cookie_name)
+        # todo:- Need to clear dashboard sessions
+        return response
 
     @classmethod
     async def create_user(cls, username, password, role, first_name, last_name, employee_id, status=True):
