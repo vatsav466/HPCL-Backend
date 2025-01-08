@@ -6,6 +6,13 @@ import hpcl_ceg_model
 import pandas as pd
 
 
+def convert_float_string(value):
+    try:
+        return str(int(float(value.strip()))) if value and value.strip() else ''
+    except:
+        return value if isinstance(value, str) else f"{value}"
+
+
 async def sync_users(file_path):
     if not os.path.exists(file_path):
         print(f"Given file {file_path} not exists")
@@ -20,9 +27,9 @@ async def sync_users(file_path):
     df = df[df['EMPLOYEE_NUMBER'].notna()]
     df = df.fillna('')
     df['LOCATION'] = df['LOCATION'].astype(str)
-    df['LOCATION'] = df['LOCATION'].apply(lambda x: str(int(float(x.strip()))) if x else '')
+    df['LOCATION'] = df['LOCATION'].apply(lambda x: convert_float_string(x))
     df['EMPLOYEE_NUMBER'] = df['EMPLOYEE_NUMBER'].astype(str)
-    df['EMPLOYEE_NUMBER'] = df['EMPLOYEE_NUMBER'].apply(lambda x: str(int(float(x.strip()))) if x else '')
+    df['EMPLOYEE_NUMBER'] = df['EMPLOYEE_NUMBER'].apply(lambda x: convert_float_string(x))
     df['username'] = df['EMPLOYEE_NUMBER']
     df['employee_id'] = df['EMPLOYEE_NUMBER']
     df['sap_id'] = df['LOCATION']
