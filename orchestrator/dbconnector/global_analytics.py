@@ -15,7 +15,7 @@ import orchestrator.dbconnector.connector_factory as connector_factory
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
-
+from collections import defaultdict
 
 class GlobalAnalytics:
     @staticmethod
@@ -690,14 +690,15 @@ class GlobalAnalytics:
             # Fallback query if no filters are provided
             sales_performance_query_ = f'''
                 SELECT
-                    SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
                     "M60_LEVEL_METADATA"
                 WHERE
-                    "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
+                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and   "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
                 GROUP BY
                     "M60_LEVEL_METADATA"."fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
@@ -2478,7 +2479,6 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
-    
     
     @staticmethod
     async def lpg_cdcms_month(filters, drill_state):
