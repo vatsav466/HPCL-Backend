@@ -593,17 +593,17 @@ class IndentDryOut:
         locn_code = str(self.params['terminal_plant_id'])
         indent_no = self.params.get("indent_no")
         if 'prod_reqd_dt' in self.params.keys():
-            prod_reqd_dt = self.params['prod_reqd_dt']
+            prod_reqd_dt = self.params['prod_reqd_dt'].split("T")[0]
         else:
             query = f"""SELECT "PROD_REQD_DT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE "INDENT_NO" = '{indent_no}' """ \
                     f"""AND "LOCN_CODE" = '{locn_code}' """
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
             if resp:
-                prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d %H:%M:%S")
+                prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d")
             else:
-                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        today_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d")
+        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
@@ -645,18 +645,18 @@ class IndentDryOut:
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
         locn_code = self.params.get("terminal_plant_id")
-        today_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
         if 'prod_reqd_dt' in self.params.keys():
-            prod_reqd_dt = self.params['prod_reqd_dt']
+            prod_reqd_dt = self.params['prod_reqd_dt'].split("T")[0]
         else:
             query = f"""SELECT "PROD_REQD_DT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE "INDENT_NO" = '{indent_no}' """ \
                     f"""AND "LOCN_CODE" = '{locn_code}' """
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
             if resp:
-                prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d %H:%M:%S")
+                prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d")
             else:
-                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
