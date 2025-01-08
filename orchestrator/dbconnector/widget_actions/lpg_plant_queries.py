@@ -780,7 +780,8 @@ LIMIT 10000;''',
                                 from
 	                                "LPG_SALES_SUMMARY_DATA"''',
                                  
-    "overall_pending_pmuy_nmpuy": f''' select 
+    "overall_pending_pmuy_nmpuy": f'''
+                                select 
                                     "ZOName",
                                     "ROName",
                                     "SAName",
@@ -789,5 +790,16 @@ LIMIT 10000;''',
                                     "Execution_Date",
                                     sum("Total_Pending") as "Total_pending" 
                                 from
-                                    "LPG_SALES_SUMMARY_DATA" '''
+                                    "LPG_SALES_SUMMARY_DATA" ''',
+    "pending_1_3_days" : f'''
+                        select 
+                            "ZOName" ,
+                            "ROName",
+                            "SAName",
+                            "ConsumerType" ,
+                            "JDEDistributorCode",
+                            "Execution_Date",
+                            sum("pending_1_3_days") as "Pending 1-3 days" 
+                        from
+                            "hpcl_ceg"."public"."LPG_SALES_SUMMARY_DATA" '''
 }
