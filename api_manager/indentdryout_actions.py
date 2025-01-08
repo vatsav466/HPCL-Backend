@@ -254,7 +254,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
             formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
-            formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
+            # formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
             return formatted_ist_time
         except:
             return "-"
@@ -455,7 +455,8 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     if dry_out_data:
         potential_dry_out = dry_out_data[0]["total_unique_count"]
 
-    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+    # _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
+    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out}
     return {"status": True, "message": "Success", "data": _data}
 
 
@@ -645,6 +646,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
 
     grouped_data = {}
     for entry in resp:
+        entry['name'] = str(entry["sap_id"]) + ' - ' + (entry['name'])
         sap_id = entry["sap_id"]
         if sap_id not in grouped_data:
             grouped_data[sap_id] = []
@@ -685,7 +687,7 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
     resp = pd.DataFrame(resp)
     # resp = [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()]
     result = {
-        "customer": [{"name": row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
+        "customer": [{"name": str(row['dealer_id']) + " - " + row['location_name'], "id": row['dealer_id']} for _, row in resp.iterrows()],
         "plant": [{"name": row['terminal_plant_name'], "id": row['terminal_plant_id']} for _, row in resp.iterrows()]
     }
     return {"status": True, "message": "Success", "data": result}

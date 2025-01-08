@@ -142,7 +142,7 @@ class IndentDryOut:
                 datetime.timedelta(days=0)
         ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=3)).strftime("%Y-%m-%d")
-        query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE" """ \
+        query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
                 f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                 f"""AND b."PROD" = '{prod_code}' """ \
@@ -180,6 +180,7 @@ class IndentDryOut:
                     self.params['indent_no'] = str(each_indent['INDENT_NO'])
                     self.params['terminal_plant_id'] = str(each_indent['LOCN_CODE'])
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+                    self.params['prod_reqd_dt'] = each_indent.get('PROD_REQD_DT').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     await create_alert(self.params, camunda_url)
                     # Todo:- Create Dry-Out history data for the bu/sap_id/product if not available in Open State
                 else:
@@ -589,7 +590,19 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
+        locn_code = str(self.params['terminal_plant_id'])
         indent_no = self.params.get("indent_no")
+        if 'prod_reqd_dt' in self.params.keys():
+            prod_reqd_dt = self.params['prod_reqd_dt']
+        else:
+            query = f"""SELECT "PROD_REQD_DT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE "INDENT_NO" = '{indent_no}' """ \
+                    f"""AND "LOCN_CODE" = '{locn_code}' """
+            function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            resp = await function(query=query)
+            if resp:
+                prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         today_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                             FROM 
@@ -601,7 +614,8 @@ class IndentDryOut:
                                 AND a."LOCN_CODE" = b."LOCN_CODE"
                                 AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                 AND b."CARD_STATUS" = 'I'
-                                AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS')) 
+                                AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
+--                                 AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS')) 
                             GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
@@ -630,7 +644,19 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
+        locn_code = self.params.get("terminal_plant_id")
         today_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if 'prod_reqd_dt' in self.params.keys():
+            prod_reqd_dt = self.params['prod_reqd_dt']
+        else:
+            query = f"""SELECT "PROD_REQD_DT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE "INDENT_NO" = '{indent_no}' """ \
+                    f"""AND "LOCN_CODE" = '{locn_code}' """
+            function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            resp = await function(query=query)
+            if resp:
+                prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
@@ -641,7 +667,8 @@ class IndentDryOut:
                                 AND a."LOCN_CODE" = b."LOCN_CODE"
                                 AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                 AND b."CARD_STATUS" = 'O'
-                                AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS'))
+                                AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
+--                                 AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS'))
                             GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)

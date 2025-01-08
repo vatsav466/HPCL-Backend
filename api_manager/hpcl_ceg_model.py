@@ -1773,6 +1773,299 @@ class Lpgrejections_Get_Pt_RejectionsParams(pydantic.BaseModel):
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
 
 
+class LpgSalesSummaryDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_sales_summary_data'
+    
+    jde_distributor_code: Mapped[int] = mapped_column("jde_distributor_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    consumer_type: Mapped[str] = mapped_column("consumer_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    is_prepaid: Mapped[str] = mapped_column("is_prepaid", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cyl_type: Mapped[str] = mapped_column("cyl_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    order_source_code: Mapped[str] = mapped_column("order_source_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_0_d: Mapped[int] = mapped_column("pending_0_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_1_d: Mapped[int] = mapped_column("pending_1_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_2_d: Mapped[int] = mapped_column("pending_2_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_3_d: Mapped[int] = mapped_column("pending_3_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_4_d: Mapped[int] = mapped_column("pending_4_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_5_d: Mapped[int] = mapped_column("pending_5_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_6_d: Mapped[int] = mapped_column("pending_6_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_7_d: Mapped[int] = mapped_column("pending_7_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_8_d: Mapped[int] = mapped_column("pending_8_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_9_d: Mapped[int] = mapped_column("pending_9_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_10_d: Mapped[int] = mapped_column("pending_10_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_11_d: Mapped[int] = mapped_column("pending_11_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_12_d: Mapped[int] = mapped_column("pending_12_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_13_d: Mapped[int] = mapped_column("pending_13_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_14_d: Mapped[int] = mapped_column("pending_14_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_15_d: Mapped[int] = mapped_column("pending_15_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending__beyond15_d: Mapped[int] = mapped_column("pending__beyond15_d", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    booking_received_yesterday: Mapped[int] = mapped_column("booking_received_yesterday", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    total_sales_yesterday: Mapped[int] = mapped_column("total_sales_yesterday", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    booking_received_today: Mapped[int] = mapped_column("booking_received_today", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    total_sales_today: Mapped[int] = mapped_column("total_sales_today", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sa_code: Mapped[int] = mapped_column("sa_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    state_code: Mapped[str] = mapped_column("state_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    district_code: Mapped[int] = mapped_column("district_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    taluka_code: Mapped[str] = mapped_column("taluka_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    city_code: Mapped[str] = mapped_column("city_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_code: Mapped[int] = mapped_column("ro_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sa_name: Mapped[str] = mapped_column("sa_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zo_code: Mapped[str] = mapped_column("zo_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_name: Mapped[str] = mapped_column("ro_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zo_name: Mapped[str] = mapped_column("zo_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    order_source_name: Mapped[str] = mapped_column("order_source_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    total__pending: Mapped[int] = mapped_column("total__pending", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_1_3_days: Mapped[int] = mapped_column("pending_1_3_days", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_4_7_days: Mapped[int] = mapped_column("pending_4_7_days", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    pending_8_15_days: Mapped[int] = mapped_column("pending_8_15_days", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    execution__date: Mapped[datetime.datetime] = mapped_column("execution__date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    execution__month: Mapped[str] = mapped_column("execution__month", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    execution__year: Mapped[int] = mapped_column("execution__year", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    month__year: Mapped[str] = mapped_column("month__year", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgSalesSummaryDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_sales_summary_data'
+    
+    jde_distributor_code: int
+    consumer_type: str
+    is_prepaid: str
+    cyl_type: str
+    order_source_code: str
+    pending_0_d: int
+    pending_1_d: int
+    pending_2_d: int
+    pending_3_d: int
+    pending_4_d: int
+    pending_5_d: int
+    pending_6_d: int
+    pending_7_d: int
+    pending_8_d: int
+    pending_9_d: int
+    pending_10_d: int
+    pending_11_d: int
+    pending_12_d: int
+    pending_13_d: int
+    pending_14_d: int
+    pending_15_d: int
+    pending__beyond15_d: int
+    booking_received_yesterday: int
+    total_sales_yesterday: int
+    booking_received_today: int
+    total_sales_today: int
+    sa_code: int
+    state_code: str
+    district_code: int
+    taluka_code: str
+    city_code: str
+    ro_code: int
+    sa_name: str
+    zo_code: str
+    ro_name: str
+    zo_name: str
+    order_source_name: str
+    total__pending: int
+    pending_1_3_days: int
+    pending_4_7_days: int
+    pending_8_15_days: int
+    execution__date: datetime.datetime
+    execution__month: str
+    execution__year: int
+    month__year: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgSalesSummaryDataSchema
+        upsert_keys = []
+
+
+class LpgSalesSummaryData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_sales_summary_data'
+    
+    jde_distributor_code: typing.Optional[int] | None = None
+    consumer_type: typing.Optional[str] | None = None
+    is_prepaid: typing.Optional[str] | None = None
+    cyl_type: typing.Optional[str] | None = None
+    order_source_code: typing.Optional[str] | None = None
+    pending_0_d: typing.Optional[int] | None = None
+    pending_1_d: typing.Optional[int] | None = None
+    pending_2_d: typing.Optional[int] | None = None
+    pending_3_d: typing.Optional[int] | None = None
+    pending_4_d: typing.Optional[int] | None = None
+    pending_5_d: typing.Optional[int] | None = None
+    pending_6_d: typing.Optional[int] | None = None
+    pending_7_d: typing.Optional[int] | None = None
+    pending_8_d: typing.Optional[int] | None = None
+    pending_9_d: typing.Optional[int] | None = None
+    pending_10_d: typing.Optional[int] | None = None
+    pending_11_d: typing.Optional[int] | None = None
+    pending_12_d: typing.Optional[int] | None = None
+    pending_13_d: typing.Optional[int] | None = None
+    pending_14_d: typing.Optional[int] | None = None
+    pending_15_d: typing.Optional[int] | None = None
+    pending__beyond15_d: typing.Optional[int] | None = None
+    booking_received_yesterday: typing.Optional[int] | None = None
+    total_sales_yesterday: typing.Optional[int] | None = None
+    booking_received_today: typing.Optional[int] | None = None
+    total_sales_today: typing.Optional[int] | None = None
+    sa_code: typing.Optional[int] | None = None
+    state_code: typing.Optional[str] | None = None
+    district_code: typing.Optional[int] | None = None
+    taluka_code: typing.Optional[str] | None = None
+    city_code: typing.Optional[str] | None = None
+    ro_code: typing.Optional[int] | None = None
+    sa_name: typing.Optional[str] | None = None
+    zo_code: typing.Optional[str] | None = None
+    ro_name: typing.Optional[str] | None = None
+    zo_name: typing.Optional[str] | None = None
+    order_source_name: typing.Optional[str] | None = None
+    total__pending: typing.Optional[int] | None = None
+    pending_1_3_days: typing.Optional[int] | None = None
+    pending_4_7_days: typing.Optional[int] | None = None
+    pending_8_15_days: typing.Optional[int] | None = None
+    execution__date: typing.Optional[datetime.datetime] | None = None
+    execution__month: typing.Optional[str] | None = None
+    execution__year: typing.Optional[int] | None = None
+    month__year: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgSalesSummaryDataSchema
+        upsert_keys = []
+
+
+class LpgSalesSummaryDataGetResp(pydantic.BaseModel):
+    data: typing.List[LpgSalesSummaryData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class LpgConsumersSummarySchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_consumers_summary'
+    
+    distributor_code: Mapped[int] = mapped_column("distributor_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    relationship_status: Mapped[str] = mapped_column("relationship_status", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    relationship_sub_status: Mapped[str] = mapped_column("relationship_sub_status", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    consumer_category: Mapped[str] = mapped_column("consumer_category", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    typeof_consumer: Mapped[int] = mapped_column("typeof_consumer", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    main_scheme_category: Mapped[int] = mapped_column("main_scheme_category", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    scheme_code: Mapped[int] = mapped_column("scheme_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    connection_type: Mapped[str] = mapped_column("connection_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cylinder_type: Mapped[str] = mapped_column("cylinder_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    consumer_count: Mapped[int] = mapped_column("consumer_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    e_kyc_completed: Mapped[int] = mapped_column("e_kyc_completed", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    suvidha_club: Mapped[int] = mapped_column("suvidha_club", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    hig_opt_out: Mapped[int] = mapped_column("hig_opt_out", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    subsidy_give_it_up: Mapped[int] = mapped_column("subsidy_give_it_up", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    actc_count: Mapped[int] = mapped_column("actc_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bctc_count: Mapped[int] = mapped_column("bctc_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    nctc_count: Mapped[int] = mapped_column("nctc_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    safety_check_pending: Mapped[int] = mapped_column("safety_check_pending", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    hp_pay_consumer_count: Mapped[int] = mapped_column("hp_pay_consumer_count", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    jde_distributor_code: Mapped[int] = mapped_column("jde_distributor_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sa_code: Mapped[int] = mapped_column("sa_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    state_code: Mapped[str] = mapped_column("state_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_code: Mapped[int] = mapped_column("ro_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sa_name: Mapped[str] = mapped_column("sa_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zo_code: Mapped[str] = mapped_column("zo_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_name: Mapped[str] = mapped_column("ro_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zo_name: Mapped[str] = mapped_column("zo_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category: Mapped[str] = mapped_column("category", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sub_category: Mapped[str] = mapped_column("sub_category", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category_status: Mapped[str] = mapped_column("category_status", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    e_kyc_pending: Mapped[int] = mapped_column("e_kyc_pending", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone_names: Mapped[str] = mapped_column("zone_names", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgConsumersSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_consumers_summary'
+    
+    distributor_code: int
+    relationship_status: str
+    relationship_sub_status: str
+    consumer_category: str
+    typeof_consumer: int
+    main_scheme_category: int
+    scheme_code: int
+    connection_type: str
+    cylinder_type: str
+    consumer_count: int
+    e_kyc_completed: int
+    suvidha_club: int
+    hig_opt_out: int
+    subsidy_give_it_up: int
+    actc_count: int
+    bctc_count: int
+    nctc_count: int
+    safety_check_pending: int
+    hp_pay_consumer_count: int
+    jde_distributor_code: int
+    sa_code: int
+    state_code: str
+    ro_code: int
+    sa_name: str
+    zo_code: str
+    ro_name: str
+    zo_name: str
+    category: str
+    sub_category: str
+    category_status: str
+    e_kyc_pending: int
+    zone_names: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgConsumersSummarySchema
+        upsert_keys = []
+
+
+class LpgConsumersSummary(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_consumers_summary'
+    
+    distributor_code: typing.Optional[int] | None = None
+    relationship_status: typing.Optional[str] | None = None
+    relationship_sub_status: typing.Optional[str] | None = None
+    consumer_category: typing.Optional[str] | None = None
+    typeof_consumer: typing.Optional[int] | None = None
+    main_scheme_category: typing.Optional[int] | None = None
+    scheme_code: typing.Optional[int] | None = None
+    connection_type: typing.Optional[str] | None = None
+    cylinder_type: typing.Optional[str] | None = None
+    consumer_count: typing.Optional[int] | None = None
+    e_kyc_completed: typing.Optional[int] | None = None
+    suvidha_club: typing.Optional[int] | None = None
+    hig_opt_out: typing.Optional[int] | None = None
+    subsidy_give_it_up: typing.Optional[int] | None = None
+    actc_count: typing.Optional[int] | None = None
+    bctc_count: typing.Optional[int] | None = None
+    nctc_count: typing.Optional[int] | None = None
+    safety_check_pending: typing.Optional[int] | None = None
+    hp_pay_consumer_count: typing.Optional[int] | None = None
+    jde_distributor_code: typing.Optional[int] | None = None
+    sa_code: typing.Optional[int] | None = None
+    state_code: typing.Optional[str] | None = None
+    ro_code: typing.Optional[int] | None = None
+    sa_name: typing.Optional[str] | None = None
+    zo_code: typing.Optional[str] | None = None
+    ro_name: typing.Optional[str] | None = None
+    zo_name: typing.Optional[str] | None = None
+    category: typing.Optional[str] | None = None
+    sub_category: typing.Optional[str] | None = None
+    category_status: typing.Optional[str] | None = None
+    e_kyc_pending: typing.Optional[int] | None = None
+    zone_names: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgConsumersSummarySchema
+        upsert_keys = []
+
+
+class LpgConsumersSummaryGetResp(pydantic.BaseModel):
+    data: typing.List[LpgConsumersSummary]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class ScreensSchema(UrdhvaPostgresBase):
     __tablename__ = 'screens'
     
@@ -1973,5 +2266,286 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
 
 class VtsAlertHistoryGetResp(pydantic.BaseModel):
     data: typing.List[VtsAlertHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class M60LevelMetaDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'm60_level_meta_data'
+    
+    sbu: Mapped[typing.Optional[str]] = mapped_column("sbu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sbu__name: Mapped[typing.Optional[str]] = mapped_column("sbu__name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone__name: Mapped[typing.Optional[str]] = mapped_column("zone__name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region__name: Mapped[typing.Optional[str]] = mapped_column("region__name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sa: Mapped[typing.Optional[str]] = mapped_column("sa", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sales_area__name: Mapped[typing.Optional[str]] = mapped_column("sales_area__name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    product: Mapped[typing.Optional[str]] = mapped_column("product", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    product_name: Mapped[typing.Optional[str]] = mapped_column("product_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    uom: Mapped[typing.Optional[str]] = mapped_column("uom", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    invoice_dt: Mapped[typing.Optional[str]] = mapped_column("invoice_dt", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    target_qty_kl: Mapped[typing.Optional[float]] = mapped_column("target_qty_kl", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    target_qty_tmt: Mapped[typing.Optional[float]] = mapped_column("target_qty_tmt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    fiscal_year: Mapped[typing.Optional[str]] = mapped_column("fiscal_year", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    cur_fiscal_year: Mapped[typing.Optional[str]] = mapped_column("cur_fiscal_year", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgsbucd: Mapped[typing.Optional[str]] = mapped_column("orgsbucd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgsbuname: Mapped[typing.Optional[str]] = mapped_column("orgsbuname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgzonecd: Mapped[typing.Optional[str]] = mapped_column("orgzonecd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgzonename: Mapped[typing.Optional[str]] = mapped_column("orgzonename", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgrocd: Mapped[typing.Optional[str]] = mapped_column("orgrocd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgroname: Mapped[typing.Optional[str]] = mapped_column("orgroname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgsacd: Mapped[typing.Optional[str]] = mapped_column("orgsacd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgsaname: Mapped[typing.Optional[str]] = mapped_column("orgsaname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    productcode: Mapped[typing.Optional[str]] = mapped_column("productcode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    materialgroupname: Mapped[typing.Optional[str]] = mapped_column("materialgroupname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    curfiscalyear: Mapped[typing.Optional[str]] = mapped_column("curfiscalyear", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    fiscalyear: Mapped[typing.Optional[str]] = mapped_column("fiscalyear", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    yearmonth: Mapped[typing.Optional[str]] = mapped_column("yearmonth", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    netweight_uom: Mapped[typing.Optional[float]] = mapped_column("netweight_uom", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    netweight_kg: Mapped[typing.Optional[float]] = mapped_column("netweight_kg", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    netweight_tmt: Mapped[typing.Optional[float]] = mapped_column("netweight_tmt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    total__days__till__present_day: Mapped[typing.Optional[int]] = mapped_column("total__days__till__present_day", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    number__of__sundays__till__present_day: Mapped[typing.Optional[int]] = mapped_column("number__of__sundays__till__present_day", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    target_round: Mapped[typing.Optional[int]] = mapped_column("target_round", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    actual_round: Mapped[typing.Optional[int]] = mapped_column("actual_round", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    final_sum: Mapped[typing.Optional[float]] = mapped_column("final_sum", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    final_actual_sum: Mapped[typing.Optional[float]] = mapped_column("final_actual_sum", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    max_pending_days: Mapped[typing.Optional[int]] = mapped_column("max_pending_days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    working__days__till__present_day__without_sundays: Mapped[typing.Optional[int]] = mapped_column("working__days__till__present_day__without_sundays", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    rate__per__day__required_mmt: Mapped[typing.Optional[float]] = mapped_column("rate__per__day__required_mmt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    rate_per_day_current_mmt: Mapped[typing.Optional[float]] = mapped_column("rate_per_day_current_mmt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    total__days_in_fy: Mapped[typing.Optional[int]] = mapped_column("total__days_in_fy", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    pending__days: Mapped[typing.Optional[int]] = mapped_column("pending__days", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    month_year: Mapped[typing.Optional[int]] = mapped_column("month_year", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    month_name: Mapped[typing.Optional[str]] = mapped_column("month_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    fy_month: Mapped[typing.Optional[int]] = mapped_column("fy_month", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    year_monthname: Mapped[typing.Optional[datetime.date]] = mapped_column("year_monthname", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    target__quantity_tmtt: Mapped[typing.Optional[float]] = mapped_column("target__quantity_tmtt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    prediction__value: Mapped[typing.Optional[float]] = mapped_column("prediction__value", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    act__tgt__achievement: Mapped[typing.Optional[float]] = mapped_column("act__tgt__achievement", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    zone__region__achievement: Mapped[typing.Optional[float]] = mapped_column("zone__region__achievement", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    product__achievement: Mapped[typing.Optional[float]] = mapped_column("product__achievement", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    engine_id: Mapped[typing.Optional[str]] = mapped_column("engine_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class M60LevelMetaDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'm60_level_meta_data'
+    
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu__name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    zone__name: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    region__name: typing.Optional[str] = pydantic.Field("", **{})
+    sa: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area__name: typing.Optional[str] = pydantic.Field("", **{})
+    product: typing.Optional[str] = pydantic.Field("", **{})
+    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    uom: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_dt: typing.Optional[str] = pydantic.Field("", **{})
+    target_qty_kl: typing.Optional[float] = pydantic.Field(0.0, **{})
+    target_qty_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    fiscal_year: typing.Optional[str] = pydantic.Field("", **{})
+    cur_fiscal_year: typing.Optional[str] = pydantic.Field("", **{})
+    orgsbucd: typing.Optional[str] = pydantic.Field("", **{})
+    orgsbuname: typing.Optional[str] = pydantic.Field("", **{})
+    orgzonecd: typing.Optional[str] = pydantic.Field("", **{})
+    orgzonename: typing.Optional[str] = pydantic.Field("", **{})
+    orgrocd: typing.Optional[str] = pydantic.Field("", **{})
+    orgroname: typing.Optional[str] = pydantic.Field("", **{})
+    orgsacd: typing.Optional[str] = pydantic.Field("", **{})
+    orgsaname: typing.Optional[str] = pydantic.Field("", **{})
+    productcode: typing.Optional[str] = pydantic.Field("", **{})
+    materialgroupname: typing.Optional[str] = pydantic.Field("", **{})
+    curfiscalyear: typing.Optional[str] = pydantic.Field("", **{})
+    fiscalyear: typing.Optional[str] = pydantic.Field("", **{})
+    yearmonth: typing.Optional[str] = pydantic.Field("", **{})
+    netweight_uom: typing.Optional[float] = pydantic.Field(0.0, **{})
+    netweight_kg: typing.Optional[float] = pydantic.Field(0.0, **{})
+    netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total__days__till__present_day: typing.Optional[int] = pydantic.Field(0, **{})
+    number__of__sundays__till__present_day: typing.Optional[int] = pydantic.Field(0, **{})
+    target_round: typing.Optional[int] = pydantic.Field(0, **{})
+    actual_round: typing.Optional[int] = pydantic.Field(0, **{})
+    final_sum: typing.Optional[float] = pydantic.Field(0.0, **{})
+    final_actual_sum: typing.Optional[float] = pydantic.Field(0.0, **{})
+    max_pending_days: typing.Optional[int] = pydantic.Field(0, **{})
+    working__days__till__present_day__without_sundays: typing.Optional[int] = pydantic.Field(0, **{})
+    rate__per__day__required_mmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    rate_per_day_current_mmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total__days_in_fy: typing.Optional[int] = pydantic.Field(0, **{})
+    pending__days: typing.Optional[int] = pydantic.Field(0, **{})
+    month_year: typing.Optional[int] = pydantic.Field(0, **{})
+    month_name: typing.Optional[str] = pydantic.Field("", **{})
+    fy_month: typing.Optional[int] = pydantic.Field(0, **{})
+    year_monthname: typing.Optional[datetime.date] | None = None
+    target__quantity_tmtt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    prediction__value: typing.Optional[float] = pydantic.Field(0.0, **{})
+    act__tgt__achievement: typing.Optional[float] = pydantic.Field(0.0, **{})
+    zone__region__achievement: typing.Optional[float] = pydantic.Field(0.0, **{})
+    product__achievement: typing.Optional[float] = pydantic.Field(0.0, **{})
+    engine_id: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = M60LevelMetaDataSchema
+        upsert_keys = []
+
+
+class M60LevelMetaData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'm60_level_meta_data'
+    
+    sbu: typing.Optional[str] = pydantic.Field("", **{})
+    sbu__name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    zone__name: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    region__name: typing.Optional[str] = pydantic.Field("", **{})
+    sa: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area__name: typing.Optional[str] = pydantic.Field("", **{})
+    product: typing.Optional[str] = pydantic.Field("", **{})
+    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    uom: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_dt: typing.Optional[str] = pydantic.Field("", **{})
+    target_qty_kl: typing.Optional[float] = pydantic.Field(0.0, **{})
+    target_qty_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    fiscal_year: typing.Optional[str] = pydantic.Field("", **{})
+    cur_fiscal_year: typing.Optional[str] = pydantic.Field("", **{})
+    orgsbucd: typing.Optional[str] = pydantic.Field("", **{})
+    orgsbuname: typing.Optional[str] = pydantic.Field("", **{})
+    orgzonecd: typing.Optional[str] = pydantic.Field("", **{})
+    orgzonename: typing.Optional[str] = pydantic.Field("", **{})
+    orgrocd: typing.Optional[str] = pydantic.Field("", **{})
+    orgroname: typing.Optional[str] = pydantic.Field("", **{})
+    orgsacd: typing.Optional[str] = pydantic.Field("", **{})
+    orgsaname: typing.Optional[str] = pydantic.Field("", **{})
+    productcode: typing.Optional[str] = pydantic.Field("", **{})
+    materialgroupname: typing.Optional[str] = pydantic.Field("", **{})
+    curfiscalyear: typing.Optional[str] = pydantic.Field("", **{})
+    fiscalyear: typing.Optional[str] = pydantic.Field("", **{})
+    yearmonth: typing.Optional[str] = pydantic.Field("", **{})
+    netweight_uom: typing.Optional[float] = pydantic.Field(0.0, **{})
+    netweight_kg: typing.Optional[float] = pydantic.Field(0.0, **{})
+    netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total__days__till__present_day: typing.Optional[int] = pydantic.Field(0, **{})
+    number__of__sundays__till__present_day: typing.Optional[int] = pydantic.Field(0, **{})
+    target_round: typing.Optional[int] = pydantic.Field(0, **{})
+    actual_round: typing.Optional[int] = pydantic.Field(0, **{})
+    final_sum: typing.Optional[float] = pydantic.Field(0.0, **{})
+    final_actual_sum: typing.Optional[float] = pydantic.Field(0.0, **{})
+    max_pending_days: typing.Optional[int] = pydantic.Field(0, **{})
+    working__days__till__present_day__without_sundays: typing.Optional[int] = pydantic.Field(0, **{})
+    rate__per__day__required_mmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    rate_per_day_current_mmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    total__days_in_fy: typing.Optional[int] = pydantic.Field(0, **{})
+    pending__days: typing.Optional[int] = pydantic.Field(0, **{})
+    month_year: typing.Optional[int] = pydantic.Field(0, **{})
+    month_name: typing.Optional[str] = pydantic.Field("", **{})
+    fy_month: typing.Optional[int] = pydantic.Field(0, **{})
+    year_monthname: typing.Optional[datetime.date] | None = None
+    target__quantity_tmtt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    prediction__value: typing.Optional[float] = pydantic.Field(0.0, **{})
+    act__tgt__achievement: typing.Optional[float] = pydantic.Field(0.0, **{})
+    zone__region__achievement: typing.Optional[float] = pydantic.Field(0.0, **{})
+    product__achievement: typing.Optional[float] = pydantic.Field(0.0, **{})
+    engine_id: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = M60LevelMetaDataSchema
+        upsert_keys = []
+
+
+class M60LevelMetaDataGetResp(pydantic.BaseModel):
+    data: typing.List[M60LevelMetaData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class MomLevelFinalMetaDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'mom_level_final_meta_data'
+    
+    orgsbucd: Mapped[typing.Optional[str]] = mapped_column("orgsbucd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgsbuname: Mapped[typing.Optional[str]] = mapped_column("orgsbuname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgzonecd: Mapped[typing.Optional[str]] = mapped_column("orgzonecd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgzonename: Mapped[typing.Optional[str]] = mapped_column("orgzonename", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgrocd: Mapped[typing.Optional[str]] = mapped_column("orgrocd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgroname: Mapped[typing.Optional[str]] = mapped_column("orgroname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgsacd: Mapped[typing.Optional[str]] = mapped_column("orgsacd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgsaname: Mapped[typing.Optional[str]] = mapped_column("orgsaname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    productcode: Mapped[typing.Optional[str]] = mapped_column("productcode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    materialgroupname: Mapped[typing.Optional[str]] = mapped_column("materialgroupname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    curfiscalyear: Mapped[typing.Optional[str]] = mapped_column("curfiscalyear", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    fiscalyear: Mapped[typing.Optional[str]] = mapped_column("fiscalyear", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    yearmonth: Mapped[typing.Optional[str]] = mapped_column("yearmonth", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    netweight_uom: Mapped[typing.Optional[float]] = mapped_column("netweight_uom", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    netweight_kg: Mapped[typing.Optional[float]] = mapped_column("netweight_kg", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    netweight_tmt: Mapped[typing.Optional[float]] = mapped_column("netweight_tmt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    fiscal_year: Mapped[typing.Optional[str]] = mapped_column("fiscal_year", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    engine_id: Mapped[typing.Optional[str]] = mapped_column("engine_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    month_name: Mapped[typing.Optional[str]] = mapped_column("month_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class MomLevelFinalMetaDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'mom_level_final_meta_data'
+    
+    orgsbucd: typing.Optional[str] = pydantic.Field("", **{})
+    orgsbuname: typing.Optional[str] = pydantic.Field("", **{})
+    orgzonecd: typing.Optional[str] = pydantic.Field("", **{})
+    orgzonename: typing.Optional[str] = pydantic.Field("", **{})
+    orgrocd: typing.Optional[str] = pydantic.Field("", **{})
+    orgroname: typing.Optional[str] = pydantic.Field("", **{})
+    orgsacd: typing.Optional[str] = pydantic.Field("", **{})
+    orgsaname: typing.Optional[str] = pydantic.Field("", **{})
+    productcode: typing.Optional[str] = pydantic.Field("", **{})
+    materialgroupname: typing.Optional[str] = pydantic.Field("", **{})
+    curfiscalyear: typing.Optional[str] = pydantic.Field("", **{})
+    fiscalyear: typing.Optional[str] = pydantic.Field("", **{})
+    yearmonth: typing.Optional[str] = pydantic.Field("", **{})
+    netweight_uom: typing.Optional[float] = pydantic.Field(0.0, **{})
+    netweight_kg: typing.Optional[float] = pydantic.Field(0.0, **{})
+    netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    fiscal_year: typing.Optional[str] = pydantic.Field("", **{})
+    engine_id: typing.Optional[str] = pydantic.Field("", **{})
+    month_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = MomLevelFinalMetaDataSchema
+        upsert_keys = []
+
+
+class MomLevelFinalMetaData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'mom_level_final_meta_data'
+    
+    orgsbucd: typing.Optional[str] = pydantic.Field("", **{})
+    orgsbuname: typing.Optional[str] = pydantic.Field("", **{})
+    orgzonecd: typing.Optional[str] = pydantic.Field("", **{})
+    orgzonename: typing.Optional[str] = pydantic.Field("", **{})
+    orgrocd: typing.Optional[str] = pydantic.Field("", **{})
+    orgroname: typing.Optional[str] = pydantic.Field("", **{})
+    orgsacd: typing.Optional[str] = pydantic.Field("", **{})
+    orgsaname: typing.Optional[str] = pydantic.Field("", **{})
+    productcode: typing.Optional[str] = pydantic.Field("", **{})
+    materialgroupname: typing.Optional[str] = pydantic.Field("", **{})
+    curfiscalyear: typing.Optional[str] = pydantic.Field("", **{})
+    fiscalyear: typing.Optional[str] = pydantic.Field("", **{})
+    yearmonth: typing.Optional[str] = pydantic.Field("", **{})
+    netweight_uom: typing.Optional[float] = pydantic.Field(0.0, **{})
+    netweight_kg: typing.Optional[float] = pydantic.Field(0.0, **{})
+    netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    fiscal_year: typing.Optional[str] = pydantic.Field("", **{})
+    engine_id: typing.Optional[str] = pydantic.Field("", **{})
+    month_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = MomLevelFinalMetaDataSchema
+        upsert_keys = []
+
+
+class MomLevelFinalMetaDataGetResp(pydantic.BaseModel):
+    data: typing.List[MomLevelFinalMetaData]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)

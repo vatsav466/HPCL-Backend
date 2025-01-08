@@ -35,7 +35,10 @@ async def lpgoperations_get_productions_rate(data: Lpgoperations_Get_Productions
                      ).agg(pl.col("productivity.normal.production"
                                   ).mean().round(2)).rename({"productivity.normal.production": "production"})
     _sort = ["production"] + group_col
-    df = df.sort(_sort, descending=True)
+    if data.daywise == True:
+        df = df.sort("process_date")
+    else:
+        df = df.sort(_sort, descending=True)
     if not data.top == 0:
         df = df.head(data.top)
     if not data.bottom == 0:
@@ -68,7 +71,10 @@ async def lpgoperations_get_productivity_rate(data: Lpgoperations_Get_Productivi
                      ).agg(pl.col("productivity.normal.productivity"
                                   ).mean().round(2)).rename({"productivity.normal.productivity": "productivity"})
     _sort = ["productivity"] + group_col
-    df = df.sort(_sort, descending=True)
+    if data.daywise == True:
+        df = df.sort("process_date")
+    else:
+        df = df.sort(_sort, descending=True)
     if not data.top == 0:
         df = df.head(data.top)
     if not data.bottom == 0:
