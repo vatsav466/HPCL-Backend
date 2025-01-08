@@ -254,7 +254,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
             formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
-            formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
+            # formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
             return formatted_ist_time
         except:
             return "-"
