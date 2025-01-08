@@ -646,7 +646,7 @@ class IndentDryOut:
                 input_data["action_type"] = "R2Swipe"
                 input_data["event_tags"]["is_r2_swipe"] = True
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
-                                               progress_rate="&")
+                                               progress_rate="7")
                 return await self.send_alert_action(is_r3_swipe=True)
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
