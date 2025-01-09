@@ -105,6 +105,7 @@ widget_mapping = {
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''},
     'total_suvidha': {},
     'lpg_cdcms_ageing': {},
+    'carry_forward_analysis': {}
 }
 
 
