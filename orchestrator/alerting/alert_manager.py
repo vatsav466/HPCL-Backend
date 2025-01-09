@@ -134,7 +134,8 @@ class AlertAction:
                             "is_r3_swipe": event_tags.get("is_r3_swipe", False),
                             "is_vts": event_tags.get("is_vts", False),
                             "is_delivered": event_tags.get("is_delivered", False),
-                            "is_tripped": event_tags.get("is_tripped", False)        
+                            "is_tripped": event_tags.get("is_tripped", False),
+                            "is_justify": event_tags.get("is_justify", False)     
                         })
         # print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
@@ -176,6 +177,7 @@ class AlertAction:
                    "is_vts": {"name": "VTS", "type": "Boolean"},
                    "is_delivered": {"name": "delivered", "type": "Boolean"},
                    "is_tripped": {"name": "tripped", "type": "Boolean"},
+                   "is_justify": {"name": "justify", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
