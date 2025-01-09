@@ -831,10 +831,10 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
-            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": []})
+            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
-        print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status"]])
+        print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -849,9 +849,11 @@ class IndentDryOut:
         # ceg_resp = pd.DataFrame(ceg_resp)
 
         _prod_map = await self.prod_code_mapping()
-        cris_resp.replace({"item_name": _prod_map}, inplace=True)
-        cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
-        print("cris_resp after filter: ", cris_resp[["item_name", "rosapcode", "status"]])
+        # cris_resp.replace({"item_name": _prod_map}, inplace=True)
+        # cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        cris_resp.replace({"product_grp": _prod_map}, inplace=True)
+        cris_resp = cris_resp[cris_resp['product_grp'] == str(product_code)]
+        print("cris_resp after filter: ", cris_resp[["item_name", "product_grp", "rosapcode", "status"]])
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
@@ -1275,7 +1277,7 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
-            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": []})
+            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
         print("cris_resp: ", cris_resp)
@@ -1293,8 +1295,10 @@ class IndentDryOut:
         # ceg_resp = pd.DataFrame(ceg_resp)
 
         _prod_map = await self.prod_code_mapping()
-        cris_resp.replace({"item_name": _prod_map}, inplace=True)
-        cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        # cris_resp.replace({"item_name": _prod_map}, inplace=True)
+        # cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        cris_resp.replace({"product_grp": _prod_map}, inplace=True)
+        cris_resp = cris_resp[cris_resp['product_grp'] == str(product_code)]
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
