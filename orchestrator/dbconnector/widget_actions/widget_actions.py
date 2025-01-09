@@ -100,7 +100,8 @@ widget_mapping = {
     'yearly_sales_performance': {},
     'overall_safety_check_pending': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
-    'lpg_ca_cdm': {'module_name': '', 'func_name': ''}
+    'lpg_ca_cdm': {'module_name': '', 'func_name': ''},
+    'carry_forward_analysis': {}
 }
 
 
