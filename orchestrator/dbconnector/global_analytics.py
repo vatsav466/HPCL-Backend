@@ -903,7 +903,7 @@ class GlobalAnalytics:
                 where_conditions.append(f'"M60_LEVEL_METADATA"."FISCAL_YEAR" IN (\'FY {previous_year}-{current_year}\', \'FY {current_year-2}-{previous_year}\')')
 
             if "T" in selected_keys:
-                select_columns.append('SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT") AS "TARGET_QTY_TMT"')
+                select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_QTY_TMT"')
 
             # Construct the query dynamically
             sales_performance_query_ = f'''
