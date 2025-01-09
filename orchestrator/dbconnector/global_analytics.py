@@ -667,7 +667,20 @@ class GlobalAnalytics:
             resp = await function(query=sales_performance_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            if 'H' in selected_keys:
+                year_required = str(current_year-2)+'-'+str(previous_year)
+                sales_his_query = f"""
+                select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
+                """
+                his_data = await function(query=sales_his_query)
+                his_data = pd.DataFrame(his_data)
+                his_data = df.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum()
+                his_data.to_csv('/tmp/datahis.csv',index = False)
+                resp = resp.merge(his_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
+                resp['fiscal_year'] = resp['fiscal_year'].bfill()
+                
+                
             # Fill missing values for numerical columns
             for each_float_col in ["ACTUAL_TMT_SALES", "TARGET_QTY_TMT"]:
                 if each_float_col in resp.columns:
