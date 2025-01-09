@@ -28,6 +28,8 @@ class RolesSchema(UrdhvaPostgresBase):
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     allowed_pages: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("allowed_pages", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(name, name="roles_name"),)
+
 
 class RolesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'roles'
@@ -39,7 +41,7 @@ class RolesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = RolesSchema
-        upsert_keys = []
+        upsert_keys = ['name']
 
 
 class Roles(urdhva_base.postgresmodel.PostgresModel):
@@ -52,7 +54,7 @@ class Roles(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = RolesSchema
-        upsert_keys = []
+        upsert_keys = ['name']
 
 
 class RolesGetResp(pydantic.BaseModel):
@@ -985,6 +987,8 @@ class AlertsSchema(UrdhvaPostgresBase):
     workflow_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("workflow_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_name: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    servicing_plant_id: Mapped[typing.Optional[str]] = mapped_column("servicing_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    servicing_plant_name: Mapped[typing.Optional[str]] = mapped_column("servicing_plant_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     progress_rate: Mapped[typing.Optional[int]] = mapped_column("progress_rate", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     indent_raised_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("indent_raised_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -1043,6 +1047,8 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
+    servicing_plant_id: typing.Optional[str] = pydantic.Field("", **{})
+    servicing_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
     indent_raised_date: typing.Optional[datetime.datetime] | None = None
@@ -1108,6 +1114,8 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     workflow_datetime: typing.Optional[datetime.datetime] | None = None
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_name: typing.Optional[str] = pydantic.Field("", **{})
+    servicing_plant_id: typing.Optional[str] = pydantic.Field("", **{})
+    servicing_plant_name: typing.Optional[str] = pydantic.Field("", **{})
     progress_rate: typing.Optional[int] = pydantic.Field(0, **{})
     category: typing.Optional[str] = pydantic.Field("", **{})
     indent_raised_date: typing.Optional[datetime.datetime] | None = None
