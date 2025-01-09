@@ -849,9 +849,11 @@ class IndentDryOut:
         # ceg_resp = pd.DataFrame(ceg_resp)
 
         _prod_map = await self.prod_code_mapping()
-        cris_resp.replace({"item_name": _prod_map}, inplace=True)
-        cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
-        print("cris_resp after filter: ", cris_resp[["item_name", "rosapcode", "status"]])
+        # cris_resp.replace({"item_name": _prod_map}, inplace=True)
+        # cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        cris_resp.replace({"product_grp": _prod_map}, inplace=True)
+        cris_resp = cris_resp[cris_resp['product_grp'] == str(product_code)]
+        print("cris_resp after filter: ", cris_resp[["item_name", "product_grp", "rosapcode", "status"]])
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
@@ -1293,8 +1295,10 @@ class IndentDryOut:
         # ceg_resp = pd.DataFrame(ceg_resp)
 
         _prod_map = await self.prod_code_mapping()
-        cris_resp.replace({"item_name": _prod_map}, inplace=True)
-        cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        # cris_resp.replace({"item_name": _prod_map}, inplace=True)
+        # cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        cris_resp.replace({"product_grp": _prod_map}, inplace=True)
+        cris_resp = cris_resp[cris_resp['product_grp'] == str(product_code)]
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
