@@ -3400,7 +3400,7 @@ class GlobalAnalytics:
             cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
             cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
-            if "where" in cumulative_sales_pmuy_npmuy_query_.lower():
+            if not "where" in cumulative_sales_pmuy_npmuy_query_.lower():
                 cumulative_sales_pmuy_npmuy_query_ += f' WHERE "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
             else:
                 cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''

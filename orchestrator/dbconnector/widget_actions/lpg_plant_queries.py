@@ -834,5 +834,15 @@ LIMIT 10000;''',
                                             "SAName",
                                             sum("SafetyCheckPending") as "SafetyCheckPending"
                                         from
-                                            "LPG_CONSUMERS_SUMMARY"'''
+                                            "LPG_CONSUMERS_SUMMARY"''',
+    "total_consumers": f''' select
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "JDEDistributorCode",
+                                "Category" as "Category",
+                                "SubCategory" as "SubCategory",
+                                sum("ConsumerCount") as "Total_Consumers"
+                            from
+                                "LPG_CONSUMERS_SUMMARY" '''
 }
