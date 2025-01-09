@@ -3226,11 +3226,9 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        overall_ctc_statistics_query_ = lpg_plant_queries.lpg_plant_query.get("overall_ctc_statistics")
         if filters:
-            overall_ctc_statistics_query = lpg_plant_queries.lpg_plant_query.get("overall_ctc_statistics")
-            overall_ctc_statistics_query_ = overall_ctc_statistics_query
             conditions = []
-
             for rec in filters:
                 rec.value = rec.value.split(",")
                 # Now handle other cases
@@ -3249,24 +3247,21 @@ class GlobalAnalytics:
             overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
             overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
         else:
-            overall_ctc_statistics_query_ = f'''
-                select 
-                    sum("ACTCCount") as "ACTC",
-                    sum("BCTCCount") as "BCTC",
-                    sum("NCTCCount") as "NCTC",
-                    "Category" as "Category" 
-                from
-	                "LPG_CONSUMERS_SUMMARY" 
-                where
-	                "Category"  IN ('Domestic') AND "CategoryStatus"  IN ('Active') AND "ZOName"  NOT IN ('Null')
-                group by
-	                "Category"
-            '''
-            print("overall_ctc_statistics_query_",overall_ctc_statistics_query_)
+            if not "where" in overall_ctc_statistics_query_.lower():
+                overall_ctc_statistics_query_  += f' WHERE "ZOName"  NOT IN ( \'Null\')'
+            else:
+                overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
+            overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
             resp = await function(query=overall_ctc_statistics_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-
+            resp = resp.groupby(["Category"], as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                })
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
             # Fill missing values for numerical columns
             for each_float_col in [
                 "ACTC","BCTC","NCTC"
@@ -3284,11 +3279,11 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
         
         # Execute the query
-        print("overall_ctc_statistics_query_---->",overall_ctc_statistics_query_)
         resp = await function(query=overall_ctc_statistics_query_)        
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        print("resp :", resp)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -3337,10 +3332,7 @@ class GlobalAnalytics:
                     "BCTC": "sum",
                     "NCTC": "sum"
                     })
-            
-            print("grouped_resp --> ", grouped_resp)
             if grouped_resp is not None:
-                print("grouped_resp  -> ", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
         # If no filters are applied, return the default response
@@ -3352,12 +3344,9 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-
+        overall_safety_check_pending_query_ = lpg_plant_queries.lpg_plant_query.get("overall_safety_check_pending")
         if filters:
-            overall_safety_check_pending_query = lpg_plant_queries.lpg_plant_query.get("overall_safety_check_pending")
-            overall_safety_check_pending_query_ = overall_safety_check_pending_query
             conditions = []
-
             for rec in filters:
                 rec.value = rec.value.split(",")
                 # Now handle other cases
@@ -3369,28 +3358,26 @@ class GlobalAnalytics:
                     else:
                         condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
-
             if conditions:
                 overall_safety_check_pending_query_ += ' WHERE '
                 overall_safety_check_pending_query_ += ' AND '.join(conditions)
-            overall_safety_check_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\')'
+            overall_safety_check_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\') AND "Category" IN (\'Domestic\')'
             overall_safety_check_pending_query_ += ' GROUP BY "SubCategory", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
         else:
-            overall_safety_check_pending_query_ = f'''
-                select 
-                    sum("SafetyCheckPending") as "SafetyCheckPending",
-                    "SubCategory"
-                from
-	                "LPG_CONSUMERS_SUMMARY" 
-                where
-	                "Category" IN ('Domestic') AND "ZOName"  NOT IN ('Null')
-                group by
-	                "SubCategory"
-            '''
+            if not "where" in overall_safety_check_pending_query_.lower():
+                overall_safety_check_pending_query_  += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Category" IN (\'Domestic\')'
+            else:
+                overall_safety_check_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\') AND "Category" IN (\'Domestic\')'
+            overall_safety_check_pending_query_ += ' GROUP BY "SubCategory", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
+            
             resp = await function(query=overall_safety_check_pending_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-
+            resp = resp.groupby(["SubCategory"], as_index=False).agg({
+                    "SafetyCheckPending": "sum"
+                })
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
             # Fill missing values for numerical columns
             for each_float_col in [
                 "SafetyCheckPending"
@@ -3404,9 +3391,7 @@ class GlobalAnalytics:
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
             return {"status": True, "message": "success", "data": resp}
-        
         # Execute the query
         resp = await function(query=overall_safety_check_pending_query_)        
         # Convert the response to a DataFrame for further processing
@@ -3425,36 +3410,29 @@ class GlobalAnalytics:
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-
             if "SubCategory" in filter_keys and "ZOName" not in filter_keys:    
                 grouped_resp = resp.groupby(["SubCategory","ZOName"], as_index=False).agg({
                     "SafetyCheckPending": "sum"
                 })
-
             elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.groupby(["SubCategory","ZOName","ROName"], as_index=False).agg({
                     "SafetyCheckPending": "sum"
-                })
-            
+                })            
             elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.groupby(["SubCategory","ZOName","ROName","SAName"],
                 as_index=False).agg({
                     "SafetyCheckPending": "sum"
-                    })
-            
+                    })            
             elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
                 grouped_resp = resp.groupby(["SubCategory","ZOName","ROName","SAName","JDEDistributorCode"],
                 as_index=False).agg({
                     "SafetyCheckPending": "sum"
                     })
-            
             if grouped_resp is not None:
                 print("grouped_resp  -> ", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
