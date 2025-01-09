@@ -47,7 +47,7 @@ class AlertFactory:
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
-            print("Alert data:", alert_data)
+            # print("Alert data:", alert_data)
             bu = alert_data['bu']
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
