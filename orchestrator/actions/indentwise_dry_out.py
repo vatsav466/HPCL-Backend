@@ -147,7 +147,7 @@ class IndentDryOut:
                 f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                 f"""AND b."PROD" = '{prod_code}' """ \
                 f"""AND a."LOCN_CODE" = b."LOCN_CODE" AND a."INDENT_NO" = b."INDENT_NO" AND a."CANCEL_INDENT" IS NULL """ \
-                f"""GROUP BY a."INDENT_NO", b."PROD", a."LOCN_CODE", a."INDENT_DATE" ORDER BY a."INDENT_NO" DESC"""
+                f"""GROUP BY a."INDENT_NO", b."PROD", a."LOCN_CODE", a."INDENT_DATE", a."PROD_REQD_DT" ORDER BY a."INDENT_NO" DESC"""
 
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         total_indent = await function(query=query)
@@ -679,6 +679,9 @@ class IndentDryOut:
                 prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d")
             else:
                 prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d")
+
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
