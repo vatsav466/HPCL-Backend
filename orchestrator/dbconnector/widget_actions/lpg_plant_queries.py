@@ -720,7 +720,7 @@ LIMIT 10000;''',
                                     "TARGET_QTY_TMT", "FISCAL_YEAR", "NETWEIGHT_TMT", "FinalSum", 
                                     "FinalActualSum", "Rate_Per_Day_Required_MMT", "Rate_per_day_current_MMT", 
                                     "month_year", "month_name", "Prediction_Value", "Zone_Region_Achievement",  
-                                    "Product_Achievement" 
+                                    "Product_Achievement", "fy_month"
                             FROM public."M60_LEVEL_METADATA"''',
 
     "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_DATA" where "MOM_LEVEL_FINAL_DATA"."fiscal_year" in ('2023-2024','2024-2025') ''',
