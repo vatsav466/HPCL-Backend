@@ -281,6 +281,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = LocationMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -328,6 +329,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = LocationMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class LocationMasterGetResp(pydantic.BaseModel):

@@ -260,6 +260,7 @@ Model LocationMaster {
 
     Config=> {
         crud_operations='read'
+        access_key_mapping='bu,zone,region,sales_area,sap_id'
     }
 }
 

@@ -201,29 +201,36 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the location severity count data.
         """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
         location_severity_count_query = lpg_plant_queries.lpg_plant_query.get("location_severity_count")
         location_severity_count_query_ = location_severity_count_query
 
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             for filter_ in filters:
-                if filter_.key == "bu":
-                    # Explicitly qualify the column with the correct table alias
-                    filter_key = f"a.{filter_.key}"  # Assuming "a" is the alias for the table containing "bu"
-                    filter_condition = f" WHERE {filter_key} = '{filter_.value}'"
-                    # Add the filter condition before GROUP BY
-                    location_severity_count_query_ = location_severity_count_query_.replace("GROUP BY", f"{filter_condition} GROUP BY")
-                    break
-
+                
+                # Explicitly qualify the column with the correct table alias
+                filter_.key = f"a.{filter_.key}"  # Assuming "a" is the alias for the table containing "bu"
+                # filter_condition = f" WHERE {filter_key} = '{filter_.value}'"
+                # Add the filter condition before GROUP BY
+                # location_severity_count_query_ = location_severity_count_query_.replace("GROUP BY", f"{filter_condition} GROUP BY")
+                # break
+            location_severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_severity_count_query_, filters, drill_state)
         try:
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query_)
+            resp = await function(query=location_severity_count_query_)
+            # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
             # Retry with the original query if the column is undefined
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query)
+            # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_severity_count_query)
 
         # Process the results
-        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        return {"status": True, "message": "success", "data": data}
+        # data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        return {"status": True, "message": "success", "data": resp}
 
     @staticmethod
     async def no_of_locations(filters, drill_state):
@@ -261,20 +268,27 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the severity count data.
         """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
         severity_count_query = lpg_plant_queries.lpg_plant_query.get("severity_count")
         severity_count_query_ = severity_count_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LocationMaster.get_clause_conditions(formated=True)]
         if filters:
             for filter_ in filters:
                 if filter_.key:
                     # Update the key of the filter to include the alias 'a.'
-                    filter_.key = f"lm.{filter_.key}"
+                    filter_.key = f'lm.{filter_.key}'
             severity_count_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(severity_count_query, filters, drill_state)
         try:
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query_)
+            severity_count_data = await function(query=severity_count_query_)
+            # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query)
-        severity_count_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+            # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(severity_count_query)
+        # severity_count_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         for item in severity_count_data:
             item['operability_index'] = 99
         return {"status": True, "message": "success", "data": severity_count_data}
@@ -291,17 +305,24 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the hourly alerts data.
         """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
         hourly_alerts_query = lpg_plant_queries.lpg_plant_query.get("hourly_alerts")
         hourly_alerts_query_ = hourly_alerts_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             hourly_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(hourly_alerts_query, filters, drill_state)
         try:
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query_)
+            resp = await function(query=hourly_alerts_query_)
+            # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query)
-        hourly_alerts_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        return {"status": True, "message": "success", "data": hourly_alerts_data}
+            # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(hourly_alerts_query)
+        # hourly_alerts_data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        return {"status": True, "message": "success", "data": resp}
 
 
     @staticmethod
@@ -2381,8 +2402,11 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
+        print("*********Received lpc cdcms query*******")
         yesterday = datetime.now() - relativedelta(days=1)
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -2402,12 +2426,15 @@ class GlobalAnalytics:
             lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            lpg_cdcms_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_query_.lower():
                 lpg_cdcms_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             else:
                 lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
-                                            
+            
             resp = await function(query=lpg_cdcms_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -2509,6 +2536,8 @@ class GlobalAnalytics:
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
         lpg_cdcms_month_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_month")
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -2531,6 +2560,9 @@ class GlobalAnalytics:
             lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\')'
             lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            lpg_cdcms_month_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_month_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_month_query_.lower():   
                 lpg_cdcms_month_query_ += f' WHERE "ZOName"  NOT IN (\'Null\')'
             else:
@@ -2624,6 +2656,8 @@ class GlobalAnalytics:
         yesterday = datetime.now() - relativedelta(days=6)
         cdcms_order_source_query_ = lpg_plant_queries.lpg_plant_query.get("cdcms_order_source")
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -2643,6 +2677,9 @@ class GlobalAnalytics:
             cdcms_order_source_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:      
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            cdcms_order_source_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cdcms_order_source_query_, access_filters, drill_state)
             if "where" not in cdcms_order_source_query_.lower():
                 cdcms_order_source_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
             else:
@@ -2737,6 +2774,8 @@ class GlobalAnalytics:
         yesterday = datetime.now() - relativedelta(days=6)
         lpg_pending_query_ = lpg_plant_queries.lpg_plant_query.get("overall_pending_pmuy_nmpuy")
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -2756,6 +2795,9 @@ class GlobalAnalytics:
             lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"'
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            lpg_pending_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_pending_query_, access_filters, drill_state)
             if "where" not in lpg_pending_query_.lower():                
                 lpg_pending_query_  += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
             else:
@@ -2855,6 +2897,8 @@ class GlobalAnalytics:
         lpg_pending_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_ageing")
         yesterday = datetime.now() - relativedelta(days=1)
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -2873,10 +2917,14 @@ class GlobalAnalytics:
             lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN ( \'Null\')'
             lpg_pending_query_  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            lpg_pending_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_pending_query_, access_filters, drill_state)
             if "where" not in lpg_pending_query_.lower():                
                 lpg_pending_query_  += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
             else:
                 lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
+            lpg_pending_query_  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
             resp = await function(query=lpg_pending_query_ )
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3084,17 +3132,23 @@ class GlobalAnalytics:
 
     @staticmethod
     async def location_wise_distribution(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         location_wise_distribution_query = lpg_plant_queries.lpg_plant_query.get("location_wise_distribution")
         location_wise_distribution_query_ = location_wise_distribution_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             location_wise_distribution_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(location_wise_distribution_query, filters, drill_state)
         try:
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query_)
+            resp = await function(query=location_wise_distribution_query_)
+            # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query_)
         except psycopg2.errors.UndefinedColumn as e:
             print(e)
-            keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query)
-        data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
-        return {"status": True, "message": "success", "data": data}
+            # keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query)
+        # data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
+        return {"status": True, "message": "success", "data": resp}
     
     @staticmethod
     async def cumulative_sales_pmuy_npmuy(filters, drill_state):
@@ -3114,6 +3168,8 @@ class GlobalAnalytics:
         financial_year_end = f"{end_year}-03-31 23:59:59"
 
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             cumulative_sales_pmuy_npmuy_query = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
             cumulative_sales_pmuy_npmuy_query_ = cumulative_sales_pmuy_npmuy_query
             conditions = []
@@ -3148,7 +3204,7 @@ class GlobalAnalytics:
             # Define financial year start and end dates
             financial_year_start = f"{start_year}-04-01 00:00:00"
             financial_year_end = f"{end_year}-03-31 23:59:59"
-
+            
             cumulative_sales_pmuy_npmuy_query_ = f'''
                     select 
                         "ConsumerType" as "ConsumerType",
@@ -3161,7 +3217,9 @@ class GlobalAnalytics:
                     group by
                         "ConsumerType"
             '''
-
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            cumulative_sales_pmuy_npmuy_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cumulative_sales_pmuy_npmuy_query_, access_filters, drill_state)
             resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
