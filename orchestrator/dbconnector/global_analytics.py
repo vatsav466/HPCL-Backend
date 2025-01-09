@@ -936,11 +936,12 @@ class GlobalAnalytics:
                 
                 
             # Fill missing values for numerical columns
-            for each_float_col in ["ACTUAL_TMT_SALES", "TARGET_QTY_TMT"]:
+            for each_float_col in ["NETWEIGHT_TMT","ACTUAL_TMT_SALES", "TARGET_QTY_TMT"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0).astype(np.float64)
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-
+            if "NETWEIGHT_TMT" in resp.columns.tolist():
+                resp = resp.rename(columns={'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'}) 
             # Fill missing values for string columns
             for each_str_col in ["fy_month", "month_name"]:
                 if each_str_col in resp.columns:
