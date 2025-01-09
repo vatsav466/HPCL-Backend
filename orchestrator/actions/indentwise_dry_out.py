@@ -614,9 +614,9 @@ class IndentDryOut:
                                 AND a."LOCN_CODE" = b."LOCN_CODE"
                                 AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                 AND b."CARD_STATUS" = 'I'
-                                AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
---                                 AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS')) 
+                                AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
                             GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+        # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         logger.info(f"Query: {query}")
@@ -692,9 +692,9 @@ class IndentDryOut:
                                 AND a."LOCN_CODE" = b."LOCN_CODE"
                                 AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                 AND b."CARD_STATUS" = 'O'
-                                AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
---                                 AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS'))
+                                AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
                             GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+        # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         logger.info(f"Query: {query}")
