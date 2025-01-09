@@ -24,7 +24,7 @@ async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url)
     Returns:
         dict: A dictionary containing the status, message and the created alert document.
     """
-    print("into create alert", alert_data)
+    # print("into create alert", alert_data)
     alert_type = alert_data['alert_type']
     return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").create_bu_alert(alert_data, camunda_url)
 

@@ -388,7 +388,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST"
                     WHERE 
-                        "PROD_REQD_DT" < NOW()
+                        "PROD_REQD_DT" < CURRENT_DATE
                         AND "TRUCK_REGNO" IS NULL
                         AND "CANCEL_INDENT" IS NULL
                         AND "VALID_INDENT" IN ('Y', 'H')
