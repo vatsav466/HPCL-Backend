@@ -2621,7 +2621,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-        yesterday = datetime.now() - relativedelta(days=6)
+        yesterday = datetime.now() - relativedelta(days=1)
         cdcms_order_source_query_ = lpg_plant_queries.lpg_plant_query.get("cdcms_order_source")
         if filters:
             conditions = []
@@ -2734,7 +2734,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-        yesterday = datetime.now() - relativedelta(days=6)
+        yesterday = datetime.now() - relativedelta(days=1)
         lpg_pending_query_ = lpg_plant_queries.lpg_plant_query.get("overall_pending_pmuy_nmpuy")
         if filters:
             conditions = []
@@ -2778,7 +2778,6 @@ class GlobalAnalytics:
             ]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-
             # Fill missing values for string columns
             for each_str_col in [
                 "ZOName",
@@ -3112,12 +3111,9 @@ class GlobalAnalytics:
         # Define financial year start and end dates
         financial_year_start = f"{start_year}-04-01 00:00:00"
         financial_year_end = f"{end_year}-03-31 23:59:59"
-
+        cumulative_sales_pmuy_npmuy_query_ = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
         if filters:
-            cumulative_sales_pmuy_npmuy_query = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
-            cumulative_sales_pmuy_npmuy_query_ = cumulative_sales_pmuy_npmuy_query
             conditions = []
-
             for rec in filters:
                 rec.value = rec.value.split(",")
                 # Now handle other cases
@@ -3137,34 +3133,20 @@ class GlobalAnalytics:
             cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
             cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
-            current_date = datetime.now()
-            # Determine the financial year start and end
-            if current_date.month >= 4:  # If April or later, financial year starts this year
-                start_year = current_date.year
-                end_year = current_date.year + 1
-            else:  # If before April, financial year started last year
-                start_year = current_date.year - 1
-                end_year = current_date.year
-            # Define financial year start and end dates
-            financial_year_start = f"{start_year}-04-01 00:00:00"
-            financial_year_end = f"{end_year}-03-31 23:59:59"
-
-            cumulative_sales_pmuy_npmuy_query_ = f'''
-                    select 
-                        "ConsumerType" as "ConsumerType",
-                        sum("TotalSalesYesterday")/10000000 as "Sales" 
-                    from
-                        "LPG_SALES_SUMMARY_DATA" 
-                    where
-                        "Execution_Date"::TIMESTAMP BETWEEN '{financial_year_start}' AND '{financial_year_end}'
-                        AND "ZOName" NOT IN ('Null')
-                    group by
-                        "ConsumerType"
-            '''
-
+            if "where" in cumulative_sales_pmuy_npmuy_query_.lower():
+                cumulative_sales_pmuy_npmuy_query_ += f' WHERE "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
+            else:
+                cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+                                 
             resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["ConsumerType"], as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 10000000
+                })
             # Fill missing values for numerical columns
             for each_float_col in [
                 "Sales"
@@ -3184,6 +3166,8 @@ class GlobalAnalytics:
         resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')        
         resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
         resp = resp[
@@ -3265,7 +3249,6 @@ class GlobalAnalytics:
             overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
             overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
         else:
-            #yesterday = datetime.now() - relativedelta(days=1)
             overall_ctc_statistics_query_ = f'''
                 select 
                     sum("ACTCCount") as "ACTC",
@@ -3393,7 +3376,6 @@ class GlobalAnalytics:
             overall_safety_check_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\')'
             overall_safety_check_pending_query_ += ' GROUP BY "SubCategory", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
         else:
-            #yesterday = datetime.now() - relativedelta(days=1)
             overall_safety_check_pending_query_ = f'''
                 select 
                     sum("SafetyCheckPending") as "SafetyCheckPending",
