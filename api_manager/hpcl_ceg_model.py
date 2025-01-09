@@ -2490,7 +2490,7 @@ class M60LevelMetaDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = M60LevelMetaDataSchema
         upsert_keys = []
-        access_key_mapping = ['SBU_NAME:bu', 'Zone:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
+        access_key_mapping = ['SBU_Name:bu', 'ZONE:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
 
 
 class M60LevelMetaData(urdhva_base.postgresmodel.PostgresModel):
@@ -2555,7 +2555,7 @@ class M60LevelMetaData(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = M60LevelMetaDataSchema
         upsert_keys = []
-        access_key_mapping = ['SBU_NAME:bu', 'Zone:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
+        access_key_mapping = ['SBU_Name:bu', 'ZONE:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
 
 
 class M60LevelMetaDataGetResp(pydantic.BaseModel):

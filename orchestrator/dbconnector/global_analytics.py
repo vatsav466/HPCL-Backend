@@ -359,6 +359,8 @@ class GlobalAnalytics:
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
 
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.M60LevelMetaData.get_clause_conditions(formated=True)]
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
             conditions = []
@@ -412,7 +414,12 @@ class GlobalAnalytics:
                 ORDER BY
                     "M60_LEVEL_METADATA"."fy_month" ASC;
             '''
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.M60LevelMetaData.get_clause_conditions(formated=True)]
+            sales_performance_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(sales_performance_query_, access_filters, drill_state)
+            print("sales_performance_query_: ",sales_performance_query_)
             resp = await function(query=sales_performance_query_)
+
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
 
@@ -1626,6 +1633,8 @@ class GlobalAnalytics:
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
 
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.MomLevelFinalMetaData.get_clause_conditions(formated=True)]
             sales_growth_query = lpg_plant_queries.lpg_plant_query.get("sales_growth")
             sales_growth_query_ = sales_growth_query
             print("sales_growth_query_",sales_growth_query_)
@@ -1680,7 +1689,10 @@ class GlobalAnalytics:
                     "MOM_LEVEL_FINAL_DATA"."fiscal_year" ASC
 
             """
-
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.MomLevelFinalMetaData.get_clause_conditions(formated=True)]
+            sales_growth_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(sales_growth_query_, access_filters, drill_state)
+            print("sales_growth_query_: ", sales_growth_query_)
             resp = await function(query=sales_growth_query_)
             month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
                          'Dec': '8', 'Jan': '9', 'Feb': '10', 'Mar': '11'}
