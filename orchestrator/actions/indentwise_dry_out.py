@@ -147,7 +147,7 @@ class IndentDryOut:
                 f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                 f"""AND b."PROD" = '{prod_code}' """ \
                 f"""AND a."LOCN_CODE" = b."LOCN_CODE" AND a."INDENT_NO" = b."INDENT_NO" AND a."CANCEL_INDENT" IS NULL """ \
-                f"""GROUP BY a."INDENT_NO", b."PROD", a."LOCN_CODE", a."INDENT_DATE" ORDER BY a."INDENT_NO" DESC"""
+                f"""GROUP BY a."INDENT_NO", b."PROD", a."LOCN_CODE", a."INDENT_DATE", a."PROD_REQD_DT" ORDER BY a."INDENT_NO" DESC"""
 
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         total_indent = await function(query=query)
@@ -252,6 +252,12 @@ class IndentDryOut:
                 if count == 1:
                     self.params['indent_no'] = str(each_indent.get('INDENT_NO'))
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
+                    self.params['servicing_plant_id'] = str(each_indent.get('LOCN_CODE'))
+                    self.params['servicing_plant_name'] = ''
+                    status, lt = await alert_helper.get_location_details("TAS", self.params['servicing_plant_id'])
+                    if status:
+                        self.params['servicing_plant_name'] = lt['name']
+                    # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     logger.info(f"Updateding to existing workflow: {self.params}")
                     await self.update_indent_no(
@@ -261,7 +267,8 @@ class IndentDryOut:
                     )
                     query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
                              f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
-                             f"""terminal_plant_id='{self.params["terminal_plant_id"]}' """
+                             f"""servicing_plant_id='{self.params['servicing_plant_id']}' """
+                             f"""servicing_plant_name='{self.params['servicing_plant_name']}' """
                              f"""where id='{self.params["alert_id"]}'""")
                     await hpcl_ceg_model.Alerts.update_by_query(query)
                     count += 1
@@ -272,6 +279,17 @@ class IndentDryOut:
                     self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
                     self.params['indent_no'] = str(each_indent.get('INDENT_NO'))
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
+                    status, lt = await alert_helper.get_location_details("RO", self.params['dealer_id'])
+                    if status:
+                        self.params['terminal_plant_name'] = lt['terminal_plant_name']
+                        self.params['terminal_plant_id'] = lt['terminal_plant_id']
+
+                    self.params['servicing_plant_id'] = str(each_indent.get('LOCN_CODE'))
+                    self.params['servicing_plant_name'] = ''
+                    status, lt = await alert_helper.get_location_details("TAS", self.params['servicing_plant_id'])
+                    if status:
+                        self.params['servicing_plant_name'] = lt['name']
+                    # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     logger.info(f"Multiple Indents: {self.params}")
                     await create_alert(self.params)
@@ -597,6 +615,8 @@ class IndentDryOut:
         else:
             query = f"""SELECT "PROD_REQD_DT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE "INDENT_NO" = '{indent_no}' """ \
                     f"""AND "LOCN_CODE" = '{locn_code}' """
+            Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
             if resp:
@@ -614,9 +634,11 @@ class IndentDryOut:
                                 AND a."LOCN_CODE" = b."LOCN_CODE"
                                 AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                 AND b."CARD_STATUS" = 'I'
-                                AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
---                                 AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS')) 
+                                AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
                             GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+        # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         logger.info(f"Query: {query}")
@@ -673,12 +695,17 @@ class IndentDryOut:
         else:
             query = f"""SELECT "PROD_REQD_DT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE "INDENT_NO" = '{indent_no}' """ \
                     f"""AND "LOCN_CODE" = '{locn_code}' """
+            Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
             if resp:
                 prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d")
             else:
                 prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d")
+
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
@@ -689,9 +716,11 @@ class IndentDryOut:
                                 AND a."LOCN_CODE" = b."LOCN_CODE"
                                 AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                 AND b."CARD_STATUS" = 'O'
-                                AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
---                                 AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS'))
+                                AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
                             GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+        # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         logger.info(f"Query: {query}")
@@ -828,10 +857,10 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
-            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": []})
+            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
-        print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status"]])
+        print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -846,9 +875,11 @@ class IndentDryOut:
         # ceg_resp = pd.DataFrame(ceg_resp)
 
         _prod_map = await self.prod_code_mapping()
-        cris_resp.replace({"item_name": _prod_map}, inplace=True)
-        cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
-        print("cris_resp after filter: ", cris_resp[["item_name", "rosapcode", "status"]])
+        # cris_resp.replace({"item_name": _prod_map}, inplace=True)
+        # cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        cris_resp.replace({"product_grp": _prod_map}, inplace=True)
+        cris_resp = cris_resp[cris_resp['product_grp'] == str(product_code)]
+        print("cris_resp after filter: ", cris_resp[["item_name", "product_grp", "rosapcode", "status"]])
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
@@ -1214,6 +1245,8 @@ class IndentDryOut:
         else:
             query = f"""SELECT "PROD_REQD_DT" FROM "IMS_SAP"."INDENT_REQUEST" WHERE "INDENT_NO" = '{indent_no}' """ \
                     f"""AND "LOCN_CODE" = '{locn_code}' """
+            Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
             if resp:
@@ -1230,8 +1263,12 @@ class IndentDryOut:
                                         AND a."LOCN_CODE" = b."LOCN_CODE"
                                         AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                         AND b."CARD_STATUS" = 'O'
-                                        AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
+                                        AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
                                     GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+        # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
+        print("connection_name: ", self.params['connection_name'])
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         logger.info(f"Query: {query}")
         resp = await function(query=query)
@@ -1272,7 +1309,7 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
-            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": []})
+            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
         print("cris_resp: ", cris_resp)
@@ -1290,8 +1327,10 @@ class IndentDryOut:
         # ceg_resp = pd.DataFrame(ceg_resp)
 
         _prod_map = await self.prod_code_mapping()
-        cris_resp.replace({"item_name": _prod_map}, inplace=True)
-        cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        # cris_resp.replace({"item_name": _prod_map}, inplace=True)
+        # cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
+        cris_resp.replace({"product_grp": _prod_map}, inplace=True)
+        cris_resp = cris_resp[cris_resp['product_grp'] == str(product_code)]
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]

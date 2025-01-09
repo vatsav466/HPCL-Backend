@@ -30,7 +30,7 @@ class ROAlertManager(alert_factory.AlertFactory):
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
-            logger.info(f"alert_data received to create alert {alert_data}")
+            # logger.info(f"alert_data received to create alert {alert_data}")
             # alert_alert_data = await hpcl_ceg_model.Alerts.get_all()
             bu_location_type = alert_data['bu']
             sap_id = alert_data['sap_id']

@@ -720,7 +720,7 @@ LIMIT 10000;''',
                                     "TARGET_QTY_TMT", "FISCAL_YEAR", "NETWEIGHT_TMT", "FinalSum", 
                                     "FinalActualSum", "Rate_Per_Day_Required_MMT", "Rate_per_day_current_MMT", 
                                     "month_year", "month_name", "Prediction_Value", "Zone_Region_Achievement",  
-                                    "Product_Achievement" 
+                                    "Product_Achievement"
                             FROM public."M60_LEVEL_METADATA"''',
 
     "sales_growth": f'''SELECT * FROM public."MOM_LEVEL_FINAL_DATA" where "MOM_LEVEL_FINAL_DATA"."fiscal_year" in ('2023-2024','2024-2025') ''',
@@ -801,7 +801,7 @@ LIMIT 10000;''',
                             "Execution_Date",
                             sum("pending_1_3_days") as "Pending 1-3 days" 
                         from
-                            "hpcl_ceg"."public"."LPG_SALES_SUMMARY_DATA" ''',
+                            "LPG_SALES_SUMMARY_DATA" ''',
     
     "cumulative_sales_pmuy_npmuy": f'''select
                                             "ConsumerType",
@@ -834,5 +834,15 @@ LIMIT 10000;''',
                                             "SAName",
                                             sum("SafetyCheckPending") as "SafetyCheckPending"
                                         from
-                                            "LPG_CONSUMERS_SUMMARY"'''
+                                            "LPG_CONSUMERS_SUMMARY"''',
+    "total_consumers": f''' select
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "JDEDistributorCode",
+                                "Category" as "Category",
+                                "SubCategory" as "SubCategory",
+                                sum("ConsumerCount") as "Total_Consumers"
+                            from
+                                "LPG_CONSUMERS_SUMMARY" '''
 }

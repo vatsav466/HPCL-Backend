@@ -106,7 +106,7 @@ Model RoleMapper internal {
 
 // System role master with allowed pages
 Model Roles {
-    name index_field str
+    name index_field unique_field str
     status bool
     allowed_pages optional list RoleMapper
 
@@ -559,6 +559,9 @@ Model Alerts {
     workflow_datetime optional datetime
     terminal_plant_id optional str
     terminal_plant_name optional str
+    // For Indent Rerouting
+    servicing_plant_id optional str
+    servicing_plant_name optional str
     progress_rate optional int
     category optional str
     indent_raised_date optional datetime

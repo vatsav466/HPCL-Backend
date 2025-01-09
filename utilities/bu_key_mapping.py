@@ -13,15 +13,16 @@ Location = {
     "Latitude": "latitude",
     "Longitude": "longitude",
     "LocalAutomationVendor": "local_automation_vendor",
-    "DealerName" : "dealer_name",
-    "DealerMobile" : "dealer_phone",
-    "DealerEmail" : "dealer_email",
+    "DealerName": "dealer_name",
+    "DealerMobile": "dealer_phone",
+    "DealerEmail": "dealer_email",
     "SalesArea": "sales_area",
     "DeliveryPlantID": "terminal_plant_id",
     "DeliveryPlantName": "terminal_plant_name",
     "Category": "category",
     "DistributorCode": "distributor_code",
     "DistributorName": "distributor_name",
+    "RTKM": "round_trip_distance",
 }
 
 LPG = {
