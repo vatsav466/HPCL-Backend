@@ -18,7 +18,7 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
-
+import numpy as np
 class GlobalAnalytics:
     @staticmethod
     async def analytics(filters, drill_state):
@@ -675,7 +675,7 @@ class GlobalAnalytics:
                 """
                 his_data = await function(query=sales_his_query)
                 his_data = pd.DataFrame(his_data)
-                his_data = df.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum()
+                his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum()
                 his_data.to_csv('/tmp/datahis.csv',index = False)
                 resp = resp.merge(his_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
                 resp['fiscal_year'] = resp['fiscal_year'].bfill()
@@ -684,6 +684,7 @@ class GlobalAnalytics:
             # Fill missing values for numerical columns
             for each_float_col in ["ACTUAL_TMT_SALES", "TARGET_QTY_TMT"]:
                 if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0).astype(np.float64)
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
 
             # Fill missing values for string columns
