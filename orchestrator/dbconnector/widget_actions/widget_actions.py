@@ -48,7 +48,9 @@ lpg_dashboard_actions = [
     'location_wise_distribution',
     'm60_performance',
     'yearly_sales_performance',
-    'overall_safety_check_pending'
+    'overall_safety_check_pending',
+    'total_suvidha',
+    'lpg_cdcms_ageing'
 ]
 
 # Todo:- import all widget action modules here
@@ -101,6 +103,8 @@ widget_mapping = {
     'overall_safety_check_pending': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''},
+    'total_suvidha': {},
+    'lpg_cdcms_ageing': {},
     'carry_forward_analysis': {}
 }
 

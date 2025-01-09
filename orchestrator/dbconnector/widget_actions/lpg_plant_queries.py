@@ -801,7 +801,7 @@ LIMIT 10000;''',
                             "Execution_Date",
                             sum("pending_1_3_days") as "Pending 1-3 days" 
                         from
-                            "hpcl_ceg"."public"."LPG_SALES_SUMMARY_DATA" ''',
+                            "LPG_SALES_SUMMARY_DATA" ''',
     
     "cumulative_sales_pmuy_npmuy": f'''select
                                             "ConsumerType",
