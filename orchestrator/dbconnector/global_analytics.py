@@ -1569,7 +1569,9 @@ class GlobalAnalytics:
                     resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year']],how='left',on='month_name')
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     resp.to_csv('/tmp/resp.csv',index = False)
-                    agg_dict["ACTUAL_HISTORY_TMT"] = "sum"
+                    if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                    agg_dict["ACTUAL_HISTORY_TMT"] = "max"
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)
