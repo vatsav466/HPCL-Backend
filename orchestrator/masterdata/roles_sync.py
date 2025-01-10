@@ -34,11 +34,9 @@ async def sync_user_roles():
                                                    "allowed_sub_menus": ["Supply Chain Home"]}], "name": "SOD",
                                 "status": True},
                     "Plant Incharge SOD": {"allowed_pages": [{"menu_name": "SOD Terminal",
-                                                              "allowed_sub_menus": ["Supply Chain Home",
+                                                              "allowed_sub_menus": ["Supply Chain",
                                                                                      "Terminal Home", "Dashboard",
-                                                                                     "Video Analytics"]},
-                                                              {"menu_name": "Supply Chain",
-                                                               "allowed_sub_menus": ["Supply Chain Home"]}],
+                                                                                     "Video Analytics"]}],
                                             "name": "SOD", "status": True},
                     "COLA HQO Officer SOD": {
                         "allowed_pages": [{"menu_name": "SOD Terminal", "allowed_sub_menus": ["Supply Chain Home"]}],
