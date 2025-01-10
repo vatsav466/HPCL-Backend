@@ -4,6 +4,7 @@ import asyncio
 import importlib
 import traceback
 import orchestrator
+from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 import utilities.connection_mapping as connection_mapping
 from orchestrator.alerting.listener.dry_out_listener import *
@@ -86,13 +87,22 @@ async def main(camunda_connector_name):
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=200)  # Adjust the number of workers as needed
     tasks = []
+
+    task_id = 1
     for topic in topics:
-        for i in range(1, 50):
-            etw = ExternalTaskWorker(i, base_url=engine_local_base_url,
+        for i in range(0, 20):
+            # Creating Unique WorkerId based on Topic and incremental task id
+            etw = ExternalTaskWorker(f"{task_id}-{topic}", base_url=engine_local_base_url,
                                      config=urdhva_base.settings.camunda_default_config)
-            tasks.append(loop.run_in_executor(
-                executor, lambda: etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task)))
+            # tasks.append(loop.run_in_executor(
+            #         executor, partial(lambda: etw.subscribe(topic,
+            #                                                 lambda task: run_async_function(algo_external_task, task))))
+            # )
+            subscribe_task = loop.run_in_executor(
+                executor, partial(etw.subscribe, topic, lambda task: run_async_function(algo_external_task, task))
             )
+            tasks.append(subscribe_task)
+            task_id += 1
     await asyncio.gather(*tasks)
 
 
