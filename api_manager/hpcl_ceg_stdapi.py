@@ -445,3 +445,14 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/momlevelfinalmetadata/{id}', tags=['MomLevelFinalMetaData'])
 async def delete(id: str):
     return await MomLevelFinalMetaData.delete(id)
+
+
+@router.get('/bulevelgeocoordinates/{id}', response_model=BuLevelGeoCoordinates, tags=['BuLevelGeoCoordinates'])
+async def get(id: str):
+    return await BuLevelGeoCoordinates.get(id, skip_secrets=True)
+
+
+@router.get('/bulevelgeocoordinates', response_model=BuLevelGeoCoordinatesGetResp, tags=['BuLevelGeoCoordinates'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await BuLevelGeoCoordinates.get_all(params, skip_secrets=True)
+
