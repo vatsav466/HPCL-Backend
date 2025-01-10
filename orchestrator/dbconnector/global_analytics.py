@@ -3804,3 +3804,129 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def cp_total_locations(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        cp_locations_query = lpg_plant_queries.lpg_plant_query.get('cp_total_locations')
+        
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.ConsumerPumpTankDelivery.get_clause_conditions(formated=True)]
+        if filters:
+            cp_locations_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_locations_query, filters, drill_state)
+        
+        print("query before execution: ", cp_locations_query)
+        resp = await function(query=cp_locations_query)
+
+        return {"status": True, "message": "success", "data": resp}
+    
+    @staticmethod
+    async def cp_total_dus(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        cp_dus_query = lpg_plant_queries.lpg_plant_query.get('cp_total_dus')
+        
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.ConsumperPumpTransaction.get_clause_conditions(formated=True)]
+        if filters:
+            cp_dus_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_dus_query, filters, drill_state)
+        
+        print("query before execution: ", cp_dus_query)
+        resp = await function(query=cp_dus_query)
+
+        return {"status": True, "message": "success", "data": resp}
+    
+
+    @staticmethod
+    async def cp_total_tanks(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        cp_dus_query = lpg_plant_queries.lpg_plant_query.get('cp_total_tanks')
+        
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.ConsumerPumpTankDelivery.get_clause_conditions(formated=True)]
+        if filters:
+            cp_dus_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_dus_query, filters, drill_state)
+        
+        print("query before execution: ", cp_dus_query)
+        resp = await function(query=cp_dus_query)
+
+        return {"status": True, "message": "success", "data": resp}
+
+    @staticmethod
+    async def cp_avg_monthly_consumption(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        cp_query = lpg_plant_queries.lpg_plant_query.get('cp_avg_monthly_consumption')
+        
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.ConsumerPumpTankDelivery.get_clause_conditions(formated=True)]
+        if filters:
+            cp_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_query, filters, drill_state)
+        
+        print("query before execution: ", cp_query)
+        resp = await function(query=cp_query)
+
+        return {"status": True, "message": "success", "data": resp}
+    
+
+    async def cp_avg_monthly_consumption_by_location(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        cp_query = lpg_plant_queries.lpg_plant_query.get('cp_avg_monthly_consumption_by_location')
+        
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.ConsumerPumpTankDelivery.get_clause_conditions(formated=True)]
+        if filters:
+            cp_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_query, filters, drill_state)
+        
+        print("query before execution: ", cp_query)
+        resp = await function(query=cp_query)
+
+        return {"status": True, "message": "success", "data": resp}
+    
+    async def cp_total_volume_consumption(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        cp_query = lpg_plant_queries.lpg_plant_query.get('cp_total_volume_consumption')
+        
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.ConsumerPumpTankDelivery.get_clause_conditions(formated=True)]
+        if filters:
+            cp_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_query, filters, drill_state)
+        
+        print("query before execution: ", cp_query)
+        resp = await function(query=cp_query)
+
+        return {"status": True, "message": "success", "data": resp}
+
+    
+    async def cp_total_volume_sales(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        cp_query = lpg_plant_queries.lpg_plant_query.get('cp_total_volume_sales')
+        
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.ConsumperPumpTransaction.get_clause_conditions(formated=True)]
+        if filters:
+            cp_query = await widget_actions.WidgetActions.apply_filter_drilldown(cp_query, filters, drill_state)
+        
+        print("query before execution: ", cp_query)
+        resp = await function(query=cp_query)
+
+        return {"status": True, "message": "success", "data": resp}
