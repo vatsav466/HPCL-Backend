@@ -256,7 +256,7 @@ class IndentDryOut:
                     self.params['servicing_plant_name'] = ''
                     status, lt = await alert_helper.get_location_details("TAS", self.params['servicing_plant_id'])
                     if status:
-                        self.params['servicing_plant_name'] = lt['name']
+                        self.params['servicing_plant_name'] = lt.get('name', '')
                     # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     logger.info(f"Updateding to existing workflow: {self.params}")
@@ -669,7 +669,7 @@ class IndentDryOut:
                 input_data["event_tags"]["is_r2_swipe"] = True
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
                                                progress_rate="7")
-                return await self.send_alert_action(is_r3_swipe=True)
+                return await self.send_alert_action(is_r2_swipe=True)
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
         if resp.get("count") > 0:
