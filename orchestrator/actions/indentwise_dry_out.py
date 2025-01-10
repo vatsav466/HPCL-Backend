@@ -172,24 +172,36 @@ class IndentDryOut:
             for each_indent in total_indent:
                 query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                          f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
-                         f"indent_no='{each_indent['INDENT_NO']}' and "
-                         f"alert_status in ('Open', 'Close', 'InProgress') and "
-                         f"product_code='{each_indent['PROD']}'")
-                alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
-                if not alerts_data['data']:
-                    self.params['indent_no'] = str(each_indent['INDENT_NO'])
-                    self.params['terminal_plant_id'] = str(each_indent['LOCN_CODE'])
-                    self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
-                    self.params['prod_reqd_dt'] = each_indent.get('PROD_REQD_DT').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
-                    await create_alert(self.params, camunda_url)
-                    # Todo:- Create Dry-Out history data for the bu/sap_id/product if not available in Open State
-                else:
+                         f"indent_no='' and alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
+                alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
+                if alerts_data['data']:
                     # If dry_out_days found diff, update alert
                     for record in alerts_data['data']:
                         if record['dry_out_in_days'] != self.params['dry_out_in_days']:
                             query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
                                      f"where id='{record['id']}'")
                             await hpcl_ceg_model.Alerts.update_by_query(query)
+                else:
+                    query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
+                             f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
+                             f"indent_no='{each_indent['INDENT_NO']}' and "
+                             f"alert_status in ('Open', 'Close', 'InProgress') and "
+                             f"product_code='{each_indent['PROD']}'")
+                    alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+                    if not alerts_data['data']:
+                        self.params['indent_no'] = str(each_indent['INDENT_NO'])
+                        self.params['terminal_plant_id'] = str(each_indent['LOCN_CODE'])
+                        self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+                        self.params['prod_reqd_dt'] = each_indent.get('PROD_REQD_DT').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+                        await create_alert(self.params, camunda_url)
+                        # Todo:- Create Dry-Out history data for the bu/sap_id/product if not available in Open State
+                    else:
+                        # If dry_out_days found diff, update alert
+                        for record in alerts_data['data']:
+                            if record['dry_out_in_days'] != self.params['dry_out_in_days']:
+                                query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
+                                         f"where id='{record['id']}'")
+                                await hpcl_ceg_model.Alerts.update_by_query(query)
         # Todo:- Dry out location created or not for this product, if not create
         await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code, connection_mapping.item_name_mapping.get(prod_code, ""))
         return True, {"msg": "Alert raised"}
