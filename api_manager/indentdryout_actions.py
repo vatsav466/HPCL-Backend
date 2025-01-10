@@ -672,7 +672,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
             else:
                 where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
-    query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
+    query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
             f"from alerts where indent_status not in ('Cancelled', 'Completed') and {conditions}"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
