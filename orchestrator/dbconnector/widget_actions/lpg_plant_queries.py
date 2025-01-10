@@ -846,5 +846,5 @@ LIMIT 10000;''',
                             from
                                 "LPG_CONSUMERS_SUMMARY" ''',
     
-    "m60_performance_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')'''
+    "sales_growth_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')'''
 }

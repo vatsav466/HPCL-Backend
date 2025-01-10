@@ -51,7 +51,7 @@ lpg_dashboard_actions = [
     'overall_safety_check_pending',
     'total_suvidha',
     'lpg_cdcms_ageing',
-    'm60_performance_ytd'
+    'sales_growth_ytd'
 ]
 
 # Todo:- import all widget action modules here
@@ -106,7 +106,7 @@ widget_mapping = {
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''},
     'total_suvidha': {},
     'lpg_cdcms_ageing': {},
-    'm60_performance_ytd': {},
+    'sales_growth_ytd': {},
     'carry_forward_analysis': {}
 }
 

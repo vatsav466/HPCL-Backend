@@ -3802,7 +3802,10 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def m60_performance_ytd(filters, drill_state):
+    async def sales_growth_ytd(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         m60_performance_ytd_query_ = lpg_plant_queries.lpg_plant_query.get("m60_performance_ytd")
         if filters:
             for rec in filters:
