@@ -3675,6 +3675,19 @@ class GlobalAnalytics:
         query += " GROUP BY execution_date"
         resp = await function(query=query)
         return resp
+    
+    
+    @staticmethod
+    async def cdcms_dropdown(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _query = ''' select * from cdcms_masters '''
+        resp = await function(query=_query)
+        df = pd.DataFrame(resp)
+        data = {"Month": df['Month'].unique().to_list(), "Zone": df['ZOName'].unique().to_list(), "Region": df['ROName'].unique().to_list(), "Sales Area": df['SAName'].unique().to_list(), "Distributor": df["DistributorName"].unique().to_list(), "CylType": df['CylType'].unique().to_list(), "ConsumerType": df['ConsumerType'].unique().to_list()}
+        return data        
+    
 
     @staticmethod
     async def location_wise_distribution(filters, drill_state):
@@ -3689,6 +3702,7 @@ class GlobalAnalytics:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(location_wise_distribution_query)
         data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         return {"status": True, "message": "success", "data": data}
+    
     
     @staticmethod
     async def cumulative_sales_pmuy_npmuy(filters, drill_state):

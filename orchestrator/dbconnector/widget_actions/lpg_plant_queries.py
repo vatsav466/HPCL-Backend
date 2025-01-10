@@ -850,6 +850,16 @@ LIMIT 10000;''',
                                 "LPG_CONSUMERS_SUMMARY" ''',
     
     "sales_growth_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')''',
+    "total_suvidha": f'''select 
+                            "ZOName",
+                            "ROName",
+                            "SAName",
+                            "JDEDistributorCode",
+                            "SubCategory" as "SubCategory",
+                            "Category" As "Category",
+                            sum("SuvidhaClub") as "SuvidhaClub" 
+                        from
+                            "LPG_CONSUMERS_SUMMARY" ''',
     "ekyc_statistics": f'''
                         SELECT
                             "ROName",
