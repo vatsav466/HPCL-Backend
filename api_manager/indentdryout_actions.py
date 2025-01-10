@@ -542,7 +542,6 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
 @router.post('/get_dried_out_ro', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParams):
     top_x_axis = connection_mapping.dry_out_top_x_axis
-
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
         extra_key_mapping={"sap_id": "terminal_plant_id"}))
@@ -569,12 +568,15 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     stats_resp = await function(
         query=stats_query
     )
+    where_clause_conditions = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
+    where_clause_conditions.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
+        extra_key_mapping={"sap_id": "terminal_plant_id"}))
     _date = datetime.datetime.now().strftime("%Y-%m-%d")
     delivered_query = f"""SELECT SUM(distinct_count) AS total_count
                         FROM (
                             SELECT COUNT(DISTINCT sap_id) AS distinct_count
                             FROM alerts
-                            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                            WHERE {' AND '.join(where_clause_conditions)}
                             AND indent_status = 'Completed'
                             AND DATE(updated_at) = '{_date}'  -- Use TRUNC to ignore the time part
                             GROUP BY sap_id
@@ -630,11 +632,12 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "serial": 15, "condition": "=", "group": "carry_fwd_indent"
         }, {
             "section": "DryOut Carry Fwd Indent",
-            "value": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != '']),
+            "value": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != ''])
+            if len(carry_fwd_data) else 0,
             "serial": 16, "condition": "=", "group": "carry_fwd_indent"
         }, {
             "section": "CATA Carry Fwd Indent",
-            "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']),
+            "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
             "serial": 17, "condition": "=", "group": "carry_fwd_indent"
         }])
     else:
