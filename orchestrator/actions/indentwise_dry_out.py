@@ -1060,9 +1060,14 @@ class IndentDryOut:
         #     "action_type": "RO"
         # }
         if alert_data.indent_status != indent_status:  # type: ignore
-            await alert_manager.AlertAction().update_alert_history(
-                input_data=input_data, alert_data=alert_data
-            )
+            alert_history = alert_data
+            if not isinstance(alert_data, dict):
+                alert_history = alert_data.__dict__
+            action_msgs = [entry["action_msg"] for entry in alert_history['alert_history']]
+            if input_data['action_msg'] not in action_msgs:
+                await alert_manager.AlertAction().update_alert_history(
+                    input_data=input_data, alert_data=alert_data
+                )
 
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
