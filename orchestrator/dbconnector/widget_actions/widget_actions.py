@@ -52,7 +52,8 @@ lpg_dashboard_actions = [
     'total_suvidha',
     'lpg_cdcms_ageing',
     'total_consumers',
-    'sales_growth_ytd'
+    'sales_growth_ytd',
+    'ekyc_statistics'
 ]
 
 # Todo:- import all widget action modules here
@@ -109,6 +110,7 @@ widget_mapping = {
     'lpg_cdcms_ageing': {},
     'carry_forward_analysis': {},
     'total_consumers': {},
+    'ekyc_statistics': {},
     'sales_growth_ytd': {},
     'carry_forward_analysis': {}
 }
