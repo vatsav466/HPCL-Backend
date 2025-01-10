@@ -461,7 +461,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
 async def ro_not_in_ims():
     query = f"""SELECT DISTINCT a.rosapcode
                 FROM "HPCL_HOS".sch_inventory_forecast_dashboard a
-                WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND a.rosapcode NOT IN (
+                WHERE a.rosapcode NOT IN (
                     SELECT DISTINCT SUBSTR("DEALER_CODE", 3, 8)
                     FROM "IMS_SAP"."INDENT_REQUEST"
                 );"""
