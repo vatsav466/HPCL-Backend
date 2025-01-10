@@ -485,7 +485,7 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
     # Loop through each indent group to calculate the count
     for indent_key, indent_values in indent_mapping.items():
     # Construct conditions
-        conditions = []
+        conditions = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
         for rec in record:
             if rec.key == "indent_status":
                 # Map the input value to the corresponding list in indent_mapping
@@ -674,7 +674,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     conditions = ' AND '.join(where_clause)
     query = "select location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-            f"from alerts where indent_status != 'Cancelled' and {conditions}"
+            f"from alerts where indent_status not in ('Cancelled', 'Completed') and {conditions}"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
@@ -733,3 +733,21 @@ async def indentdryout_get_distinct_ro_name(data: Indentdryout_Get_Distinct_Ro_N
 @router.post('/get_carry_fwd_indents', tags=['IndentDryOut'])
 async def indentdryout_get_carry_fwd_indents(data: Indentdryout_Get_Carry_Fwd_IndentsParams):
     ...
+
+
+# Action download_dryout_report
+@router.post('/download_dryout_report', tags=['IndentDryOut'])
+async def indentdryout_download_dryout_report(data: Indentdryout_Download_Dryout_ReportParams):
+    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
+    for record in data.filters:
+        if record.value:
+            if record.key == "plant":
+                record.key = "terminal_plant_id"
+            if len(record.value) == 1:
+                where_clause.append(f"{record.key}='{record.value[0]}'")
+            else:
+                where_clause.append(f"{record.key} in {tuple(record.value)}")
+    conditions = ' AND '.join(where_clause)
+    query = "select  sap_id as dealer_code, location_name as name, progress_rate as present_stage, id as alert_id," \
+            "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
+            f"from alerts where indent_status != 'Cancelled' and {conditions}"

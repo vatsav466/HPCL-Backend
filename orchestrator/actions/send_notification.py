@@ -72,7 +72,7 @@ class SendNotification:
     async def _load_and_validate_alert(self) -> bool:
         """Load alert data and validate its existence"""
         alert_id = self.params.get("alert_id")
-        print("alert_id --> ", alert_id)
+        # print("alert_id --> ", alert_id)
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         
         if alert_data:

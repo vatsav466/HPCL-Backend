@@ -1692,6 +1692,11 @@ class Indentdryout_Get_Carry_Fwd_IndentsParams(pydantic.BaseModel):
     pass
 
 
+class Indentdryout_Download_Dryout_ReportParams(pydantic.BaseModel):
+    filters: typing.List[IndentDryOutDataFiltersCreate]
+    report_name: str
+
+
 class LpgOperationsSchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_operations'
     
@@ -2664,7 +2669,7 @@ class BuLevelGeoCoordinatesSchema(UrdhvaPostgresBase):
     __tablename__ = 'bu_level_geo_coordinates'
     
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    ro_id: Mapped[str] = mapped_column("ro_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_id: Mapped[typing.Optional[str]] = mapped_column("ro_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     latitude: Mapped[typing.Optional[str]] = mapped_column("latitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     longitude: Mapped[typing.Optional[str]] = mapped_column("longitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -2674,7 +2679,7 @@ class BuLevelGeoCoordinatesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'bu_level_geo_coordinates'
     
     sap_id: str
-    ro_id: str
+    ro_id: typing.Optional[str] = pydantic.Field("", **{})
     bu: str
     latitude: typing.Optional[str] = pydantic.Field("", **{})
     longitude: typing.Optional[str] = pydantic.Field("", **{})
@@ -2690,7 +2695,7 @@ class BuLevelGeoCoordinates(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'bu_level_geo_coordinates'
     
     sap_id: typing.Optional[str] | None = None
-    ro_id: typing.Optional[str] | None = None
+    ro_id: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[str] | None = None
     latitude: typing.Optional[str] = pydantic.Field("", **{})
     longitude: typing.Optional[str] = pydantic.Field("", **{})

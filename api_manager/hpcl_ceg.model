@@ -845,6 +845,11 @@ Model IndentDryOut {
     Action=> get_carry_fwd_indents {
 
     }
+
+    Action=> download_dryout_report {
+        filters list IndentDryOutDataFilters
+        report_name str
+    }
     
      Config=> {
         access_key_mapping='bu,zone,region,sales_area,site_id:sap_id'
@@ -1171,7 +1176,7 @@ Model MomLevelFinalMetaData {
 
 Model BuLevelGeoCoordinates {
     sap_id str
-    ro_id str
+    ro_id optional str
     bu str
     latitude optional str
     longitude optional str
