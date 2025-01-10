@@ -641,8 +641,8 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        logger.info(f"Query: {query}")
-        logger.info(f"Resp: {resp}")
+        # logger.info(f"Query: {query}")
+        # logger.info(f"Resp: {resp}")
         input_data = {
             "action_msg": "",
             "event_tags": {
@@ -653,7 +653,7 @@ class IndentDryOut:
             if await self._is_r3_swiped():
                 logger.info("R2 Not Swiped But R3 Swiped")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
-                logger.info(f"params: {self.params}")
+                # logger.info(f"params: {self.params}")
                 input_data["action_msg"] = "R2 Not Swiped But R3 Swiped"
                 input_data["action_type"] = "R2Swipe"
                 input_data["event_tags"]["is_r2_swipe"] = True
@@ -663,7 +663,7 @@ class IndentDryOut:
             elif await self._is_indent_delivered():
                 logger.info("R2, R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
-                logger.info(f"params: {self.params}")
+                # logger.info(f"params: {self.params}")
                 input_data["action_msg"] = "R2, R3 Not Swiped But Indent Delivered"
                 input_data["action_type"] = "R2Swipe"
                 input_data["event_tags"]["is_r2_swipe"] = True
@@ -723,8 +723,8 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        logger.info(f"Query: {query}")
-        logger.info(f"Resp: {resp}")
+        # logger.info(f"Query: {query}")
+        # logger.info(f"Resp: {resp}")
         input_data = {
             "action_msg": "",
             "event_tags": {
@@ -735,7 +735,7 @@ class IndentDryOut:
             if await self._is_indent_delivered():
                 logger.info("R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
-                logger.info(f"params: {self.params}")
+                # logger.info(f"params: {self.params}")
                 input_data["action_msg"] = "R3 Not Swiped But Indent Delivered"
                 input_data["action_type"] = "R3Swipe"
                 input_data["event_tags"]["is_r3_swipe"] = True
@@ -1270,7 +1270,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        logger.info(f"Query: {query}")
+        # logger.info(f"Query: {query}")
         resp = await function(query=query)
         if not resp:
             return False
