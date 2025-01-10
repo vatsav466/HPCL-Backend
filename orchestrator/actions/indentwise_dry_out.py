@@ -860,7 +860,7 @@ class IndentDryOut:
             cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
-        print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
+        # print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -879,7 +879,7 @@ class IndentDryOut:
         # cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
         cris_resp.replace({"product_grp": _prod_map}, inplace=True)
         cris_resp = cris_resp[cris_resp['product_grp'] == str(product_code)]
-        print("cris_resp after filter: ", cris_resp[["item_name", "product_grp", "rosapcode", "status"]])
+        # print("cris_resp after filter: ", cris_resp[["item_name", "product_grp", "rosapcode", "status"]])
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
@@ -1266,7 +1266,7 @@ class IndentDryOut:
                                         AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
                                     GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
         # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
-        print("connection_name: ", self.params['connection_name'])
+        # print("connection_name: ", self.params['connection_name'])
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -1312,7 +1312,7 @@ class IndentDryOut:
             cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
-        print("cris_resp: ", cris_resp)
+        # print("cris_resp: ", cris_resp)
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
