@@ -152,6 +152,9 @@ class Settings(pydantic_settings.BaseSettings):
     things_board_username: str = "admin"
     things_board_password: str = "password"
 
+    # Timezone settings
+    time_zone: str = "Asia/Kolkata"
+
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \
                 self.db_multi_tenancy_model == MultiTenancyMode.SingleServerMultiDb:

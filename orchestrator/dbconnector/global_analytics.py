@@ -19,6 +19,8 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
+
+
 class GlobalAnalytics:
     @staticmethod
     async def analytics(filters, drill_state):

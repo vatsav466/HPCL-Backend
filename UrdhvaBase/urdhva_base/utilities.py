@@ -1,4 +1,5 @@
 import re
+import pytz
 import asyncio
 import datetime
 import functools
@@ -62,3 +63,10 @@ def snake_case(s):
     """
     return snakecase.convert(s)    
 
+
+def get_present_time(utc=False):
+    """
+    Function to get present time in utc or local format
+    :param utc:
+    :return:
+    """
