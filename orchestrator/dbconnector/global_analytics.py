@@ -155,8 +155,11 @@ class GlobalAnalytics:
         """
         alert_ageing_query = lpg_plant_queries.lpg_plant_query.get("alert_ageing")
         alert_ageing_query_ = alert_ageing_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             alert_ageing_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(alert_ageing_query, filters, drill_state)
+            print(alert_ageing_query_)
         try:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(alert_ageing_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -179,8 +182,11 @@ class GlobalAnalytics:
         """
         day_wise_alerts_query = lpg_plant_queries.lpg_plant_query.get("day_wise_alerts")
         day_wise_alerts_query_ = day_wise_alerts_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             day_wise_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(day_wise_alerts_query, filters, drill_state)
+            print(day_wise_alerts_query_)
         try:
             keys, res = connector_factory.PostgreSQLConnector('LPG_PLANT').execute_query(day_wise_alerts_query_)
         except psycopg2.errors.UndefinedColumn as e:
@@ -3223,6 +3229,7 @@ class GlobalAnalytics:
             else:
                 lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
             lpg_pending_query_  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
+            print(lpg_pending_query_)
             resp = await function(query=lpg_pending_query_ )
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3466,6 +3473,8 @@ class GlobalAnalytics:
         financial_year_end = f"{end_year}-03-31 23:59:59"
         cumulative_sales_pmuy_npmuy_query_ = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
         if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -3486,6 +3495,10 @@ class GlobalAnalytics:
             cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
             cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            cumulative_sales_pmuy_npmuy_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cumulative_sales_pmuy_npmuy_query_, access_filters, drill_state)
+
             if not "where" in cumulative_sales_pmuy_npmuy_query_.lower():
                 cumulative_sales_pmuy_npmuy_query_ += f' WHERE "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
             else:
