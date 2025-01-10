@@ -1,4 +1,7 @@
 import utilities.helpers as helpers
+import datetime
+financial_year_start = f"{datetime.now().year - 1}-04-01 00:00:00"
+financial_year_end = f"{datetime.now().year}-03-31 23:59:59"
 
 timezone_format = 'YYYY-MM-DD HH24:MI:SS.US'
 lpg_plant_query = {
@@ -844,5 +847,17 @@ LIMIT 10000;''',
                                 "SubCategory" as "SubCategory",
                                 sum("ConsumerCount") as "Total_Consumers"
                             from
-                                "LPG_CONSUMERS_SUMMARY" '''
+                                "LPG_CONSUMERS_SUMMARY" ''',
+    
+    "ekyc_statistics": f'''
+                        SELECT
+                            "ROName",
+                            "SAName",
+                            "JDEDistributorCode",
+                            "ZoneNames",
+                            sum("eKYCCompleted") as "Completed",
+                            sum("eKYCPending") as "Pending"     
+                        FROM
+                            "LPG_CONSUMERS_SUMMARY",
+                        '''
 }
