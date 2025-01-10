@@ -281,14 +281,14 @@ class IndentDryOut:
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
                     status, lt = await alert_helper.get_location_details("RO", self.params['dealer_id'])
                     if status:
-                        self.params['terminal_plant_name'] = lt['terminal_plant_name']
-                        self.params['terminal_plant_id'] = lt['terminal_plant_id']
+                        self.params['terminal_plant_name'] = lt.get('terminal_plant_name', '')
+                        self.params['terminal_plant_id'] = lt.get('terminal_plant_id', '')
 
                     self.params['servicing_plant_id'] = str(each_indent.get('LOCN_CODE'))
                     self.params['servicing_plant_name'] = ''
                     status, lt = await alert_helper.get_location_details("TAS", self.params['servicing_plant_id'])
                     if status:
-                        self.params['servicing_plant_name'] = lt['name']
+                        self.params['servicing_plant_name'] = lt.get('name', '')
                     # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     logger.info(f"Multiple Indents: {self.params}")
