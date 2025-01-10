@@ -471,4 +471,4 @@ async def ro_not_in_ims():
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)
     data = pd.DataFrame(data)
-    return data['sap_id'].unique().tolist()
+    return data['rosapcode'].unique().tolist()
