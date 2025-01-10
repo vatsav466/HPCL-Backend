@@ -650,7 +650,16 @@ class IndentDryOut:
             }
         }
         if not resp:
-            if await self._is_r3_swiped():
+            if await self._is_invoice_created():
+                logger.info("R2 Not Swiped But Invoice Created")
+                logger.info(f"alert_id: {self.params.get('alert_id')}")
+                input_data["action_msg"] = "R2 Not Swiped But Invoice Created"
+                input_data["action_type"] = "R2Swipe"
+                input_data["event_tags"]["is_r2_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
+                                               progress_rate="7")
+                return await self.send_alert_action(is_r2_swipe=True)
+            elif await self._is_r3_swiped():
                 logger.info("R2 Not Swiped But R3 Swiped")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
@@ -1337,5 +1346,29 @@ class IndentDryOut:
         else:
             cris_resp = {}
         if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
+            return True
+        return False
+
+    async def _is_invoice_created(self):
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dealer_code = str(self.params.get("dealer_id")).zfill(10)
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
+        next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        indent_no = "','".join(self.params.get("indent_no").split(","))
+        query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' AND """ \
+                f"""a."LOCN_CODE" = b."LOCN_CODE" AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND a."INDENT_NO" IN ('{indent_no}') """ \
+                f"""AND a."CANCEL_INDENT" IS NULL AND a."TRUCK_REGNO" IS NOT NULL AND (a."VALID_INDENT" = 'Y' OR a."VALID_INDENT" = 'H') """ \
+                f"""AND a."BATCH_FLAG" = 'Y' AND b."SALES_ORDERNO" IS NOT NULL AND b."INVOICE_NO" IS NOT NULL"""
+
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+        if not resp:
+            return False
+        resp = resp[0]
+        if resp.get("count") > 0:
             return True
         return False
