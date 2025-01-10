@@ -1658,7 +1658,23 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    year_required = str(current_year-2)+'-'+str(current_year-1)
+                    sales_his_query = f"""
+                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
+                    """
+                    his_data = await function(query=sales_his_query)
+                    his_data = pd.DataFrame(his_data)
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
+                    his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
+                    resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
+                    resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year','ORGSBUNAME']],how='left',left_on=['month_name','SBU_Name'],right_on = ['month_name','ORGSBUNAME'])
+                    resp['fiscal_year'] = resp['fiscal_year'].bfill()
+                    if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                    agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1712,7 +1728,27 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
-                
+                    year_required = str(current_year-2)+'-'+str(current_year-1)
+                    sales_his_query = f"""
+                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+
+                    """
+                    his_data = await function(query=sales_his_query)
+                    his_data = pd.DataFrame(his_data)
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
+                    his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
+                    his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
+                    resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
+                    resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year','ORGSBUNAME','ORGZONENAME']],
+                                      how='left',left_on=['month_name','SBU_Name','Zone_Name'],
+                                      right_on = ['month_name','ORGSBUNAME','ORGZONENAME'])
+                    resp['fiscal_year'] = resp['fiscal_year'].bfill()
+                    if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                    agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
+                    
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
@@ -1765,7 +1801,27 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
-                
+                    year_required = str(current_year-2)+'-'+str(current_year-1)
+                    sales_his_query = f"""
+                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+
+                    """
+                    his_data = await function(query=sales_his_query)
+                    his_data = pd.DataFrame(his_data)
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
+                    his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
+                    his_data['ORGRONAME'] = his_data['ORGRONAME'].fillna('').astype(str)
+                    his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
+                    resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
+                    resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year','ORGSBUNAME','ORGZONENAME','ORGRONAME']],
+                                      how='left',left_on=['month_name','SBU_Name','Zone_Name','Region_Name'],
+                                      right_on = ['month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'])
+                    resp['fiscal_year'] = resp['fiscal_year'].bfill()
+                    if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                    agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
@@ -1819,7 +1875,28 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    year_required = str(current_year-2)+'-'+str(current_year-1)
+                    sales_his_query = f"""
+                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
+                    """
+                    his_data = await function(query=sales_his_query)
+                    his_data = pd.DataFrame(his_data)
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
+                    his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
+                    his_data['ORGRONAME'] = his_data['ORGRONAME'].fillna('').astype(str)
+                    his_data['ORGSANAME'] = his_data['ORGSANAME'].fillna('').astype(str)
+                    his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
+                    resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
+                    resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME']],
+                                      how='left',left_on=['month_name','SBU_Name','Zone_Name','Region_Name','SalesArea_Name'],
+                                      right_on = ['month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'])
+                    resp['fiscal_year'] = resp['fiscal_year'].bfill()
+                    if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                    agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
@@ -3300,6 +3377,237 @@ class GlobalAnalytics:
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
+        
+    @staticmethod
+    async def card_chart(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        financial_year_start = f"{datetime.now().year - 1}-04-01 00:00:00"
+        financial_year_end = f"{datetime.now().year}-03-31 23:59:59"
+        card_query = f'''
+                        select
+                            sum("TotalSalesYesterday")/10000000 as "Sales" 
+                        from
+                            "LPG_SALES_SUMMARY_DATA" 
+                        where
+                            "Execution_Date"::DATE BETWEEN '{financial_year_start}' AND '{financial_year_end}'
+                            AND "ZOName" NOT IN ( 'Null')
+                        '''
+        card_query  += f' AND "Execution_Date"::DATE BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
+        card_query  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
+        
+        resp = await function(query=card_query)
+        resp = pd.DataFrame(resp)
+        for each_float_col in [
+            "Sales"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        for each_str_col in []:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+        return {"status": True, "message": "success", "data": resp}
+
+    
+    @staticmethod
+    async def total_consumers(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        total_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("total_consumers")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                total_consumers_query_  += ' WHERE '
+                total_consumers_query_  += ' AND '.join(conditions)
+            total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+            total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
+        else:
+            if not "where" in total_consumers_query_.lower():
+                total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+            else:
+                total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+            total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
+            resp = await function(query=total_consumers_query_ )
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["Category"], as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total_Consumers"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "Category",
+                "SubCategory",
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        resp = await function(query=total_consumers_query_ )
+        if resp:
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            for each_float_col in [
+                "Total_Consumers"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "Category",
+                "SubCategory",
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "Category" in filter_keys and "SubCategory" not in filter_keys:
+                    grouped_resp = resp.groupby(["Category", "SubCategory"], as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+                if "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" not in filter_keys:
+                    grouped_resp = resp.groupby(["Category", "SubCategory","ZOName"], as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+                if "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["Category","SubCategory", "ZOName", "ROName"], as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+                elif "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["Category","SubCategory","ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+                elif "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["Category","SubCategory","ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def ekyc_statistics(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        ekyc_statistics_query_ = lpg_plant_queries.lpg_plant_query.get("ekyc_statistics")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                ekyc_statistics_query_ += ' WHERE '
+                ekyc_statistics_query_ += ' AND '.join(conditions)
+            ekyc_statistics_query_ += f'  AND "ZOName"  NOT IN ( \'Null\') '
+            ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZoneNames" '
+        else:
+            if not "where" in ekyc_statistics_query_.lower():
+                ekyc_statistics_query_ += f' WHERE "ZOName"  NOT IN ( \'Null\')'
+            else:
+                ekyc_statistics_query_ += f' AND "ZOName"  NOT IN ( \'Null\')'
+            ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZoneNames"'
+            resp = await function(query=ekyc_statistics_query_)
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["ZoneNames"], as_index=False).agg({
+                    "Completed": "sum",
+                    "Pending": "sum"
+                })
+            for each_float_col in [
+                "Completed","Pending"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in [
+                "ROName", "SAName", "JDEDistributorCode","ZoneNames"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        # Execute the query
+        print("*" * 50)
+        print("ekyc_statistics_query_ :", ekyc_statistics_query_)
+        print("*" * 50)
+        resp = await function(query=ekyc_statistics_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
+        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+        for each_float_col in [
+                "Completed","Pending"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        # Fill missing values for string columns
+        for each_str_col in [
+                 "ROName", "SAName", "JDEDistributorCode","ZoneNames"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "ZoneNames" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZoneNames", "ROName"], as_index=False).agg({
+                    "Completed": "sum",
+                    "Pending": "sum"
+                })
+            elif "ZoneNames" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZoneNames", "ROName", "SAName"], as_index=False).agg({
+                    "Completed": "sum",
+                    "Pending": "sum"                
+                })
+            elif "ZonesNames" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZoneNames", "ROName", "SAName", "DistributorName"],
+                                            as_index=False).agg({"Completed": "sum", "Pending": "sum"})
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
     
     @staticmethod
     async def total_suvidha(filters, drill_state):
@@ -3930,3 +4238,202 @@ class GlobalAnalytics:
         resp = await function(query=cp_query)
 
         return {"status": True, "message": "success", "data": resp}
+    @staticmethod
+    async def sales_growth_ytd(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        sales_growth_ytd_query_ = lpg_plant_queries.lpg_plant_query.get("sales_growth_ytd")
+        month_mapping = {
+                            "Jan": "January",
+                            "Feb": "February",
+                            "Mar": "March",
+                            "Apr": "April",
+                            "May": "May",
+                            "Jun": "June",
+                            "Jul": "July",
+                            "Aug": "August",
+                            "Sep": "September",
+                            "Oct": "October",
+                            "Nov": "November",
+                            "Dec": "December"
+                    }
+
+        # Reverse mapping (for returning the short form)
+        reverse_month_mapping = {v: k for k, v in month_mapping.items()}
+        conditions = []
+        if filters:
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    print("in if")
+                    condition = f" and {rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        print("if in else")
+                        if rec.key =='"SBU_Name"':
+                            rec.key = '"ORGSBUNAME"'
+                        elif rec.key == '"Zone_Name"':
+                            rec.key = '"ORGZONENAME"'
+                        elif rec.key == '"SalesArea_Name"':
+                            rec.key = '"ORGSANAME"'
+                        elif rec.key == '"Region_Name"':
+                            rec.key = '"ORGRONAME"'
+                        condition = f" and {rec.key} = '{rec.value[0]}'"
+                    else:
+                        print("else in else")
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                #sales_growth_query_ += ' WHERE '
+                sales_growth_ytd_query_ += ''.join(conditions)
+            sales_growth_ytd_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(sales_growth_ytd_query_, filters, drill_state)
+        else:
+            # Fallback query if no filters are provided
+            sales_growth_ytd_query_ = """  
+                SELECT
+                    ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")) AS "total_sales",
+                    "MOM_DAY_LEVEL_DATA"."fiscal_year" AS "fiscal_year",
+                    "MOM_DAY_LEVEL_DATA"."month_name"
+                FROM
+                    "hpcl_ceg"."public"."MOM_DAY_LEVEL_DATA"
+                WHERE
+                    "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')
+                GROUP BY
+                  "MOM_DAY_LEVEL_DATA"."fiscal_year","MOM_DAY_LEVEL_DATA"."month_name"
+                ORDER BY
+                    "MOM_DAY_LEVEL_DATA"."fiscal_year" ASC;
+            """
+
+            resp = await function(query=sales_growth_ytd_query_)
+            month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
+                         'Dec': '8', 'Jan': '9', 'Feb': '10', 'Mar': '11'}
+            d = {"2023-2024": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
+                               "11": 0},
+                 "2024-2025": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
+                               "11": 0},
+                 "fy_month": {"0": "1", "1": "2", "2": "3", "3": "4", "4": "5", "5": "6", "6": "7", "7": "8", "8": "9",
+                              "9": "10", "10": "11", "11": "12"},
+                 "month_name": {"0": "Apr", "1": "May", "2": "Jun", "3": "Jul", "4": "Aug", "5": "Sep", "6": "Oct",
+                                "7": "Nov", "8": "Dec", "9": "Jan", "10": "Feb", "11": "Mar"}}
+
+            for rec in resp:
+                if rec['fiscal_year'] == "2024-2025":
+                    d['2024-2025'][month_map[rec['month_name']]] = rec['total_sales']
+                else:
+                    d['2023-2024'][month_map[rec['month_name']]] = rec['total_sales']
+            return {"status": True, "message": "success", "data": d}
+        
+        resp = await function(query=sales_growth_ytd_query_)
+        resp = pd.DataFrame(resp)
+        resp =resp.rename(columns = {'ORGSBUCD':'SBU','ORGSBUNAME':'SBU_Name','ORGZONECD':'ZONE','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
+            'NETWEIGHT_TMT':'total_sales', 'ORGSANAME':'SalesArea_Name',"ORGSACD":"SA","ORGROCD":"REGION"})
+
+        # Fill missing values for numeric columns
+        for each_float_col in ["sum_total_sales", "total_sales"]:
+            if each_float_col in resp.columns.tolist():
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+        # Fill missing values for string columns
+        for each_str_col in [
+             "month_name", "SBU", "ZONE", "REGION", "SA",
+
+            "Zone_Name", "Region_Name", "SalesArea_Name", "fiscal_year",
+            "month_name"
+        ]:
+            resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+        
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            filter_keys = [x.replace('ORGSBUNAME', 'SBU_Name') if 'ORGSBUNAME' in x else x.replace('ORGZONENAME', 'Zone_Name') if 'ORGZONENAME' in x else x.replace('ORGSANAME','SalesArea_Name') if 'ORGSANAME'in x else x.replace('ORGRONAME','Region_Name') if 'ORGRONAME' in x else x for x in filter_keys]
+            resp["month_name"] = resp["month_name"].apply(
+                lambda x: reverse_month_mapping.get(x, x)
+            )
+            grouped_keys = ["fiscal_year", "month_name"]
+            # this is for getting all the months data for the specific SBU and fiscal year
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SBU_Name' in filter_keys:
+                grouped_keys.extend(["SBU_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Zone_Name' in filter_keys:
+                grouped_keys.extend(["Zone_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Region_Name' in filter_keys:
+                grouped_keys.extend(["Region_Name"])
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SalesArea_Name' in filter_keys:
+                grouped_keys.extend(["SalesArea_Name"])
+            
+            if "month_name" in filter_keys and "SBU_Name" not in filter_keys:
+                grouped_keys.append("SBU_Name")
+            elif "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
+                if "DS Lubes" in filters[-1].value[0] or 'DS' in filters[-1].value[0] or 'Lubes' in filters[-1].value[0]:
+                    grouped_keys.extend(["SBU_Name", "Region_Name"])
+                else:
+                    grouped_keys.extend(["SBU_Name", "Zone_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and
+                  "Region_Name" not in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys
+                  and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"])
+            elif ("month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and
+                  "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys):
+                grouped_keys.extend(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name","MATERIALGROUPNAME"])
+            grouped_resp = resp.groupby(grouped_keys, as_index=False).agg({
+                "total_sales": lambda x: round(sum(x),2),
+            })
+            print("grouped_keys->>",grouped_keys)
+            if grouped_resp is not None:
+                if "sbu_name" in resp.columns.tolist():
+                    sub_name = list(set(rec['SBU_Name'] for rec in grouped_resp.to_dict(orient='records')))
+                transformed_data = []
+                data = grouped_resp.to_dict(orient='records')
+                print("data-->>",data)
+                '''
+                for sbu_name in sub_name:
+                    entry = {
+                        "month_name": "Jan",
+                        "SBU_Name": sbu_name,
+                        "2024-2025": next((item['total_sales'] for item in data if
+                                           item['SBU_Name'] == sbu_name and item['fiscal_year'] == '2024-2025'), 0),
+                        "2023-2024": next((item['total_sales'] for item in data if
+                                           item['SBU_Name'] == sbu_name and item['fiscal_year'] == '2023-2024'), 0)
+                    }
+                    for key in ["Zone_Name", "Region_Name", "SalesArea_Name"]:
+                        if key in grouped_keys:
+                            if key in data[0]:
+                            entry[key] = next((item[key] for item in data if item['SBU_Name'] == sbu_name), None)
+                    
+                    transformed_data.append(entry)
+                return {"status": True, "message": "success", "data": transformed_data}
+                '''
+                # added the below lines from 685 to 696 for dorrect drill data from backend 
+                '''
+                for record in data:
+                    entry = {
+                        "month_name": record["month_name"],
+                        "SBU_Name": record["SBU_Name"],
+                        "2024-2025": record["total_sales"] if record["fiscal_year"] == "2024-2025" else 0,
+                        "2023-2024": record["total_sales"] if record["fiscal_year"] == "2023-2024" else 0,
+                        "fiscal_year": record["fiscal_year"]
+                    }
+                    for key in grouped_keys:
+                        if key in record:
+                            entry[key] = record[key]
+                    transformed_data.append(entry)
+                '''
+                if "sbu_name" in resp.columns.tolist():
+                    grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': '', 'SBU_Name': ''})
+                else:
+                    grouped_data = defaultdict(lambda: {'2023-2024': 0, '2024-2025': 0, 'month_name': ''})
+                #grouped_keys =  ['fiscal_year', 'month_name', 'SBU_Name']
+                key_fields = [key for key in grouped_keys if key != 'fiscal_year']  # Exclude 'fiscal_year'
+
+                for record in data:
+                    key = tuple(record[field] for field in key_fields)    
+                    #key = (record['month_name'], record['SBU_Name'],record['Zone_Name'])
+                    for field in key_fields:
+                        grouped_data[key][field] = record.get(field, '')
+                    grouped_data[key][record['fiscal_year']] = record['total_sales']
+                result = list(grouped_data.values())
+                return {"status": True, "message": "success", "data": result}
+
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}

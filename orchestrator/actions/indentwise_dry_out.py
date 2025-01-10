@@ -256,7 +256,7 @@ class IndentDryOut:
                     self.params['servicing_plant_name'] = ''
                     status, lt = await alert_helper.get_location_details("TAS", self.params['servicing_plant_id'])
                     if status:
-                        self.params['servicing_plant_name'] = lt['name']
+                        self.params['servicing_plant_name'] = lt.get('name', '')
                     # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     logger.info(f"Updateding to existing workflow: {self.params}")
@@ -281,14 +281,14 @@ class IndentDryOut:
                     self.params['terminal_plant_id'] = str(each_indent.get('LOCN_CODE'))
                     status, lt = await alert_helper.get_location_details("RO", self.params['dealer_id'])
                     if status:
-                        self.params['terminal_plant_name'] = lt['terminal_plant_name']
-                        self.params['terminal_plant_id'] = lt['terminal_plant_id']
+                        self.params['terminal_plant_name'] = lt.get('terminal_plant_name', '')
+                        self.params['terminal_plant_id'] = lt.get('terminal_plant_id', '')
 
                     self.params['servicing_plant_id'] = str(each_indent.get('LOCN_CODE'))
                     self.params['servicing_plant_name'] = ''
                     status, lt = await alert_helper.get_location_details("TAS", self.params['servicing_plant_id'])
                     if status:
-                        self.params['servicing_plant_name'] = lt['name']
+                        self.params['servicing_plant_name'] = lt.get('name', '')
                     # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
                     logger.info(f"Multiple Indents: {self.params}")
@@ -641,8 +641,8 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        logger.info(f"Query: {query}")
-        logger.info(f"Resp: {resp}")
+        # logger.info(f"Query: {query}")
+        # logger.info(f"Resp: {resp}")
         input_data = {
             "action_msg": "",
             "event_tags": {
@@ -650,10 +650,19 @@ class IndentDryOut:
             }
         }
         if not resp:
-            if await self._is_r3_swiped():
+            if await self._is_invoice_created():
+                logger.info("R2 Not Swiped But Invoice Created")
+                logger.info(f"alert_id: {self.params.get('alert_id')}")
+                input_data["action_msg"] = "R2 Not Swiped But Invoice Created"
+                input_data["action_type"] = "R2Swipe"
+                input_data["event_tags"]["is_r2_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
+                                               progress_rate="7")
+                return await self.send_alert_action(is_r2_swipe=True)
+            elif await self._is_r3_swiped():
                 logger.info("R2 Not Swiped But R3 Swiped")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
-                logger.info(f"params: {self.params}")
+                # logger.info(f"params: {self.params}")
                 input_data["action_msg"] = "R2 Not Swiped But R3 Swiped"
                 input_data["action_type"] = "R2Swipe"
                 input_data["event_tags"]["is_r2_swipe"] = True
@@ -663,13 +672,13 @@ class IndentDryOut:
             elif await self._is_indent_delivered():
                 logger.info("R2, R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
-                logger.info(f"params: {self.params}")
+                # logger.info(f"params: {self.params}")
                 input_data["action_msg"] = "R2, R3 Not Swiped But Indent Delivered"
                 input_data["action_type"] = "R2Swipe"
                 input_data["event_tags"]["is_r2_swipe"] = True
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
                                                progress_rate="7")
-                return await self.send_alert_action(is_r3_swipe=True)
+                return await self.send_alert_action(is_r2_swipe=True)
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
         if resp.get("count") > 0:
@@ -723,8 +732,8 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        logger.info(f"Query: {query}")
-        logger.info(f"Resp: {resp}")
+        # logger.info(f"Query: {query}")
+        # logger.info(f"Resp: {resp}")
         input_data = {
             "action_msg": "",
             "event_tags": {
@@ -735,7 +744,7 @@ class IndentDryOut:
             if await self._is_indent_delivered():
                 logger.info("R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
-                logger.info(f"params: {self.params}")
+                # logger.info(f"params: {self.params}")
                 input_data["action_msg"] = "R3 Not Swiped But Indent Delivered"
                 input_data["action_type"] = "R3Swipe"
                 input_data["event_tags"]["is_r3_swipe"] = True
@@ -860,7 +869,7 @@ class IndentDryOut:
             cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
-        print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
+        # print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -879,7 +888,7 @@ class IndentDryOut:
         # cris_resp = cris_resp[cris_resp['item_name'] == str(product_code)]
         cris_resp.replace({"product_grp": _prod_map}, inplace=True)
         cris_resp = cris_resp[cris_resp['product_grp'] == str(product_code)]
-        print("cris_resp after filter: ", cris_resp[["item_name", "product_grp", "rosapcode", "status"]])
+        # print("cris_resp after filter: ", cris_resp[["item_name", "product_grp", "rosapcode", "status"]])
         cris_resp = cris_resp.to_dict("records")
         if cris_resp:
             cris_resp = cris_resp[0]
@@ -1051,9 +1060,14 @@ class IndentDryOut:
         #     "action_type": "RO"
         # }
         if alert_data.indent_status != indent_status:  # type: ignore
-            await alert_manager.AlertAction().update_alert_history(
-                input_data=input_data, alert_data=alert_data
-            )
+            alert_history = alert_data
+            if not isinstance(alert_data, dict):
+                alert_history = alert_data.__dict__
+            action_msgs = [entry["action_msg"] for entry in alert_history['alert_history']]
+            if input_data['action_msg'] not in action_msgs:
+                await alert_manager.AlertAction().update_alert_history(
+                    input_data=input_data, alert_data=alert_data
+                )
 
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
@@ -1266,11 +1280,11 @@ class IndentDryOut:
                                         AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
                                     GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
         # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
-        print("connection_name: ", self.params['connection_name'])
+        # print("connection_name: ", self.params['connection_name'])
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        logger.info(f"Query: {query}")
+        # logger.info(f"Query: {query}")
         resp = await function(query=query)
         if not resp:
             return False
@@ -1312,7 +1326,7 @@ class IndentDryOut:
             cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
         else:
             cris_resp = pd.DataFrame(cris_resp)
-        print("cris_resp: ", cris_resp)
+        # print("cris_resp: ", cris_resp)
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1337,5 +1351,29 @@ class IndentDryOut:
         else:
             cris_resp = {}
         if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
+            return True
+        return False
+
+    async def _is_invoice_created(self):
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dealer_code = str(self.params.get("dealer_id")).zfill(10)
+        now = (
+                datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
+                datetime.timedelta(days=0)
+        ).strftime("%Y-%m-%d")
+        next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        indent_no = "','".join(self.params.get("indent_no").split(","))
+        query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' AND """ \
+                f"""a."LOCN_CODE" = b."LOCN_CODE" AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND a."INDENT_NO" IN ('{indent_no}') """ \
+                f"""AND a."CANCEL_INDENT" IS NULL AND a."TRUCK_REGNO" IS NOT NULL AND (a."VALID_INDENT" = 'Y' OR a."VALID_INDENT" = 'H') """ \
+                f"""AND a."BATCH_FLAG" = 'Y' AND b."SALES_ORDERNO" IS NOT NULL AND b."INVOICE_NO" IS NOT NULL"""
+
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+        if not resp:
+            return False
+        resp = resp[0]
+        if resp.get("count") > 0:
             return True
         return False

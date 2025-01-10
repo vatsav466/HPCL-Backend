@@ -1290,6 +1290,9 @@
                 },
                 {
                     "name": "get_carry_fwd_indents"
+                },
+                {
+                    "name": "download_dryout_report"
                 }
             ]
         },
@@ -1416,6 +1419,9 @@
                 },
                 {
                     "name": "get_carry_fwd_indents"
+                },
+                {
+                    "name": "download_dryout_report"
                 }
             ]
         },
@@ -2165,6 +2171,75 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "bulevelgeocoordinates",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "BuLevelGeoCoordinates",
+            "attributes": {},
+            "uris": [
+                "/api/bulevelgeocoordinates/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_geo_master"
+                }
+            ]
+        },
+        {
+            "name": "bulevelgeocoordinates_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "BuLevelGeoCoordinates_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/bulevelgeocoordinates/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "bulevelgeocoordinates_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "BuLevelGeoCoordinates_admin",
+            "attributes": {},
+            "uris": [
+                "/api/bulevelgeocoordinates/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "upload_geo_master"
+                }
+            ]
         }
     ],
     "policies": [
@@ -2444,6 +2519,10 @@
             "displayName": "get_carry_fwd_indents"
         },
         {
+            "name": "download_dryout_report",
+            "displayName": "download_dryout_report"
+        },
+        {
             "name": "get_productions_rate",
             "displayName": "get_productions_rate"
         },
@@ -2466,6 +2545,10 @@
         {
             "name": "get_pt_rejections",
             "displayName": "get_pt_rejections"
+        },
+        {
+            "name": "upload_geo_master",
+            "displayName": "upload_geo_master"
         }
     ]
 }

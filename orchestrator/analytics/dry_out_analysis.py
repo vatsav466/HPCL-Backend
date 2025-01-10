@@ -77,6 +77,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
         bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
                       if helpers.normalize_string(key).startswith(f"RO_")]
         bu_data_ro = pd.DataFrame(bu_data_ro)
+        bu_data_ro['name'] = bu_data_ro['name'].fillna("")
+        bu_data_ro['category'] = bu_data_ro['category'].fillna("")
         if plant:
             key_mapping["terminal_plant_id"] = plant
         for rec in bu_data_ro.to_dict(orient='records'):
@@ -457,9 +459,9 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
     return
 
 async def ro_not_in_ims():
-    query = f"""SELECT DISTINCT a.sap_id
-                FROM alerts a
-                WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND a.sap_id NOT IN (
+    query = f"""SELECT DISTINCT a.rosapcode
+                FROM "HPCL_HOS".sch_inventory_forecast_dashboard a
+                WHERE a.rosapcode NOT IN (
                     SELECT DISTINCT SUBSTR("DEALER_CODE", 3, 8)
                     FROM "IMS_SAP"."INDENT_REQUEST"
                 );"""
@@ -469,4 +471,4 @@ async def ro_not_in_ims():
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)
     data = pd.DataFrame(data)
-    return data['sap_id'].unique().tolist()
+    return data['rosapcode'].unique().tolist()

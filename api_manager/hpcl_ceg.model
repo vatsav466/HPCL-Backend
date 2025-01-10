@@ -846,6 +846,11 @@ Model IndentDryOut {
     Action=> get_carry_fwd_indents {
 
     }
+
+    Action=> download_dryout_report {
+        filters list IndentDryOutDataFilters
+        report_name str
+    }
     
      Config=> {
         access_key_mapping='bu,zone,region,sales_area,site_id:sap_id'
@@ -1233,5 +1238,22 @@ Model ConsumperPumpTransaction {
 
     Config=> {
         access_key_mapping='bu,sap_id'
+    }
+}
+
+
+Model BuLevelGeoCoordinates {
+    sap_id str
+    ro_id optional str
+    bu str
+    latitude optional str
+    longitude optional str
+
+    Action=> upload_geo_master {   
+    }
+
+    Config=> {
+        access_key_mapping='bu'
+        crud_operations='read'
     }
 }
