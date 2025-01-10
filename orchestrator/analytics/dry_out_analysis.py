@@ -27,6 +27,36 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
     :return:
     """
     bu = bu.upper()
+    cond = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
+    for rec in cond:
+        if rec['key'] == 'zone':
+            if not zone:
+                zone = []
+            if isinstance(rec['value'], list):
+                zone.extend(rec['value'])
+            else:
+                zone.append(rec['value'])
+        if rec['key'] == 'region':
+            if not region:
+                region =[]
+            if isinstance(rec['value'], list):
+                region.extend(rec['value'])
+            else:
+                region.append(rec['value'])
+        if rec['key'] == 'sap_id':
+            if not plant:
+                plant = []
+            if isinstance(rec['value'], list):
+                plant.extend(rec['value'])
+            else:
+                plant.append(rec['value'])
+        if rec['key'] == 'sales_area':
+            if not sales_area:
+                sales_area = []
+            if isinstance(rec['value'], list):
+                sales_area.extend(rec['value'])
+            else:
+                sales_area.append(rec['value'])
     redis_client = await urdhva_base.redispool.get_redis_connection()
     location_data = await redis_client.hgetall("location_master")
 
@@ -59,6 +89,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
     # Filtering zone
     for rec in bu_data.to_dict(orient='records'):
         if rec["zone"]:
+            if cond and plant and rec['sap_id'] not in plant:
+                continue
             final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
     if zone:
         key_mapping["zone"] = zone
@@ -73,6 +105,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
             if skip_record or not rec["sap_id"]:
                 continue
             if rec["sap_id"]:
+                if plant and rec['sap_id'] not in plant:
+                    continue
                 final_data["plant"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
         bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
                       if helpers.normalize_string(key).startswith(f"RO_")]
