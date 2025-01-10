@@ -79,7 +79,7 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP024", "interlock_name": "Intrusion", "model": "VA", "workflow_name": "TAS_VA_Workflow"},
                          {"sop_id": "SOP024", "interlock_name": "Smoke Detection", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          {"sop_id": "SOP024", "interlock_name": "Fire Detection", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
-                         {"sop_id": "SOP024", "interlock_name": "Fire/Smoke  ", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
+                         {"sop_id": "SOP024", "interlock_name": "Fire/Smoke Detection", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          {"sop_id": "SOP024", "interlock_name": "Absence Of Wheelchock", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          {"sop_id": "SOP025", "interlock_name": "Non-wearing of Safety Belt at Height", "model": "VA", "workflow_name": "TAS_VA_Workflow"},
                          {"sop_id": "SOP026", "interlock_name": "Non-Wearing of Safety Helmet", "model": "VA", "workflow_name": "TAS_VA_Workflow"},
