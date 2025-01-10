@@ -3806,7 +3806,8 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        m60_performance_ytd_query_ = lpg_plant_queries.lpg_plant_query.get("m60_performance_ytd")
+        sales_growth_ytd_query_ = lpg_plant_queries.lpg_plant_query.get("sales_growth_ytd")
+        conditions = []
         if filters:
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -3832,11 +3833,11 @@ class GlobalAnalytics:
 
             if conditions:
                 #sales_growth_query_ += ' WHERE '
-                m60_performance_ytd_query_ += ''.join(conditions)
-            m60_performance_ytd_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(m60_performance_ytd_query_, filters, drill_state)
+                sales_growth_ytd_query_ += ''.join(conditions)
+            sales_growth_ytd_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(sales_growth_ytd_query_, filters, drill_state)
         else:
             # Fallback query if no filters are provided
-            sales_growth_query_ = """  
+            sales_growth_ytd_query_ = """  
                 SELECT
                     ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")) AS "total_sales",
                     "MOM_DAY_LEVEL_DATA"."fiscal_year" AS "fiscal_year",
@@ -3851,7 +3852,7 @@ class GlobalAnalytics:
                     "MOM_DAY_LEVEL_DATA"."fiscal_year" ASC;
             """
 
-            resp = await function(query=sales_growth_query_)
+            resp = await function(query=sales_growth_ytd_query_)
             month_map = {'Apr': '0', 'May': '1', 'Jun': '2', 'Jul': '3', 'Aug': '4', 'Sep': '5', 'Oct': '6', 'Nov': '7',
                          'Dec': '8', 'Jan': '9', 'Feb': '10', 'Mar': '11'}
             d = {"2023-2024": {"0": 0, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0,
@@ -3870,7 +3871,7 @@ class GlobalAnalytics:
                     d['2023-2024'][month_map[rec['month_name']]] = rec['total_sales']
             return {"status": True, "message": "success", "data": d}
         
-        resp = await function(query=sales_growth_query_)
+        resp = await function(query=sales_growth_ytd_query_)
         resp = pd.DataFrame(resp)
         resp =resp.rename(columns = {'ORGSBUCD':'SBU','ORGSBUNAME':'SBU_Name','ORGZONECD':'ZONE','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
             'NETWEIGHT_TMT':'total_sales', 'ORGSANAME':'SalesArea_Name',"ORGSACD":"SA","ORGROCD":"REGION"})
