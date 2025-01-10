@@ -267,7 +267,7 @@ class IndentDryOut:
                     )
                     query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
                              f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
-                             f"""servicing_plant_id='{self.params['servicing_plant_id']}' """
+                             f"""servicing_plant_id='{self.params['servicing_plant_id']}', """
                              f"""servicing_plant_name='{self.params['servicing_plant_name']}' """
                              f"""where id='{self.params["alert_id"]}'""")
                     await hpcl_ceg_model.Alerts.update_by_query(query)
