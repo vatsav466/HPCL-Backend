@@ -2658,3 +2658,56 @@ class MomLevelFinalMetaDataGetResp(pydantic.BaseModel):
     data: typing.List[MomLevelFinalMetaData]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class BuLevelGeoCoordinatesSchema(UrdhvaPostgresBase):
+    __tablename__ = 'bu_level_geo_coordinates'
+    
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_id: Mapped[str] = mapped_column("ro_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    latitude: Mapped[typing.Optional[str]] = mapped_column("latitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    longitude: Mapped[typing.Optional[str]] = mapped_column("longitude", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class BuLevelGeoCoordinatesCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'bu_level_geo_coordinates'
+    
+    sap_id: str
+    ro_id: str
+    bu: str
+    latitude: typing.Optional[str] = pydantic.Field("", **{})
+    longitude: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = BuLevelGeoCoordinatesSchema
+        upsert_keys = []
+        access_key_mapping = ['bu']
+
+
+class BuLevelGeoCoordinates(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'bu_level_geo_coordinates'
+    
+    sap_id: typing.Optional[str] | None = None
+    ro_id: typing.Optional[str] | None = None
+    bu: typing.Optional[str] | None = None
+    latitude: typing.Optional[str] = pydantic.Field("", **{})
+    longitude: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = BuLevelGeoCoordinatesSchema
+        upsert_keys = []
+        access_key_mapping = ['bu']
+
+
+class BuLevelGeoCoordinatesGetResp(pydantic.BaseModel):
+    data: typing.List[BuLevelGeoCoordinates]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Bulevelgeocoordinates_Upload_Geo_MasterParams(pydantic.BaseModel):
+    pass
+    

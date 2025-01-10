@@ -1167,3 +1167,20 @@ Model MomLevelFinalMetaData {
     }
 
 }
+
+
+Model BuLevelGeoCoordinates {
+    sap_id str
+    ro_id str
+    bu str
+    latitude optional str
+    longitude optional str
+
+    Action=> upload_geo_master {   
+    }
+
+    Config=> {
+        access_key_mapping='bu'
+        crud_operations='read'
+    }
+}
