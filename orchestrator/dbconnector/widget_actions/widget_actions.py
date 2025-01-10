@@ -187,6 +187,8 @@ class WidgetActions:
             if condition == 'equals':
                 if isinstance(value, int):
                     conditions.append(f''' {key} = {value} ''')
+                elif isinstance(value, list):
+                    conditions.append(f''' {key} = '{value[0]}' ''')
                 else:
                     conditions.append(f''' {key} = '{value}' ''')
             elif condition == 'prefix':
