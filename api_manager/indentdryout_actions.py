@@ -547,12 +547,15 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         extra_key_mapping={"sap_id": "terminal_plant_id"}))
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    dry_out_in_days_query = '1'
     for record in data.filters:
         if record.key == "progress_rate":
             if record.value:
                 where_clause.append(f"progress_rate={int(record.value[0])}")
         else:
             if record.value:
+                if record.key == 'dry_out_in_days':
+                    dry_out_in_days_query = record.value[0]
                 if record.key == "plant":
                     record.key = "terminal_plant_id"
                 if len(record.value) == 1:
@@ -577,7 +580,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                             SELECT COUNT(DISTINCT sap_id) AS distinct_count
                             FROM alerts
                             WHERE {' AND '.join(where_clause_conditions)}
-                            AND indent_status = 'Completed'
+                            AND indent_status = 'Completed' AND dry_out_in_days = '{dry_out_in_days_query}' 
                             AND DATE(updated_at) = '{_date}'  -- Use TRUNC to ignore the time part
                             GROUP BY sap_id
                         ) AS subquery"""
