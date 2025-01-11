@@ -248,6 +248,37 @@ class IndentDryOut:
                 f"AND PROD_REQD_DT BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND CANCEL_INDENT IS NULL"
 
         if not self.params.get("indent_no"):
+            # TODO:
+            workflow_date = datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")
+            todays_date = datetime.datetime.now()
+            if todays_date.date() > workflow_date.date():
+                if await self._is_indent_delivered():
+                    print("Indent as been delivered but still alert is in Intial stage")
+                    print("Params: ", self.params)
+                    input_data = {
+                        "action_msg": "",
+                        "event_tags": {
+                            "is_delivered": False
+                        }
+                    }
+                    input_data["action_msg"] = "Indent Delivered"
+                    input_data["action_type"] = "Created"
+                    input_data["event_tags"]["is_delivered"] = True
+                    await self.update_alert_status(
+                        indent_status=IndentStatus.Completed,
+                        alert_status=AlertStatus.Close,
+                        alert_state=AlertState.Resolved,
+                        input_data=input_data,
+                        progress_rate="11"
+                    )
+                    await self.close_supply_chain_alert(
+                        alert_id=self.params.get("alert_id"),
+                        alert_status=AlertStatus.Close,
+                        alert_state=AlertState.Resolved,
+                        indent_status=IndentStatus.Completed
+                    )
+                    await self._close_camunda_workflow()
+                    return await self.send_alert_action(is_raised=False)
             query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE" """ \
                     f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
                     f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
@@ -1347,6 +1378,9 @@ class IndentDryOut:
                             where id = '{alert_id}' '''
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         ceg_resp = await function(query=query)
+        if not ceg_resp:
+            print("Alerts not Present")
+            return False
         ceg_resp = ceg_resp[0]
         product_code = ceg_resp.get("product_code")
         dry_out_in_days = ceg_resp.get("dry_out_in_days")
@@ -1362,6 +1396,8 @@ class IndentDryOut:
             cris_resp = cris_resp[0]
         else:
             cris_resp = {}
+        print("cris_resp: ", cris_resp)
+        print("dry_out_in_days: ", ceg_resp)
         if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
             return True
         return False
@@ -1387,5 +1423,45 @@ class IndentDryOut:
             return False
         resp = resp[0]
         if resp.get("count") > 0:
+            return True
+        return False
+
+    async def _close_camunda_workflow(self):
+        camunda_url = await helpers.get_alert_camunda_url(self.params['alert_id'], "error")
+        MAX_RETRIES = 5
+        RETRY_DELAY = 5
+        headers = {"Content-Type": "application/json"}
+        if camunda_url != 'error':
+            alert_data = await Alerts.get(self.params["alert_id"])
+
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+            instance_id = alert_data.get("workflow_instance_id")
+            url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
+            for attempt in range(MAX_RETRIES):
+                try:
+                    response = requests.delete(url, headers=headers)
+
+                    if response.status_code == 204:  # Success in Camunda
+                        print(f"{instance_id} Deleted successfully.")
+                        logger.info(f"{instance_id} Deleted successfully.")
+                        break
+                    else:
+                        print(
+                            f"Error Deleting {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+                        logger.info(
+                            f"Error Deleting {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+
+                except requests.RequestException as e:
+                    print(f"Request error for {instance_id} (attempt {attempt + 1}): {e}")
+                    logger.info(f"Request error for {instance_id} (attempt {attempt + 1}): {e}")
+
+                # Retry logic with exponential backoff
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAY * (2 ** attempt))
+                else:
+                    print(f"Failed to Deleting {instance_id} after {MAX_RETRIES} retries.")
+                    logger.info(f"Failed to Deleting {instance_id} after {MAX_RETRIES} retries.")
+                    return False
             return True
         return False
