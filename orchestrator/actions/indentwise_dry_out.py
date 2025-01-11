@@ -253,31 +253,31 @@ class IndentDryOut:
             todays_date = datetime.datetime.now()
             if todays_date.date() > workflow_date.date():
                 if await self._is_indent_delivered():
-                    print("Indent as been delivered but still alert is in Intial stage")
-                    print("Params: ", self.params)
-                    input_data = {
-                        "action_msg": "",
-                        "event_tags": {
-                            "is_delivered": False
+                    if await self._close_camunda_workflow():
+                        print("Indent as been delivered but still alert is in Intial stage")
+                        print("Params: ", self.params)
+                        input_data = {
+                            "action_msg": "",
+                            "event_tags": {
+                                "is_delivered": False
+                            }
                         }
-                    }
-                    input_data["action_msg"] = "Indent Delivered"
-                    input_data["action_type"] = "Created"
-                    input_data["event_tags"]["is_delivered"] = True
-                    await self.update_alert_status(
-                        indent_status=IndentStatus.Completed,
-                        alert_status=AlertStatus.Close,
-                        alert_state=AlertState.Resolved,
-                        input_data=input_data,
-                        progress_rate="11"
-                    )
-                    await self.close_supply_chain_alert(
-                        alert_id=self.params.get("alert_id"),
-                        alert_status=AlertStatus.Close,
-                        alert_state=AlertState.Resolved,
-                        indent_status=IndentStatus.Completed
-                    )
-                    await self._close_camunda_workflow()
+                        input_data["action_msg"] = "Indent Delivered"
+                        input_data["action_type"] = "Created"
+                        input_data["event_tags"]["is_delivered"] = True
+                        await self.update_alert_status(
+                            indent_status=IndentStatus.Completed,
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            input_data=input_data,
+                            progress_rate="11"
+                        )
+                        await self.close_supply_chain_alert(
+                            alert_id=self.params.get("alert_id"),
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            indent_status=IndentStatus.Completed
+                        )
                     return await self.send_alert_action(is_raised=False)
             query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE" """ \
                     f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
@@ -1396,8 +1396,8 @@ class IndentDryOut:
             cris_resp = cris_resp[0]
         else:
             cris_resp = {}
-        print("cris_resp: ", cris_resp)
-        print("dry_out_in_days: ", ceg_resp)
+        # print("cris_resp: ", cris_resp)
+        # print("dry_out_in_days: ", ceg_resp)
         if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
             return True
         return False
