@@ -34,7 +34,7 @@ async def sync_users(file_path):
     df['employee_id'] = df['EMPLOYEE_NUMBER']
     df['sap_id'] = df['LOCATION']
     df['email'] = df['EMP_EMAIL']
-    if 'Zone' in df.colums:
+    if 'Zone' in df.columns:
         df['zone'] = df['Zone']
     if 'Region' in df.columns:
         df['region'] = df['Region']
