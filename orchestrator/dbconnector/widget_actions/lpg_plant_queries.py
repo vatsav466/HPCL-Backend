@@ -870,5 +870,36 @@ LIMIT 10000;''',
                             sum("eKYCPending") as "Pending"     
                         FROM
                             "LPG_CONSUMERS_SUMMARY",
-                        '''
+                        ''',
+    
+    "lpg_operations_productivity_zone": f'''   
+                        select 
+                            "zone" as "zone",
+                            "name" as "name",
+                            CAST("process_date" AS DATE) as "process_date",
+                            "carousel" as "carousel",
+                            avg("productivity.normal.productivity") as "productivity"
+                        from 
+                            "LPG_OPERATIONS_SUMMARY_DATA"
+                        ''',
+    
+    "lpg_operations_production_zone": f''' 
+                        select 
+                            "zone" as "zone",
+                            "name" as "name",
+                            CAST("process_date" AS DATE) as "process_date",
+                            "carousel" as "carousel",
+                            sum("productivity.normal.production")/1000 as "Productions" 
+                        from 
+                            "LPG_OPERATIONS_SUMMARY_DATA" ''',
+    
+    "lpg_operations_filled_cylinder": f''' 
+                        select 
+                            sum("total") as "Handled",
+                            sum("cylfilled") as "Cylinder_Filled",
+                            "zone" as "zone",
+                            "plant" as "plant",
+                            CAST("process_date" AS DATE) as "process_date"
+                        from
+                            "lpg_cs_rejections" '''
 }
