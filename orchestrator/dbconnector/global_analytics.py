@@ -4047,6 +4047,215 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_operations_productivity_zone(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        productivity_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_productivity_zone")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                productivity_zone_query_  += ' WHERE '
+                productivity_zone_query_  += ' AND '.join(conditions)
+            productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date","carousel" '
+        else:
+            if not "where" in productivity_zone_query_.lower():
+                productivity_zone_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            else:
+                productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date","carousel" '
+            resp = await function(query=productivity_zone_query_)
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+                        "productivity": "mean"
+                    })
+            for each_float_col in ["productivity"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in ["zone", "name", "carousel"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        resp = await function(query=productivity_zone_query_)
+        if resp:
+            resp = pd.DataFrame(resp)
+            for each_float_col in ["productivity"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in ["zone","name","carousel"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "zone" in filter_keys and "name" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                        "productivity": "mean"
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_operations_production_zone(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        production_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_production_zone")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                production_zone_query_  += ' WHERE '
+                production_zone_query_  += ' AND '.join(conditions)
+            production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            production_zone_query_  += ' GROUP BY "zone", "name", "process_date", "carousel" '
+        else:
+            if not "where" in production_zone_query_.lower():
+                production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            else:
+                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            production_zone_query_  += ' GROUP BY "zone", "name", "process_date", "carousel" '
+            resp = await function(query=production_zone_query_)
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+                        "Productions": "sum"
+                    })
+            for each_float_col in ["Productions"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in ["zone", "name", "carousel"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        resp = await function(query=production_zone_query_)
+        if resp:
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            for each_float_col in ["Productions"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in ["zone", "name", "carousel"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "zone" in filter_keys and "name" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                        "Productions": "sum"
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_operations_filled_cylinder(filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_handled_filled_cylinder")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                handled_cylinder_query_ += ' WHERE '
+                handled_cylinder_query_ += ' AND '.join(conditions)
+            handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant", "process_date" '
+        else:
+            if not "where" in handled_cylinder_query_.lower():
+                handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            else:
+                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            handled_cylinder_query_ += ' GROUP BY "zone", "plant", "process_date" '
+            resp = await function(query=handled_cylinder_query_)
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["zone"], as_index=False).agg({
+                    "Cylinder_Filled": "sum"
+                })
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            for each_float_col in ["Cylinder_Filled"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)            
+            for each_str_col in ["zone", "plant"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        # Execute the query
+        resp = await function(query=handled_cylinder_query_)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
+        resp = pd.DataFrame(resp)
+        for each_float_col in ["Cylinder_Filled"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        # Fill missing values for string columns
+        for each_str_col in ["zone", "plant"]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "zone" in filter_keys and "plant" not in filter_keys:
+                grouped_resp = resp.groupby(["zone", "plant"], as_index=False).agg({
+                    "Cylinder_Filled": "sum"
+                })
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
 
     @staticmethod
     async def sales_growth_ytd(filters, drill_state):

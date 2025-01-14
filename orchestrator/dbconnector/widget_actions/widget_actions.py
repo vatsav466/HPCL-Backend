@@ -54,7 +54,10 @@ lpg_dashboard_actions = [
     'total_consumers',
     'sales_growth_ytd',
     'ekyc_statistics',
-    'cdcms_dropdown'
+    'cdcms_dropdown',
+    'lpg_operations_productivity_zone',
+    'lpg_operations_production_zone',
+    'lpg_operations_filled_cylinder'
 ]
 
 # Todo:- import all widget action modules here
@@ -114,7 +117,10 @@ widget_mapping = {
     'ekyc_statistics': {},
     'sales_growth_ytd': {},
     'carry_forward_analysis': {},
-    'cdcms_dropdown': {}
+    'cdcms_dropdown': {},
+    'lpg_operations_productivity_zone': {},
+    'lpg_operations_production_zone': {},
+    'lpg_operations_filled_cylinder': {}
 }
 
 
