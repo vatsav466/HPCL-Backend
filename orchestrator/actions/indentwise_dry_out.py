@@ -132,6 +132,7 @@ class IndentDryOut:
                 datetime.timedelta(days=0)
         ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=3)).strftime("%Y-%m-%d")
+        # todo:- Remove COUNT
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
                 f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
@@ -147,7 +148,6 @@ class IndentDryOut:
             query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                      f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
                      f"alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
-            # f"indent_no='' and alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
             alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
             if not alerts_data['data']:
                 await create_alert(self.params, camunda_url)
@@ -163,15 +163,21 @@ class IndentDryOut:
             for each_indent in total_indent:
                 query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                          f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
-                         f"indent_no='' and alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
+                         f"indent_no='' and alert_status in ('Open', 'InProgress') and "
+                         f"product_code='{self.params['product_code']}'")
                 alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
                 if alerts_data['data']:
                     # If dry_out_days found diff, update alert
-                    for record in alerts_data['data']:
-                        if record['dry_out_in_days'] != self.params['dry_out_in_days']:
-                            query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
-                                     f"where id='{record['id']}'")
-                            await hpcl_ceg_model.Alerts.update_by_query(query)
+                    query = (f"""update alerts set indent_no='{each_indent["INDENT_NO"]}', """
+                             f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
+                             f"""servicing_plant_id='{each_indent['LOCN_CODE']}', """
+                             f"""where id='{self.params["alert_id"]}'""")
+                    await hpcl_ceg_model.Alerts.update_by_query(query)
+                    await self.update_indent_no(
+                        str(each_indent['INDENT_NO']),
+                        str(each_indent.get("LOCN_CODE")),
+                        each_indent.get("INDENT_DATE")
+                    )
                 else:
                     query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                              f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
@@ -422,6 +428,7 @@ class IndentDryOut:
                 datetime.timedelta(days=0)
         ).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # Todo:- Add location code
         query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR("DEALER_CODE",1,10) = '{dealer_code}' """ \
                 f"""AND "PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
                 f"""AND "CANCEL_INDENT" IS NOT NULL AND "INDENT_NO" IN ('{indent_no}')"""
@@ -610,6 +617,7 @@ class IndentDryOut:
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
         today_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Todo:- Need to check whether LOADED_ON was required or not in this
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST" a, 
