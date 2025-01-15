@@ -21,8 +21,20 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
 
+async def filter_data(df, _filters):
+    try:
+        if _filters:
+            mask = pd.Series(True, index=df.index)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    mask = mask & (df[key].fillna('') == value)
+            df = df[mask]
+            return df
+    except Exception as e:
+        print("Exception in filtering data :", str(e))
+    return df
 
-class GlobalAnalytics:
+class GlobalAnalytics:        
     @staticmethod
     async def analytics(filters, cross_filters, drill_state):
         """
@@ -2875,6 +2887,10 @@ class GlobalAnalytics:
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
         lpg_cdcms_month_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_month")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})        
         if filters:
             conditions = []
             for rec in filters:
@@ -2906,6 +2922,7 @@ class GlobalAnalytics:
             resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
             resp = resp.sort_values("Month_No")            
@@ -2935,6 +2952,7 @@ class GlobalAnalytics:
         resp = await function(query=lpg_cdcms_month_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        resp = await filter_data(resp, _filters)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
 
         # Fill missing values for numerical columns
@@ -3552,6 +3570,10 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         total_suvidha_query_ = lpg_plant_queries.lpg_plant_query.get("total_suvidha")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -3579,6 +3601,9 @@ class GlobalAnalytics:
             
             resp = await function(query=total_suvidha_query_)
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["SubCategory"], as_index=False).agg({
                         "SuvidhaClub": "sum",
                     })
@@ -3605,6 +3630,7 @@ class GlobalAnalytics:
         resp = await function(query=total_suvidha_query_)
         if resp:
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
             
             for each_float_col in [
@@ -3699,9 +3725,9 @@ class GlobalAnalytics:
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
         months = [month for month in calendar.month_name if month]
-        data = {"Month": months, "Zone": df['Zone'].unique().to_list(), 
-                "Region": df['Region'].unique().to_list(), "SalesArea": df['SalesArea'].unique().to_list(), 
-                "Distributor": df["Distributor"].unique().to_list(), "CylType": ['C142','C5'], 
+        data = {"Execution_Month": months, "ZOName": df['ZOName'].unique().to_list(), 
+                "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
+                "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
                 "ConsumerType": ['PMUY', 'NPMUY']}
         return data
     
