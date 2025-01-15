@@ -24,7 +24,7 @@ from collections import defaultdict
 
 class GlobalAnalytics:
     @staticmethod
-    async def analytics(filters, drill_state):
+    async def analytics(filters, cross_filters, drill_state):
         """
         Retrieves analytics data for the given filters and drill state.
 
@@ -149,7 +149,7 @@ class GlobalAnalytics:
 
     
     @staticmethod
-    async def alert_ageing(filters, drill_state):
+    async def alert_ageing(filters, cross_filters, drill_state):
         """
         This method is used to fetch the alert ageing data for the given filters and drill state
         :param filters: The filter parameters
@@ -169,7 +169,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": data}
     
     @staticmethod
-    async def day_wise_alerts(filters, drill_state):
+    async def day_wise_alerts(filters, cross_filters, drill_state):
         """
         Fetches the day-wise alerts data for the given filters and drill state.
 
@@ -193,7 +193,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": data}
     
     @staticmethod
-    async def location_severity_count(filters, drill_state):
+    async def location_severity_count(filters, cross_filters, drill_state):
         """
         Fetches the location severity count data for the given filters and drill state.
 
@@ -229,7 +229,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": data}
 
     @staticmethod
-    async def no_of_locations(filters, drill_state):
+    async def no_of_locations(filters, cross_filters, drill_state):
         """
         Fetches the top interlocks data for the given filters and drill state.
 
@@ -253,7 +253,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": no_of_locations_data}
 
     @staticmethod
-    async def severity_count(filters, drill_state):
+    async def severity_count(filters, cross_filters, drill_state):
         """
         Fetches the severity count data for the given filters and drill state.
 
@@ -283,7 +283,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": severity_count_data}
     
     @staticmethod
-    async def hourly_alerts(filters, drill_state):
+    async def hourly_alerts(filters, cross_filters, drill_state):
         """
         Fetches the hourly alerts data for the given filters and drill state.
 
@@ -308,7 +308,7 @@ class GlobalAnalytics:
 
 
     @staticmethod
-    async def sales_performance(filters, drill_state):
+    async def sales_performance(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -807,7 +807,7 @@ class GlobalAnalytics:
     #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def m60_performance(filters, drill_state):
+    async def m60_performance(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -1939,7 +1939,7 @@ class GlobalAnalytics:
 
     
     @staticmethod
-    async def sales_growth(filters, drill_state):
+    async def sales_growth(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -2160,7 +2160,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def sales_yearly_performance(filters, drill_state):
+    async def sales_yearly_performance(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -2306,7 +2306,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def yearly_sales_performance(filters, drill_state):
+    async def yearly_sales_performance(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -2589,7 +2589,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     @staticmethod
-    async def sales_yearly_growth(filters, drill_state):
+    async def sales_yearly_growth(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -2742,7 +2742,7 @@ class GlobalAnalytics:
     
 
     @staticmethod
-    async def lpg_cdcms(filters, drill_state):
+    async def lpg_cdcms(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -2852,7 +2852,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     @staticmethod
-    async def lpg_cdcms_month(filters, drill_state):
+    async def lpg_cdcms_month(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -2983,7 +2983,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def cdcms_order_source(filters, drill_state):
+    async def cdcms_order_source(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3096,7 +3096,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def overall_pending_pmuy_nmpuy(filters, drill_state):
+    async def overall_pending_pmuy_nmpuy(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3213,7 +3213,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def lpg_cdcms_ageing(filters, drill_state):
+    async def lpg_cdcms_ageing(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3315,7 +3315,7 @@ class GlobalAnalytics:
     
         
     @staticmethod
-    async def card_chart(filters, drill_state):
+    async def card_chart(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3347,7 +3347,7 @@ class GlobalAnalytics:
 
     
     @staticmethod
-    async def total_consumers(filters, drill_state):
+    async def total_consumers(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3455,7 +3455,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def ekyc_statistics(filters, drill_state):
+    async def ekyc_statistics(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3546,7 +3546,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def total_suvidha(filters, drill_state):
+    async def total_suvidha(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3651,7 +3651,7 @@ class GlobalAnalytics:
     
 
     @staticmethod
-    async def carry_forward_analysis(filters, drill_state):
+    async def carry_forward_analysis(filters, cross_filters, drill_state):
         """
         For Dry Out and Indent Carry Forward Analysis
         :param filters:
@@ -3681,7 +3681,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def cdcms_dropdown(filters, drill_state):
+    async def cdcms_dropdown(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3707,7 +3707,7 @@ class GlobalAnalytics:
     
 
     @staticmethod
-    async def location_wise_distribution(filters, drill_state):
+    async def location_wise_distribution(filters, cross_filters, drill_state):
         location_wise_distribution_query = lpg_plant_queries.lpg_plant_query.get("location_wise_distribution")
         location_wise_distribution_query_ = location_wise_distribution_query
         if filters:
@@ -3722,7 +3722,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def cumulative_sales_pmuy_npmuy(filters, drill_state):
+    async def cumulative_sales_pmuy_npmuy(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3847,7 +3847,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     @staticmethod
-    async def overall_ctc_statistics(filters, drill_state):
+    async def overall_ctc_statistics(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3965,7 +3965,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def overall_safety_check_pending(filters, drill_state):
+    async def overall_safety_check_pending(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -4065,7 +4065,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def lpg_operations_productivity_zone(filters, drill_state):
+    async def lpg_operations_productivity_zone(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -4134,7 +4134,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def lpg_operations_production_zone(filters, drill_state):
+    async def lpg_operations_production_zone(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -4203,7 +4203,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def lpg_operations_filled_cylinder(filters, drill_state):
+    async def lpg_operations_filled_cylinder(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -4273,7 +4273,7 @@ class GlobalAnalytics:
     
 
     @staticmethod
-    async def sales_growth_ytd(filters, drill_state):
+    async def sales_growth_ytd(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)

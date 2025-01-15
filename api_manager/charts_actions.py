@@ -522,7 +522,7 @@ async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
             return {"status": true, "message": "success", "data": [{"count": 56}]}
         elif data.filters[0].value == "CP":
             return {"status": true, "message": "success", "data": [{"count": 10}]}
-    return await widget_actions.WidgetActions.execute_widget_action(data.action, data.filters, data.drill_state)
+    return await widget_actions.WidgetActions.execute_widget_action(data.action, data.filters, data.cross_filters, data.drill_state)
 
 
 # Action enable_cross_filter
