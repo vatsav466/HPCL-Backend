@@ -1217,8 +1217,9 @@ class IndentDryOut:
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
         instance_id = alert_data.get("workflow_instance_id")
-        CAMUNDA_URL = await helpers.get_alert_camunda_url(self.params["alert_id"],
-                                                          f"{urdhva_base.settings.camunda_url}")
+        # CAMUNDA_URL = await helpers.get_alert_camunda_url(self.params["alert_id"],
+        #                                                   f"{urdhva_base.settings.camunda_url}")
+        CAMUNDA_URL = self.params['CAMUNDA_URL']
 
         headers = {"Content-Type": "application/json"}
         # url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
@@ -1428,7 +1429,8 @@ class IndentDryOut:
         return False
 
     async def _close_camunda_workflow(self):
-        camunda_url = await helpers.get_alert_camunda_url(self.params['alert_id'], "error")
+        # camunda_url = await helpers.get_alert_camunda_url(self.params['alert_id'], "error")
+        camunda_url = self.params['CAMUNDA_URL']
         MAX_RETRIES = 5
         RETRY_DELAY = 5
         headers = {"Content-Type": "application/json"}
