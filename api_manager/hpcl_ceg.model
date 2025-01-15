@@ -418,6 +418,7 @@ Model Alert_History internal {
     is_r3_swipe optional bool
     is_delivered optional bool
     is_tripped optional bool
+    is_justify optional bool
 }
 
 Model tags internal {
@@ -439,6 +440,7 @@ Model tags internal {
     isVTS optional bool
     isDelivered optional bool
     isTripped optional bool
+    isJustify optional bool
 }
 
 Model Interlock {
