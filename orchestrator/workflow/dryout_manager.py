@@ -72,6 +72,25 @@ def run_async_function(async_func, task):
     return asyncio.run(async_func(task))
 
 
+async def process_topic(camunda_connector_name, topic, worker_id):
+    """
+    Processes a single Camunda topic using an ExternalTaskWorker.
+    """
+    conn = connection_mapping.camunda_listener_mapping[camunda_connector_name]
+    engine_local_base_url = f"http://{conn['host']}:{conn['port']}/engine-rest"
+
+    # Create the ExternalTaskWorker
+    etw = ExternalTaskWorker(
+        worker_id=worker_id,
+        base_url=engine_local_base_url,
+        config=urdhva_base.settings.camunda_default_config,
+    )
+
+    # Subscribe to the topic
+    print(f"Worker {worker_id} subscribing to topic: {topic}")
+    await etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task))
+
+
 async def main(camunda_connector_name):
     """
     Main entry point of the workflow manager.
