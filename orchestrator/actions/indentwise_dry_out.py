@@ -529,6 +529,7 @@ class IndentDryOut:
                 if not isinstance(alert_resp, dict):
                     alert_resp = alert_resp.__dict__
                 if alert_resp['indent_no']:
+                    indent_no = alert_resp['indent_no']
                     await self.update_indent_no(
                         str(alert_resp['indent_no']),
                         str(alert_resp["terminal_plant_id"]),
