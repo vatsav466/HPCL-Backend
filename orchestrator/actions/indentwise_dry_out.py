@@ -286,6 +286,9 @@ class IndentDryOut:
                     f"""AND b."PROD" = '{prod_code}' """ \
                     f"""AND a."LOCN_CODE" = b."LOCN_CODE" AND a."INDENT_NO" = b."INDENT_NO" AND a."CANCEL_INDENT" IS NULL """ \
                     f"""GROUP BY a."INDENT_NO", b."PROD", a."LOCN_CODE", a."INDENT_DATE" ORDER BY a."INDENT_NO" DESC"""
+            Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            print("connection_nameL ", self.params['connection_name'])
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
             if not resp:
@@ -345,7 +348,8 @@ class IndentDryOut:
                     f"""AND b."PROD" = '{prod_code}' """ \
                     f"""AND a."LOCN_CODE" = b."LOCN_CODE" AND a."INDENT_NO" = '{indent_no}' AND a."CANCEL_INDENT" IS NULL """ \
                     f"""GROUP BY a."INDENT_NO", b."PROD", a."LOCN_CODE" ORDER BY a."INDENT_NO" DESC"""
-
+            Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             resp = await function(query=query)
             if not resp:
