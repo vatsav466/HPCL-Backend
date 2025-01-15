@@ -3687,7 +3687,7 @@ class GlobalAnalytics:
         _query = ''' select * from cdcms_masters '''
         resp = await function(query=_query)
         df = pd.DataFrame(resp)
-        data = {"Month": df['Month'].unique().to_list(), "Zone": df['ZOName'].unique().to_list(), "Region": df['ROName'].unique().to_list(), "Sales Area": df['SAName'].unique().to_list(), "Distributor": df["DistributorName"].unique().to_list(), "CylType": df['CylType'].unique().to_list(), "ConsumerType": df['ConsumerType'].unique().to_list()}
+        data = {"Month": df['Month'].unique().tolist(), "Zone": df['ZOName'].unique().tolist(), "Region": df['ROName'].unique().tolist(), "Sales Area": df['SAName'].unique().tolist(), "Distributor": df["DistributorName"].unique().tolist(), "CylType": df['CylType'].unique().tolist(), "ConsumerType": df['ConsumerType'].unique().tolist()}
         return data        
     
 
