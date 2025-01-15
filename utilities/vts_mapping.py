@@ -20,8 +20,9 @@ vts_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "Critical",
         "description": "Speed Violation",
-        "alert_threshold": 5
+        "alert_threshold": 10
     },
     "night_driving_count": {
         "alerting_rules": {
@@ -44,8 +45,9 @@ vts_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "Critical",
         "description": "Night Driving",
-        "alert_threshold": 5
+        "alert_threshold": 10
     },
     "route_deviation_count": {
         "alerting_rules": {
@@ -62,8 +64,9 @@ vts_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "Critical",
         "description": "Route Deviation",
-        "alert_threshold": 5
+        "alert_threshold": 10
     },
     "stoppage_violations_count": {
         "alerting_rules": {
@@ -80,8 +83,9 @@ vts_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "Critical",
         "description": "Stoppage  Violations",
-        "alert_threshold": 5,
+        "alert_threshold": 10
     },
     "no_halt_zone_count": {
         "alerting_rules": {
@@ -98,6 +102,7 @@ vts_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "",
         "description": "NoHalt Zone",
         "alert_threshold": 0
     },
@@ -116,6 +121,7 @@ vts_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "",
         "description": "Device Offline",
         "alert_threshold": 0
     },
@@ -128,6 +134,7 @@ vts_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "",
         "description": "Device Tampered",
         "alert_threshold": 0
     },
@@ -140,8 +147,9 @@ vts_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "High",
         "description": "Main Supply Removal",
-        "alert_threshold": 0
+        "alert_threshold": 10
     }
 }
 
@@ -167,8 +175,9 @@ vts_exception_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "Critical",
         "description": "Speed Violation",
-        "alert_threshold": 5
+        "alert_threshold": 10
     },
     "night_driving_count": {
         "alerting_rules": {
@@ -191,8 +200,9 @@ vts_exception_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "Critical",
         "description": "Night Driving",
-        "alert_threshold": 5
+        "alert_threshold": 10
     },
     "route_deviation_count": {
         "alerting_rules": {
@@ -209,8 +219,9 @@ vts_exception_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "Critical",
         "description": "Route Deviation",
-        "alert_threshold": 5
+        "alert_threshold": 10
     },
     "stoppage_violations_count": {
         "alerting_rules": {
@@ -227,8 +238,9 @@ vts_exception_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "Critical",
         "description": "Stoppage  Violations",
-        "alert_threshold": 5,
+        "alert_threshold": 10
     },
     "no_halt_zone_count": {
         "alerting_rules": {
@@ -245,6 +257,7 @@ vts_exception_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "",
         "description": "NoHalt Zone",
         "alert_threshold": 0
     },
@@ -263,6 +276,7 @@ vts_exception_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "",
         "description": "Device Offline",
         "alert_threshold": 0
     },
@@ -275,6 +289,7 @@ vts_exception_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "",
         "description": "Device Tampered",
         "alert_threshold": 0
     },
@@ -287,7 +302,8 @@ vts_exception_interlock_mapping = {
                 "clear_count": True
             }
         },
+        "severity": "High",
         "description": "Main Supply Removal",
-        "alert_threshold": 0
+        "alert_threshold": 10
     }
 }
