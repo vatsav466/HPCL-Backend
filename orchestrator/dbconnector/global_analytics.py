@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import calendar
 import psycopg2
 import polars as pl
 import numpy as np
@@ -3367,13 +3368,13 @@ class GlobalAnalytics:
             if conditions:
                 total_consumers_query_  += ' WHERE '
                 total_consumers_query_  += ' AND '.join(conditions)
-            total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+            total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL '
             total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
         else:
             if not "where" in total_consumers_query_.lower():
-                total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+                total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
             else:
-                total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+                total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
             total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
             resp = await function(query=total_consumers_query_ )
             # Convert the response to a DataFrame for further processing
@@ -3686,9 +3687,23 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         _query = ''' select * from cdcms_masters '''
         resp = await function(query=_query)
-        df = pd.DataFrame(resp)
-        data = {"Month": df['Month'].unique().tolist(), "Zone": df['ZOName'].unique().tolist(), "Region": df['ROName'].unique().tolist(), "Sales Area": df['SAName'].unique().tolist(), "Distributor": df["DistributorName"].unique().tolist(), "CylType": df['CylType'].unique().tolist(), "ConsumerType": df['ConsumerType'].unique().tolist()}
-        return data        
+        df = pl.from_pandas(pd.DataFrame(resp))
+        df = df.rename({"ZOName":"Zone", "ROName": "Region", "DistributorName": "Distributor", "SAName": "SalesArea"})        
+        _filters = []
+        for filter in filters:
+            _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _filters:
+            filter_expr = pl.lit(True)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
+            df = df.filter(filter_expr)
+        months = [month for month in calendar.month_name if month]
+        data = {"Month": months, "Zone": df['Zone'].unique().to_list(), 
+                "Region": df['Region'].unique().to_list(), "SalesArea": df['SalesArea'].unique().to_list(), 
+                "Distributor": df["Distributor"].unique().to_list(), "CylType": ['C142','C5'], 
+                "ConsumerType": ['PMUY', 'NPMUY']}
+        return data
     
 
     @staticmethod
@@ -3855,13 +3870,13 @@ class GlobalAnalytics:
             if conditions:
                 overall_ctc_statistics_query_ += ' WHERE '
                 overall_ctc_statistics_query_ += ' AND '.join(conditions)
-            overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
+            overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\') AND "Category" NOT IN (\'Others\')'
             overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
         else:
             if not "where" in overall_ctc_statistics_query_.lower():
-                overall_ctc_statistics_query_  += f' WHERE "ZOName"  NOT IN ( \'Null\')'
+                overall_ctc_statistics_query_  += f' WHERE "ZOName"  NOT IN ( \'Null\') AND "Category" NOT IN (\'Others\')'
             else:
-                overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
+                overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\') AND "Category" NOT IN (\'Others\')'
             overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
             resp = await function(query=overall_ctc_statistics_query_)
             # Convert the response to a DataFrame for further processing
