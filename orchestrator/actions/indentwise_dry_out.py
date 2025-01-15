@@ -232,6 +232,7 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        print("Params: ", self.params)
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
@@ -1217,7 +1218,7 @@ class IndentDryOut:
             alert_data = alert_data.__dict__
         instance_id = alert_data.get("workflow_instance_id")
         CAMUNDA_URL = await helpers.get_alert_camunda_url(self.params["alert_id"],
-                                                          f"{urdhva_base.settings.camunda_url}/engine-rest")
+                                                          f"{urdhva_base.settings.camunda_url}")
 
         headers = {"Content-Type": "application/json"}
         # url = f"{CAMUNDA_URL}/process-instance/{instance_id}/variables/indent_no"
