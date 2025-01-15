@@ -111,16 +111,6 @@ class IndentDryOut:
         }
         return True, msg_block
 
-    async def create_dry_out_summary(self):
-        schema_name = connection_mapping.schema_mapping.get("hpcl_ceg", "HPCL_HOS")
-        table_name = connection_mapping.table_mapping.get("dry_out", "sch_inventory_forecast_dashboard")
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
-            "hpcl_ceg", "1"
-        )
-        Charts_Connection_Vault_RoutingParams.action = 'get_data'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        records = await function(schema_name=schema_name, table_name=table_name, query=query)
-
     async def check_raised_indent(self, params: dict):
         if not self.params:
             self.params = params
@@ -156,7 +146,8 @@ class IndentDryOut:
             # Check Alert Exists for same Scenario or not
             query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                      f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params['sap_id']}' and "
-                     f"indent_no='' and alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
+                     f"alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
+            # f"indent_no='' and alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
             alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=1)
             if not alerts_data['data']:
                 await create_alert(self.params, camunda_url)
