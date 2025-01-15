@@ -1380,7 +1380,7 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         ceg_resp = await function(query=query)
         if not ceg_resp:
-            print("Alerts not Present")
+            print(f"{alert_id} Alerts not Present")
             return False
         ceg_resp = ceg_resp[0]
         product_code = ceg_resp.get("product_code")
@@ -1449,20 +1449,20 @@ class IndentDryOut:
                         break
                     else:
                         print(
-                            f"Error Deleting {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+                            f"Error Deleting {instance_id} {camunda_url} (attempt {attempt + 1}): {response.status_code} - {response.text}")
                         logger.info(
-                            f"Error Deleting {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+                            f"Error Deleting {camunda_url} {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}")
 
                 except requests.RequestException as e:
-                    print(f"Request error for {instance_id} (attempt {attempt + 1}): {e}")
-                    logger.info(f"Request error for {instance_id} (attempt {attempt + 1}): {e}")
+                    print(f"Request error for {camunda_url} {instance_id} (attempt {attempt + 1}): {e}")
+                    logger.info(f"Request error for {camunda_url} {instance_id} (attempt {attempt + 1}): {e}")
 
                 # Retry logic with exponential backoff
                 if attempt < MAX_RETRIES - 1:
                     time.sleep(RETRY_DELAY * (2 ** attempt))
                 else:
-                    print(f"Failed to Deleting {instance_id} after {MAX_RETRIES} retries.")
-                    logger.info(f"Failed to Deleting {instance_id} after {MAX_RETRIES} retries.")
+                    print(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
+                    logger.info(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
                     return False
             return True
         return False
