@@ -150,6 +150,58 @@ vts_interlock_mapping = {
         "severity": "High",
         "description": "Main Supply Removal",
         "alert_threshold": 10
+    },
+    "driver_panic": {
+        "alerting_rules": {
+            "0": {
+                "interlock_name": "Driver Panic FirstTime",
+                "block_duration": 7,
+                "block_msg": "7 days",
+                "clear_count": True
+            }
+        },
+        "severity": "Critical",
+        "description": "Driver Panic",
+        "alert_threshold": 10
+    },
+    "continuous_driving": {
+        "alerting_rules": {
+            "0": {
+                "interlock_name": "Continuous Driving FirstTime",
+                "block_duration": 7,
+                "block_msg": "7 days",
+                "clear_count": True
+            }
+        },
+        "severity": "High",
+        "description": "Continuous Driving",
+        "alert_threshold": 15
+    },
+    "harsh_breaking": {
+        "alerting_rules": {
+            "0": {
+                "interlock_name": "Harsh Breaking FirstTime",
+                "block_duration": 7,
+                "block_msg": "7 days",
+                "clear_count": True
+            }
+        },
+        "severity": "Medium",
+        "description": "Harsh Breaking",
+        "alert_threshold": 20
+    },
+    "harsh_turn": {
+        "alerting_rules": {
+            "0": {
+                "interlock_name": "Harsh Turn FirstTime",
+                "block_duration": 7,
+                "block_msg": "7 days",
+                "clear_count": True
+            }
+        },
+        "severity": "Medium",
+        "description": "Harsh Turn",
+        "alert_threshold": 20
     }
 }
 
@@ -305,5 +357,57 @@ vts_exception_interlock_mapping = {
         "severity": "High",
         "description": "Main Supply Removal",
         "alert_threshold": 10
+    },
+    "driver_panic": {
+        "alerting_rules": {
+            "0": {
+                "interlock_name": "Driver Panic FirstTime",
+                "block_duration": 7,
+                "block_msg": "7 days",
+                "clear_count": True
+            }
+        },
+        "severity": "Critical",
+        "description": "Driver Panic",
+        "alert_threshold": 10
+    },
+    "continuous_driving": {
+        "alerting_rules": {
+            "0": {
+                "interlock_name": "Continuous Driving FirstTime",
+                "block_duration": 7,
+                "block_msg": "7 days",
+                "clear_count": True
+            }
+        },
+        "severity": "High",
+        "description": "Continuous Driving",
+        "alert_threshold": 15
+    },
+    "harsh_breaking": {
+        "alerting_rules": {
+            "0": {
+                "interlock_name": "Harsh Breaking FirstTime",
+                "block_duration": 7,
+                "block_msg": "7 days",
+                "clear_count": True
+            }
+        },
+        "severity": "Medium",
+        "description": "Harsh Breaking",
+        "alert_threshold": 20
+    },
+    "harsh_turn": {
+        "alerting_rules": {
+            "0": {
+                "interlock_name": "Harsh Turn FirstTime",
+                "block_duration": 7,
+                "block_msg": "7 days",
+                "clear_count": True
+            }
+        },
+        "severity": "Medium",
+        "description": "Harsh Turn",
+        "alert_threshold": 20
     }
 }
