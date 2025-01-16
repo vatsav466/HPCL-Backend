@@ -947,7 +947,7 @@ class GlobalAnalytics:
                 """
                 his_data = await function(query=sales_his_query)
                 his_data = pd.DataFrame(his_data)
-                his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum()
+                his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                 his_data.to_csv('/tmp/datahis.csv',index = False)
                 resp = resp.merge(his_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
                 resp['fiscal_year'] = resp['fiscal_year'].bfill()
