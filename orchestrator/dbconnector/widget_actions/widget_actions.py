@@ -57,8 +57,7 @@ lpg_dashboard_actions = [
     'cdcms_dropdown',
     'lpg_operations_productivity_zone',
     'lpg_operations_production_zone',
-    'lpg_operations_filled_cylinder',
-    'industry_sales'
+    'lpg_operations_filled_cylinder'
 ]
 
 # Todo:- import all widget action modules here
@@ -121,8 +120,7 @@ widget_mapping = {
     'cdcms_dropdown': {},
     'lpg_operations_productivity_zone': {},
     'lpg_operations_production_zone': {},
-    'lpg_operations_filled_cylinder': {},
-    'industry_sales': {}
+    'lpg_operations_filled_cylinder': {}
 }
 
 
