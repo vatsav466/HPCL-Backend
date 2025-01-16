@@ -394,7 +394,7 @@ class ThingsBoardInterface:
 
 
 if __name__ == "__main__":
-    file_path = "dnc_backend_v2/things_board/device_data/11128.xlsx"
+    file_path = "/opt/ceg/algo/things_board/device_data/11128.xlsx"
     ThingsBoardInterface().create_bu_devices("TAS", "11128", "Mathura", file_path)
 
 
