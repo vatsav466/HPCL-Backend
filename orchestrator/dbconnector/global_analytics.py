@@ -918,7 +918,7 @@ class GlobalAnalytics:
                 where_conditions.append(f'"M60_LEVEL_METADATA"."FISCAL_YEAR" IN (\'FY {previous_year}-{current_year}\', \'FY {current_year-2}-{previous_year}\')')
 
             if "T" in selected_keys:
-                select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_QTY_TMT"')
+                select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_QTY_TMT"')
 
             # Construct the query dynamically
             sales_performance_query_ = f'''
@@ -983,8 +983,8 @@ class GlobalAnalytics:
             # Fallback query if no filters are provided
             sales_performance_query_ = f'''
                 SELECT
-                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES",
-                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
