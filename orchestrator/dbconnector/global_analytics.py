@@ -3714,7 +3714,6 @@ class GlobalAnalytics:
         _query = ''' select * from cdcms_masters '''
         resp = await function(query=_query)
         df = pl.from_pandas(pd.DataFrame(resp))
-        df = df.rename({"ZOName":"Zone", "ROName": "Region", "DistributorName": "Distributor", "SAName": "SalesArea"})        
         _filters = []
         for filter in filters:
             _filters.append({f"{filter.key}": f"{filter.value}"})
