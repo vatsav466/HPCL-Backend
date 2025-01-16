@@ -953,15 +953,41 @@ class GlobalAnalytics:
                 resp['fiscal_year'] = resp['fiscal_year'].bfill()
             
             if "I" in selected_keys:
-                industry_resp = df.groupby("COMNAME", as_index=False)[["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]].sum().round(0)               
-                return {"status": True, "message": "success", "data": industry_resp}
+                month_mapping = {0: "Apr", 1: "May", 2: "Jun", 3: "Jul", 4: "Aug", 5: "Sep", 6: "Oct", 7: "Nov", 8: "Dec"}
+                reverse_month_mapping = {v.upper(): k for k, v in month_mapping.items()}  # For uppercase column mapping
+
+                # Step 2: Group by COMNAME and calculate sums for each month
+                ind_resp = (
+                    df.groupby("COMNAME", as_index=False)[["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]]
+                    .sum()
+                    .round(0)
+                )
+
+                for _, row in ind_resp.iterrows():
+                    comname = row["COMNAME"]
+                    # Check if row contains any NaN values before processing
+                    valid_row = {col: row[col] for col in row.index if col != "COMNAME" and not pd.isna(row[col])}
+
+                    # Only add if valid data exists
+                    if valid_row:
+                        resp[f"{comname}_industry_sales"] = {reverse_month_mapping[col]: int(valid_row[col]) for col in valid_row}
+                    else:
+                        resp[f"{comname}_industry_sales"] = {}
+
+                print("Updated resp --> ", resp.columns)
             # Fill missing values for numerical columns
-            for each_float_col in ["NETWEIGHT_TMT","ACTUAL_TMT_SALES", "TARGET_QTY_TMT"]:
+            for each_float_col in ["NETWEIGHT_TMT","ACTUAL_TMT_SALES", "TARGET_QTY_TMT", 'BPCL_industry_sales', 'CPCL_industry_sales', 'GAIL_industry_sales',
+                                    'HMEL_industry_sales', 'HPCL_industry_sales', 'IOCL_industry_sales',
+                                    'MRPL_industry_sales', 'NEL_industry_sales', 'NRL_industry_sales',
+                                    'OIL INDIA LIMITED_industry_sales', 'ONGC_industry_sales',
+                                    'RBML_industry_sales', 'RIL_industry_sales', 'RSIL_industry_sales',
+                                    'SEIPL_industry_sales', 'SIMPL_industry_sales',
+                                    'SMAFSL_industry_sales']:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0).astype(np.float64)
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             if "NETWEIGHT_TMT" in resp.columns.tolist():
-                resp = resp.rename(columns={'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'}) 
+                resp = resp.rename(columns={'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
             # Fill missing values for string columns
             for each_str_col in ["fy_month", "month_name"]:
                 if each_str_col in resp.columns:
