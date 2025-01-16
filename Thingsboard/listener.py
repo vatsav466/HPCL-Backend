@@ -85,7 +85,6 @@ class RabbitMQListener:
     def __init__(self, sap_id):
         self.queue_name = f"{RABBITMQ_PREFIX_QUEUE}{sap_id}"
         self.sap_id = sap_id
-        self.site_id = SITE_ID
 
     def on_message(self, ch, method, properties, body):
         """Callback to handle incoming messages."""
@@ -94,7 +93,7 @@ class RabbitMQListener:
             print(f"Received message on {self.queue_name}: {message}")
             location_id = message.get("location_id")
             tags_data = message.get("tags_data", {})
-            success = TelemetryService.process_tags_data(location_id, tags_data, self.site_id)
+            success = TelemetryService.process_tags_data(location_id, tags_data, location_id)
             ch.basic_ack(delivery_tag=method.delivery_tag)
             if success:
                 print(f"All tags processed successfully for {self.queue_name}.")
