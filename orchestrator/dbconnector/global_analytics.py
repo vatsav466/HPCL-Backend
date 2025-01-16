@@ -901,7 +901,7 @@ class GlobalAnalytics:
             # Initialize the dynamic parts of the query
             where_conditions = [f'"M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}']
             select_columns = [
-                'SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES"',
+                'ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric, 0) AS "ACTUAL_TMT_SALES"',
                 '"M60_LEVEL_METADATA"."fy_month" AS "fy_month"',
                 'TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", \'Month\'), \'Mon\') AS "month_name"',
                 '"M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"',
