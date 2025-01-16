@@ -1127,9 +1127,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
  
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1180,9 +1180,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict).round(0)                    
+                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)                    
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Region_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1233,9 +1233,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SalesArea_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1286,9 +1286,9 @@ class GlobalAnalytics:
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
                 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'ProductName' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1339,9 +1339,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict)
 
             if len(filters) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1391,9 +1391,9 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
 
                 if selected_keys:
-                    grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "Zone_Name" in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1443,9 +1443,9 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
 
                 if selected_keys:
-                    grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "Region_Name" in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1496,9 +1496,9 @@ class GlobalAnalytics:
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["month_name", "Region_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "Region_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["month_name", "Region_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "Region_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "SalesArea_Name" in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1549,9 +1549,9 @@ class GlobalAnalytics:
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["month_name", "SalesArea_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["month_name", "SalesArea_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "SalesArea_Name"], as_index=False).agg(agg_dict)
             
             elif len(filters) == 2 and "month_name" in filter_keys and "ProductName" in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1602,9 +1602,9 @@ class GlobalAnalytics:
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["month_name", "ProductName"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["month_name", "ProductName"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["month_name", "ProductName"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1672,9 +1672,9 @@ class GlobalAnalytics:
                     agg_dict["ACTUAL_HISTORY_TMT"] = "max"
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict).round(0) 
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)  
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1742,9 +1742,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1815,9 +1815,9 @@ class GlobalAnalytics:
                     
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1888,9 +1888,9 @@ class GlobalAnalytics:
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
@@ -1963,9 +1963,9 @@ class GlobalAnalytics:
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
@@ -2018,9 +2018,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict).round(0)
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
 
             grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
             if "TARGET_QTY_TMT" in grouped_resp.columns:
