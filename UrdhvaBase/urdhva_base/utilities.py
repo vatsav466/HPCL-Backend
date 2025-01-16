@@ -70,3 +70,8 @@ def get_present_time(utc=False):
     :param utc:
     :return:
     """
+    time_stamp = datetime.datetime.now(datetime.timezone.utc)
+    if not utc:
+        time_stamp = time_stamp.astimezone(pytz.timezone('Asia/Kolkata'))
+    return time_stamp
+
