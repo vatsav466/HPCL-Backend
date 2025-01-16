@@ -57,7 +57,8 @@ lpg_dashboard_actions = [
     'cdcms_dropdown',
     'lpg_operations_productivity_zone',
     'lpg_operations_production_zone',
-    'lpg_operations_filled_cylinder'
+    'lpg_operations_filled_cylinder',
+    'industry_sales'
 ]
 
 # Todo:- import all widget action modules here
@@ -120,7 +121,8 @@ widget_mapping = {
     'cdcms_dropdown': {},
     'lpg_operations_productivity_zone': {},
     'lpg_operations_production_zone': {},
-    'lpg_operations_filled_cylinder': {}
+    'lpg_operations_filled_cylinder': {},
+    'industry_sales': {}
 }
 
 
@@ -163,7 +165,7 @@ class WidgetActions:
             # print(f"Resolved function: {dir(func)}")
 
             # Execute the function asynchronously
-            res = await func(filters, cross_filters, drill_state)
+            res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
             lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
             return res
         
