@@ -692,6 +692,8 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     device_data: typing.Optional[str] = pydantic.Field("", **{})
     allocated_time: typing.Optional[str] = pydantic.Field("", **{})
     processed_time: typing.Optional[str] = pydantic.Field("", **{})
+    ims_datetime: typing.Optional[str] = pydantic.Field("", **{})
+    prod_reqd_dt: typing.Optional[str] = pydantic.Field("", **{})
     mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
     action_type: hpcl_ceg_enum.AlertActionType
     alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
