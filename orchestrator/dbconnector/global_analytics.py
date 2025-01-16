@@ -2813,7 +2813,11 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
-        yesterday = datetime.now() - relativedelta(days=1)
+        yesterday = datetime.now() - relativedelta(days=14)
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -2845,6 +2849,7 @@ class GlobalAnalytics:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["ZOName"], as_index=False).agg({
                     "Bookings": "sum",
                     "Sales": "sum",
@@ -2872,6 +2877,7 @@ class GlobalAnalytics:
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
+        resp = await filter_data(resp, _filters)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         # Filter rows where Execution_Date matches yesterday
         resp = resp[resp["Execution_Date"].dt.date == yesterday.date()]
@@ -3061,6 +3067,10 @@ class GlobalAnalytics:
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         yesterday = datetime.now() - relativedelta(days=1)
         cdcms_order_source_query_ = lpg_plant_queries.lpg_plant_query.get("cdcms_order_source")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -3092,7 +3102,7 @@ class GlobalAnalytics:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["OrderSourceName"], as_index=False).agg({
                     "Total_Bookings": "sum"
                 })
@@ -3117,6 +3127,7 @@ class GlobalAnalytics:
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
+        resp = await filter_data(resp, _filters)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         # Filter rows where Execution_Date matches yesterday
         resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
@@ -3174,6 +3185,10 @@ class GlobalAnalytics:
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         yesterday = datetime.now() - relativedelta(days=1)
         lpg_pending_query_ = lpg_plant_queries.lpg_plant_query.get("overall_pending_pmuy_nmpuy")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -3768,12 +3783,16 @@ class GlobalAnalytics:
         resp = await function(query=_query)
         df = pl.from_pandas(pd.DataFrame(resp))
         _filters = []
-        for filter in filters:
-            _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            for filter in filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if _filters:
             filter_expr = pl.lit(True)
             for _filter in _filters:
                 for key, value in _filter.items():
+                    key = key.replace('"','')
+                    if key in ["Execution_Month", "CylType", "ConsumerType"]:
+                        continue
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
         months = [month for month in calendar.month_name if month]
