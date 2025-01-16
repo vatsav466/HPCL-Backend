@@ -869,7 +869,7 @@ LIMIT 10000;''',
                             sum("eKYCCompleted") as "Completed",
                             sum("eKYCPending") as "Pending"     
                         FROM
-                            "LPG_CONSUMERS_SUMMARY",
+                            "LPG_CONSUMERS_SUMMARY"
                         ''',
     
     "lpg_operations_productivity_zone": f'''   
