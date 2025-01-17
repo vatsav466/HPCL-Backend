@@ -430,6 +430,8 @@ class GlobalAnalytics:
         resp = await function(query=sales_performance_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        resp = resp[resp["SBU_Name"] != "0"]
+        resp = resp[resp["Zone_Name"] != "-"]
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -453,13 +455,18 @@ class GlobalAnalytics:
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
+            filter_values = [rec.value[0].strip('"') for rec in filters]
             if "month_name" in filter_keys:
             # Convert full month names to short form (e.g., "January" -> "Jan")
                 resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
+            
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
                 grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
@@ -517,14 +524,17 @@ class GlobalAnalytics:
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
                 grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                if "DS" in filters[-1].value[0] or 'Lubes' in filters[-1].value[0] or 'DS Lubes' in filters[-1].value[0]:
-                        grouped_resp = resp.groupby(["month_name", "SBU_Name","Region_Name"], as_index=False).agg({
+                if "DS" in filter_values or 'Lubes' in filter_values or 'DS Lubes' in filter_values:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name","Region_Name"], as_index=False).agg({
                         "TARGET_QTY_TMT": "sum",
                         "NETWEIGHT_TMT": "sum"
                     })
@@ -1086,6 +1096,7 @@ class GlobalAnalytics:
                 "GAS HQO": "NG",  # Map GAS HQO to NG
             }
             resp = resp[resp["SBU_Name"] != "0"]
+            resp = resp[resp["Zone_Name"] != "-"]
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
