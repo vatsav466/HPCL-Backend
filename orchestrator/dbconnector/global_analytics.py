@@ -27,6 +27,7 @@ async def filter_data(df, _filters):
             mask = pd.Series(True, index=df.index)
             for _filter in _filters:
                 for key, value in _filter.items():
+                    key = key.replace('"','')
                     mask = mask & (df[key].fillna('') == value)
             df = df[mask]
             return df
@@ -419,15 +420,15 @@ class GlobalAnalytics:
             # Fallback query if no filters are provided
             sales_performance_query_ = f'''
                 SELECT
-                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES",
-                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
                     "M60_LEVEL_METADATA"
                 WHERE
-                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and   "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
+                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
                 GROUP BY
                     "M60_LEVEL_METADATA"."fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
@@ -487,13 +488,27 @@ class GlobalAnalytics:
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
+            filter_values = [rec.value[0].strip('"') for rec in filters]
             if "month_name" in filter_keys:
             # Convert full month names to short form (e.g., "January" -> "Jan")
                 resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
+            sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
+
+            # Create a mapping dictionary for SBU_Name replacements
+            sbu_mapping = {
+                "PETROCHEMICALS SBU": "PETCHEM",  # Map PETROCHEMICALS SBU to PETCHEM
+                "GAS HQO": "NG",  # Map GAS HQO to NG
+            }
+            resp = resp[resp["SBU_Name"] != "0"]
+            resp = resp[resp["Zone_Name"] != "-"]
+            
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
                 grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
@@ -551,14 +566,17 @@ class GlobalAnalytics:
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
                 grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
-                if "DS" in filters[-1].value[0] or 'Lubes' in filters[-1].value[0] or 'DS Lubes' in filters[-1].value[0]:
-                        grouped_resp = resp.groupby(["month_name", "SBU_Name","Region_Name"], as_index=False).agg({
+                if "DS" in filter_values or 'Lubes' in filter_values or 'DS Lubes' in filter_values:
+                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name","Region_Name"], as_index=False).agg({
                         "TARGET_QTY_TMT": "sum",
                         "NETWEIGHT_TMT": "sum"
                     })
@@ -1004,19 +1022,15 @@ class GlobalAnalytics:
 
                     # Only add if valid data exists
                     if valid_row:
-                        resp[f"{comname}_industry_sales"] = {reverse_month_mapping[col]: int(valid_row[col]) for col in valid_row}
+                        resp[f"{comname}"] = {reverse_month_mapping[col]: int(valid_row[col]) for col in valid_row}
                     else:
-                        resp[f"{comname}_industry_sales"] = {}
+                        resp[f"{comname}"] = {}
 
                 print("Updated resp --> ", resp.columns)
             # Fill missing values for numerical columns
-            for each_float_col in ["NETWEIGHT_TMT","ACTUAL_TMT_SALES", "TARGET_QTY_TMT", 'BPCL_industry_sales', 'CPCL_industry_sales', 'GAIL_industry_sales',
-                                    'HMEL_industry_sales', 'HPCL_industry_sales', 'IOCL_industry_sales',
-                                    'MRPL_industry_sales', 'NEL_industry_sales', 'NRL_industry_sales',
-                                    'OIL INDIA LIMITED_industry_sales', 'ONGC_industry_sales',
-                                    'RBML_industry_sales', 'RIL_industry_sales', 'RSIL_industry_sales',
-                                    'SEIPL_industry_sales', 'SIMPL_industry_sales',
-                                    'SMAFSL_industry_sales']:
+            for each_float_col in ["NETWEIGHT_TMT","ACTUAL_TMT_SALES", "TARGET_QTY_TMT", 'BPCL', 'CPCL', 'GAIL',
+                                    'HMEL', 'HPCL', 'IOCL', 'MRPL', 'NEL', 'NRL','OIL INDIA LIMITED', 'ONGC',
+                                    'RBML', 'RIL', 'RSIL', 'SEIPL', 'SIMPL','SMAFSL']:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0).astype(np.float64)
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
@@ -1106,6 +1120,7 @@ class GlobalAnalytics:
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
+            filter_values = [rec.value[0].strip('') for rec in filters]
             if "month_name" in filter_keys:
             # Convert full month names to short form (e.g., "January" -> "Jan")
                 resp["month_name"] = resp["month_name"].apply(
@@ -1119,6 +1134,7 @@ class GlobalAnalytics:
                 "GAS HQO": "NG",  # Map GAS HQO to NG
             }
             resp = resp[resp["SBU_Name"] != "0"]
+            resp = resp[resp["Zone_Name"] != "-"]
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1872,10 +1888,28 @@ class GlobalAnalytics:
                 # resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
+                grouped_keys = ["FISCAL_YEAR", "month_name", "SBU_Name"]
+
+                # If valid keys are selected, apply conditional grouping
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
+                    # Check the last filter's value for specific keywords
+                    if "DS Lubes" in filter_values or "DS" in filter_values or "Lubes" in filter_values:
+                        print("DS Lubes selected")
+                        grouped_keys.extend(["Region_Name"])
+                    else:
+                        print("No DS Lubes selected")
+                        grouped_keys.extend(["Zone_Name"])
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
+                    print("No keys selected")
+                    if "DS Lubes" in filter_values or "DS" in filter_values or "Lubes" in filter_values:
+                        print("DS Lubes selected")
+                        grouped_keys.extend(["Region_Name"])
+                    else:
+                        # If no valid keys are selected, group by all keys
+                        grouped_keys.extend(["Zone_Name"])
+
+                # Add grouping logic based on the updated grouped_keys
+                grouped_resp = resp.groupby(grouped_keys, as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -2920,8 +2954,7 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
-        print("*********Received lpc cdcms query*******")
-        yesterday = datetime.now() - relativedelta(days=14)
+        yesterday = datetime.now() - relativedelta(days=1)
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -2946,7 +2979,7 @@ class GlobalAnalytics:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
             lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -2955,8 +2988,7 @@ class GlobalAnalytics:
                 lpg_cdcms_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             else:
                 lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
-            
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
             resp = await function(query=lpg_cdcms_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3094,7 +3126,7 @@ class GlobalAnalytics:
                 lpg_cdcms_month_query_ += ' WHERE '
                 lpg_cdcms_month_query_ += ' AND '.join(conditions)
             lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName", "ConsumerType", "CylType"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3103,7 +3135,7 @@ class GlobalAnalytics:
                 lpg_cdcms_month_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
             else:
                 lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName", "ConsumerType", "CylType"'
             resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3218,7 +3250,7 @@ class GlobalAnalytics:
                 cdcms_order_source_query_ += ' WHERE '
                 cdcms_order_source_query_ += ' AND '.join(conditions)
             cdcms_order_source_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
         else:      
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3227,7 +3259,7 @@ class GlobalAnalytics:
                 cdcms_order_source_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
             else:
                 cdcms_order_source_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
-            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
 
             resp = await function(query=cdcms_order_source_query_)
             # Convert the response to a DataFrame for further processing
@@ -3341,7 +3373,7 @@ class GlobalAnalytics:
                 lpg_pending_query_  += ' WHERE '
                 lpg_pending_query_  += ' AND '.join(conditions)
             lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"'
+            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode", "CylType"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3350,7 +3382,7 @@ class GlobalAnalytics:
                 lpg_pending_query_  += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
             else:
                 lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
-            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"'
+            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode", "CylType"'
             print("*"*50)
             print("lpg_pending_query_ :", lpg_pending_query_)
             print("*"*50)
@@ -3935,13 +3967,14 @@ class GlobalAnalytics:
             for _filter in _filters:
                 for key, value in _filter.items():
                     key = key.replace('"','')
-                    if key in ["Execution_Month", "CylType", "ConsumerType"]:
+                    if key in ["Month", "CylType", "ConsumerType"]:
                         continue
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
         months = [month for month in calendar.month_name if month]
-        df = df.filter(pl.col("ZOName").fill_null("") != "")
-        data = {"Execution_Month": months, "ZOName": df['ZOName'].unique().to_list(), 
+        df = df.filter(pl.col("ZOName").fill_null("") != "NULL")
+        df = df.filter(pl.col("DistributorName").fill_null("") != "NULL")
+        data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
                 "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
                 "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
                 "ConsumerType": ['PMUY', 'NPMUY']}

@@ -470,7 +470,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                         a.terminal_plant_id, 
                         i.indent_no, 
                         i.prod_reqd_dt,
-                        NOW() AS reported_date,
+                        NOW() AT TIME ZONE 'Asia/Kolkata' AS reported_date,
                         a.dry_out_in_days, 
                         a.dried_out
                     FROM 
@@ -507,8 +507,8 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
     data = await function(query=query)
     data = pd.DataFrame(data)
     for key in ['dry_out_in_days', 'indent_no', 'category']:
-        if key not in data.columns:
-            data[key] = pd.Series(dtype='str')
+        if key in data.columns:
+            data[key] = data[key].astype(str)
 
     if not insert_to_db:
         return data.to_dict(orient="records")

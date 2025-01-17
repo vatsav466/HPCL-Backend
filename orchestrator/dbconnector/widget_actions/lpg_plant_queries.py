@@ -756,8 +756,10 @@ LIMIT 10000;''',
                             "ZOName" as "ZOName",
                             "ROName" as "ROName",
                             "SAName" as "SAName",
-                            "Execution_Date" as "Execution_Date",
-                            "JDEDistributorCode" as "JDEDistributorCode"
+                            "Execution_Date",
+                            "JDEDistributorCode",
+                            "ConsumerType",
+                            "CylType"
                     from
                         "LPG_SALES_SUMMARY_DATA"''',
     
@@ -768,7 +770,9 @@ LIMIT 10000;''',
                                 "ZOName",
                                 "ROName",
                                 "SAName",
-                                "JDEDistributorCode"
+                                "JDEDistributorCode",
+                                "ConsumerType", 
+                                "CylType"
                             from
                                 "lpg_cdcms_sales_summary"''',
     
@@ -779,6 +783,8 @@ LIMIT 10000;''',
 	                                "ROName",
 	                                "SAName",
                                     "Execution_Date",
+                                    "ConsumerType", 
+                                    "CylType",
 	                                sum("BookingReceivedYesterday") as "Total_Bookings"
                                 from
 	                                "LPG_SALES_SUMMARY_DATA"''',
@@ -791,6 +797,7 @@ LIMIT 10000;''',
                                     "ConsumerType",
                                     "JDEDistributorCode",
                                     "Execution_Date",
+                                    "CylType",
                                     sum("Total_Pending") as "Total_pending" 
                                 from
                                     "LPG_SALES_SUMMARY_DATA" ''',
