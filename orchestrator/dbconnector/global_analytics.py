@@ -3887,13 +3887,13 @@ class GlobalAnalytics:
             for _filter in _filters:
                 for key, value in _filter.items():
                     key = key.replace('"','')
-                    if key in ["Execution_Month", "CylType", "ConsumerType"]:
+                    if key in ["Month", "CylType", "ConsumerType"]:
                         continue
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
         months = [month for month in calendar.month_name if month]
-        df = df.filter(pl.col("ZOName").fill_null("") != "")
-        data = {"Execution_Month": months, "ZOName": df['ZOName'].unique().to_list(), 
+        df = df.filter(pl.col("ZOName").fill_null("") != "NULL")
+        data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
                 "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
                 "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
                 "ConsumerType": ['PMUY', 'NPMUY']}
