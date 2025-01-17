@@ -430,8 +430,6 @@ class GlobalAnalytics:
         resp = await function(query=sales_performance_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        resp = resp[resp["SBU_Name"] != "0"]
-        resp = resp[resp["Zone_Name"] != "-"]
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -461,6 +459,15 @@ class GlobalAnalytics:
                 resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
+            sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
+
+            # Create a mapping dictionary for SBU_Name replacements
+            sbu_mapping = {
+                "PETROCHEMICALS SBU": "PETCHEM",  # Map PETROCHEMICALS SBU to PETCHEM
+                "GAS HQO": "NG",  # Map GAS HQO to NG
+            }
+            resp = resp[resp["SBU_Name"] != "0"]
+            resp = resp[resp["Zone_Name"] != "-"]
             
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
