@@ -130,7 +130,8 @@ class IndentDryOut:
         self.params['alert_type'] = 'RO'
         self.params['bu'] = 'RO'
         self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
-        camunda_url = urdhva_base.settings.camunda_url
+        camunda_host = connection_mapping.camunda_listener_mapping.get("camunda_dryout_01")
+        camunda_url = f"http://{camunda_host['host']}:{camunda_host['port']}"
         if self.params['camunda_host']:
             camunda_url = f"http://{self.params['camunda_host']}:{self.params['camunda_port']}"
 
@@ -243,6 +244,32 @@ class IndentDryOut:
                     "start_time": datetime.datetime.now(tz=datetime.timezone.utc)}
             await hpcl_ceg_model.DryOutHistoryCreate(**data).create()
 
+    async def check_indent_status_for_notification(self, params: dict):
+        if not self.params:
+            self.params = params
+            await self.get_connection_name()
+        dealer_code = str(self.params.get("dealer_id")).zfill(10)
+        prod_code = self.params.get("product_code")
+        now = (pytz.timezone('UTC').localize(
+            datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
+            pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
+        next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
+            "%Y-%m-%d")
+
+        query = f"""SELECT a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
+                f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
+                f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') """ \
+                f"""AND b."PROD" = '{prod_code}' """ \
+                f"""AND a."LOCN_CODE" = b."LOCN_CODE" AND a."INDENT_NO" = b."INDENT_NO" AND a."CANCEL_INDENT" IS NULL """ \
+                f"""ORDER BY a."INDENT_NO" DESC"""
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+        if not resp:
+            return await self.send_alert_action(is_raised=False)
+        return await self.send_alert_action(is_raised=True)
+
     async def check_indent_status(self, params: dict):
         if not self.params:
             self.params = params
@@ -252,6 +279,8 @@ class IndentDryOut:
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         prod_code = self.params.get("product_code")
         indent_no = self.params.get("indent_no")
+        camunda_host = connection_mapping.camunda_listener_mapping.get("camunda_dryout_01")
+        camunda_url = f"http://{camunda_host['host']}:{camunda_host['port']}"
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -404,7 +433,7 @@ class IndentDryOut:
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                                         :-3] + "Z"
                     logger.info(f"Multiple Indents: {self.params}")
-                    await create_alert(self.params)
+                    await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""))
             return await self.send_alert_action(is_raised=True)
