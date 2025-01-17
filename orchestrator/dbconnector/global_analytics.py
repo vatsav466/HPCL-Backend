@@ -1115,10 +1115,6 @@ class GlobalAnalytics:
 
             # Create a mapping dictionary for SBU_Name replacements
             sbu_mapping = {
-                "Retail": "Retail",
-                "LPG": "LPG",
-                "I&C": "I&C",
-                "Aviation": "Aviation",
                 "PETROCHEMICALS SBU": "PETCHEM",  # Map PETROCHEMICALS SBU to PETCHEM
                 "GAS HQO": "NG",  # Map GAS HQO to NG
             }
@@ -1722,7 +1718,7 @@ class GlobalAnalytics:
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     resp.to_csv('/tmp/resp.csv',index = False)
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = "max"
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1791,7 +1787,7 @@ class GlobalAnalytics:
                     resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year','ORGSBUNAME']],how='left',left_on=['month_name','SBU_Name'],right_on = ['month_name','ORGSBUNAME'])
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
 
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
@@ -1868,12 +1864,12 @@ class GlobalAnalytics:
                                       right_on = ['month_name','ORGSBUNAME','ORGZONENAME'])
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
 
-                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
-                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
-                resp = resp.sort_values('SBU_Name')
+                # resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                # resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                # resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1946,12 +1942,12 @@ class GlobalAnalytics:
                                       right_on = ['month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'])
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
                 
-                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
-                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
-                resp = resp.sort_values('SBU_Name')
+                # resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                # resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                # resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -2026,12 +2022,12 @@ class GlobalAnalytics:
                                       right_on = ['month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'])
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
                 
-                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
-                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
-                resp = resp.sort_values('SBU_Name')
+                # resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                # resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                # resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -2088,10 +2084,10 @@ class GlobalAnalytics:
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
 
-                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
-                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
-                resp = resp.sort_values('SBU_Name')
-                
+                # resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                # resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                # resp = resp.sort_values('SBU_Name')
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
@@ -3044,7 +3040,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         month_mapping = {
                             "Jan": "January",
                             "Feb": "February",
@@ -3063,6 +3058,15 @@ class GlobalAnalytics:
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
         lpg_cdcms_month_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_month")
+        
+        today = datetime.now()
+        if today.month < 4:
+            start_year = today.year - 1
+        else:
+            start_year = today.year
+        end_year = start_year + 1
+        financial_year = f"{start_year}-{end_year}"
+        
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -3073,7 +3077,7 @@ class GlobalAnalytics:
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
-                if rec.key == '"Execution_Month"':  # Only handle the month_name case separately
+                if rec.key == '"Month"':  # Only handle the month_name case separately
                     # Check if any value in rec.value is in month_mapping
                     rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
                 # Now handle other cases
@@ -3089,27 +3093,30 @@ class GlobalAnalytics:
             if conditions:
                 lpg_cdcms_month_query_ += ' WHERE '
                 lpg_cdcms_month_query_ += ' AND '.join(conditions)
-            lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\')'
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
+            lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_month_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_month_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_month_query_.lower():   
-                lpg_cdcms_month_query_ += f' WHERE "ZOName"  NOT IN (\'Null\')'
+                lpg_cdcms_month_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
             else:
-                lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\')'
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_No", "Execution_Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
+                lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
             resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
-            resp = resp.sort_values("Month_No")            
-            resp = resp.groupby(["Execution_Month"], as_index=False).agg({
+            resp['Month_Number'] = resp['Month_Number'].astype(str)
+            resp = resp.groupby(["Month", "Month_Number"], as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
                 })
+            resp['Month_Number'] = resp['Month_Number'].astype(int)
+            resp = resp.sort_values(by="Month_Number")
+            del resp["Month_Number"]
             # Fill missing values for numerical columns
             for each_float_col in [
                 "Total Sales"
@@ -3119,12 +3126,11 @@ class GlobalAnalytics:
 
             # Fill missing values for string columns
             for each_str_col in [
-                "Month_No", "Execution_Month", "ZOName"
+                "Month", "ZOName"
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
         
         print("*"*50)
         print("BaseQuery :",lpg_cdcms_month_query_)
@@ -3133,8 +3139,7 @@ class GlobalAnalytics:
         resp = await function(query=lpg_cdcms_month_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        resp = await filter_data(resp, _filters)
-        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+        resp = await filter_data(resp, _filters)        
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -3145,7 +3150,7 @@ class GlobalAnalytics:
 
         # Fill missing values for string columns
         for each_str_col in [
-            "Month_No", "Execution_Month", "ZOName"
+            "Month", "ZOName"
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -3153,25 +3158,25 @@ class GlobalAnalytics:
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            if "Execution_Month" in filter_keys:
+            if "Month" in filter_keys:
             # Convert full month names to short form (e.g., "January" -> "Jan")
-                resp["Execution_Month"] = resp["Execution_Month"].apply(
+                resp["Month"] = resp["Month"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
-            if "Execution_Month" in filter_keys and "ZOName" not in filter_keys:
-                grouped_resp = resp.groupby(["Execution_Month", "ZOName"], as_index=False).agg({
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName"], as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
                 })
-            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName"], as_index=False).agg({
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName","ROName"], as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
                 })
-            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName"], as_index=False).agg({
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName","ROName","SAName"], as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
                 })            
-            elif "Execution_Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                grouped_resp = resp.groupby(["Execution_Month", "ZOName","ROName","SAName","DistributorName"],
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
                     "Total Sales": lambda x: x.sum() / 10000000
                     })
@@ -4584,7 +4589,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         current_date = datetime.now().strftime("%Y-%m-%d")
-        handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_handled_filled_cylinder")
+        handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_filled_cylinder")
         if filters:
             conditions = []
             for rec in filters:
