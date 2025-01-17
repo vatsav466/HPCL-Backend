@@ -39,11 +39,17 @@ class CheckAtrStatus:
             atrSubmitted = False
             alerthistory = alert_data.get('alertHistory', [])
             for item in alerthistory:
-                if "atr_uploaded" in item or "Justified by" in item:
+                if ("atr_uploaded" in item and item["atr_uploaded"] is True) or \
+                    ("Justified by" in item and item["Justified by"] is True):
                     atrSubmitted = True
                     alert_data['alert_id'] = alert_id
-                    alert_data["action_msg"] = ""
-                    alert_data["action_type"] = ""
+                    # Set action_msg based on the condition
+                    if "atr_uploaded" in item and item["atr_uploaded"] is True:
+                        alert_data["action_msg"] = "ATR Uploaded"
+                        alert_data["action_type"] = "ATR Uploaded"
+                    elif "Justified by" in item and item["Justified by"] is True:
+                        alert_data["action_msg"] = f"Justified by {item['Justified by']}"
+                        alert_data["action_type"] = f"Justified by"
                     await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
                     break
             return True, {"atrStatus": atrSubmitted}

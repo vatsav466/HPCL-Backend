@@ -75,7 +75,7 @@ class Settings(pydantic_settings.BaseSettings):
     db_multi_tenancy_model: MultiTenancyMode = MultiTenancyMode.SingleServerSingleDb
     login_count: int = 5
     base_path: str = ""
-    mft_path: str = ""
+    mft_path: str = "/opt/ceg/mft_path/"
     ui_path: str = ""
     download_path: str = "/opt/ceg/algo/orchestrator/masters"
     template_path: str = "/opt/ceg/algo/orchestrator/notification_templates"
@@ -126,10 +126,10 @@ class Settings(pydantic_settings.BaseSettings):
     # Default Camunda
     camunda_url: str = 'http://10.90.38.167:8080'
     camunda_default_config: typing.Dict[str, int] = {
-        "maxTasks": 1,
+        "maxTasks": 10,
         "lockDuration": 10000,
         "asyncResponseTimeout": 5000,
-        "retries": 3,
+        "retries": 5,
         "retryTimeout": 5000,
         "sleepSeconds": 30
     }
@@ -151,6 +151,9 @@ class Settings(pydantic_settings.BaseSettings):
     things_board_url: str = "http://localhost:8080"
     things_board_username: str = "admin"
     things_board_password: str = "password"
+
+    # Timezone settings
+    time_zone: str = "Asia/Kolkata"
 
     def db_url(self, db):
         if self.db_multi_tenancy_model == MultiTenancyMode.SingleServerSingleDb or \

@@ -4,6 +4,7 @@ import asyncio
 import importlib
 import traceback
 import orchestrator
+from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 import utilities.connection_mapping as connection_mapping
 from orchestrator.alerting.listener.dry_out_listener import *
@@ -11,7 +12,7 @@ from camunda.external_task.external_task import ExternalTask, TaskResult
 from camunda.external_task.external_task_worker import ExternalTaskWorker
 
 logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
-
+CAMUNDA_URL = ''
 
 async def algo_external_task(task: ExternalTask) -> TaskResult:
     """
@@ -21,6 +22,7 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     passed in the task variables.
     It also handles the failure scenario and returns the appropriate task result.
     """
+    global CAMUNDA_URL
     variables = task.get_variables()
     # print("variables --> ", variables)
     module_name = variables.pop('module_name', None)
@@ -33,7 +35,9 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         function = getattr(class_instance, function_name)
         # print("req_variables --> ", req_variables)
         # print("variables --> ", variables)
-        status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
+        params = {key: variables.get(key, None) for key in req_variables}
+        params['CAMUNDA_URL'] = CAMUNDA_URL
+        status, data = await function(**{"params": params})
         # print("status: ", status)
         # print("data: ", data)
         if status:
@@ -68,6 +72,25 @@ def run_async_function(async_func, task):
     return asyncio.run(async_func(task))
 
 
+async def process_topic(camunda_connector_name, topic, worker_id):
+    """
+    Processes a single Camunda topic using an ExternalTaskWorker.
+    """
+    conn = connection_mapping.camunda_listener_mapping[camunda_connector_name]
+    engine_local_base_url = f"http://{conn['host']}:{conn['port']}/engine-rest"
+
+    # Create the ExternalTaskWorker
+    etw = ExternalTaskWorker(
+        worker_id=worker_id,
+        base_url=engine_local_base_url,
+        config=urdhva_base.settings.camunda_default_config,
+    )
+
+    # Subscribe to the topic
+    print(f"Worker {worker_id} subscribing to topic: {topic}")
+    await etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task))
+
+
 async def main(camunda_connector_name):
     """
     Main entry point of the workflow manager.
@@ -76,8 +99,11 @@ async def main(camunda_connector_name):
     It then runs the algo_external_task function for each incoming task in a separate thread.
     """
     # engine_local_base_url = f"{urdhva_base.settings.camunda_url}/engine-rest"
+    global CAMUNDA_URL
     conn = connection_mapping.camunda_listener_mapping[camunda_connector_name]
     engine_local_base_url = f"http://{conn['host']}:{conn['port']}/engine-rest"
+    CAMUNDA_URL = f"http://{conn['host']}:{conn['port']}"
+    topics = ['dryout_indentwise_consumer'] + [f'dryout_indentwise_consumer{i}' for i in range(1, 31)]
     topics = ['dryout_indentwise_consumer', 'dryout_indentwise_consumer1', 'dryout_indentwise_consumer2',
               'dryout_indentwise_consumer3', 'dryout_indentwise_consumer4', 'dryout_indentwise_consumer5',
               'dryout_indentwise_consumer6', 'dryout_indentwise_consumer7', 'dryout_indentwise_consumer8',
@@ -86,13 +112,22 @@ async def main(camunda_connector_name):
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=200)  # Adjust the number of workers as needed
     tasks = []
+
+    task_id = 1
     for topic in topics:
-        for i in range(1, 50):
-            etw = ExternalTaskWorker(i, base_url=engine_local_base_url,
+        for i in range(0, 1):
+            # Creating Unique WorkerId based on Topic and incremental task id
+            etw = ExternalTaskWorker(f"{task_id}-{topic}", base_url=engine_local_base_url,
                                      config=urdhva_base.settings.camunda_default_config)
-            tasks.append(loop.run_in_executor(
-                executor, lambda: etw.subscribe(topic, lambda task: run_async_function(algo_external_task, task)))
+            # tasks.append(loop.run_in_executor(
+            #         executor, partial(lambda: etw.subscribe(topic,
+            #                                                 lambda task: run_async_function(algo_external_task, task))))
+            # )
+            subscribe_task = loop.run_in_executor(
+                executor, partial(etw.subscribe, topic, lambda task: run_async_function(algo_external_task, task))
             )
+            tasks.append(subscribe_task)
+            task_id += 1
     await asyncio.gather(*tasks)
 
 

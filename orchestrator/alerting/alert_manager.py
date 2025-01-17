@@ -116,7 +116,9 @@ class AlertAction:
         # Append the updated alert history with the converted datetime strings
         alert_history.append({"allocated_time": allocated_time.isoformat() if isinstance(allocated_time, datetime.datetime) else allocated_time,
                             "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],
-                            "action_msg": input_data["action_msg"], "mail_sent_to": "", 
+                            "action_msg": input_data["action_msg"], "mail_sent_to": "",
+                            "ims_datetime": input_data.get("ims_datetime", ""),
+                            "prod_reqd_dt": input_data.get("prod_reqd_dt", ""),
                             "atr_uploaded": event_tags.get("is_atr_uploaded", False),
                             "maintenance_exception": event_tags.get("is_maintenance_exception", False), 
                             "revocation": event_tags.get("is_revocation", False),

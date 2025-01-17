@@ -27,6 +27,36 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
     :return:
     """
     bu = bu.upper()
+    cond = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
+    for rec in cond:
+        if rec['key'] == 'zone':
+            if not zone:
+                zone = []
+            if isinstance(rec['value'], list):
+                zone.extend(rec['value'])
+            else:
+                zone.append(rec['value'])
+        if rec['key'] == 'region':
+            if not region:
+                region =[]
+            if isinstance(rec['value'], list):
+                region.extend(rec['value'])
+            else:
+                region.append(rec['value'])
+        if rec['key'] == 'sap_id':
+            if not plant:
+                plant = []
+            if isinstance(rec['value'], list):
+                plant.extend(rec['value'])
+            else:
+                plant.append(rec['value'])
+        if rec['key'] == 'sales_area':
+            if not sales_area:
+                sales_area = []
+            if isinstance(rec['value'], list):
+                sales_area.extend(rec['value'])
+            else:
+                sales_area.append(rec['value'])
     redis_client = await urdhva_base.redispool.get_redis_connection()
     location_data = await redis_client.hgetall("location_master")
 
@@ -59,6 +89,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
     # Filtering zone
     for rec in bu_data.to_dict(orient='records'):
         if rec["zone"]:
+            if cond and plant and rec['sap_id'] not in plant:
+                continue
             final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
     if zone:
         key_mapping["zone"] = zone
@@ -73,6 +105,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
             if skip_record or not rec["sap_id"]:
                 continue
             if rec["sap_id"]:
+                if plant and rec['sap_id'] not in plant:
+                    continue
                 final_data["plant"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
         bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
                       if helpers.normalize_string(key).startswith(f"RO_")]
@@ -381,7 +415,28 @@ async def get_category_sync():
         conflict_columns=["DEALER_CODE"]
     )
 
+
 async def sync_carry_fwd_indent(insert_to_db: bool):
+    conditions = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
+    where_clause = []
+    for rec in conditions:
+        if rec['key'] == 'sap_id':
+            if isinstance(rec['value'], str):
+                where_clause.append(f"terminal_plant_id='{rec['value']}'")
+            else:
+                if len(rec['value']) == 1:
+                    where_clause.append(f"terminal_plant_id='{rec['value'][0]}'")
+                else:
+                    where_clause.append(f"terminal_plant_id in {tuple(rec['value'])}")
+    base_conditions = " AND ".join(where_clause)
+    if base_conditions:
+        combined_query = " where a." + " AND a.".join(where_clause)
+        cd_query = " where cd." + " AND cd.".join(where_clause)
+        where_clause = " AND " + base_conditions
+    else:
+        where_clause = ""
+        combined_query = ""
+        cd_query = ""
     query = f"""WITH INDENT_DATA AS (
                     SELECT DISTINCT 
                         SUBSTR("DEALER_CODE", 3, 8) AS sap_id, 
@@ -407,7 +462,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     FROM 
                         "alerts"
                     WHERE
-                        alert_status != 'Close' AND indent_status NOT IN ('Cancelled', 'Completed')
+                        alert_status != 'Close' AND indent_status NOT IN ('Cancelled', 'Completed') {where_clause}
                 ),
                 COMBINED_DATA AS (
                     SELECT 
@@ -421,9 +476,10 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     FROM 
                         INDENT_DATA i
                     LEFT JOIN 
-                        ALERT_DATA a 
+                        ALERT_DATA a
                     ON 
                         i.sap_id::TEXT = a.sap_id::TEXT AND TRIM(i.indent_no::TEXT) = TRIM(a.indent_no::TEXT)
+                    {combined_query}
                 )
                 SELECT 
                     cd.sap_id, 
@@ -440,6 +496,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     "IMS_SAP"."DEALER_DETAILS_CATA" d
                 ON 
                     d."DEALER_CODE" = cd.sap_id
+                {cd_query}
                 ORDER BY 
                     cd.sap_id;"""
 
@@ -449,7 +506,9 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)
     data = pd.DataFrame(data)
-    data['indent_no'] = data['indent_no'].astype(str)
+    for key in ['dry_out_in_days', 'indent_no', 'category']:
+        if key not in data.columns:
+            data[key] = pd.Series(dtype='str')
 
     if not insert_to_db:
         return data.to_dict(orient="records")
@@ -457,6 +516,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
     for each_record in data.to_dict(orient="records"):
         await hpcl_ceg_model.CarryFwdIndentCreate(**each_record).create()
     return
+
 
 async def ro_not_in_ims():
     query = f"""SELECT DISTINCT a.rosapcode
@@ -471,4 +531,21 @@ async def ro_not_in_ims():
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     data = await function(query=query)
     data = pd.DataFrame(data)
-    return data['rosapcode'].unique().tolist()
+    redis_cli = await urdhva_base.redispool.get_redis_connection()
+    locations = {key.decode(): json.loads(value.decode())
+                 for key, value in (await redis_cli.hgetall('location_master')).items()}
+    conditions = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
+    rosapcodes = data['rosapcode'].unique().tolist()
+    plants = []
+    for rec in conditions:
+        if rec['key'] == 'sap_id':
+            plants = [rec['value']] if isinstance(rec['value'], str) else rec['value']
+            break
+    if plants:
+        allowed_dealers = []
+        for dealer in rosapcodes:
+            if f'RO_{dealer}' in locations and locations[f'RO_{dealer}'].get('terminal_plant_id', '') in plants:
+                allowed_dealers.append(dealer)
+        return allowed_dealers
+    else:
+        return rosapcodes

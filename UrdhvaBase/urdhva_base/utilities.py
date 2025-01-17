@@ -1,4 +1,5 @@
 import re
+import pytz
 import asyncio
 import datetime
 import functools
@@ -61,4 +62,16 @@ def snake_case(s):
               return:- algo_fusion
     """
     return snakecase.convert(s)    
+
+
+def get_present_time(utc=False):
+    """
+    Function to get present time in utc or local format
+    :param utc:
+    :return:
+    """
+    time_stamp = datetime.datetime.now(datetime.timezone.utc)
+    if not utc:
+        time_stamp = time_stamp.astimezone(pytz.timezone('Asia/Kolkata'))
+    return time_stamp
 

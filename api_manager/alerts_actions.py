@@ -62,29 +62,31 @@ async def alerts_upload_image(upload_file: fastapi.UploadFile = fastapi.File(Non
     try:
         UPLOAD_DIR = urdhva_base.settings.uploads  # Directory to save the uploaded files
         os.makedirs(UPLOAD_DIR, exist_ok=True)  # Ensure the upload directory exists
-        # Save the uploaded file
-        file_extension = Path(upload_file.filename).suffix
-        if file_extension.lower() not in [".png", ".jpg", ".jpeg", ".gif"]:
-            return JSONResponse(
+
+        # Validate the uploaded file type
+        file_extension = Path(upload_file.filename).suffix.lower()
+        allowed_extensions = [".png", ".jpg", ".jpeg", ".gif", ".csv", ".xlsx", ".xls", ".pdf", ".doc", ".docx"]
+        if file_extension not in allowed_extensions:
+            return fastapi.responses.JSONResponse(
                 status_code=400, content={"message": "Unsupported file type"}
             )
 
         # Save the uploaded file
-        file_name = f"{upload_file.filename}"
+        file_name = upload_file.filename
         file_path = os.path.join(UPLOAD_DIR, file_name)
         with open(file_path, "wb") as f:
             f.write(await upload_file.read())
 
         # Generate encryption key and encrypt the file
-        encrypted_file_path = helpers.encrypt_file(file_path)
+        encrypted_file_key = helpers.encrypt_file(file_path)
 
         # Delete the original file
         os.remove(file_path)
 
         return {
             "message": "File uploaded and encrypted successfully",
-            "file_path": file_path,
-            "encrypted_file_key": encrypted_file_path,
+            "original_file_path": file_path,
+            "encrypted_file_key": encrypted_file_key,
         }
 
     except Exception as e:

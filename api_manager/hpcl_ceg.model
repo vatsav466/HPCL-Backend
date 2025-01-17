@@ -398,6 +398,8 @@ Model Alert_History internal {
     device_data optional str
     allocated_time optional str
     processed_time optional str
+    ims_datetime optional str
+    prod_reqd_dt optional str
     mail_sent_to optional str
     action_type AlertActionType
     alert_status optional AlertStatus
@@ -419,6 +421,7 @@ Model Alert_History internal {
     is_r3_swipe optional bool
     is_delivered optional bool
     is_tripped optional bool
+    is_justify optional bool
 }
 
 Model tags internal {
@@ -440,6 +443,7 @@ Model tags internal {
     isVTS optional bool
     isDelivered optional bool
     isTripped optional bool
+    isJustify optional bool
 }
 
 Model Interlock {

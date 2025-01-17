@@ -850,6 +850,16 @@ LIMIT 10000;''',
                                 "LPG_CONSUMERS_SUMMARY" ''',
     
     "sales_growth_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')''',
+    "total_suvidha": f'''select 
+                            "ZOName",
+                            "ROName",
+                            "SAName",
+                            "JDEDistributorCode",
+                            "SubCategory" as "SubCategory",
+                            "Category" As "Category",
+                            sum("SuvidhaClub") as "SuvidhaClub" 
+                        from
+                            "LPG_CONSUMERS_SUMMARY" ''',
     "ekyc_statistics": f'''
                         SELECT
                             "ROName",
@@ -859,8 +869,39 @@ LIMIT 10000;''',
                             sum("eKYCCompleted") as "Completed",
                             sum("eKYCPending") as "Pending"     
                         FROM
-                            "LPG_CONSUMERS_SUMMARY",
-                        '''
+                            "LPG_CONSUMERS_SUMMARY"
+                        ''',
+    
+    "lpg_operations_productivity_zone": f'''   
+                        select 
+                            "zone" as "zone",
+                            "name" as "name",
+                            CAST("process_date" AS DATE) as "process_date",
+                            "carousel" as "carousel",
+                            avg("productivity.normal.productivity") as "productivity"
+                        from 
+                            "LPG_OPERATIONS_SUMMARY_DATA"
+                        ''',
+    
+    "lpg_operations_production_zone": f''' 
+                        select 
+                            "zone" as "zone",
+                            "name" as "name",
+                            CAST("process_date" AS DATE) as "process_date",
+                            "carousel" as "carousel",
+                            sum("productivity.normal.production")/1000 as "Productions" 
+                        from 
+                            "LPG_OPERATIONS_SUMMARY_DATA" ''',
+    
+    "lpg_operations_filled_cylinder": f''' 
+                        select 
+                            sum("total") as "Handled",
+                            sum("cylfilled") as "Cylinder_Filled",
+                            "zone" as "zone",
+                            "plant" as "plant",
+                            CAST("process_date" AS DATE) as "process_date"
+                        from
+                            "lpg_cs_rejections" '''
                                 "LPG_CONSUMERS_SUMMARY" ''',
     
     "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "cp_tank_delivery_updated" ', 

@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import calendar
 import psycopg2
 import polars as pl
 import numpy as np
@@ -19,9 +20,23 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
-class GlobalAnalytics:
+
+async def filter_data(df, _filters):
+    try:
+        if _filters:
+            mask = pd.Series(True, index=df.index)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    mask = mask & (df[key].fillna('') == value)
+            df = df[mask]
+            return df
+    except Exception as e:
+        print("Exception in filtering data :", str(e))
+    return df
+
+class GlobalAnalytics:        
     @staticmethod
-    async def analytics(filters, drill_state):
+    async def analytics(filters, cross_filters, drill_state):
         """
         Retrieves analytics data for the given filters and drill state.
 
@@ -146,7 +161,7 @@ class GlobalAnalytics:
 
     
     @staticmethod
-    async def alert_ageing(filters, drill_state):
+    async def alert_ageing(filters, cross_filters, drill_state):
         """
         This method is used to fetch the alert ageing data for the given filters and drill state
         :param filters: The filter parameters
@@ -169,7 +184,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": data}
     
     @staticmethod
-    async def day_wise_alerts(filters, drill_state):
+    async def day_wise_alerts(filters, cross_filters, drill_state):
         """
         Fetches the day-wise alerts data for the given filters and drill state.
 
@@ -196,7 +211,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": data}
     
     @staticmethod
-    async def location_severity_count(filters, drill_state):
+    async def location_severity_count(filters, cross_filters, drill_state):
         """
         Fetches the location severity count data for the given filters and drill state.
 
@@ -239,7 +254,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp}
 
     @staticmethod
-    async def no_of_locations(filters, drill_state):
+    async def no_of_locations(filters, cross_filters, drill_state):
         """
         Fetches the top interlocks data for the given filters and drill state.
 
@@ -263,7 +278,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": no_of_locations_data}
 
     @staticmethod
-    async def severity_count(filters, drill_state):
+    async def severity_count(filters, cross_filters, drill_state):
         """
         Fetches the severity count data for the given filters and drill state.
 
@@ -300,7 +315,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": severity_count_data}
     
     @staticmethod
-    async def hourly_alerts(filters, drill_state):
+    async def hourly_alerts(filters, cross_filters, drill_state):
         """
         Fetches the hourly alerts data for the given filters and drill state.
 
@@ -332,7 +347,7 @@ class GlobalAnalytics:
 
 
     @staticmethod
-    async def sales_performance(filters, drill_state):
+    async def sales_performance(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -573,8 +588,8 @@ class GlobalAnalytics:
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
-            grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(2)
-            grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(2)
+            grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
+            grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(0)
             # Return grouped response
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
@@ -838,7 +853,7 @@ class GlobalAnalytics:
     #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def m60_performance(filters, drill_state):
+    async def m60_performance(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -852,6 +867,8 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df_pl = pl.read_excel("/opt/ceg/algo/Y2NE_Dec 24 FY2024-25_06.01.25.xlsx", sheet_name="Results", engine='xlsx2csv', engine_options={"skip_rows": 2})
+        df = df_pl.to_pandas()    
         month_mapping = {
                             "Jan": "January",
                             "Feb": "February",
@@ -870,14 +887,14 @@ class GlobalAnalytics:
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
 
-        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"'] for rec in filters):
+        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"'] for rec in filters):
             print("into only filters")
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
             conditions = []
 
             # Define keys to exclude from the WHERE clause
-            excluded_keys = {'"A"', '"H"', '"T"', '"BE"', '"RI"'}
+            excluded_keys = {'"A"', '"H"', '"T"', '"BE"', '"RI"', '"I"'}
 
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -901,7 +918,7 @@ class GlobalAnalytics:
                 sales_performance_query_ += ' WHERE '
                 sales_performance_query_ += ' AND '.join(conditions)
 
-        elif len(filters) >= 1 and (filters[0].key in ['"H"', '"T"', '"BE"', '"RI"', '"A"']):
+        elif len(filters) >= 1 and (filters[0].key in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"']):
             print("into elif")
             selected_keys = [rec.key.strip('"') for rec in filters]
             current_date = datetime.now()
@@ -918,7 +935,7 @@ class GlobalAnalytics:
             # Initialize the dynamic parts of the query
             where_conditions = [f'"M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}']
             select_columns = [
-                'SUM(ROUND("M60_LEVEL_METADATA"."NETWEIGHT_TMT")) AS "ACTUAL_TMT_SALES"',
+                'ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric, 0) AS "ACTUAL_TMT_SALES"',
                 '"M60_LEVEL_METADATA"."fy_month" AS "fy_month"',
                 'TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", \'Month\'), \'Mon\') AS "month_name"',
                 '"M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"',
@@ -935,7 +952,7 @@ class GlobalAnalytics:
                 where_conditions.append(f'"M60_LEVEL_METADATA"."FISCAL_YEAR" IN (\'FY {previous_year}-{current_year}\', \'FY {current_year-2}-{previous_year}\')')
 
             if "T" in selected_keys:
-                select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_QTY_TMT"')
+                select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_QTY_TMT"')
 
             # Construct the query dynamically
             sales_performance_query_ = f'''
@@ -964,19 +981,47 @@ class GlobalAnalytics:
                 """
                 his_data = await function(query=sales_his_query)
                 his_data = pd.DataFrame(his_data)
-                his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum()
+                his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                 his_data.to_csv('/tmp/datahis.csv',index = False)
                 resp = resp.merge(his_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
                 resp['fiscal_year'] = resp['fiscal_year'].bfill()
-                
-                
+            
+            if "I" in selected_keys:
+                month_mapping = {0: "Apr", 1: "May", 2: "Jun", 3: "Jul", 4: "Aug", 5: "Sep", 6: "Oct", 7: "Nov", 8: "Dec"}
+                reverse_month_mapping = {v.upper(): k for k, v in month_mapping.items()}  # For uppercase column mapping
+
+                # Step 2: Group by COMNAME and calculate sums for each month
+                ind_resp = (
+                    df.groupby("COMNAME", as_index=False)[["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]]
+                    .sum()
+                    .round(0)
+                )
+
+                for _, row in ind_resp.iterrows():
+                    comname = row["COMNAME"]
+                    # Check if row contains any NaN values before processing
+                    valid_row = {col: row[col] for col in row.index if col != "COMNAME" and not pd.isna(row[col])}
+
+                    # Only add if valid data exists
+                    if valid_row:
+                        resp[f"{comname}_industry_sales"] = {reverse_month_mapping[col]: int(valid_row[col]) for col in valid_row}
+                    else:
+                        resp[f"{comname}_industry_sales"] = {}
+
+                print("Updated resp --> ", resp.columns)
             # Fill missing values for numerical columns
-            for each_float_col in ["NETWEIGHT_TMT","ACTUAL_TMT_SALES", "TARGET_QTY_TMT"]:
+            for each_float_col in ["NETWEIGHT_TMT","ACTUAL_TMT_SALES", "TARGET_QTY_TMT", 'BPCL_industry_sales', 'CPCL_industry_sales', 'GAIL_industry_sales',
+                                    'HMEL_industry_sales', 'HPCL_industry_sales', 'IOCL_industry_sales',
+                                    'MRPL_industry_sales', 'NEL_industry_sales', 'NRL_industry_sales',
+                                    'OIL INDIA LIMITED_industry_sales', 'ONGC_industry_sales',
+                                    'RBML_industry_sales', 'RIL_industry_sales', 'RSIL_industry_sales',
+                                    'SEIPL_industry_sales', 'SIMPL_industry_sales',
+                                    'SMAFSL_industry_sales']:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0).astype(np.float64)
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             if "NETWEIGHT_TMT" in resp.columns.tolist():
-                resp = resp.rename(columns={'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'}) 
+                resp = resp.rename(columns={'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
             # Fill missing values for string columns
             for each_str_col in ["fy_month", "month_name"]:
                 if each_str_col in resp.columns:
@@ -998,8 +1043,8 @@ class GlobalAnalytics:
             # Fallback query if no filters are provided
             sales_performance_query_ = f'''
                 SELECT
-                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES",
-                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
@@ -1066,6 +1111,18 @@ class GlobalAnalytics:
                 resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
+            sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
+
+            # Create a mapping dictionary for SBU_Name replacements
+            sbu_mapping = {
+                "Retail": "Retail",
+                "LPG": "LPG",
+                "I&C": "I&C",
+                "Aviation": "Aviation",
+                "PETROCHEMICALS SBU": "PETCHEM",  # Map PETROCHEMICALS SBU to PETCHEM
+                "GAS HQO": "NG",  # Map GAS HQO to NG
+            }
+            resp = resp[resp["SBU_Name"] != "0"]
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1113,6 +1170,10 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1272,12 +1333,65 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
-
+                
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
+                
+            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'ProductName' in filter_keys:
+                # Define the set of valid keys without the quotes
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+
+                # Extract user-selected keys with `value == 'true'`
+                selected_keys = set()
+
+                for rec in filters:
+                    print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
+                    if rec.key.strip('"') in valid_keys and 'true' in rec.value:
+                        selected_keys.add(rec.key.strip('"'))  # Add the stripped key if valid and value is 'true'
+                # Define the aggregation dictionary dynamically
+                agg_dict = {"NETWEIGHT_TMT": "sum"}
+
+                # Group the response by the selected keys and apply the aggregation functions
+                if 'T' in selected_keys:
+                    agg_dict["TARGET_QTY_TMT"] = "sum"
+                print("selected keys ", selected_keys)
+
+                # Check if 'H' is in selected keys and update fiscal year values
+                if 'H' in selected_keys:
+                    current_date = datetime.now()
+                    current_year = current_date.year
+                    current_month = current_date.month
+                    
+                    if current_month >= 4:  # April or later
+                        current_fiscal_year = f"FY {current_year}-{current_year + 1}"
+                        previous_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                    else:  # January to March
+                        current_fiscal_year = f"FY {current_year - 1}-{current_year}"
+                        previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
+
+                    for rec in filters:
+                        if rec.key == "FISCAL_YEAR":
+                            # Ensure rec.value is a list of fiscal years
+                            fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
+                            
+                            # Check and add the previous fiscal year
+                            if current_fiscal_year in fiscal_year_values:
+                                if previous_fiscal_year not in fiscal_year_values:
+                                    fiscal_year_values.append(previous_fiscal_year)
+                            
+                            # Assign the updated list back to rec.value
+                            rec.value = fiscal_year_values
+                
+                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
+                # If any valid keys are selected, group the data
+                if selected_keys:
+                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict)
+                else:
+                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict)
 
             if len(filters) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1325,6 +1439,10 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
 
                 if selected_keys:
                     grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict)
@@ -1597,7 +1715,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     print("hisdata",len(his_data))
                     his_data = pd.DataFrame(his_data)
-                    his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
                     resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
                     resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year']],how='left',on='month_name')
@@ -1666,7 +1784,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
-                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
                     his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
                     resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
@@ -1675,6 +1793,10 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
+
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1736,7 +1858,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
-                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
                     his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
                     his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
@@ -1748,7 +1870,11 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
-                    
+
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
@@ -1809,7 +1935,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
-                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
                     his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
                     his_data['ORGRONAME'] = his_data['ORGRONAME'].fillna('').astype(str)
@@ -1822,6 +1948,11 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
+                
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
@@ -1883,7 +2014,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
-                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
                     his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
                     his_data['ORGRONAME'] = his_data['ORGRONAME'].fillna('').astype(str)
@@ -1897,6 +2028,11 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
+                
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
@@ -1952,15 +2088,19 @@ class GlobalAnalytics:
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
 
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
+                
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
 
-            grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(2)
+            grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
             if "TARGET_QTY_TMT" in grouped_resp.columns:
-                grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(2)
+                grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(0)
             # Return grouped response
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
@@ -1970,7 +2110,7 @@ class GlobalAnalytics:
 
     
     @staticmethod
-    async def sales_growth(filters, drill_state):
+    async def sales_growth(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -2196,7 +2336,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def sales_yearly_performance(filters, drill_state):
+    async def sales_yearly_performance(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -2342,7 +2482,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def yearly_sales_performance(filters, drill_state):
+    async def yearly_sales_performance(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -2625,7 +2765,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     @staticmethod
-    async def sales_yearly_growth(filters, drill_state):
+    async def sales_yearly_growth(filters, cross_filters, drill_state):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -2778,14 +2918,18 @@ class GlobalAnalytics:
     
 
     @staticmethod
-    async def lpg_cdcms(filters, drill_state):
+    async def lpg_cdcms(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
         print("*********Received lpc cdcms query*******")
-        yesterday = datetime.now() - relativedelta(days=1)
+        yesterday = datetime.now() - relativedelta(days=14)
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -2822,6 +2966,7 @@ class GlobalAnalytics:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["ZOName"], as_index=False).agg({
                     "Bookings": "sum",
                     "Sales": "sum",
@@ -2849,6 +2994,7 @@ class GlobalAnalytics:
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
+        resp = await filter_data(resp, _filters)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         # Filter rows where Execution_Date matches yesterday
         resp = resp[resp["Execution_Date"].dt.date == yesterday.date()]
@@ -2894,7 +3040,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     @staticmethod
-    async def lpg_cdcms_month(filters, drill_state):
+    async def lpg_cdcms_month(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -2917,6 +3063,10 @@ class GlobalAnalytics:
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
         lpg_cdcms_month_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_month")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})        
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -2953,6 +3103,7 @@ class GlobalAnalytics:
             resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
             resp = resp.sort_values("Month_No")            
@@ -2982,6 +3133,7 @@ class GlobalAnalytics:
         resp = await function(query=lpg_cdcms_month_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        resp = await filter_data(resp, _filters)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
 
         # Fill missing values for numerical columns
@@ -3030,13 +3182,17 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def cdcms_order_source(filters, drill_state):
+    async def cdcms_order_source(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         yesterday = datetime.now() - relativedelta(days=1)
         cdcms_order_source_query_ = lpg_plant_queries.lpg_plant_query.get("cdcms_order_source")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3073,7 +3229,7 @@ class GlobalAnalytics:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["OrderSourceName"], as_index=False).agg({
                     "Total_Bookings": "sum"
                 })
@@ -3098,6 +3254,7 @@ class GlobalAnalytics:
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
+        resp = await filter_data(resp, _filters)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         # Filter rows where Execution_Date matches yesterday
         resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
@@ -3148,13 +3305,17 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def overall_pending_pmuy_nmpuy(filters, drill_state):
+    async def overall_pending_pmuy_nmpuy(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         yesterday = datetime.now() - relativedelta(days=1)
         lpg_pending_query_ = lpg_plant_queries.lpg_plant_query.get("overall_pending_pmuy_nmpuy")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3270,7 +3431,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def lpg_cdcms_ageing(filters, drill_state):
+    async def lpg_cdcms_ageing(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3379,7 +3540,7 @@ class GlobalAnalytics:
     
         
     @staticmethod
-    async def card_chart(filters, drill_state):
+    async def card_chart(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3411,7 +3572,7 @@ class GlobalAnalytics:
 
     
     @staticmethod
-    async def total_consumers(filters, drill_state):
+    async def total_consumers(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3432,13 +3593,13 @@ class GlobalAnalytics:
             if conditions:
                 total_consumers_query_  += ' WHERE '
                 total_consumers_query_  += ' AND '.join(conditions)
-            total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+            total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL '
             total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
         else:
             if not "where" in total_consumers_query_.lower():
-                total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+                total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
             else:
-                total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL AND "SubCategory"  IN (\'NPMUY\',\'PMUY\') '
+                total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
             total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
             resp = await function(query=total_consumers_query_ )
             # Convert the response to a DataFrame for further processing
@@ -3519,7 +3680,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def ekyc_statistics(filters, drill_state):
+    async def ekyc_statistics(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3610,12 +3771,16 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def total_suvidha(filters, drill_state):
+    async def total_suvidha(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         total_suvidha_query_ = lpg_plant_queries.lpg_plant_query.get("total_suvidha")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -3643,6 +3808,9 @@ class GlobalAnalytics:
             
             resp = await function(query=total_suvidha_query_)
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["SubCategory"], as_index=False).agg({
                         "SuvidhaClub": "sum",
                     })
@@ -3669,6 +3837,7 @@ class GlobalAnalytics:
         resp = await function(query=total_suvidha_query_)
         if resp:
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
             
             for each_float_col in [
@@ -3715,7 +3884,7 @@ class GlobalAnalytics:
     
 
     @staticmethod
-    async def carry_forward_analysis(filters, drill_state):
+    async def carry_forward_analysis(filters, cross_filters, drill_state):
         """
         For Dry Out and Indent Carry Forward Analysis
         :param filters:
@@ -3742,9 +3911,40 @@ class GlobalAnalytics:
         query += " GROUP BY execution_date"
         resp = await function(query=query)
         return resp
+    
+    
+    @staticmethod
+    async def cdcms_dropdown(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _query = ''' select * from cdcms_masters '''
+        resp = await function(query=_query)
+        df = pl.from_pandas(pd.DataFrame(resp))
+        _filters = []
+        if filters:
+            for filter in filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _filters:
+            filter_expr = pl.lit(True)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    key = key.replace('"','')
+                    if key in ["Execution_Month", "CylType", "ConsumerType"]:
+                        continue
+                    filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
+            df = df.filter(filter_expr)
+        months = [month for month in calendar.month_name if month]
+        df = df.filter(pl.col("ZOName").fill_null("") != "")
+        data = {"Execution_Month": months, "ZOName": df['ZOName'].unique().to_list(), 
+                "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
+                "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
+                "ConsumerType": ['PMUY', 'NPMUY']}
+        return data
+    
 
     @staticmethod
-    async def location_wise_distribution(filters, drill_state):
+    async def location_wise_distribution(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3763,8 +3963,9 @@ class GlobalAnalytics:
         # data = connector_factory.PostgreSQLConnector('LPG_PLANT').process_recommendations(keys, res)
         return {"status": True, "message": "success", "data": resp}
     
+    
     @staticmethod
-    async def cumulative_sales_pmuy_npmuy(filters, drill_state):
+    async def cumulative_sales_pmuy_npmuy(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3897,7 +4098,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     @staticmethod
-    async def overall_ctc_statistics(filters, drill_state):
+    async def overall_ctc_statistics(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -3920,13 +4121,13 @@ class GlobalAnalytics:
             if conditions:
                 overall_ctc_statistics_query_ += ' WHERE '
                 overall_ctc_statistics_query_ += ' AND '.join(conditions)
-            overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
+            overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\') AND "Category" NOT IN (\'Others\')'
             overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
         else:
             if not "where" in overall_ctc_statistics_query_.lower():
-                overall_ctc_statistics_query_  += f' WHERE "ZOName"  NOT IN ( \'Null\')'
+                overall_ctc_statistics_query_  += f' WHERE "ZOName"  NOT IN ( \'Null\') AND "Category" NOT IN (\'Others\')'
             else:
-                overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
+                overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\') AND "Category" NOT IN (\'Others\')'
             overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
             resp = await function(query=overall_ctc_statistics_query_)
             # Convert the response to a DataFrame for further processing
@@ -4015,7 +4216,7 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     @staticmethod
-    async def overall_safety_check_pending(filters, drill_state):
+    async def overall_safety_check_pending(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -4112,6 +4313,7 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+        
     
     @staticmethod
     async def cp_total_locations(filters, drill_state):
@@ -4239,7 +4441,215 @@ class GlobalAnalytics:
 
         return {"status": True, "message": "success", "data": resp}
     @staticmethod
-    async def sales_growth_ytd(filters, drill_state):
+    async def lpg_operations_productivity_zone(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        productivity_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_productivity_zone")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                productivity_zone_query_  += ' WHERE '
+                productivity_zone_query_  += ' AND '.join(conditions)
+            productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date","carousel" '
+        else:
+            if not "where" in productivity_zone_query_.lower():
+                productivity_zone_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            else:
+                productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date","carousel" '
+            resp = await function(query=productivity_zone_query_)
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+                        "productivity": "mean"
+                    })
+            for each_float_col in ["productivity"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in ["zone", "name", "carousel"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        resp = await function(query=productivity_zone_query_)
+        if resp:
+            resp = pd.DataFrame(resp)
+            for each_float_col in ["productivity"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in ["zone","name","carousel"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "zone" in filter_keys and "name" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                        "productivity": "mean"
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_operations_production_zone(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        production_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_production_zone")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                production_zone_query_  += ' WHERE '
+                production_zone_query_  += ' AND '.join(conditions)
+            production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            production_zone_query_  += ' GROUP BY "zone", "name", "process_date", "carousel" '
+        else:
+            if not "where" in production_zone_query_.lower():
+                production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            else:
+                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            production_zone_query_  += ' GROUP BY "zone", "name", "process_date", "carousel" '
+            resp = await function(query=production_zone_query_)
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+                        "Productions": "sum"
+                    })
+            for each_float_col in ["Productions"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in ["zone", "name", "carousel"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        resp = await function(query=production_zone_query_)
+        if resp:
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            for each_float_col in ["Productions"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in ["zone", "name", "carousel"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "zone" in filter_keys and "name" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                        "Productions": "sum"
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_operations_filled_cylinder(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_handled_filled_cylinder")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                handled_cylinder_query_ += ' WHERE '
+                handled_cylinder_query_ += ' AND '.join(conditions)
+            handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant", "process_date" '
+        else:
+            if not "where" in handled_cylinder_query_.lower():
+                handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            else:
+                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+            handled_cylinder_query_ += ' GROUP BY "zone", "plant", "process_date" '
+            resp = await function(query=handled_cylinder_query_)
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["zone"], as_index=False).agg({
+                    "Cylinder_Filled": "sum"
+                })
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            for each_float_col in ["Cylinder_Filled"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)            
+            for each_str_col in ["zone", "plant"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        # Execute the query
+        resp = await function(query=handled_cylinder_query_)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
+        resp = pd.DataFrame(resp)
+        for each_float_col in ["Cylinder_Filled"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        # Fill missing values for string columns
+        for each_str_col in ["zone", "plant"]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "zone" in filter_keys and "plant" not in filter_keys:
+                grouped_resp = resp.groupby(["zone", "plant"], as_index=False).agg({
+                    "Cylinder_Filled": "sum"
+                })
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+
+    @staticmethod
+    async def sales_growth_ytd(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)

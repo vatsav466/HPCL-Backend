@@ -12,7 +12,7 @@ RABBITMQ_VHOST = 'hpcl_ceg'
 RABBITMQ_USER = 'hpcl_ceg'
 RABBITMQ_PASSWORD = 'algo#ceg@4321'
 RABBITMQ_PREFIX_QUEUE = "command_listener_"
-SITE_ID = "1999"
+SITE_ID = "11128"
 BASE_URL = "http://10.90.38.164:8080"
 
 
@@ -22,7 +22,7 @@ class TelemetryService:
     @staticmethod
     def load_site_data(site_id):
         """Load site data from a local JSON file."""
-        filename = f"/Users/manohar/Documents/GitHub/dnc_backend_v2/things_board/device_data/{site_id}.json"
+        filename = f"/opt/ceg/algo/things_board/device_data/{site_id}.json"
         if not os.path.exists(filename):
             print(f"Site data file not found: {filename}")
             return None
@@ -85,7 +85,6 @@ class RabbitMQListener:
     def __init__(self, sap_id):
         self.queue_name = f"{RABBITMQ_PREFIX_QUEUE}{sap_id}"
         self.sap_id = sap_id
-        self.site_id = SITE_ID
 
     def on_message(self, ch, method, properties, body):
         """Callback to handle incoming messages."""
@@ -94,7 +93,7 @@ class RabbitMQListener:
             print(f"Received message on {self.queue_name}: {message}")
             location_id = message.get("location_id")
             tags_data = message.get("tags_data", {})
-            success = TelemetryService.process_tags_data(location_id, tags_data, self.site_id)
+            success = TelemetryService.process_tags_data(location_id, tags_data, location_id)
             ch.basic_ack(delivery_tag=method.delivery_tag)
             if success:
                 print(f"All tags processed successfully for {self.queue_name}.")
@@ -127,7 +126,7 @@ class RabbitMQListener:
 
 
 def main():
-    sap_ids = ["1999", "2000", "2001"]  # Add all the SAP IDs you want to listen for
+    sap_ids = ["1999", "11128", "2001"]  # Add all the SAP IDs you want to listen for
     try:
         threads = []
         for sap_id in sap_ids:

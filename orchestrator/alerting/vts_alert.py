@@ -150,6 +150,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             vts_alert_data['alert_section'] = 'VTS'
                             vts_alert_data['alert_history'] = alert_history
                             vts_alert_data['clear_count'] = details['alerting_rules'][str(altcount)]['clear_count']
+                            vts_alert_data['severity'] = details['severity']
                             await cls.create_alert(vts_alert_data, camunda_url)
                 except Exception as e:
                     print(traceback.format_exc())

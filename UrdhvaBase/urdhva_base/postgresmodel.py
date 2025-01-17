@@ -106,7 +106,7 @@ class BasePostgresModel(pydantic.BaseModel):
         ...
 
     @classmethod
-    async def get_clause_conditions(cls, formated=False):
+    async def get_clause_conditions(cls, formated=False, extra_key_mapping={}):
         where_clause = []
         if urdhva_base.ctx.exists() and hasattr(cls.Config, "access_key_mapping"):
             key_mapping = cls.Config.access_key_mapping
@@ -116,6 +116,8 @@ class BasePostgresModel(pydantic.BaseModel):
             }
             rpt = urdhva_base.context.context.get('rpt', {})
             for key, value in mapped_data.items():
+                if key in extra_key_mapping:
+                    key = extra_key_mapping[key]
                 if value in rpt and rpt.get(value):
                     if isinstance(rpt[value], list):
                         if len(rpt[value]) == 1:
