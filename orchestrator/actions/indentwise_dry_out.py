@@ -429,7 +429,7 @@ class IndentDryOut:
         query = f"""SELECT COUNT(*) AS "count", b."PROD_ALLOT_TIME" """ \
                 f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b """ \
                 f"""WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
-                f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND a."CANCEL_INDENT" IS NULL """ \ 
+                f"""AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND a."CANCEL_INDENT" IS NULL """ \
                 f"""AND a."INDENT_NO" IN ('{indent_no}') AND a."TRUCK_REGNO" IS NOT NULL """ \
                 f"""AND a."LOCN_CODE" = b."LOCN_CODE" AND a."TRUCK_REGNO" = b."JDE_TRUCK_NO" """ \
                 f"""AND b."INDENT_NO" IN ('{indent_no}') """ \
