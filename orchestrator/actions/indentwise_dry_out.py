@@ -187,10 +187,11 @@ class IndentDryOut:
                     alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
                     # checking with indent_no from ims
                     if alerts_data['data']:
-                        if record['dry_out_in_days'] != self.params['dry_out_in_days']:
-                            query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
-                                     f"where id='{record['id']}'")
-                            await hpcl_ceg_model.Alerts.update_by_query(query)
+                        for record in alerts_data['data']:
+                            if record['dry_out_in_days'] != self.params['dry_out_in_days']:
+                                query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
+                                         f"where id='{record['id']}'")
+                                await hpcl_ceg_model.Alerts.update_by_query(query)
                     else:
                         # not alerts with indent_no then create alerts
                         self.params['indent_no'] = str(each_indent['INDENT_NO'])
