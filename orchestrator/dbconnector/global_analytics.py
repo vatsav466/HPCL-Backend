@@ -1852,8 +1852,12 @@ class GlobalAnalytics:
                         grouped_keys.extend(["Zone_Name"])
                 else:
                     print("No keys selected")
-                    # If no valid keys are selected, group by all keys
-                    grouped_keys.extend(["Zone_Name", "Region_Name"])
+                    if "DS Lubes" in filter_values or "DS" in filter_values or "Lubes" in filter_values:
+                        print("DS Lubes selected")
+                        grouped_keys.extend(["Region_Name"])
+                    else:
+                        # If no valid keys are selected, group by all keys
+                        grouped_keys.extend(["Zone_Name"])
 
                 # Add grouping logic based on the updated grouped_keys
                 grouped_resp = resp.groupby(grouped_keys, as_index=False).agg(agg_dict)
