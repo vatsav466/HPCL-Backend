@@ -1081,10 +1081,6 @@ class GlobalAnalytics:
 
             # Create a mapping dictionary for SBU_Name replacements
             sbu_mapping = {
-                "Retail": "Retail",
-                "LPG": "LPG",
-                "I&C": "I&C",
-                "Aviation": "Aviation",
                 "PETROCHEMICALS SBU": "PETCHEM",  # Map PETROCHEMICALS SBU to PETCHEM
                 "GAS HQO": "NG",  # Map GAS HQO to NG
             }
@@ -1760,9 +1756,9 @@ class GlobalAnalytics:
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
 
-                # resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
-                # resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
-                # resp = resp.sort_values('SBU_Name')
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -4387,7 +4383,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         current_date = datetime.now().strftime("%Y-%m-%d")
-        handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_handled_filled_cylinder")
+        handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_filled_cylinder")
         if filters:
             conditions = []
             for rec in filters:
