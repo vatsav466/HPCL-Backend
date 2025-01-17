@@ -260,6 +260,7 @@ Model LocationMaster {
 
     Config=> {
         crud_operations='read'
+        access_key_mapping='bu,zone,region,sales_area,sap_id'
     }
 }
 
@@ -1143,7 +1144,7 @@ Model M60LevelMetaData{
     engine_id optional str
 
     Config=> {
-        access_key_mapping='SBU_NAME:bu,Zone:zone,SalesArea_Name:sales_area,Region_Name:region'
+        access_key_mapping='SBU_Name:bu,ZONE:zone,SalesArea_Name:sales_area,Region_Name:region'
     }
 
 }
@@ -1175,6 +1176,73 @@ Model MomLevelFinalMetaData {
         access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'
     }
 
+}
+
+Model ConsumerPumpTankDelivery {
+    bu optional str
+    depot optional str
+    sap_id optional str
+    product optional str
+    tank_group optional str
+    start_time optional datetime
+    end_time optional datetime
+    tank_no optional int
+    volume optional float
+    tc_volume optional float
+    start_volume optional float
+    start_water optional float
+    start_temp optional float
+    start_product_height optional float
+    end_volume optional float
+    end_water optional float
+    end_temp optional float
+    end_product_height optional float
+    manual optional bool
+    delivery_date optional datetime
+    truck_reg_no optional str
+    po_number optional str
+    verification_delivery_time optional datetime
+    verification_sales_order_no optional str
+    actual_volume optional float
+    actual_temp optional float
+    density optional float
+    pre_density optional float
+    post_density optional float
+    source optional str
+
+    Config=> {
+        access_key_mapping='bu,sap_id'
+    }
+}
+
+
+Model ConsumperPumpTransaction {
+    bu optional str
+    sap_id optional str
+    depot optional str
+    make optional str
+    model optional str
+    make_model optional str
+    capacity optional int
+    token_type optional str
+    transaction_time optional datetime
+    transaction_type optional str
+    product optional str
+    volume optional float
+    tank_no optional int
+    start_pump_totalizer optional float
+    end_pump_totalizer optional float
+    consumption_type optional str
+    consumption_benchmark optional int
+    dispensing_unit optional int
+    pump_no optional int
+    global_nozzle_no optional int
+    department optional str
+    status optional str
+
+    Config=> {
+        access_key_mapping='bu,sap_id'
+    }
 }
 
 

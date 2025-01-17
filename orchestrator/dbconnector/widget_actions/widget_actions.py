@@ -146,16 +146,16 @@ class WidgetActions:
                 raise AttributeError(f"Function {func_name} not found in either module.")
 
             action_query = lpg_plant_queries.lpg_plant_query.get(func_name)
-            for model_, model_actions in model_mapping.modelMapping.items():
-                if func_name in model_actions:
-                    where_clause = await eval(f"hpcl_ceg_model.{model_}.get_clause_conditions()")
-                    print("where_clause: ", where_clause)
-                    print("query before: ",action_query)
-                    widget_mapping[func_name] = {'filter_applied': action_query}
-                    if where_clause:
-                        action_query = await WidgetActions.get_not_join_query(action_query, where_clause,"")
-                    lpg_plant_queries.lpg_plant_query[func_name] = action_query
-                    print("query after: ", lpg_plant_queries.lpg_plant_query[func_name],'\n','%'*50)
+            # for model_, model_actions in model_mapping.modelMapping.items():
+            #     if func_name in model_actions:
+            #         where_clause = await eval(f"hpcl_ceg_model.{model_}.get_clause_conditions(formated=True)")
+            #         print("where_clause: ", where_clause)
+            #         print("query before: ",action_query)
+            #         widget_mapping[func_name] = {'filter_applied': action_query}
+            #         if where_clause:
+            #             action_query = await WidgetActions.get_not_join_query(action_query, where_clause,"")
+            #         lpg_plant_queries.lpg_plant_query[func_name] = action_query
+            #         print("query after: ", lpg_plant_queries.lpg_plant_query[func_name],'\n','%'*50)
 
 
             # Retrieve the function from the resolved module
@@ -164,7 +164,7 @@ class WidgetActions:
 
             # Execute the function asynchronously
             res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
-            lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
+            # lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
             return res
         
         except AttributeError as e:
@@ -195,12 +195,16 @@ class WidgetActions:
             value = filter_item['value']
 
             if condition == 'equals':
-                if isinstance(value, int):
-                    conditions.append(f''' {key} = {value} ''')
-                elif isinstance(value, list):
-                    conditions.append(f''' {key} = '{value[0]}' ''')
+                if '.' in key:
+                    if isinstance(value, int):
+                        conditions.append(f''' {key} = {value} ''')
+                    else:
+                        conditions.append(f''' {key} = '{value}' ''')
                 else:
-                    conditions.append(f''' {key} = '{value}' ''')
+                    if isinstance(value, int):
+                        conditions.append(f''' "{key}" = {value} ''')
+                    else:
+                        conditions.append(f''' "{key}" = '{value}' ''')
             elif condition == 'prefix':
                 conditions.append(f"{key} LIKE '{value}%'")
             elif condition == 'contains':

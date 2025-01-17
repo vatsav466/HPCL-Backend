@@ -4,6 +4,8 @@ import orchestrator.dbconnector.connector_factory as connector_factory
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from orchestrator.dashboard.chart_factory import charts_functions as execution_helpers
 from orchestrator.dbconnector.widget_actions import widget_actions
+import hpcl_ceg_model
+import dashboard_studio_model
 import psycopg2
 from psycopg2 import sql, errors
 
@@ -390,6 +392,8 @@ class LPGPlantActions:
     async def high_alert_locations(filters, drill_state):
         high_alert_query = lpg_plant_queries.lpg_plant_query.get("high_alert_locations")
         high_alert_query_ = high_alert_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             high_alert_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(high_alert_query, filters, drill_state)
             print("high_alert_query_ --> ", high_alert_query_)
@@ -409,6 +413,8 @@ class LPGPlantActions:
     async def critical_alert_locations(filters, drill_state):
         critical_alert_query = lpg_plant_queries.lpg_plant_query.get("critical_alert_locations")
         critical_alert_query_ = critical_alert_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             critical_alert_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(critical_alert_query, filters, drill_state)
             print("critical_alert_locations --> ", critical_alert_query_)
@@ -428,6 +434,8 @@ class LPGPlantActions:
     async def sod_terminal(filters, drill_state):
         sod_terminal_query = lpg_plant_queries.lpg_plant_query.get("sod_terminal")
         sod_terminal_query_ = sod_terminal_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             sod_terminal_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(sod_terminal_query, filters, drill_state)
         try:
@@ -446,6 +454,8 @@ class LPGPlantActions:
     async def alert_categories(filters, drill_state):
         alert_categories_query = lpg_plant_queries.lpg_plant_query.get("alert_categories")
         alert_categories_query_ = alert_categories_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             alert_categories_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(alert_categories_query, filters, drill_state)
         try:
@@ -464,6 +474,8 @@ class LPGPlantActions:
     async def tas_alerts(filters, drill_state):
         tas_alerts_query = lpg_plant_queries.lpg_plant_query.get("tas_alerts")
         tas_alerts_query_ = tas_alerts_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             tas_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(tas_alerts_query, filters, drill_state)
         try:
@@ -482,6 +494,8 @@ class LPGPlantActions:
     async def non_tas_alerts(filters, drill_state):
         non_tas_alerts_query = lpg_plant_queries.lpg_plant_query.get("non_tas_alerts")
         non_tas_alerts_query_ = non_tas_alerts_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             non_tas_alerts_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(non_tas_alerts_query, filters, drill_state)
         try:
@@ -500,6 +514,8 @@ class LPGPlantActions:
     async def no_of_terminals(filters, drill_state):
         no_of_terminals_query = lpg_plant_queries.lpg_plant_query.get("no_of_terminals")
         no_of_terminals_query_ = no_of_terminals_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             no_of_terminals_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(no_of_terminals_query, filters, drill_state)
         try:
@@ -519,6 +535,8 @@ class LPGPlantActions:
     # async def alert_ageing(filters, drill_state):
     #     alert_ageing_query = lpg_plant_queries.lpg_plant_query.get("alert_ageing")
     #     alert_ageing_query_ = alert_ageing_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
     #     if filters:
     #         alert_ageing_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(alert_ageing_query, filters, drill_state)
     #     try:
@@ -537,6 +555,8 @@ class LPGPlantActions:
     async def alert_distributions(filters, drill_state):
         alert_distributions_query = lpg_plant_queries.lpg_plant_query.get("alert_distributions")
         alert_distributions_query_ = alert_distributions_query
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             alert_distributions_query_ = await widget_actions.WidgetActions.apply_filter_drilldown(alert_distributions_query, filters, drill_state)
         try:
