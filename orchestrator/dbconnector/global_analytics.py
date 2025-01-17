@@ -1077,6 +1077,18 @@ class GlobalAnalytics:
                 resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
+            sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
+
+            # Create a mapping dictionary for SBU_Name replacements
+            sbu_mapping = {
+                "Retail": "Retail",
+                "LPG": "LPG",
+                "I&C": "I&C",
+                "Aviation": "Aviation",
+                "PETROCHEMICALS SBU": "PETCHEM",  # Map PETROCHEMICALS SBU to PETCHEM
+                "GAS HQO": "NG",  # Map GAS HQO to NG
+            }
+            resp = resp[resp["SBU_Name"] != "0"]
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1124,6 +1136,10 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1389,6 +1405,10 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
 
                 if selected_keys:
                     grouped_resp = resp.groupby(["month_name", "SBU_Name"], as_index=False).agg(agg_dict)
@@ -1661,7 +1681,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     print("hisdata",len(his_data))
                     his_data = pd.DataFrame(his_data)
-                    his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
                     resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
                     resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year']],how='left',on='month_name')
@@ -1730,7 +1750,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
-                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
                     his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
                     resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
@@ -1739,6 +1759,10 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
+
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1800,7 +1824,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
-                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
                     his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
                     his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
@@ -1812,7 +1836,11 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
-                    
+
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
@@ -1873,7 +1901,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
-                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
                     his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
                     his_data['ORGRONAME'] = his_data['ORGRONAME'].fillna('').astype(str)
@@ -1886,6 +1914,11 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
+                
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
@@ -1947,7 +1980,7 @@ class GlobalAnalytics:
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
-                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'],as_index = False)['NETWEIGHT_TMT'].sum()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
                     his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
                     his_data['ORGRONAME'] = his_data['ORGRONAME'].fillna('').astype(str)
@@ -1961,6 +1994,11 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
+                
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
@@ -2016,6 +2054,10 @@ class GlobalAnalytics:
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
 
+                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                resp = resp.sort_values('SBU_Name')
+                
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
