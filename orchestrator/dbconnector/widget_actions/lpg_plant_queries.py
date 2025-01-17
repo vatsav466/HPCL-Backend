@@ -901,8 +901,7 @@ LIMIT 10000;''',
                             "plant" as "plant",
                             CAST("process_date" AS DATE) as "process_date"
                         from
-                            "lpg_cs_rejections" '''
-                                "LPG_CONSUMERS_SUMMARY" ''',
+                            "lpg_cs_rejections" ''',
     
     "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "cp_tank_delivery_updated" ', 
 
