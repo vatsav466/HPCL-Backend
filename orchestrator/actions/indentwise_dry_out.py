@@ -215,7 +215,7 @@ class IndentDryOut:
                 self.params['indent_no'] = ''
                 self.params['terminal_plant_id'] = ''
                 self.params['servicing_plant_id'] = ''
-                self.params['indent_raised_date'] = ''
+                # self.params['indent_raised_date'] = ''
                 await create_alert(self.params, camunda_url)
                 await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                     connection_mapping.item_name_mapping.get(prod_code, ""))
