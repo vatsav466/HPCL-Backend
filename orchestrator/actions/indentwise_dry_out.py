@@ -970,6 +970,7 @@ class IndentDryOut:
         ims_datetime = ims_datetime.split(" ")[0]
         ims_time = resp.get("INVOICE_TIME").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z" if resp.get(
             "INVOICE_TIME", "") else ""
+        ims_time = str(ims_time).zfill(6)
         ims_time = f" {ims_time[:2]}:{ims_time[2:4]}:{ims_time[4:6]}"
         if resp.get("count") > 0:
             input_data["action_msg"] = "Invoice created"
