@@ -22,7 +22,7 @@ vts_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Speed Violation",
-        "alert_threshold": 10
+        "alert_threshold": 5
     },
     "night_driving_count": {
         "alerting_rules": {
@@ -47,7 +47,7 @@ vts_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Night Driving",
-        "alert_threshold": 10
+        "alert_threshold": 5
     },
     "route_deviation_count": {
         "alerting_rules": {
@@ -66,7 +66,7 @@ vts_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Route Deviation",
-        "alert_threshold": 10
+        "alert_threshold": 5
     },
     "stoppage_violations_count": {
         "alerting_rules": {
@@ -85,7 +85,7 @@ vts_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Stoppage  Violations",
-        "alert_threshold": 10
+        "alert_threshold": 5
     },
     "no_halt_zone_count": {
         "alerting_rules": {
@@ -149,7 +149,7 @@ vts_interlock_mapping = {
         },
         "severity": "High",
         "description": "Main Supply Removal",
-        "alert_threshold": 10
+        "alert_threshold": 0
     },
     "driver_panic": {
         "alerting_rules": {
@@ -162,7 +162,7 @@ vts_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Driver Panic",
-        "alert_threshold": 10
+        "alert_threshold": 0
     },
     "continuous_driving": {
         "alerting_rules": {
@@ -175,7 +175,7 @@ vts_interlock_mapping = {
         },
         "severity": "High",
         "description": "Continuous Driving",
-        "alert_threshold": 15
+        "alert_threshold": 5
     },
     "harsh_breaking": {
         "alerting_rules": {
@@ -188,7 +188,7 @@ vts_interlock_mapping = {
         },
         "severity": "Medium",
         "description": "Harsh Breaking",
-        "alert_threshold": 20
+        "alert_threshold": 5
     },
     "harsh_turn": {
         "alerting_rules": {
@@ -201,7 +201,7 @@ vts_interlock_mapping = {
         },
         "severity": "Medium",
         "description": "Harsh Turn",
-        "alert_threshold": 20
+        "alert_threshold": 5
     }
 }
 
@@ -229,7 +229,7 @@ vts_exception_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Speed Violation",
-        "alert_threshold": 10
+        "alert_threshold": 5
     },
     "night_driving_count": {
         "alerting_rules": {
@@ -254,7 +254,7 @@ vts_exception_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Night Driving",
-        "alert_threshold": 10
+        "alert_threshold": 5
     },
     "route_deviation_count": {
         "alerting_rules": {
@@ -273,7 +273,7 @@ vts_exception_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Route Deviation",
-        "alert_threshold": 10
+        "alert_threshold": 5
     },
     "stoppage_violations_count": {
         "alerting_rules": {
@@ -292,7 +292,7 @@ vts_exception_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Stoppage  Violations",
-        "alert_threshold": 10
+        "alert_threshold": 5
     },
     "no_halt_zone_count": {
         "alerting_rules": {
@@ -356,7 +356,7 @@ vts_exception_interlock_mapping = {
         },
         "severity": "High",
         "description": "Main Supply Removal",
-        "alert_threshold": 10
+        "alert_threshold": 0
     },
     "driver_panic": {
         "alerting_rules": {
@@ -369,7 +369,7 @@ vts_exception_interlock_mapping = {
         },
         "severity": "Critical",
         "description": "Driver Panic",
-        "alert_threshold": 10
+        "alert_threshold": 0
     },
     "continuous_driving": {
         "alerting_rules": {
@@ -382,7 +382,7 @@ vts_exception_interlock_mapping = {
         },
         "severity": "High",
         "description": "Continuous Driving",
-        "alert_threshold": 15
+        "alert_threshold": 5
     },
     "harsh_breaking": {
         "alerting_rules": {
@@ -395,7 +395,7 @@ vts_exception_interlock_mapping = {
         },
         "severity": "Medium",
         "description": "Harsh Breaking",
-        "alert_threshold": 20
+        "alert_threshold": 5
     },
     "harsh_turn": {
         "alerting_rules": {
@@ -408,6 +408,6 @@ vts_exception_interlock_mapping = {
         },
         "severity": "Medium",
         "description": "Harsh Turn",
-        "alert_threshold": 20
+        "alert_threshold": 5
     }
 }
