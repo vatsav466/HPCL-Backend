@@ -161,7 +161,11 @@ class IndentDryOut:
                 alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
                 # checking if alerts avaible with empty indent if there update with indent no
                 if alerts_data['data']:
-                    for record in alerts_data['data']:
+                    for index, record in enumerate(alerts_data['data']):
+                        if index >= 1:
+                            print(f"Found duplicate alert {record}")
+                            # Todo:- Push to cleanup queue
+                            continue
                         query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
                                  f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
                                  f"""servicing_plant_id='{each_indent["LOCN_CODE"]}' """                                 
@@ -368,8 +372,8 @@ class IndentDryOut:
                     input_data["event_tags"]["is_raised"] = True
                     input_data['ims_datetime'] = each_indent.get("INDENT_DATE").strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                                  :-3] + "Z" if each_indent.get("INDENT_DATE", "") else ""
-                    input_data['prod_reqd_dt'] = resp.get("PROD_REQD_DT").strftime('%Y-%m-%dT%H:%M:%S.%f')[
-                                                 :-3] + "Z" if resp.get("PROD_REQD_DT", "") else ""
+                    input_data['prod_reqd_dt'] = each_indent.get("PROD_REQD_DT").strftime('%Y-%m-%dT%H:%M:%S.%f')[
+                                                 :-3] + "Z" if each_indent.get("PROD_REQD_DT", "") else ""
                     await self.update_alert_status(indent_status=IndentStatus.IndentRaised, input_data=input_data,
                                                    progress_rate="2")
                     query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
