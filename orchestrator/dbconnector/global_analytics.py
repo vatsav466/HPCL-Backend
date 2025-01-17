@@ -1688,7 +1688,7 @@ class GlobalAnalytics:
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     resp.to_csv('/tmp/resp.csv',index = False)
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = "max"
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1757,7 +1757,7 @@ class GlobalAnalytics:
                     resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year','ORGSBUNAME']],how='left',left_on=['month_name','SBU_Name'],right_on = ['month_name','ORGSBUNAME'])
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
 
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
@@ -1834,7 +1834,7 @@ class GlobalAnalytics:
                                       right_on = ['month_name','ORGSBUNAME','ORGZONENAME'])
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
 
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
@@ -1912,7 +1912,7 @@ class GlobalAnalytics:
                                       right_on = ['month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME'])
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
                 
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
@@ -1992,7 +1992,7 @@ class GlobalAnalytics:
                                       right_on = ['month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'])
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
-                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(np.float64)
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
                 
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
@@ -2057,7 +2057,7 @@ class GlobalAnalytics:
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
                 resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
                 resp = resp.sort_values('SBU_Name')
-                
+
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
