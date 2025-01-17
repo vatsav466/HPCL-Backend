@@ -646,6 +646,12 @@ class IndentDryOut:
             }
         }
         if not resp:
+            input_data["action_msg"] = "Indent Is On Hold"
+            input_data["action_type"] = "Message"
+            input_data["event_tags"]["is_raised"] = False
+            input_data["ims_datetime"] = ""
+            await self.update_alert_status(indent_status=IndentStatus.IndentOnHold, input_data=input_data,
+                                           progress_rate="2")
             return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         ims_datetime = ""
