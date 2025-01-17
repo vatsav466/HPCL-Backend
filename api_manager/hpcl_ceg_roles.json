@@ -1921,6 +1921,69 @@
             ]
         },
         {
+            "name": "vaalerthistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VaAlertHistory",
+            "attributes": {},
+            "uris": [
+                "/api/vaalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vaalerthistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VaAlertHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vaalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vaalerthistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VaAlertHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vaalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "m60levelmetadata",
             "type": "all",
             "ownerManagedAccess": false,

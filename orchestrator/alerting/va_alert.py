@@ -42,19 +42,26 @@ class VAAlertManager(alert_factory.AlertFactory):
             location_id = alert_data['location_id'].split(",")[-1].strip()
 
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'].value,
+            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'],
                                                                      sap_id=location_id)
             if not status:
                 logger.info(f"Error in finding location {location_id} "
-                            f"for bu {alert_data['location_type'].value} - {loc_dt}")
+                            f"for bu {alert_data['location_type']} - {loc_dt}")
                 return
 
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
-            for record in alert_data['data']:
+            if isinstance(alert_data, dict):
+                alert_records = [alert_data]  # Wrap single record in a list for uniform processing
+            elif isinstance(alert_data, list):
+                alert_records = alert_data  # Use directly if it's already a list
+            else:
+                logger.error("Invalid alert_data format. Expected dict or list of dicts.")
+                return
+            for record in alert_records:
                 try:
                     exception_msg = " ".join([
                         f"New Alert created at {recv_time} for",
-                        f"alert_type - {record['alert_type']},",
+                        f"alert_type - {record['alert_section']},",
                         f"alert_description - {record['alert_description']},",
                         f"device_id - {record['device_id']},",
                         f"video_url - {record['video_url']}"
@@ -65,28 +72,24 @@ class VAAlertManager(alert_factory.AlertFactory):
                         "action_type": "Created",
                         "alert_status": "Open"
                         }]
-
-                    va_alert_data = va_alert_mapping.VA_Alert_Mapping[alert_data['location_type'].value].get(
-                        record['alert_type'], {})
+                    va_alert_data = va_alert_mapping.VA_Alert_Mapping[record['location_type']].get(
+                        record['alert_section'], {})
                     if not va_alert_data:
                         logger.info("interlock_details not found")
                         continue
 
-                    keys = [location_id, alert_data['location_type'].value, "VA", record['device_id'],
+                    keys = [location_id, record['location_type'], "VA", record['device_id'],
                             va_alert_data['name']]
-                    print("key------->",keys)
                     alert_id = helpers.generate_hash(keys)
-                    print("alert_id---->",alert_id)
-                    # redis_ins = await urdhva_base.redispool.get_redis_connection()
-                    # if await redis_ins.hexists("alert_mapping", alert_id):
-                    #     print("Alert already exists")
-                    #     continue
-
+                    redis_ins = await urdhva_base.redispool.get_redis_connection()
+                    if await redis_ins.exists(alert_id):
+                        logger.info("Alert already exists")
+                        continue
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
-                        alert_data['location_type'].value,
+                        record['location_type'],
                         va_alert_data["name"])
-
-                    interlock_details.update({"bu": alert_data['location_type'].value,
+                    
+                    interlock_details.update({"bu": record['location_type'],
                                               "location_name": loc_dt['name'],
                                               "sap_id": location_id,
                                               "device_id": record['device_id'],

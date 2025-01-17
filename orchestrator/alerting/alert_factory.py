@@ -107,7 +107,10 @@ class AlertFactory:
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
-            await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
+            if alert_data.get("alert_section",'') in ["VA"]:
+                await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
+            else:
+                await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
                        "variables": {"alert_id": {"value": alert_resp['id'], "type": "String"},
                                      "interlock_name": {"value": interlock_name, "type": "String"},
