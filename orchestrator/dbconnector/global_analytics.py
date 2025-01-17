@@ -3883,7 +3883,7 @@ class GlobalAnalytics:
             for _filter in _filters:
                 for key, value in _filter.items():
                     key = key.replace('"','')
-                    if key in ["Execution_Month", "CylType", "ConsumerType"]:
+                    if key in ["Month", "CylType", "ConsumerType"]:
                         continue
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
