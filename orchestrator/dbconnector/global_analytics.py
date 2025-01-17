@@ -27,6 +27,7 @@ async def filter_data(df, _filters):
             mask = pd.Series(True, index=df.index)
             for _filter in _filters:
                 for key, value in _filter.items():
+                    key = key.replace('"','')
                     mask = mask & (df[key].fillna('') == value)
             df = df[mask]
             return df
@@ -2914,7 +2915,7 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
-        yesterday = datetime.now() - relativedelta(days=14)
+        yesterday = datetime.now() - relativedelta(days=1)
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -2937,13 +2938,13 @@ class GlobalAnalytics:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
             lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
         else:
             if "where" not in lpg_cdcms_query_.lower():
                 lpg_cdcms_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             else:
                 lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
                                             
             resp = await function(query=lpg_cdcms_query_)
             # Convert the response to a DataFrame for further processing
@@ -3080,13 +3081,13 @@ class GlobalAnalytics:
                 lpg_cdcms_month_query_ += ' WHERE '
                 lpg_cdcms_month_query_ += ' AND '.join(conditions)
             lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName", "ConsumerType", "CylType"'
         else:
             if "where" not in lpg_cdcms_month_query_.lower():   
                 lpg_cdcms_month_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
             else:
                 lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName", "ConsumerType", "CylType"'
             resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3199,13 +3200,13 @@ class GlobalAnalytics:
                 cdcms_order_source_query_ += ' WHERE '
                 cdcms_order_source_query_ += ' AND '.join(conditions)
             cdcms_order_source_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
         else:      
             if "where" not in cdcms_order_source_query_.lower():
                 cdcms_order_source_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
             else:
                 cdcms_order_source_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
-            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
 
             resp = await function(query=cdcms_order_source_query_)
             # Convert the response to a DataFrame for further processing
@@ -3317,13 +3318,13 @@ class GlobalAnalytics:
                 lpg_pending_query_  += ' WHERE '
                 lpg_pending_query_  += ' AND '.join(conditions)
             lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"'
+            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode", "CylType"'
         else:
             if "where" not in lpg_pending_query_.lower():                
                 lpg_pending_query_  += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
             else:
                 lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
-            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"'
+            lpg_pending_query_  += ' GROUP BY "Execution_Date","ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode", "CylType"'
             print("*"*50)
             print("lpg_pending_query_ :", lpg_pending_query_)
             print("*"*50)
@@ -3907,6 +3908,7 @@ class GlobalAnalytics:
             df = df.filter(filter_expr)
         months = [month for month in calendar.month_name if month]
         df = df.filter(pl.col("ZOName").fill_null("") != "NULL")
+        df = df.filter(pl.col("DistributorName").fill_null("") != "NULL")
         data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
                 "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
                 "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
