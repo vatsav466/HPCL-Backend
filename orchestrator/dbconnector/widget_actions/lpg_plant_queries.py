@@ -814,8 +814,8 @@ LIMIT 10000;''',
                             "LPG_SALES_SUMMARY_DATA" ''',
     
     "cumulative_sales_pmuy_npmuy": f'''select
+                                            "DistributorName",
                                             "ConsumerType",
-                                            "JDEDistributorCode",
                                             "ZOName",
                                             "ROName",
                                             "SAName",

@@ -3216,7 +3216,7 @@ class GlobalAnalytics:
                 grouped_resp['Total Sales'] = grouped_resp['Total Sales'].round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}            
 
     @staticmethod
     async def cdcms_order_source(filters, cross_filters, drill_state):
@@ -4007,7 +4007,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         current_date = datetime.now()
         if current_date.month >= 4:  # If April or later, financial year starts this year
             start_year = current_date.year
@@ -4042,7 +4041,7 @@ class GlobalAnalytics:
                 cumulative_sales_pmuy_npmuy_query_ += ' AND '.join(conditions)
             
             cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
-            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -4052,7 +4051,7 @@ class GlobalAnalytics:
                 cumulative_sales_pmuy_npmuy_query_ += f' WHERE "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
             else:
                 cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
-            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode"'
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName"'
                                  
             resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
             # Convert the response to a DataFrame for further processing
@@ -4083,7 +4082,6 @@ class GlobalAnalytics:
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
-        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')        
         resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
         resp = resp[
             (resp["Execution_Date"] >= financial_year_start) &
@@ -4098,7 +4096,7 @@ class GlobalAnalytics:
 
         # Fill missing values for string columns
         for each_str_col in [
-            "ConsumerType","ZOName","ROName","SAName","JDEDistributorCode"
+            "ConsumerType","ZOName","ROName","SAName","DistributorName"
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -4123,8 +4121,8 @@ class GlobalAnalytics:
                     "Sales": lambda x: x.sum() / 10000000
                     })
             
-            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
-                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName","SAName","JDEDistributorCode"],
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
                     "Sales": lambda x: x.sum() / 10000000
                     })
