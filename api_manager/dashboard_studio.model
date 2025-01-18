@@ -232,6 +232,7 @@ Model Charts {
         filters optional list WidgetFilters
         action str
         drill_state optional str
+        cross_filters optional list str
     }
 
     Action=> enable_cross_filter {

@@ -3126,7 +3126,7 @@ class GlobalAnalytics:
                 lpg_cdcms_month_query_ += ' WHERE '
                 lpg_cdcms_month_query_ += ' AND '.join(conditions)
             lpg_cdcms_month_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
-            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName", "ConsumerType", "CylType"'
+            lpg_cdcms_month_query_ += ' GROUP BY "Month_Number", "Month", "JDEDistributorCode", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
