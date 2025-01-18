@@ -247,7 +247,7 @@ class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
     schema: str
     table: str
     column: typing.List[str]
-    where_cond: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    where_cond: typing.Optional[typing.List[dict]] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
 
 class Charts_Generate_Dynamic_Chart_QueryParams(pydantic.BaseModel):
