@@ -646,6 +646,12 @@ class IndentDryOut:
             }
         }
         if not resp:
+            input_data["action_msg"] = "Indent Is On Hold"
+            input_data["action_type"] = "Message"
+            input_data["event_tags"]["is_raised"] = False
+            input_data["ims_datetime"] = ""
+            await self.update_alert_status(indent_status=IndentStatus.IndentOnHold, input_data=input_data,
+                                           progress_rate="2")
             return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         ims_datetime = ""
@@ -687,9 +693,10 @@ class IndentDryOut:
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
         next_date = (datetime.datetime.now(pytz.timezone('Asia/Kolkata')) + datetime.timedelta(days=2)).strftime(
             "%Y-%m-%d")
-        query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR("DEALER_CODE",1,10) = '{dealer_code}' """ \
+        query = f"""SELECT COUNT(*) AS "count", "SEND_TO_JDE_TIME" FROM "IMS_SAP"."INDENT_REQUEST" WHERE SUBSTR("DEALER_CODE",1,10) = '{dealer_code}' """ \
                 f"""AND "PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND "CANCEL_INDENT" IS NULL AND """ \
-                f"""("VALID_INDENT" = 'Y' OR "VALID_INDENT" = 'H') AND "BATCH_FLAG" = 'Y' AND "INDENT_NO" IN ('{indent_no}')"""
+                f"""("VALID_INDENT" = 'Y' OR "VALID_INDENT" = 'H') AND "BATCH_FLAG" = 'Y' AND "INDENT_NO" IN ('{indent_no}') """ \
+                f"""GROUP BY "SEND_TO_JDE_TIME" """
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         input_data = {
@@ -701,10 +708,13 @@ class IndentDryOut:
         if not resp:
             return await self.send_alert_action(is_raised=False)
         resp = resp[0]
+        ims_datetime = resp.get("SEND_TO_JDE_TIME").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z" if resp.get(
+            "SEND_TO_JDE_TIME", "") else ""
         if resp.get("count") > 0:
             input_data["action_msg"] = "Sent To SAP"
             input_data["action_type"] = "SentToSap"
             input_data["event_tags"]["is_sent_to_sap"] = True
+            input_data['ims_datetime'] = ims_datetime
             await self.update_alert_status(indent_status=IndentStatus.SentToSAP, input_data=input_data, progress_rate="5")
             return await self.send_alert_action(is_sent_to_sap=True)
         return await self.send_alert_action(is_sent_to_sap=False)
@@ -832,10 +842,13 @@ class IndentDryOut:
                 return await self.send_alert_action(is_r2_swipe=True)
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
+        ims_datetime = resp.get("LOADED_ON").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z" if resp.get(
+            "LOADED_ON", "") else ""
         if resp.get("count") > 0:
             input_data["action_msg"] = "R2 Swiped"
             input_data["action_type"] = "R2Swipe"
             input_data["event_tags"]["is_r2_swipe"] = True
+            input_data["ims_datetime"] = ims_datetime
             await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data, progress_rate="7")
             return await self.send_alert_action(is_r2_swipe=True)
         return await self.send_alert_action(is_r2_swipe=False)
@@ -905,10 +918,13 @@ class IndentDryOut:
                 return await self.send_alert_action(is_r3_swipe=True)
             return await self.send_alert_action(is_r3_swipe=False)
         resp = resp[0]
+        ims_datetime = resp.get("LOADED_ON").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z" if resp.get(
+            "LOADED_ON", "") else ""
         if resp.get("count") > 0:
             input_data["action_msg"] = "R3 Swiped"
             input_data["action_type"] = "R3Swipe"
             input_data["event_tags"]["is_r3_swipe"] = True
+            input_data["ims_datetime"] = ims_datetime
             await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data, progress_rate="9")
             return await self.send_alert_action(is_r3_swipe=True)
         return await self.send_alert_action(is_r3_swipe=False)
@@ -932,10 +948,11 @@ class IndentDryOut:
             "%Y-%m-%d")
         indent_no = "','".join(self.params.get("indent_no").split(","))
         location_no = self.params.get("location_no")
-        query = f"""SELECT COUNT(*) AS "count" FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' AND """ \
+        query = f"""SELECT COUNT(*) AS "count", b."INVOICE_DATE", b."INVOICE_TIME" FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' AND """ \
                 f"""a."LOCN_CODE" = b."LOCN_CODE" AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND a."INDENT_NO" IN ('{indent_no}') """ \
                 f"""AND a."CANCEL_INDENT" IS NULL AND a."TRUCK_REGNO" IS NOT NULL AND (a."VALID_INDENT" = 'Y' OR a."VALID_INDENT" = 'H') """ \
-                f"""AND a."BATCH_FLAG" = 'Y' AND b."SALES_ORDERNO" IS NOT NULL AND b."INVOICE_NO" IS NOT NULL"""
+                f"""AND a."BATCH_FLAG" = 'Y' AND b."SALES_ORDERNO" IS NOT NULL AND b."INVOICE_NO" IS NOT NULL AND b."INDENT_NO" IN ('{indent_no}') """ \
+                f"""GROUP BY b."INVOICE_DATE", b."INVOICE_TIME" """
 
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
@@ -948,11 +965,17 @@ class IndentDryOut:
         if not resp:
             return await self.send_alert_action(is_raised=False)
         resp = resp[0]
+        ims_datetime = resp.get("INVOICE_DATE").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z" if resp.get(
+            "INVOICE_DATE", "") else ""
+        ims_datetime = ims_datetime.split(" ")[0]
+        ims_time = resp.get("INVOICE_TIME") if resp.get("INVOICE_TIME", "") else ""
+        ims_time = str(ims_time).zfill(6)
+        ims_time = f" {str(ims_time)[:2]}:{str(ims_time)[2:4]}:{str(ims_time)[4:6]}"
         if resp.get("count") > 0:
             input_data["action_msg"] = "Invoice created"
             input_data["action_type"] = "Created"
             input_data["event_tags"]["is_created"] = True
-
+            input_data["ims_datetime"] = str(ims_datetime) + str(ims_time)
             await self.update_alert_status(
                 indent_status=IndentStatus.InvoiceCreated,
                 input_data=input_data,

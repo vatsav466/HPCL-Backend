@@ -1,4 +1,5 @@
-Location = {
+# For RO
+RO = {
     "ROCode": "ro_id",
     "LocationID": "sap_id",
     "LocationName": "name",
@@ -25,22 +26,39 @@ Location = {
     "RTKM": "round_trip_distance",
 }
 
-LPG = {
+# For Terminal Locations
+TAS = {
     "LocationID": "sap_id",
-    "LocationName": "location_name",
+    "LocationName": "name",
     "LocationType": "bu",
     "LocationState": "state",
-    "LocationCity": "city",
+    "Address": "address",
+    "LocationDistrict": "district",
     "LocationRegion": "region",
-    "DeviceType": "device_type",
-    "DeviceDesc": "device_desc",
-    "DeviceTag": "device_tag",
-    "DeviceID": "device_id",
-    "DeviceKey": "device_key"
+    "LocationCity": "city",
+    "LocationZone": "zone",
+    "LocationPinCode": "pincode",
+    "Latitude": "latitude",
+    "Longitude": "longitude"
 }
 
+# For LPG Locations
+LPG = {
+    "LocationID": "sap_id",
+    "LocationName": "name",
+    "LocationType": "bu",
+    "LocationState": "state",
+    "Address": "address",
+    "LocationDistrict": "district",
+    "LocationRegion": "region",
+    "LocationCity": "city",
+    "LocationZone": "zone",
+    "LocationPinCode": "pincode",
+    "Latitude": "latitude",
+    "Longitude": "longitude"
+}
 
-RO = {
+RO_Device = {
     "LocationID": "sap_id",
     "LocationName": "location_name",
     "LocationType": "bu",
@@ -69,28 +87,13 @@ Role = {
     "LocationZone": "zone"
 }
 
-TAS = {
-    "LocationID": "sap_id",
-    "LocationName": "location_name",
-    "LocationType": "bu",
-    "LocationState": "state",
-    "LocationCity": "city",
-    "LocationRegion": "region",
-    "DeviceType": "device_type",
-    "DeviceDesc": "device_desc",
-    "DeviceTag": "device_tag",
-    "DeviceID": "device_id",
-    "DeviceKey": "device_key"
-}
-
 processcodemap = {
-    'RO': '1', 
-    'TAS': '2', 
-    'VTS': '3', 
-    'TAS_vehicle': '3', 
+    'RO': '1',
+    'TAS': '2',
+    'VTS': '3',
+    'TAS_vehicle': '3',
     'LPG_vehicle': '4'
-    }
-
+}
 
 tasSopcommands = {
     "SOP012": "/ASSETS/OPC/TLF_PULSE_STP_LPID.OP",
@@ -122,13 +125,13 @@ cems_location_master = {
 }
 
 alertmap = {'Pulse Security': 'LOADING TERMINATE COMMAND FROM CCC FOR PULSE ERROR',
-                    'K-Factors': 'LOADING TERMINATE COMMAND FROM CCC FOR KFACTOR ERROR',
-                    'No Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR NO FLOW ERROR',
-                    'Low Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR LOW FLOW ERROR',
-                    'High Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR HIGH FLOW ERROR',
-                    'Unauthorized Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR UNAUTHORISE FLOW ERROR',
-                    'Meteroverrun': 'LOADING TERMINATE COMMAND FROM CCC FOR METER OVERRUN ERROR',
-                    'Blendoverdose': 'LOADING TERMINATE COMMAND FROM CCC FOR BLEND OVERDOSE ERROR',
-                    'Blendunderdose': 'LOADING TERMINATE COMMAND FROM CCC FOR BLEND UNDERDOSE ERROR',
-                    'Additive overdose': 'LOADING TERMINATE COMMAND FROM CCC FOR ADD OVERDOSE ERROR',
-                    'Additive underdose': 'LOADING TERMINATE COMMAND FROM CCC FOR ADD UNDERDOSE ERROR'}
+            'K-Factors': 'LOADING TERMINATE COMMAND FROM CCC FOR KFACTOR ERROR',
+            'No Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR NO FLOW ERROR',
+            'Low Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR LOW FLOW ERROR',
+            'High Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR HIGH FLOW ERROR',
+            'Unauthorized Flow': 'LOADING TERMINATE COMMAND FROM CCC FOR UNAUTHORISE FLOW ERROR',
+            'Meteroverrun': 'LOADING TERMINATE COMMAND FROM CCC FOR METER OVERRUN ERROR',
+            'Blendoverdose': 'LOADING TERMINATE COMMAND FROM CCC FOR BLEND OVERDOSE ERROR',
+            'Blendunderdose': 'LOADING TERMINATE COMMAND FROM CCC FOR BLEND UNDERDOSE ERROR',
+            'Additive overdose': 'LOADING TERMINATE COMMAND FROM CCC FOR ADD OVERDOSE ERROR',
+            'Additive underdose': 'LOADING TERMINATE COMMAND FROM CCC FOR ADD UNDERDOSE ERROR'}

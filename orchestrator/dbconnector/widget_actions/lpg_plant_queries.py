@@ -756,8 +756,10 @@ LIMIT 10000;''',
                             "ZOName" as "ZOName",
                             "ROName" as "ROName",
                             "SAName" as "SAName",
-                            "Execution_Date" as "Execution_Date",
-                            "JDEDistributorCode" as "JDEDistributorCode"
+                            "Execution_Date",
+                            "JDEDistributorCode",
+                            "ConsumerType",
+                            "CylType"
                     from
                         "LPG_SALES_SUMMARY_DATA"''',
     
@@ -768,7 +770,9 @@ LIMIT 10000;''',
                                 "ZOName",
                                 "ROName",
                                 "SAName",
-                                "JDEDistributorCode"
+                                "JDEDistributorCode",
+                                "ConsumerType", 
+                                "CylType"
                             from
                                 "lpg_cdcms_sales_summary"''',
     
@@ -779,6 +783,8 @@ LIMIT 10000;''',
 	                                "ROName",
 	                                "SAName",
                                     "Execution_Date",
+                                    "ConsumerType", 
+                                    "CylType",
 	                                sum("BookingReceivedYesterday") as "Total_Bookings"
                                 from
 	                                "LPG_SALES_SUMMARY_DATA"''',
@@ -791,6 +797,7 @@ LIMIT 10000;''',
                                     "ConsumerType",
                                     "JDEDistributorCode",
                                     "Execution_Date",
+                                    "CylType",
                                     sum("Total_Pending") as "Total_pending" 
                                 from
                                     "LPG_SALES_SUMMARY_DATA" ''',
@@ -901,5 +908,56 @@ LIMIT 10000;''',
                             "plant" as "plant",
                             CAST("process_date" AS DATE) as "process_date"
                         from
-                            "lpg_cs_rejections" '''
+                            "lpg_cs_rejections" ''',
+    
+    "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "cp_tank_delivery_updated" ', 
+
+    "cp_total_dus": '''SELECT SUM("du") AS "total_du"
+FROM (
+    SELECT COUNT(DISTINCT "dispensing_unit") AS "du"
+    FROM "cp_transaction_updated"
+    GROUP BY "sap_id"
+) AS subquery ''',
+
+    "cp_total_tanks": '''SELECT SUM("tanks") AS "total_tanks"
+FROM (
+    SELECT COUNT(DISTINCT "tank_no") AS "tanks"
+    FROM "cp_tank_delivery_updated"
+    GROUP BY "sap_id"
+) AS subquery ''',
+
+    "cp_avg_monthly_consumption": '''SELECT 
+    AVG("sale_volume")/1000 AS "avg_sale_volume",
+    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY') AS "start_month_year",
+    "product" AS "product"
+FROM
+    "cp_tank_delivery_updated"
+GROUP BY
+    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY'),
+    "product",
+    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY')
+ORDER BY
+    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY') ASC''',
+
+    "cp_avg_monthly_consumption_by_location": '''SELECT 
+    AVG("sale_volume")/1000 AS "avg_sale_volume",
+	"depot" AS "plant",
+    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY') AS "start_month_year",
+    "product" AS "product"
+FROM
+    "cp_tank_delivery_updated"
+GROUP BY
+    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY'),
+    "product",
+	"depot",
+    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY')
+ORDER BY
+    "depot",TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY') ASC''',
+
+    "cp_total_volume_consumption": '''select sum("sale_volume")/1000 as "total_consumption" 
+    from "cp_tank_delivery_updated" ''',
+
+    "cp_total_volume_sales": '''select sum("sale_volume")/1000 as "total_sales" 
+    from "cp_transaction_updated"'''
+
 }

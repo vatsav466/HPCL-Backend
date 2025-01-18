@@ -283,6 +283,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = LocationMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
@@ -330,6 +331,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = LocationMasterSchema
         upsert_keys = []
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
 class LocationMasterGetResp(pydantic.BaseModel):
@@ -2559,7 +2561,7 @@ class M60LevelMetaDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = M60LevelMetaDataSchema
         upsert_keys = []
-        access_key_mapping = ['SBU_NAME:bu', 'Zone:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
+        access_key_mapping = ['SBU_Name:bu', 'ZONE:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
 
 
 class M60LevelMetaData(urdhva_base.postgresmodel.PostgresModel):
@@ -2624,7 +2626,7 @@ class M60LevelMetaData(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = M60LevelMetaDataSchema
         upsert_keys = []
-        access_key_mapping = ['SBU_NAME:bu', 'Zone:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
+        access_key_mapping = ['SBU_Name:bu', 'ZONE:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
 
 
 class M60LevelMetaDataGetResp(pydantic.BaseModel):
@@ -2719,6 +2721,228 @@ class MomLevelFinalMetaData(urdhva_base.postgresmodel.PostgresModel):
 
 class MomLevelFinalMetaDataGetResp(pydantic.BaseModel):
     data: typing.List[MomLevelFinalMetaData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class ConsumerPumpTankDeliverySchema(UrdhvaPostgresBase):
+    __tablename__ = 'consumer_pump_tank_delivery'
+    
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    depot: Mapped[typing.Optional[str]] = mapped_column("depot", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    product: Mapped[typing.Optional[str]] = mapped_column("product", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tank_group: Mapped[typing.Optional[str]] = mapped_column("tank_group", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    start_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("start_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    tank_no: Mapped[typing.Optional[int]] = mapped_column("tank_no", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    volume: Mapped[typing.Optional[float]] = mapped_column("volume", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    tc_volume: Mapped[typing.Optional[float]] = mapped_column("tc_volume", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    start_volume: Mapped[typing.Optional[float]] = mapped_column("start_volume", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    start_water: Mapped[typing.Optional[float]] = mapped_column("start_water", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    start_temp: Mapped[typing.Optional[float]] = mapped_column("start_temp", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    start_product_height: Mapped[typing.Optional[float]] = mapped_column("start_product_height", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    end_volume: Mapped[typing.Optional[float]] = mapped_column("end_volume", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    end_water: Mapped[typing.Optional[float]] = mapped_column("end_water", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    end_temp: Mapped[typing.Optional[float]] = mapped_column("end_temp", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    end_product_height: Mapped[typing.Optional[float]] = mapped_column("end_product_height", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    manual: Mapped[typing.Optional[bool]] = mapped_column("manual", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
+    delivery_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("delivery_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    truck_reg_no: Mapped[typing.Optional[str]] = mapped_column("truck_reg_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    po_number: Mapped[typing.Optional[str]] = mapped_column("po_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    verification_delivery_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("verification_delivery_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    verification_sales_order_no: Mapped[typing.Optional[str]] = mapped_column("verification_sales_order_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    actual_volume: Mapped[typing.Optional[float]] = mapped_column("actual_volume", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    actual_temp: Mapped[typing.Optional[float]] = mapped_column("actual_temp", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    density: Mapped[typing.Optional[float]] = mapped_column("density", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    pre_density: Mapped[typing.Optional[float]] = mapped_column("pre_density", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    post_density: Mapped[typing.Optional[float]] = mapped_column("post_density", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    source: Mapped[typing.Optional[str]] = mapped_column("source", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class ConsumerPumpTankDeliveryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'consumer_pump_tank_delivery'
+    
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    depot: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    product: typing.Optional[str] = pydantic.Field("", **{})
+    tank_group: typing.Optional[str] = pydantic.Field("", **{})
+    start_time: typing.Optional[datetime.datetime] | None = None
+    end_time: typing.Optional[datetime.datetime] | None = None
+    tank_no: typing.Optional[int] = pydantic.Field(0, **{})
+    volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    tc_volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_water: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_temp: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_product_height: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_water: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_temp: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_product_height: typing.Optional[float] = pydantic.Field(0.0, **{})
+    manual: typing.Optional[bool] = pydantic.Field(False, )
+    delivery_date: typing.Optional[datetime.datetime] | None = None
+    truck_reg_no: typing.Optional[str] = pydantic.Field("", **{})
+    po_number: typing.Optional[str] = pydantic.Field("", **{})
+    verification_delivery_time: typing.Optional[datetime.datetime] | None = None
+    verification_sales_order_no: typing.Optional[str] = pydantic.Field("", **{})
+    actual_volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    actual_temp: typing.Optional[float] = pydantic.Field(0.0, **{})
+    density: typing.Optional[float] = pydantic.Field(0.0, **{})
+    pre_density: typing.Optional[float] = pydantic.Field(0.0, **{})
+    post_density: typing.Optional[float] = pydantic.Field(0.0, **{})
+    source: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = ConsumerPumpTankDeliverySchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
+
+
+class ConsumerPumpTankDelivery(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'consumer_pump_tank_delivery'
+    
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    depot: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    product: typing.Optional[str] = pydantic.Field("", **{})
+    tank_group: typing.Optional[str] = pydantic.Field("", **{})
+    start_time: typing.Optional[datetime.datetime] | None = None
+    end_time: typing.Optional[datetime.datetime] | None = None
+    tank_no: typing.Optional[int] = pydantic.Field(0, **{})
+    volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    tc_volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_water: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_temp: typing.Optional[float] = pydantic.Field(0.0, **{})
+    start_product_height: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_water: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_temp: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_product_height: typing.Optional[float] = pydantic.Field(0.0, **{})
+    manual: typing.Optional[bool] = pydantic.Field(False, )
+    delivery_date: typing.Optional[datetime.datetime] | None = None
+    truck_reg_no: typing.Optional[str] = pydantic.Field("", **{})
+    po_number: typing.Optional[str] = pydantic.Field("", **{})
+    verification_delivery_time: typing.Optional[datetime.datetime] | None = None
+    verification_sales_order_no: typing.Optional[str] = pydantic.Field("", **{})
+    actual_volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    actual_temp: typing.Optional[float] = pydantic.Field(0.0, **{})
+    density: typing.Optional[float] = pydantic.Field(0.0, **{})
+    pre_density: typing.Optional[float] = pydantic.Field(0.0, **{})
+    post_density: typing.Optional[float] = pydantic.Field(0.0, **{})
+    source: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = ConsumerPumpTankDeliverySchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
+
+
+class ConsumerPumpTankDeliveryGetResp(pydantic.BaseModel):
+    data: typing.List[ConsumerPumpTankDelivery]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class ConsumperPumpTransactionSchema(UrdhvaPostgresBase):
+    __tablename__ = 'consumper_pump_transaction'
+    
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    depot: Mapped[typing.Optional[str]] = mapped_column("depot", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    make: Mapped[typing.Optional[str]] = mapped_column("make", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    model: Mapped[typing.Optional[str]] = mapped_column("model", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    make_model: Mapped[typing.Optional[str]] = mapped_column("make_model", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    capacity: Mapped[typing.Optional[int]] = mapped_column("capacity", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    token_type: Mapped[typing.Optional[str]] = mapped_column("token_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transaction_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("transaction_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    transaction_type: Mapped[typing.Optional[str]] = mapped_column("transaction_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    product: Mapped[typing.Optional[str]] = mapped_column("product", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    volume: Mapped[typing.Optional[float]] = mapped_column("volume", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    tank_no: Mapped[typing.Optional[int]] = mapped_column("tank_no", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    start_pump_totalizer: Mapped[typing.Optional[float]] = mapped_column("start_pump_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    end_pump_totalizer: Mapped[typing.Optional[float]] = mapped_column("end_pump_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    consumption_type: Mapped[typing.Optional[str]] = mapped_column("consumption_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    consumption_benchmark: Mapped[typing.Optional[int]] = mapped_column("consumption_benchmark", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    dispensing_unit: Mapped[typing.Optional[int]] = mapped_column("dispensing_unit", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    pump_no: Mapped[typing.Optional[int]] = mapped_column("pump_no", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    global_nozzle_no: Mapped[typing.Optional[int]] = mapped_column("global_nozzle_no", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    department: Mapped[typing.Optional[str]] = mapped_column("department", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class ConsumperPumpTransactionCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'consumper_pump_transaction'
+    
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    depot: typing.Optional[str] = pydantic.Field("", **{})
+    make: typing.Optional[str] = pydantic.Field("", **{})
+    model: typing.Optional[str] = pydantic.Field("", **{})
+    make_model: typing.Optional[str] = pydantic.Field("", **{})
+    capacity: typing.Optional[int] = pydantic.Field(0, **{})
+    token_type: typing.Optional[str] = pydantic.Field("", **{})
+    transaction_time: typing.Optional[datetime.datetime] | None = None
+    transaction_type: typing.Optional[str] = pydantic.Field("", **{})
+    product: typing.Optional[str] = pydantic.Field("", **{})
+    volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    tank_no: typing.Optional[int] = pydantic.Field(0, **{})
+    start_pump_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_pump_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    consumption_type: typing.Optional[str] = pydantic.Field("", **{})
+    consumption_benchmark: typing.Optional[int] = pydantic.Field(0, **{})
+    dispensing_unit: typing.Optional[int] = pydantic.Field(0, **{})
+    pump_no: typing.Optional[int] = pydantic.Field(0, **{})
+    global_nozzle_no: typing.Optional[int] = pydantic.Field(0, **{})
+    department: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = ConsumperPumpTransactionSchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
+
+
+class ConsumperPumpTransaction(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'consumper_pump_transaction'
+    
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    depot: typing.Optional[str] = pydantic.Field("", **{})
+    make: typing.Optional[str] = pydantic.Field("", **{})
+    model: typing.Optional[str] = pydantic.Field("", **{})
+    make_model: typing.Optional[str] = pydantic.Field("", **{})
+    capacity: typing.Optional[int] = pydantic.Field(0, **{})
+    token_type: typing.Optional[str] = pydantic.Field("", **{})
+    transaction_time: typing.Optional[datetime.datetime] | None = None
+    transaction_type: typing.Optional[str] = pydantic.Field("", **{})
+    product: typing.Optional[str] = pydantic.Field("", **{})
+    volume: typing.Optional[float] = pydantic.Field(0.0, **{})
+    tank_no: typing.Optional[int] = pydantic.Field(0, **{})
+    start_pump_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_pump_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    consumption_type: typing.Optional[str] = pydantic.Field("", **{})
+    consumption_benchmark: typing.Optional[int] = pydantic.Field(0, **{})
+    dispensing_unit: typing.Optional[int] = pydantic.Field(0, **{})
+    pump_no: typing.Optional[int] = pydantic.Field(0, **{})
+    global_nozzle_no: typing.Optional[int] = pydantic.Field(0, **{})
+    department: typing.Optional[str] = pydantic.Field("", **{})
+    status: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = ConsumperPumpTransactionSchema
+        upsert_keys = []
+        access_key_mapping = ['bu', 'sap_id']
+
+
+class ConsumperPumpTransactionGetResp(pydantic.BaseModel):
+    data: typing.List[ConsumperPumpTransaction]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 

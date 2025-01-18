@@ -2110,6 +2110,132 @@
             ]
         },
         {
+            "name": "consumerpumptankdelivery",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTankDelivery",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptankdelivery/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumptankdelivery_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTankDelivery_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptankdelivery/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumptankdelivery_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTankDelivery_admin",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptankdelivery/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "consumperpumptransaction",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumperPumpTransaction",
+            "attributes": {},
+            "uris": [
+                "/api/consumperpumptransaction/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "consumperpumptransaction_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumperPumpTransaction_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/consumperpumptransaction/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "consumperpumptransaction_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumperPumpTransaction_admin",
+            "attributes": {},
+            "uris": [
+                "/api/consumperpumptransaction/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "bulevelgeocoordinates",
             "type": "all",
             "ownerManagedAccess": false,

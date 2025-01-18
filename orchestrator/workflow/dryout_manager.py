@@ -103,7 +103,6 @@ async def main(camunda_connector_name):
     conn = connection_mapping.camunda_listener_mapping[camunda_connector_name]
     engine_local_base_url = f"http://{conn['host']}:{conn['port']}/engine-rest"
     CAMUNDA_URL = f"http://{conn['host']}:{conn['port']}"
-    topics = ['dryout_indentwise_consumer'] + [f'dryout_indentwise_consumer{i}' for i in range(1, 31)]
     topics = ['dryout_indentwise_consumer', 'dryout_indentwise_consumer1', 'dryout_indentwise_consumer2',
               'dryout_indentwise_consumer3', 'dryout_indentwise_consumer4', 'dryout_indentwise_consumer5',
               'dryout_indentwise_consumer6', 'dryout_indentwise_consumer7', 'dryout_indentwise_consumer8',

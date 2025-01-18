@@ -16,7 +16,12 @@ async def upload_location_master_data(df):
     """
     redis_client = await urdhva_base.redispool.get_redis_connection()
     # Iterate through the rows of the CSV and extract `bu` and `sapid`
-    df = df.rename(bu_key_mapping.Location)
+    if df['LocationType'][0] == 'TAS':
+        df = df.rename(bu_key_mapping.TAS)
+    elif df['LocationType'][0] == 'LPG':
+        df = df.rename(bu_key_mapping.LPG)
+    elif df['LocationType'][0] == 'RO':
+        df = df.rename(bu_key_mapping.RO)
     try:
         df = df.with_columns(pl.lit(True).alias('is_active'))
         data = df.to_dicts()

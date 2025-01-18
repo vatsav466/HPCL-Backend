@@ -457,6 +457,56 @@ async def delete(id: str):
     return await MomLevelFinalMetaData.delete(id)
 
 
+@router.post('/consumerpumptankdelivery', response_model=ConsumerPumpTankDelivery, tags=['ConsumerPumpTankDelivery'])
+async def create(inputObj: ConsumerPumpTankDeliveryCreate):
+    return await inputObj.create()
+
+
+@router.put('/consumerpumptankdelivery', response_model=ConsumerPumpTankDelivery, tags=['ConsumerPumpTankDelivery'])
+async def update(inputObj: ConsumerPumpTankDelivery):
+    return await inputObj.modify()
+
+
+@router.get('/consumerpumptankdelivery/{id}', response_model=ConsumerPumpTankDelivery, tags=['ConsumerPumpTankDelivery'])
+async def get(id: str):
+    return await ConsumerPumpTankDelivery.get(id, skip_secrets=True)
+
+
+@router.get('/consumerpumptankdelivery', response_model=ConsumerPumpTankDeliveryGetResp, tags=['ConsumerPumpTankDelivery'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ConsumerPumpTankDelivery.get_all(params, skip_secrets=True)
+
+
+@router.delete('/consumerpumptankdelivery/{id}', tags=['ConsumerPumpTankDelivery'])
+async def delete(id: str):
+    return await ConsumerPumpTankDelivery.delete(id)
+
+
+@router.post('/consumperpumptransaction', response_model=ConsumperPumpTransaction, tags=['ConsumperPumpTransaction'])
+async def create(inputObj: ConsumperPumpTransactionCreate):
+    return await inputObj.create()
+
+
+@router.put('/consumperpumptransaction', response_model=ConsumperPumpTransaction, tags=['ConsumperPumpTransaction'])
+async def update(inputObj: ConsumperPumpTransaction):
+    return await inputObj.modify()
+
+
+@router.get('/consumperpumptransaction/{id}', response_model=ConsumperPumpTransaction, tags=['ConsumperPumpTransaction'])
+async def get(id: str):
+    return await ConsumperPumpTransaction.get(id, skip_secrets=True)
+
+
+@router.get('/consumperpumptransaction', response_model=ConsumperPumpTransactionGetResp, tags=['ConsumperPumpTransaction'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ConsumperPumpTransaction.get_all(params, skip_secrets=True)
+
+
+@router.delete('/consumperpumptransaction/{id}', tags=['ConsumperPumpTransaction'])
+async def delete(id: str):
+    return await ConsumperPumpTransaction.delete(id)
+
+
 @router.get('/bulevelgeocoordinates/{id}', response_model=BuLevelGeoCoordinates, tags=['BuLevelGeoCoordinates'])
 async def get(id: str):
     return await BuLevelGeoCoordinates.get(id, skip_secrets=True)
