@@ -302,7 +302,7 @@ class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
     filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     action: str
     drill_state: typing.Optional[str] = pydantic.Field("", **{})
-    cross_filters: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
 
 class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):
