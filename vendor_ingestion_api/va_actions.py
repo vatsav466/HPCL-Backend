@@ -5,6 +5,7 @@ import fastapi
 import json
 import requests
 import traceback
+import hpcl_ceg_model
 import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/va')
@@ -28,9 +29,28 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
     """
     try:
       logger.info(f"Received VA data ingestion from vendor {data.location_id}({data.location_type}) {data.dict()}")
-      await alert_manager.create_alert({**data.dict(), "alert_type": "VA"})
-      return True, "Success"
+      # Ensure data.data is a list and contains items
+      if isinstance(data.data, list) and len(data.data) > 0:
+         enriched_data = [
+            {
+               **entry.dict(),
+               'vendor_id': data.vendor_id,
+               'location_id': data.location_id,
+               'location_type': data.location_type.value if hasattr(data.location_type, 'value') else str(data.location_type),
+            }
+            for entry in data.data
+            ]
+      else:
+          logger.error(f"Invalid data structure: data.data is not a list or is empty")
+          return {"status": False, "message": "Invalid data", "data": []}
       
+      for entry in enriched_data:
+          entry['alert_section'] = entry['alert_type']
+          await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()  
+          await alert_manager.create_alert({**entry, "alert_type": "VA"})
+    
+      return True, "Success"
+        
     except Exception as e:
         print(traceback.format_exc())
         logger.error(e)

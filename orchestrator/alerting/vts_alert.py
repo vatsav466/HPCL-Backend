@@ -37,7 +37,6 @@ class VTSAlertManager(alert_factory.AlertFactory):
             dict: A dictionary containing the status, message and the created alert document
         """
         try:
-            print("alert_data --> ", alert_data)
             # alert_data -->  {'tl_number': 'MP09HH7297', 'report_duration': '2024-12-2316: 19: 15', 'total_trips': 1, 
             # 'stoppage_violations_count': 1, 'route_deviation_count': 0, 'speed_violation_count': 0, 
             # 'main_supply_removal_count': 0, 'night_driving_count': 0, 'no_halt_zone_count': 0, 
@@ -46,8 +45,6 @@ class VTSAlertManager(alert_factory.AlertFactory):
             
             status, location_details = await alert_helper.get_location_details(alert_data['location_type'], alert_data['location_id'])
             if not status:
-                print(f"Error in finding location {alert_data['location_id']} "
-                            f"for bu {alert_data['location_type']} - {location_details}")
                 logger.info(f"Error in finding location {alert_data['location_id']} "
                             f"for bu {alert_data['location_type']} - {location_details}")
                 return
@@ -62,7 +59,6 @@ class VTSAlertManager(alert_factory.AlertFactory):
                 return
 
             for record in alert_records:
-                print("record --> ", record)
                 try:
                     for key, details in vts_mapping.vts_interlock_mapping.items():
                         if not record.get(key):
@@ -102,8 +98,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             for key,values in previousaltCount.items():
                                 alertmsg.append(key+"Count :%s"% values)
 
-                            altcount = altcount['count']
-                            print("altcount",altcount)                                                                                                                                                
+                            altcount = altcount['count']                                                                                                                                                
                             # TODO Previous month history quarterly 
                             # check all violation function to be implemented                                                                                                           
                             max_limit = int(max(list(details['alerting_rules'].keys())))
@@ -132,8 +127,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                                                                                                  record['location_type'],
                                                                                                                  record['tl_number'],key)
                             if tripinterlockname and tripinterlockname["violation_type"]==key:
-                                print("tripinterlockname ------->",tripinterlockname["violation_type"])
-                                print("alert already exists")
+                                logger.info("alert already exists")
                                 continue
                             vts_data['violation_count'] = 0
                             await hpcl_ceg_model.VTS(**vts_data).modify()
@@ -142,10 +136,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                                                                                                    record['tl_number'],
                                                                                                                    interlock_details.get("interlock_name",""),
                                                                                                                    key)
-                            print("interlock_name_check", interlocknamecheck)
-                            print("interlock_name---->",interlock_details["interlock_name"])
                             if interlocknamecheck and interlocknamecheck['interlock_name']==interlock_details["interlock_name"]:
-                                print("alert already exists")
+                                logger.info("alert already exists")
                                 continue
                             vts_alert_data['alert_section'] = 'VTS'
                             vts_alert_data['alert_history'] = alert_history

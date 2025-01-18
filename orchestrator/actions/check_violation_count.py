@@ -40,7 +40,6 @@ class CheckViolationCount:
             
             # Fetch the count of violations matching the query
             count = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query),resp_type='plain')
-            print("count-------->", count)
             return count
 
         except Exception as e:
@@ -68,7 +67,6 @@ class CheckViolationCount:
         try:
             query = f"bu='{bu}' and sap_id='{sap_id}' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}' and sop_id='SOP001'"
             count = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
-            print("count-------->", count)
             finalresp[violation_type] = count
         
         except Exception as e:
@@ -95,7 +93,6 @@ class CheckViolationCount:
         try:
             query = f"bu='{bu}' and sap_id='{sap_id}' and interlock_name='{interlockname}' and alert_status='Open' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}' and sop_id='SOP001'"
             data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query), resp_type='plain')
-            print("data-------->", data)
             if len(data['data']):
                 return data['data'][0]            
         except Exception as e:
@@ -121,7 +118,6 @@ class CheckViolationCount:
         try:
             query = f"bu='{bu}' and sap_id='{sap_id}' and alert_status='Open' and vehicle_number='{vehicle_number}' and violation_type='{violation_type}' and sop_id='SOP001'"
             data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1), resp_type='plain')
-            print("data-------->", data)
             if len(data['data']):
                 return data['data'][0]            
         except Exception as e:
