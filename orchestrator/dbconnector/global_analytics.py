@@ -3102,7 +3102,7 @@ class GlobalAnalytics:
         _filters = []
         if cross_filters:
             for filter in cross_filters:
-                _filters.append({f"{filter.key}": f"{filter.value}"})        
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3171,7 +3171,7 @@ class GlobalAnalytics:
         resp = await function(query=lpg_cdcms_month_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        resp = await filter_data(resp, _filters)        
+        resp = await filter_data(resp, _filters)
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -3216,7 +3216,8 @@ class GlobalAnalytics:
                 grouped_resp['Total Sales'] = grouped_resp['Total Sales'].round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}            
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
 
     @staticmethod
     async def cdcms_order_source(filters, cross_filters, drill_state):
@@ -4007,16 +4008,18 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_date = datetime.now()
-        if current_date.month >= 4:  # If April or later, financial year starts this year
-            start_year = current_date.year
-            end_year = current_date.year + 1
-        else:  # If before April, financial year started last year
-            start_year = current_date.year - 1
-            end_year = current_date.year
-        # Define financial year start and end dates
-        financial_year_start = f"{start_year}-04-01 00:00:00"
-        financial_year_end = f"{end_year}-03-31 23:59:59"
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})        
+        today = datetime.now()
+        if today.month < 4:
+            start_year = today.year - 1
+        else:
+            start_year = today.year
+        end_year = start_year + 1
+        financial_year = f"{start_year}-{end_year}"
+        
         cumulative_sales_pmuy_npmuy_query_ = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -4040,24 +4043,25 @@ class GlobalAnalytics:
                 cumulative_sales_pmuy_npmuy_query_ += ' WHERE '
                 cumulative_sales_pmuy_npmuy_query_ += ' AND '.join(conditions)
             
-            cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
-            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName"'
+            cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             cumulative_sales_pmuy_npmuy_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cumulative_sales_pmuy_npmuy_query_, access_filters, drill_state)
 
             if not "where" in cumulative_sales_pmuy_npmuy_query_.lower():
-                cumulative_sales_pmuy_npmuy_query_ += f' WHERE "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
+                cumulative_sales_pmuy_npmuy_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
             else:
-                cumulative_sales_pmuy_npmuy_query_ += f' AND "Execution_Date"::TIMESTAMP BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
-            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ConsumerType", "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName"'
+                cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
                                  
             resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["ConsumerType"], as_index=False).agg({
                     "Sales": lambda x: x.sum() / 10000000
                 })
@@ -4080,13 +4084,9 @@ class GlobalAnalytics:
         resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        resp = await filter_data(resp, _filters)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
-        resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
-        resp = resp[
-            (resp["Execution_Date"] >= financial_year_start) &
-            (resp["Execution_Date"] <= financial_year_end)
-        ]
         # Fill missing values for numerical columns
         for each_float_col in [
             "Sales"
