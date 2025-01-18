@@ -761,7 +761,7 @@ LIMIT 10000;''',
                             "ConsumerType",
                             "CylType"
                     from
-                        "LPG_SALES_SUMMARY_DATA"''',
+                        "lpg_todays_cdcms_sales_summary"''',
     
     "lpg_cdcms_month": f'''select
                                 sum("TotalSalesYesterday") as "Total Sales",
@@ -770,12 +770,11 @@ LIMIT 10000;''',
                                 "ZOName",
                                 "ROName",
                                 "SAName",
-                                "JDEDistributorCode",
                                 "ConsumerType", 
                                 "CylType",
                                 "DistributorName"
                             from
-                                "lpg_cdcms_sales_summary"''',
+                                "lpg_monthly_cdcms_sales_summary"''',
     
     "cdcms_order_source": f'''select
                                     "OrderSourceName",
