@@ -819,7 +819,6 @@ LIMIT 10000;''',
                                             "ZOName",
                                             "ROName",
                                             "SAName",
-                                            "Execution_Date",
                                             sum("TotalSalesYesterday") as "Sales"
                                         from
                                             "lpg_monthly_cdcms_sales_summary"''',
