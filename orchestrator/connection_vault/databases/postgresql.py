@@ -438,18 +438,57 @@ class Postgresql(BaseAction):
         :param debug:
         :return:
         """
+        # try:
+        #     columns_mapping = dict()
+        #     connection = await self.get_connection()
+        #     for column in column_name:
+        #         query = f'''SELECT DISTINCT "{column}" FROM "{schema_name}"."{table_name}"'''
+        #         if where_clause:
+        #             where_query = ''
+        #             for key, value in where_clause.items():
+        #                 where_query += f'"{key}" = \'{value}\' AND '
+        #             where_query = where_query[:-5]
+        #             if where_query:
+        #                 query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
+        #         stmt = await connection.prepare(
+        #             query
+        #         )
+        #         data = await stmt.fetch()
+        #         # data = pd.DataFrame(data)
+        #         # columns_mapping[column] = data[column].unique().tolist()
+        #         columns_mapping[column] = [record[column] for record in data]
+        #     # await connection.close()
+        #     await self.close_connection(connection)
+        #     return {
+        #         "status": True, "message": "Connected to PostgresSQL",
+        #         "data": columns_mapping
+        #     }
+        # except Exception as err:
+        #     print(err, traceback.format_exc())
+        #     # traceback.print_exc(file=sys.stdout)
+        #     return {
+        #         "status": False, "message": "Unable to connect to PostgresSQL",
+        #         "data": []
+        #     }
         try:
             columns_mapping = dict()
             connection = await self.get_connection()
             for column in column_name:
                 query = f'''SELECT DISTINCT "{column}" FROM "{schema_name}"."{table_name}"'''
                 if where_clause:
-                    where_query = ''
-                    for key, value in where_clause.items():
-                        where_query += f'"{key}" = \'{value}\' AND '
-                    where_query = where_query[:-5]
+                    if isinstance(where_clause, list):
+                        where_query = ''
+                        for _dict in where_clause:
+                            where_query += f'''"{_dict["key"]}" {_dict["cond"]} '{_dict["value"]}' AND '''
+                        where_query = where_query[:-5]
+                    else:
+                        where_query = ''
+                        for key, value in where_clause.items():
+                            where_query += f'"{key}" = \'{value}\' AND '
+                        where_query = where_query[:-5]
                     if where_query:
                         query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
+
                 stmt = await connection.prepare(
                     query
                 )
