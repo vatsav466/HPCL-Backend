@@ -772,7 +772,8 @@ LIMIT 10000;''',
                                 "SAName",
                                 "JDEDistributorCode",
                                 "ConsumerType", 
-                                "CylType"
+                                "CylType",
+                                "DistributorName"
                             from
                                 "lpg_cdcms_sales_summary"''',
     
