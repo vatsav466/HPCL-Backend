@@ -390,15 +390,15 @@ class GlobalAnalytics:
             # Fallback query if no filters are provided
             sales_performance_query_ = f'''
                 SELECT
-                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES",
-                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES",
+                    ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
                     "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
                 FROM
                     "M60_LEVEL_METADATA"
                 WHERE
-                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and   "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
+                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
                 GROUP BY
                     "M60_LEVEL_METADATA"."fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
@@ -1072,6 +1072,7 @@ class GlobalAnalytics:
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
+            filter_values = [rec.value[0].strip('') for rec in filters]
             if "month_name" in filter_keys:
             # Convert full month names to short form (e.g., "January" -> "Jan")
                 resp["month_name"] = resp["month_name"].apply(
@@ -1838,10 +1839,24 @@ class GlobalAnalytics:
                 # resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
+                grouped_keys = ["FISCAL_YEAR", "month_name", "SBU_Name"]
+
+                # If valid keys are selected, apply conditional grouping
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
+                    # Check the last filter's value for specific keywords
+                    if "DS Lubes" in filter_values or "DS" in filter_values or "Lubes" in filter_values:
+                        print("DS Lubes selected")
+                        grouped_keys.extend(["Region_Name"])
+                    else:
+                        print("No DS Lubes selected")
+                        grouped_keys.extend(["Zone_Name"])
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
+                    print("No keys selected")
+                    # If no valid keys are selected, group by all keys
+                    grouped_keys.extend(["Zone_Name", "Region_Name"])
+
+                # Add grouping logic based on the updated grouped_keys
+                grouped_resp = resp.groupby(grouped_keys, as_index=False).agg(agg_dict)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -3873,8 +3888,8 @@ class GlobalAnalytics:
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
         months = [month for month in calendar.month_name if month]
-        df = df.filter(pl.col("ZOName").fill_null("") != "")
-        data = {"Execution_Month": months, "ZOName": df['ZOName'].unique().to_list(), 
+        df = df.filter(pl.col("ZOName").fill_null("") != "NULL")
+        data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
                 "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
                 "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
                 "ConsumerType": ['PMUY', 'NPMUY']}
