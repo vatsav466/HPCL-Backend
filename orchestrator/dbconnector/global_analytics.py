@@ -1162,13 +1162,15 @@ class GlobalAnalytics:
                 resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
-            sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
-
-            # Create a mapping dictionary for SBU_Name replacements
-            sbu_mapping = {
-                "PETROCHEMICALS SBU": "PETCHEM",  # Map PETROCHEMICALS SBU to PETCHEM
-                "GAS HQO": "NG",  # Map GAS HQO to NG
-            }
+            if 'NG' in resp['SBU_Name'].unique().tolist():
+                sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
+                # Create a mapping dictionary for SBU_Name replacements
+                sbu_mapping = {"Retail":"Retail", "LPG":"LPG","Lubes":"Lubes","I&C":"I&C", "Aviation":"Aviation", "PETROCHEMICALS SBU": "PETCHEM", "GAS HQO": "NG"}
+            else:
+                sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM']
+                # Create a mapping dictionary for SBU_Name replacements
+                sbu_mapping = {"Retail":"Retail", "LPG":"LPG","Lubes":"Lubes","I&C":"I&C", "Aviation":"Aviation", "PETROCHEMICALS SBU": "PETCHEM"}
+            
             resp = resp[resp["SBU_Name"] != "0"]
             resp = resp[resp["Zone_Name"] != "-"]
 
@@ -1900,7 +1902,7 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+                    select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
                     """
                     his_data = await function(query=sales_his_query)
@@ -1995,7 +1997,7 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+                    select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","ORGRONAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
                     """
                     his_data = await function(query=sales_his_query)
