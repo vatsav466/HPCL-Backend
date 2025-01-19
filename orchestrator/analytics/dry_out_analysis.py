@@ -449,6 +449,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                         AND "TRUCK_REGNO" IS NULL
                         AND "CANCEL_INDENT" IS NULL
                         AND "VALID_INDENT" IN ('Y', 'H')
+                        AND SUBSTR("DEALER_CODE", 11, 7) = '7000111'
                 ),
                 ALERT_DATA AS (
                     SELECT DISTINCT ON (sap_id, 
@@ -508,7 +509,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
     data = pd.DataFrame(data)
     for key in ['dry_out_in_days', 'indent_no', 'category']:
         if key in data.columns:
-            data[key] = data[key].astype(str)
+            data[key] = data[key].fillna("").astype(str)
 
     if not insert_to_db:
         return data.to_dict(orient="records")
@@ -549,3 +550,70 @@ async def ro_not_in_ims():
         return allowed_dealers
     else:
         return rosapcodes
+
+async def _generate_where_clause(where_clause):
+    # where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
+    where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
+        extra_key_mapping={"sap_id": "terminal_plant_id"}))
+    for record in where_clause:
+        if record['key'] == "progress_rate":
+            if record['value']:
+                where_clause.append(f"progress_rate={int(record['value'][0])}")
+        else:
+            if record['value']:
+                if record['key'] == 'dry_out_in_days':
+                    dry_out_in_days_query = record['value'][0]
+                if record['key'] == "plant":
+                    record['key'] = "terminal_plant_id"
+                if len(record['value']) == 1:
+                    where_clause.append(f"{record['key']}='{record['value'][0]}'")
+                else:
+                    where_clause.append(f"{record['key']} in {tuple(record['value'])}")
+    conditions = ' AND '.join(where_clause)
+    return conditions
+
+async def _get_on_hold_data(dry_out_in_days='1'):
+    where_clause = {
+        "a.interlock_name": ["Dry Out Each Indent Wise MainFlow"],
+        "a.progress_rate": ["2"],
+        "a.dry_out_in_days": [dry_out_in_days]
+    }
+    conditions = _generate_where_clause(where_clause)
+    stats_query = f"""SELECT 
+                            a.sap_id,
+                            a.indent_no,
+                            a.product_code,
+                            a.progress_rate AS present_stage,
+                            ir."PROD_REQD_DT",
+                            ir."VALID_INDENT",
+                            ir."INDENT_HOLD_RELEASE_TIME",
+                            ir."INDENT_EXECUTABLE_TIME",
+                            ir."CANCEL_INDENT"
+                        FROM 
+                            alerts a
+                        JOIN 
+                            "IMS_SAP"."INDENT_REQUEST" ir 
+                        ON 
+                            a.sap_id::TEXT = SUBSTR(ir."DEALER_CODE", 3, 8)::TEXT
+                            AND a.indent_no::TEXT = ir."INDENT_NO"::TEXT
+                            --AND ir."PROD_REQD_DT" BETWEEN TO_DATE('2025-01-17', 'YYYY-MM-DD') AND TO_DATE('2025-01-19', 'YYYY-MM-DD')
+                            AND ir."CANCEL_INDENT" IS NULL
+                        WHERE 
+                            {conditions}
+                            AND a.indent_status NOT IN ('Cancelled', 'Completed')
+                        order by a.sap_id"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    stats_resp = await function(
+        query=stats_query
+    )
+    stats_resp = pd.DataFrame(stats_resp)
+    return stats_resp.to_dict(orient='records')
+
+async def _get_pending_indents(dry_out_in_days='1'):
+    where_clause = {
+        "a.interlock_name": ["Dry Out Each Indent Wise MainFlow"],
+        "a.progress_rate": ["3"],
+        "a.dry_out_in_days": [dry_out_in_days]
+    }

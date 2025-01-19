@@ -177,7 +177,7 @@ Model Charts {
         schema str
         table str
         column list str
-        where_cond optional dict
+        where_cond optional list dict
     }
 
     Action=> generate_dynamic_chart_query {
@@ -232,6 +232,7 @@ Model Charts {
         filters optional list WidgetFilters
         action str
         drill_state optional str
+        cross_filters optional list WidgetFilters
     }
 
     Action=> enable_cross_filter {

@@ -247,7 +247,7 @@ class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
     schema: str
     table: str
     column: typing.List[str]
-    where_cond: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    where_cond: typing.Optional[typing.List[dict]] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
 
 class Charts_Generate_Dynamic_Chart_QueryParams(pydantic.BaseModel):
@@ -300,9 +300,9 @@ class Charts_Get_SchemaParams(pydantic.BaseModel):
 
 class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
     filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
-    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
     action: str
     drill_state: typing.Optional[str] = pydantic.Field("", **{})
+    cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
 
 
 class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):

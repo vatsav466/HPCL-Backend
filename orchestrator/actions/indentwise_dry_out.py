@@ -955,6 +955,12 @@ class IndentDryOut:
                 f"""AND a."BATCH_FLAG" = 'Y' AND b."SALES_ORDERNO" IS NOT NULL AND b."INVOICE_NO" IS NOT NULL AND b."INDENT_NO" IN ('{indent_no}') """ \
                 f"""GROUP BY b."INVOICE_DATE", b."INVOICE_TIME" """
 
+        query = f"""SELECT COUNT(*) AS "count", b."INVOICE_DATE", b."INVOICE_TIME" FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' AND """ \
+                f"""a."LOCN_CODE" = b."LOCN_CODE" AND a."PROD_REQD_DT" BETWEEN TO_DATE('{now}', 'YYYY-MM-DD') AND TO_DATE('{next_date}', 'YYYY-MM-DD') AND a."INDENT_NO" IN ('{indent_no}') """ \
+                f"""AND a."CANCEL_INDENT" IS NULL AND a."TRUCK_REGNO" IS NOT NULL AND (a."VALID_INDENT" = 'Y' OR a."VALID_INDENT" = 'H') """ \
+                f"""AND a."BATCH_FLAG" = 'Y' AND b."INDENT_NO" IN ('{indent_no}') AND SUBSTR(b."DEALER_CODE",1,10) = '{dealer_code}' """ \
+                f"""GROUP BY b."INVOICE_DATE", b."INVOICE_TIME" """
+
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         input_data = {
@@ -976,7 +982,7 @@ class IndentDryOut:
             input_data["action_msg"] = "Invoice created"
             input_data["action_type"] = "Created"
             input_data["event_tags"]["is_created"] = True
-            input_data["ims_datetime"] = str(ims_datetime) + str(ims_time)
+            input_data["ims_datetime"] = str(ims_datetime) + str(ims_time) if ims_datetime else ""
             await self.update_alert_status(
                 indent_status=IndentStatus.InvoiceCreated,
                 input_data=input_data,

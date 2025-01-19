@@ -319,9 +319,12 @@ class WidgetActions:
         
     @staticmethod
     async def apply_filter_drilldown(query, filters, drilldown):
-        if 'join' in query.lower():
-            updated_query = await WidgetActions.get_join_query(query, filters, drilldown)
+        if filters:
+            if 'join' in query.lower():
+                updated_query = await WidgetActions.get_join_query(query, filters, drilldown)
+            else:
+                updated_query = await WidgetActions.get_not_join_query(query, filters,drilldown)
+            return updated_query
         else:
-            updated_query = await WidgetActions.get_not_join_query(query, filters,drilldown)
-        return updated_query
+            return query
         

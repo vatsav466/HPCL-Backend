@@ -761,7 +761,7 @@ LIMIT 10000;''',
                             "ConsumerType",
                             "CylType"
                     from
-                        "LPG_SALES_SUMMARY_DATA"''',
+                        "lpg_todays_cdcms_sales_summary"''',
     
     "lpg_cdcms_month": f'''select
                                 sum("TotalSalesYesterday") as "Total Sales",
@@ -770,11 +770,11 @@ LIMIT 10000;''',
                                 "ZOName",
                                 "ROName",
                                 "SAName",
-                                "JDEDistributorCode",
                                 "ConsumerType", 
-                                "CylType"
+                                "CylType",
+                                "DistributorName"
                             from
-                                "lpg_cdcms_sales_summary"''',
+                                "lpg_monthly_cdcms_sales_summary"''',
     
     "cdcms_order_source": f'''select
                                     "OrderSourceName",
@@ -787,7 +787,7 @@ LIMIT 10000;''',
                                     "CylType",
 	                                sum("BookingReceivedYesterday") as "Total_Bookings"
                                 from
-	                                "LPG_SALES_SUMMARY_DATA"''',
+	                                "lpg_todays_cdcms_sales_summary"''',
                                  
     "overall_pending_pmuy_nmpuy": f'''
                                 select 
@@ -800,7 +800,7 @@ LIMIT 10000;''',
                                     "CylType",
                                     sum("Total_Pending") as "Total_pending" 
                                 from
-                                    "LPG_SALES_SUMMARY_DATA" ''',
+                                    "lpg_todays_cdcms_sales_summary" ''',
     "lpg_cdcms_ageing" : f'''
                         select 
                             "ZOName" ,
@@ -814,15 +814,14 @@ LIMIT 10000;''',
                             "LPG_SALES_SUMMARY_DATA" ''',
     
     "cumulative_sales_pmuy_npmuy": f'''select
+                                            "DistributorName",
                                             "ConsumerType",
-                                            "JDEDistributorCode",
                                             "ZOName",
                                             "ROName",
                                             "SAName",
-                                            "Execution_Date",
                                             sum("TotalSalesYesterday") as "Sales"
                                         from
-                                            "LPG_SALES_SUMMARY_DATA"''',
+                                            "lpg_monthly_cdcms_sales_summary"''',
     
     "overall_ctc_statistics": f'''select
                                         "Category",
