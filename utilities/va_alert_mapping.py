@@ -6,7 +6,7 @@ VA_Alert_Mapping = {
         "ABSENCE_OF_EARTHING": {"name": "Absence Of Earthing", "severity": "Critical"},
         "ABSENCE_OF_WHEELCHOCK": {"name": "Absence Of Wheelchock", "severity": "High"},
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {"name": "Absence Of Fire Extinguisher Decantation", "severity": "High"},
-        "VEHICLE_CAME_FSM_NOT_PRESENT_AIRFILLING": {"name": "Unauthorised Filling Of Container", "severity": "Medium"},
+        "UNAUTHORISED_FILLING_OF_CONTAINER": {"name": "Unauthorised Filling Of Container", "severity": "Medium"},
         "ALIGHT_FROM_TWO_WHEELER": {"name": "Alight From Two Wheeler", "severity": "Medium"},
         "ABSENCE OF EARTHING": {"name": "Absence Of Earthing", "severity": "Critical"},
         "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock", "severity": "High"}
