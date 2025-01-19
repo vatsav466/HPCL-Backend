@@ -1057,7 +1057,7 @@ class GlobalAnalytics:
             resp['ACTUAL_TMT_SALES'] = round(resp['ACTUAL_TMT_SALES']/(total_days_in_month - days_left_in_month))
             resp['TARGET_QTY_TMT'] = round(resp['TARGET_QTY_TMT']/(total_days_in_month - days_left_in_month))
             resp["ACTUAL_TMT_SALES"] = resp.apply(
-                    lambda row: row["ACTUAL_TMT_SALES"] / (total_days_in_month - days_left_in_month)
+                    lambda row: round(row["ACTUAL_TMT_SALES"] / (total_days_in_month - days_left_in_month))
                     if row["month_name"] == current_month_name
                     else row["ACTUAL_TMT_SALES"],  # Leave other rows unchanged
                     axis=1,
@@ -1065,14 +1065,14 @@ class GlobalAnalytics:
             
             if 'T' in selected_keys:
                 resp["TARGET_QTY_TMT"] = resp.apply(
-                        lambda row: row["TARGET_QTY_TMT"] / (total_days_in_month - days_left_in_month)
+                        lambda row: round(row["TARGET_QTY_TMT"] / (total_days_in_month - days_left_in_month))
                         if row["month_name"] == current_month_name
                         else row["TARGET_QTY_TMT"],  # Leave other rows unchanged
                         axis=1,
                 )
             if 'H' in selected_keys:
                 resp["ACTUAL_HISTORY_TMT"] = resp.apply(
-                        lambda row: row["ACTUAL_HISTORY_TMT"] / (total_days_in_month - days_left_in_month)
+                        lambda row: round(row["ACTUAL_HISTORY_TMT"] / (total_days_in_month - days_left_in_month))
                         if row["month_name"] == current_month_name
                         else row["ACTUAL_HISTORY_TMT"],  # Leave other rows unchanged
                         axis=1,
