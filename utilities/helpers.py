@@ -28,16 +28,37 @@ def password_generator(password_length=16, special_characters_allowed=True, case
     return random_pass
 
 
-def get_time_stamp_by_delta(dt=None, months=0, days=0, with_month_start_day=True, date_time_format="%Y-%m-%d", ascending=False):
+def get_time_stamp_by_delta(dt=None, months=0, days=0, years=0, with_month_start_day=True,
+                            date_time_format="%Y-%m-%d", ascending=False):
     """
     Get the timestamp by descending or ascending a specified number of months from the current date.
     :param dt: datetime object
     :param months: Total months to descend
     :param days: Total days to descend
+    :param years: Total years to descend
     :param with_month_start_day: whether date should start from day 1 or present day
     :param date_time_format: Format to return the date
+    :param ascending: To use in incremental or decremental format
     :return: Formatted date string
+    Example:
+    on 2025-01-19
+      Case 1
+        input:- utilities.helpers.get_time_stamp_by_delta(days=1, with_month_start_day=False, year=1, ascending=True)
+        response:- '2026-01-20'
+      Case 2
+        input:- utilities.helpers.get_time_stamp_by_delta(days=1, with_month_start_day=False, year=1, ascending=False)
+        response:- '2024-01-18'
+      Case 3
+        input:- utilities.helpers.get_time_stamp_by_delta(days=1, with_month_start_day=True, year=1, ascending=False)
+        response:- '2023-12-31'
+      Case 4
+        input:- utilities.helpers.get_time_stamp_by_delta(with_month_start_day=True, year=1, ascending=False)
+        response:- '2024-01-01'
+      Case 5
+        input:- utilities.helpers.get_time_stamp_by_delta(days=1, year=0, date_time_format=None, ascending=False)
+        response:- datetime.datetime(2024, 12, 31, 7, 56, 43, 663410, tzinfo=datetime.timezone.utc)
     """
+    # Todo:- Need to add default timezone from settings file and requested timezone as input for changes
     if not dt:
         dt = datetime.datetime.now(tz=datetime.timezone.utc)
 
@@ -48,6 +69,12 @@ def get_time_stamp_by_delta(dt=None, months=0, days=0, with_month_start_day=True
     # Subtract the specified number of months
     if months > 0:
         dt = dt - relativedelta(months=months) if not ascending else dt + relativedelta(months=months)
+    elif years > 0:
+        day_filter = 0
+        if days > 0:
+            day_filter = days
+        dt = dt - relativedelta(year=dt.year-years, days=day_filter) if not ascending \
+            else dt + relativedelta(year=dt.year+years, days=day_filter)
     elif days > 0:
         dt = dt - relativedelta(days=days) if not ascending else dt + relativedelta(days=days)
 

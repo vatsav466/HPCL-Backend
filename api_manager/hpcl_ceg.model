@@ -810,6 +810,8 @@ Model IndentDryOut {
         region optional list str
         sales_area optional list str
         plant optional list str
+        cat_a_requested optional bool
+        dry_out_dealers optional bool
     }
 
     Action=> create_dry_out_alert {
