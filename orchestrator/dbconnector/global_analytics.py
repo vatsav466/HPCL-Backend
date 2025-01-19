@@ -999,7 +999,7 @@ class GlobalAnalytics:
             if 'H' in selected_keys:
                 year_required = str(current_year-2)+'-'+str(previous_year)
                 sales_his_query = f"""
-                select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+                select "fiscal_year","month_name","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
                 """
                 his_data = await function(query=sales_his_query)
@@ -1756,7 +1756,7 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+                    select "fiscal_year","month_name","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
                     """
 
@@ -1826,7 +1826,7 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+                    select  "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
                     """
                     his_data = await function(query=sales_his_query)
