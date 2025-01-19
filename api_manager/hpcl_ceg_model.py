@@ -1657,6 +1657,8 @@ class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     plant: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    cat_a_dealers: typing.Optional[bool] = pydantic.Field(False, )
+    dry_out_dealers: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):

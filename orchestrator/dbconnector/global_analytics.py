@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import hpcl_ceg_model
 import dashboard_studio_model
-from datetime import datetime
+from datetime import datetime,timedelta
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
@@ -905,7 +905,7 @@ class GlobalAnalytics:
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
 
-        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"'] for rec in filters):
+        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"'] for rec in filters):
             print("into only filters")
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
@@ -936,10 +936,12 @@ class GlobalAnalytics:
                 sales_performance_query_ += ' WHERE '
                 sales_performance_query_ += ' AND '.join(conditions)
 
-        elif len(filters) >= 1 and (filters[0].key in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"']):
+        elif len(filters) >= 1 and any(rec.key in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"'] for rec in filters):
             print("into elif")
             selected_keys = [rec.key.strip('"') for rec in filters]
-            current_date = datetime.now()
+            #current_date = datetime.now()
+            current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+            print("current_date",)
             current_year = current_date.year
             next_year = current_year + 1
             current_month = current_date.month
@@ -949,6 +951,9 @@ class GlobalAnalytics:
             else:  # January to March
                 previous_year = current_year - 1
                 fiscal_year_start = f"'FY {previous_year}-{current_year}'"
+            pres_year_date_filters = ""
+            hist_year_date_filters = ""
+            
 
             # Initialize the dynamic parts of the query
             where_conditions = [f'"M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}']
@@ -1040,7 +1045,39 @@ class GlobalAnalytics:
             for each_str_col in ["fy_month", "month_name"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
+            # added for ytd
+            current_month_name = current_date.strftime('%B')[:3]
+            #today = datetime.today()
+            today = current_date.today()
+            #total_days_in_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+            total_days_in_month = (current_date.today().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+            total_days_in_month = total_days_in_month.day
+            days_left_in_month = total_days_in_month - today.day
+            resp.to_csv('/tmp/resp.csv',index = False)
+            resp['ACTUAL_TMT_SALES'] = round(resp['ACTUAL_TMT_SALES']/(total_days_in_month - days_left_in_month))
+            resp['TARGET_QTY_TMT'] = round(resp['TARGET_QTY_TMT']/(total_days_in_month - days_left_in_month))
+            resp["ACTUAL_TMT_SALES"] = resp.apply(
+                    lambda row: round(row["ACTUAL_TMT_SALES"] / (total_days_in_month - days_left_in_month))
+                    if row["month_name"] == current_month_name
+                    else row["ACTUAL_TMT_SALES"],  # Leave other rows unchanged
+                    axis=1,
+            )
+            
+            if 'T' in selected_keys:
+                resp["TARGET_QTY_TMT"] = resp.apply(
+                        lambda row: round(row["TARGET_QTY_TMT"] / (total_days_in_month - days_left_in_month))
+                        if row["month_name"] == current_month_name
+                        else row["TARGET_QTY_TMT"],  # Leave other rows unchanged
+                        axis=1,
+                )
+            if 'H' in selected_keys:
+                resp["ACTUAL_HISTORY_TMT"] = resp.apply(
+                        lambda row: round(row["ACTUAL_HISTORY_TMT"] / (total_days_in_month - days_left_in_month))
+                        if row["month_name"] == current_month_name
+                        else row["ACTUAL_HISTORY_TMT"],  # Leave other rows unchanged
+                        axis=1,
+                )
+            resp.to_csv('/tmp/resp_updated.csv',index = False)
             return {"status": True, "message": "success", "data": resp}
 
         else:
@@ -2625,7 +2662,7 @@ class GlobalAnalytics:
             for each_str_col in ["fy_month", "month_name"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
+            
             return {"status": True, "message": "success", "data": resp}
             
         else:
@@ -3217,7 +3254,6 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
-    
 
     @staticmethod
     async def cdcms_order_source(filters, cross_filters, drill_state):

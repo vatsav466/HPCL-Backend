@@ -14,7 +14,7 @@ req_keys = {
 }
 
 
-async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
+async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -24,10 +24,14 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
     :param region:
     :param sales_area:
     :param plant:
+    :param cat_a_dealers
+    :param dry_out_dealers
     :return:
     """
     bu = bu.upper()
     cond = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
+    dry_out_plants = []
+    dry_out_customers = []
     for rec in cond:
         if rec['key'] == 'zone':
             if not zone:
@@ -36,21 +40,21 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
                 zone.extend(rec['value'])
             else:
                 zone.append(rec['value'])
-        if rec['key'] == 'region':
+        elif rec['key'] == 'region':
             if not region:
-                region =[]
+                region = []
             if isinstance(rec['value'], list):
                 region.extend(rec['value'])
             else:
                 region.append(rec['value'])
-        if rec['key'] == 'sap_id':
+        elif rec['key'] == 'sap_id':
             if not plant:
                 plant = []
             if isinstance(rec['value'], list):
                 plant.extend(rec['value'])
             else:
                 plant.append(rec['value'])
-        if rec['key'] == 'sales_area':
+        elif rec['key'] == 'sales_area':
             if not sales_area:
                 sales_area = []
             if isinstance(rec['value'], list):
@@ -92,6 +96,14 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
             if cond and plant and rec['sap_id'] not in plant:
                 continue
             final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
+    if dry_out_dealers:
+        query = """select dealer_id, terminal_plant_id
+                from public.alerts where interlock_name='Dry Out Each Indent Wise MainFlow' and dry_out_in_days='1' and 
+                alert_status in ('Open', 'InProgress') 
+                group by dealer_id, terminal_plant_id"""
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
+        dry_out_plants = list(set([rec['terminal_plant_id'] for rec in data['data']]))
+        dry_out_customers = list(set([rec['dealer_id'] for rec in data['data']]))
     if zone:
         key_mapping["zone"] = zone
     if bu == "TAS":
@@ -106,6 +118,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
                 continue
             if rec["sap_id"]:
                 if plant and rec['sap_id'] not in plant:
+                    continue
+                if dry_out_dealers and rec["sap_id"] not in dry_out_plants:
                     continue
                 final_data["plant"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
         bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
@@ -125,6 +139,10 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
             if skip_record or not rec["sap_id"]:
                 continue
             if rec["sap_id"]:
+                if dry_out_dealers and rec["sap_id"] not in dry_out_customers:
+                    continue
+                if cat_a_dealers and check_category(rec['category']) != "A":
+                    continue
                 final_data["customer"][rec["sap_id"]] = {"name": str(rec["sap_id"]) + " - " + rec["name"], "id": rec["sap_id"],
                                                          "category": check_category(rec['category'])}
     else:
@@ -170,6 +188,10 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[]):
             if skip_record or not rec["sap_id"]:
                 continue
             if rec["sap_id"]:
+                if dry_out_dealers and rec["sap_id"] not in dry_out_customers:
+                    continue
+                if cat_a_dealers and check_category(rec['category']) != "A":
+                    continue
                 final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
                                                          "category": check_category(rec['category'])}
 
