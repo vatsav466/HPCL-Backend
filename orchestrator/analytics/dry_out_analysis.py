@@ -14,7 +14,7 @@ req_keys = {
 }
 
 
-async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_requested=False, dry_out_dealers=False):
+async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -24,7 +24,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_r
     :param region:
     :param sales_area:
     :param plant:
-    :param cat_a_requested
+    :param cat_a_dealers
     :param dry_out_dealers
     :return:
     """
@@ -141,7 +141,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_r
             if rec["sap_id"]:
                 if dry_out_dealers and rec["sap_id"] not in dry_out_customers:
                     continue
-                if cat_a_requested and check_category(rec['category']) != "A":
+                if cat_a_dealers and check_category(rec['category']) != "A":
                     continue
                 final_data["customer"][rec["sap_id"]] = {"name": str(rec["sap_id"]) + " - " + rec["name"], "id": rec["sap_id"],
                                                          "category": check_category(rec['category'])}
@@ -190,7 +190,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_r
             if rec["sap_id"]:
                 if dry_out_dealers and rec["sap_id"] not in dry_out_customers:
                     continue
-                if cat_a_requested and check_category(rec['category']) != "A":
+                if cat_a_dealers and check_category(rec['category']) != "A":
                     continue
                 final_data["customer"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"],
                                                          "category": check_category(rec['category'])}

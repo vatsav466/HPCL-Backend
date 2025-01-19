@@ -810,7 +810,7 @@ Model IndentDryOut {
         region optional list str
         sales_area optional list str
         plant optional list str
-        cat_a_requested optional bool
+        cat_a_dealers optional bool
         dry_out_dealers optional bool
     }
 
