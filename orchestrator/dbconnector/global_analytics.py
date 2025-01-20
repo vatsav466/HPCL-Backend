@@ -888,6 +888,10 @@ class GlobalAnalytics:
     
     @staticmethod
     async def calculate_date(from_date, to_date, df, col):
+        # Convert from_date and to_date to datetime objects
+        from_date = datetime.strptime(from_date, '%Y-%m-%d')  # Adjust the format to match your date format
+        to_date = datetime.strptime(to_date, '%Y-%m-%d')  # Adjust the format as needed
+        
         from_month_name = from_date.strftime('%B')[:3]
         to_month_name = to_date.strftime('%B')[:3]
         df[col] = df.apply(
@@ -1087,10 +1091,38 @@ class GlobalAnalytics:
                 resp = await GlobalAnalytics.calculate_ytd(current_date,resp,'ACTUAL_HISTORY_TMT')
             
             if 'DATE' in selected_keys:
+                print("into date")
+                year_required = str(current_year-1)+'-'+str(current_year)
                 from_date, to_date = [
                         rec.value for rec in filters if rec.key == '"DATE"'
                     ][0].split(",")
-                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_TMT_SALES')
+                # Convert strings to datetime objects
+                from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+                to_date_obj = datetime.strptime(to_date, '%Y-%m-%d')
+
+                # Get abbreviated month names
+                from_date_month = from_date_obj.strftime('%b')  # 'Jan'
+                to_date_month = to_date_obj.strftime('%b')      # 'Jan'
+
+                print(f"From Date Month: {from_date_month}, To Date Month: {to_date_month}")
+                from_date = from_date.replace("-", "")  # Strip hyphens
+                to_date = to_date.replace("-", "")  # Strip hyphens
+                date_day_query = f"""
+                select "fiscal_year","month_name","NETWEIGHT_TMT" FROM "MOM_DAY_LEVEL_DATA" where "FISCALYEAR" = 'FY {year_required}' and "DAY_ID" between '{from_date}' and '{to_date}'
+                """
+                print("date_day_query --> ", date_day_query)
+                day_data = await function(query=date_day_query)
+                day_data = pd.DataFrame(day_data)
+                day_data = day_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
+                day_data.to_csv('/tmp/dataday.csv',index = False)
+                day_data['NETWEIGHT_TMT'] = day_data['NETWEIGHT_TMT'].fillna(0).astype(int)
+                resp = resp[(resp["month_name"] >= from_date_month) & (resp["month_name"] <= to_date_month)]
+                resp = resp.merge(day_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
+                print("resp['NETWEIGHT_TMT'] -->  ", resp['NETWEIGHT_TMT'])
+                print("resp --> ", resp)
+                resp['NETWEIGHT_TMT'] = resp['NETWEIGHT_TMT'].fillna(0).astype(int)
+                resp = resp.to_dict("records")
+                # resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_TMT_SALES')
             
             if 'T' in selected_keys  and "DATE" in selected_keys:
                 from_date, to_date = [
