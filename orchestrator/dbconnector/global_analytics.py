@@ -933,14 +933,14 @@ class GlobalAnalytics:
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
 
-        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"'] for rec in filters):
+        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"', '"DATE"'] for rec in filters):
             print("into only filters")
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
             conditions = []
 
             # Define keys to exclude from the WHERE clause
-            excluded_keys = {'"A"', '"H"', '"T"', '"BE"', '"RI"', '"I"'}
+            excluded_keys = {'"A"', '"H"', '"T"', '"BE"', '"RI"', '"I"', '"YTD"', '"DATE"'}
 
             for rec in filters:
                 rec.value = rec.value.split(",")
