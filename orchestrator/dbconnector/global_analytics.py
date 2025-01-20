@@ -869,7 +869,20 @@ class GlobalAnalytics:
 
     #     # If no filters are applied, return the default response
     #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
-
+    async def calculate_ytd(current_date,df,col):
+        current_month_name = current_date.strftime('%B')[:3]
+        today = current_date.today()
+        #total_days_in_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        total_days_in_month = (current_date.today().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        total_days_in_month = total_days_in_month.day
+        days_left_in_month = total_days_in_month - today.day
+        df[col] = df.apply(
+                        lambda row: round(row[col] / (total_days_in_month - days_left_in_month))
+                        if row["month_name"] == current_month_name
+                        else row[col],  # Leave other rows unchanged
+                        axis=1,
+                )
+        return df
     @staticmethod
     async def m60_performance(filters, cross_filters, drill_state):
         """
@@ -1046,36 +1059,19 @@ class GlobalAnalytics:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             # added for ytd
-            current_month_name = current_date.strftime('%B')[:3]
-            #today = datetime.today()
-            today = current_date.today()
-            #total_days_in_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-            total_days_in_month = (current_date.today().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-            total_days_in_month = total_days_in_month.day
-            days_left_in_month = total_days_in_month - today.day
+            
+            
             
             if 'YTD' in selected_keys:
-                resp["ACTUAL_TMT_SALES"] = resp.apply(
-                        lambda row: round(row["ACTUAL_TMT_SALES"] / (total_days_in_month - days_left_in_month))
-                        if row["month_name"] == current_month_name
-                        else row["ACTUAL_TMT_SALES"],  # Leave other rows unchanged
-                        axis=1,
-                )
+                resp = await calculate_ytd(current_date,resp,'ACTUAL_TMT_SALES')
+                
             
             if 'T' in selected_keys  and "YTD" in selected_keys:
-                resp["TARGET_QTY_TMT"] = resp.apply(
-                        lambda row: round(row["TARGET_QTY_TMT"] / (total_days_in_month - days_left_in_month))
-                        if row["month_name"] == current_month_name
-                        else row["TARGET_QTY_TMT"],  # Leave other rows unchanged
-                        axis=1,
-                )
+                resp = await calculate_ytd(current_date,resp,'TARGET_QTY_TMT')
+               
             if 'H' in selected_keys and "YTD" in selected_keys:
-                resp["ACTUAL_HISTORY_TMT"] = resp.apply(
-                        lambda row: round(row["ACTUAL_HISTORY_TMT"] / (total_days_in_month - days_left_in_month))
-                        if row["month_name"] == current_month_name
-                        else row["ACTUAL_HISTORY_TMT"],  # Leave other rows unchanged
-                        axis=1,
-                )
+                resp = await calculate_ytd(current_date,resp,'ACTUAL_HISTORY_TMT')
+                
             
             return {"status": True, "message": "success", "data": resp}
 
