@@ -812,3 +812,89 @@ async def _get_pending_indents(dry_out_in_days='1'):
         "a.progress_rate": ["3"],
         "a.dry_out_in_days": [dry_out_in_days]
     }
+
+async def constant_dryout_ros(days=7):
+    now = datetime.now()
+    run_id = [
+        (now - timedelta(days=i)).strftime('%y%m%d-2300') for i in range(1, days+1)
+    ]
+    run_ids = tuple(run_id)
+    print(run_ids)
+    query = f"""
+    WITH forecast_dashboard AS (
+        SELECT
+            site_id,
+            fcc_code,
+            rosapcode,
+            run_id,
+            COUNT(DISTINCT tank_no) AS tank_cnt,
+            STRING_AGG(CAST(tank_no AS TEXT), ',') AS tank_no,
+            CASE
+                WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= 0 THEN 1
+                WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) < (SUM(sch.avgsales_7days) / 7) THEN 2
+                WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) >= (SUM(sch.avgsales_7days) / 7)
+                     AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 3 THEN 3
+                WHEN SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) > (SUM(sch.avgsales_7days) / 7) * 3
+                     AND SUM(CASE WHEN pumpable_Stock >= 0 THEN pumpable_Stock ELSE 0 END) <= (SUM(sch.avgsales_7days) / 7) * 6 THEN 4
+                ELSE 6
+            END AS newstatus
+        FROM "HPCL_HOS".sch_inventory_forecast_dashboard AS sch
+        WHERE run_id IN {run_ids}
+        GROUP BY site_id, fcc_code, rosapcode, run_id
+        ORDER BY run_id, site_id, fcc_code, rosapcode
+    )
+    SELECT *
+    FROM forecast_dashboard
+    WHERE newstatus = 1
+    """
+
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    stats_resp = await function(
+        query=query
+    )
+    df = pl.DataFrame(stats_resp)
+    df = df.with_columns(
+        pl.col("run_id")
+        .str.slice(0, 6)
+        .str.strptime(pl.Date, format="%y%m%d")
+        .alias("run_id_date")
+    )
+    print("days: ", days)
+    aggregated_df = df.group_by("rosapcode").agg(
+        pl.col("run_id_date").n_unique().alias("unique_days_count")
+    )
+
+    filtered_df = aggregated_df.filter(
+        pl.col("unique_days_count") == days
+    )
+    data = df.join(filtered_df.select("rosapcode"), on="rosapcode", how="inner")
+    redis_cli = await urdhva_base.redispool.get_redis_connection()
+    locations = {key.decode(): json.loads(value.decode())
+                 for key, value in (await redis_cli.hgetall('location_master')).items()}
+    loc_data = [value for key, value in locations.items()]
+    locations_data = pl.DataFrame(loc_data)
+    result = data.join(locations_data.select("sap_id", "name").unique(subset="sap_id"), left_on = "rosapcode", right_on = "sap_id", how = "left")
+    print('printing columns')
+    print(result.columns)
+
+    exit()
+
+    conditions = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
+    rosapcodes = data['rosapcode'].unique().tolist()
+    plants = []
+    for rec in conditions:
+        if rec['key'] == 'sap_id':
+            plants = [rec['value']] if isinstance(rec['value'], str) else rec['value']
+            break
+    if plants:
+        allowed_dealers = []
+        for dealer in rosapcodes:
+            if f'RO_{dealer}' in locations and locations[f'RO_{dealer}'].get('terminal_plant_id', '') in plants:
+                allowed_dealers.append(dealer)
+        return allowed_dealers
+    else:
+        return rosapcodes
