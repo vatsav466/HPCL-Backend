@@ -815,7 +815,9 @@ class IndentDryOut:
             if await self._is_invoice_created():
                 logger.info("R2 Not Swiped But Invoice Created")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
-                input_data["action_msg"] = "R2 Not Swiped But Invoice Created"
+                # input_data["action_msg"] = "R2 Not Swiped But Invoice Created"
+                input_data["remarks"] = "R2 Not Swiped But Invoice Created"
+                input_data["action_msg"] = "R2 Swiped"
                 input_data["action_type"] = "R2Swipe"
                 input_data["event_tags"]["is_r2_swipe"] = True
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
@@ -825,7 +827,8 @@ class IndentDryOut:
                 logger.info("R2 Not Swiped But R3 Swiped")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
-                input_data["action_msg"] = "R2 Not Swiped But R3 Swiped"
+                input_data["remarks"] = "R2 Not Swiped But R3 Swiped"
+                input_data["action_msg"] = "R2 Swiped"
                 input_data["action_type"] = "R2Swipe"
                 input_data["event_tags"]["is_r2_swipe"] = True
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
@@ -835,7 +838,8 @@ class IndentDryOut:
                 logger.info("R2, R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
-                input_data["action_msg"] = "R2, R3 Not Swiped But Indent Delivered"
+                input_data["remarks"] = "R2, R3 Not Swiped But Indent Delivered"
+                input_data["action_msg"] = "R2 Swiped"
                 input_data["action_type"] = "R2Swipe"
                 input_data["event_tags"]["is_r2_swipe"] = True
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
@@ -911,7 +915,8 @@ class IndentDryOut:
                 logger.info("R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
-                input_data["action_msg"] = "R3 Not Swiped But Indent Delivered"
+                input_data["remarks"] = "R3 Not Swiped But Indent Delivered"
+                input_data["action_msg"] = "R3 Swiped"
                 input_data["action_type"] = "R3Swipe"
                 input_data["event_tags"]["is_r3_swipe"] = True
                 await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data,
