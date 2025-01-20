@@ -1930,7 +1930,20 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
-
+                
+                if "YTD" in selected_keys:
+                    resultCols.append("NETWEIGHT_TMT")
+                
+                if "H" in selected_keys and "YTD" in selected_keys:
+                        resultCols.append("ACTUAL_HISTORY_TMT")
+                        
+                if "T" in selected_keys and "TYD" in selected_keys:
+                    resultCols.append("TARGET_QUANTITY_TMT")
+                        
+                if len(resultCols)>0:
+                    current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+            
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
@@ -2027,6 +2040,18 @@ class GlobalAnalytics:
 
                 # Add grouping logic based on the updated grouped_keys
                 grouped_resp = resp.groupby(grouped_keys, as_index=False).agg(agg_dict)
+                if "YTD" in selected_keys:
+                    resultCols.append("NETWEIGHT_TMT")
+                
+                if "H" in selected_keys and "YTD" in selected_keys:
+                        resultCols.append("ACTUAL_HISTORY_TMT")
+                        
+                if "T" in selected_keys and "TYD" in selected_keys:
+                    resultCols.append("TARGET_QUANTITY_TMT")
+                        
+                if len(resultCols)>0:
+                    current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -2107,7 +2132,19 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
-
+                if "YTD" in selected_keys:
+                    resultCols.append("NETWEIGHT_TMT")
+                
+                if "H" in selected_keys and "YTD" in selected_keys:
+                        resultCols.append("ACTUAL_HISTORY_TMT")
+                        
+                if "T" in selected_keys and "TYD" in selected_keys:
+                    resultCols.append("TARGET_QUANTITY_TMT")
+                        
+                if len(resultCols)>0:
+                    current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -2190,7 +2227,18 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
-
+                if "YTD" in selected_keys:
+                    resultCols.append("NETWEIGHT_TMT")
+                
+                if "H" in selected_keys and "YTD" in selected_keys:
+                        resultCols.append("ACTUAL_HISTORY_TMT")
+                        
+                if "T" in selected_keys and "TYD" in selected_keys:
+                    resultCols.append("TARGET_QUANTITY_TMT")
+                        
+                if len(resultCols)>0:
+                    current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
             elif "FISCAL_YEAR" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
@@ -2249,7 +2297,19 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
-
+                if "YTD" in selected_keys:
+                    resultCols.append("NETWEIGHT_TMT")
+                
+                if "H" in selected_keys and "YTD" in selected_keys:
+                        resultCols.append("ACTUAL_HISTORY_TMT")
+                        
+                if "T" in selected_keys and "TYD" in selected_keys:
+                    resultCols.append("TARGET_QUANTITY_TMT")
+                        
+                if len(resultCols)>0:
+                    current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    
             grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
             if "TARGET_QTY_TMT" in grouped_resp.columns:
                 grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(0)
