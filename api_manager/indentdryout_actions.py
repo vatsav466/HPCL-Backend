@@ -311,11 +311,11 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
                 history['action_msg'] = "R3 Swiped"
             resp = prepare_history_data(history)
             alert_history["changed_data"].append(resp)
-            alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
-                                         f" {convert_time_read_format(str(history['allocated_time']))}, "
-                                         f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+            # alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
+            #                              f" {convert_time_read_format(str(history['allocated_time']))}, "
+            #                              f"Processed at {convert_time_read_format(str(history['processed_time']))}")
+        # alert_history["data"] = alert_history["data"][::-1]
         alert_history["data"] = alert_history["data"][::-1]
-        alert_history["changed_data"] = alert_history["data"][::-1]
     return alert_history
 
     # def convert_time_read_format(date_time):
