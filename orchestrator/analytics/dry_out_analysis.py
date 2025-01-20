@@ -1,6 +1,8 @@
 import urdhva_base
 import json
+import datetime
 import pandas as pd
+import polars as pl
 import hpcl_ceg_model
 import charts_actions
 import urdhva_base.redispool
@@ -655,7 +657,7 @@ async def _get_ims_day_wise_report(report_date: str):
                     AND ir.PROD_REQD_DT = TO_DATE('{report_date}', 'YYYY-MM-DD') 
                 ORDER BY 
                     ir.INDENT_NO"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "ims", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
@@ -757,7 +759,7 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
                     cd.rn = 1 or cd.rn is null
                 ORDER BY 
                     a.sap_id, a.indent_no;"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
@@ -797,7 +799,7 @@ async def _get_on_hold_data(dry_out_in_days='1'):
                             {conditions}
                             AND a.indent_status NOT IN ('Cancelled', 'Completed')
                         order by a.sap_id"""
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     stats_resp = await function(
@@ -814,9 +816,9 @@ async def _get_pending_indents(dry_out_in_days='1'):
     }
 
 async def constant_dryout_ros(days=7):
-    now = datetime.now()
+    now = datetime.datetime.now()
     run_id = [
-        (now - timedelta(days=i)).strftime('%y%m%d-2300') for i in range(1, days+1)
+        (now - datetime.timedelta(days=i)).strftime('%y%m%d-2300') for i in range(1, days+1)
     ]
     run_ids = tuple(run_id)
     print(run_ids)
@@ -848,7 +850,7 @@ async def constant_dryout_ros(days=7):
     WHERE newstatus = 1
     """
 
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
@@ -877,24 +879,7 @@ async def constant_dryout_ros(days=7):
                  for key, value in (await redis_cli.hgetall('location_master')).items()}
     loc_data = [value for key, value in locations.items()]
     locations_data = pl.DataFrame(loc_data)
-    result = data.join(locations_data.select("sap_id", "name").unique(subset="sap_id"), left_on = "rosapcode", right_on = "sap_id", how = "left")
+    result = data.join(locations_data.select(["sap_id", "name"]).unique(subset="sap_id", keep='first'), left_on = "rosapcode", right_on = "sap_id", how = "left")
     print('printing columns')
     print(result.columns)
-
-    exit()
-
-    conditions = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
-    rosapcodes = data['rosapcode'].unique().tolist()
-    plants = []
-    for rec in conditions:
-        if rec['key'] == 'sap_id':
-            plants = [rec['value']] if isinstance(rec['value'], str) else rec['value']
-            break
-    if plants:
-        allowed_dealers = []
-        for dealer in rosapcodes:
-            if f'RO_{dealer}' in locations and locations[f'RO_{dealer}'].get('terminal_plant_id', '') in plants:
-                allowed_dealers.append(dealer)
-        return allowed_dealers
-    else:
-        return rosapcodes
+    return result.select(["rosapcode", "name"]).to_dicts()
