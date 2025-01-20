@@ -19,7 +19,7 @@ VA_Alert_Mapping = {
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {"name": "Absence Of Fire Extinguisher Tt Operations", "severity": "High"},
         "PPE_HELMET": {"name": "Person not wearing Safety Helmet", "severity": "Medium"},
         "LINE_OF_FIRE": {"name": "Intrusion", "severity": "Critical"},
-        "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt", "severity": "Critical"},
+        "ABSENCE_OF_SAFETY_HARNESS": {"name": "Person not wearing Safety Harness/Belt", "severity": "Critical"},
         "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock", "severity": "High"}
     },
     "LPG": {
