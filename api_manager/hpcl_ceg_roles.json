@@ -819,6 +819,9 @@
                 },
                 {
                     "name": "upload_image"
+                },
+                {
+                    "name": "get_frequent_dryout_ro"
                 }
             ]
         },
@@ -837,6 +840,9 @@
                 },
                 {
                     "name": "get_performance_index"
+                },
+                {
+                    "name": "get_frequent_dryout_ro"
                 }
             ]
         },
@@ -873,6 +879,9 @@
                 },
                 {
                     "name": "upload_image"
+                },
+                {
+                    "name": "get_frequent_dryout_ro"
                 }
             ]
         },
@@ -2496,6 +2505,10 @@
         {
             "name": "upload_image",
             "displayName": "upload_image"
+        },
+        {
+            "name": "get_frequent_dryout_ro",
+            "displayName": "get_frequent_dryout_ro"
         },
         {
             "name": "upload_cems_location_master",
