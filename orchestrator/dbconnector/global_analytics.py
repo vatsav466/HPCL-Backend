@@ -869,6 +869,7 @@ class GlobalAnalytics:
 
     #     # If no filters are applied, return the default response
     #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    @staticmethod
     async def calculate_ytd(current_date,df,col):
         current_month_name = current_date.strftime('%B')[:3]
         today = current_date.today()
