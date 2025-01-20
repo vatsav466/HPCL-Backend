@@ -290,14 +290,14 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             if status:
                 resp['terminal_plant_name'] = location_data['name']
         servicing_plant_id = resp['servicing_plant_id'] if resp['servicing_plant_id'] else resp['terminal_plant_id']
-        alert_history["data"].append(f"Dry-out Location Identified at "
+        alert_history["changed_data"].append(f"Dry-out Location Identified at "
                                      f"{convert_time_read_format(str(resp['created_at']))}, "
                                      f"Servicing Plat Location {servicing_plant_id}")
 
         action_msgs = [entry["action_msg"] for entry in resp.get('alert_history', [])]
         for history in resp.get("alert_history", []):
             if history['action_msg'] == "Valid Indent":
-                if "Indent Is On Hold" and "Valid Indent" in action_msgs:
+                if "Indent Is On Hold" in action_msgs and "Valid Indent" in action_msgs:
                     history['action_msg'] = "Indent On Hold Released"
             if history['action_msg'] == "Invalid Is On Hold":
                 history['action_msg'] = "Indent Is On Hold"
