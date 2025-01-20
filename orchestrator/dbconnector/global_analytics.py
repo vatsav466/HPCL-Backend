@@ -869,7 +869,35 @@ class GlobalAnalytics:
 
     #     # If no filters are applied, return the default response
     #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
-
+    @staticmethod
+    async def calculate_ytd(current_date,df,cols):
+        current_month_name = current_date.strftime('%B')[:3]
+        today = current_date.today()
+        #total_days_in_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        total_days_in_month = (current_date.today().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+        total_days_in_month = total_days_in_month.day
+        days_left_in_month = total_days_in_month - today.day
+        for col in cols:
+            df[col] = df.apply(
+                            lambda row: round(row[col] / (total_days_in_month - days_left_in_month))
+                            if row["month_name"] == current_month_name
+                            else row[col],  # Leave other rows unchanged
+                            axis=1
+                    )
+        return df
+    
+    @staticmethod
+    async def calculate_date(from_date, to_date, df, col):
+        from_month_name = from_date.strftime('%B')[:3]
+        to_month_name = to_date.strftime('%B')[:3]
+        df[col] = df.apply(
+            lambda row: round(row[col])
+            if from_month_name <= row["month_name"] <= to_month_name
+            else row[col],  # Leave other rows unchanged
+            axis=1,
+        )
+        return df
+        
     @staticmethod
     async def m60_performance(filters, cross_filters, drill_state):
         """
@@ -905,14 +933,14 @@ class GlobalAnalytics:
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
 
-        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"'] for rec in filters):
+        if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"', '"DATE"'] for rec in filters):
             print("into only filters")
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
             sales_performance_query_ = sales_performance_query
             conditions = []
 
             # Define keys to exclude from the WHERE clause
-            excluded_keys = {'"A"', '"H"', '"T"', '"BE"', '"RI"', '"I"'}
+            excluded_keys = {'"A"', '"H"', '"T"', '"BE"', '"RI"', '"I"', '"YTD"', '"DATE"'}
 
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -936,7 +964,7 @@ class GlobalAnalytics:
                 sales_performance_query_ += ' WHERE '
                 sales_performance_query_ += ' AND '.join(conditions)
 
-        elif len(filters) >= 1 and any(rec.key in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"'] for rec in filters):
+        elif len(filters) >= 1 and any(rec.key in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"', '"DATE'] for rec in filters):
             print("into elif")
             selected_keys = [rec.key.strip('"') for rec in filters]
             #current_date = datetime.now()
@@ -1046,37 +1074,36 @@ class GlobalAnalytics:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             # added for ytd
-            current_month_name = current_date.strftime('%B')[:3]
-            #today = datetime.today()
-            today = current_date.today()
-            #total_days_in_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-            total_days_in_month = (current_date.today().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
-            total_days_in_month = total_days_in_month.day
-            days_left_in_month = total_days_in_month - today.day
+            
+            
             
             if 'YTD' in selected_keys:
-                resp["ACTUAL_TMT_SALES"] = resp.apply(
-                        lambda row: round(row["ACTUAL_TMT_SALES"] / (total_days_in_month - days_left_in_month))
-                        if row["month_name"] == current_month_name
-                        else row["ACTUAL_TMT_SALES"],  # Leave other rows unchanged
-                        axis=1,
-                )
+                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,'ACTUAL_TMT_SALES')
             
             if 'T' in selected_keys  and "YTD" in selected_keys:
-                resp["TARGET_QTY_TMT"] = resp.apply(
-                        lambda row: round(row["TARGET_QTY_TMT"] / (total_days_in_month - days_left_in_month))
-                        if row["month_name"] == current_month_name
-                        else row["TARGET_QTY_TMT"],  # Leave other rows unchanged
-                        axis=1,
-                )
+                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,'TARGET_QTY_TMT')
+               
             if 'H' in selected_keys and "YTD" in selected_keys:
-                resp["ACTUAL_HISTORY_TMT"] = resp.apply(
-                        lambda row: round(row["ACTUAL_HISTORY_TMT"] / (total_days_in_month - days_left_in_month))
-                        if row["month_name"] == current_month_name
-                        else row["ACTUAL_HISTORY_TMT"],  # Leave other rows unchanged
-                        axis=1,
-                )
+                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,'ACTUAL_HISTORY_TMT')
             
+            if 'DATE' in selected_keys:
+                from_date, to_date = [
+                        rec.value for rec in filters if rec.key == '"DATE"'
+                    ][0].split(",")
+                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_TMT_SALES')
+            
+            if 'T' in selected_keys  and "DATE" in selected_keys:
+                from_date, to_date = [
+                        rec.value for rec in filters if rec.key == '"DATE"'
+                    ][0].split(",")
+                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'TARGET_QTY_TMT')
+               
+            if 'H' in selected_keys and "DATE" in selected_keys:
+                from_date, to_date = [
+                        rec.value for rec in filters if rec.key == '"DATE"'
+                    ][0].split(",")
+                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_HISTORY_TMT')
+                
             return {"status": True, "message": "success", "data": resp}
 
         else:
@@ -1221,15 +1248,15 @@ class GlobalAnalytics:
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
 
-                resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
-                resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
-                resp = resp.sort_values('SBU_Name')
+                # resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
+                # resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
+                # resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
  
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1280,9 +1307,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)                    
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)                    
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Region_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1333,9 +1360,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SalesArea_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1386,9 +1413,9 @@ class GlobalAnalytics:
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'ProductName' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1439,9 +1466,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
 
             if len(filters) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1712,7 +1739,7 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -1774,15 +1801,24 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = "max"
+                    
+                    if "YTD" in selected_keys:
+                        current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                        resp = GlobalAnalytics.calculate_ytd(current_date,resp,['NETWEIGHT_TMT'])
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)  
-
+                if "H" in selected_keys and "YTD" in selected_keys:
+                        current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                        resp = GlobalAnalytics.calculate_ytd(current_date,resp,['ACTUAL_HISTORY_TMT'])
+                if "T" in selected_keys and "TYD" in selected_keys:
+                    current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                    resp = GlobalAnalytics.calculate_ytd(current_date,resp,['TARGET_QUANTITY_TMT'])
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -1828,11 +1864,13 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                    select  "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" 
-                    where "FISCALYEAR" = 'FY {year_required}'
+                                        SELECT "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" 
+                                        FROM "MOM_LEVEL_FINAL_DATA" 
+                                        WHERE "FISCALYEAR" = 'FY {year_required}'
                     """
                     if "month_name" in filter_keys:
-                        sales_his_query += f""" and "month_name" = '{filter_values[1]}'"""
+                        sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
+                    print("sales_his_query",sales_his_query)
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -1849,7 +1887,6 @@ class GlobalAnalytics:
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
                 resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
                 resp = resp.sort_values('SBU_Name')
-
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
@@ -1907,6 +1944,8 @@ class GlobalAnalytics:
                     select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
                     """
+                    if "month_name" in filter_keys:
+                        sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -2002,6 +2041,8 @@ class GlobalAnalytics:
                     select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","ORGRONAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
 
                     """
+                    if "month_name" in filter_keys:
+                        sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
@@ -2078,9 +2119,12 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                    select * FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
-
+                                        SELECT "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" 
+                                        FROM "MOM_LEVEL_FINAL_DATA" 
+                                        WHERE "FISCALYEAR" = 'FY {year_required}'
                     """
+                    if "month_name" in filter_keys:
+                        sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()

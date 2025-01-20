@@ -568,10 +568,19 @@ async def ro_not_in_ims():
         allowed_dealers = []
         for dealer in rosapcodes:
             if f'RO_{dealer}' in locations and locations[f'RO_{dealer}'].get('terminal_plant_id', '') in plants:
-                allowed_dealers.append(dealer)
+                if f'RO_{dealer}' in locations.keys():
+                    allowed_dealers.append({dealer: locations[f'RO_{dealer}'].get("name", "")})
+                else:
+                    allowed_dealers.append({dealer: ""})
         return allowed_dealers
     else:
-        return rosapcodes
+        sap_code = []
+        for dealer in rosapcodes:
+            if f'RO_{dealer}' in locations.keys():
+                sap_code.append({dealer: locations[f'RO_{dealer}'].get("name", "")})
+            else:
+                sap_code.append({dealer: ""})
+        return sap_code
 
 async def _generate_where_clause(where_clause):
     # where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
@@ -593,6 +602,171 @@ async def _generate_where_clause(where_clause):
                     where_clause.append(f"{record['key']} in {tuple(record['value'])}")
     conditions = ' AND '.join(where_clause)
     return conditions
+
+async def _get_ims_day_wise_report(report_date: str):
+    query = f"""SELECT 
+                    ir.LOCN_CODE,
+                    ir.INDENT_NO,
+                    ir.INDENT_DATE,
+                    ir.PROD_REQD_DT,
+                    ir.DEALER_CODE,
+                    ir.BATCH_FLAG,
+                    ir.TRUCK_REGNO,
+                    ir.VALID_INDENT,
+                    ir.SEND_TO_JDE_TIME,
+                    ir.DELIVERY_DATE,
+                    ir.INDENT_HOLD_RELEASE_TIME,
+                    ir.INDENT_EXECUTABLE_TIME,
+                    ip.PROD,
+                    ip.QTY,
+                    ip.PROD_ALLOT_TIME,
+                    ip.SALES_ORDERNO,
+                    ip.INVOICE_NO,
+                    ip.JDE_TRUCK_NO,
+                    tse.LOADED_ON,
+                    tse.CARD_STATUS,
+                    ROW_NUMBER() OVER (
+                            PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
+                                         COALESCE(ir."INDENT_NO"::TEXT, ''), 
+                                         COALESCE(ir."DEALER_CODE"::TEXT, ''), 
+                                         COALESCE(ip."PROD"::TEXT, '') 
+                            ORDER BY tse."LOADED_ON" ASC
+                        ) AS rn
+                FROM 
+                    (
+                        SELECT * FROM "IMS_SAP"."INDENT_REQUEST" WHERE PROD_REQD_DT = TO_DATE('{report_date}', 'YYYY-MM-DD')
+                    ) AS ir
+                LEFT JOIN 
+                    "IMS_SAP"."INDENT_PRODUCTS" ip
+                ON 
+                    ir.LOCN_CODE = ip.LOCN_CODE
+                    AND ir.DEALER_CODE = ip.DEALER_CODE
+                    AND ir.INDENT_NO = ip.INDENT_NO
+                LEFT JOIN 
+                    "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+                ON 
+                    ir.LOCN_CODE = tse.LOCN_CODE
+                    AND ir.TRUCK_REGNO = tse.TRUCK_REGNO
+                    AND tse.CARD_STATUS = 'O'
+                    AND tse."LOADED_ON" >= ir."PROD_REQD_DT"
+                    AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+                WHERE
+                    cd.rn = 1
+                    AND ir.PROD_REQD_DT = TO_DATE('{report_date}', 'YYYY-MM-DD') 
+                ORDER BY 
+                    ir.INDENT_NO"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+        "ims", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    stats_resp = await function(
+        query=query
+    )
+    stats_resp = pd.DataFrame(stats_resp)
+    stats_resp = stats_resp.drop_duplicates(subset=["LOCN_CODE", "INDENT_NO", "DEALER_CODE", "PROD"], keep='first')
+    return stats_resp.to_dict(orient='records')
+
+async def _get_dry_out_ims_report(dry_out_in_days='1'):
+    query = f"""WITH CombinedData AS (
+                    SELECT 
+                        ir."LOCN_CODE",
+                        ir."INDENT_NO",
+                        ir."INDENT_DATE",
+                        ir."PROD_REQD_DT",
+                        ir."DEALER_CODE",
+                        ir."BATCH_FLAG",
+                        ir."TRUCK_REGNO",
+                        ir."VALID_INDENT",
+                        ir."SEND_TO_JDE_TIME",
+                        ir."DELIVERY_DATE",
+                        ir."INDENT_HOLD_RELEASE_TIME",
+                        ir."INDENT_EXECUTABLE_TIME",
+                        ip."PROD" AS "PRODUCT_CODE",
+                        ip."QTY",
+                        ip."PROD_ALLOT_TIME",
+                        ip."SALES_ORDERNO",
+                        ip."INVOICE_NO",
+                        ip."JDE_TRUCK_NO",
+                        tse."LOADED_ON",
+                        tse."CARD_STATUS",
+                        ROW_NUMBER() OVER (
+                            PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
+                                         COALESCE(ir."INDENT_NO"::TEXT, ''), 
+                                         COALESCE(ir."DEALER_CODE"::TEXT, ''), 
+                                         COALESCE(ip."PROD"::TEXT, '') 
+                            ORDER BY tse."LOADED_ON" ASC
+                        ) AS rn
+                    FROM 
+                        "IMS_SAP"."INDENT_REQUEST" ir
+                    LEFT JOIN 
+                        "IMS_SAP"."INDENT_PRODUCTS" ip
+                    ON 
+                        COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
+                        AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
+                        AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
+                    LEFT JOIN 
+                        "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+                    ON 
+                        COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
+                        AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
+                        AND tse."CARD_STATUS" = 'O'
+                        AND tse."LOADED_ON" >= ir."PROD_REQD_DT"
+                        AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+                )
+                SELECT 
+                    a.sap_id ad alerts.sap_id,
+                    a.location_name as location_name,
+                    a.terminal_plant_id as terminal_plant_od,
+                    a.indent_no as alerts.indent_no,
+                    a.product_code as alerts.product_code,
+                    a.dry_out_in_days,
+                    cd."LOCN_CODE",
+                    cd."INDENT_NO",
+                    cd."INDENT_DATE",
+                    cd."PROD_REQD_DT",
+                    cd."DEALER_CODE",
+                    cd."BATCH_FLAG",
+                    cd."TRUCK_REGNO",
+                    cd."VALID_INDENT",
+                    cd."SEND_TO_JDE_TIME",
+                    cd."DELIVERY_DATE",
+                    cd."INDENT_HOLD_RELEASE_TIME",
+                    cd."INDENT_EXECUTABLE_TIME",
+                    cd."PRODUCT_CODE",
+                    cd."QTY",
+                    cd."PROD_ALLOT_TIME",
+                    cd."SALES_ORDERNO",
+                    cd."INVOICE_NO",
+                    cd."JDE_TRUCK_NO",
+                    cd."LOADED_ON",
+                    cd."CARD_STATUS"
+                FROM 
+                    (SELECT * 
+                     FROM alerts 
+                     WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                     AND indent_status NOT IN ('Cancelled', 'Completed')
+                     AND dry_out_in_days = '{dry_out_in_days}') a
+                LEFT JOIN 
+                    CombinedData cd
+                ON 
+                    COALESCE(substr(cd."DEALER_CODE", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
+                    AND COALESCE(cd."INDENT_NO"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
+                    AND COALESCE(cd."PRODUCT_CODE"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+                WHERE 
+                    cd.rn = 1 or cd.rn is null
+                ORDER BY 
+                    a.sap_id, a.indent_no;"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    stats_resp = await function(
+        query=query
+    )
+    stats_resp = pd.DataFrame(stats_resp)
+    return stats_resp.to_dict(orient='records')
 
 async def _get_on_hold_data(dry_out_in_days='1'):
     where_clause = {
@@ -618,7 +792,6 @@ async def _get_on_hold_data(dry_out_in_days='1'):
                         ON 
                             a.sap_id::TEXT = SUBSTR(ir."DEALER_CODE", 3, 8)::TEXT
                             AND a.indent_no::TEXT = ir."INDENT_NO"::TEXT
-                            --AND ir."PROD_REQD_DT" BETWEEN TO_DATE('2025-01-17', 'YYYY-MM-DD') AND TO_DATE('2025-01-19', 'YYYY-MM-DD')
                             AND ir."CANCEL_INDENT" IS NULL
                         WHERE 
                             {conditions}
