@@ -243,10 +243,26 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
         resp = resp.__dict__
     alert_history = {
         "details": {},
-        "data": []
+        "data": [],
+        "changed_data": []
     }
 
-    def convert_time_read_format(date_time):
+    def prepare_history_data(history_data):
+        if history_data["action_msg"] == "Indent Raised":
+            history_msg = (f"Action:- {history['action_msg']}, Indent Raised at"
+                                         f" {convert_time_read_format(str(history['ims_datetime']), is_ist=True)}, "
+                                         f"Product Required Date {convert_time_read_format(str(history['prod_reqd_dt']), is_ist=True)}")
+        elif history_data["action_msg"] == "Indent Is On Hold":
+            history_msg = (f"Action:- {history['action_msg']}")
+        elif history_data["action_msg"] == "Indent On Hold Released":
+            history_msg = (f"Action:- {history['action_msg']}, On Hold Released at"
+                           f" {convert_time_read_format(str(history['ims_datetime']), is_ist=True)}")
+        else:
+            history_msg = (f"Action:- {history['action_msg']}, {history['action_type']}: "
+                           f"Processed at {convert_time_read_format(str(history['ims_datetime']), is_ist=True)}")
+        return history_msg
+
+    def convert_time_read_format(date_time, is_ist=False):
         try:
             utc_timestamp = parser.parse(date_time).replace(tzinfo=None)
             # Define UTC and IST timezones
@@ -257,7 +273,8 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             ist_time = utc_time.astimezone(ist)
             # Format the IST timestamp in the desired format
             formatted_ist_time = ist_time.strftime('%d-%m-%Y %H:%M:%S')
-            # formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
+            if is_ist:
+                formatted_ist_time = utc_timestamp.strftime('%d-%m-%Y %H:%M:%S')
             return formatted_ist_time
         except:
             return "-"
@@ -272,16 +289,33 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
             status, location_data = await alert_helper.get_location_details("TAS", resp['terminal_plant_id'])
             if status:
                 resp['terminal_plant_name'] = location_data['name']
+        servicing_plant_id = resp['servicing_plant_id'] if resp['servicing_plant_id'] else resp['terminal_plant_id']
         alert_history["data"].append(f"Dry-out Location Identified at "
-                                     f"{convert_time_read_format(str(resp['created_at']))}")
+                                     f"{convert_time_read_format(str(resp['created_at']))}, "
+                                     f"Servicing Plat Location {servicing_plant_id}")
 
+        action_msgs = [entry["action_msg"] for entry in resp.get('alert_history', [])]
         for history in resp.get("alert_history", []):
+            if history['action_msg'] == "Valid Indent":
+                if "Indent Is On Hold" and "Valid Indent" in action_msgs:
+                    history['action_msg'] = "Indent On Hold Released"
             if history['action_msg'] == "Invalid Is On Hold":
                 history['action_msg'] = "Indent Is On Hold"
+            if history['action_msg'] == "R2 Not Swiped But Invoice Created":
+                history['action_msg'] = "R2 Swiped"
+            if history['action_msg'] == "R2 Not Swiped But R3 Swiped":
+                history['action_msg'] = "R2 Swiped"
+            if history['action_msg'] == "R2, R3 Not Swiped But Indent Delivered":
+                history['action_msg'] = "R2 Swiped"
+            if history['action_msg'] == "R3 Not Swiped But Indent Delivered":
+                history['action_msg'] = "R3 Swiped"
+            resp = prepare_history_data(history)
+            alert_history["changed_data"].append(resp)
             alert_history["data"].append(f"Action:- {history['action_msg']}, {history['action_type']} at"
                                          f" {convert_time_read_format(str(history['allocated_time']))}, "
                                          f"Processed at {convert_time_read_format(str(history['processed_time']))}")
         alert_history["data"] = alert_history["data"][::-1]
+        alert_history["changed_data"] = alert_history["data"][::-1]
     return alert_history
 
     # def convert_time_read_format(date_time):
