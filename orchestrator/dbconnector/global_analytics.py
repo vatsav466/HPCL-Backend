@@ -1829,7 +1829,6 @@ class GlobalAnalytics:
                     resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
                     resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year']],how='left',on='month_name')
                     resp['fiscal_year'] = resp['fiscal_year'].bfill()
-                    resp.to_csv('/tmp/resp.csv',index = False)
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = "max"
@@ -1846,8 +1845,8 @@ class GlobalAnalytics:
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
-                if "T" in selected_keys and "TYD" in selected_keys:
-                    resultCols.append("TARGET_QUANTITY_TMT")
+                if "T" in selected_keys and "YTD" in selected_keys:
+                    resultCols.append("TARGET_QTY_TMT")
                     
                     
                 if len(resultCols)>0:
@@ -1937,8 +1936,8 @@ class GlobalAnalytics:
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
-                if "T" in selected_keys and "TYD" in selected_keys:
-                    resultCols.append("TARGET_QUANTITY_TMT")
+                if "T" in selected_keys and "YTD" in selected_keys:
+                    resultCols.append("TARGET_QTY_TMT")
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
@@ -1946,7 +1945,7 @@ class GlobalAnalytics:
             
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -2046,8 +2045,8 @@ class GlobalAnalytics:
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
-                if "T" in selected_keys and "TYD" in selected_keys:
-                    resultCols.append("TARGET_QUANTITY_TMT")
+                if "T" in selected_keys and "YTD" in selected_keys:
+                    resultCols.append("TARGET_QTY_TMT")
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
@@ -2055,7 +2054,7 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -2138,8 +2137,8 @@ class GlobalAnalytics:
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
-                if "T" in selected_keys and "TYD" in selected_keys:
-                    resultCols.append("TARGET_QUANTITY_TMT")
+                if "T" in selected_keys and "YTD" in selected_keys:
+                    resultCols.append("TARGET_QTY_TMT")
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
@@ -2148,7 +2147,7 @@ class GlobalAnalytics:
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -2233,8 +2232,8 @@ class GlobalAnalytics:
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
-                if "T" in selected_keys and "TYD" in selected_keys:
-                    resultCols.append("TARGET_QUANTITY_TMT")
+                if "T" in selected_keys and "YTD" in selected_keys:
+                    resultCols.append("TARGET_QTY_TMT")
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
@@ -2243,7 +2242,7 @@ class GlobalAnalytics:
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -2303,8 +2302,8 @@ class GlobalAnalytics:
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
-                if "T" in selected_keys and "TYD" in selected_keys:
-                    resultCols.append("TARGET_QUANTITY_TMT")
+                if "T" in selected_keys and "YTD" in selected_keys:
+                    resultCols.append("TARGET_QTY_TMT")
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
