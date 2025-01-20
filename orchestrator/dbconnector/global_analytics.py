@@ -1828,9 +1828,11 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                    select  "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
-
+                    select  "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" 
+                    where "FISCALYEAR" = 'FY {year_required}'
                     """
+                    if "month_name" in filter_keys:
+                        sales_his_query += f""" and "month_name" = '{filter_values[1]}'"""
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
                     his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
