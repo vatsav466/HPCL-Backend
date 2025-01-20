@@ -869,6 +869,7 @@ class GlobalAnalytics:
 
     #     # If no filters are applied, return the default response
     #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
     @staticmethod
     async def calculate_ytd(current_date,df,col):
         current_month_name = current_date.strftime('%B')[:3]
@@ -881,9 +882,22 @@ class GlobalAnalytics:
                         lambda row: round(row[col] / (total_days_in_month - days_left_in_month))
                         if row["month_name"] == current_month_name
                         else row[col],  # Leave other rows unchanged
-                        axis=1,
+                        axis=1
                 )
         return df
+    
+    @staticmethod
+    async def calculate_date(from_date, to_date, df, col):
+        from_month_name = from_date.strftime('%B')[:3]
+        to_month_name = to_date.strftime('%B')[:3]
+        df[col] = df.apply(
+            lambda row: round(row[col])
+            if from_month_name <= row["month_name"] <= to_month_name
+            else row[col],  # Leave other rows unchanged
+            axis=1,
+        )
+        return df
+        
     @staticmethod
     async def m60_performance(filters, cross_filters, drill_state):
         """
@@ -950,7 +964,7 @@ class GlobalAnalytics:
                 sales_performance_query_ += ' WHERE '
                 sales_performance_query_ += ' AND '.join(conditions)
 
-        elif len(filters) >= 1 and any(rec.key in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"'] for rec in filters):
+        elif len(filters) >= 1 and any(rec.key in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"', '"DATE'] for rec in filters):
             print("into elif")
             selected_keys = [rec.key.strip('"') for rec in filters]
             #current_date = datetime.now()
@@ -1064,16 +1078,32 @@ class GlobalAnalytics:
             
             
             if 'YTD' in selected_keys:
-                resp = await calculate_ytd(current_date,resp,'ACTUAL_TMT_SALES')
-                
+                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,'ACTUAL_TMT_SALES')
             
             if 'T' in selected_keys  and "YTD" in selected_keys:
-                resp = await calculate_ytd(current_date,resp,'TARGET_QTY_TMT')
+                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,'TARGET_QTY_TMT')
                
             if 'H' in selected_keys and "YTD" in selected_keys:
-                resp = await calculate_ytd(current_date,resp,'ACTUAL_HISTORY_TMT')
-                
+                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,'ACTUAL_HISTORY_TMT')
             
+            if 'DATE' in selected_keys:
+                from_date, to_date = [
+                        rec.value for rec in filters if rec.key == '"DATE"'
+                    ][0].split(",")
+                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_TMT_SALES')
+            
+            if 'T' in selected_keys  and "DATE" in selected_keys:
+                from_date, to_date = [
+                        rec.value for rec in filters if rec.key == '"DATE"'
+                    ][0].split(",")
+                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'TARGET_QTY_TMT')
+               
+            if 'H' in selected_keys and "DATE" in selected_keys:
+                from_date, to_date = [
+                        rec.value for rec in filters if rec.key == '"DATE"'
+                    ][0].split(",")
+                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_HISTORY_TMT')
+                
             return {"status": True, "message": "success", "data": resp}
 
         else:
