@@ -869,21 +869,21 @@ class GlobalAnalytics:
 
     #     # If no filters are applied, return the default response
     #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
-
     @staticmethod
-    async def calculate_ytd(current_date,df,col):
+    async def calculate_ytd(current_date,df,cols):
         current_month_name = current_date.strftime('%B')[:3]
         today = current_date.today()
         #total_days_in_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         total_days_in_month = (current_date.today().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         total_days_in_month = total_days_in_month.day
         days_left_in_month = total_days_in_month - today.day
-        df[col] = df.apply(
-                        lambda row: round(row[col] / (total_days_in_month - days_left_in_month))
-                        if row["month_name"] == current_month_name
-                        else row[col],  # Leave other rows unchanged
-                        axis=1
-                )
+        for col in cols:
+            df[col] = df.apply(
+                            lambda row: round(row[col] / (total_days_in_month - days_left_in_month))
+                            if row["month_name"] == current_month_name
+                            else row[col],  # Leave other rows unchanged
+                            axis=1
+                    )
         return df
     
     @staticmethod
@@ -1739,7 +1739,7 @@ class GlobalAnalytics:
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -1801,15 +1801,24 @@ class GlobalAnalytics:
                     if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
                         resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
                     agg_dict["ACTUAL_HISTORY_TMT"] = "max"
+                    
+                    if "YTD" in selected_keys:
+                        current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                        resp = GlobalAnalytics.calculate_ytd(current_date,resp,['NETWEIGHT_TMT'])
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)  
-
+                if "H" in selected_keys and "YTD" in selected_keys:
+                        current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                        resp = GlobalAnalytics.calculate_ytd(current_date,resp,['ACTUAL_HISTORY_TMT'])
+                if "T" in selected_keys and "TYD" in selected_keys:
+                    current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
+                    resp = GlobalAnalytics.calculate_ytd(current_date,resp,['TARGET_QUANTITY_TMT'])
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -1878,7 +1887,6 @@ class GlobalAnalytics:
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
                 resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
                 resp = resp.sort_values('SBU_Name')
-                
                 # If any valid keys are selected, group the data
                 if selected_keys:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
@@ -1933,9 +1941,8 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                                        SELECT "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" 
-                                        FROM "MOM_LEVEL_FINAL_DATA" 
-                                        WHERE "FISCALYEAR" = 'FY {year_required}'
+                    select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+
                     """
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
@@ -2031,9 +2038,8 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                                        SELECT "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" 
-                                        FROM "MOM_LEVEL_FINAL_DATA" 
-                                        WHERE "FISCALYEAR" = 'FY {year_required}'
+                    select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","ORGRONAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
+
                     """
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
