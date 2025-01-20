@@ -1227,9 +1227,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["SBU_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
  
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1280,9 +1280,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg(agg_dict)                    
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)                    
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Region_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1333,9 +1333,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SalesArea_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1386,9 +1386,9 @@ class GlobalAnalytics:
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'ProductName' in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -1439,9 +1439,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["ProductName"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
 
             if len(filters) == 2 and "month_name" in filter_keys and "SBU_Name" in filter_keys:
                 # Define the set of valid keys without the quotes
