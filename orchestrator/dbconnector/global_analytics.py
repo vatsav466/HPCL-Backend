@@ -2347,8 +2347,8 @@ class GlobalAnalytics:
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
                     resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
-                    
-            grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
+            if "NETWEIGHT_TMT" in  grouped_resp.columns:   
+                grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
             if "TARGET_QTY_TMT" in grouped_resp.columns:
                 grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(0)
             # Return grouped response
