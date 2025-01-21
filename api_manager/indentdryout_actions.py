@@ -741,7 +741,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     if is_delivered:
         query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
                 "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-                f"from alerts where indent_status not in ('Cancelled') and {conditions} and DATE(updated_at) = '{_date}'"
+                f"from alerts where indent_status not in ('Cancelled') and {conditions} and DATE(updated_at) = '{_date}' and jsonb_array_length(alert_history::jsonb) > 2"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query
