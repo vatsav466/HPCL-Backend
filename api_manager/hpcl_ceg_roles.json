@@ -2438,6 +2438,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "lpgoperationsrejections",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperationsRejections",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperationsrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperationsrejections_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperationsRejections_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperationsrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgoperationsrejections_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgOperationsRejections_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgoperationsrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

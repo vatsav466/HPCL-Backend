@@ -1148,6 +1148,7 @@ class GlobalAnalytics:
                 print("resp", resp)
                 resp = pd.DataFrame(resp)
                 resp = await GlobalAnalytics.calculate_date(from_date_obj, to_date_obj, resp, 'TARGET_QTY_TMT')
+                resp["TARGET_QTY_TMT"] = resp["TARGET_QTY_TMT"].fillna(0).astype(int)
                 resp = resp.to_dict("records")
                
             if 'H' in selected_keys and "DATE" in selected_keys:
@@ -1170,6 +1171,7 @@ class GlobalAnalytics:
                 print("resp", resp)
                 resp = pd.DataFrame(resp)
                 resp = await GlobalAnalytics.calculate_date(from_date_obj, to_date_obj, resp, 'ACTUAL_HISTORY_TMT')
+                resp["ACTUAL_HISTORY_TMT"] = resp["ACTUAL_HISTORY_TMT"].fillna(0).astype(int)
                 resp = resp.to_dict("records")
 
                 
@@ -5323,3 +5325,148 @@ class GlobalAnalytics:
             return {"status": True, "message":"success", "data":[]}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def lpg_operations_rejet(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/Users/apple/Desktop/DistributorMappings.csv")
+        current_date = datetime.now() - relativedelta(days=0)
+        current_date_1 = current_date.strftime("%Y-%m-%d")
+        print(current_date_1)
+        
+
+        cs_resp_ = lpg_plant_queries.lpg_plant_query.get("cs_query")
+        pt_resp_ = lpg_plant_queries.lpg_plant_query.get("pt_query")
+        gd_resp_ = lpg_plant_queries.lpg_plant_query.get("gd_query")
+
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsRejections.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                print('Key: ',rec.key)
+                if rec.key == '"rejection_type"':
+                    rejection_filter = rec
+                    continue
+                if len(rec.value) == 1:
+                    condition = f"{rec.key} = '{rec.value[0]}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+
+            if conditions:
+                cs_resp_ += ' WHERE ' + ' AND '.join(conditions)
+                pt_resp_ += ' WHERE ' + ' AND '.join(conditions)
+                gd_resp_ += ' WHERE ' + ' AND '.join(conditions)
+                common_filter = f'''
+                AND CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND "zone" IS NOT NULL
+            '''
+            else:
+                cs_resp_ += 'WHERE '
+                pt_resp_ += ' WHERE '
+                gd_resp_ += ' WHERE '
+                common_filter = f'''
+                CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND "zone" IS NOT NULL
+            '''
+
+            cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
+            pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
+            gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsRejections.get_clause_conditions(formated=True)]
+            cs_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cs_resp_, access_filters, drill_state)
+            pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
+            gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)
+            if not "where" in cs_resp_.lower():
+                common_filter = f'''
+                WHERE CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND "zone" IS NOT NULL
+            '''
+            else:
+                common_filter = f'''
+                AND CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND "zone" IS NOT NULL
+            '''
+            cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
+            pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
+            gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
+
+            cs_resp = await function(query=cs_resp_)
+            pt_resp = await function(query=pt_resp_)
+            gd_resp = await function(query=gd_resp_)
+            
+            
+            cs_df = pd.DataFrame(cs_resp)
+            pt_df = pd.DataFrame(pt_resp)
+            gd_df = pd.DataFrame(gd_resp)     
+            print("cs_df--> ",cs_resp)       
+            combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
+            print("combined_df --> ",combined_df)
+            combined_df = combined_df.groupby(["rejection_type"], as_index=False).agg({
+                    "Rejections": "mean"
+                })
+            combined_df["Rejections"] = combined_df["Rejections"].round(1)
+
+
+            combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
+            for each_str_col in ["zone", "plant", "rejection_type"]:
+                if each_str_col in combined_df.columns:
+                    combined_df[each_str_col] = combined_df[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}
+
+        cs_resp = await function(query=cs_resp_)
+        pt_resp = await function(query=pt_resp_)
+        gd_resp = await function(query=gd_resp_)
+        
+        # Convert the responses to DataFrames
+        cs_df = pd.DataFrame(cs_resp)
+        pt_df = pd.DataFrame(pt_resp)
+        gd_df = pd.DataFrame(gd_resp)
+
+        # Combine DataFrames
+        combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
+        if rejection_filter:
+            print("rejection_filter: ", rejection_filter)
+            combined_df = combined_df[combined_df['rejection_type'] == rejection_filter.value[0]]
+
+        # Fill missing values
+        combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
+        
+        
+        for each_str_col in ["zone", "plant", "rejection_type"]:
+            if each_str_col in combined_df.columns:
+                combined_df[each_str_col] = combined_df[each_str_col].fillna('').astype(str)
+
+        # Group data based on filters if required
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "rejection_type" in filter_keys and "zone" not in filter_keys:
+                grouped_resp = combined_df.groupby(["rejection_type","zone"], as_index=False).agg({
+                    "Rejections": "mean"
+                })
+
+            elif "rejection_type" in filter_keys and "zone"  in filter_keys and "plant" not in filter_keys:
+                print("grouped_resp plant--> ")
+                
+                grouped_resp = combined_df.groupby(["rejection_type","zone", "plant"], as_index=False).agg({
+                    "Rejections": "mean"
+                })
+
+            if grouped_resp is not None:
+                grouped_resp["Rejections"] = grouped_resp["Rejections"].round(1)
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # Final response
+        return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}

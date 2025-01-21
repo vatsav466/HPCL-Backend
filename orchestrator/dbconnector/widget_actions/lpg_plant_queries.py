@@ -981,5 +981,38 @@ ORDER BY
                             sum("Consumers") as "Consumers",
                             sum("Refills") as "Refills"
                         FROM
-                            "subsidy_failure_statistics_PEC_data"'''
+                            "subsidy_failure_statistics_PEC_data"''',
+    
+    "cs_query" : f'''
+                    select 
+                        "zone" as "zone",
+                        "plant" as "plant",
+                        'CS' AS "rejection_type",
+                        avg("sortoutpercentage") * 100 as "Rejections",
+                        CAST("process_date" AS DATE) as "process_date"
+                    from
+                        "lpg_cs_rejections"
+                ''',
+
+    "pt_query": f'''
+                    select 
+                        "zone" as "zone",
+                        "plant" as "plant",
+                        'PT' AS "rejection_type",
+                        avg("sortoutpercentage") * 100 as "Rejections",
+                        CAST("process_date" AS DATE) as "process_date"
+                    from
+                        "lpg_pt_rejections"
+                ''',
+
+    "gd_query" : f'''
+                    select 
+                        "zone" as "zone",
+                        "plant" as "plant",
+                        'GD' AS "rejection_type",
+                        avg("sortoutpercentage") * 100 as "Rejections",
+                        CAST("process_date" AS DATE) as "process_date"
+                    from
+                        "lpg_gd_rejections"
+                '''
 }

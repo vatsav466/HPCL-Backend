@@ -1329,3 +1329,19 @@ Model LpgSubsidyFailureData {
         access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone'
     }
 }
+
+Model LpgOperationsRejections {
+    zone str
+    plant str
+    cyl_type str
+    max_date datetime
+    Execution_Date datetime
+    process_date datetime
+    sortoutpercentage float
+    system_id int
+    total int
+
+    Config=> {
+        access_key_mapping='zone'
+    }
+}
