@@ -1094,6 +1094,12 @@ class GlobalAnalytics:
             if 'H' in selected_keys and "YTD" in selected_keys:
                 resp = await GlobalAnalytics.calculate_ytd(current_date,resp,['ACTUAL_HISTORY_TMT'])
             
+            month_to_num = {
+                "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
+                "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
+                "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+            }
+
             if 'DATE' in selected_keys:
                 print("into date")
                 year_required = str(current_year-1)+'-'+str(current_year)
@@ -1120,13 +1126,40 @@ class GlobalAnalytics:
                 day_data = day_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                 day_data.to_csv('/tmp/dataday.csv',index = False)
                 day_data['NETWEIGHT_TMT'] = day_data['NETWEIGHT_TMT'].fillna(0).astype(int)
-                resp = resp[(resp["month_name"] >= from_date_month) & (resp["month_name"] <= to_date_month)]
-                resp = resp.merge(day_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
-                print("resp['NETWEIGHT_TMT'] -->  ", resp['NETWEIGHT_TMT'])
-                print("resp --> ", resp)
-                resp = resp.rename(columns = {"NETWEIGHT_TMT" : "ACTUAL_TMT_SALES"})
+                resp["month_num"] = resp["month_name"].map(month_to_num)
+                # Filter based on the fiscal year boundary
+                from_month_num = month_to_num[from_date_month]  # e.g., Apr -> 4
+                to_month_num = month_to_num[to_date_month]      # e.g., Jan -> 1
+                
+                if from_month_num <= to_month_num:
+                    # No year boundary (e.g., Apr to Aug)
+                    resp = resp[(resp["month_num"] >= from_month_num) & (resp["month_num"] <= to_month_num)]
+                else:
+                    # Year boundary (e.g., Apr to Jan)
+                    resp = resp[(resp["month_num"] >= from_month_num) | (resp["month_num"] <= to_month_num)]
+
+                # Drop the temporary column after filtering
+                resp = resp.drop(columns=["month_num"])
+
+                # Merge day_data with resp
+                resp = resp.merge(day_data[['month_name', 'NETWEIGHT_TMT', 'fiscal_year']], how='left', on='month_name')
+                
+                # Rename column and fill NaN values
+                resp = resp.rename(columns={"NETWEIGHT_TMT": "ACTUAL_TMT_SALES"})
                 resp["ACTUAL_TMT_SALES"] = resp["ACTUAL_TMT_SALES"].fillna(0).astype(int)
+                
+                # Convert result to dictionary format
                 resp = resp.to_dict("records")
+                
+                print("Final result:", resp)
+
+                # resp = resp[(resp["month_name"] >= from_date_month) & (resp["month_name"] <= to_date_month)]
+                # resp = resp.merge(day_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
+                # print("resp['NETWEIGHT_TMT'] -->  ", resp['NETWEIGHT_TMT'])
+                # print("resp --> ", resp)
+                # resp = resp.rename(columns = {"NETWEIGHT_TMT" : "ACTUAL_TMT_SALES"})
+                # resp["ACTUAL_TMT_SALES"] = resp["ACTUAL_TMT_SALES"].fillna(0).astype(int)
+                # resp = resp.to_dict("records")
             
             if 'T' in selected_keys  and "DATE" in selected_keys:
                 print("into date")
