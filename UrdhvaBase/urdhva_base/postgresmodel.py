@@ -114,12 +114,26 @@ class BasePostgresModel(pydantic.BaseModel):
                 key.split(":")[0].strip(): key.split(":")[1].strip() if ":" in key else key.split(":")[0].strip()
                 for key in key_mapping
             }
+            # Generating OR Conditions for mapped keys
+            or_condition_keys = {}
+            for key in [item for item, count in collections.Counter(list(mapped_data.values())).items() if count > 1]:
+                for key_, value in mapped_data.items():
+                    if value == key:
+                        if key not in or_condition_keys:
+                            or_condition_keys[key] = []
+                        or_condition_keys[key].append(key_)
+            # Cleaning if key matching or_conditions and not equals to base key
+            for base_key, mapped_keys in or_condition_keys.items():
+                for mapped_key in mapped_keys:
+                    if mapped_key != base_key and mapped_key in mapped_data:
+                        del mapped_data[mapped_key]
             rpt = urdhva_base.context.context.get('rpt', {})
             # Removing BU incase if SAP_ID was available and restricted
             # Todo:- Need to verify in multiple conditions
             if 'bu' in mapped_data and 'sap_id' in mapped_data:
                 if rpt.get('bu') and rpt.get('sap_id'):
                     del mapped_data['bu']
+            # Generating query Conditions
             for key, value in mapped_data.items():
                 if key in extra_key_mapping:
                     key = extra_key_mapping[key]
@@ -129,12 +143,20 @@ class BasePostgresModel(pydantic.BaseModel):
                             if formated:
                                 where_clause.append({'key': key, "cond": 'equals', "value": rpt[value][0]})
                             else:
-                                where_clause.append(f"{key}='{rpt[value][0]}'")
+                                if key in or_condition_keys:
+                                    conditions = [f"{k}='{rpt[value][0]}'" for k in or_condition_keys[key]]
+                                    where_clause.append(f"({' OR '.join(conditions)})")
+                                else:
+                                    where_clause.append(f"{key}='{rpt[value][0]}'")
                         else:
                             if formated:
                                 where_clause.append({'key': key, "cond": ' ', "value": rpt[value]})
                             else:
-                                where_clause.append(f"{key} in {tuple(rpt[value])}")
+                                if key in or_condition_keys:
+                                    conditions = [f"{k} in {tuple(rpt[value])}" for k in or_condition_keys[key]]
+                                    where_clause.append(f"({' OR '.join(conditions)})")
+                                else:
+                                    where_clause.append(f"{key} in {tuple(rpt[value])}")
                     else:
                         if formated:
                             where_clause.append({'key': key, "cond": 'equals', "value": rpt[value]})
