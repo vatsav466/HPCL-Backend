@@ -5188,7 +5188,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/Users/apple/Desktop/DistributorMappings.csv")
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         yesterday = datetime.now() - relativedelta(days=1)
         lpg_exception_stats_ = lpg_plant_queries.lpg_plant_query.get("subsidy_exception_stats")
         _filters = []
@@ -5298,7 +5298,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/Users/apple/Desktop/DistributorMappings.csv")
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         yesterday = datetime.now() - relativedelta(days=1)
         lpg_failure_stats_ = lpg_plant_queries.lpg_plant_query.get("subsidy_failure_stats")
         _filters = []
@@ -5411,7 +5411,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/Users/apple/Desktop/DistributorMappings.csv")
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         current_date = datetime.now() - relativedelta(days=0)
         current_date_1 = current_date.strftime("%Y-%m-%d")
         print(current_date_1)
