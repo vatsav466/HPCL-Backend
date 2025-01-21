@@ -941,7 +941,11 @@ class GlobalAnalytics:
 
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
-
+        month_to_num = {
+                "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
+                "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
+                "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+            }
         if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"', '"DATE"'] for rec in filters):
             print("into only filters")
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
@@ -1082,10 +1086,6 @@ class GlobalAnalytics:
             for each_str_col in ["fy_month", "month_name"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            
-            
-            
-            
             
             if 'DATE' in selected_keys:
                 print("into date")
@@ -2051,7 +2051,6 @@ class GlobalAnalytics:
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
                     select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
-
                     """
                     if "month_name" in filter_keys:
                         sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
@@ -2248,7 +2247,7 @@ class GlobalAnalytics:
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
-                                        SELECT "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" 
+                                        SELECT "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","ORGRONAME","ORGSANAME","NETWEIGHT_TMT" 
                                         FROM "MOM_LEVEL_FINAL_DATA" 
                                         WHERE "FISCALYEAR" = 'FY {year_required}'
                     """
@@ -2341,9 +2340,6 @@ class GlobalAnalytics:
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
 
-                # resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
-                # resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
-                # resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
