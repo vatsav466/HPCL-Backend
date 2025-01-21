@@ -63,11 +63,13 @@ class crisDataCreate(pydantic.BaseModel):
     interlock_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: str
     device_value: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: str
+    alarm_id: str
     alert_status: ingestion_api_enum.AlertStatus
     tank_id: typing.Optional[str] = pydantic.Field("", **{})
     nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
-    pump_id: typing.Optional[str] = pydantic.Field("", **{})
+    pump_no: typing.Optional[str] = pydantic.Field("", **{})
+    occurrence_date: typing.Optional[str] = pydantic.Field("", **{})
+    closure_date: typing.Optional[str] = pydantic.Field("", **{})
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
     products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
 
