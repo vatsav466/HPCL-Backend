@@ -879,6 +879,7 @@ class GlobalAnalytics:
         days_left_in_month = total_days_in_month - today.day
         current_month_name = df['month_name'].unique().tolist()[0]
         for col in cols:
+            df[col] = df[col].fillna(0).astype(np.float64).round(0)
             df[col] = df.apply(
                             lambda row: round(row[col] / (total_days_in_month - days_left_in_month))
                             if row["month_name"] == current_month_name
