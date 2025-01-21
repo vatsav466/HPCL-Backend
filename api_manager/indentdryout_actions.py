@@ -720,8 +720,14 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
         extra_key_mapping={"sap_id": "terminal_plant_id"}))
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    ist = pytz.timezone('Asia/Kolkata')
+    _date = datetime.datetime.now(ist).strftime("%Y-%m-%d")
+    is_delivered = False
     for record in data.filters:
         if record.value:
+            if record.key == "progress_rate":
+                if "11" in record.value:
+                    is_delivered = True
             if record.key == "plant":
                 record.key = "terminal_plant_id"
             if len(record.value) == 1:
@@ -732,6 +738,10 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
     query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
             "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
             f"from alerts where indent_status not in ('Cancelled', 'Completed') and {conditions}"
+    if is_delivered:
+        query = "select distinct on (sap_id, indent_no, product_code) location_name as name, sap_id, progress_rate as present_stage, id as alert_id," \
+                "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
+                f"from alerts where indent_status not in ('Cancelled') and {conditions} and DATE(updated_at) = '{_date}' and jsonb_array_length(alert_history::jsonb) > 2"
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(
         query=query

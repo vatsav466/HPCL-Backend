@@ -565,3 +565,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/lpgsubsidyfailuredata/{id}', tags=['LpgSubsidyFailureData'])
 async def delete(id: str):
     return await LpgSubsidyFailureData.delete(id)
+
+
+@router.post('/lpgoperationsrejections', response_model=LpgOperationsRejections, tags=['LpgOperationsRejections'])
+async def create(inputObj: LpgOperationsRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgoperationsrejections', response_model=LpgOperationsRejections, tags=['LpgOperationsRejections'])
+async def update(inputObj: LpgOperationsRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpgoperationsrejections/{id}', response_model=LpgOperationsRejections, tags=['LpgOperationsRejections'])
+async def get(id: str):
+    return await LpgOperationsRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpgoperationsrejections', response_model=LpgOperationsRejectionsGetResp, tags=['LpgOperationsRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgOperationsRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgoperationsrejections/{id}', tags=['LpgOperationsRejections'])
+async def delete(id: str):
+    return await LpgOperationsRejections.delete(id)

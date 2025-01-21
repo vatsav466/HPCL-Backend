@@ -877,7 +877,9 @@ class GlobalAnalytics:
         total_days_in_month = (current_date.today().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         total_days_in_month = total_days_in_month.day
         days_left_in_month = total_days_in_month - today.day
+        current_month_name = df['month_name'].unique().tolist()[0]
         for col in cols:
+            df[col] = df[col].fillna(0).astype(np.float64).round(0)
             df[col] = df.apply(
                             lambda row: round(row[col] / (total_days_in_month - days_left_in_month))
                             if row["month_name"] == current_month_name
@@ -889,14 +891,17 @@ class GlobalAnalytics:
     @staticmethod
     async def calculate_date(from_date, to_date, df, col):
         # Convert from_date and to_date to datetime objects
-        from_date = datetime.strptime(from_date, '%Y-%m-%d')  # Adjust the format to match your date format
-        to_date = datetime.strptime(to_date, '%Y-%m-%d')  # Adjust the format as needed
-        
-        from_month_name = from_date.strftime('%B')[:3]
-        to_month_name = to_date.strftime('%B')[:3]
+        # Extract abbreviated month names for comparison
+        from_month_name = from_date.strftime('%b')  # 'Jan'
+        to_month_name = to_date.strftime('%b')      # 'Jan'
+
+        # Define an ordered list of abbreviated month names for proper comparison
+        month_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+        # Filter rows within the date range based on month_name
         df[col] = df.apply(
             lambda row: round(row[col])
-            if from_month_name <= row["month_name"] <= to_month_name
+            if month_order.index(from_month_name) <= month_order.index(row["month_name"]) <= month_order.index(to_month_name)
             else row[col],  # Leave other rows unchanged
             axis=1,
         )
@@ -1077,19 +1082,10 @@ class GlobalAnalytics:
             for each_str_col in ["fy_month", "month_name"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            # added for ytd
             
             
             
-            if 'YTD' in selected_keys:
-                # resp = await GlobalAnalytics.calculate_ytd(current_date,resp,['ACTUAL_TMT_SALES'])
-                resp = resp
             
-            if 'T' in selected_keys  and "YTD" in selected_keys:
-                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,['TARGET_QTY_TMT'])
-               
-            if 'H' in selected_keys and "YTD" in selected_keys:
-                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,['ACTUAL_HISTORY_TMT'])
             
             if 'DATE' in selected_keys:
                 print("into date")
@@ -1117,25 +1113,91 @@ class GlobalAnalytics:
                 day_data = day_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                 day_data.to_csv('/tmp/dataday.csv',index = False)
                 day_data['NETWEIGHT_TMT'] = day_data['NETWEIGHT_TMT'].fillna(0).astype(int)
-                resp = resp[(resp["month_name"] >= from_date_month) & (resp["month_name"] <= to_date_month)]
-                resp = resp.merge(day_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
-                print("resp['NETWEIGHT_TMT'] -->  ", resp['NETWEIGHT_TMT'])
-                print("resp --> ", resp)
-                resp['NETWEIGHT_TMT'] = resp['NETWEIGHT_TMT'].fillna(0).astype(int)
+                resp["month_num"] = resp["month_name"].map(month_to_num)
+                # Filter based on the fiscal year boundary
+                from_month_num = month_to_num[from_date_month]  # e.g., Apr -> 4
+                to_month_num = month_to_num[to_date_month]      # e.g., Jan -> 1
+                
+                if from_month_num <= to_month_num:
+                    # No year boundary (e.g., Apr to Aug)
+                    resp = resp[(resp["month_num"] >= from_month_num) & (resp["month_num"] <= to_month_num)]
+                else:
+                    # Year boundary (e.g., Apr to Jan)
+                    resp = resp[(resp["month_num"] >= from_month_num) | (resp["month_num"] <= to_month_num)]
+
+                # Drop the temporary column after filtering
+                resp = resp.drop(columns=["month_num"])
+
+                # Merge day_data with resp
+                resp = resp.merge(day_data[['month_name', 'NETWEIGHT_TMT', 'fiscal_year']], how='left', on='month_name')
+                
+                # Rename column and fill NaN values
+                resp = resp.rename(columns={"NETWEIGHT_TMT": "ACTUAL_TMT_SALES"})
+                resp["ACTUAL_TMT_SALES"] = resp["ACTUAL_TMT_SALES"].fillna(0).astype(int)
+                
+                # Convert result to dictionary format
                 resp = resp.to_dict("records")
-                # resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_TMT_SALES')
             
             if 'T' in selected_keys  and "DATE" in selected_keys:
+                print("into date")
+                year_required = str(current_year)+'-'+str(current_year+1)
                 from_date, to_date = [
                         rec.value for rec in filters if rec.key == '"DATE"'
                     ][0].split(",")
-                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'TARGET_QTY_TMT')
+                # Convert strings to datetime objects
+                from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+                to_date_obj = datetime.strptime(to_date, '%Y-%m-%d')
+
+                # Get abbreviated month names
+                from_date_month = from_date_obj.strftime('%b')  # 'Jan'
+                to_date_month = to_date_obj.strftime('%b')      # 'Jan'
+
+                print(f"From Date Month: {from_date_month}, To Date Month: {to_date_month}")
+                from_date = from_date.replace("-", "")  # Strip hyphens
+                to_date = to_date.replace("-", "")  # Strip hyphens
+                print("resp", resp)
+                resp = pd.DataFrame(resp)
+                resp = await GlobalAnalytics.calculate_date(from_date_obj, to_date_obj, resp, 'TARGET_QTY_TMT')
+                resp["TARGET_QTY_TMT"] = resp["TARGET_QTY_TMT"].fillna(0).astype(int)
+                resp = resp.to_dict("records")
                
             if 'H' in selected_keys and "DATE" in selected_keys:
+                print("into date")
+                year_required = str(current_year)+'-'+str(current_year+1)
                 from_date, to_date = [
                         rec.value for rec in filters if rec.key == '"DATE"'
                     ][0].split(",")
-                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_HISTORY_TMT')
+                # Convert strings to datetime objects
+                from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+                to_date_obj = datetime.strptime(to_date, '%Y-%m-%d')
+
+                # Get abbreviated month names
+                from_date_month = from_date_obj.strftime('%b')  # 'Jan'
+                to_date_month = to_date_obj.strftime('%b')      # 'Jan'
+
+                print(f"From Date Month: {from_date_month}, To Date Month: {to_date_month}")
+                from_date = from_date.replace("-", "")  # Strip hyphens
+                to_date = to_date.replace("-", "")  # Strip hyphens
+                print("resp", resp)
+                resp = pd.DataFrame(resp)
+                resp = await GlobalAnalytics.calculate_date(from_date_obj, to_date_obj, resp, 'ACTUAL_HISTORY_TMT')
+                resp["ACTUAL_HISTORY_TMT"] = resp["ACTUAL_HISTORY_TMT"].fillna(0).astype(int)
+                resp = resp.to_dict("records")
+            # added for ytd
+            resultCols = []
+            if 'YTD' in selected_keys:
+                # resp = await GlobalAnalytics.calculate_ytd(current_date,resp,['ACTUAL_TMT_SALES'])
+                resp = resp
+            
+            if 'T' in selected_keys  and "YTD" in selected_keys:
+                resultCols.append('TARGET_QTY_TMT')
+                
+               
+            if 'H' in selected_keys and "YTD" in selected_keys:
+                resultCols.append('ACTUAL_HISTORY_TMT')
+            
+            if len(resultCols) >0:
+                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,resultCols)
                 
             return {"status": True, "message": "success", "data": resp}
 
@@ -1293,7 +1355,7 @@ class GlobalAnalytics:
  
             if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI' ,'YTD','DATE'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -1823,7 +1885,6 @@ class GlobalAnalytics:
                     """
 
                     his_data = await function(query=sales_his_query)
-                    print("hisdata",len(his_data))
                     his_data = pd.DataFrame(his_data)
                     his_data = his_data.groupby(['fiscal_year','month_name'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
                     his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
@@ -1841,22 +1902,20 @@ class GlobalAnalytics:
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)  
                 resultCols = []
-                if "YTD" in selected_keys:
-                    resultCols.append("NETWEIGHT_TMT")
+                
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
                 if "T" in selected_keys and "YTD" in selected_keys:
                     resultCols.append("TARGET_QTY_TMT")
                     
-                    
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
                     
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD','DATE'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -1931,8 +1990,7 @@ class GlobalAnalytics:
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
                 
-                if "YTD" in selected_keys:
-                    resultCols.append("NETWEIGHT_TMT")
+                resultCols = []
                 
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
@@ -1942,11 +2000,11 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
             
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD','DATE'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -2040,8 +2098,7 @@ class GlobalAnalytics:
 
                 # Add grouping logic based on the updated grouped_keys
                 grouped_resp = resp.groupby(grouped_keys, as_index=False).agg(agg_dict)
-                if "YTD" in selected_keys:
-                    resultCols.append("NETWEIGHT_TMT")
+                resultCols= []
                 
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
@@ -2051,11 +2108,11 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD','DATE'}
 
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
@@ -2132,9 +2189,8 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
-                if "YTD" in selected_keys:
-                    resultCols.append("NETWEIGHT_TMT")
-                
+
+                resultCols=[]
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
@@ -2143,16 +2199,14 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
                     
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
-                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
-
+                valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD','DATE'}
                 # Extract user-selected keys with `value == 'true'`
                 selected_keys = set()
-
                 for rec in filters:
                     print(f"rec.key: {rec.key}, rec.value: {rec.value}")  # Debugging: Print key and value
                     if rec.key.strip('"') in valid_keys and 'true' in rec.value:
@@ -2227,9 +2281,7 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
-                if "YTD" in selected_keys:
-                    resultCols.append("NETWEIGHT_TMT")
-                
+
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
@@ -2238,7 +2290,8 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    
             elif "FISCAL_YEAR" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
@@ -2297,8 +2350,7 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
-                if "YTD" in selected_keys:
-                    resultCols.append("NETWEIGHT_TMT")
+                resultCols = []
                 
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
@@ -2309,8 +2361,8 @@ class GlobalAnalytics:
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
                     resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
-                    
-            grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
+            if "NETWEIGHT_TMT" in  grouped_resp.columns:   
+                grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
             if "TARGET_QTY_TMT" in grouped_resp.columns:
                 grouped_resp["TARGET_QTY_TMT"] = grouped_resp["TARGET_QTY_TMT"].round(0)
             # Return grouped response
@@ -5287,3 +5339,148 @@ class GlobalAnalytics:
             return {"status": True, "message":"success", "data":[]}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def lpg_operations_rejet(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/Users/apple/Desktop/DistributorMappings.csv")
+        current_date = datetime.now() - relativedelta(days=0)
+        current_date_1 = current_date.strftime("%Y-%m-%d")
+        print(current_date_1)
+        
+
+        cs_resp_ = lpg_plant_queries.lpg_plant_query.get("cs_query")
+        pt_resp_ = lpg_plant_queries.lpg_plant_query.get("pt_query")
+        gd_resp_ = lpg_plant_queries.lpg_plant_query.get("gd_query")
+
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsRejections.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                print('Key: ',rec.key)
+                if rec.key == '"rejection_type"':
+                    rejection_filter = rec
+                    continue
+                if len(rec.value) == 1:
+                    condition = f"{rec.key} = '{rec.value[0]}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+
+            if conditions:
+                cs_resp_ += ' WHERE ' + ' AND '.join(conditions)
+                pt_resp_ += ' WHERE ' + ' AND '.join(conditions)
+                gd_resp_ += ' WHERE ' + ' AND '.join(conditions)
+                common_filter = f'''
+                AND CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND "zone" IS NOT NULL
+            '''
+            else:
+                cs_resp_ += 'WHERE '
+                pt_resp_ += ' WHERE '
+                gd_resp_ += ' WHERE '
+                common_filter = f'''
+                CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND "zone" IS NOT NULL
+            '''
+
+            cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
+            pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
+            gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsRejections.get_clause_conditions(formated=True)]
+            cs_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cs_resp_, access_filters, drill_state)
+            pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
+            gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)
+            if not "where" in cs_resp_.lower():
+                common_filter = f'''
+                WHERE CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND "zone" IS NOT NULL
+            '''
+            else:
+                common_filter = f'''
+                AND CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND "zone" IS NOT NULL
+            '''
+            cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
+            pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
+            gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
+
+            cs_resp = await function(query=cs_resp_)
+            pt_resp = await function(query=pt_resp_)
+            gd_resp = await function(query=gd_resp_)
+            
+            
+            cs_df = pd.DataFrame(cs_resp)
+            pt_df = pd.DataFrame(pt_resp)
+            gd_df = pd.DataFrame(gd_resp)     
+            print("cs_df--> ",cs_resp)       
+            combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
+            print("combined_df --> ",combined_df)
+            combined_df = combined_df.groupby(["rejection_type"], as_index=False).agg({
+                    "Rejections": "mean"
+                })
+            combined_df["Rejections"] = combined_df["Rejections"].round(1)
+
+
+            combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
+            for each_str_col in ["zone", "plant", "rejection_type"]:
+                if each_str_col in combined_df.columns:
+                    combined_df[each_str_col] = combined_df[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}
+
+        cs_resp = await function(query=cs_resp_)
+        pt_resp = await function(query=pt_resp_)
+        gd_resp = await function(query=gd_resp_)
+        
+        # Convert the responses to DataFrames
+        cs_df = pd.DataFrame(cs_resp)
+        pt_df = pd.DataFrame(pt_resp)
+        gd_df = pd.DataFrame(gd_resp)
+
+        # Combine DataFrames
+        combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
+        if rejection_filter:
+            print("rejection_filter: ", rejection_filter)
+            combined_df = combined_df[combined_df['rejection_type'] == rejection_filter.value[0]]
+
+        # Fill missing values
+        combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
+        
+        
+        for each_str_col in ["zone", "plant", "rejection_type"]:
+            if each_str_col in combined_df.columns:
+                combined_df[each_str_col] = combined_df[each_str_col].fillna('').astype(str)
+
+        # Group data based on filters if required
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "rejection_type" in filter_keys and "zone" not in filter_keys:
+                grouped_resp = combined_df.groupby(["rejection_type","zone"], as_index=False).agg({
+                    "Rejections": "mean"
+                })
+
+            elif "rejection_type" in filter_keys and "zone"  in filter_keys and "plant" not in filter_keys:
+                print("grouped_resp plant--> ")
+                
+                grouped_resp = combined_df.groupby(["rejection_type","zone", "plant"], as_index=False).agg({
+                    "Rejections": "mean"
+                })
+
+            if grouped_resp is not None:
+                grouped_resp["Rejections"] = grouped_resp["Rejections"].round(1)
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        # Final response
+        return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}

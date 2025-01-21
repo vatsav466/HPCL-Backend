@@ -3169,3 +3169,63 @@ class LpgSubsidyFailureDataGetResp(pydantic.BaseModel):
     data: typing.List[LpgSubsidyFailureData]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class LpgOperationsRejectionsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_operations_rejections'
+    
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    plant: Mapped[str] = mapped_column("plant", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cyl_type: Mapped[str] = mapped_column("cyl_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    max_date: Mapped[datetime.datetime] = mapped_column("max_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    execution__date: Mapped[datetime.datetime] = mapped_column("execution__date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    process_date: Mapped[datetime.datetime] = mapped_column("process_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sortoutpercentage: Mapped[float] = mapped_column("sortoutpercentage", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    system_id: Mapped[int] = mapped_column("system_id", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    total: Mapped[int] = mapped_column("total", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgOperationsRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_operations_rejections'
+    
+    zone: str
+    plant: str
+    cyl_type: str
+    max_date: datetime.datetime
+    execution__date: datetime.datetime
+    process_date: datetime.datetime
+    sortoutpercentage: float
+    system_id: int
+    total: int
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgOperationsRejectionsSchema
+        upsert_keys = []
+        access_key_mapping = ['zone']
+
+
+class LpgOperationsRejections(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_operations_rejections'
+    
+    zone: typing.Optional[str] | None = None
+    plant: typing.Optional[str] | None = None
+    cyl_type: typing.Optional[str] | None = None
+    max_date: typing.Optional[datetime.datetime] | None = None
+    execution__date: typing.Optional[datetime.datetime] | None = None
+    process_date: typing.Optional[datetime.datetime] | None = None
+    sortoutpercentage: typing.Optional[float] | None = None
+    system_id: typing.Optional[int] | None = None
+    total: typing.Optional[int] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgOperationsRejectionsSchema
+        upsert_keys = []
+        access_key_mapping = ['zone']
+
+
+class LpgOperationsRejectionsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgOperationsRejections]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
