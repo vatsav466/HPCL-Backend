@@ -607,7 +607,7 @@ Model Alerts {
         // Example:- 'SBU_NAME:bu,zone,region,sales_area,sap_id'
         // SBU_NAME was the key in database for SBU where as our role will give key as bu
         // If there are no : then we are marking key and value as same
-        access_key_mapping='bu,zone,region,sales_area,sap_id'
+        access_key_mapping='bu,zone,region,sales_area,sap_id,terminal_plant_id:sap_id'
         search_fields='bu,sap_id,sop_id,location_name,alert_section,interlock_name,device_name,device_id,device_msg,violation_type,rca_type,assigned_to,region,zone,indent_status'
     }
 }
