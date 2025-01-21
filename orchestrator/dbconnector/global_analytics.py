@@ -2343,6 +2343,7 @@ class GlobalAnalytics:
                 else:
                     grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
 
+                resultCols = []
                 if "H" in selected_keys and "YTD" in selected_keys:
                         resultCols.append("ACTUAL_HISTORY_TMT")
                         
