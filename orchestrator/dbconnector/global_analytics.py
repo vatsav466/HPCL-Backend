@@ -1082,7 +1082,8 @@ class GlobalAnalytics:
             
             
             if 'YTD' in selected_keys:
-                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,['ACTUAL_TMT_SALES'])
+                # resp = await GlobalAnalytics.calculate_ytd(current_date,resp,['ACTUAL_TMT_SALES'])
+                resp = resp
             
             if 'T' in selected_keys  and "YTD" in selected_keys:
                 resp = await GlobalAnalytics.calculate_ytd(current_date,resp,['TARGET_QTY_TMT'])
