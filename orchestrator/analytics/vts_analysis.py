@@ -37,7 +37,7 @@ async def get_tt_current_location(truck_no: str) -> typing.List[typing.Any]:
 
 async def get_trucks_available_in_terminal(terminal_plant_id: str) -> typing.List[typing.Any]:
     creds = credential_loader.get_credentials("VTS")
-    url = f"http://{creds['host']}:{creds['port']}/api/TTDetails/TT_Approching_Depot"
+    url = f"http://{creds['host']}:{creds['port']}/api/TTDetails/TT_Inside_Depot"
     session = requests.Session()
     session.auth = (creds['user'], creds['password'])
     try:
