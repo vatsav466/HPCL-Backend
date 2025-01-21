@@ -906,6 +906,68 @@ class GlobalAnalytics:
             axis=1,
         )
         return df
+    
+    @staticmethod
+    async def calculate_actual_history_tmt(from_date_obj, to_date_obj, resp, column_name):
+        """
+        Calculate the adjusted ACTUAL_HISTORY_TMT for the specified date range based on 
+        the number of days in each month within the range.
+
+        Args:
+            from_date_obj (datetime): The start date of the range.
+            to_date_obj (datetime): The end date of the range.
+            resp (pd.DataFrame): The response DataFrame containing the ACTUAL_HISTORY_TMT column.
+            column_name (str): The column name to be adjusted.
+
+        Returns:
+            pd.DataFrame: The adjusted DataFrame with a new column.
+        """
+        # Calculate total days in the range
+        total_days = (to_date_obj - from_date_obj).days + 1
+        
+        # Initialize a dictionary to store days for each month
+        days_per_month = {}
+
+        # Iterate through all months in the range
+        current_date = from_date_obj
+        while current_date <= to_date_obj:
+            year = current_date.year
+            month = current_date.month
+            _, days_in_month = calendar.monthrange(year, month)
+            
+            # Determine the actual start and end days for the current month
+            if current_date.month == from_date_obj.month and current_date.year == from_date_obj.year:
+                # Start from the given day in the first month
+                start_day = from_date_obj.day
+            else:
+                start_day = 1
+            
+            if current_date.month == to_date_obj.month and current_date.year == to_date_obj.year:
+                # End at the given day in the last month
+                end_day = to_date_obj.day
+            else:
+                end_day = days_in_month
+            
+            # Calculate days in the current month within the range
+            days_in_range = end_day - start_day + 1
+            days_per_month[(year, month)] = days_in_range
+
+            # Move to the next month
+            next_month = month % 12 + 1
+            next_year = year + (month // 12)
+            current_date = datetime(next_year, next_month, 1)
+        
+        # Calculate the fraction of days for each month
+        days_per_month_fraction = {key: days / total_days for key, days in days_per_month.items()}
+
+        # Adjust the ACTUAL_HISTORY_TMT values in resp
+        resp[column_name] = resp[column_name].fillna(0).astype(int)
+        resp[f"{column_name}_adjusted"] = resp[column_name].apply(
+            lambda value: sum(value * days_per_month_fraction.get((year, month), 0) 
+                            for (year, month) in days_per_month_fraction.keys())
+        )
+
+        return resp
         
     @staticmethod
     async def m60_performance(filters, cross_filters, drill_state):
@@ -941,7 +1003,11 @@ class GlobalAnalytics:
 
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
-
+        month_to_num = {
+                "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
+                "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
+                "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+            }
         if filters and any(rec.key not in ['"H"', '"T"', '"BE"', '"RI"', '"A"', '"I"', '"YTD"', '"DATE"'] for rec in filters):
             print("into only filters")
             sales_performance_query = lpg_plant_queries.lpg_plant_query.get("sales_performance")
@@ -1180,7 +1246,7 @@ class GlobalAnalytics:
                 to_date = to_date.replace("-", "")  # Strip hyphens
                 print("resp", resp)
                 resp = pd.DataFrame(resp)
-                resp = await GlobalAnalytics.calculate_date(from_date_obj, to_date_obj, resp, 'ACTUAL_HISTORY_TMT')
+                resp = await GlobalAnalytics.calculate_actual_history_tmt(from_date_obj, to_date_obj, resp, 'ACTUAL_HISTORY_TMT')
                 resp["ACTUAL_HISTORY_TMT"] = resp["ACTUAL_HISTORY_TMT"].fillna(0).astype(int)
                 resp = resp.to_dict("records")
             # added for ytd
