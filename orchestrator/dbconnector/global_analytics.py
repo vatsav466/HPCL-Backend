@@ -889,14 +889,17 @@ class GlobalAnalytics:
     @staticmethod
     async def calculate_date(from_date, to_date, df, col):
         # Convert from_date and to_date to datetime objects
-        from_date = datetime.strptime(from_date, '%Y-%m-%d')  # Adjust the format to match your date format
-        to_date = datetime.strptime(to_date, '%Y-%m-%d')  # Adjust the format as needed
-        
-        from_month_name = from_date.strftime('%B')[:3]
-        to_month_name = to_date.strftime('%B')[:3]
+        # Extract abbreviated month names for comparison
+        from_month_name = from_date.strftime('%b')  # 'Jan'
+        to_month_name = to_date.strftime('%b')      # 'Jan'
+
+        # Define an ordered list of abbreviated month names for proper comparison
+        month_order = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+        # Filter rows within the date range based on month_name
         df[col] = df.apply(
             lambda row: round(row[col])
-            if from_month_name <= row["month_name"] <= to_month_name
+            if month_order.index(from_month_name) <= month_order.index(row["month_name"]) <= month_order.index(to_month_name)
             else row[col],  # Leave other rows unchanged
             axis=1,
         )
@@ -1121,21 +1124,54 @@ class GlobalAnalytics:
                 resp = resp.merge(day_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
                 print("resp['NETWEIGHT_TMT'] -->  ", resp['NETWEIGHT_TMT'])
                 print("resp --> ", resp)
-                resp['NETWEIGHT_TMT'] = resp['NETWEIGHT_TMT'].fillna(0).astype(int)
+                resp = resp.rename(columns = {"NETWEIGHT_TMT" : "ACTUAL_TMT_SALES"})
+                resp["ACTUAL_TMT_SALES"] = resp["ACTUAL_TMT_SALES"].fillna(0).astype(int)
                 resp = resp.to_dict("records")
-                # resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_TMT_SALES')
             
             if 'T' in selected_keys  and "DATE" in selected_keys:
+                print("into date")
+                year_required = str(current_year)+'-'+str(current_year+1)
                 from_date, to_date = [
                         rec.value for rec in filters if rec.key == '"DATE"'
                     ][0].split(",")
-                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'TARGET_QTY_TMT')
+                # Convert strings to datetime objects
+                from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+                to_date_obj = datetime.strptime(to_date, '%Y-%m-%d')
+
+                # Get abbreviated month names
+                from_date_month = from_date_obj.strftime('%b')  # 'Jan'
+                to_date_month = to_date_obj.strftime('%b')      # 'Jan'
+
+                print(f"From Date Month: {from_date_month}, To Date Month: {to_date_month}")
+                from_date = from_date.replace("-", "")  # Strip hyphens
+                to_date = to_date.replace("-", "")  # Strip hyphens
+                print("resp", resp)
+                resp = pd.DataFrame(resp)
+                resp = await GlobalAnalytics.calculate_date(from_date_obj, to_date_obj, resp, 'TARGET_QTY_TMT')
+                resp = resp.to_dict("records")
                
             if 'H' in selected_keys and "DATE" in selected_keys:
+                print("into date")
+                year_required = str(current_year)+'-'+str(current_year+1)
                 from_date, to_date = [
                         rec.value for rec in filters if rec.key == '"DATE"'
                     ][0].split(",")
-                resp = await GlobalAnalytics.calculate_date(from_date, to_date, resp, 'ACTUAL_HISTORY_TMT')
+                # Convert strings to datetime objects
+                from_date_obj = datetime.strptime(from_date, '%Y-%m-%d')
+                to_date_obj = datetime.strptime(to_date, '%Y-%m-%d')
+
+                # Get abbreviated month names
+                from_date_month = from_date_obj.strftime('%b')  # 'Jan'
+                to_date_month = to_date_obj.strftime('%b')      # 'Jan'
+
+                print(f"From Date Month: {from_date_month}, To Date Month: {to_date_month}")
+                from_date = from_date.replace("-", "")  # Strip hyphens
+                to_date = to_date.replace("-", "")  # Strip hyphens
+                print("resp", resp)
+                resp = pd.DataFrame(resp)
+                resp = await GlobalAnalytics.calculate_date(from_date_obj, to_date_obj, resp, 'ACTUAL_HISTORY_TMT')
+                resp = resp.to_dict("records")
+
                 
             return {"status": True, "message": "success", "data": resp}
 
