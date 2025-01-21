@@ -822,6 +822,9 @@
                 },
                 {
                     "name": "get_frequent_dryout_ro"
+                },
+                {
+                    "name": "get_frequent_dryout_terminals"
                 }
             ]
         },
@@ -843,6 +846,9 @@
                 },
                 {
                     "name": "get_frequent_dryout_ro"
+                },
+                {
+                    "name": "get_frequent_dryout_terminals"
                 }
             ]
         },
@@ -882,6 +888,9 @@
                 },
                 {
                     "name": "get_frequent_dryout_ro"
+                },
+                {
+                    "name": "get_frequent_dryout_terminals"
                 }
             ]
         },
@@ -2635,6 +2644,10 @@
         {
             "name": "get_frequent_dryout_ro",
             "displayName": "get_frequent_dryout_ro"
+        },
+        {
+            "name": "get_frequent_dryout_terminals",
+            "displayName": "get_frequent_dryout_terminals"
         },
         {
             "name": "upload_cems_location_master",

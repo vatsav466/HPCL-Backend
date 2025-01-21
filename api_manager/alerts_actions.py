@@ -15,6 +15,7 @@ import utilities.vts_mapping as vts_mapping
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
+import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 
 router = fastapi.APIRouter(prefix='/alerts')
 
@@ -165,32 +166,10 @@ async def alerts_intitiate_vts_exception(data: Alerts_Intitiate_Vts_ExceptionPar
 # Action get_frequent_dryout_ro
 @router.post('/get_frequent_dryout_ro', tags=['Alerts'])
 async def alerts_get_frequent_dryout_ro(data: Alerts_Get_Frequent_Dryout_RoParams):
-    datetime_condition = ""
-    if data.start_date and data.end_date:
-        datetime_condition = f" AND workflow_datetime BETWEEN '{data.start_date}' AND '{data.end_date}' "
+    return await dry_out_analysis.current_month_frequent_dryout_ros(data)
 
-    where_condition = ''' interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                            AND location_name != '' AND  indent_status != 'Cancelled' 
-                            AND (workflow_datetime >= DATE_TRUNC('month', CURRENT_DATE)
-                                AND workflow_datetime < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
-                        ) ''' + datetime_condition
 
-    dry_out_query = f'''WITH unique_sap_ids AS (
-                          SELECT location_name, sap_id, DATE(workflow_datetime) AS workflow_date
-                          FROM alerts
-                          WHERE {where_condition}
-                          GROUP BY location_name, sap_id, DATE(workflow_datetime)
-                        ),
-                        monthly_sap_count AS (
-                          SELECT location_name, sap_id, COUNT(sap_id) AS total_count
-                          FROM unique_sap_ids
-                          GROUP BY location_name, sap_id
-                        )
-                        SELECT location_name, sap_id, SUM(total_count) AS "Total_Count"
-                        FROM monthly_sap_count
-                        WHERE total_count > 1
-                        GROUP BY location_name, sap_id
-                        ORDER BY "Total_Count" DESC '''
-
-    resp = await urdhva_base.BasePostgresModel.get_aggr_data(dry_out_query)
-    return resp['data']
+# Action get_frequent_dryout_terminals
+@router.post('/get_frequent_dryout_terminals', tags=['Alerts'])
+async def alerts_get_frequent_dryout_terminals(data: Alerts_Get_Frequent_Dryout_TerminalsParams):
+    return await dry_out_analysis.current_month_frequent_drout_terminals(data)
