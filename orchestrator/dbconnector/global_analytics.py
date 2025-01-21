@@ -870,14 +870,15 @@ class GlobalAnalytics:
     #     # If no filters are applied, return the default response
     #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     @staticmethod
-    async def calculate_ytd(current_date,df,cols):
+    async def calculate_ytd(current_date,df,cols,current_month=False):
         current_month_name = current_date.strftime('%B')[:3]
         today = current_date.today()
         #total_days_in_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         total_days_in_month = (current_date.today().replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         total_days_in_month = total_days_in_month.day
         days_left_in_month = total_days_in_month - today.day
-        current_month_name = df['month_name'].unique().tolist()[0]
+        if current_month == False:
+            current_month_name = df['month_name'].unique().tolist()[0]
         for col in cols:
             df[col] = df[col].fillna(0).astype(np.float64).round(0)
             df[col] = df.apply(
@@ -1072,14 +1073,14 @@ class GlobalAnalytics:
                 '"M60_LEVEL_METADATA"."FISCAL_YEAR"',
             ]
 
-            # Build conditions based on selected keys
+            #Build conditions based on selected keys
             if "H" in selected_keys:
                 previous_year = current_year - 1
                 where_conditions.append(f'"M60_LEVEL_METADATA"."FISCAL_YEAR" IN (\'FY {previous_year}-{current_year}\', \'FY {current_year-2}-{previous_year}\')')
 
             if "T" in selected_keys:
                 select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_QTY_TMT"')
-
+            
             # Construct the query dynamically
             sales_performance_query_ = f'''
                 SELECT
@@ -1259,8 +1260,17 @@ class GlobalAnalytics:
                 resultCols.append('ACTUAL_HISTORY_TMT')
             
             if len(resultCols) >0:
-                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,resultCols)
-                
+                resp = await GlobalAnalytics.calculate_ytd(current_date,resp,resultCols,current_month=True)
+
+            for each_key in resp:
+                print(each_key)
+                if each_key in ['ACTUAL_TMT_SALES']:
+                    zero_value_keys = [k for k, v in resp[each_key].items() if v == 0.0]
+                    resp[each_key] = {k: v for k, v in resp[each_key].items() if v != 0.0}
+
+                if len(selected_keys) == 1 and 'A' in selected_keys:
+                    resp['month_name'] = {k: v for k, v in resp['month_name'].items() if k not in zero_value_keys}
+
             return {"status": True, "message": "success", "data": resp}
 
         else:
@@ -1973,7 +1983,8 @@ class GlobalAnalytics:
                     
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
+
                     
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -2062,7 +2073,7 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
             
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -2169,7 +2180,7 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
 
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -2260,7 +2271,7 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
                     
             elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
@@ -2352,7 +2363,7 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
                     
             elif "FISCAL_YEAR" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
@@ -2419,7 +2430,7 @@ class GlobalAnalytics:
                         
                 if len(resultCols)>0:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
-                    resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols)
+                    grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
             if "NETWEIGHT_TMT" in  grouped_resp.columns:   
                 grouped_resp["NETWEIGHT_TMT"] = grouped_resp["NETWEIGHT_TMT"].round(0)
             if "TARGET_QTY_TMT" in grouped_resp.columns:
