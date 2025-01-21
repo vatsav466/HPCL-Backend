@@ -957,6 +957,29 @@ ORDER BY
     from "cp_tank_delivery_updated" ''',
 
     "cp_total_volume_sales": '''select sum("sale_volume")/1000 as "total_sales" 
-    from "cp_transaction_updated"'''
+    from "cp_transaction_updated"''',
 
+    "subsidy_exception_stats": f''' select 
+                                        "ZOName" ,
+                                        "ROName",
+                                        "SAName" ,
+                                        "JDEDistributorCode",
+                                        "ExceptionName" as "ExceptionName" ,
+                                        SUM("Consumers") AS "Consumers",
+                                        SUM("Refills")  AS "Refills"
+                                    from
+                                        "subsidy_exception_statistics_EC_data" 
+                                     ''',
+
+    "subsidy_failure_stats": f'''
+                        SELECT 
+                            "ZOName" ,
+                            "ROName",
+                            "SAName",
+                            "JDEDistributorCode",
+                            "PaymentErrorName" as "PaymentErrorName",
+                            sum("Consumers") as "Consumers",
+                            sum("Refills") as "Refills"
+                        FROM
+                            "subsidy_failure_statistics_PEC_data"'''
 }

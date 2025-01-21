@@ -1284,3 +1284,48 @@ Model BuLevelGeoCoordinates {
         crud_operations='read'
     }
 }
+
+Model LpgSubsidyExceptionData {
+    Exception_Code str
+    Distributor_Code int
+    Refills int
+    Consumers int
+    ID int
+    EXCEPTION_CODE str
+    ExceptionDescription str
+    ExceptionName str
+    JDEDistributorCode int
+    SACode str
+    StateCode str
+    ROCode str
+    SAName str
+    ZOCode str
+    ROName str
+    ZOName str
+    
+    Config=> {
+        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone'
+    }
+}
+
+Model LpgSubsidyFailureData {
+    PaymentErrorCode str
+    Distributor_Code int
+    Refills int
+    Consumers int
+    Code int
+    PaymentErrorDecription str
+    PaymentErrorName str
+    JDEDistributorCode int
+    SACode str
+    StateCode str
+    ROCode str
+    SAName str
+    ZOCode str
+    ROName str
+    ZOName str
+    
+    Config=> {
+        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone'
+    }
+}

@@ -516,3 +516,52 @@ async def get(id: str):
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
     return await BuLevelGeoCoordinates.get_all(params, skip_secrets=True)
 
+
+@router.post('/lpgsubsidyexceptiondata', response_model=LpgSubsidyExceptionData, tags=['LpgSubsidyExceptionData'])
+async def create(inputObj: LpgSubsidyExceptionDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgsubsidyexceptiondata', response_model=LpgSubsidyExceptionData, tags=['LpgSubsidyExceptionData'])
+async def update(inputObj: LpgSubsidyExceptionData):
+    return await inputObj.modify()
+
+
+@router.get('/lpgsubsidyexceptiondata/{id}', response_model=LpgSubsidyExceptionData, tags=['LpgSubsidyExceptionData'])
+async def get(id: str):
+    return await LpgSubsidyExceptionData.get(id, skip_secrets=True)
+
+
+@router.get('/lpgsubsidyexceptiondata', response_model=LpgSubsidyExceptionDataGetResp, tags=['LpgSubsidyExceptionData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgSubsidyExceptionData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgsubsidyexceptiondata/{id}', tags=['LpgSubsidyExceptionData'])
+async def delete(id: str):
+    return await LpgSubsidyExceptionData.delete(id)
+
+
+@router.post('/lpgsubsidyfailuredata', response_model=LpgSubsidyFailureData, tags=['LpgSubsidyFailureData'])
+async def create(inputObj: LpgSubsidyFailureDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgsubsidyfailuredata', response_model=LpgSubsidyFailureData, tags=['LpgSubsidyFailureData'])
+async def update(inputObj: LpgSubsidyFailureData):
+    return await inputObj.modify()
+
+
+@router.get('/lpgsubsidyfailuredata/{id}', response_model=LpgSubsidyFailureData, tags=['LpgSubsidyFailureData'])
+async def get(id: str):
+    return await LpgSubsidyFailureData.get(id, skip_secrets=True)
+
+
+@router.get('/lpgsubsidyfailuredata', response_model=LpgSubsidyFailureDataGetResp, tags=['LpgSubsidyFailureData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgSubsidyFailureData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgsubsidyfailuredata/{id}', tags=['LpgSubsidyFailureData'])
+async def delete(id: str):
+    return await LpgSubsidyFailureData.delete(id)

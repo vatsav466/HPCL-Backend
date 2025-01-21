@@ -5063,3 +5063,226 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": result}
 
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
+    @staticmethod
+    async def subsidy_exception_stats(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/Users/apple/Desktop/DistributorMappings.csv")
+        yesterday = datetime.now() - relativedelta(days=1)
+        lpg_exception_stats_ = lpg_plant_queries.lpg_plant_query.get("subsidy_exception_stats")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_exception_stats_  += ' WHERE '
+                lpg_exception_stats_  += ' AND '.join(conditions)
+            lpg_exception_stats_  += ' AND "ZOName" IS NOT NULL'
+            lpg_exception_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","ExceptionName"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
+            lpg_exception_stats_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_exception_stats_, access_filters, drill_state)
+            lpg_exception_stats_  = f'''
+                                    SELECT 
+                                        "ExceptionName" AS "ExceptionName",
+                                        SUM("Consumers") AS "Consumers",
+                                        SUM("Refills")  AS "Refills"
+                                        FROM
+                                        "subsidy_exception_statistics_EC_data"
+                                    GROUP BY
+                                        "ExceptionName" '''
+            resp = await function(query=lpg_exception_stats_ )
+            resp = pd.DataFrame(resp)
+
+            for each_float_col in [
+                "Consumers","Refills"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in [
+                "ZOName","ROName","SAName","JDEDistributorCode","ExceptionName"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+
+        # Execute the query
+        resp = await function(query=lpg_exception_stats_ )
+        if resp:
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            print("resp ", resp.columns,resp.dtypes)
+
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            print(resp.columns)
+            
+            for each_float_col in ["Consumers","Refills"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","ExceptionName"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "ExceptionName" in filter_keys  and "ZOName" not in filter_keys:
+                    print("grouped_resp ZOName--> ")
+                    grouped_resp = resp.groupby(["ExceptionName","ZOName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum" })
+
+                if "ExceptionName" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    print("grouped_resp ROName--> ")
+                    grouped_resp = resp.groupby(["ExceptionName", "ZOName", "ROName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum"})
+
+                elif "ExceptionName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    print("grouped_resp  elif SAName--> ")
+                    grouped_resp = resp.groupby(["ExceptionName","ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum"})  
+
+                elif "ExceptionName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    print("grouped_resp  elif DistributorName--> ")
+                    grouped_resp = resp.groupby(["ExceptionName","ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({"Consumers": "sum","Refills": "sum"})
+
+                if grouped_resp is not None:
+                    print("grouped_resp  -> ", grouped_resp)
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    @staticmethod
+    async def subsidy_failure_stats(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/Users/apple/Desktop/DistributorMappings.csv")
+        yesterday = datetime.now() - relativedelta(days=1)
+        lpg_failure_stats_ = lpg_plant_queries.lpg_plant_query.get("subsidy_failure_stats")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyFailureData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_failure_stats_  += ' WHERE '
+                lpg_failure_stats_  += ' AND '.join(conditions)
+            lpg_failure_stats_  += ' AND "ZOName" IS NOT NULL'
+            lpg_failure_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","PaymentErrorName"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyFailureData.get_clause_conditions(formated=True)]
+            lpg_failure_stats_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_failure_stats_, access_filters, drill_state)
+            lpg_failure_stats_  = f'''
+                                    SELECT 
+                                        "PaymentErrorName" as "PaymentErrorName",
+                                        sum("Consumers") as "Consumers",
+                                        sum("Refills") as "Refills" 
+                                    FROM
+                                        "subsidy_failure_statistics_PEC_data" 
+                                    WHERE
+                                        "PaymentErrorName"  NOT IN ( 'Null')
+                                    GROUP BY
+                                        "PaymentErrorName"
+                        '''
+            resp = await function(query=lpg_failure_stats_ )
+            resp = pd.DataFrame(resp)
+
+            for each_float_col in [
+                "Consumers","Refills"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in [
+                "ZOName","ROName","SAName","JDEDistributorCode","PaymentErrorName"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+
+        # Execute the query
+        resp = await function(query=lpg_failure_stats_ )
+        if resp:
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            print("resp ", resp.columns,resp.dtypes)
+
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            print(resp.columns)
+            
+            for each_float_col in ["Consumers","Refills"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","PaymentErrorName"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "PaymentErrorName" in filter_keys  and "ZOName" not in filter_keys:
+                    print("grouped_resp ZOName--> ")
+                    grouped_resp = resp.groupby(["PaymentErrorName","ZOName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum" })
+
+                if "PaymentErrorName" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    print("grouped_resp ROName--> ")
+                    grouped_resp = resp.groupby(["PaymentErrorName", "ZOName", "ROName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum"})
+
+                elif "PaymentErrorName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    print("grouped_resp  elif SAName--> ")
+                    grouped_resp = resp.groupby(["PaymentErrorName","ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum"})  
+
+                elif "PaymentErrorName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    print("grouped_resp  elif DistributorName--> ")
+                    grouped_resp = resp.groupby(["PaymentErrorName","ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({"Consumers": "sum","Refills": "sum"})
+
+                if grouped_resp is not None:
+                    print("grouped_resp  -> ", grouped_resp)
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}

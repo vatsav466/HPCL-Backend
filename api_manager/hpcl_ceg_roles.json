@@ -2312,6 +2312,132 @@
                     "name": "upload_geo_master"
                 }
             ]
+        },
+        {
+            "name": "lpgsubsidyexceptiondata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSubsidyExceptionData",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsubsidyexceptiondata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgsubsidyexceptiondata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSubsidyExceptionData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsubsidyexceptiondata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgsubsidyexceptiondata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSubsidyExceptionData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsubsidyexceptiondata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgsubsidyfailuredata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSubsidyFailureData",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsubsidyfailuredata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgsubsidyfailuredata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSubsidyFailureData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsubsidyfailuredata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgsubsidyfailuredata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgSubsidyFailureData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgsubsidyfailuredata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

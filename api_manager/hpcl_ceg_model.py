@@ -3005,4 +3005,162 @@ class BuLevelGeoCoordinatesGetResp(pydantic.BaseModel):
 
 class Bulevelgeocoordinates_Upload_Geo_MasterParams(pydantic.BaseModel):
     pass
+
+
+class LpgSubsidyExceptionDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_subsidy_exception_data'
     
+    exception__code: Mapped[str] = mapped_column("exception__code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    distributor__code: Mapped[int] = mapped_column("distributor__code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    refills: Mapped[int] = mapped_column("refills", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    consumers: Mapped[int] = mapped_column("consumers", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    
+    exception_code: Mapped[str] = mapped_column("exception_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    exception_description: Mapped[str] = mapped_column("exception_description", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    exception_name: Mapped[str] = mapped_column("exception_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    jde_distributor_code: Mapped[int] = mapped_column("jde_distributor_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sa_code: Mapped[str] = mapped_column("sa_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    state_code: Mapped[str] = mapped_column("state_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_code: Mapped[str] = mapped_column("ro_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sa_name: Mapped[str] = mapped_column("sa_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zo_code: Mapped[str] = mapped_column("zo_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_name: Mapped[str] = mapped_column("ro_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zo_name: Mapped[str] = mapped_column("zo_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgSubsidyExceptionDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_subsidy_exception_data'
+    
+    exception__code: str
+    distributor__code: int
+    refills: int
+    consumers: int
+    
+    exception_code: str
+    exception_description: str
+    exception_name: str
+    jde_distributor_code: int
+    sa_code: str
+    state_code: str
+    ro_code: str
+    sa_name: str
+    zo_code: str
+    ro_name: str
+    zo_name: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgSubsidyExceptionDataSchema
+        upsert_keys = []
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+
+
+class LpgSubsidyExceptionData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_subsidy_exception_data'
+    
+    exception__code: typing.Optional[str] | None = None
+    distributor__code: typing.Optional[int] | None = None
+    refills: typing.Optional[int] | None = None
+    consumers: typing.Optional[int] | None = None
+    
+    exception_code: typing.Optional[str] | None = None
+    exception_description: typing.Optional[str] | None = None
+    exception_name: typing.Optional[str] | None = None
+    jde_distributor_code: typing.Optional[int] | None = None
+    sa_code: typing.Optional[str] | None = None
+    state_code: typing.Optional[str] | None = None
+    ro_code: typing.Optional[str] | None = None
+    sa_name: typing.Optional[str] | None = None
+    zo_code: typing.Optional[str] | None = None
+    ro_name: typing.Optional[str] | None = None
+    zo_name: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgSubsidyExceptionDataSchema
+        upsert_keys = []
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+
+
+class LpgSubsidyExceptionDataGetResp(pydantic.BaseModel):
+    data: typing.List[LpgSubsidyExceptionData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class LpgSubsidyFailureDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_subsidy_failure_data'
+    
+    payment_error_code: Mapped[str] = mapped_column("payment_error_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    distributor__code: Mapped[int] = mapped_column("distributor__code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    refills: Mapped[int] = mapped_column("refills", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    consumers: Mapped[int] = mapped_column("consumers", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    code: Mapped[int] = mapped_column("code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    payment_error_decription: Mapped[str] = mapped_column("payment_error_decription", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    payment_error_name: Mapped[str] = mapped_column("payment_error_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    jde_distributor_code: Mapped[int] = mapped_column("jde_distributor_code", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sa_code: Mapped[str] = mapped_column("sa_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    state_code: Mapped[str] = mapped_column("state_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_code: Mapped[str] = mapped_column("ro_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sa_name: Mapped[str] = mapped_column("sa_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zo_code: Mapped[str] = mapped_column("zo_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_name: Mapped[str] = mapped_column("ro_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zo_name: Mapped[str] = mapped_column("zo_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgSubsidyFailureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_subsidy_failure_data'
+    
+    payment_error_code: str
+    distributor__code: int
+    refills: int
+    consumers: int
+    code: int
+    payment_error_decription: str
+    payment_error_name: str
+    jde_distributor_code: int
+    sa_code: str
+    state_code: str
+    ro_code: str
+    sa_name: str
+    zo_code: str
+    ro_name: str
+    zo_name: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgSubsidyFailureDataSchema
+        upsert_keys = []
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+
+
+class LpgSubsidyFailureData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_subsidy_failure_data'
+    
+    payment_error_code: typing.Optional[str] | None = None
+    distributor__code: typing.Optional[int] | None = None
+    refills: typing.Optional[int] | None = None
+    consumers: typing.Optional[int] | None = None
+    code: typing.Optional[int] | None = None
+    payment_error_decription: typing.Optional[str] | None = None
+    payment_error_name: typing.Optional[str] | None = None
+    jde_distributor_code: typing.Optional[int] | None = None
+    sa_code: typing.Optional[str] | None = None
+    state_code: typing.Optional[str] | None = None
+    ro_code: typing.Optional[str] | None = None
+    sa_name: typing.Optional[str] | None = None
+    zo_code: typing.Optional[str] | None = None
+    ro_name: typing.Optional[str] | None = None
+    zo_name: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgSubsidyFailureDataSchema
+        upsert_keys = []
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+
+
+class LpgSubsidyFailureDataGetResp(pydantic.BaseModel):
+    data: typing.List[LpgSubsidyFailureData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
