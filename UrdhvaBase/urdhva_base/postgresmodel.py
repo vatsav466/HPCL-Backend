@@ -115,6 +115,11 @@ class BasePostgresModel(pydantic.BaseModel):
                 for key in key_mapping
             }
             rpt = urdhva_base.context.context.get('rpt', {})
+            # Removing BU incase if SAP_ID was available and restricted
+            # Todo:- Need to verify in multiple conditions
+            if 'bu' in mapped_data and 'sap_id' in mapped_data:
+                if rpt.get('bu') and rpt.get('sap_id'):
+                    del mapped_data['bu']
             for key, value in mapped_data.items():
                 if key in extra_key_mapping:
                     key = extra_key_mapping[key]
