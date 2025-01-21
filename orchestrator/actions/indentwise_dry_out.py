@@ -656,13 +656,16 @@ class IndentDryOut:
             return await self.send_alert_action(is_raised=False)
         resp = resp[0]
         ims_datetime = ""
+        action_msg = "Valid Indent"
         if resp.get("INDENT_HOLD_RELEASE_TIME", ""):
             ims_datetime = resp.get("INDENT_HOLD_RELEASE_TIME").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
-        elif resp.get("INDENT_EXECUTABLE_TIME", ""):
+            action_msg = "Indent On Hold Released"
+        if resp.get("INDENT_EXECUTABLE_TIME", ""):
             ims_datetime = resp.get("INDENT_EXECUTABLE_TIME").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"
+            action_msg = "Valid Indent"
 
         if resp.get("count") > 0:
-            input_data["action_msg"] = "Valid Indent"
+            input_data["action_msg"] = action_msg
             input_data["action_type"] = "Raised"
             input_data["event_tags"]["is_raised"] = True
             input_data["ims_datetime"] = ims_datetime
