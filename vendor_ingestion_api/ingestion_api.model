@@ -65,11 +65,13 @@ Model crisData internal {
     interlock_description optional str
     device_id str
     device_value optional str
-    alert_id str
+    alarm_id str
     alert_status AlertStatus
     tank_id optional str
     nozzle_id optional str
-    pump_id optional str
+    pump_no optional str
+    occurrence_date optional str
+    closure_date optional str
     indent_no optional str
     products optional list productsDetails
 }
