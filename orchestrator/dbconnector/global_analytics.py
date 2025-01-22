@@ -4448,6 +4448,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         query = lpg_plant_queries.lpg_plant_query.get("carry_forward_analysis")
+        query = lpg_plant_queries.lpg_plant_query.get("carry_fwd_indent")
         conditions = []
         for rec in filters:
             rec.value = rec.value.split(",")
@@ -4461,7 +4462,7 @@ class GlobalAnalytics:
             conditions.append(condition)
         if conditions:
             query += f" WHERE {' AND '.join(conditions)}"
-        query += " GROUP BY execution_date"
+        query += " GROUP BY reported_date::DATE"
         resp = await function(query=query)
         return resp
     
