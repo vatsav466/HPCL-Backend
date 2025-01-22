@@ -1020,9 +1020,9 @@ class GlobalAnalytics:
 
             for rec in filters:
                 rec.value = rec.value.split(",")
-                if rec.key == '"month_name"':  # Only handle the month_name case separately
+                #if rec.key == '"month_name"':  # Only handle the month_name case separately
                     # Check if any value in rec.value is in month_mapping
-                    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                #    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
 
                 # Skip keys that should not be added to the WHERE clause
                 if rec.key in excluded_keys:
@@ -1058,26 +1058,31 @@ class GlobalAnalytics:
             pres_year_date_filters = ""
             hist_year_date_filters = ""
             
-
+            '''
+            removed the below line from the query because we having data directly in DB as  January
+            'TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", \'Month\'), \'Mon\') AS "month_name"'
+            
+            'TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", \'Month\'), \'Mon\')',
+            '''
             # Initialize the dynamic parts of the query
-            #where_conditions = [f'"M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start} and "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0']
-            where_conditions = [f'"M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}']
+            #where_conditions = [f'"M60_LEVEL_METADATA"."fiscal_year" = {fiscal_year_start} and "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0']
+            where_conditions = [f'"M60_LEVEL_METADATA"."fiscal_year" = {fiscal_year_start}']
             select_columns = [
                 'ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric, 0) AS "ACTUAL_TMT_SALES"',
                 '"M60_LEVEL_METADATA"."fy_month" AS "fy_month"',
-                'TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", \'Month\'), \'Mon\') AS "month_name"',
-                '"M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"',
+                '"month_name"',
+                '"M60_LEVEL_METADATA"."fiscal_year" AS "fiscal_year"',
             ]
             group_by_columns = [
                 '"M60_LEVEL_METADATA"."fy_month"',
-                'TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", \'Month\'), \'Mon\')',
-                '"M60_LEVEL_METADATA"."FISCAL_YEAR"',
+                '"month_name"',
+                '"M60_LEVEL_METADATA"."fiscal_year"',
             ]
 
             #Build conditions based on selected keys
             if "H" in selected_keys:
                 previous_year = current_year - 1
-                where_conditions.append(f'"M60_LEVEL_METADATA"."FISCAL_YEAR" IN (\'FY {previous_year}-{current_year}\', \'FY {current_year-2}-{previous_year}\')')
+                where_conditions.append(f'"M60_LEVEL_METADATA"."fiscal_year" IN (\'FY {previous_year}-{current_year}\', \'FY {current_year-2}-{previous_year}\')')
 
             if "T" in selected_keys:
                 select_columns.append('ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_QTY_TMT"')
@@ -1262,22 +1267,28 @@ class GlobalAnalytics:
             else:  # January to March
                 previous_year = current_year - 1
                 fiscal_year_start = f"'FY {previous_year}-{current_year}'"
+                
+            '''
+            TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
+            removed the above line from the below query as the data is directly available as January etc
+            TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
+            '''
             # Fallback query if no filters are provided
             sales_performance_query_ = f'''
                 SELECT
                     ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES",
                     ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
-                    TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
-                    "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
+                    "month_name"
+                    "M60_LEVEL_METADATA"."fiscal_year" AS "fiscal_year"
                 FROM
                     "M60_LEVEL_METADATA"
                 WHERE
-                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and   "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
+                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and   "M60_LEVEL_METADATA"."fiscal_year" = {fiscal_year_start}
                 GROUP BY
                     "M60_LEVEL_METADATA"."fy_month",
-                    TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
-                    "M60_LEVEL_METADATA"."FISCAL_YEAR"
+                    "month_name",
+                    "M60_LEVEL_METADATA"."fiscal_year"
                 ORDER BY
                     "M60_LEVEL_METADATA"."fy_month" ASC;
             '''
@@ -1318,7 +1329,7 @@ class GlobalAnalytics:
         # Fill missing values for string columns
         for each_str_col in [
             "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
-            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
+            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "fiscal_year", 
             "month_year", "month_name"
         ]:
             if each_str_col in resp.columns:
@@ -1349,7 +1360,7 @@ class GlobalAnalytics:
             resp = resp[resp["SBU_Name"] != "0"]
             resp = resp[resp["Zone_Name"] != "-"]
 
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SBU_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
 
@@ -1382,7 +1393,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1394,7 +1405,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
 
                 # resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
                 # resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
@@ -1406,7 +1417,7 @@ class GlobalAnalytics:
                 else:
                     grouped_resp = resp.groupby(["SBU_Name", "Zone_Name"], as_index=False).agg(agg_dict)
  
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Zone_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI' ,'YTD','DATE'}
 
@@ -1439,7 +1450,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1451,7 +1462,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1459,7 +1470,7 @@ class GlobalAnalytics:
                 else:
                     grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)                    
 
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Region_Name' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Region_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
 
@@ -1492,7 +1503,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1504,7 +1515,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1512,7 +1523,7 @@ class GlobalAnalytics:
                 else:
                     grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
 
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SalesArea_Name' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SalesArea_Name' in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
 
@@ -1545,7 +1556,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1557,7 +1568,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1565,7 +1576,7 @@ class GlobalAnalytics:
                 else:
                     grouped_resp = resp.groupby(["SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'ProductName' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'ProductName' in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI'}
 
@@ -1598,7 +1609,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1610,7 +1621,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1651,7 +1662,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1663,7 +1674,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
 
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
                 resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
@@ -1707,7 +1718,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1719,7 +1730,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
 
                 if selected_keys:
                     grouped_resp = resp.groupby(["month_name", "Zone_Name"], as_index=False).agg(agg_dict)
@@ -1759,7 +1770,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1771,7 +1782,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1812,7 +1823,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1824,7 +1835,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1865,7 +1876,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1877,7 +1888,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                 
                 # If any valid keys are selected, group the data
                 if selected_keys:
@@ -1885,7 +1896,7 @@ class GlobalAnalytics:
                 else:
                     grouped_resp = resp.groupby(["month_name", "ProductName"], as_index=False).agg(agg_dict)
 
-            elif "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
+            elif "fiscal_year" in filter_keys and "month_name" not in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD'}
 
@@ -1918,7 +1929,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -1930,7 +1941,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
                     select "fiscal_year","month_name","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
@@ -1951,9 +1962,9 @@ class GlobalAnalytics:
                     
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name"], as_index=False).agg(agg_dict)  
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name"], as_index=False).agg(agg_dict)  
                 resultCols = []
                 
                 if "H" in selected_keys and "YTD" in selected_keys:
@@ -1967,7 +1978,7 @@ class GlobalAnalytics:
                     grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
 
                     
-            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
+            elif "fiscal_year" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD','DATE'}
 
@@ -2000,7 +2011,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -2012,7 +2023,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
                                         SELECT "fiscal_year","month_name","ORGSBUNAME","NETWEIGHT_TMT" 
@@ -2045,9 +2056,9 @@ class GlobalAnalytics:
                 resp = resp.sort_values('SBU_Name')
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name"], as_index=False).agg(agg_dict)
                 
                 resultCols = []
                 
@@ -2061,7 +2072,7 @@ class GlobalAnalytics:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
                     grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
             
-            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
+            elif "fiscal_year" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD','DATE'}
 
@@ -2094,7 +2105,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -2106,7 +2117,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
                     select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
@@ -2134,7 +2145,7 @@ class GlobalAnalytics:
                 # resp = resp.sort_values('SBU_Name')
 
                 # If any valid keys are selected, group the data
-                grouped_keys = ["FISCAL_YEAR", "month_name", "SBU_Name"]
+                grouped_keys = ["fiscal_year", "month_name", "SBU_Name"]
 
                 # If valid keys are selected, apply conditional grouping
                 if selected_keys:
@@ -2168,7 +2179,7 @@ class GlobalAnalytics:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
                     grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
 
-            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
+            elif "fiscal_year" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD','DATE'}
 
@@ -2201,7 +2212,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -2213,7 +2224,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
                     select "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","ORGRONAME","NETWEIGHT_TMT" FROM "MOM_LEVEL_FINAL_DATA" where "FISCALYEAR" = 'FY {year_required}'
@@ -2244,9 +2255,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg(agg_dict)
 
                 resultCols=[]
                 if "H" in selected_keys and "YTD" in selected_keys:
@@ -2259,7 +2270,7 @@ class GlobalAnalytics:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
                     grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
                     
-            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
+            elif "fiscal_year" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
                 # Define the set of valid keys without the quotes
                 valid_keys = {'A', 'H', 'T', 'BE', 'RI','YTD','DATE'}
@@ -2291,7 +2302,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -2303,7 +2314,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
                                         SELECT "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","ORGRONAME","ORGSANAME","NETWEIGHT_TMT" 
@@ -2336,9 +2347,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg(agg_dict)
 
                 resultCols = []
                 if "H" in selected_keys and "YTD" in selected_keys:
@@ -2351,7 +2362,7 @@ class GlobalAnalytics:
                     current_date = helpers.get_time_stamp_by_delta(days=0,with_month_start_day=False,date_time_format=None)
                     grouped_resp = await GlobalAnalytics.calculate_ytd(current_date,grouped_resp,resultCols,current_month=False)
                     
-            elif "FISCAL_YEAR" in filter_keys and \
+            elif "fiscal_year" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
                 # Define the set of valid keys without the quotes
@@ -2386,7 +2397,7 @@ class GlobalAnalytics:
                         previous_fiscal_year = f"FY {current_year - 2}-{current_year - 1}"
 
                     for rec in filters:
-                        if rec.key == "FISCAL_YEAR":
+                        if rec.key == "fiscal_year":
                             # Ensure rec.value is a list of fiscal years
                             fiscal_year_values = rec.value if isinstance(rec.value, list) else [rec.value]
                             
@@ -2398,7 +2409,7 @@ class GlobalAnalytics:
                             # Assign the updated list back to rec.value
                             rec.value = fiscal_year_values
                 
-                    resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
+                    resp = resp[resp["fiscal_year"].isin([current_fiscal_year, previous_fiscal_year])]
                     year_required = str(current_year-2)+'-'+str(current_year-1)
                     sales_his_query = f"""
                                         SELECT "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","ORGRONAME","ORGSANAME","NETWEIGHT_TMT" 
@@ -2428,9 +2439,9 @@ class GlobalAnalytics:
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 else:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg(agg_dict)
                 resultCols = []
                 
                 if "H" in selected_keys and "YTD" in selected_keys:
