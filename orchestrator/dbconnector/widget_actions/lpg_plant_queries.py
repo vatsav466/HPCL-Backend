@@ -829,7 +829,7 @@ LIMIT 10000;''',
                             sum("pending_8_15_days") as "pending_8_15_days",
                             sum("Pending_Beyond15D") as "pending_beyond_15_days"
                         from
-                            "LPG_SALES_SUMMARY_DATA" ''',
+                            "lpg_todays_cdcms_sales_summary" ''',
     
     "cumulative_sales_pmuy_npmuy": f'''select
                                             "DistributorName",
