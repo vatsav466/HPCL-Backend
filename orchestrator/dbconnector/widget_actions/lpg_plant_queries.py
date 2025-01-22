@@ -743,6 +743,14 @@ LIMIT 10000;''',
                                         SUM(dry_out_cat_a) as "dry_out_cat_a", DATE(execution_date)
                                   from 
                                         "carry_forward_indents"''',
+
+    "carry_fwd_indent": f'''SELECT 
+                                    reported_date::DATE AS reported_date,
+                                    COUNT(*) AS cf_indents,
+                                    COUNT(dry_out_in_days) AS dry_out_locations,
+                                    COUNT(category) AS dry_out_cat_a
+                                FROM 
+                                    public.carry_fwd_indent''',
     
     "location_wise_distribution": f'''SELECT 
                                             bu,
