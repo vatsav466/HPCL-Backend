@@ -5530,11 +5530,12 @@ class GlobalAnalytics:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     @staticmethod
-    async def lpg_operations_rejet(filters, cross_filters, drill_state):
+    async def lpg_operations_rejetions(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_date = datetime.now().strftime("%Y-%m-%d")
+        current_month = datetime.now().strftime("%Y-%m")
+        current_month = current_month + "-01"
 
         cs_resp_ = lpg_plant_queries.lpg_plant_query.get("cs_query")
         pt_resp_ = lpg_plant_queries.lpg_plant_query.get("pt_query")
@@ -5563,12 +5564,12 @@ class GlobalAnalytics:
                 cs_resp_ += ' WHERE ' + ' AND '.join(conditions)
                 pt_resp_ += ' WHERE ' + ' AND '.join(conditions)
                 gd_resp_ += ' WHERE ' + ' AND '.join(conditions)
-                common_filter = f''' AND CAST("process_date" AS DATE) = '{current_date}' AND "zone" IS NOT NULL '''
+                common_filter = f''' AND CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
             else:
                 cs_resp_ += 'WHERE '
                 pt_resp_ += ' WHERE '
                 gd_resp_ += ' WHERE '
-                common_filter = f''' CAST("process_date" AS DATE) = '{current_date}' AND "zone" IS NOT NULL '''
+                common_filter = f''' CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
 
             cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
             pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
@@ -5580,15 +5581,9 @@ class GlobalAnalytics:
             pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
             gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)
             if not "where" in cs_resp_.lower():
-                common_filter = f'''
-                WHERE CAST("process_date" AS DATE) = '{current_date}' 
-                AND "zone" IS NOT NULL
-            '''
+                common_filter = f''' WHERE CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
             else:
-                common_filter = f'''
-                AND CAST("process_date" AS DATE) = '{current_date}' 
-                AND "zone" IS NOT NULL
-            '''
+                common_filter = f''' AND CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
             cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
             pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
             gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
@@ -5596,7 +5591,7 @@ class GlobalAnalytics:
             cs_resp = await function(query=cs_resp_)
             pt_resp = await function(query=pt_resp_)
             gd_resp = await function(query=gd_resp_)
-                        
+
             cs_df = pd.DataFrame(cs_resp)
             pt_df = pd.DataFrame(pt_resp)
             gd_df = pd.DataFrame(gd_resp)
