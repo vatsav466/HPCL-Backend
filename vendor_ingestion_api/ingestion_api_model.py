@@ -64,7 +64,6 @@ class crisDataCreate(pydantic.BaseModel):
     device_id: str
     device_value: typing.Optional[str] = pydantic.Field("", **{})
     alarm_id: str
-    alert_status: ingestion_api_enum.AlertStatus
     tank_id: typing.Optional[str] = pydantic.Field("", **{})
     nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
     pump_no: typing.Optional[str] = pydantic.Field("", **{})
