@@ -1281,7 +1281,7 @@ class GlobalAnalytics:
                     ROUND(SUM("M60_LEVEL_METADATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES",
                     ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
-                    "month_name"
+                    "month_name",
                     "M60_LEVEL_METADATA"."fiscal_year" AS "fiscal_year"
                 FROM
                     "M60_LEVEL_METADATA"
