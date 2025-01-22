@@ -85,6 +85,19 @@ async def sync_ims_indent_products():
             records=ro_data,
             conflict_columns=["LOCN_CODE", "INDENT_NO", "PROD"]
         )
+
+        # history data
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get(
+            "hpcl_ceg", "1")
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
+        function = await charts_actions.charts_connection_vault_routing(
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        resp = await function(
+            schema_name="IMS_SAP",
+            table_name="INDENT_PRODUCTS_HISTORY",
+            records=ro_data,
+            conflict_columns=["LOCN_CODE", "INDENT_NO", "PROD", "run_id"]
+        )
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
         print(traceback.format_exc())
