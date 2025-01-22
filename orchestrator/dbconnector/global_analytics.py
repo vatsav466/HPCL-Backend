@@ -2020,7 +2020,12 @@ class GlobalAnalytics:
                                         WHERE "FISCALYEAR" = 'FY {year_required}'
                     """
                     if "month_name" in filter_keys:
-                        sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
+                        ## Find the filter with key "month_name"
+                        month_filter = next((rec for rec in filters if rec.key.strip('"') == "month_name"), None)
+                        if month_filter:
+                            # Extract the month name value (handle string or list values)
+                            month_name = month_filter.value if isinstance(month_filter.value, str) else month_filter.value[0]
+                            sales_his_query += f""" and "month_name" = '{month_name[:3]}'"""
                     print("sales_his_query",sales_his_query)
                     his_data = await function(query=sales_his_query)
                     his_data = pd.DataFrame(his_data)
