@@ -4043,31 +4043,10 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        financial_year_start = f"{datetime.now().year - 1}-04-01 00:00:00"
-        financial_year_end = f"{datetime.now().year}-03-31 23:59:59"
-        card_query = f'''
-                        select
-                            sum("TotalSalesYesterday")/10000000 as "Sales" 
-                        from
-                            "LPG_SALES_SUMMARY_DATA" 
-                        where
-                            "Execution_Date"::DATE BETWEEN '{financial_year_start}' AND '{financial_year_end}'
-                            AND "ZOName" NOT IN ( 'Null')
-                        '''
-        card_query  += f' AND "Execution_Date"::DATE BETWEEN \'{financial_year_start}\' AND \'{financial_year_end}\''
-        card_query  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
-        
+        card_query = lpg_plant_queries.lpg_plant_query.get(drill_state)
         resp = await function(query=card_query)
         resp = pd.DataFrame(resp)
-        for each_float_col in [
-            "Sales"
-        ]:
-            if each_float_col in resp.columns:
-                resp[each_float_col] = resp[each_float_col].fillna(0.0)
-        for each_str_col in []:
-            if each_str_col in resp.columns:
-                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-        return {"status": True, "message": "success", "data": resp}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     
     @staticmethod

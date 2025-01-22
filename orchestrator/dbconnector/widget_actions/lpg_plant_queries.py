@@ -1,7 +1,15 @@
 import utilities.helpers as helpers
 from datetime import datetime
-financial_year_start = f"{datetime.now().year - 1}-04-01 00:00:00"
-financial_year_end = f"{datetime.now().year}-03-31 23:59:59"
+
+today = datetime.now()
+current_month = datetime.now().strftime("%B") # format : January, February
+if today.month < 4:
+    start_year = today.year - 1
+else:
+    start_year = today.year
+end_year = start_year + 1
+financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
+
 
 timezone_format = 'YYYY-MM-DD HH24:MI:SS.US'
 lpg_plant_query = {
@@ -1024,5 +1032,24 @@ ORDER BY
                         CAST("process_date" AS DATE) as "process_date"
                     from
                         "lpg_gd_rejections"
-                '''
+                ''',
+                
+    'cdcms_current_year_sales':f'''select 
+                                        sum("TotalSalesYesterday") as "total_sales" 
+                                    from
+                                        "lpg_monthly_cdcms_sales_summary"
+                                    where
+                                        "Financial_Year"='{financial_year}' ''',
+    
+    'cdcms_current_month_sales':f'''select
+                                        sum("TotalSalesYesterday") as "total_sales" 
+                                    from
+                                        "lpg_monthly_cdcms_sales_summary"
+                                    where
+                                        "Financial_Year"='{financial_year}' AND "Month"='{current_month}' ''',
+    
+    'cdcms_current_week_sales': f''' SELECT sum("TotalSalesYesterday") as "total_sales"
+                                    FROM "lpg_cdcms_sales_summary"
+                                    WHERE "Execution_Date" >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::INT + 1
+                                    AND "Execution_Date" <= CURRENT_DATE; '''
 }
