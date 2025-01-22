@@ -970,7 +970,7 @@ class GlobalAnalytics:
         )
 
         return resp
-        
+
     @staticmethod
     async def m60_performance(filters, cross_filters, drill_state):
         """
@@ -983,7 +983,21 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
-        return await m60_performance.m60_performance(filters, cross_filters, drill_state)
+        return await m60_performance.m60_performance([rec.dict() for rec in filters],
+                                                     [rec.dict() for rec in cross_filters], drill_state)
+
+    @staticmethod
+    async def m60_performance_old(filters, cross_filters, drill_state):
+        """
+        Fetches the sales performance data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the sales performance data.
+        """
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)

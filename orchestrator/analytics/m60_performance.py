@@ -84,7 +84,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
         group_by_filter = [group_by_filter]
     for grp_key in group_by_filter:
         if grp_key.strip('"') not in req_keys and grp_key not in req_keys:
-            req_keys.append(grp_key.strip('"'))
+            req_keys.append(grp_key)
     query = f"""SELECT {','.join(req_keys)} FROM "{table_name}" """
     conditions = [cond for cond in where_conditions]
     if start_date and end_date:
@@ -92,7 +92,8 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
             conditions.append(f""" {date_key}='{start_date}' """)
         else:
             conditions.append(f""" {date_key} BETWEEN '{start_date}' AND '{end_date}' """)
-    query += f' where {" AND ".join(conditions)}'
+    if conditions:
+        query += f' where {" AND ".join(conditions)}'
     if group_by_filter:
         query += f" GROUP BY {','.join(group_by_filter)}"
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -230,14 +231,19 @@ async def m60_performance(filters, cross_filters, drill_state):
     # df = pd.concat([actual_data, target_data, hist_data])
     df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
     merged_df = df_[0]
-    if len(df_) > 1:
-        for df in df_[1:]:
-            merged_df = pd.merge(merged_df, df, on='month_name', how='outer')  # Outer merge with df2
-    merged_df.fillna(0, inplace=True)
     if group_by_filter.strip('"') == 'month_name':
+        if len(df_) > 1:
+            for df in df_[1:]:
+                merged_df = pd.merge(merged_df, df, on='month_name', how='outer')  # Outer merge with df2
+        merged_df.fillna(0, inplace=True)
         merged_df["month_order"] = merged_df["month_name"].map({month: i for i, month in enumerate(months)})
         merged_df = merged_df.sort_values("month_order").drop(columns="month_order")
+        merged_df.reset_index(drop=True, inplace=True)
     if group_by_filter.strip('"') == 'SBU_Name':
+        if len(df_) > 1:
+            for df in df_[1:]:
+                merged_df = pd.merge(merged_df, df, on='SBU_Name', how='outer')  # Outer merge with df2
         merged_df["sbu_order"] = merged_df["SBU_Name"].map({month: i for i, month in enumerate(months)})
         merged_df = merged_df.sort_values("sbu_order").drop(columns="sbu_order")
-    return merged_df.to_dict(orient='series')
+        merged_df.reset_index(drop=True, inplace=True)
+    return {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
