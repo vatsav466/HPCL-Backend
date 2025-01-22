@@ -11,6 +11,11 @@ except ImportError:
 from dateutil.relativedelta import relativedelta
 
 
+def month_short_to_number(short_name):
+    # Parses the short month name (%b) and extracts the month as an integer.
+    return datetime.datetime.strptime(short_name, '%b').month
+
+
 def password_generator(password_length=16, special_characters_allowed=True, case_sensitive=True):
     """
     @description: function to generate random password
