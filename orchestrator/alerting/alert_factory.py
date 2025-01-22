@@ -154,7 +154,7 @@ class AlertFactory:
 
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
-                workflowid =interlock_name.get("workflow_name", "interlock_name")
+                workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 if alert_data_dict.get("alert_section") not in ["VA"]:
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)

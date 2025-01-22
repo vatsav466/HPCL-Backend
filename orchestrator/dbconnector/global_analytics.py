@@ -1323,7 +1323,10 @@ class GlobalAnalytics:
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+        if not filters:
+            filters = []
 
+        filters = filters + cross_filters  
         # Apply grouping logic based on filters
         if filters:
             grouped_resp = None

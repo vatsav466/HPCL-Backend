@@ -61,6 +61,7 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP005", "interlock_name": "HCDS(Audio visual alarm in control room)", "workflow_name": ""},
                          {"sop_id": "SOP007", "interlock_name": "Tank overfill prevention(MOV)", "workflow_name": ""},
                          {"sop_id": "SOP007", "interlock_name": "Tank overfill prevention close inlet MOV", "workflow_name": "Tank overfill prevention close inlet MOV"},
+                         {"sop_id": "SOP007", "interlock_name": "TAS ESD MAINTENANCE", "workflow_name": ""},
                          {"sop_id": "SOP009", "interlock_name": "Plant ESD(Closure of tank MOVS)", "workflow_name": ""},
                          {"sop_id": "SOP011", "interlock_name": "Dyke drain valve position indication", "workflow_name": ""},
                          {"sop_id": "SOP012", "interlock_name": "Pulse Security Alarm", "workflow_name": ""},
