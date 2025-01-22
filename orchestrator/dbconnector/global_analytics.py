@@ -2413,7 +2413,32 @@ class GlobalAnalytics:
                             rec.value = fiscal_year_values
                 
                     resp = resp[resp["FISCAL_YEAR"].isin([current_fiscal_year, previous_fiscal_year])]
-
+                    year_required = str(current_year-2)+'-'+str(current_year-1)
+                    sales_his_query = f"""
+                                        SELECT "fiscal_year","month_name","ORGSBUNAME","ORGZONENAME","ORGRONAME","ORGSANAME","NETWEIGHT_TMT" 
+                                        FROM "MOM_LEVEL_FINAL_DATA" 
+                                        WHERE "FISCALYEAR" = 'FY {year_required}'
+                    """
+                    if "month_name" in filter_keys:
+                        sales_his_query += f""" and "month_name" = '{filter_values[1][:3]}'"""
+                    his_data = await function(query=sales_his_query)
+                    his_data = pd.DataFrame(his_data)
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].str.strip("DS").str.strip()
+                    his_data = his_data.groupby(['fiscal_year','month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'],as_index = False)['NETWEIGHT_TMT'].sum().round(0)
+                    his_data['ORGSBUNAME'] = his_data['ORGSBUNAME'].fillna('').astype(str)
+                    his_data['ORGZONENAME'] = his_data['ORGZONENAME'].fillna('').astype(str)
+                    his_data['ORGRONAME'] = his_data['ORGRONAME'].fillna('').astype(str)
+                    his_data['ORGSANAME'] = his_data['ORGSANAME'].fillna('').astype(str)
+                    his_data = his_data.rename(columns = {'NETWEIGHT_TMT':'ACTUAL_HISTORY_TMT'})
+                    resp['month_name'] = resp['month_name'].apply(lambda x:x[:3] if len(x)>=3 else x)
+                    resp = resp.merge(his_data[['month_name','ACTUAL_HISTORY_TMT','fiscal_year','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME']],
+                                      how='left',left_on=['month_name','SBU_Name','Zone_Name','Region_Name','SalesArea_Name'],
+                                      right_on = ['month_name','ORGSBUNAME','ORGZONENAME','ORGRONAME','ORGSANAME'])
+                    resp['fiscal_year'] = resp['fiscal_year'].bfill()
+                    if "ACTUAL_HISTORY_TMT" in resp.columns.tolist():
+                        resp['ACTUAL_HISTORY_TMT'] = resp['ACTUAL_HISTORY_TMT'].fillna(0).astype(int)
+                    agg_dict["ACTUAL_HISTORY_TMT"] = lambda x: ', '.join(map(str, x.unique()))
+                
 
                 # If any valid keys are selected, group the data
                 if selected_keys:
