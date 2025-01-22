@@ -717,11 +717,12 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
                         AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
                 )
                 SELECT 
-                    a.sap_id ad alerts.sap_id,
+                    a.sap_id as alerts_sap_id,
                     a.location_name as location_name,
                     a.terminal_plant_id as terminal_plant_od,
-                    a.indent_no as alerts.indent_no,
-                    a.product_code as alerts.product_code,
+                    a.indent_no as alerts_indent_no,
+                    a.product_code as alerts_product_code,
+                    a.indent_status as indent_status,
                     a.dry_out_in_days,
                     cd."LOCN_CODE",
                     cd."INDENT_NO",
