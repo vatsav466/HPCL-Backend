@@ -1068,7 +1068,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         schema_class = AlertsSchema
         upsert_keys = []
         search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
-        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id', 'terminal_plant_id:sap_id']
 
 
 class Alerts(urdhva_base.postgresmodel.PostgresModel):
@@ -1135,7 +1135,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
         schema_class = AlertsSchema
         upsert_keys = []
         search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
-        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
+        access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id', 'terminal_plant_id:sap_id']
 
 
 class AlertsGetResp(pydantic.BaseModel):
