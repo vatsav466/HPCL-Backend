@@ -1114,29 +1114,6 @@ class GlobalAnalytics:
                 resp = resp.merge(his_data[['month_name','NETWEIGHT_TMT','fiscal_year']],how='left',on='month_name')
                 resp['fiscal_year'] = resp['fiscal_year'].bfill()
             
-            if "I" in selected_keys:
-                month_mapping = {0: "Apr", 1: "May", 2: "Jun", 3: "Jul", 4: "Aug", 5: "Sep", 6: "Oct", 7: "Nov", 8: "Dec"}
-                reverse_month_mapping = {v.upper(): k for k, v in month_mapping.items()}  # For uppercase column mapping
-
-                # Step 2: Group by COMNAME and calculate sums for each month
-                ind_resp = (
-                    df.groupby("COMNAME", as_index=False)[["APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]]
-                    .sum()
-                    .round(0)
-                )
-
-                for _, row in ind_resp.iterrows():
-                    comname = row["COMNAME"]
-                    # Check if row contains any NaN values before processing
-                    valid_row = {col: row[col] for col in row.index if col != "COMNAME" and not pd.isna(row[col])}
-
-                    # Only add if valid data exists
-                    if valid_row:
-                        resp[f"{comname}"] = {reverse_month_mapping[col]: int(valid_row[col]) for col in valid_row}
-                    else:
-                        resp[f"{comname}"] = {}
-
-                print("Updated resp --> ", resp.columns)
             # Fill missing values for numerical columns
             for each_float_col in ["NETWEIGHT_TMT","ACTUAL_TMT_SALES", "TARGET_QTY_TMT", 'BPCL', 'CPCL', 'GAIL',
                                     'HMEL', 'HPCL', 'IOCL', 'MRPL', 'NEL', 'NRL','OIL INDIA LIMITED', 'ONGC',
@@ -1262,7 +1239,6 @@ class GlobalAnalytics:
             
             if len(resultCols) >0:
                 resp = await GlobalAnalytics.calculate_ytd(current_date,resp,resultCols,current_month=True)
-
             for each_key in resp:
                 print(each_key)
                 if each_key in ['ACTUAL_TMT_SALES']:
