@@ -4047,6 +4047,66 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
+    
+    @staticmethod
+    async def lpg_domestic_sale_table(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        lpg_sale_table_ = lpg_plant_queries.lpg_plant_query.get("lpg_domestic_sale_table")
+        
+        if not filters and not cross_filters:
+            lpg_sale_table_ += f' WHERE "ZOName" IS NOT NULL'
+            lpg_sale_table_ += ' GROUP BY "ZOName", "CylType", "ConsumerType" '
+        
+        resp = await function(query=lpg_sale_table_)
+        if not resp:
+            return {"status": True, "message": "No data available", "data": []}
+        
+        resp = pd.DataFrame(resp)
+        for each_float_col in ["Total_Booking", "Total_Sales", "Total_Pending"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        for each_str_col in ["ZOName", "CylType", "ConsumerType"]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna("").astype(str)
+        resp = resp.groupby(["ZOName", "CylType", "ConsumerType"], as_index=False).agg({
+            "Total_Booking": "sum",
+            "Total_Sales": "sum",
+            "Total_Pending": "sum"
+        })
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_consumer_table(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        lpg_consumer_table_ = lpg_plant_queries.lpg_plant_query.get("lpg_consumer_table")
+        if not filters and not cross_filters:
+            lpg_consumer_table_ += f' WHERE "ZOName" IS NOT NULL'
+            lpg_consumer_table_ += ' GROUP BY "ZoneNames", "CylinderType", "SubCategory" '
+        resp = await function(query=lpg_consumer_table_)
+        if not resp:
+            return {"status": True, "message": "No data available", "data": []}
+        resp = pd.DataFrame(resp)
+        for each_float_col in ["Total_Consumers", "eKYCCompleted", "eKYCPending", "SafetyCheckPending","SuvidhaClub"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        for each_str_col in ["ZoneNames", "CylinderType", "SubCategory"]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna("").astype(str)
+        resp = resp.groupby(["ZoneNames", "CylinderType", "SubCategory"], as_index=False).agg({
+            "Total_Consumers": "sum",
+            "eKYCCompleted": "sum",
+            "eKYCPending": "sum",
+            "SafetyCheckPending": "sum",
+            "SuvidhaClub": "sum"
+
+        })
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
         
     @staticmethod

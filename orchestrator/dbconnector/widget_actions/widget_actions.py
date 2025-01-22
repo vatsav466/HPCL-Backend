@@ -61,7 +61,9 @@ lpg_dashboard_actions = [
     'subsidy_failure_stats',
     'subsidy_exception_stats',
     'lpg_cdcms_sales_comparision',
-    'card_chart'
+    'card_chart',
+    'lpg_domestic_sale_table',
+    'lpg_consumer_table'
 ]
 
 # Todo:- import all widget action modules here
@@ -128,7 +130,9 @@ widget_mapping = {
     'subsidy_failure_stats': {},
     'subsidy_exception_stats': {},
     'lpg_cdcms_sales_comparision': {},
-    'card_chart': {}
+    'card_chart': {},
+    'lpg_domestic_sale_table': {},
+    'lpg_consumer_table': {}
 }
 
 
