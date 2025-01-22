@@ -1066,5 +1066,28 @@ ORDER BY
                                         sum("Total_Pending") as "Pending"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
-                                '''
+                                ''',
+                                
+    "lpg_domestic_sale_table": f''' select 
+                                        "ZOName" as "ZOName",
+                                        "CylType" as "CylType",
+                                        "ConsumerType" as "ConsumerType",
+                                        sum("BookingReceivedYesterday") as "Total_Booking",
+                                        sum("TotalSalesYesterday") as "Total_Sales",
+                                        sum("Total_Pending") as "Total_Pending"
+                                    from
+                                        "lpg_todays_cdcms_sales_summary" 
+                                     ''',
+                                     
+    "lpg_consumer_table": f''' select 
+                                    "ZoneNames" as "ZoneNames",
+                                    "SubCategory" as "SubCategory",
+                                    sum("ConsumerCount") as "Total_Consumers",
+                                    sum("eKYCCompleted") as "eKYCCompleted",
+                                    sum("eKYCPending") as "eKYCPending",
+                                    sum("SafetyCheckPending") as "SafetyCheckPending",
+                                    sum("SuvidhaClub") as "SuvidhaClub",
+                                    "CylinderType" as "CylinderType" 
+                                from
+                                    "LPG_CONSUMERS_SUMMARY" '''
 }
