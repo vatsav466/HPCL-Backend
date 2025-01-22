@@ -99,7 +99,7 @@ def insertToDB(data, table_name, indexing_col=()):
     print(f"-- Inserting Data to {table_name} --")
     print("Length of Data :", len(data))
     print(len(apr_data))
-    data = apr_data
+    
     print(len(data))
     #data = data.unique(['engine_id'])
     print(len(data))
