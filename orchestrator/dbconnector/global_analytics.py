@@ -985,6 +985,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        '''
         df_pl = pl.read_excel("/opt/ceg/algo/Y2NE_Dec 24 FY2024-25_06.01.25.xlsx", sheet_name="Results", engine='xlsx2csv', engine_options={"skip_rows": 2})
         df = df_pl.to_pandas()    
         month_mapping = {
@@ -1004,6 +1005,7 @@ class GlobalAnalytics:
 
         # Reverse mapping (for returning the short form)
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
+        '''
         month_to_num = {
                 "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
                 "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
@@ -1343,11 +1345,13 @@ class GlobalAnalytics:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
             filter_values = [rec.value[0].strip('') for rec in filters]
+            '''
             if "month_name" in filter_keys:
             # Convert full month names to short form (e.g., "January" -> "Jan")
                 resp["month_name"] = resp["month_name"].apply(
                 lambda x: reverse_month_mapping.get(x, x)
             )
+            '''
             if 'NG' in resp['SBU_Name'].unique().tolist():
                 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
                 # Create a mapping dictionary for SBU_Name replacements
