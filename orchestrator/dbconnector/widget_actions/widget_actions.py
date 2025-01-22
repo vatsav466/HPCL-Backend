@@ -60,7 +60,8 @@ lpg_dashboard_actions = [
     'lpg_operations_filled_cylinder',
     'subsidy_failure_stats',
     'subsidy_exception_stats',
-    'lpg_cdcms_sales_comparision'
+    'lpg_cdcms_sales_comparision',
+    'card_chart'
 ]
 
 # Todo:- import all widget action modules here
@@ -126,7 +127,8 @@ widget_mapping = {
     'lpg_operations_filled_cylinder': {},
     'subsidy_failure_stats': {},
     'subsidy_exception_stats': {},
-    'lpg_cdcms_sales_comparision': {}
+    'lpg_cdcms_sales_comparision': {},
+    'card_chart': {}
 }
 
 
