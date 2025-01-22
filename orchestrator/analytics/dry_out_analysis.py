@@ -953,7 +953,7 @@ async def current_month_frequent_drout_terminals(data):
                         )
                         SELECT location_name, terminal_plant_id, category, SUM(total_count) AS "Total_Count"
                         FROM monthly_sap_count
-                        WHERE total_count > 0
+                        WHERE total_count > 1
                         GROUP BY location_name, terminal_plant_id, category
                         ORDER BY "Total_Count" DESC '''
 
