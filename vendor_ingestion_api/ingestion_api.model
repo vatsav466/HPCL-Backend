@@ -66,7 +66,6 @@ Model crisData internal {
     device_id str
     device_value optional str
     alarm_id str
-    alert_status AlertStatus
     tank_id optional str
     nozzle_id optional str
     pump_no optional str
