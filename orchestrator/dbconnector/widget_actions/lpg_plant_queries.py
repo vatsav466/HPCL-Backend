@@ -745,7 +745,7 @@ LIMIT 10000;''',
                                         "carry_forward_indents"''',
 
     "carry_fwd_indent": f'''SELECT 
-                                    reported_date::DATE AS reported_date,
+                                    reported_date::DATE AS execution_date,
                                     COUNT(*) AS cf_indents,
                                     COUNT(dry_out_in_days) AS dry_out_locations,
                                     COUNT(category) AS dry_out_cat_a

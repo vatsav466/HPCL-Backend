@@ -4462,7 +4462,7 @@ class GlobalAnalytics:
             conditions.append(condition)
         if conditions:
             query += f" WHERE {' AND '.join(conditions)}"
-        query += " GROUP BY reported_date::DATE"
+        query += " GROUP BY execution_date::DATE"
         resp = await function(query=query)
         return resp
     
