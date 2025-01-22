@@ -13,6 +13,7 @@ from collections import defaultdict
 import utilities.helpers as helpers
 import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
+from orchestrator.analytics import m60_performance
 import utilities.connection_mapping as connection_mapping
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.dbconnector.connector_factory as connector_factory
@@ -982,6 +983,7 @@ class GlobalAnalytics:
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
         """
+        return await m60_performance.m60_performance(filters, cross_filters, drill_state)
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
