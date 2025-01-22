@@ -1239,6 +1239,7 @@ class GlobalAnalytics:
             
             if len(resultCols) >0:
                 resp = await GlobalAnalytics.calculate_ytd(current_date,resp,resultCols,current_month=True)
+            resp = resp.to_dict(orient = 'series')
             for each_key in resp:
                 print(each_key)
                 if each_key in ['ACTUAL_TMT_SALES']:
