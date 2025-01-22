@@ -12,7 +12,7 @@ RABBITMQ_VHOST = 'hpcl_ceg'
 RABBITMQ_USER = 'hpcl_ceg'
 RABBITMQ_PASSWORD = 'algo#ceg@4321'
 RABBITMQ_PREFIX_QUEUE = "command_listener_"
-SITE_ID = "11128"
+SITE_ID = "1128"
 BASE_URL = "http://10.90.38.164:8080"
 
 
@@ -126,7 +126,7 @@ class RabbitMQListener:
 
 
 def main():
-    sap_ids = ["1999", "11128", "2001"]  # Add all the SAP IDs you want to listen for
+    sap_ids = ["1999", "1128", "2001"]  # Add all the SAP IDs you want to listen for
     try:
         threads = []
         for sap_id in sap_ids:
@@ -144,7 +144,6 @@ def main():
     except Exception as e:
         print(f"Unexpected error: {e}")
         sys.exit(1)
-
-
+        
 if __name__ == "__main__":
     main()
