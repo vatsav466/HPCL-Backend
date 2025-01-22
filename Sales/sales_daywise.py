@@ -311,7 +311,10 @@ def get_and_insert_data(cursor, query, params=None):
     print(data['ORGSBUNAME'].unique())
     data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None else x )
     print(data['ORGSBUNAME'].unique())
+    data = data.rename(columns = {'ORGSBUNAME':'SBU_Name','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
+                                  'ORGSANAME':'SalesArea_Name','MATERIALGROUPNAME':'ProductName'})
     data = pl.from_pandas(data)
+    
      
     insertToDB(data, params["table_name"])
 
