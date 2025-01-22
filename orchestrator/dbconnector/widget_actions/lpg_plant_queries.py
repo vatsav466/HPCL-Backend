@@ -1051,5 +1051,20 @@ ORDER BY
     'cdcms_current_week_sales': f''' SELECT sum("TotalSalesYesterday") as "total_sales"
                                     FROM "lpg_cdcms_sales_summary"
                                     WHERE "Execution_Date" >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::INT + 1
-                                    AND "Execution_Date" <= CURRENT_DATE; '''
+                                    AND "Execution_Date" <= CURRENT_DATE; ''',
+    'cdcms_current_date_sales':f'''select
+                                        sum("TotalSalesYesterday") as "total_sales" 
+                                    from
+                                        "lpg_todays_cdcms_sales_summary"
+                                ''',
+    'cdcms_current_date_bookings':f'''select
+                                        sum("BookingReceivedYesterday") as "Bookings" 
+                                    from
+                                        "lpg_todays_cdcms_sales_summary"
+                                ''',
+    'cdcms_current_date_pending':f'''select
+                                        sum("Total_Pending") as "Pending"
+                                    from
+                                        "lpg_todays_cdcms_sales_summary"
+                                '''
 }
