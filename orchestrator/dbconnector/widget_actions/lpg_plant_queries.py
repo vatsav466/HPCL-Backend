@@ -845,7 +845,14 @@ LIMIT 10000;''',
                                         from
                                             "LPG_CONSUMERS_SUMMARY"''',
 
-    'lpg_cdcms_sales_comparision': f''' select * from lpg_monthly_cdcms_sales_summary ''',
+    'lpg_cdcms_sales_comparision': f''' select 
+                                            "Month",
+                                            "Month_Number",
+                                            "Financial_Year",
+                                            sum("TotalSalesYesterday") as "Total_Sales",
+                                            "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"
+                                        from
+                                            "lpg_monthly_cdcms_sales_summary" ''',
     
     "total_consumers": f''' select
                                 "ZOName",
