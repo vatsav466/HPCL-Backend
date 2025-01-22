@@ -822,10 +822,12 @@ LIMIT 10000;''',
                             "ZOName" ,
                             "ROName",
                             "SAName",
-                            "ConsumerType" ,
                             "JDEDistributorCode",
-                            "Execution_Date",
-                            sum("pending_1_3_days") as "Pending 1-3 days" 
+                            "ConsumerType",
+                            sum("pending_1_3_days") as "pending_1_3_days",
+                            sum("pending_4_7_days") as "pending_4_7_days",
+                            sum("pending_8_15_days") as "pending_8_15_days",
+                            sum("Pending_Beyond15D") as "pending_beyond_15_days"
                         from
                             "LPG_SALES_SUMMARY_DATA" ''',
     

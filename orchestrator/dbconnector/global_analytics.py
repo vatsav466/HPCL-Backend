@@ -3949,14 +3949,14 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_pending_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_ageing")
-        yesterday = datetime.now() - relativedelta(days=1)
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
+                if rec.key.replace('"', '') in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+                    continue
                 rec.value = rec.value.split(",")
                 # Now handle other cases
                 if isinstance(rec.value, str):
@@ -3970,57 +3970,40 @@ class GlobalAnalytics:
             if conditions:
                 lpg_pending_query_  += ' WHERE '
                 lpg_pending_query_  += ' AND '.join(conditions)
-            lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN ( \'Null\')'
-            lpg_pending_query_  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
+            if not conditions:
+                lpg_pending_query_  += f' WHERE "ZOName"  NOT IN ( \'Null\')'
+            else:
+                lpg_pending_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
+            lpg_pending_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_pending_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_pending_query_, access_filters, drill_state)
-            if "where" not in lpg_pending_query_.lower():                
-                lpg_pending_query_  += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
+            if "where" not in lpg_pending_query_.lower():
+                lpg_pending_query_  += f' WHERE "ZOName"  NOT IN (\'Null\')'
             else:
-                lpg_pending_query_  += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
-            lpg_pending_query_  += ' GROUP BY "Execution_Date", "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
-            print(lpg_pending_query_)
+                lpg_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\')'
+            lpg_pending_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
             resp = await function(query=lpg_pending_query_ )
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             resp = resp.groupby(["ConsumerType"], as_index=False).agg({
-                    "Pending 1-3 days": "sum"
+                    "pending_1_3_days": "sum",
+                    "pending_4_7_days": "sum",
+                    "pending_8_15_days": "sum",
+                    "pending_beyond_15_days": "sum"
                 })
-            # Fill missing values for numerical columns
-            for each_float_col in [
-                "Ageing"
-            ]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            # Fill missing values for string columns
-            for each_str_col in [
-                "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode"
-            ]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
-        # Execute the query
+
         print("*"*50)
         print("lpg_pending_query_ :", lpg_pending_query_)
         print("*"*50)
+
         resp = await function(query=lpg_pending_query_)
-        # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
-        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-        # Filter rows where Execution_Date matches yesterday
-        resp['Execution_Date'] = pd.to_datetime(resp['Execution_Date'])
-        resp = resp[resp["Execution_Date"].dt.date == yesterday.date()]
-        # Fill missing values for numerical columns
-        for each_float_col in [
-            "Pending 1-3 days"
-        ]:
-            if each_float_col in resp.columns:
-                resp[each_float_col] = resp[each_float_col].fillna(0.0)
-        # Fill missing values for string columns
+
         for each_str_col in [
             "ZOName", "ROName", "SAName", "ConsumerType", "JDEDistributorCode"
         ]:
@@ -4029,23 +4012,77 @@ class GlobalAnalytics:
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            if "ConsumerType" in filter_keys and "ZOName" not in filter_keys:
+            if "pending_1_3_days" in filter_keys and "ZOName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
-                    "Pending 1-3 days": "sum"
+                    "pending_1_3_days": "sum"
                 })
-            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+            elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
-                    "Pending 1-3 days": "sum",
+                    "pending_1_3_days": "sum",
                 })
-            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+            elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
                                             as_index=False).agg({
-                    "Pending 1-3 days": "sum",
+                    "pending_1_3_days": "sum",
                 })
-            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+            elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
                                             as_index=False).agg({
-                    "Pending 1-3 days": "sum",
+                    "pending_1_3_days": "sum",
+                })
+            elif "pending_4_7_days" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                    "pending_4_7_days": "sum"
+                })
+            elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                    "pending_4_7_days": "sum",
+                })
+            elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                            as_index=False).agg({
+                    "pending_4_7_days": "sum",
+                })
+            elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                            as_index=False).agg({
+                    "pending_4_7_days": "sum",
+                })
+            elif "pending_8_15_days" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                    "pending_8_15_days": "sum"
+                })
+            elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                    "pending_8_15_days": "sum",
+                })
+            elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                            as_index=False).agg({
+                    "pending_8_15_days": "sum",
+                })
+            elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                            as_index=False).agg({
+                    "pending_8_15_days": "sum",
+                })
+            elif "pending_beyond_15_days" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                    "pending_beyond_15_days": "sum"
+                })
+            elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                    "pending_beyond_15_days": "sum",
+                })
+            elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                            as_index=False).agg({
+                    "pending_beyond_15_days": "sum",
+                })
+            elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                            as_index=False).agg({
+                    "pending_beyond_15_days": "sum",
                 })
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
