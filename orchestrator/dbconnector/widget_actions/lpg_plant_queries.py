@@ -844,6 +844,9 @@ LIMIT 10000;''',
                                             sum("SafetyCheckPending") as "SafetyCheckPending"
                                         from
                                             "LPG_CONSUMERS_SUMMARY"''',
+
+    'lpg_cdcms_sales_comparision': f''' select * from lpg_monthly_cdcms_sales_summary ''',
+    
     "total_consumers": f''' select
                                 "ZOName",
                                 "ROName",

@@ -5237,10 +5237,11 @@ class GlobalAnalytics:
                                         "ExceptionName" '''
             resp = await function(query=lpg_exception_stats_ )
             resp = pd.DataFrame(resp)
-
-            for each_float_col in [
-                "Consumers","Refills"
-            ]:
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["ExceptionName","ZOName"], as_index=False
+                                ).agg({"Consumers": "sum","Refills": "sum" })
+            for each_float_col in ["Consumers","Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             for each_str_col in [
@@ -5251,50 +5252,34 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
 
         # Execute the query
-        resp = await function(query=lpg_exception_stats_ )
+        resp = await function(query=lpg_exception_stats_)
         if resp:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-            print("resp ", resp.columns,resp.dtypes)
-
             resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-            print(resp.columns)
-            
             for each_float_col in ["Consumers","Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-
             for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","ExceptionName"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "ExceptionName" in filter_keys  and "ZOName" not in filter_keys:
-                    print("grouped_resp ZOName--> ")
                     grouped_resp = resp.groupby(["ExceptionName","ZOName"], as_index=False).agg({
                         "Consumers": "sum","Refills": "sum" })
-
                 if "ExceptionName" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                    print("grouped_resp ROName--> ")
                     grouped_resp = resp.groupby(["ExceptionName", "ZOName", "ROName"], as_index=False).agg({
                         "Consumers": "sum","Refills": "sum"})
-
                 elif "ExceptionName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                    print("grouped_resp  elif SAName--> ")
                     grouped_resp = resp.groupby(["ExceptionName","ZOName", "ROName", "SAName"], as_index=False).agg({
-                        "Consumers": "sum","Refills": "sum"})  
-
+                        "Consumers": "sum","Refills": "sum"})
                 elif "ExceptionName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                    print("grouped_resp  elif DistributorName--> ")
                     grouped_resp = resp.groupby(["ExceptionName","ZOName", "ROName", "SAName", "DistributorName"],
                                                 as_index=False).agg({"Consumers": "sum","Refills": "sum"})
-
                 if grouped_resp is not None:
-                    print("grouped_resp  -> ", grouped_resp)
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-
         else:
             return {"status": True, "message":"success", "data":[]}
         # If no filters are applied, return the default response
@@ -5306,7 +5291,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-        yesterday = datetime.now() - relativedelta(days=1)
         lpg_failure_stats_ = lpg_plant_queries.lpg_plant_query.get("subsidy_failure_stats")
         _filters = []
         if cross_filters:
@@ -5336,28 +5320,18 @@ class GlobalAnalytics:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyFailureData.get_clause_conditions(formated=True)]
             lpg_failure_stats_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_failure_stats_, access_filters, drill_state)
-            lpg_failure_stats_  = f'''
-                                    SELECT 
-                                        "PaymentErrorName" as "PaymentErrorName",
-                                        sum("Consumers") as "Consumers",
-                                        sum("Refills") as "Refills" 
-                                    FROM
-                                        "subsidy_failure_statistics_PEC_data" 
-                                    WHERE
-                                        "PaymentErrorName"  NOT IN ( 'Null')
-                                    GROUP BY
-                                        "PaymentErrorName"
-                        '''
+
             resp = await function(query=lpg_failure_stats_ )
             resp = pd.DataFrame(resp)
-
-            for each_float_col in [
-                "Consumers","Refills"
-            ]:
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["PaymentErrorName"], as_index=False
+                                ).agg({"Consumers": "sum","Refills": "sum" })
+            for each_float_col in ["Consumers", "Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             for each_str_col in [
-                "ZOName","ROName","SAName","JDEDistributorCode","PaymentErrorName"
+                "ZOName", "ROName", "SAName", "JDEDistributorCode", "PaymentErrorName"
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -5368,11 +5342,7 @@ class GlobalAnalytics:
         if resp:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-            print("resp ", resp.columns,resp.dtypes)
-
             resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-            print(resp.columns)
-            
             for each_float_col in ["Consumers","Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
@@ -5385,27 +5355,18 @@ class GlobalAnalytics:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "PaymentErrorName" in filter_keys  and "ZOName" not in filter_keys:
-                    print("grouped_resp ZOName--> ")
                     grouped_resp = resp.groupby(["PaymentErrorName","ZOName"], as_index=False).agg({
                         "Consumers": "sum","Refills": "sum" })
-
                 if "PaymentErrorName" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                    print("grouped_resp ROName--> ")
                     grouped_resp = resp.groupby(["PaymentErrorName", "ZOName", "ROName"], as_index=False).agg({
                         "Consumers": "sum","Refills": "sum"})
-
                 elif "PaymentErrorName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                    print("grouped_resp  elif SAName--> ")
                     grouped_resp = resp.groupby(["PaymentErrorName","ZOName", "ROName", "SAName"], as_index=False).agg({
-                        "Consumers": "sum","Refills": "sum"})  
-
+                        "Consumers": "sum","Refills": "sum"})
                 elif "PaymentErrorName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                    print("grouped_resp  elif DistributorName--> ")
                     grouped_resp = resp.groupby(["PaymentErrorName","ZOName", "ROName", "SAName", "DistributorName"],
                                                 as_index=False).agg({"Consumers": "sum","Refills": "sum"})
-
                 if grouped_resp is not None:
-                    print("grouped_resp  -> ", grouped_resp)
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
 
         else:
@@ -5418,11 +5379,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-        current_date = datetime.now() - relativedelta(days=0)
-        current_date_1 = current_date.strftime("%Y-%m-%d")
-        print(current_date_1)
-        
+        current_date = datetime.now().strftime("%Y-%m-%d")
 
         cs_resp_ = lpg_plant_queries.lpg_plant_query.get("cs_query")
         pt_resp_ = lpg_plant_queries.lpg_plant_query.get("pt_query")
@@ -5438,7 +5395,6 @@ class GlobalAnalytics:
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
-                print('Key: ',rec.key)
                 if rec.key == '"rejection_type"':
                     rejection_filter = rec
                     continue
@@ -5448,23 +5404,16 @@ class GlobalAnalytics:
                     condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
-
             if conditions:
                 cs_resp_ += ' WHERE ' + ' AND '.join(conditions)
                 pt_resp_ += ' WHERE ' + ' AND '.join(conditions)
                 gd_resp_ += ' WHERE ' + ' AND '.join(conditions)
-                common_filter = f'''
-                AND CAST("process_date" AS DATE) = '{current_date_1}' 
-                AND "zone" IS NOT NULL
-            '''
+                common_filter = f''' AND CAST("process_date" AS DATE) = '{current_date}' AND "zone" IS NOT NULL '''
             else:
                 cs_resp_ += 'WHERE '
                 pt_resp_ += ' WHERE '
                 gd_resp_ += ' WHERE '
-                common_filter = f'''
-                CAST("process_date" AS DATE) = '{current_date_1}' 
-                AND "zone" IS NOT NULL
-            '''
+                common_filter = f''' CAST("process_date" AS DATE) = '{current_date}' AND "zone" IS NOT NULL '''
 
             cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
             pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
@@ -5477,12 +5426,12 @@ class GlobalAnalytics:
             gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)
             if not "where" in cs_resp_.lower():
                 common_filter = f'''
-                WHERE CAST("process_date" AS DATE) = '{current_date_1}' 
+                WHERE CAST("process_date" AS DATE) = '{current_date}' 
                 AND "zone" IS NOT NULL
             '''
             else:
                 common_filter = f'''
-                AND CAST("process_date" AS DATE) = '{current_date_1}' 
+                AND CAST("process_date" AS DATE) = '{current_date}' 
                 AND "zone" IS NOT NULL
             '''
             cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
@@ -5492,19 +5441,15 @@ class GlobalAnalytics:
             cs_resp = await function(query=cs_resp_)
             pt_resp = await function(query=pt_resp_)
             gd_resp = await function(query=gd_resp_)
-            
-            
+                        
             cs_df = pd.DataFrame(cs_resp)
             pt_df = pd.DataFrame(pt_resp)
-            gd_df = pd.DataFrame(gd_resp)     
-            print("cs_df--> ",cs_resp)       
+            gd_df = pd.DataFrame(gd_resp)
             combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
-            print("combined_df --> ",combined_df)
             combined_df = combined_df.groupby(["rejection_type"], as_index=False).agg({
                     "Rejections": "mean"
                 })
             combined_df["Rejections"] = combined_df["Rejections"].round(1)
-
 
             combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
             for each_str_col in ["zone", "plant", "rejection_type"]:
@@ -5525,13 +5470,9 @@ class GlobalAnalytics:
         # Combine DataFrames
         combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
         if rejection_filter:
-            print("rejection_filter: ", rejection_filter)
             combined_df = combined_df[combined_df['rejection_type'] == rejection_filter.value[0]]
-
         # Fill missing values
         combined_df["Rejections"] = combined_df["Rejections"].fillna(0.0)
-        
-        
         for each_str_col in ["zone", "plant", "rejection_type"]:
             if each_str_col in combined_df.columns:
                 combined_df[each_str_col] = combined_df[each_str_col].fillna('').astype(str)
@@ -5543,14 +5484,10 @@ class GlobalAnalytics:
                 grouped_resp = combined_df.groupby(["rejection_type","zone"], as_index=False).agg({
                     "Rejections": "mean"
                 })
-
             elif "rejection_type" in filter_keys and "zone"  in filter_keys and "plant" not in filter_keys:
-                print("grouped_resp plant--> ")
-                
                 grouped_resp = combined_df.groupby(["rejection_type","zone", "plant"], as_index=False).agg({
                     "Rejections": "mean"
                 })
-
             if grouped_resp is not None:
                 grouped_resp["Rejections"] = grouped_resp["Rejections"].round(1)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
