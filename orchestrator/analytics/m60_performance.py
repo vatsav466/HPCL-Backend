@@ -120,6 +120,7 @@ async def m60_performance(filters, cross_filters, drill_state):
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     for index, _ in enumerate(cross_filters):
         cross_filters[index]['key'] = cross_filters[index]['key'].strip('"')
+    cross_filters = [rec for rec in cross_filters if not (rec['key'] == 'month_name' and not rec['value'].strip('"'))]
     actual_data = []
     hist_data = []
     target_data = []
@@ -178,13 +179,13 @@ async def m60_performance(filters, cross_filters, drill_state):
             group_keys.append("month_name")
         target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                          where_conditions+Default_Filters, start_date, end_date, group_keys)
-        print(json.dumps(target_data, default=str))
+        # print(json.dumps(target_data, default=str))
         target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
         target_data = target_data.groupby(group_by_filter.strip('"'))['TARGET_TMT_SALES'].sum().reset_index()
         if group_by_filter == 'month_name':
             target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True, categories=months)
         target_data = target_data.to_dict(orient='records')
-        print(json.dumps(target_data, default=str))
+        # print(json.dumps(target_data, default=str))
     if actual:
         # Checking whether start date and end date enabled
         filter_dates = []
@@ -204,10 +205,15 @@ async def m60_performance(filters, cross_filters, drill_state):
             actual_data.extend(await collect_data([actual_d], 'MOM_DAY_LEVEL_DATA',
                                                   where_conditions + Default_Filters, date_range[0], date_range[1],
                                                   [group_by_filter], '"DAY_ID"'))
-        print(" Actual Data")
-        print("&" * 30)
-        print(json.dumps(actual_data, default=str))
-        print("&" * 30)
+        if actual_data:
+            actual_data = pd.DataFrame(actual_data)
+            actual_data = actual_data.groupby(group_by_filter.strip('"'))['ACTUAL_TMT_SALES'].sum().reset_index()
+            actual_data['ACTUAL_TMT_SALES'] = actual_data['ACTUAL_TMT_SALES'].fillna(0)
+            actual_data = actual_data.to_dict(orient='records')
+        # print(" Actual Data")
+        # print("&" * 30)
+        # print(json.dumps(actual_data, default=str))
+        # print("&" * 30)
     if history:
         filter_dates = []
         day_filter_dates = []
@@ -217,17 +223,22 @@ async def m60_performance(filters, cross_filters, drill_state):
             filter_dates.append([start_date_history, end_date_history])
         for date_range in filter_dates:
             hist_data.extend(await collect_data([history], 'MOM_LEVEL_FINAL_DATA',
-                                                where_conditions_history, date_range[0], date_range[1],
-                                                [group_by_filter], '"YEARMONTH"'))
+                                                where_conditions_history + Default_Filters, date_range[0],
+                                                date_range[1], [group_by_filter], '"YEARMONTH"'))
         # Todo:- for optimization use single query for day filter with or condition
         for date_range in day_filter_dates:
             hist_data.extend(await collect_data([history_d], 'MOM_DAY_LEVEL_DATA',
-                                                where_conditions_history, date_range[0], date_range[1],
-                                                [group_by_filter], '"DAY_ID"'))
-        print(" Historical Data")
-        print("^" * 30)
-        print(json.dumps(hist_data, default=str))
-        print("^" * 30)
+                                                where_conditions_history + Default_Filters, date_range[0],
+                                                date_range[1], [group_by_filter], '"DAY_ID"'))
+        if hist_data:
+            hist_data = pd.DataFrame(hist_data)
+            hist_data = hist_data.groupby(group_by_filter.strip('"'))['ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
+            hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
+            hist_data = hist_data.to_dict(orient='records')
+        # print(" Historical Data")
+        # print("^" * 30)
+        # print(json.dumps(hist_data, default=str))
+        # print("^" * 30)
     # df = pd.concat([actual_data, target_data, hist_data])
     df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
     merged_df = df_[0]
@@ -235,7 +246,6 @@ async def m60_performance(filters, cross_filters, drill_state):
         if len(df_) > 1:
             for df in df_[1:]:
                 merged_df = pd.merge(merged_df, df, on='month_name', how='outer')  # Outer merge with df2
-        merged_df.fillna(0, inplace=True)
         merged_df["month_order"] = merged_df["month_name"].map({month: i for i, month in enumerate(months)})
         merged_df = merged_df.sort_values("month_order").drop(columns="month_order")
         merged_df.reset_index(drop=True, inplace=True)
@@ -243,7 +253,8 @@ async def m60_performance(filters, cross_filters, drill_state):
         if len(df_) > 1:
             for df in df_[1:]:
                 merged_df = pd.merge(merged_df, df, on='SBU_Name', how='outer')  # Outer merge with df2
-        merged_df["sbu_order"] = merged_df["SBU_Name"].map({month: i for i, month in enumerate(months)})
+        merged_df["sbu_order"] = merged_df["SBU_Name"].map({sbu: i for i, sbu in enumerate(sbu_order)})
         merged_df = merged_df.sort_values("sbu_order").drop(columns="sbu_order")
         merged_df.reset_index(drop=True, inplace=True)
+    merged_df.fillna(0, inplace=True)
     return {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
