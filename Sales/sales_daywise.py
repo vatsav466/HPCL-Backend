@@ -115,8 +115,11 @@ def insertToDB(data, table_name, indexing_col=()):
     print(data['NETWEIGHT_KG'].unique())
     print(data['NETWEIGHT_KG'].dtype)
     data = data.with_columns([
-    pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_KG"),
-    pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_TMT")
+    #pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_KG"),
+    pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).alias("NETWEIGHT_KG"),
+    #pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_TMT")
+    pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).alias("NETWEIGHT_TMT")
+    
 ])
      
     dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),
