@@ -71,7 +71,7 @@ async def vts_ingest_data_blocked_trucks(data: Vts_Ingest_Data_Blocked_TrucksPar
         Returns:
         """
     try:
-        logger.info(f"Received VA data ingestion from vendor {data.location_id}({data.location_type}) {data.dict()}")
+        logger.info(f"Received VTS data ingestion from vendor {data.location_id}({data.location_type}) {data.dict()}")
         return True, "Success"
     except Exception as e:
         print(traceback.format_exc())
