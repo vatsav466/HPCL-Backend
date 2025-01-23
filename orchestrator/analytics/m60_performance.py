@@ -288,9 +288,8 @@ async def m60_performance(filters, cross_filters, drill_state):
     if len(df_) > 1:
         for df in df_[1:]:
             merged_df = pd.merge(merged_df, df, on=group_by_filter.strip('"'), how='outer')  # Outer merge with df2
-
     # Ordering Data for Month and SBU names
-    if group_by_filter.strip('"') in ('month_name', 'SBU_Name'):
+    if not merged_df.empty and group_by_filter.strip('"') in ('month_name', 'SBU_Name'):
         sort_key = months if group_by_filter.strip('"') == 'month_name' else sbu_order
         merged_df["data_order"] = merged_df[group_by_filter.strip('"')].map({cond: i for i, cond in enumerate(sort_key)})
         merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
@@ -305,6 +304,8 @@ async def m60_performance(filters, cross_filters, drill_state):
     if history:
         if MandateKeys["history"] not in merged_df:
             merged_df[MandateKeys["history"]] = 0
+    if group_by_filter and group_by_filter.strip('"') not in merged_df:
+        merged_df[group_by_filter.strip('"')] = ""
     merged_df.fillna(0, inplace=True)
     final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
     return {"status": True, "message": "Success", "data": final_resp}
