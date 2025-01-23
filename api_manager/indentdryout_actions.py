@@ -292,7 +292,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
         servicing_plant_id = resp['servicing_plant_id'] if resp['servicing_plant_id'] else resp['terminal_plant_id']
         alert_history["changed_data"].append(f"Dry-out Location Identified at "
                                      f"{convert_time_read_format(str(resp['created_at']))}, "
-                                     f"Servicing Plat Location {servicing_plant_id}")
+                                     f"Servicing Plant Location {servicing_plant_id}")
 
         action_msgs = [entry["action_msg"] for entry in resp.get('alert_history', [])]
         for history in resp.get("alert_history", []):
