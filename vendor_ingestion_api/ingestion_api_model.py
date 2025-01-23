@@ -31,6 +31,56 @@ class vtsDataCreate(pydantic.BaseModel):
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class vtsDataUpdatedCreate(pydantic.BaseModel):
+    alert_id: str
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    terminal_code: typing.Optional[str] = pydantic.Field("", **{})
+    trip_status: typing.Optional[str] = pydantic.Field("", **{})
+    truck_regno: str
+    violation_type: str
+    threshold_limit: typing.Optional[str] = pydantic.Field("", **{})
+    unit: typing.Optional[str] = pydantic.Field("", **{})
+    min_violation_count: typing.Optional[str] = pydantic.Field("", **{})
+    max_violation_count: typing.Optional[str] = pydantic.Field("", **{})
+    trip_alert_count: typing.Optional[str] = pydantic.Field("", **{})
+    violation_count: typing.Optional[str] = pydantic.Field("", **{})
+    shortage_in_trip: typing.Optional[str] = pydantic.Field("", **{})
+    cumulative_duration: typing.Optional[str] = pydantic.Field("", **{})
+    trip_type: typing.Optional[str] = pydantic.Field("", **{})
+    active: typing.Optional[str] = pydantic.Field("", **{})
+    approval_status: typing.Optional[str] = pydantic.Field("", **{})
+    start_location: typing.Optional[str] = pydantic.Field("", **{})
+    end_location: typing.Optional[str] = pydantic.Field("", **{})
+    distance: typing.Optional[str] = pydantic.Field("", **{})
+    duration: typing.Optional[str] = pydantic.Field("", **{})
+    from_date: typing.Optional[str] = pydantic.Field("", **{})
+    to_date: typing.Optional[str] = pydantic.Field("", **{})
+    latitude: typing.Optional[str] = pydantic.Field("", **{})
+    longitude: typing.Optional[str] = pydantic.Field("", **{})
+    endlatitude: typing.Optional[str] = pydantic.Field("", **{})
+    endlongitude: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class vtsBlockedTruckCreate(pydantic.BaseModel):
+    alert_id: str
+    alert_type: str
+    action_type: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    rca_reason: typing.Optional[str] = pydantic.Field("", **{})
+    remarks: typing.Optional[str] = pydantic.Field("", **{})
+    truck_regno: typing.Optional[str] = pydantic.Field("", **{})
+    without_shortage_count: typing.Optional[str] = pydantic.Field("", **{})
+    with_shortage_count: typing.Optional[str] = pydantic.Field("", **{})
+    first_blocked_days: typing.Optional[str] = pydantic.Field("", **{})
+    second_blocked_days: typing.Optional[str] = pydantic.Field("", **{})
+    third_blocked_days: typing.Optional[str] = pydantic.Field("", **{})
+    active: typing.Optional[bool] = pydantic.Field(False, )
+    approval_status: typing.Optional[str] = pydantic.Field("", **{})
+    blocked_datetime: typing.Optional[str] = pydantic.Field("", **{})
+    unblocked_datetime: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class Vts_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
@@ -38,11 +88,23 @@ class Vts_Ingest_DataParams(pydantic.BaseModel):
     data: typing.List[vtsDataCreate]
 
 
+class Vts_Ingest_Data_Blocked_TrucksParams(pydantic.BaseModel):
+    vendor_id: str
+    location_id: str
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+    data: typing.List[vtsBlockedTruckCreate]
+
+
 class vaDataCreate(pydantic.BaseModel):
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: str
     alert_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: str
     video_url: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class vaScoreCreate(pydantic.BaseModel):
+    overall_score: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class Va_Ingest_DataParams(pydantic.BaseModel):
@@ -50,6 +112,13 @@ class Va_Ingest_DataParams(pydantic.BaseModel):
     location_id: str
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.Optional[typing.List[vaDataCreate]] | None = None
+
+
+class Va_Ingest_Data_ScoreParams(pydantic.BaseModel):
+    vendor_id: str
+    location_id: str
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+    data: typing.List[vaScoreCreate]
 
 
 class productsDetailsCreate(pydantic.BaseModel):
