@@ -14,11 +14,13 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
+Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
 DefaultTable = 'Day'
+MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
 
 
 async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_resp_format="%Y%m%d"):
@@ -112,16 +114,33 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     return resp
 
 
-async def m60_performance(filters, cross_filters, drill_state):
+def get_group_by_filter_key(cross_filters):
+    """
+    Getting group by filter key based on cross filters
+    :param cross_filters:
+    :return:
+    """
     group_by_filter = '"month_name"'
+    if cross_filters:
+        index = 0
+        if len([rec['value'] for rec in cross_filters if 'lubes' in rec['value'].lower()
+                                                         and rec['key'].strip('"') == "SBU_Name"]):
+            for key in [rec['key'] for rec in cross_filters]:
+                if key in Lubes_Filters and Lubes_Filters.index(key) > index:
+                    index = Lubes_Filters.index(key)
+            group_by_filter = Lubes_Filters[index + 1]
+        else:
+            for key in [rec['key'] for rec in cross_filters]:
+                if key in Base_Filters and Base_Filters.index(key) > index:
+                    index = Base_Filters.index(key)
+            group_by_filter = Base_Filters[index + 1]
+    return group_by_filter
+
+
+async def m60_performance(filters, cross_filters, drill_state):
     if not cross_filters:
         cross_filters = []
-    if len(cross_filters):
-        index = 0
-        for key in [rec['key'] for rec in cross_filters]:
-            if key in Base_Filters and Base_Filters.index(key) > index:
-                index = Base_Filters.index(key)
-        group_by_filter = Base_Filters[index + 1]
+    group_by_filter = get_group_by_filter_key(cross_filters)
 
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
@@ -133,9 +152,6 @@ async def m60_performance(filters, cross_filters, drill_state):
     end_date_history = helpers.get_time_stamp_by_delta(dt_parser.parse(end_date), years=1, days=0,
                                                        with_month_start_day=False,
                                                        date_time_format=None).strftime("%Y%m%d")
-    print(start_date, end_date)
-    print(start_date_history, end_date_history)
-
 
     for index, _ in enumerate(cross_filters):
         cross_filters[index]['key'] = cross_filters[index]['key'].strip('"')
@@ -145,7 +161,9 @@ async def m60_performance(filters, cross_filters, drill_state):
     target_data = []
     actual_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES" """
     history_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_HISTORY_TMT_SALES" """
-
+    filters_req = [condition['key'].strip('"') for condition in filters if condition['key'].strip('"') in ["A", "H", "T"]]
+    if len(filters_req) == 0:
+        filters.append({"key": '"A"', "cond": "equals", "value": "true"})
     # Generating filters
     for condition in filters:
         if condition['key'].strip('"') == "A":
@@ -178,7 +196,7 @@ async def m60_performance(filters, cross_filters, drill_state):
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
         elif condition['key'] == '"FISCAL_YEAR"':
             # Not considering now
-            fis_year = condition['value']
+            ...
         else:
             condition["key"] = condition["key"].strip('"')
             cross_filters.append(condition)
@@ -189,7 +207,6 @@ async def m60_performance(filters, cross_filters, drill_state):
     # For history table
     for rec in cross_filters:
         rec['key'] = rec['key'].strip('"')
-        # rec['key'] = HistoryKeyMapping.get(rec['key'].strip(), rec['key'].strip()).strip('"')
 
     where_conditions_history = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
@@ -204,11 +221,12 @@ async def m60_performance(filters, cross_filters, drill_state):
         target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                          where_conditions+Default_Filters, start_date, end_date, group_keys)
         # print(json.dumps(target_data, default=str))
-        target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
-        target_data = target_data.groupby(group_by_filter.strip('"'))['TARGET_TMT_SALES'].sum().reset_index()
-        if group_by_filter == 'month_name':
-            target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True, categories=months)
-        target_data = target_data.to_dict(orient='records')
+        if target_data:
+            target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+            target_data = target_data.groupby(group_by_filter.strip('"'))['TARGET_TMT_SALES'].sum().reset_index()
+            if group_by_filter == 'month_name':
+                target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True, categories=months)
+            target_data = target_data.to_dict(orient='records')
 
     # Data Retrival for current financial year
     if actual:
@@ -238,10 +256,6 @@ async def m60_performance(filters, cross_filters, drill_state):
             actual_data = actual_data.groupby(group_by_filter.strip('"'))['ACTUAL_TMT_SALES'].sum().reset_index()
             actual_data['ACTUAL_TMT_SALES'] = actual_data['ACTUAL_TMT_SALES'].fillna(0)
             actual_data = actual_data.to_dict(orient='records')
-        # print(" Actual Data")
-        # print("&" * 30)
-        # print(json.dumps(actual_data, default=str))
-        # print("&" * 30)
 
     # Data Retrival for last financial year
     if history:
@@ -268,13 +282,9 @@ async def m60_performance(filters, cross_filters, drill_state):
             hist_data = hist_data.groupby(group_by_filter.strip('"'))['ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
             hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
             hist_data = hist_data.to_dict(orient='records')
-        # print(" Historical Data")
-        # print("^" * 30)
-        # print(json.dumps(hist_data, default=str))
-        # print("^" * 30)
 
     df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
-    merged_df = df_[0]
+    merged_df = df_[0] if len(df_) else pd.DataFrame([])
     if len(df_) > 1:
         for df in df_[1:]:
             merged_df = pd.merge(merged_df, df, on=group_by_filter.strip('"'), how='outer')  # Outer merge with df2
@@ -285,6 +295,16 @@ async def m60_performance(filters, cross_filters, drill_state):
         merged_df["data_order"] = merged_df[group_by_filter.strip('"')].map({cond: i for i, cond in enumerate(sort_key)})
         merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
         merged_df.reset_index(drop=True, inplace=True)
+    # If required keys not available keeping records with zero value
+    if target:
+        if MandateKeys["target"] not in merged_df:
+            merged_df[MandateKeys["target"]] = 0
+    if actual:
+        if MandateKeys["actual"] not in merged_df:
+            merged_df[MandateKeys["actual"]] = 0
+    if history:
+        if MandateKeys["history"] not in merged_df:
+            merged_df[MandateKeys["history"]] = 0
     merged_df.fillna(0, inplace=True)
     final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
     return {"status": True, "message": "Success", "data": final_resp}
