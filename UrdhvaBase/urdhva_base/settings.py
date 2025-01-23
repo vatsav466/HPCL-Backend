@@ -137,6 +137,9 @@ class Settings(pydantic_settings.BaseSettings):
 
     }
 
+    # For DB Connection Mapping
+    db_connection_config: typing.Dict[str, str] = {}
+
     # RabbitMQ
     rabbitmq_enabled: bool = False
     rabbitmq_host: str = "localhost"
