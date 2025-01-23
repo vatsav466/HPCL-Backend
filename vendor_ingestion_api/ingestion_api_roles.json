@@ -27,6 +27,9 @@
                 },
                 {
                     "name": "ingest_data"
+                },
+                {
+                    "name": "ingest_data_blocked_trucks"
                 }
             ]
         },
@@ -69,6 +72,9 @@
                 },
                 {
                     "name": "ingest_data"
+                },
+                {
+                    "name": "ingest_data_blocked_trucks"
                 }
             ]
         },
@@ -96,6 +102,9 @@
                 },
                 {
                     "name": "ingest_data"
+                },
+                {
+                    "name": "ingest_data_score"
                 }
             ]
         },
@@ -138,6 +147,9 @@
                 },
                 {
                     "name": "ingest_data"
+                },
+                {
+                    "name": "ingest_data_score"
                 }
             ]
         },
@@ -502,8 +514,16 @@
             "displayName": "ingest_data"
         },
         {
+            "name": "ingest_data_blocked_trucks",
+            "displayName": "ingest_data_blocked_trucks"
+        },
+        {
             "name": "ingest_data",
             "displayName": "ingest_data"
+        },
+        {
+            "name": "ingest_data_score",
+            "displayName": "ingest_data_score"
         },
         {
             "name": "ingest_data",
