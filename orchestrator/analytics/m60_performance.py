@@ -260,4 +260,5 @@ async def m60_performance(filters, cross_filters, drill_state):
         merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
         merged_df.reset_index(drop=True, inplace=True)
     merged_df.fillna(0, inplace=True)
-    return {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+    final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+    return {"status": True, "message": "Success", "data": final_resp}
