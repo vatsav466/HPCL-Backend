@@ -1045,39 +1045,84 @@ ORDER BY
                 ''',
                 
     'cdcms_current_year_sales':f'''select 
-                                        sum("TotalSalesYesterday") as "total_sales" 
+                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
                                         "Financial_Year"='{financial_year}' ''',
     
     'cdcms_current_month_sales':f'''select
-                                        sum("TotalSalesYesterday") as "total_sales" 
+                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
                                         "Financial_Year"='{financial_year}' AND "Month"='{current_month}' ''',
     
-    'cdcms_current_week_sales': f''' SELECT sum("TotalSalesYesterday") as "total_sales"
-                                    FROM "lpg_cdcms_sales_summary"
-                                    WHERE "Execution_Date" >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::INT + 1
-                                    AND "Execution_Date" <= CURRENT_DATE; ''',
+    'cdcms_current_week_sales': f''' SELECT 
+                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
+                                    FROM
+                                        "lpg_cdcms_sales_summary"
+                                    WHERE 
+                                        "Execution_Date" >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::INT + 1
+                                        AND "Execution_Date" <= CURRENT_DATE; ''',
+    
     'cdcms_current_date_sales':f'''select
-                                        sum("TotalSalesYesterday") as "total_sales" 
+                                        round(sum("TotalSalesYesterday")/100000, 2) as "total_sales" 
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
     'cdcms_current_date_bookings':f'''select
-                                        sum("BookingReceivedYesterday") as "Bookings" 
+                                        round(sum("BookingReceivedYesterday")/100000, 2) as "Bookings" 
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
     'cdcms_current_date_pending':f'''select
-                                        sum("Total_Pending") as "Pending"
+                                        round(sum("Total_Pending")/100000, 2) as "Pending"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
-                                
+    'lpg_operations_current_month_productivity': f''' SELECT 
+                                                        ROUND(AVG("productivity.normal.productivity")) 
+                                                    FROM 
+                                                        "LPG_OPERATIONS_SUMMARY_DATA"
+                                                    WHERE 
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+
+    'lpg_operations_current_month_productions': '''SELECT
+                                                        ROUND(AVG("productivity.normal.production"))
+                                                    FROM
+                                                        "LPG_OPERATIONS_SUMMARY_DATA"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);''',
+
+    'lpg_operations_current_month_cylinder_filled': ''' SELECT
+                                                            ROUND(SUM("cylfilled"::numeric)/100000, 2) AS "Cylinders_Filled"
+                                                        FROM
+                                                            "lpg_cs_rejections"
+                                                        WHERE
+                                                            DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+
+    'lpg_operations_current_month_cs_rejection': ''' SELECT
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "Cylinders_Filled"
+                                                    FROM
+                                                        "lpg_cs_rejections"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+
+    'lpg_operations_current_month_gd_rejection': ''' SELECT
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "Cylinders_Filled"
+                                                    FROM
+                                                        "lpg_gd_rejections"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+
+    'lpg_operations_current_month_pt_rejection': ''' SELECT
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "Cylinders_Filled"
+                                                    FROM
+                                                        "lpg_pt_rejections"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
+
     "lpg_domestic_sale_table": f''' select 
                                         "ZOName" as "ZOName",
                                         "CylType" as "CylType",
@@ -1088,7 +1133,7 @@ ORDER BY
                                     from
                                         "lpg_todays_cdcms_sales_summary" 
                                      ''',
-                                     
+
     "lpg_consumer_table": f''' select 
                                     "ZoneNames" as "ZoneNames",
                                     "SubCategory" as "SubCategory",
