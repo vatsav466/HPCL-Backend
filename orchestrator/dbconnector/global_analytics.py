@@ -4032,76 +4032,116 @@ class GlobalAnalytics:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
                     "pending_1_3_days": "sum"
                 })
+                grouped_resp = grouped_resp.pivot(index="ZOName", columns="ConsumerType", values="pending_1_3_days").fillna(0)
+                _index = "ZOName"
             elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
                     "pending_1_3_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="ROName", columns="ConsumerType", values="pending_1_3_days").fillna(0)
+                _index = "ROName"
             elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
                                             as_index=False).agg({
                     "pending_1_3_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="SAName", columns="ConsumerType", values="pending_1_3_days").fillna(0)
+                _index = "SAName"
             elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
                                             as_index=False).agg({
                     "pending_1_3_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_1_3_days").fillna(0)
+                _index = "DistributorName"
             elif "pending_4_7_days" in filter_keys and "ZOName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
                     "pending_4_7_days": "sum"
                 })
+                grouped_resp = grouped_resp.pivot(index="ZOName", columns="ConsumerType", values="pending_4_7_days").fillna(0)
+                _index = "ZOName"
             elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
                     "pending_4_7_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="ROName", columns="ConsumerType", values="pending_4_7_days").fillna(0)
+                _index = "ROName"
             elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
                                             as_index=False).agg({
                     "pending_4_7_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="SAName", columns="ConsumerType", values="pending_4_7_days").fillna(0)
+                _index = "SAName"
             elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
                                             as_index=False).agg({
                     "pending_4_7_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_4_7_days").fillna(0)
+                _index = "DistributorName"
             elif "pending_8_15_days" in filter_keys and "ZOName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
                     "pending_8_15_days": "sum"
                 })
+                grouped_resp = grouped_resp.pivot(index="ZOName", columns="ConsumerType", values="pending_8_15_days").fillna(0)
+                _index = "ZOName"
             elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
                     "pending_8_15_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="ROName", columns="ConsumerType", values="pending_8_15_days").fillna(0)
+                _index = "ROName"
             elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
                                             as_index=False).agg({
                     "pending_8_15_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="SAName", columns="ConsumerType", values="pending_8_15_days").fillna(0)
+                _index = "SAName"
             elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
                                             as_index=False).agg({
                     "pending_8_15_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_8_15_days").fillna(0)
+                _index = "DistributorName"
             elif "pending_beyond_15_days" in filter_keys and "ZOName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
                     "pending_beyond_15_days": "sum"
                 })
+                grouped_resp = grouped_resp.pivot(index="ZOName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
+                _index = "ZOName"
             elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
                     "pending_beyond_15_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="ROName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
+                _index = "ROName"
             elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
                                             as_index=False).agg({
                     "pending_beyond_15_days": "sum",
                 })
+                grouped_resp = grouped_resp.pivot(index="SAName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
+                _index = "SAName"
             elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
                 grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
                                             as_index=False).agg({
                     "pending_beyond_15_days": "sum",
                 })
-            if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+                grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
+                _index = "DistributorName"
+            result = [
+                        {
+                            "PMUY": row.get("PMUY", 0),
+                            "NPMUY": row.get("NPMUY", 0),
+                            _index: index
+                        }
+                        for index, row in grouped_resp.iterrows()
+                    ]
+            # if grouped_resp is not None:
+            return {"status": True, "message": "success", "data": result}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
@@ -5672,7 +5712,10 @@ class GlobalAnalytics:
                 cs_resp_ += ' WHERE ' + ' AND '.join(conditions)
                 pt_resp_ += ' WHERE ' + ' AND '.join(conditions)
                 gd_resp_ += ' WHERE ' + ' AND '.join(conditions)
-                common_filter = f''' AND CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
+                if "process_date" in conditions:
+                    common_filter = f''' AND "zone" IS NOT NULL '''                    
+                else:
+                    common_filter = f''' AND CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
             else:
                 cs_resp_ += 'WHERE '
                 pt_resp_ += ' WHERE '
