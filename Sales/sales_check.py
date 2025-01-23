@@ -71,7 +71,8 @@ def insertToDB(data, table_name, indexing_col=()):
      
     for col in data.columns:
         if data.schema[col] in [pl.Float32, pl.Float64] :
-            data = data.with_columns(pl.col(col).round(2).alias(col))
+            #data = data.with_columns(pl.col(col).round(2).alias(col))
+            data = data.with_columns(pl.col(col).alias(col))
         if 'Decimal' in str(data.schema[col]):
             data = data.with_columns(pl.col(col).cast(float).round(2).alias(col))
     '''
@@ -142,8 +143,10 @@ select * FROM   "MOM_LEVEL_FINAL_DATA" where "month_name"in  ('Apr','May','Jun')
     print(data['NETWEIGHT_KG'].unique())
     print(data['NETWEIGHT_KG'].dtype)
     data = data.with_columns([
-    pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_KG"),
-    pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_TMT")
+    #pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_KG"),
+    pl.col("NETWEIGHT_KG").fill_null(0).cast(pl.Float64).alias("NETWEIGHT_KG"),
+    #pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).round(2).alias("NETWEIGHT_TMT")
+    pl.col("NETWEIGHT_TMT").fill_null(0).cast(pl.Float64).alias("NETWEIGHT_TMT")
 ])
      
     dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),
