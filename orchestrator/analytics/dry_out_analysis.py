@@ -769,7 +769,7 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
         query=query
     )
     stats_resp = pd.DataFrame(stats_resp)
-    stats_resp = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
+    stats_resp['DRY_OUT_IN_DAYS'] = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
     stats_resp.replace({"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True)
     stats_resp.replace({"VALID_INDENT": {"H": "ON_HOLD_RELEASED", "Y": "VALID_INDENT", "N": "ON_HOLD"}}, inplace=True)
     return stats_resp.to_dict(orient='records')
