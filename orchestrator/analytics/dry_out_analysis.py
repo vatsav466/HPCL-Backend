@@ -774,6 +774,7 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
     stats_resp.replace({"VALID_INDENT": {"H": "ON_HOLD_RELEASED", "Y": "VALID_INDENT", "N": "ON_HOLD"}}, inplace=True)
     return stats_resp.to_dict(orient='records')
 
+
 async def _get_on_hold_data(dry_out_in_days='1'):
     where_clause = {
         "a.interlock_name": ["Dry Out Each Indent Wise MainFlow"],
@@ -812,12 +813,14 @@ async def _get_on_hold_data(dry_out_in_days='1'):
     stats_resp = pd.DataFrame(stats_resp)
     return stats_resp.to_dict(orient='records')
 
+
 async def _get_pending_indents(dry_out_in_days='1'):
     where_clause = {
         "a.interlock_name": ["Dry Out Each Indent Wise MainFlow"],
         "a.progress_rate": ["3"],
         "a.dry_out_in_days": [dry_out_in_days]
     }
+
 
 async def constant_dryout_ros(days=7):
     now = datetime.datetime.now()
@@ -887,3 +890,83 @@ async def constant_dryout_ros(days=7):
     print('printing columns')
     print(result.columns)
     return result.select(["rosapcode", "name"]).to_dicts()
+
+
+async def current_month_frequent_dryout_ros(data):
+    datetime_condition = ""
+    if data.start_date and data.end_date:
+        datetime_condition = f" AND workflow_datetime BETWEEN '{data.start_date}' AND '{data.end_date}' "
+
+    where_condition = ''' interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                                AND location_name != '' AND  indent_status != 'Cancelled' 
+                                AND (workflow_datetime >= DATE_TRUNC('month', CURRENT_DATE)
+                                    AND workflow_datetime < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+                            ) ''' + datetime_condition
+
+    dry_out_query = f'''WITH unique_sap_ids AS (
+                              SELECT location_name, sap_id, DATE(workflow_datetime) AS workflow_date
+                              FROM alerts
+                              WHERE {where_condition}
+                              GROUP BY location_name, sap_id, DATE(workflow_datetime)
+                            ),
+                            monthly_sap_count AS (
+                              SELECT location_name, sap_id, COUNT(sap_id) AS total_count
+                              FROM unique_sap_ids
+                              GROUP BY location_name, sap_id
+                            )
+                            SELECT location_name, sap_id, SUM(total_count) AS "Total_Count"
+                            FROM monthly_sap_count
+                            WHERE total_count > 1
+                            GROUP BY location_name, sap_id
+                            ORDER BY "Total_Count" DESC '''
+
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dryout_resp = await function(
+        query=dry_out_query
+    )
+
+    return dryout_resp
+
+
+async def current_month_frequent_drout_terminals(data):
+    datetime_condition = ""
+    if data.start_date and data.end_date:
+        datetime_condition = f" AND workflow_datetime BETWEEN '{data.start_date}' AND '{data.end_date}' "
+
+    where_condition = ''' interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                                    AND location_name != '' AND  indent_status != 'Cancelled' 
+                                    AND (workflow_datetime >= DATE_TRUNC('month', CURRENT_DATE)
+                                        AND workflow_datetime < DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month'
+                                    AND category != ''
+                                ) ''' + datetime_condition
+
+    dry_out_query = f'''WITH unique_terminal_plant_ids AS (
+                          SELECT location_name, terminal_plant_id, category, DATE(workflow_datetime) AS workflow_date
+                          FROM alerts
+                          WHERE {where_condition}
+                          GROUP BY location_name, terminal_plant_id, category, DATE(workflow_datetime)
+                        ),
+                        monthly_sap_count AS (
+                          SELECT location_name, terminal_plant_id, category, COUNT(terminal_plant_id) AS total_count
+                          FROM unique_terminal_plant_ids
+                          GROUP BY location_name, terminal_plant_id, category
+                        )
+                        SELECT location_name, terminal_plant_id, category, SUM(total_count) AS "Total_Count"
+                        FROM monthly_sap_count
+                        WHERE total_count > 1
+                        GROUP BY location_name, terminal_plant_id, category
+                        ORDER BY "Total_Count" DESC '''
+
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dryout_resp = await function(
+        query=dry_out_query
+    )
+    return dryout_resp

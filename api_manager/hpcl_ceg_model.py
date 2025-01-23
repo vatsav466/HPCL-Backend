@@ -1174,6 +1174,11 @@ class Alerts_Get_Frequent_Dryout_RoParams(pydantic.BaseModel):
     end_date: typing.Optional[datetime.datetime] | None = None
 
 
+class Alerts_Get_Frequent_Dryout_TerminalsParams(pydantic.BaseModel):
+    start_date: typing.Optional[datetime.datetime] | None = None
+    end_date: typing.Optional[datetime.datetime] | None = None
+
+
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'cems_location_master'
     

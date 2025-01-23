@@ -601,6 +601,12 @@ Model Alerts {
         end_date optional datetime
     }
 
+    Action=> get_frequent_dryout_terminals {
+        start_date optional datetime
+        end_date optional datetime
+    }
+
+
     Config=> {
         crud_operations='read'
         // Access Key Mapping for RBAC,
