@@ -40,10 +40,12 @@ async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_res
                                  start_dt.replace(day=month_days).strftime(day_resp_format)])
         _, month_days = monthrange(end_dt.year, end_dt.month)
         day_filter_dates.append([end_dt.replace(day=1).strftime(day_resp_format), end_dt.strftime(day_resp_format)])
+        dt = helpers.get_time_stamp_by_delta(end_dt, months=1, ascending=False, date_time_format=None)
+        _, month_days = monthrange(dt.year, dt.month)
+        dt = dt.replace(day=month_days)
         filter_dates.append([helpers.get_time_stamp_by_delta(start_dt, months=1, ascending=True,
                                                              date_time_format=None).strftime(resp_format),
-                             helpers.get_time_stamp_by_delta(end_dt, months=1, ascending=False,
-                                                             date_time_format=None).strftime(resp_format)])
+                             dt.strftime(resp_format)])
     return filter_dates, day_filter_dates
 
 
@@ -116,6 +118,7 @@ async def m60_performance(filters, cross_filters, drill_state):
             if key in Base_Filters and Base_Filters.index(key) > index:
                 index = Base_Filters.index(key)
         group_by_filter = Base_Filters[index + 1]
+
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     for index, _ in enumerate(cross_filters):
@@ -126,6 +129,7 @@ async def m60_performance(filters, cross_filters, drill_state):
     target_data = []
     actual_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES" """
     history_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_HISTORY_TMT_SALES" """
+
     # Generating filters
     for condition in filters:
         if condition['key'].strip('"') == "A":
@@ -158,7 +162,6 @@ async def m60_performance(filters, cross_filters, drill_state):
         else:
             condition["key"] = condition["key"].strip('"')
             cross_filters.append(condition)
-    m60_df = []
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
@@ -173,6 +176,7 @@ async def m60_performance(filters, cross_filters, drill_state):
     if clause:
         where_conditions_history = [clause]
 
+    # Data Retrival for target data
     if target:
         group_keys = [group_by_filter]
         if group_by_filter.strip('"') != "month_name":
@@ -185,7 +189,8 @@ async def m60_performance(filters, cross_filters, drill_state):
         if group_by_filter == 'month_name':
             target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True, categories=months)
         target_data = target_data.to_dict(orient='records')
-        # print(json.dumps(target_data, default=str))
+
+    # Data Retrival for current financial year
     if actual:
         # Checking whether start date and end date enabled
         filter_dates = []
@@ -214,6 +219,8 @@ async def m60_performance(filters, cross_filters, drill_state):
         # print("&" * 30)
         # print(json.dumps(actual_data, default=str))
         # print("&" * 30)
+
+    # Data Retrival for last financial year
     if history:
         filter_dates = []
         day_filter_dates = []
@@ -239,22 +246,18 @@ async def m60_performance(filters, cross_filters, drill_state):
         # print("^" * 30)
         # print(json.dumps(hist_data, default=str))
         # print("^" * 30)
-    # df = pd.concat([actual_data, target_data, hist_data])
+
     df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
     merged_df = df_[0]
-    if group_by_filter.strip('"') == 'month_name':
-        if len(df_) > 1:
-            for df in df_[1:]:
-                merged_df = pd.merge(merged_df, df, on='month_name', how='outer')  # Outer merge with df2
-        merged_df["month_order"] = merged_df["month_name"].map({month: i for i, month in enumerate(months)})
-        merged_df = merged_df.sort_values("month_order").drop(columns="month_order")
-        merged_df.reset_index(drop=True, inplace=True)
-    if group_by_filter.strip('"') == 'SBU_Name':
-        if len(df_) > 1:
-            for df in df_[1:]:
-                merged_df = pd.merge(merged_df, df, on='SBU_Name', how='outer')  # Outer merge with df2
-        merged_df["sbu_order"] = merged_df["SBU_Name"].map({sbu: i for i, sbu in enumerate(sbu_order)})
-        merged_df = merged_df.sort_values("sbu_order").drop(columns="sbu_order")
+    if len(df_) > 1:
+        for df in df_[1:]:
+            merged_df = pd.merge(merged_df, df, on=group_by_filter.strip('"'), how='outer')  # Outer merge with df2
+
+    # Ordering Data for Month and SBU names
+    if group_by_filter.strip('"') in ('month_name', 'SBU_Name'):
+        sort_key = months if group_by_filter.strip('"') == '' else sbu_order
+        merged_df["data_order"] = merged_df[group_by_filter.strip('"')].map({cond: i for i, cond in enumerate(sort_key)})
+        merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
         merged_df.reset_index(drop=True, inplace=True)
     merged_df.fillna(0, inplace=True)
     return {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
