@@ -73,12 +73,12 @@ async def main():
     """
     engine_local_base_url = urdhva_base.settings.camunda_url + "/engine-rest"
     # etw = ExternalTaskWorker(10, base_url=ENGINE_LOCAL_BASE_URL, config=default_config)
-    topics = ['workflow_consumer']
+    topics = [f'workflow_consumer'] + [f'tas_workflow_consumer_{t_id}' for t_id in range(1, 21)]
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=400)  # Adjust the number of workers as needed
     tasks = []
     for topic in topics:
-        for i in range(1, 200):
+        for i in range(0, 1):
             etw = ExternalTaskWorker(i, base_url=engine_local_base_url,
                                      config=urdhva_base.settings.camunda_default_config)
             tasks.append(loop.run_in_executor(
