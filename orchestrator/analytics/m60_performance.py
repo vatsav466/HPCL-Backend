@@ -168,10 +168,12 @@ async def m60_performance(filters, cross_filters, drill_state):
             # Calculating start and end dates
             start_date, end_date = condition['value'].split(",")
             start_date_history = dt_parser.parse(start_date)
-            start_date_history = start_date_history.replace(year=start_date_history.year-1).strftime("%Y%m")
+            start_date_history = start_date_history.replace(year=start_date_history.year-1).strftime(
+                "%Y%m%d" if Default_Filters == "Day" else "%Y%m")
             # For History
             end_date_history = dt_parser.parse(end_date)
-            end_date_history = end_date_history.replace(year=end_date_history.year-1).strftime("%Y%m")
+            end_date_history = end_date_history.replace(year=end_date_history.year-1).strftime(
+                "%Y%m%d" if Default_Filters == "Day" else "%Y%m")
         elif condition['key'] == '"FISCAL_YEAR"':
             # Not considering now
             fis_year = condition['value']
