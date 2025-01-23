@@ -288,7 +288,7 @@ class FiscalYear(_Hashable):
 
     @property
     def fiscal_year_end_date(self) -> str:
-        return self.q2.start.strftime("%Y-%m-%d")
+        return self.q4.end.strftime("%Y-%m-%d")
 
     @property
     def prev_year_start_date(self) -> str:
@@ -296,7 +296,7 @@ class FiscalYear(_Hashable):
 
     @property
     def prev_year_end_date(self) -> str:
-        return self.prev_fiscal_year.q2.start.strftime("%Y-%m-%d")
+        return self.prev_fiscal_year.q4.end.strftime("%Y-%m-%d")
 
     @property
     def end(self) -> "FiscalDateTime":

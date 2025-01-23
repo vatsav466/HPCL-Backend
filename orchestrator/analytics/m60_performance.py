@@ -18,6 +18,7 @@ Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
+DefaultTable = 'Day'
 
 
 async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_resp_format="%Y%m%d"):
@@ -30,6 +31,9 @@ async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_res
     """
     filter_dates = []
     day_filter_dates = []
+    if DefaultTable == "Day":
+        return [], [[dt_parser.parse(start_date).strftime(day_resp_format),
+                     dt_parser.parse(end_date).strftime(day_resp_format)]]
     start_dt = dt_parser.parse(start_date)
     end_dt = dt_parser.parse(end_date)
     if start_dt.month == end_dt.month or (end_dt.month - start_dt.month) == 1:
@@ -121,6 +125,18 @@ async def m60_performance(filters, cross_filters, drill_state):
 
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
+
+    end_date = fiscal_year.FiscalYear.current().fiscal_year_end_date
+    start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
+    # For History
+    start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime("%Y%m%d")
+    end_date_history = helpers.get_time_stamp_by_delta(dt_parser.parse(end_date), years=1, days=0,
+                                                       with_month_start_day=False,
+                                                       date_time_format=None).strftime("%Y%m%d")
+    print(start_date, end_date)
+    print(start_date_history, end_date_history)
+
+
     for index, _ in enumerate(cross_filters):
         cross_filters[index]['key'] = cross_filters[index]['key'].strip('"')
     cross_filters = [rec for rec in cross_filters if not (rec['key'] == 'month_name' and not rec['value'].strip('"'))]
@@ -198,7 +214,10 @@ async def m60_performance(filters, cross_filters, drill_state):
         if start_date and end_date:
             filter_dates, day_filter_dates = await get_date_filters(start_date, end_date)
         else:
-            filter_dates.append([start_date, end_date])
+            if DefaultTable == "Day":
+                day_filter_dates.append([start_date, end_date])
+            else:
+                filter_dates.append([start_date, end_date])
         # For Month level aggregations from month data table
         for date_range in filter_dates:
             actual_data.extend(await collect_data([actual], 'M60_LEVEL_METADATA',
@@ -227,7 +246,10 @@ async def m60_performance(filters, cross_filters, drill_state):
         if start_date and end_date:
             filter_dates, day_filter_dates = await get_date_filters(start_date_history, end_date_history, "%Y%m")
         else:
-            filter_dates.append([start_date_history, end_date_history])
+            if DefaultTable == "Day":
+                day_filter_dates.append([start_date_history, end_date_history])
+            else:
+                filter_dates.append([start_date_history, end_date_history])
         for date_range in filter_dates:
             hist_data.extend(await collect_data([history], 'MOM_LEVEL_FINAL_DATA',
                                                 where_conditions_history + Default_Filters, date_range[0],
