@@ -717,31 +717,31 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
                         AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
                 )
                 SELECT 
-                    a.sap_id as alerts_sap_id,
-                    a.location_name as location_name,
-                    a.terminal_plant_id as terminal_plant_od,
-                    a.indent_no as alerts_indent_no,
-                    a.product_code as alerts_product_code,
-                    a.indent_status as indent_status,
-                    a.dry_out_in_days,
-                    cd."LOCN_CODE",
-                    cd."INDENT_NO",
-                    cd."INDENT_DATE",
+                    a.sap_id as "SAP_ID",
+                    a.location_name as "LOCATION_NAME",
+                    a.terminal_plant_id as "TERMINAL_PLANT_ID",
+                    a.indent_no as "INDENT_NO",
+                    a.product_code as "PRODUCT_CODE",
+                    a.indent_status as "INDENT_STATUS",
+                    a.dry_out_in_days as "DRY_OUT_IN_DAYS",
+                    cd."LOCN_CODE" AS "ASSIGNED_TO_LOCN",
+--                     cd."INDENT_NO",
+--                     cd."INDENT_DATE",
                     cd."PROD_REQD_DT",
-                    cd."DEALER_CODE",
-                    cd."BATCH_FLAG",
+--                     cd."DEALER_CODE",
+--                     cd."BATCH_FLAG",
                     cd."TRUCK_REGNO",
                     cd."VALID_INDENT",
                     cd."SEND_TO_JDE_TIME",
                     cd."DELIVERY_DATE",
                     cd."INDENT_HOLD_RELEASE_TIME",
                     cd."INDENT_EXECUTABLE_TIME",
-                    cd."PRODUCT_CODE",
+--                     cd."PRODUCT_CODE",
                     cd."QTY",
                     cd."PROD_ALLOT_TIME",
                     cd."SALES_ORDERNO",
                     cd."INVOICE_NO",
-                    cd."JDE_TRUCK_NO",
+--                     cd."JDE_TRUCK_NO",
                     cd."LOADED_ON",
                     cd."CARD_STATUS"
                 FROM 
@@ -769,6 +769,9 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
         query=query
     )
     stats_resp = pd.DataFrame(stats_resp)
+    stats_resp = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
+    stats_resp.replace({"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True)
+    stats_resp.replace({"VALID_INDENT": {"H": "ON_HOLD_RELEASED", "Y": "VALID_INDENT", "N": "ON_HOLD"}}, inplace=True)
     return stats_resp.to_dict(orient='records')
 
 async def _get_on_hold_data(dry_out_in_days='1'):
