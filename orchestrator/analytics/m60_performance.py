@@ -160,20 +160,22 @@ async def m60_performance(filters, cross_filters, drill_state):
             end_date = end_date_.replace(day=end_date_.day-1).strftime("%Y-%m-%d")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
             # For History
-            start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime("%Y%m%d")
+            start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
             end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=False,
                                                                date_time_format=None)
-            end_date_history = end_date_history.strftime("%Y%m%d")
+            end_date_history = end_date_history.strftime(
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
         elif condition['key'].strip('"') == "DATE":
             # Calculating start and end dates
             start_date, end_date = condition['value'].split(",")
             start_date_history = dt_parser.parse(start_date)
             start_date_history = start_date_history.replace(year=start_date_history.year-1).strftime(
-                "%Y%m%d" if Default_Filters == "Day" else "%Y%m")
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
             # For History
             end_date_history = dt_parser.parse(end_date)
             end_date_history = end_date_history.replace(year=end_date_history.year-1).strftime(
-                "%Y%m%d" if Default_Filters == "Day" else "%Y%m")
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
         elif condition['key'] == '"FISCAL_YEAR"':
             # Not considering now
             fis_year = condition['value']
