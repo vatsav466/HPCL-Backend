@@ -1104,6 +1104,7 @@ Model VaAlertHistory {
     vendor_id optional str
     location_id optional str
     location_type optional str
+    alert_id optional str
     alert_type optional str
     alert_description optional str
     device_id optional str

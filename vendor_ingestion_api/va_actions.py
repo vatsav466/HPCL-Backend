@@ -46,7 +46,8 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
       
       for entry in enriched_data:
           entry['alert_section'] = entry['alert_type']
-          await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()  
+          await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
+          entry['va_alert_id'] = entry.pop("alert_id")
           await alert_manager.create_alert({**entry, "alert_type": "VA"})
     
       return True, "Success"
@@ -85,3 +86,20 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
     # except Exception as e:
     #     logger.error(e)
     #     return {"status": False, "message": "Error submitting justification", "data": []}
+
+
+# Action ingest_data_score
+@router.post('/ingest_data_score', tags=['VA'])
+async def va_ingest_data_score(data: Va_Ingest_Data_ScoreParams):
+    """
+    Args:
+        data:
+    Returns:
+    """
+    try:
+        logger.info(f"Received VA data ingestion from vendor {data.location_id}({data.location_type}) {data.dict()}")
+        return True, "Success"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return False, e
