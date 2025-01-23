@@ -76,12 +76,14 @@ def insertToDB(data, table_name, indexing_col=()):
     print(data['TARGET_ROUND'].dtype)
     for col in data.columns:
         if data.schema[col] in [pl.Float32, pl.Float64]:
-             data = data.with_columns(pl.col(col).round(2).alias(col))
+             #data = data.with_columns(pl.col(col).round(2).alias(col))
+             data = data.with_columns(pl.col(col).alias(col))
         if data[col].dtype in ['Int64']:
             data = data.with_columns(pl.col(col).round(0).alias(col))
         if 'Decimal' in str(data.schema[col]):
             print("decimal type col")
-            data = data.with_columns(pl.col(col).cast(pl.Int64).round(0).alias(col))
+            #data = data.with_columns(pl.col(col).cast(pl.Int64).round(0).alias(col))
+            data = data.with_columns(pl.col(col).alias(col))
     print(data)
     print(data.schema)
     data.write_csv(f"/tmp/table_name1.csv",separator='~')
