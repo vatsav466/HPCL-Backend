@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  camunda:
+  camunda_worker_base:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -13,11 +13,11 @@ services:
     ports:
         - "8080:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_01:
+  camunda_worker_01:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -29,11 +29,11 @@ services:
     ports:
         - "9080:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_02:
+  camunda_worker_02:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -45,11 +45,11 @@ services:
     ports:
         - "9081:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_03:
+  camunda_worker_03:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -61,11 +61,11 @@ services:
     ports:
         - "9082:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_04:
+  camunda_worker_04:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -77,11 +77,11 @@ services:
     ports:
         - "9083:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_05:
+  camunda_worker_05:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -93,11 +93,11 @@ services:
     ports:
         - "9084:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_06:
+  camunda_worker_06:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -109,11 +109,11 @@ services:
     ports:
         - "9085:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_07:
+  camunda_worker_07:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -125,11 +125,11 @@ services:
     ports:
         - "9086:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_08:
+  camunda_worker_08:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -141,11 +141,11 @@ services:
     ports:
         - "9087:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_09:
+  camunda_worker_09:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -157,11 +157,11 @@ services:
     ports:
         - "9088:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
-  camunda_10:
+  camunda_worker_10:
     image: camunda/camunda-bpm-platform:${DISTRO:-latest}
     environment:
         - DB_DRIVER=org.postgresql.Driver
@@ -173,9 +173,10 @@ services:
     ports:
         - "9089:8080"
     volumes:
-        - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml
+      - /DATA/camunda_docker/bpm-platform.xml:/camunda/conf/bpm-platform.xml:ro
     restart: unless-stopped
     networks:
         - postgres
 networks:
   postgres:
+
