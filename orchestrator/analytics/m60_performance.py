@@ -255,7 +255,7 @@ async def m60_performance(filters, cross_filters, drill_state):
 
     # Ordering Data for Month and SBU names
     if group_by_filter.strip('"') in ('month_name', 'SBU_Name'):
-        sort_key = months if group_by_filter.strip('"') == '' else sbu_order
+        sort_key = months if group_by_filter.strip('"') == 'month_name' else sbu_order
         merged_df["data_order"] = merged_df[group_by_filter.strip('"')].map({cond: i for i, cond in enumerate(sort_key)})
         merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
         merged_df.reset_index(drop=True, inplace=True)
