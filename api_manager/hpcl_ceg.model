@@ -609,6 +609,7 @@ Model Alerts {
 
     Action=> get_closed_alerts_details {
         bu str
+        alert_section str
         interlock_name str
     }
 
