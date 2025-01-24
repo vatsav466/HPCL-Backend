@@ -73,6 +73,100 @@ item_name_mapping = {
     "3373000": "POWER 100"
 }
 
+rca_reason = {
+    "FIRE/SMOKE": [
+        "Short circuit or electrical fault.",
+        "Equipment overheating.",
+        "Unauthorized fire-related activities.",
+        "Negligence during operations.",
+        "Others"
+    ],
+    "ABSENCE OF EARTHING": [
+        "Equipment not properly grounded.",
+        "Earthing mechanism damaged or removed.",
+        "Neglect in routine earthing checks.",
+        "Others"
+    ],
+    "ABSENCE OF WHEELCHOCK": [
+        "Misplaced after previous use.",
+        "Insufficient wheel chocks allocated.",
+        "Lack of awareness or training.",
+        "Others"
+    ],
+    "ALIGHT FROM TWO WHEELER": [
+        "Unsafe behavior or oversight by personnel.",
+        "Lack of adherence to safety guidelines.",
+        "Lack of proper monitoring.",
+        "Others"
+    ],
+    "UNAUTHORIZED FILLING OF CONTAINER": [
+        "Negligence or lack of training.",
+        "Absence of supervision in sensitive areas.",
+        "Deliberate violation of procedures.",
+        "Others"
+    ],
+    "ABSENCE OF FIRE EXTINGUISHER DECANTATION": [
+        "Fire extinguisher removed for emergency use.",
+        "Neglect in replacing after usage.",
+        "Lack of periodic safety checks.",
+        "Others"
+    ],
+    "Person not wearing Safety Helmet": [
+        "Person not wearing helmets due to oversight.",
+        "Helmets damaged or unavailable.",
+        "Lack of training on PPE compliance.",
+        "Others"
+    ],
+    "LINE OF FIRE": [
+        "Personnel entering restricted or unsafe zones.",
+        "Lack of awareness about safety protocols.",
+        "Poor supervision or monitoring.",
+        "Others"
+    ],
+    "ABSENCE OF SAFETY HARNESS": [
+        "Safety harness not available at the site.",
+        "Personnel neglecting safety protocols.",
+        "Damaged or unusable harness not replaced.",
+        "Others"
+    ],
+    "Fire-Extinguisher": [
+        "Routine maintenance or refill pending.",
+        "Misplacement during an emergency.",
+        "Delay in procurement of replacements.",
+        "Others"
+    ],
+    "Wheel-Chock": [
+        "Chock not placed due to negligence.",
+        "Damaged chock not replaced.",
+        "Lack of proper storage or tracking.",
+        "Others"
+    ],
+    "Intrusion-PersonAtPerimeter": [
+        "Unauthorized entry due to lack of monitoring.",
+        "Security personnel not alert.",
+        "Malfunctioning perimeter systems.",
+        "Others"
+    ],
+    "LPGLeak-FillingGun": [
+        "Damaged or malfunctioning filling gun.",
+        "Improper handling during operations.",
+        "Lack of routine equipment checks.",
+        "Others"
+    ],
+    "LPGLeak-Detection": [
+        "Faulty or uncalibrated detection systems.",
+        "Lack of routine maintenance.",
+        "Leakage caused by improper operations.",
+        "Others"
+    ],
+    "PPE-Compliance": [
+        "Personnel unaware of PPE guidelines.",
+        "Unavailability or damage to PPE equipment.",
+        "Neglect in wearing mandatory PPE.",
+        "Others"
+    ]
+}
+
 dry_out_query = f"""SELECT
                         "title",
                         "value" AS "Site_Count",

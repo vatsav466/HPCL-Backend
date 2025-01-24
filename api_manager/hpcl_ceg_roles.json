@@ -825,6 +825,9 @@
                 },
                 {
                     "name": "get_frequent_dryout_terminals"
+                },
+                {
+                    "name": "get_closed_alerts_details"
                 }
             ]
         },
@@ -849,6 +852,9 @@
                 },
                 {
                     "name": "get_frequent_dryout_terminals"
+                },
+                {
+                    "name": "get_closed_alerts_details"
                 }
             ]
         },
@@ -891,6 +897,9 @@
                 },
                 {
                     "name": "get_frequent_dryout_terminals"
+                },
+                {
+                    "name": "get_closed_alerts_details"
                 }
             ]
         },
@@ -2711,6 +2720,10 @@
         {
             "name": "get_frequent_dryout_terminals",
             "displayName": "get_frequent_dryout_terminals"
+        },
+        {
+            "name": "get_closed_alerts_details",
+            "displayName": "get_closed_alerts_details"
         },
         {
             "name": "upload_cems_location_master",
