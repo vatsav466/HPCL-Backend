@@ -282,7 +282,7 @@ async def m60_performance(filters, cross_filters, drill_state):
             hist_data = hist_data.groupby(group_by_filter.strip('"'))['ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
             hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
             hist_data = hist_data.to_dict(orient='records')
-
+            
     df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
     merged_df = df_[0] if len(df_) else pd.DataFrame([])
     if len(df_) > 1:
@@ -293,6 +293,7 @@ async def m60_performance(filters, cross_filters, drill_state):
         sort_key = months if group_by_filter.strip('"') == 'month_name' else sbu_order
         merged_df["data_order"] = merged_df[group_by_filter.strip('"')].map({cond: i for i, cond in enumerate(sort_key)})
         merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
+        merged_df = merged_df[merged_df[group_by_filter.strip('"')].isin(sort_key)]
         merged_df.reset_index(drop=True, inplace=True)
     # If required keys not available keeping records with zero value
     if target:
