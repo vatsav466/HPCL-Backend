@@ -1181,6 +1181,7 @@ class Alerts_Get_Frequent_Dryout_TerminalsParams(pydantic.BaseModel):
 
 class Alerts_Get_Closed_Alerts_DetailsParams(pydantic.BaseModel):
     bu: str
+    alert_section: str
     interlock_name: str
 
 
