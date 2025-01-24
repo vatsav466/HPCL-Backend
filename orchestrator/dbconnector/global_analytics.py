@@ -3990,7 +3990,7 @@ class GlobalAnalytics:
                 lpg_pending_query_  += f' WHERE "ZOName"  NOT IN ( \'Null\')'
             else:
                 lpg_pending_query_  += f' AND "ZOName"  NOT IN ( \'Null\')'
-            lpg_pending_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
+            lpg_pending_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","ConsumerType" ,"DistributorName" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3999,7 +3999,7 @@ class GlobalAnalytics:
                 lpg_pending_query_  += f' WHERE "ZOName"  NOT IN (\'Null\')'
             else:
                 lpg_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\')'
-            lpg_pending_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","ConsumerType" ,"JDEDistributorCode" '
+            lpg_pending_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","ConsumerType" ,"DistributorName" '
             resp = await function(query=lpg_pending_query_ )
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -4021,7 +4021,7 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": []}
 
         for each_str_col in [
-            "ZOName", "ROName", "SAName", "ConsumerType", "JDEDistributorCode"
+            "ZOName", "ROName", "SAName", "ConsumerType", "DistributorName"
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -5110,7 +5110,7 @@ class GlobalAnalytics:
                 productivity_zone_query_  += ' WHERE '
                 productivity_zone_query_  += ' AND '.join(conditions)
             productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date","carousel" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "carousel" '
         else:
             if not "where" in productivity_zone_query_.lower():
                 productivity_zone_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
