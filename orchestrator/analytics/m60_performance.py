@@ -198,8 +198,18 @@ async def m60_performance(filters, cross_filters, drill_state):
             # Not considering now
             ...
         else:
+            # Clearing if value was an empty string
+            if not condition["value"]:
+                continue
             condition["key"] = condition["key"].strip('"')
-            cross_filters.append(condition)
+            cross_filter_append = True
+            if condition["key"] == "month_name":
+                for crs_rec in cross_filters:
+                    if crs_rec["key"] == "month_name":
+                        crs_rec["value"] = condition["value"]
+                        cross_filter_append = False
+            if cross_filter_append:
+                cross_filters.append(condition)
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
@@ -282,7 +292,7 @@ async def m60_performance(filters, cross_filters, drill_state):
             hist_data = hist_data.groupby(group_by_filter.strip('"'))['ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
             hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
             hist_data = hist_data.to_dict(orient='records')
-            
+
     df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
     merged_df = df_[0] if len(df_) else pd.DataFrame([])
     if len(df_) > 1:
