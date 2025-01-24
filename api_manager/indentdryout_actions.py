@@ -296,9 +296,9 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
 
         action_msgs = [entry["action_msg"] for entry in resp.get('alert_history', [])]
         for history in resp.get("alert_history", []):
-            if history['action_msg'] == "Valid Indent":
-                if "Indent Is On Hold" in action_msgs and "Valid Indent" in action_msgs:
-                    history['action_msg'] = "Indent On Hold Released"
+            # if history['action_msg'] == "Valid Indent":
+            #     if "Indent Is On Hold" in action_msgs and "Valid Indent" in action_msgs:
+            #         history['action_msg'] = "Indent On Hold Released"
             if history['action_msg'] == "Invalid Is On Hold":
                 history['action_msg'] = "Indent Is On Hold"
             if history['action_msg'] == "R2 Not Swiped But Invoice Created":

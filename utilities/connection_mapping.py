@@ -164,6 +164,29 @@ rca_reason = {
         "Unavailability or damage to PPE equipment.",
         "Neglect in wearing mandatory PPE.",
         "Others"
+    ],
+    "MAINTENANCE": [
+        "Insufficient spare parts inventory.",
+        "Others"
+    ],
+    "HIGH-LEVEL ALARM": [
+        "Exceeded operational limits",
+        "Faulty level sensors.",
+        "Incorrect calibration of setpoints.",
+        "Blocked or restricted process flow.",
+        "Others"
+    ],
+    "HCD ALARM": [
+        "Misconfigured alarm thresholds.",
+        "Process fluctuations beyond normal range.",
+        "Sensor drift or errors.",
+        "Others"
+    ],
+    "HCD FAULT": [
+        "Loose wiring or connection fault.",
+        "Power supply interruption.",
+        "System software or firmware issues.",
+        "Others"
     ]
 }
 
