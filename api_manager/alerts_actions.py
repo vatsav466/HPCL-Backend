@@ -12,6 +12,7 @@ import utilities
 from pathlib import Path
 import utilities.helpers as helpers
 import utilities.vts_mapping as vts_mapping
+import utilities.connection_mapping as connection_mapping
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.actions.check_violation_count as check_violation_count
@@ -173,3 +174,27 @@ async def alerts_get_frequent_dryout_ro(data: Alerts_Get_Frequent_Dryout_RoParam
 @router.post('/get_frequent_dryout_terminals', tags=['Alerts'])
 async def alerts_get_frequent_dryout_terminals(data: Alerts_Get_Frequent_Dryout_TerminalsParams):
     return await dry_out_analysis.current_month_frequent_drout_terminals(data)
+
+
+# Action get_closed_alerts_details
+@router.post('/get_closed_alerts_details', tags=['Alerts'])
+async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_DetailsParams):
+    close_alert_details = {
+        "actions": {
+            "Justify": "Justification",
+            "Accept & Close": "AcceptClose",
+            "Approve": "Approved",
+            "Reject": "Rejected"
+        },
+        "category": {
+            "Operations": "operations",
+            "Sales": "sales",
+            "Others": "others"
+        },
+        "rca_reason": {
+        }
+    }
+    if data.bu in ['VA']:
+        del close_alert_details['actions']['Reject']
+    close_alert_details["rca_reason"] = connection_mapping.rca_reason.get(data.interlock_name, ["Others"])
+    return close_alert_details

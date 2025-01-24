@@ -607,6 +607,10 @@ Model Alerts {
         end_date optional datetime
     }
 
+    Action=> get_closed_alerts_details {
+        bu str
+        interlock_name str
+    }
 
     Config=> {
         crud_operations='read'
