@@ -223,7 +223,7 @@ class WidgetActions:
                 conditions.append(f"{key} LIKE '%{value}%'")
             elif condition == 'suffix':
                 conditions.append(f"{key} LIKE '%{value}'")
-            elif condition == ' ' and isinstance(value, list):
+            elif condition in [' ', 'one-off'] and isinstance(value, list):
                 values = "', '".join(map(str, value))
                 conditions.append(f''' "{key}" IN ('{values}') ''')
             elif condition == 'pattern':

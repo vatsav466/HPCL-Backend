@@ -1,8 +1,11 @@
-connection_mapping = {
-    "ims": "3",
-    "hpcl_ceg": "1",
-    "cris": "2"
-}
+import urdhva_base
+
+connection_mapping = urdhva_base.settings.db_connection_config
+# connection_mapping = {
+#     "ims": "3",
+#     "hpcl_ceg": "1",
+#     "cris": "2"
+# }
 
 schema_mapping = {
     "cris": "HPCL_HOS",
@@ -18,18 +21,20 @@ table_mapping = {
     "truck_swipe": "TRUCK_SWIPE_ENTRY_SAP",
 }
 
-camunda_listener_mapping = {
-    "camunda_dryout_01": {"host": "10.90.38.167", "port": 9080},
-    "camunda_dryout_02": {"host": "10.90.38.167", "port": 9081},
-    "camunda_dryout_03": {"host": "10.90.38.167", "port": 9082},
-    "camunda_dryout_04": {"host": "10.90.38.167", "port": 9083},
-    "camunda_dryout_05": {"host": "10.90.38.167", "port": 9084},
-    "camunda_dryout_06": {"host": "10.90.38.167", "port": 9085},
-    "camunda_dryout_07": {"host": "10.90.38.167", "port": 9086},
-    "camunda_dryout_08": {"host": "10.90.38.167", "port": 9087},
-    "camunda_dryout_09": {"host": "10.90.38.167", "port": 9088},
-    "camunda_dryout_10": {"host": "10.90.38.167", "port": 9089}
-}
+camunda_listener_mapping = urdhva_base.settings.camunda_url_config
+
+# camunda_listener_mapping = {
+#     "camunda_dryout_01": {"host": "10.90.38.167", "port": 9080},
+#     "camunda_dryout_02": {"host": "10.90.38.167", "port": 9081},
+#     "camunda_dryout_03": {"host": "10.90.38.167", "port": 9082},
+#     "camunda_dryout_04": {"host": "10.90.38.167", "port": 9083},
+#     "camunda_dryout_05": {"host": "10.90.38.167", "port": 9084},
+#     "camunda_dryout_06": {"host": "10.90.38.167", "port": 9085},
+#     "camunda_dryout_07": {"host": "10.90.38.167", "port": 9086},
+#     "camunda_dryout_08": {"host": "10.90.38.167", "port": 9087},
+#     "camunda_dryout_09": {"host": "10.90.38.167", "port": 9088},
+#     "camunda_dryout_10": {"host": "10.90.38.167", "port": 9089}
+# }
 
 dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"},
                   {"name": "Indent On Hold", "group": "pending"}, {"name": "Pending Indents", "group": "pending"},
@@ -47,11 +52,13 @@ dry_out_bottom_x_axis = [
         "Dealer", "SO\nRM", "SO\nCO", "SO", "SO\nRM", "SO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "PO\nRM", "SO\nRM"
     ]
 
-creds_type = {
-    "2": {"cred_model": "Databases", 'cred_type': "PostgreSQL"},
-    "3": {"cred_model": "Databases", 'cred_type': "Oracle"},
-    "1": {"cred_model": "Databases", 'cred_type': "PostgreSQL"}
-}
+creds_type = urdhva_base.settings.db_connection_mapping
+
+# creds_type = {
+#     "2": {"cred_model": "Databases", 'cred_type': "PostgreSQL"},
+#     "3": {"cred_model": "Databases", 'cred_type': "Oracle"},
+#     "1": {"cred_model": "Databases", 'cred_type': "PostgreSQL"}
+# }
 
 product_code_mapping = {
     "MS": "2811000",

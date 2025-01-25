@@ -137,7 +137,7 @@ def get_group_by_filter_key(cross_filters):
     return group_by_filter
 
 
-async def m60_performance(filters, cross_filters, drill_state):
+async def m60_performance(filters, cross_filters, drill_state=""):
     if not cross_filters:
         cross_filters = []
     group_by_filter = get_group_by_filter_key(cross_filters)
@@ -202,6 +202,7 @@ async def m60_performance(filters, cross_filters, drill_state):
             if not condition["value"]:
                 continue
             condition["key"] = condition["key"].strip('"')
+            # Giving more preference for the month's provided in filters than cross filters on drill down
             if condition["key"] == "month_name":
                 value = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
                 cross_filter_append = True
@@ -211,11 +212,11 @@ async def m60_performance(filters, cross_filters, drill_state):
                             crs_rec["value"] = value[0]
                         else:
                             crs_rec["value"] = value
-                            crs_rec["cond"] = ' '
+                            crs_rec["cond"] = 'one-off'
                         cross_filter_append = False
                 if cross_filter_append:
                     if len(value) > 1:
-                        condition["cond"] = ' '
+                        condition["cond"] = 'one-off'
                         condition["value"] = value
                     cross_filters.append(condition)
             else:
