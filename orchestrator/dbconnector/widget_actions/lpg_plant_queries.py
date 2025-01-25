@@ -899,7 +899,7 @@ LIMIT 10000;''',
                             "ROName",
                             "SAName",
                             "JDEDistributorCode",
-                            "ZoneNames",
+                            "ZOName",
                             sum("eKYCCompleted") as "Completed",
                             sum("eKYCPending") as "Pending"     
                         FROM
