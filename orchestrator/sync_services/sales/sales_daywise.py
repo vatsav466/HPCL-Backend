@@ -316,7 +316,8 @@ def get_and_insert_data(cursor, query, params=None):
     print(data['ORGSBUNAME'].unique())
     data = data.rename(columns = {'ORGSBUNAME':'SBU_Name','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
                                   'ORGSANAME':'SalesArea_Name','MATERIALGROUPNAME':'ProductName'})
-    df['SBU_Name'] = df['SBU_Name'].str.replace('Direct','I&C').str.replace('DS Lubes','Lubes').str.replace('Direct I&C','I&C')
+    data['ORGSBUCD'] = data['ORGSBUCD'].fillna('').astype(str).apply(lambda x:x.split('.')[0] if '.' in x else x)
+    data['SBU_Name'] = data['SBU_Name'].str.replace('Direct','I&C').str.replace('DS Lubes','Lubes').str.replace('Direct I&C','I&C')
     data = pl.from_pandas(data)
     
     

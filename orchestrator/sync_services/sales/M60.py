@@ -49,6 +49,7 @@ def generate_engine_id(row):
     values = [str(v) for v in struct.values()]
     row_string = "|".join(values)
     return hashlib.md5(row_string.encode()).hexdigest()
+
 def insertToDB(data, table_name, indexing_col=()):
     #data["engine_id"] = data.apply(generate_engine_id, axis=1)
     data = data.with_columns(
