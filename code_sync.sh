@@ -33,6 +33,9 @@ fi
 mkdir -p /var/log/ceg_sys_logs/ | true
 mkdir -p /var/log/ceg_logs/ | true
 
+echo "Starting TTL Cache Service"
+systemctl start ceg_ttl_cache.service
+systemctl enable ceg_ttl_cache.service
 
 echo "Restarting All Base API Services"
 
