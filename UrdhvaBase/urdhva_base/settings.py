@@ -91,6 +91,11 @@ class Settings(pydantic_settings.BaseSettings):
     session_secure: bool = True
     session_httponly: bool = True
 
+    # Master cache time
+    cache_gateway_port: int = 5920
+    cache_gateway_host: str = "localhost"
+    default_masters_cache_seconds: int = 10#15*60
+
     # For importing Urdhva framework packages
     import_paths: typing.Dict[str, str] = {}
 
@@ -133,12 +138,11 @@ class Settings(pydantic_settings.BaseSettings):
         "retryTimeout": 5000,
         "sleepSeconds": 30
     }
-    camunda_url_config: typing.Dict[str, pydantic.AnyUrl] = {
-
-    }
+    camunda_url_config: typing.Dict[str, typing.Dict] = {}
 
     # For DB Connection Mapping
     db_connection_config: typing.Dict[str, str] = {}
+    db_connection_mapping: typing.Dict[str, typing.Dict] = {}
 
     # RabbitMQ
     rabbitmq_enabled: bool = False
