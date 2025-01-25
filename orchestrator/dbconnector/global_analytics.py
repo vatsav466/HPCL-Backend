@@ -4357,19 +4357,19 @@ class GlobalAnalytics:
                 ekyc_statistics_query_ += ' WHERE '
                 ekyc_statistics_query_ += ' AND '.join(conditions)
             ekyc_statistics_query_ += f'  AND "ZOName"  NOT IN ( \'Null\') '
-            ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZoneNames" '
+            ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZOName" '
         else:
             if not "where" in ekyc_statistics_query_.lower():
                 ekyc_statistics_query_ += f' WHERE "ZOName"  NOT IN ( \'Null\')'
             else:
                 ekyc_statistics_query_ += f' AND "ZOName"  NOT IN ( \'Null\')'
-            ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZoneNames"'
+            ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZOName"'
             resp = await function(query=ekyc_statistics_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["ZoneNames"], as_index=False).agg({
+            resp = resp.groupby(["ZOName"], as_index=False).agg({
                     "Completed": "sum",
                     "Pending": "sum"
                 })
@@ -4379,7 +4379,7 @@ class GlobalAnalytics:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             for each_str_col in [
-                "ROName", "SAName", "JDEDistributorCode","ZoneNames"
+                "ROName", "SAName", "JDEDistributorCode","ZOName"
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -4402,25 +4402,25 @@ class GlobalAnalytics:
                 resp[each_float_col] = resp[each_float_col].fillna(0.0)
         # Fill missing values for string columns
         for each_str_col in [
-                 "ROName", "SAName", "JDEDistributorCode","ZoneNames"
+                 "ROName", "SAName", "JDEDistributorCode","ZOName"
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            if "ZoneNames" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.groupby(["ZoneNames", "ROName"], as_index=False).agg({
+            if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZOName", "ROName"], as_index=False).agg({
                     "Completed": "sum",
                     "Pending": "sum"
                 })
-            elif "ZoneNames" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.groupby(["ZoneNames", "ROName", "SAName"], as_index=False).agg({
+            elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZOName", "ROName", "SAName"], as_index=False).agg({
                     "Completed": "sum",
                     "Pending": "sum"                
                 })
             elif "ZonesNames" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                grouped_resp = resp.groupby(["ZoneNames", "ROName", "SAName", "DistributorName"],
+                grouped_resp = resp.groupby(["ZOName", "ROName", "SAName", "DistributorName"],
                                             as_index=False).agg({"Completed": "sum", "Pending": "sum"})
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
