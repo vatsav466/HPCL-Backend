@@ -773,7 +773,7 @@ LIMIT 10000;''',
                             "ROName" as "ROName",
                             "SAName" as "SAName",
                             "Execution_Date",
-                            "JDEDistributorCode",
+                            "DistributorName",
                             "ConsumerType",
                             "CylType"
                     from
