@@ -94,7 +94,7 @@ class Settings(pydantic_settings.BaseSettings):
     # Master cache time
     cache_gateway_port: int = 5920
     cache_gateway_host: str = "localhost"
-    default_masters_cache_seconds: int = 10#15*60
+    default_masters_cache_seconds: int = 15*60
 
     # For importing Urdhva framework packages
     import_paths: typing.Dict[str, str] = {}
