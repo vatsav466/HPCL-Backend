@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import httpx
 import asyncio
 import hpcl_ceg_model
 import urdhva_base.redispool
@@ -7,6 +8,31 @@ import urdhva_base.utilities as utils
 
 
 async def get_location_details(bu, sap_id):
+    """
+    Retrieves location details based on the provided business unit and SAP ID.
+
+    Parameters:
+    bu (str): The business unit identifier.
+    sap_id (str): The SAP ID of the location.
+
+    Returns:
+    dict: Location details, including name, address, coordinates, etc., or None if not found.
+    """
+    if not bu or not sap_id:
+        print("Invalid parameters: 'bu' and 'sap_id' are required.")
+        return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
+    async with httpx.AsyncClient(verify=False) as client:
+        base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+        resp = await client.get(f"{base_url}/api_cache/v1/get_location_data", params={"bu": bu,
+                                                                                      'location_id': sap_id})
+        if resp.status_code // 100 == 2:
+            return resp.json()
+        else:
+            print(resp.status_code, resp.text)
+    return False, {}
+
+
+async def get_location_details_old(bu, sap_id):
     """
     Retrieves location details based on the provided business unit and SAP ID.
 
