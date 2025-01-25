@@ -25,7 +25,7 @@ def get_industry_data():
     print(type(res))
     print("cols",res.columns.tolist())
     res = res.rename(columns = {'VALUE':'NETWEIGHT_TMT','SBU':'SBU_Name','PRODCODE':'PRODUCTCODE','PRODNAME':'ProductName','ZONE':'Zone_Name','REGIONCODE':'ORGROCD',
-        'REGIONNAME':'Region_Name','FIN_YEAR':'fiscal_year','Co':'Company_Name'})
+        'REGIONNAME':'Region_Name','FIN_YEAR':'fiscal_year','Co':'Company_Name','MONTH':'month_name'})
     if 'SBU with district wise' in res.columns:
         del res['SBU with district wise']
     if 'RO' in res.columns:
