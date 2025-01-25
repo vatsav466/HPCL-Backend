@@ -202,13 +202,23 @@ async def m60_performance(filters, cross_filters, drill_state):
             if not condition["value"]:
                 continue
             condition["key"] = condition["key"].strip('"')
-            cross_filter_append = True
             if condition["key"] == "month_name":
+                value = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
+                cross_filter_append = True
                 for crs_rec in cross_filters:
                     if crs_rec["key"] == "month_name":
-                        crs_rec["value"] = condition["value"]
+                        if len(value) == 1:
+                            crs_rec["value"] = value[0]
+                        else:
+                            crs_rec["value"] = value
+                            crs_rec["cond"] = ' '
                         cross_filter_append = False
-            if cross_filter_append:
+                if cross_filter_append:
+                    if len(value) > 1:
+                        condition["cond"] = ' '
+                        condition["value"] = value
+                    cross_filters.append(condition)
+            else:
                 cross_filters.append(condition)
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
