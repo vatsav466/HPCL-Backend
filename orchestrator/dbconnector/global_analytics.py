@@ -3298,7 +3298,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
         yesterday = datetime.now() - relativedelta(days=1)
         _filters = []
@@ -3325,7 +3324,7 @@ class GlobalAnalytics:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
             lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -3334,7 +3333,7 @@ class GlobalAnalytics:
                 lpg_cdcms_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
             else:
                 lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
             resp = await function(query=lpg_cdcms_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3369,7 +3368,6 @@ class GlobalAnalytics:
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         resp = await filter_data(resp, _filters)
-        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         # Filter rows where Execution_Date matches yesterday
         resp = resp[resp["Execution_Date"].dt.date == yesterday.date()]
 
@@ -4224,6 +4222,11 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         total_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("total_consumers")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+
         if filters:
             conditions = []
             for rec in filters:
@@ -4250,6 +4253,7 @@ class GlobalAnalytics:
             resp = await function(query=total_consumers_query_ )
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["Category"], as_index=False).agg({
@@ -4276,6 +4280,7 @@ class GlobalAnalytics:
         resp = await function(query=total_consumers_query_ )
         if resp:
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
             resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
@@ -4331,7 +4336,11 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-        ekyc_statistics_query_ = lpg_plant_queries.lpg_plant_query.get("ekyc_statistics")
+        ekyc_statistics_query_ = lpg_plant_queries.lpg_plant_query.get("ekyc_statistics")        
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -4357,6 +4366,7 @@ class GlobalAnalytics:
             ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZoneNames"'
             resp = await function(query=ekyc_statistics_query_)
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["ZoneNames"], as_index=False).agg({
@@ -4381,6 +4391,7 @@ class GlobalAnalytics:
         resp = await function(query=ekyc_statistics_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        resp = await filter_data(resp, _filters)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
@@ -4620,7 +4631,7 @@ class GlobalAnalytics:
         _filters = []
         if cross_filters:
             for filter in cross_filters:
-                _filters.append({f"{filter.key}": f"{filter.value}"})        
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         today = datetime.now()
         if today.month < 4:
             start_year = today.year - 1
@@ -4749,6 +4760,10 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         overall_ctc_statistics_query_ = lpg_plant_queries.lpg_plant_query.get("overall_ctc_statistics")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -4777,6 +4792,7 @@ class GlobalAnalytics:
             resp = await function(query=overall_ctc_statistics_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["Category"], as_index=False).agg({
                     "ACTC": "sum",
                     "BCTC": "sum",
@@ -4804,6 +4820,7 @@ class GlobalAnalytics:
         resp = await function(query=overall_ctc_statistics_query_)        
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        resp = await filter_data(resp, _filters)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
@@ -4866,6 +4883,10 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         overall_safety_check_pending_query_ = lpg_plant_queries.lpg_plant_query.get("overall_safety_check_pending")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -4894,6 +4915,7 @@ class GlobalAnalytics:
             resp = await function(query=overall_safety_check_pending_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["SubCategory"], as_index=False).agg({
                     "SafetyCheckPending": "sum"
                 })
@@ -4917,6 +4939,7 @@ class GlobalAnalytics:
         resp = await function(query=overall_safety_check_pending_query_)        
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
+        resp = await filter_data(resp, _filters)
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -4953,7 +4976,6 @@ class GlobalAnalytics:
                     "SafetyCheckPending": "sum"
                     })
             if grouped_resp is not None:
-                print("grouped_resp  -> ", grouped_resp)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
