@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import asyncio
 import hpcl_ceg_model
 import urdhva_base.redispool
 import urdhva_base.utilities as utils
@@ -19,17 +20,21 @@ async def get_location_details(bu, sap_id):
     if not bu or not sap_id:
         print("Invalid parameters: 'bu' and 'sap_id' are required.")
         return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
-    redis_ins = await urdhva_base.redispool.get_redis_connection()
-    try:
-        if await redis_ins.hexists("location_master", f"{bu.upper()}_{sap_id}"):
-            location_data = json.loads(await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}"))
-            return True, location_data
-    except Exception as e:
-        print("Redis Exception: ", e)
-        return False, {}
-    finally:
-        await redis_ins.close()
-
+    count = 0
+    # Temporarily looping multiple times with sleep in case of failure
+    while count < 3:
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        try:
+            if await redis_ins.hexists("location_master", f"{bu.upper()}_{sap_id}"):
+                location_data = json.loads(await redis_ins.hget("location_master", f"{bu.upper()}_{sap_id}"))
+                return True, location_data
+        except Exception as e:
+            print("Redis Exception: ", e)
+            await asyncio.sleep(2)
+        finally:
+            count += 1
+            await redis_ins.close()
+    return False, {}
     # Verifying the same available in database or not
     query = f"bu = '{bu.upper()}' AND sap_id = '{sap_id}'"
     params = urdhva_base.queryparams.QueryParams()
