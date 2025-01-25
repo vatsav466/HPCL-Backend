@@ -29,6 +29,7 @@ async def get_employee_details(bu: str, location_id: str, role: str):
 
 if __name__ == "__main__":
     port = urdhva_base.settings.cache_gateway_port
+    host = "0.0.0.0"
     log_level: any = None
     reload: bool = False
     if len(sys.argv) > 1:
@@ -37,5 +38,5 @@ if __name__ == "__main__":
     uvicorn_logger = logging.getLogger("uvicorn.access")
     uvicorn_logger.addFilter(LogFilter())
     # Starting uvicorn rest api
-    uvicorn.run("cache_gateway.cache_api_actions:app", port=port, log_level=log_level, reload=reload,
+    uvicorn.run("cache_gateway.cache_api_actions:app", host=host, port=port, log_level=log_level, reload=reload,
                 reload_dirs=[os.getcwd()])
