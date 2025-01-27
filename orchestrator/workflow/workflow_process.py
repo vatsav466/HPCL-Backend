@@ -41,24 +41,22 @@ class Camunda:
             print(traceback.format_exc())
     
 
-    async def closeWorkflow(self, workflowId, clustercamunda):
-        url = config.rocamundaurl + '/engine-rest/message'
-        if clustercamunda:
-            url = config.clustercamundaurl + "/engine-rest/message"
-        header = {"Content-Type": "application/json", "Accept": "application/json"}
-        data = {"messageName": "interLockOk",
-                "businessKey": workflowId,
-                "variables": {"alertid": {"value": workflowId, "type": "String"},
-                            "closed": {"value": True, "type": "Boolean"}}}
+    async def closeWorkflow(self, payload, workflowId, camunda_url=urdhva_base.settings.camunda_url):
+        if camunda_url:
+            self.camunda_url = camunda_url
+        url = f" {self.camunda_url}/engine-rest/message"
 
-        response = requests.request(method="POST", url=url,
-                                    data=json.dumps(data), headers=header, verify=False)
-        if response.status_code != 200:
-            print("Camunda URL:%s" % url)
-            print("Camunda DATA:%s" % data)
-            print("Camunda close response code: %s text:%s" % (response.status_code, response.text))
-        else:
+        try:
+            response = requests.post(url, data=json.dumps(payload), headers=self.headers, verify=False)
+            response.raise_for_status()
+            print(response.json())
+            logger.info(response.json())
             print("InterLock Ok Successfully Sent to : " + str(workflowId))
+        
+        except requests.exceptions.RequestException as e:
+            print(f"Error closing workflow: {e}")
+            logger.error(f"Error closing workflow: {e}")
+            print(traceback.format_exc())
 
     async def update_alerts_with_instance_id(self, alert_id, instance_id):
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
