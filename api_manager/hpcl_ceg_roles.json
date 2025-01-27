@@ -1319,7 +1319,7 @@
                     "name": "get_carry_fwd_indents"
                 },
                 {
-                    "name": "download_dryout_report"
+                    "name": "get_dryout_report"
                 }
             ]
         },
@@ -1374,6 +1374,9 @@
                 },
                 {
                     "name": "get_carry_fwd_indents"
+                },
+                {
+                    "name": "get_dryout_report"
                 }
             ]
         },
@@ -1448,7 +1451,7 @@
                     "name": "get_carry_fwd_indents"
                 },
                 {
-                    "name": "download_dryout_report"
+                    "name": "get_dryout_report"
                 }
             ]
         },
@@ -2873,8 +2876,8 @@
             "displayName": "get_carry_fwd_indents"
         },
         {
-            "name": "download_dryout_report",
-            "displayName": "download_dryout_report"
+            "name": "get_dryout_report",
+            "displayName": "get_dryout_report"
         },
         {
             "name": "get_productions_rate",
