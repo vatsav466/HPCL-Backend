@@ -4364,7 +4364,6 @@ class GlobalAnalytics:
             ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZOName"'
             resp = await function(query=ekyc_statistics_query_)
             resp = pd.DataFrame(resp)
-            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["ZOName"], as_index=False).agg({
@@ -5104,8 +5103,6 @@ class GlobalAnalytics:
         resp = await function(query=cp_query)
 
         return {"status": True, "message": "success", "data": resp}
-    
-    
     @staticmethod
     async def lpg_operations_productivity_zone(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")

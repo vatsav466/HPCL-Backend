@@ -63,7 +63,8 @@ lpg_dashboard_actions = [
     'lpg_cdcms_sales_comparision',
     'card_chart',
     'lpg_domestic_sale_table',
-    'lpg_consumer_table'
+    'lpg_consumer_table',
+    'industry_performance'
 ]
 
 # Todo:- import all widget action modules here
@@ -132,7 +133,8 @@ widget_mapping = {
     'lpg_cdcms_sales_comparision': {},
     'card_chart': {},
     'lpg_domestic_sale_table': {},
-    'lpg_consumer_table': {}
+    'lpg_consumer_table': {},
+    'industry_performance':{}
 }
 
 
