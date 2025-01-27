@@ -184,6 +184,8 @@ def insertToDB(data, table_name, indexing_col=()):
         CSV HEADER DELIMITER '~';
         '''
         print(query)
+        
+        data = data.rename({'FISCAL_YEAR':'fiscal_year'})
         for g, split_df in data.group_by(len(data)// 10000000):
             csv_file = f'/tmp/{table_name}.csv'
             split_df.write_csv(csv_file, separator='~')

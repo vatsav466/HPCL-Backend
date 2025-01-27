@@ -244,6 +244,10 @@ def insertToDB(data, table_name, indexing_col=()):
         FROM STDIN
         CSV HEADER DELIMITER '~';
         '''
+        data = data.to_pandas()
+        data['Zone_Name'] = data['Zone_Name'].str.replace('North Central LPG Zone','North Central LPG Zo').str.replace('South Central Retail Zone','South Central Retail').str.replace('South Central LPG Zone ','South Central LPG Zo').str.replace('EAST CENTRAL ZONE','East Central Zone').str.replace('North West Frontier Zone','North West Frontier').str.replace('North West Retail Zone','North West Retail Zo').
+        str.replace('North Central Retail Zone','North Central Retail')
+        data = pl.from_pandas()
         for g, split_df in data.group_by(len(data) // 10000000):
             csv_file = f'/tmp/{table_name}.csv'
             print("*"*50)
