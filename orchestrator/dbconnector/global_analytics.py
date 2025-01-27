@@ -5204,13 +5204,13 @@ class GlobalAnalytics:
                 production_zone_query_  += ' WHERE '
                 production_zone_query_  += ' AND '.join(conditions)
             production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "process_date", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
         else:
             if not "where" in production_zone_query_.lower():
                 production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "process_date", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
             resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
@@ -5273,13 +5273,13 @@ class GlobalAnalytics:
                 handled_cylinder_query_ += ' WHERE '
                 handled_cylinder_query_ += ' AND '.join(conditions)
             handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant", "process_date" '
+            handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
         else:
             if not "where" in handled_cylinder_query_.lower():
                 handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            handled_cylinder_query_ += ' GROUP BY "zone", "plant", "process_date" '
+            handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
             resp = await function(query=handled_cylinder_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
