@@ -11,16 +11,18 @@ import orchestrator.dbconnector.connector_factory as connector_factory
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
-HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
-                     'SalesArea_Name': '"ORGSANAME"'}
+# HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
+#                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
-DBNames = {"m60_ta": "M60_LEVEL_METADATA", "ind_h": "MOM_LEVEL_FINAL_DATA","ind_act": "MOM_LEVEL_FINAL_DATA"}
+DBNames = {"m60_ta": "M60_LEVEL_METADATA", "ind_h": "industry_performance","ind_act": "industry_performance"}
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
 DefaultTable = 'Day'
-MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
+# MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
+MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES"}
+
 
 
 async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_resp_format="%Y%m%d"):
@@ -55,35 +57,35 @@ async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_res
     return filter_dates, day_filter_dates
 
 
-def calculate_pro_rate(target_data, key, start_month=None, end_month=None):
-    """
-    Calculating YTD data for target
-    :param target_data:
-    :param key:
-    :param start_month:
-    :param end_month:
-    :return:
-    """
-    if not start_month and not end_month:
-        return target_data
-    if start_month:
-        # Calculate no of days the start month
-        dt = dt_parser.parse(start_month)
-        _, month_days = monthrange(dt.year, dt.month)
-        pending_days = month_days - dt.day + 1
-        for rec in target_data:
-            if helpers.month_short_to_number(rec['month_name']) == dt.month:
-                rec[key] = round((rec[key] / month_days) * pending_days)
-    # validate month:
-    if end_month:
-        # Calculate no of days the end month
-        dt = dt_parser.parse(end_month)
-        _, month_days = monthrange(dt.year, dt.month)
-        pending_days = dt.day
-        for rec in target_data:
-            if helpers.month_short_to_number(rec['month_name']) == dt.month:
-                rec[key] = round((rec[key] / month_days) * pending_days)
-    return target_data
+# def calculate_pro_rate(target_data, key, start_month=None, end_month=None):
+#     """
+#     Calculating YTD data for target
+#     :param target_data:
+#     :param key:
+#     :param start_month:
+#     :param end_month:
+#     :return:
+#     """
+#     if not start_month and not end_month:
+#         return target_data
+#     if start_month:
+#         # Calculate no of days the start month
+#         dt = dt_parser.parse(start_month)
+#         _, month_days = monthrange(dt.year, dt.month)
+#         pending_days = month_days - dt.day + 1
+#         for rec in target_data:
+#             if helpers.month_short_to_number(rec['month_name']) == dt.month:
+#                 rec[key] = round((rec[key] / month_days) * pending_days)
+#     # validate month:
+#     if end_month:
+#         # Calculate no of days the end month
+#         dt = dt_parser.parse(end_month)
+#         _, month_days = monthrange(dt.year, dt.month)
+#         pending_days = dt.day
+#         for rec in target_data:
+#             if helpers.month_short_to_number(rec['month_name']) == dt.month:
+#                 rec[key] = round((rec[key] / month_days) * pending_days)
+#     return target_data
 
 
 async def collect_data(req_keys, table_name, where_conditions, start_date, end_date, group_by_filter,
@@ -143,7 +145,8 @@ async def industry_performance(filters, cross_filters, drill_state):
     group_by_filter = get_group_by_filter_key(cross_filters)
 
     # Assigning empty variables
-    history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
+    # history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
+    history = actual = start_date = end_date = start_date_history = end_date_history = ""
 
     end_date = fiscal_year.FiscalYear.current().fiscal_year_end_date
     start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
@@ -322,9 +325,9 @@ async def industry_performance(filters, cross_filters, drill_state):
         merged_df = merged_df[merged_df[group_by_filter.strip('"')].isin(sort_key)]
         merged_df.reset_index(drop=True, inplace=True)
     # If required keys not available keeping records with zero value
-    if target:
-        if MandateKeys["target"] not in merged_df:
-            merged_df[MandateKeys["target"]] = 0
+    # if target:
+    #     if MandateKeys["target"] not in merged_df:
+    #         merged_df[MandateKeys["target"]] = 0
     if actual:
         if MandateKeys["actual"] not in merged_df:
             merged_df[MandateKeys["actual"]] = 0

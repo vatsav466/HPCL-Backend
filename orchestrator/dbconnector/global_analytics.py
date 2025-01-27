@@ -425,15 +425,15 @@ class GlobalAnalytics:
                     ROUND(SUM("M60_LEVEL_METADATA"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES",
                     "M60_LEVEL_METADATA"."fy_month" AS "fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon') AS "month_name",
-                    "M60_LEVEL_METADATA"."FISCAL_YEAR" AS "FISCAL_YEAR"
+                    "M60_LEVEL_METADATA"."fiscal_year" AS "fiscal_year"
                 FROM
                     "M60_LEVEL_METADATA"
                 WHERE
-                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and "M60_LEVEL_METADATA"."FISCAL_YEAR" = {fiscal_year_start}
+                    "M60_LEVEL_METADATA"."NETWEIGHT_TMT" != 0 and "M60_LEVEL_METADATA"."fiscal_year" = {fiscal_year_start}
                 GROUP BY
                     "M60_LEVEL_METADATA"."fy_month",
                     TO_CHAR(TO_DATE("M60_LEVEL_METADATA"."month_name", 'Month'), 'Mon'),
-                    "M60_LEVEL_METADATA"."FISCAL_YEAR"
+                    "M60_LEVEL_METADATA"."fiscal_year"
                 ORDER BY
                     "M60_LEVEL_METADATA"."fy_month" ASC;
             '''
@@ -479,7 +479,7 @@ class GlobalAnalytics:
         # Fill missing values for string columns
         for each_str_col in [
             "SBU", "SBU_Name", "ZONE", "Zone_Name", "REGION", "Region_Name", "SA", 
-            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "FISCAL_YEAR", 
+            "SalesArea_Name", "PRODUCT", "ProductName", "UOM", "fiscal_year", 
             "month_year", "month_name"
         ]:
             if each_str_col in resp.columns:
@@ -506,7 +506,7 @@ class GlobalAnalytics:
             resp = resp[resp["Zone_Name"] != "-"]
             
 
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SBU_Name' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SBU_Name' in filter_keys:
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
                 resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
                 resp = resp.sort_values('SBU_Name')
@@ -514,17 +514,17 @@ class GlobalAnalytics:
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Zone_Name' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Zone_Name' in filter_keys:
                 grouped_resp = resp.groupby(["Zone_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'Region_Name' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'Region_Name' in filter_keys:
                 grouped_resp = resp.groupby(["Region_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
                 })
-            if "month_name" not in filter_keys and 'FISCAL_YEAR' not in filter_keys and 'SalesArea_Name' in filter_keys:
+            if "month_name" not in filter_keys and 'fiscal_year' not in filter_keys and 'SalesArea_Name' in filter_keys:
                 grouped_resp = resp.groupby(["SalesArea_Name"], as_index=False).agg({
                     "TARGET_QTY_TMT": "sum",
                     "NETWEIGHT_TMT": "sum"
@@ -560,50 +560,50 @@ class GlobalAnalytics:
                     "NETWEIGHT_TMT": "sum"
                 })
 
-            elif "FISCAL_YEAR" in filter_keys and "month_name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR"], as_index=False).agg({
+            elif "fiscal_year" in filter_keys and "month_name" not in filter_keys:
+                grouped_resp = resp.groupby(["fiscal_year"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
+            elif "fiscal_year" in filter_keys and "month_name" in filter_keys and "SBU_Name" not in filter_keys:
                 resp['SBU_Name'] = resp['SBU_Name'].map(sbu_mapping).fillna(resp['SBU_Name'])
                 resp['SBU_Name'] = pd.Categorical(resp['SBU_Name'], categories=sbu_order, ordered=True)
                 resp = resp.sort_values('SBU_Name')
-                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
+            elif "fiscal_year" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" not in filter_keys:
                 if "DS" in filter_values or 'Lubes' in filter_values or 'DS Lubes' in filter_values:
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name","Region_Name"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name","Region_Name"], as_index=False).agg({
                         "TARGET_QTY_TMT": "sum",
                         "NETWEIGHT_TMT": "sum"
                     })
                 else:    
-                    grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg({
+            elif "fiscal_year" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and "Region_Name" not in filter_keys:
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum"
                 })
 
-            elif "FISCAL_YEAR" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
+            elif "fiscal_year" in filter_keys and "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys \
                                     and "Region_Name" in filter_keys and "SalesArea_Name" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg({
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
 
-            elif "FISCAL_YEAR" in filter_keys and \
+            elif "fiscal_year" in filter_keys and \
             "month_name" in filter_keys and "SBU_Name" in filter_keys and "Zone_Name" in filter_keys and \
                                     "Region_Name" in filter_keys and "SalesArea_Name" in filter_keys and "ProductName" not in filter_keys:
-                grouped_resp = resp.groupby(["FISCAL_YEAR", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg({
+                grouped_resp = resp.groupby(["fiscal_year", "month_name", "SBU_Name", "Zone_Name", "Region_Name", "SalesArea_Name", "ProductName"], as_index=False).agg({
                     "NETWEIGHT_TMT": "sum",
                     "TARGET_QTY_TMT": "sum",
                 })
