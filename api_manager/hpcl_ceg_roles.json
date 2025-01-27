@@ -2137,6 +2137,69 @@
             ]
         },
         {
+            "name": "industryperformance",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "IndustryPerformance",
+            "attributes": {},
+            "uris": [
+                "/api/industryperformance/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "industryperformance_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "IndustryPerformance_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/industryperformance/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "industryperformance_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "IndustryPerformance_admin",
+            "attributes": {},
+            "uris": [
+                "/api/industryperformance/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "consumerpumptankdelivery",
             "type": "all",
             "ownerManagedAccess": false,

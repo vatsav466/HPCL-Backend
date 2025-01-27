@@ -1230,7 +1230,6 @@ Model IndustryPerformance {
     Dist optional str
     Prod1 optional str
     DISTCODE optional str
-    NETWEIGHT_TMT optional float
     COMCODE optional int
     Code optional str
     PRODUCTCODE optional int
