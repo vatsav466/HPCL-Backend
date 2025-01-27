@@ -60,3 +60,55 @@ async def get_trucks_returning_to_terminal() -> typing.List[typing.Any]:
         return response.json()
     finally:
         session.close()
+
+async def get_all_blocked_tt() -> typing.List[typing.Any]:
+    creds = credential_loader.get_credentials("VTS")
+    url = f"http://{creds['host']}:{creds['port']}/api/TTDetails/TT_Blocked_List"
+    session = requests.Session()
+    session.auth = (creds['user'], creds['password'])
+    try:
+        response = session.get(url, params={}, headers=default_headers)
+        if response.status_code // 100 == 2:
+            return response.json()
+        return response.json()
+    finally:
+        session.close()
+
+async def get_today_blocked_tt() -> typing.List[typing.Any]:
+    creds = credential_loader.get_credentials("VTS")
+    url = f"http://{creds['host']}:{creds['port']}/api/TTDetails/TT_Blocked_Today"
+    session = requests.Session()
+    session.auth = (creds['user'], creds['password'])
+    try:
+        response = session.get(url, params={}, headers=default_headers)
+        if response.status_code // 100 == 2:
+            return response.json()
+        return response.json()
+    finally:
+        session.close()
+
+async def get_today_unblocked_tt() -> typing.List[typing.Any]:
+    creds = credential_loader.get_credentials("VTS")
+    url = f"http://{creds['host']}:{creds['port']}/api/TTDetails/TT_UnBlocked_Today"
+    session = requests.Session()
+    session.auth = (creds['user'], creds['password'])
+    try:
+        response = session.get(url, params={}, headers=default_headers)
+        if response.status_code // 100 == 2:
+            return response.json()
+        return response.json()
+    finally:
+        session.close()
+
+async def get_unblocked_tt() -> typing.List[typing.Any]:
+    creds = credential_loader.get_credentials("VTS")
+    url = f"http://{creds['host']}:{creds['port']}/api/TTDetails/TT_UnBlocked"
+    session = requests.Session()
+    session.auth = (creds['user'], creds['password'])
+    try:
+        response = session.post(url, params={}, headers=default_headers)
+        if response.status_code // 100 == 2:
+            return response.json()
+        return response.json()
+    finally:
+        session.close()
