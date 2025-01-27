@@ -102,6 +102,8 @@ class AlertFactory:
                                                         ),
                                                         'indent_raised_date': alert_data.get('indent_raised_date', None),
                                                         'dry_out_in_days': str(alert_data.get('dry_out_in_days', '1')),
+                                                        'servicing_plant_id': str(alert_data.get('servicing_plant_id', '')),
+                                                        'servicing_plant_name': str(alert_data.get('servicing_plant_name', '')),
                                                         'progress_rate': 1,
                                                         'origin_altid': alert_data.get('origin_altid',''),
                                                         'raw_data': {}}).create()
