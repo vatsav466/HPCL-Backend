@@ -802,19 +802,10 @@ async def indentdryout_get_carry_fwd_indents(data: Indentdryout_Get_Carry_Fwd_In
     ...
 
 
-# Action download_dryout_report
-@router.post('/download_dryout_report', tags=['IndentDryOut'])
-async def indentdryout_download_dryout_report(data: Indentdryout_Download_Dryout_ReportParams):
-    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
-    for record in data.filters:
-        if record.value:
-            if record.key == "plant":
-                record.key = "terminal_plant_id"
-            if len(record.value) == 1:
-                where_clause.append(f"{record.key}='{record.value[0]}'")
-            else:
-                where_clause.append(f"{record.key} in {tuple(record.value)}")
-    conditions = ' AND '.join(where_clause)
-    query = "select  sap_id as dealer_code, location_name as name, progress_rate as present_stage, id as alert_id," \
-            "indent_no as indent_no, product_code as product_code, dry_out_in_days " \
-            f"from alerts where indent_status != 'Cancelled' and {conditions}"
+# Action get_dryout_report
+@router.post('/get_dryout_report', tags=['IndentDryOut'])
+async def indentdryout_get_dryout_report(data: Indentdryout_Get_Dryout_ReportParams):
+    dry_out_data = await dry_out_analysis._get_dry_out_ims_report(
+        dry_out_in_days=data.dry_out_in_days
+    )
+    return {"status": True, "message": "Success", "data": dry_out_data}
