@@ -165,7 +165,11 @@ def insertToDB(data, table_name, indexing_col=()):
     '''
     print(columns_formatted)
     #cur.execute(create_table_index)
-
+    #renaming the column value of month_name from full letters to first three charecters
+    data = data.with_columns(
+    pl.col("month_name").map_elements(lambda x: x[:3] if len(x) >= 3 else x).alias("month_name")
+)
+    data = data.rename({'FISCAL_YEAR':'fiscal_year'})
     sql = f"""SELECT * FROM "{table_name}" LIMIT 1"""
     cur.execute(sql)
     column_names = [desc[0] for desc in cur.description]
@@ -185,7 +189,6 @@ def insertToDB(data, table_name, indexing_col=()):
         '''
         print(query)
         
-        data = data.rename({'FISCAL_YEAR':'fiscal_year'})
         for g, split_df in data.group_by(len(data)// 10000000):
             csv_file = f'/tmp/{table_name}.csv'
             split_df.write_csv(csv_file, separator='~')
