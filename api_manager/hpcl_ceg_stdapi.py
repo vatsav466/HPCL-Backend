@@ -457,6 +457,31 @@ async def delete(id: str):
     return await MomLevelFinalMetaData.delete(id)
 
 
+@router.post('/industryperformance', response_model=IndustryPerformance, tags=['IndustryPerformance'])
+async def create(inputObj: IndustryPerformanceCreate):
+    return await inputObj.create()
+
+
+@router.put('/industryperformance', response_model=IndustryPerformance, tags=['IndustryPerformance'])
+async def update(inputObj: IndustryPerformance):
+    return await inputObj.modify()
+
+
+@router.get('/industryperformance/{id}', response_model=IndustryPerformance, tags=['IndustryPerformance'])
+async def get(id: str):
+    return await IndustryPerformance.get(id, skip_secrets=True)
+
+
+@router.get('/industryperformance', response_model=IndustryPerformanceGetResp, tags=['IndustryPerformance'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await IndustryPerformance.get_all(params, skip_secrets=True)
+
+
+@router.delete('/industryperformance/{id}', tags=['IndustryPerformance'])
+async def delete(id: str):
+    return await IndustryPerformance.delete(id)
+
+
 @router.post('/consumerpumptankdelivery', response_model=ConsumerPumpTankDelivery, tags=['ConsumerPumpTankDelivery'])
 async def create(inputObj: ConsumerPumpTankDeliveryCreate):
     return await inputObj.create()

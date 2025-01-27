@@ -2747,6 +2747,120 @@ class MomLevelFinalMetaDataGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class IndustryPerformanceSchema(UrdhvaPostgresBase):
+    __tablename__ = 'industry_performance'
+    
+    prod1_1: Mapped[typing.Optional[str]] = mapped_column("prod1_1", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sbu__name: Mapped[typing.Optional[str]] = mapped_column("sbu__name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    statename: Mapped[typing.Optional[str]] = mapped_column("statename", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    company__name: Mapped[typing.Optional[str]] = mapped_column("company__name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    product_name: Mapped[typing.Optional[str]] = mapped_column("product_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    distname: Mapped[typing.Optional[str]] = mapped_column("distname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    prod2: Mapped[typing.Optional[str]] = mapped_column("prod2", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    comname: Mapped[typing.Optional[str]] = mapped_column("comname", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    psu_pvt: Mapped[typing.Optional[str]] = mapped_column("psu_pvt", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    statecode: Mapped[typing.Optional[str]] = mapped_column("statecode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    orgrocd: Mapped[typing.Optional[str]] = mapped_column("orgrocd", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    dist: Mapped[typing.Optional[str]] = mapped_column("dist", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    prod1: Mapped[typing.Optional[str]] = mapped_column("prod1", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    distcode: Mapped[typing.Optional[str]] = mapped_column("distcode", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    netweight_tmt: Mapped[typing.Optional[float]] = mapped_column("netweight_tmt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    comcode: Mapped[typing.Optional[int]] = mapped_column("comcode", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    code: Mapped[typing.Optional[str]] = mapped_column("code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    productcode: Mapped[typing.Optional[int]] = mapped_column("productcode", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    zone__name: Mapped[typing.Optional[str]] = mapped_column("zone__name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    region__name: Mapped[typing.Optional[str]] = mapped_column("region__name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    new_code: Mapped[typing.Optional[str]] = mapped_column("new_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    fiscal_year: Mapped[typing.Optional[str]] = mapped_column("fiscal_year", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    co_name: Mapped[typing.Optional[str]] = mapped_column("co_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    month_name: Mapped[typing.Optional[str]] = mapped_column("month_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    netweight_tmt: Mapped[typing.Optional[float]] = mapped_column("netweight_tmt", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    comp_type: Mapped[typing.Optional[str]] = mapped_column("comp_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class IndustryPerformanceCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'industry_performance'
+    
+    prod1_1: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    sbu__name: typing.Optional[str] = pydantic.Field("", **{})
+    statename: typing.Optional[str] = pydantic.Field("", **{})
+    company__name: typing.Optional[str] = pydantic.Field("", **{})
+    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    distname: typing.Optional[str] = pydantic.Field("", **{})
+    prod2: typing.Optional[str] = pydantic.Field("", **{})
+    comname: typing.Optional[str] = pydantic.Field("", **{})
+    psu_pvt: typing.Optional[str] = pydantic.Field("", **{})
+    statecode: typing.Optional[str] = pydantic.Field("", **{})
+    orgrocd: typing.Optional[str] = pydantic.Field("", **{})
+    dist: typing.Optional[str] = pydantic.Field("", **{})
+    prod1: typing.Optional[str] = pydantic.Field("", **{})
+    distcode: typing.Optional[str] = pydantic.Field("", **{})
+    netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    comcode: typing.Optional[int] = pydantic.Field(0, **{})
+    code: typing.Optional[str] = pydantic.Field("", **{})
+    productcode: typing.Optional[int] = pydantic.Field(0, **{})
+    zone__name: typing.Optional[str] = pydantic.Field("", **{})
+    region__name: typing.Optional[str] = pydantic.Field("", **{})
+    new_code: typing.Optional[str] = pydantic.Field("", **{})
+    fiscal_year: typing.Optional[str] = pydantic.Field("", **{})
+    co_name: typing.Optional[str] = pydantic.Field("", **{})
+    month_name: typing.Optional[str] = pydantic.Field("", **{})
+    netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    comp_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = IndustryPerformanceSchema
+        upsert_keys = []
+        access_key_mapping = ['ORGSBUNAME:bu', 'ORGZONENAME:zone', 'ORGSANAME:sales_area']
+
+
+class IndustryPerformance(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'industry_performance'
+    
+    prod1_1: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    sbu__name: typing.Optional[str] = pydantic.Field("", **{})
+    statename: typing.Optional[str] = pydantic.Field("", **{})
+    company__name: typing.Optional[str] = pydantic.Field("", **{})
+    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    distname: typing.Optional[str] = pydantic.Field("", **{})
+    prod2: typing.Optional[str] = pydantic.Field("", **{})
+    comname: typing.Optional[str] = pydantic.Field("", **{})
+    psu_pvt: typing.Optional[str] = pydantic.Field("", **{})
+    statecode: typing.Optional[str] = pydantic.Field("", **{})
+    orgrocd: typing.Optional[str] = pydantic.Field("", **{})
+    dist: typing.Optional[str] = pydantic.Field("", **{})
+    prod1: typing.Optional[str] = pydantic.Field("", **{})
+    distcode: typing.Optional[str] = pydantic.Field("", **{})
+    netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    comcode: typing.Optional[int] = pydantic.Field(0, **{})
+    code: typing.Optional[str] = pydantic.Field("", **{})
+    productcode: typing.Optional[int] = pydantic.Field(0, **{})
+    zone__name: typing.Optional[str] = pydantic.Field("", **{})
+    region__name: typing.Optional[str] = pydantic.Field("", **{})
+    new_code: typing.Optional[str] = pydantic.Field("", **{})
+    fiscal_year: typing.Optional[str] = pydantic.Field("", **{})
+    co_name: typing.Optional[str] = pydantic.Field("", **{})
+    month_name: typing.Optional[str] = pydantic.Field("", **{})
+    netweight_tmt: typing.Optional[float] = pydantic.Field(0.0, **{})
+    comp_type: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = IndustryPerformanceSchema
+        upsert_keys = []
+        access_key_mapping = ['ORGSBUNAME:bu', 'ORGZONENAME:zone', 'ORGSANAME:sales_area']
+
+
+class IndustryPerformanceGetResp(pydantic.BaseModel):
+    data: typing.List[IndustryPerformance]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class ConsumerPumpTankDeliverySchema(UrdhvaPostgresBase):
     __tablename__ = 'consumer_pump_tank_delivery'
     
