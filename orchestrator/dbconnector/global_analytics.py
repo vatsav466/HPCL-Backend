@@ -3651,8 +3651,8 @@ class GlobalAnalytics:
             resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
-            current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['Total_Sales'].sum().reset_index()
-            previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Month')['Total_Sales'].sum().reset_index()
+            current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['sales_volume'].sum().reset_index()
+            previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Month')['sales_volume'].sum().reset_index()
 
             resp = pd.merge(current_year, previous_year, on='Month', how='outer', suffixes=('_current', '_previous'))
             final_data = []
@@ -3661,8 +3661,8 @@ class GlobalAnalytics:
                     "Month": row['Month'][:3],
                     "Current_Year": financial_year,
                     "Previous_Year": prev_financial_year,
-                    "Current_Sales": round(float(row['Total_Sales_current'])/10000000, 2) if pd.notnull(row['Total_Sales_current']) else 0,
-                    "Previous_Sale": round(float(row['Total_Sales_previous'])/10000000, 2) if pd.notnull(row['Total_Sales_previous']) else 0
+                    "Current_Sales": round(float(row['sales_volume_current'])/1000000, 2) if pd.notnull(row['sales_volume_current']) else 0,
+                    "Previous_Sale": round(float(row['sales_volume_previous'])/1000000, 2) if pd.notnull(row['sales_volume_previous']) else 0
                 }
                 final_data.append(comparison)
             month_order = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
@@ -3682,20 +3682,20 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
             if "Month" in filter_keys and "ZOName" not in filter_keys:
-                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName"])['Total_Sales'].sum().reset_index()
-                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName"])['Total_Sales'].sum().reset_index()
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName"], how='outer', suffixes=('_current', '_previous'))
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName"])['Total_Sales'].sum().reset_index()
-                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName"])['Total_Sales'].sum().reset_index()
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName"], how='outer', suffixes=('_current', '_previous'))
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['Total_Sales'].sum().reset_index()
-                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['Total_Sales'].sum().reset_index()
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName", "SAName"], how='outer', suffixes=('_current', '_previous'))
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['Total_Sales'].sum().reset_index()
-                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['Total_Sales'].sum().reset_index()
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName", "SAName", "DistributorName"], how='outer', suffixes=('_current', '_previous'))
             final_data = []
             for _, row in resp.iterrows():
@@ -3703,8 +3703,8 @@ class GlobalAnalytics:
                     "Month": row['Month'][:3],
                     "Current_Year": financial_year,
                     "Previous_Year": prev_financial_year,
-                    "Current_Sales": round(float(row['Total_Sales_current'])/10000000, 2) if pd.notnull(row['Total_Sales_current']) else 0,
-                    "Previous_Sale": round(float(row['Total_Sales_previous'])/10000000, 2) if pd.notnull(row['Total_Sales_previous']) else 0
+                    "Current_Sales": round(float(row['sales_volume_current'])/1000000, 2) if pd.notnull(row['sales_volume_current']) else 0,
+                    "Previous_Sale": round(float(row['sales_volume_previous'])/1000000, 2) if pd.notnull(row['sales_volume_previous']) else 0
                 }
                 if "ZOName" in row:
                     comparison.update({"ZOName": row["ZOName"]})
@@ -4261,14 +4261,16 @@ class GlobalAnalytics:
                 total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
             else:
                 total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
-            total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
+            total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName", "Category", "SubCategory", "JDEDistributorCode"'
             resp = await function(query=total_consumers_query_ )
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            resp.rename({"SubCategory": "ConsumerType"}, inplace=True)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
             resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["Category"], as_index=False).agg({
+            resp = resp.groupby(["ZOName"], as_index=False).agg({
                         "Total_Consumers": "sum",
                     })
             # Fill missing values for numerical columns
@@ -4314,24 +4316,17 @@ class GlobalAnalytics:
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
-                if "Category" in filter_keys and "SubCategory" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category", "SubCategory"], as_index=False).agg({
+                
+                if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName"], as_index=False).agg({
                         "Total_Consumers": "sum",
                     })
-                if "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category", "SubCategory","ZOName"], as_index=False).agg({
+                elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName", "SAName"], as_index=False).agg({
                         "Total_Consumers": "sum",
                     })
-                if "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category","SubCategory", "ZOName", "ROName"], as_index=False).agg({
-                        "Total_Consumers": "sum",
-                    })
-                elif "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category","SubCategory","ZOName", "ROName", "SAName"], as_index=False).agg({
-                        "Total_Consumers": "sum",
-                    })
-                elif "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category","SubCategory","ZOName", "ROName", "SAName", "DistributorName"],
+                elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName", "SAName", "DistributorName"],
                                                 as_index=False).agg({
                         "Total_Consumers": "sum",
                     })
@@ -5209,13 +5204,13 @@ class GlobalAnalytics:
                 production_zone_query_  += ' WHERE '
                 production_zone_query_  += ' AND '.join(conditions)
             production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "process_date", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
         else:
             if not "where" in production_zone_query_.lower():
                 production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "process_date", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
             resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
@@ -5278,13 +5273,13 @@ class GlobalAnalytics:
                 handled_cylinder_query_ += ' WHERE '
                 handled_cylinder_query_ += ' AND '.join(conditions)
             handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant", "process_date" '
+            handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
         else:
             if not "where" in handled_cylinder_query_.lower():
                 handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            handled_cylinder_query_ += ' GROUP BY "zone", "plant", "process_date" '
+            handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
             resp = await function(query=handled_cylinder_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
