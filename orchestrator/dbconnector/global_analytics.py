@@ -5294,9 +5294,9 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "data": resp}
         # Execute the query
         resp = await function(query=handled_cylinder_query_)
+        resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
-        resp = pd.DataFrame(resp)
         for each_float_col in ["Cylinder_Filled"]:
             if each_float_col in resp.columns:
                 resp[each_float_col] = resp[each_float_col].fillna(0.0)
