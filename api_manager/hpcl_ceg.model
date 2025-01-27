@@ -1213,6 +1213,40 @@ Model MomLevelFinalMetaData {
     }
 
 }
+Model IndustryPerformance {
+
+    Prod1_1 optional str
+    CATEGORY optional str
+    SBU_Name optional str
+    STATENAME optional str
+    Company_Name optional str
+    ProductName optional str
+    DISTNAME optional str
+    Prod2 optional str
+    COMNAME optional str
+    PSU_PVT optional str
+    STATECODE optional str
+    ORGROCD optional str
+    Dist optional str
+    Prod1 optional str
+    DISTCODE optional str
+    NETWEIGHT_TMT optional float
+    COMCODE optional int
+    Code optional str
+    PRODUCTCODE optional int
+    Zone_Name optional str
+    Region_Name optional str
+    NewCode optional str
+    fiscal_year optional str
+    CoName optional str
+    month_name optional str
+    NETWEIGHT_TMT optional float
+    COMP_TYPE optional str
+    
+    Config=> {
+        access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'
+    }
+}
 
 Model ConsumerPumpTankDelivery {
     bu optional str
