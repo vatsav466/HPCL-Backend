@@ -13,6 +13,7 @@ from hpcl_ceg_enum import AlertStatus as AlertStatus
 import orchestrator.alerting.alert_helper as alert_helper
 from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.connection_mapping as connection_mapping
+# import orchestrator.analytics.vts_analysis as vts_analysis
 from charts_actions import charts_connection_vault_routing
 import orchestrator.alerting.alert_manager as alert_manager
 from orchestrator.alerting.alert_manager import close_alert
@@ -745,7 +746,8 @@ class IndentDryOut:
                         AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                         AND b."CARD_STATUS" = 'R'
                         AND TRUNC(b."LOADED_ON") = TRUNC(TO_DATE('{today_date}', 'YYYY-MM-DD HH24:MI:SS')) 
-                    GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+                    GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON"
+                    ORDER BY b."LOADED_ON" DESC"""
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
         input_data = {
@@ -800,7 +802,8 @@ class IndentDryOut:
                                 AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                 AND b."CARD_STATUS" = 'I'
                                 AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
-                            GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+                            GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON"
+                            ORDER BY b."LOADED_ON" DESC"""
         # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -899,7 +902,8 @@ class IndentDryOut:
                                 AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                 AND b."CARD_STATUS" = 'O'
                                 AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
-                            GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+                            GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON"
+                            ORDER BY b."LOADED_ON" DESC"""
         # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1415,7 +1419,8 @@ class IndentDryOut:
                                         AND a."TRUCK_REGNO" = b."TRUCK_REGNO"
                                         AND b."CARD_STATUS" = 'O'
                                         AND b."LOADED_ON" >= TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD')
-                                    GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" """
+                                    GROUP BY a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON"
+                                    ORDER BY b."LOADED_ON" DESC"""
         # AND b."LOADED_ON" BETWEEN TO_DATE('{prod_reqd_dt}', 'YYYY-MM-DD') AND TO_DATE('{today_date}', 'YYYY-MM-DD')
         # print("connection_name: ", self.params['connection_name'])
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
