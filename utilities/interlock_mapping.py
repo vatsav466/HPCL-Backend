@@ -54,6 +54,8 @@ tas_interlock_mapping = [
 
                          {"sop_id": "SOP001", "interlock_name": "Tank overfill prevention(ROSV)", "workflow_name": ""},
                          {"sop_id": "SOP001", "interlock_name": "Tank Overfill Protection", "workflow_name": "Tank Overfill Protection"},
+                         {"sop_id": "SOP001", "interlock_name": "Tank Overfill Protection", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
+                         {"sop_id": "SOP002", "interlock_name": "Plant ESD Closure of Effect", "workflow_name": "TAS ESD CLOSURE OF EFFECT SOP002"},
                          {"sop_id": "SOP002", "interlock_name": "Plant ESD(closure of tank ROSOVs)", "workflow_name": ""},
                          {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS", "workflow_name": ""},
                          {"sop_id": "SOP003", "interlock_name": "Plant ESD(Power shutdown)", "workflow_name": ""},
@@ -63,8 +65,11 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP007", "interlock_name": "Tank overfill prevention close inlet MOV", "workflow_name": "Tank overfill prevention close inlet MOV"},
                          {"sop_id": "SOP007", "interlock_name": "ESD is Under Maintenance", "workflow_name": "TAS ESD MAINTENANCE"},
                          {"sop_id": "SOP009", "interlock_name": "Plant ESD(Closure of tank MOVS)", "workflow_name": ""},
+                         {"sop_id": "SOP010", "interlock_name": "ROSOV is Under Maintenance", "workflow_name": "TAS ROSOV UNDER MAINTENANCE SOP010"},
                          {"sop_id": "SOP011", "interlock_name": "Dyke drain valve position indication", "workflow_name": ""},
+                         {"sop_id": "SOP011", "interlock_name": "VFT is Under Maintenance", "workflow_name": "TAS TANK VFT UNDER MAINTENANCE SOP011"},
                          {"sop_id": "SOP012", "interlock_name": "Pulse Security Alarm", "workflow_name": ""},
+                         {"sop_id": "SOP012", "interlock_name": "Radar is Under Maintenance", "workflow_name": "TAS TANK RADAR UNDER MAINTENANCE SOP012"},
                          {"sop_id": "SOP013", "interlock_name": "K factors", "workflow_name": ""},
                          {"sop_id": "SOP014", "interlock_name": "No flow alarm", "workflow_name": ""},
                          {"sop_id": "SOP015", "interlock_name": "Low flow alarm", "workflow_name": ""},
@@ -270,21 +275,21 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
     if not bu or (not interlock_name and not sop_id):
         return {}
     mapping = eval(f'{urdhva_base.utilities.snake_case(bu)}_interlock_mapping')
-    # print("mapping --> ", mapping)
+    print("mapping --> ", mapping)
     filtered_data = []
     if sop_id:
-        # print("sop_id-->", sop_id)
+        print("sop_id-->", sop_id)
         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower(), mapping))
-        # print(f"Entries with sop_id '{sop_id}':")
+        print(f"Entries with sop_id '{sop_id}':")
         # for item in filtered_data:
         #     print(item)
         if len(filtered_data) > 1 and interlock_name:
             filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), filtered_data))
-            # print("filtered_data(1)------>", filtered_data)
+            print("filtered_data(1)------>", filtered_data)
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-        # print("filtered_data(2)", filtered_data)
-    # print("filtered_data--->", filtered_data[0])
+        print("filtered_data(2)", filtered_data)
+    print("filtered_data--->", filtered_data[0])
     return filtered_data[0] if filtered_data else {}
 
 
