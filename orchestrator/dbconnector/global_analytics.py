@@ -4261,14 +4261,16 @@ class GlobalAnalytics:
                 total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
             else:
                 total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
-            total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
+            total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName", "Category", "SubCategory", "JDEDistributorCode"'
             resp = await function(query=total_consumers_query_ )
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            resp.rename({"SubCategory": "ConsumerType"}, inplace=True)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
             resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["Category"], as_index=False).agg({
+            resp = resp.groupby(["ZOName"], as_index=False).agg({
                         "Total_Consumers": "sum",
                     })
             # Fill missing values for numerical columns
@@ -4314,24 +4316,17 @@ class GlobalAnalytics:
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
-                if "Category" in filter_keys and "SubCategory" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category", "SubCategory"], as_index=False).agg({
+                
+                if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName"], as_index=False).agg({
                         "Total_Consumers": "sum",
                     })
-                if "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category", "SubCategory","ZOName"], as_index=False).agg({
+                elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName", "SAName"], as_index=False).agg({
                         "Total_Consumers": "sum",
                     })
-                if "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category","SubCategory", "ZOName", "ROName"], as_index=False).agg({
-                        "Total_Consumers": "sum",
-                    })
-                elif "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category","SubCategory","ZOName", "ROName", "SAName"], as_index=False).agg({
-                        "Total_Consumers": "sum",
-                    })
-                elif "Category" in filter_keys and "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                    grouped_resp = resp.groupby(["Category","SubCategory","ZOName", "ROName", "SAName", "DistributorName"],
+                elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName", "SAName", "DistributorName"],
                                                 as_index=False).agg({
                         "Total_Consumers": "sum",
                     })
