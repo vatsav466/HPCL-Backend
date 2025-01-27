@@ -3651,8 +3651,8 @@ class GlobalAnalytics:
             resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
-            current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['Total_Sales'].sum().reset_index()
-            previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Month')['Total_Sales'].sum().reset_index()
+            current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['sales_volume'].sum().reset_index()
+            previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Month')['sales_volume'].sum().reset_index()
 
             resp = pd.merge(current_year, previous_year, on='Month', how='outer', suffixes=('_current', '_previous'))
             final_data = []
@@ -3661,8 +3661,8 @@ class GlobalAnalytics:
                     "Month": row['Month'][:3],
                     "Current_Year": financial_year,
                     "Previous_Year": prev_financial_year,
-                    "Current_Sales": round(float(row['Total_Sales_current'])/10000000, 2) if pd.notnull(row['Total_Sales_current']) else 0,
-                    "Previous_Sale": round(float(row['Total_Sales_previous'])/10000000, 2) if pd.notnull(row['Total_Sales_previous']) else 0
+                    "Current_Sales": round(float(row['sales_volume_current'])/1000000, 2) if pd.notnull(row['sales_volume_current']) else 0,
+                    "Previous_Sale": round(float(row['sales_volume_previous'])/1000000, 2) if pd.notnull(row['sales_volume_previous']) else 0
                 }
                 final_data.append(comparison)
             month_order = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
@@ -3682,20 +3682,20 @@ class GlobalAnalytics:
                 lambda x: reverse_month_mapping.get(x, x)
             )
             if "Month" in filter_keys and "ZOName" not in filter_keys:
-                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName"])['Total_Sales'].sum().reset_index()
-                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName"])['Total_Sales'].sum().reset_index()
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName"], how='outer', suffixes=('_current', '_previous'))
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName"])['Total_Sales'].sum().reset_index()
-                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName"])['Total_Sales'].sum().reset_index()
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName"], how='outer', suffixes=('_current', '_previous'))
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['Total_Sales'].sum().reset_index()
-                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['Total_Sales'].sum().reset_index()
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName", "SAName"], how='outer', suffixes=('_current', '_previous'))
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['Total_Sales'].sum().reset_index()
-                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['Total_Sales'].sum().reset_index()
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName", "SAName", "DistributorName"], how='outer', suffixes=('_current', '_previous'))
             final_data = []
             for _, row in resp.iterrows():
@@ -3703,8 +3703,8 @@ class GlobalAnalytics:
                     "Month": row['Month'][:3],
                     "Current_Year": financial_year,
                     "Previous_Year": prev_financial_year,
-                    "Current_Sales": round(float(row['Total_Sales_current'])/10000000, 2) if pd.notnull(row['Total_Sales_current']) else 0,
-                    "Previous_Sale": round(float(row['Total_Sales_previous'])/10000000, 2) if pd.notnull(row['Total_Sales_previous']) else 0
+                    "Current_Sales": round(float(row['sales_volume_current'])/1000000, 2) if pd.notnull(row['sales_volume_current']) else 0,
+                    "Previous_Sale": round(float(row['sales_volume_previous'])/1000000, 2) if pd.notnull(row['sales_volume_previous']) else 0
                 }
                 if "ZOName" in row:
                     comparison.update({"ZOName": row["ZOName"]})

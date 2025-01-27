@@ -867,7 +867,7 @@ LIMIT 10000;''',
                                             "Month",
                                             "Month_Number",
                                             "Financial_Year",
-                                            sum("TotalSalesYesterday") as "Total_Sales",
+                                            sum("sales_volume") as "sales_volume",
                                             "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"
                                         from
                                             "lpg_monthly_cdcms_sales_summary" ''',
@@ -1045,21 +1045,21 @@ ORDER BY
                 ''',
                 
     'cdcms_current_year_sales':f'''select 
-                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
+                                        round(sum("sales_volume")/1000000, 2) as "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
                                         "Financial_Year"='{financial_year}' ''',
     
     'cdcms_current_month_sales':f'''select
-                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
+                                        round(sum("sales_volume")/1000000, 2) as "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
                                         "Financial_Year"='{financial_year}' AND "Month"='{current_month}' ''',
     
     'cdcms_current_week_sales': f''' SELECT 
-                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
+                                        round(sum("sales_volume")/1000000, 2) as "total_sales"
                                     FROM
                                         "lpg_cdcms_sales_summary"
                                     WHERE 
@@ -1067,17 +1067,17 @@ ORDER BY
                                         AND "Execution_Date" <= CURRENT_DATE; ''',
     
     'cdcms_current_date_sales':f'''select
-                                        round(sum("TotalSalesYesterday")/100000, 2) as "total_sales" 
+                                        round(sum("sales_volume")/1000000, 2) as "total_sales" 
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
     'cdcms_current_date_bookings':f'''select
-                                        round(sum("BookingReceivedYesterday")/100000, 2) as "Bookings" 
+                                        round(sum("bookings_volume")/1000000, 2) as "Bookings" 
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
     'cdcms_current_date_pending':f'''select
-                                        round(sum("Total_Pending")/100000, 2) as "Pending"
+                                        round(sum("pendings_volume")/1000000, 2) as "Pending"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
