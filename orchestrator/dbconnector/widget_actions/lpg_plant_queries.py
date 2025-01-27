@@ -1043,23 +1043,23 @@ ORDER BY
                     from
                         "lpg_gd_rejections"
                 ''',
-                
-    'cdcms_current_year_sales':f'''select 
-                                        round(sum("sales_volume")/1000000, 2) as "total_sales"
-                                    from
+                    
+    'cdcms_current_year_sales':f''' SELECT 
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+                                    FROM 
                                         "lpg_monthly_cdcms_sales_summary"
-                                    where
+                                    WHERE 
                                         "Financial_Year"='{financial_year}' ''',
     
     'cdcms_current_month_sales':f'''select
-                                        round(sum("sales_volume")/1000000, 2) as "total_sales"
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
                                         "Financial_Year"='{financial_year}' AND "Month"='{current_month}' ''',
     
     'cdcms_current_week_sales': f''' SELECT 
-                                        round(sum("sales_volume")/1000000, 2) as "total_sales"
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     FROM
                                         "lpg_cdcms_sales_summary"
                                     WHERE 
@@ -1067,20 +1067,23 @@ ORDER BY
                                         AND "Execution_Date" <= CURRENT_DATE; ''',
     
     'cdcms_current_date_sales':f'''select
-                                        round(sum("sales_volume")/1000000, 2) as "total_sales" 
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
+
     'cdcms_current_date_bookings':f'''select
-                                        round(sum("bookings_volume")/1000000, 2) as "Bookings" 
+                                        ROUND(CAST(SUM("bookings_volume") / 1000000 AS NUMERIC), 2) AS "Bookings"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
+
     'cdcms_current_date_pending':f'''select
-                                        round(sum("pendings_volume")/1000000, 2) as "Pending"
+                                        ROUND(CAST(SUM("pendings_volume") / 1000000 AS NUMERIC), 2) AS "Pending"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                 ''',
+
     'lpg_operations_current_month_productivity': f''' SELECT 
                                                         ROUND(AVG("productivity.normal.productivity")) 
                                                     FROM 
