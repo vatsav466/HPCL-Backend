@@ -760,7 +760,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                 WHERE 
                     cd.rn = 1 or cd.rn is null
                 ORDER BY 
-                    a.sap_id, a.indent_no;"""
+                    a.indent_no desc;"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
