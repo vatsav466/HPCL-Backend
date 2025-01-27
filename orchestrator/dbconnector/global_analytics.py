@@ -983,6 +983,20 @@ class GlobalAnalytics:
         """
         return await m60_performance.m60_performance([rec.dict() for rec in filters],
                                                      [rec.dict() for rec in cross_filters], drill_state)
+    @staticmethod
+    async def industry_performance(filters, cross_filters, drill_state):
+        """
+        Fetches the sales performance data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the sales performance data.
+        """
+        return await industry_performance.industry_performance([rec.dict() for rec in filters],
+                                                     [rec.dict() for rec in cross_filters], drill_state)
 
     @staticmethod
     async def m60_performance_old(filters, cross_filters, drill_state):
