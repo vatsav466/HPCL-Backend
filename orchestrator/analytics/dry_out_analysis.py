@@ -669,7 +669,8 @@ async def _get_ims_day_wise_report(report_date: str):
     stats_resp = stats_resp.drop_duplicates(subset=["LOCN_CODE", "INDENT_NO", "DEALER_CODE", "PROD"], keep='first')
     return stats_resp.to_dict(orient='records')
 
-async def _get_dry_out_ims_report(dry_out_in_days='1'):
+async def _get_dry_out_ims_report(dry_out_in_days=['1']):
+    dry_out_in_days = "', '".join(x for x in dry_out_in_days)
     query = f"""WITH CombinedData AS (
                     SELECT 
                         ir."LOCN_CODE",
@@ -749,7 +750,7 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
                      FROM alerts 
                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
                      AND indent_status NOT IN ('Cancelled', 'Completed')
-                     AND dry_out_in_days = '{dry_out_in_days}') a
+                     AND dry_out_in_days IN ('{dry_out_in_days}')) a
                 LEFT JOIN 
                     CombinedData cd
                 ON 

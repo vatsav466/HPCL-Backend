@@ -1717,9 +1717,8 @@ class Indentdryout_Get_Carry_Fwd_IndentsParams(pydantic.BaseModel):
     pass
 
 
-class Indentdryout_Download_Dryout_ReportParams(pydantic.BaseModel):
-    filters: typing.List[IndentDryOutDataFiltersCreate]
-    report_name: str
+class Indentdryout_Get_Dryout_ReportParams(pydantic.BaseModel):
+    dry_out_in_days: typing.List[str]
 
 
 class LpgOperationsSchema(UrdhvaPostgresBase):

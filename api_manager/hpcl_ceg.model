@@ -871,9 +871,8 @@ Model IndentDryOut {
 
     }
 
-    Action=> download_dryout_report {
-        filters list IndentDryOutDataFilters
-        report_name str
+    Action=> get_dryout_report {
+        dry_out_in_days list str
     }
     
      Config=> {
