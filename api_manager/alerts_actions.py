@@ -187,14 +187,12 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
             "Reject": "Rejected"
         },
         "category": {
-            "Operations": "operations",
-            "Sales": "sales",
-            "Others": "others"
         },
         "rca_reason": {
         }
     }
-    if data.alert_section in ['VA']:
+    if data.alert_section in ['VA', 'VTS']:
         del close_alert_details['actions']['Reject']
-    close_alert_details["rca_reason"] = connection_mapping.rca_reason.get(data.interlock_name, ["Others"])
+    close_alert_details["category"] = connection_mapping.alert_action_category.get(data.alert_section, {"Others": "Others"})
+    close_alert_details["rca_reason"] = connection_mapping.alert_action_rca_reason.get(data.alert_section, ["Others"])
     return close_alert_details

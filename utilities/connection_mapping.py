@@ -80,6 +80,36 @@ item_name_mapping = {
     "3373000": "POWER 100"
 }
 
+alert_action_category = {
+    "VA": {
+        "Safety": "Safety",
+        "Security": "Security",
+        "Operations": "Operations",
+        "Other": "Other"
+    },
+    "VTS": {
+        "Safety": "Safety",
+        "Pilferage": "Pilferage",
+        "Operations": "Operations"
+    }
+}
+
+alert_action_rca_reason = {
+    "VTS": [
+        "Health Issue",
+        "Person Issue",
+        "Equipment issue",
+        "Location/Outlet Near by",
+        "Other"
+    ],
+    "VA": [
+        "Person issue",
+        "Equipment issue",
+        "Lack of Awareness",
+        "Other"
+    ]
+}
+
 rca_reason = {
     "FIRE/SMOKE": [
         "Short circuit or electrical fault.",
