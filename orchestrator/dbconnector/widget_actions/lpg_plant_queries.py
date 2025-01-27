@@ -994,7 +994,7 @@ ORDER BY
                                         "JDEDistributorCode",
                                         "ExceptionName" as "ExceptionName" ,
                                         SUM("Consumers") AS "Consumers",
-                                        SUM("Refills")  AS "Refills"
+                                        SUM("Refills") AS "Refills"
                                     from
                                         "subsidy_exception_statistics_EC_data" 
                                      ''',

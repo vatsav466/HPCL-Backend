@@ -5522,7 +5522,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
-        yesterday = datetime.now() - relativedelta(days=1)
         lpg_exception_stats_ = lpg_plant_queries.lpg_plant_query.get("subsidy_exception_stats")
         _filters = []
         if cross_filters:
@@ -5552,29 +5551,22 @@ class GlobalAnalytics:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
             lpg_exception_stats_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_exception_stats_, access_filters, drill_state)
-            lpg_exception_stats_  = f'''
-                                    SELECT 
-                                        "ExceptionName" AS "ExceptionName",
-                                        SUM("Consumers") AS "Consumers",
-                                        SUM("Refills")  AS "Refills"
-                                        FROM
-                                        "subsidy_exception_statistics_EC_data"
-                                    GROUP BY
-                                        "ExceptionName" '''
+            if "where" not in lpg_exception_stats_.lower():
+                lpg_exception_stats_  += ' WHERE "ZOName" IS NOT NULL'
+            else:
+                lpg_exception_stats_  += ' AND "ZOName" IS NOT NULL'
+            lpg_exception_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode", "ExceptionName"'
             resp = await function(query=lpg_exception_stats_ )
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["ExceptionName","ZOName"], as_index=False
+            resp = resp.groupby(["ExceptionName"], as_index=False
                                 ).agg({"Consumers": "sum","Refills": "sum" })
-            for each_float_col in ["Consumers","Refills"]:
+            
+            for each_float_col in ["Consumers", "Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in [
-                "ZOName","ROName","SAName","JDEDistributorCode","ExceptionName"
-            ]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            resp["ExceptionName"] = resp["ExceptionName"].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
 
         # Execute the query
@@ -5641,13 +5633,17 @@ class GlobalAnalytics:
                 lpg_failure_stats_  += ' WHERE '
                 lpg_failure_stats_  += ' AND '.join(conditions)
             lpg_failure_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_failure_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","PaymentErrorName"'
+            lpg_failure_stats_  += ' GROUP BY "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","PaymentErrorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyFailureData.get_clause_conditions(formated=True)]
             lpg_failure_stats_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_failure_stats_, access_filters, drill_state)
-
-            resp = await function(query=lpg_failure_stats_ )
+            if "where" not in lpg_failure_stats_.lower():
+                lpg_failure_stats_  += ' WHERE "ZOName" IS NOT NULL'
+            else:
+                lpg_failure_stats_  += ' AND "ZOName" IS NOT NULL'
+            lpg_failure_stats_  += ' GROUP BY "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","PaymentErrorName"'
+            resp = await function(query=lpg_failure_stats_)
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
