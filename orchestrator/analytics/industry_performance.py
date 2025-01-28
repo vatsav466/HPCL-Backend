@@ -124,20 +124,32 @@ def get_group_by_filter_key(cross_filters):
     :param cross_filters:
     :return:
     """
+    print("cross_filters --> ", cross_filters)
     group_by_filter = '"Company_Name"' # added Company_Name key for the company wise grouping
     if cross_filters:
+        print(" if cross_filters --> ", cross_filters)
         index = 0
         if len([rec['value'] for rec in cross_filters if 'lubes' in rec['value'].lower()
                                                          and rec['key'].strip('"') == "SBU_Name"]):
+            print(" into if cross_filters --> ", cross_filters)                                                         
             for key in [rec['key'] for rec in cross_filters]:
+                print(" into for key --> ", key)
                 if key in Lubes_Filters and Lubes_Filters.index(key) > index:
+                    print(" into if key --> ", key)
                     index = Lubes_Filters.index(key)
+                    print(" into if index --> ", index)
             group_by_filter = Lubes_Filters[index + 1]
+            print(" into if group_by_filter --> ", group_by_filter)
         else:
+            print(" into else cross_filters --> ", cross_filters)
             for key in [rec['key'] for rec in cross_filters]:
+                print(" into else key --> ", key)
                 if key in Base_Filters and Base_Filters.index(key) > index:
+                    print(" into else key --> ", key)
                     index = Base_Filters.index(key)
+                    print(" into else index --> ", index)
             group_by_filter = Base_Filters[index + 1]
+            print(" into else group_by_filter --> ", group_by_filter)
     return group_by_filter
 
 
@@ -274,17 +286,17 @@ async def industry_performance(filters, cross_filters, drill_state):
             else:
                 filter_dates.append([start_date, end_date])
         # For Month level aggregations from month data table
-        for date_range in filter_dates:
-            actual_data.extend(await collect_data([actual], 'industry_performance',
-                                                  where_conditions+Default_Filters, date_range[0], date_range[1],
-                                                  [group_by_filter]))
+        # for date_range in filter_dates:
+        #     actual_data.extend(await collect_data([actual], 'industry_performance',
+        #                                           where_conditions+Default_Filters, date_range[0], date_range[1],
+        #                                           [group_by_filter]))
 
-        # For Month level aggregations from day wise data table
-        # Todo:- for optimization use single query for day filter with or condition
-        for date_range in day_filter_dates:
-            actual_data.extend(await collect_data([actual_d], 'industry_performance',
-                                                  where_conditions + Default_Filters, date_range[0], date_range[1],
-                                                  [group_by_filter], '"DAY_ID"'))
+        # # For Month level aggregations from day wise data table
+        # # Todo:- for optimization use single query for day filter with or condition
+        # for date_range in day_filter_dates:
+        #     actual_data.extend(await collect_data([actual_d], 'industry_performance',
+        #                                           where_conditions + Default_Filters, date_range[0], date_range[1],
+        #                                           [group_by_filter], '"DAY_ID"'))
         
         # For Year level aggregations                                                   
         actual_data.extend(await collect_data([actual], 'industry_performance',
@@ -308,10 +320,10 @@ async def industry_performance(filters, cross_filters, drill_state):
                 day_filter_dates.append([start_date_history, end_date_history])
             else:
                 filter_dates.append([start_date_history, end_date_history])
-        for date_range in filter_dates:
-            hist_data.extend(await collect_data([history], 'industry_performance',
-                                                where_conditions_history + Default_Filters, date_range[0],
-                                                date_range[1], [group_by_filter], '"YEARMONTH"'))
+        # for date_range in filter_dates:
+        #     hist_data.extend(await collect_data([history], 'industry_performance',
+        #                                         where_conditions_history + Default_Filters, date_range[0],
+        #                                         date_range[1], [group_by_filter], '"YEARMONTH"'))
         '''
         # Todo:- for optimization use single query for day filter with or condition
         for date_range in day_filter_dates:
@@ -319,6 +331,9 @@ async def industry_performance(filters, cross_filters, drill_state):
                                                 where_conditions_history + Default_Filters, date_range[0],
                                                 date_range[1], [group_by_filter], '"DAY_ID"'))
         '''
+        hist_data.extend(await collect_data([history], 'industry_performance',
+                                                  where_conditions_history, his_year, curr_year,
+                                                  [group_by_filter]))
         if hist_data:
             hist_data = pd.DataFrame(hist_data)
             hist_data = hist_data.groupby(group_by_filter.strip('"'))['IND_ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
