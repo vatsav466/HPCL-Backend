@@ -27,11 +27,7 @@ month_mapping = {
             "Dec": "December"
     }
 
-class LPGCDCMSActions:
-    def __init__(self):
-        ...
-        
-    async def filter_data(self, df, _filters):
+async def filter_data(df, _filters):
         try:
             if _filters:
                 mask = pd.Series(True, index=df.index)
@@ -45,16 +41,18 @@ class LPGCDCMSActions:
             print("Exception in filtering data :", str(e))
         return df
     
-    async def get_financial_year(self):
-        today = datetime.now()
-        if today.month < 4:
-            start_year = today.year - 1
-        else:
-            start_year = today.year
-        end_year = start_year + 1
-        financial_year = f"{start_year}-{end_year}"
-        return financial_year
-    
+async def get_financial_year():
+    today = datetime.now()
+    if today.month < 4:
+        start_year = today.year - 1
+    else:
+        start_year = today.year
+    end_year = start_year + 1
+    financial_year = f"{start_year}-{end_year}"
+    return financial_year
+
+
+class LPGCDCMSActions:        
 
     @staticmethod
     def get_next_level_drill_params(present_group):
@@ -62,7 +60,7 @@ class LPGCDCMSActions:
         
     
     @staticmethod
-    async def lpg_cdcms_actual_vs_historic_sales(self, filters, cross_filters, drill_state):
+    async def lpg_cdcms_actual_vs_historic_sales(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -118,7 +116,7 @@ class LPGCDCMSActions:
             resp = await function(query=lpg_cdcms_sales_comparision_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-            resp = await self.filter_data(resp, _filters)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
             current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['sales_volume'].sum().reset_index()
@@ -142,7 +140,7 @@ class LPGCDCMSActions:
         resp = await function(query=lpg_cdcms_sales_comparision_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        resp = await self.filter_data(resp, _filters)
+        resp = await filter_data(resp, _filters)
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
@@ -192,7 +190,7 @@ class LPGCDCMSActions:
 
     
     @staticmethod
-    async def lpg_cdcms_monthly_sales(self, filters, cross_filters, drill_state):
+    async def lpg_cdcms_monthly_sales(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -200,7 +198,7 @@ class LPGCDCMSActions:
         reverse_month_mapping = {v: k for k, v in month_mapping.items()}
         lpg_cdcms_month_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_month")
 
-        financial_year = await self.get_financial_year()
+        financial_year = await get_financial_year()
         
         _filters = []
         if cross_filters:
@@ -240,7 +238,7 @@ class LPGCDCMSActions:
             resp = await function(query=lpg_cdcms_month_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-            resp = await self.filter_data(resp, _filters)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
             resp['Month_Number'] = resp['Month_Number'].astype(str)
@@ -267,7 +265,7 @@ class LPGCDCMSActions:
                 
         resp = await function(query=lpg_cdcms_month_query_)
         resp = pd.DataFrame(resp)
-        resp = await self.filter_data(resp, _filters)
+        resp = await filter_data(resp, _filters)
         
         for each_float_col in [
             "Total Sales"
@@ -312,7 +310,7 @@ class LPGCDCMSActions:
     
     
     @staticmethod
-    async def lpg_cdcms_booking_vs_sales_vs_pending(self, filters, cross_filters, drill_state):
+    async def lpg_cdcms_booking_vs_sales_vs_pending(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -350,7 +348,7 @@ class LPGCDCMSActions:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = await self.filter_data(resp, _filters)
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["ZOName"], as_index=False).agg({
                     "Bookings": "sum",
                     "Sales": "sum",
@@ -373,7 +371,7 @@ class LPGCDCMSActions:
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
-        resp = await self.filter_data(resp, _filters)
+        resp = await filter_data(resp, _filters)
         # Fill missing values for numerical columns
         for each_float_col in [
             "Bookings", "Sales", "Pending"
@@ -412,7 +410,7 @@ class LPGCDCMSActions:
     
     
     @staticmethod
-    async def lpg_cdcms_bookings_order_source_wise(self, filters, cross_filters, drill_state):
+    async def lpg_cdcms_bookings_order_source_wise(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -455,7 +453,7 @@ class LPGCDCMSActions:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = await self.filter_data(resp, _filters)
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["OrderSourceName"], as_index=False).agg({
                     "Total_Bookings": "sum"
                 })
@@ -478,7 +476,7 @@ class LPGCDCMSActions:
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
-        resp = await self.filter_data(resp, _filters)
+        resp = await filter_data(resp, _filters)
         for each_float_col in [
             "Total_Bookings"
         ]:
@@ -517,7 +515,7 @@ class LPGCDCMSActions:
     
     
     @staticmethod
-    async def lpg_cdcms_pending_cosumer_type_wise(self, filters, cross_filters, drill_state):
+    async def lpg_cdcms_pending_cosumer_type_wise(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -562,7 +560,7 @@ class LPGCDCMSActions:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = await self.filter_data(resp, _filters)
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["ConsumerType"], as_index=False).agg({
                         "Total_pending": "sum",
                     })
@@ -591,7 +589,7 @@ class LPGCDCMSActions:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = await self.filter_data(resp, _filters)
+            resp = await filter_data(resp, _filters)
             # Fill missing values for numerical columns
             for each_float_col in [
                 "Total_pending"
@@ -637,7 +635,7 @@ class LPGCDCMSActions:
     
     
     @staticmethod
-    async def lpg_cdcms_ageing(self, filters, cross_filters, drill_state):
+    async def lpg_cdcms_ageing(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -684,7 +682,7 @@ class LPGCDCMSActions:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = await self.filter_data(resp, _filters)
+            resp = await filter_data(resp, _filters)
             
             for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
                 resp = resp.with_columns(
@@ -707,7 +705,7 @@ class LPGCDCMSActions:
         resp = pd.DataFrame(resp)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
-        resp = await self.filter_data(resp, _filters)
+        resp = await filter_data(resp, _filters)
         
         for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
                 resp = resp.with_columns(
@@ -875,7 +873,7 @@ class LPGCDCMSActions:
     
     
     @staticmethod
-    async def lpg_cdcms_current_financial_year_sales(self, filters, cross_filters, drill_state):
+    async def lpg_cdcms_current_financial_year_sales(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -883,7 +881,7 @@ class LPGCDCMSActions:
         if cross_filters:
             for filter in cross_filters:
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        financial_year = await self.get_financial_year()
+        financial_year = await get_financial_year()
         cumulative_sales_pmuy_npmuy_query_ = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -925,7 +923,7 @@ class LPGCDCMSActions:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = await self.filter_data(resp, _filters)
+            resp = await filter_data(resp, _filters)
             resp = resp.groupby(["ConsumerType"], as_index=False).agg({
                     "Sales": lambda x: x.sum() / 1000000
                 })
@@ -946,7 +944,7 @@ class LPGCDCMSActions:
         resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
-        resp = await self.filter_data(resp, _filters)
+        resp = await filter_data(resp, _filters)
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         # Fill missing values for numerical columns
@@ -978,11 +976,11 @@ class LPGCDCMSActions:
     
     
     @staticmethod
-    async def lpg_cdcms_sakhi_registrations(self, filters, drill_state):
+    async def lpg_cdcms_sakhi_registrations(filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        financial_year = await self.get_financial_year()
+        financial_year = await get_financial_year()
         sakhi_registrations_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_sakhi_registrations")
         if filters:
             conditions = []
