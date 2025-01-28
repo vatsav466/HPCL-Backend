@@ -87,7 +87,7 @@ class Settings(pydantic_settings.BaseSettings):
     enable_echo: bool = True
 
     # Session configuration settings
-    session_same_site: str = 'lax'
+    session_same_site: str = 'Strict'
     session_secure: bool = True
     session_httponly: bool = True
 
