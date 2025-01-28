@@ -47,7 +47,7 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
       for entry in enriched_data:
           entry['alert_section'] = entry['alert_type']
           await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
-          entry['va_alert_id'] = entry.pop("alert_id")
+          # entry['vendor_alert_id'] = entry.pop("alert_id")
           await alert_manager.create_alert({**entry, "alert_type": "VA"})
     
       return True, "Success"
