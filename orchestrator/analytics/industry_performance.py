@@ -103,7 +103,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
         # else:
         #     conditions.append(f""" {date_key} BETWEEN '{start_date}' AND '{end_date}' """)
         else:
-            conditions.append(f""" {year_key} BETWEEN '{start_date}' AND '{end_date}' """)
+            conditions.append(f""" {year_key} = '{start_date}-{end_date}' """)
     if conditions:
         query += f' where {" AND ".join(conditions)}'
     if group_by_filter:
