@@ -288,12 +288,12 @@ async def industry_performance(filters, cross_filters, drill_state):
         
         # For Year level aggregations                                                   
         actual_data.extend(await collect_data([actual], 'industry_performance',
-                                                  where_conditions, curr_year, his_year,
+                                                  where_conditions, his_year, curr_year,
                                                   [group_by_filter]))
 
         if actual_data:
             actual_data = pd.DataFrame(actual_data)
-            actual_data = actual_data.groupby(group_by_filter.strip('"'))['ACTUAL_TMT_SALES'].sum().reset_index()
+            actual_data = actual_data.groupby(group_by_filter.strip('"'))['IND_ACTUAL_TMT_SALES'].sum().reset_index()
             actual_data['IND_ACTUAL_TMT_SALES'] = actual_data['IND_ACTUAL_TMT_SALES'].fillna(0)
             actual_data = actual_data.to_dict(orient='records')
 
