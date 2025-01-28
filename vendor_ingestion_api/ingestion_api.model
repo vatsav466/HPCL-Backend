@@ -60,7 +60,7 @@ Model vtsDataUpdated internal {
     endlongitude optional str
 }
 
-Model vtsBlockedTruck internal {
+Model vtsBlockedTruckOld internal {
     alert_id str
     alert_type str
     action_type optional str
@@ -77,6 +77,20 @@ Model vtsBlockedTruck internal {
     approval_status optional str
     blocked_datetime optional str
     unblocked_datetime optional str
+}
+
+Model vtsBlockedTruck internal {
+    alert_id optional str
+    TT_No optional str
+    Location_Name optional str
+    Transporter_Name optional str
+    Transporter_Code optional str
+    Vehicle_Blocked_Desc optional str
+    Vehicle_Blocked_Start_Date optional str
+    Vehicle_Blocked_End_Date optional str
+    Vehicle_Blocked_Instance_No optional str
+    Vehicle_Blocked_Instance_Type optional str
+    Alert_Type optional str
 }
 
 Model VTS crud_disable {

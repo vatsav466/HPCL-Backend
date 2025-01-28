@@ -62,7 +62,7 @@ class vtsDataUpdatedCreate(pydantic.BaseModel):
     endlongitude: typing.Optional[str] = pydantic.Field("", **{})
 
 
-class vtsBlockedTruckCreate(pydantic.BaseModel):
+class vtsBlockedTruckOldCreate(pydantic.BaseModel):
     alert_id: str
     alert_type: str
     action_type: typing.Optional[str] = pydantic.Field("", **{})
@@ -79,6 +79,20 @@ class vtsBlockedTruckCreate(pydantic.BaseModel):
     approval_status: typing.Optional[str] = pydantic.Field("", **{})
     blocked_datetime: typing.Optional[str] = pydantic.Field("", **{})
     unblocked_datetime: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class vtsBlockedTruckCreate(pydantic.BaseModel):
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    tt__no: typing.Optional[str] = pydantic.Field("", **{})
+    location__name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter__name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter__code: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle__blocked__desc: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle__blocked__start__date: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle__blocked__end__date: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle__blocked__instance__no: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle__blocked__instance__type: typing.Optional[str] = pydantic.Field("", **{})
+    alert__type: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class Vts_Ingest_DataParams(pydantic.BaseModel):
