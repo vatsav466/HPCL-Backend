@@ -89,7 +89,7 @@ async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_res
 
 
 async def collect_data(req_keys, table_name, where_conditions, start_date, end_date, group_by_filter,
-                       date_key='"year_monthname"::DATE'):
+                       date_key='"year_monthname"::DATE', year_key='"fiscal_year"'): # added year_key
     if group_by_filter and not isinstance(group_by_filter, list):
         group_by_filter = [group_by_filter]
     for grp_key in group_by_filter:
@@ -100,8 +100,10 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     if start_date and end_date:
         if start_date == end_date:
             conditions.append(f""" {date_key}='{start_date}' """)
+        # else:
+        #     conditions.append(f""" {date_key} BETWEEN '{start_date}' AND '{end_date}' """)
         else:
-            conditions.append(f""" {date_key} BETWEEN '{start_date}' AND '{end_date}' """)
+            conditions.append(f""" {year_key} BETWEEN '{start_date}' AND '{end_date}' """)
     if conditions:
         query += f' where {" AND ".join(conditions)}'
     if group_by_filter:
@@ -122,7 +124,7 @@ def get_group_by_filter_key(cross_filters):
     :param cross_filters:
     :return:
     """
-    group_by_filter = '"month_name"'
+    group_by_filter = '"Company_Name"' # added Company_Name key for the company wise grouping
     if cross_filters:
         index = 0
         if len([rec['value'] for rec in cross_filters if 'lubes' in rec['value'].lower()
@@ -150,6 +152,11 @@ async def industry_performance(filters, cross_filters, drill_state):
 
     end_date = fiscal_year.FiscalYear.current().fiscal_year_end_date
     start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
+
+    # For Current Year and History Year removed FY format for the query 
+    curr_year = str(fiscal_year.FiscalYear.current()).strip('FY')
+    his_year = str(fiscal_year.FiscalYear.current().prev_fiscal_year).strip('FY')
+    
     # For History
     start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime("%Y%m%d")
     end_date_history = helpers.get_time_stamp_by_delta(dt_parser.parse(end_date), years=1, days=0,
@@ -271,12 +278,19 @@ async def industry_performance(filters, cross_filters, drill_state):
             actual_data.extend(await collect_data([actual], 'industry_performance',
                                                   where_conditions+Default_Filters, date_range[0], date_range[1],
                                                   [group_by_filter]))
+
         # For Month level aggregations from day wise data table
         # Todo:- for optimization use single query for day filter with or condition
         for date_range in day_filter_dates:
             actual_data.extend(await collect_data([actual_d], 'industry_performance',
                                                   where_conditions + Default_Filters, date_range[0], date_range[1],
                                                   [group_by_filter], '"DAY_ID"'))
+        
+        # For Year level aggregations                                                   
+        actual_data.extend(await collect_data([actual], 'industry_performance',
+                                                  where_conditions, curr_year, his_year,
+                                                  [group_by_filter]))
+
         if actual_data:
             actual_data = pd.DataFrame(actual_data)
             actual_data = actual_data.groupby(group_by_filter.strip('"'))['ACTUAL_TMT_SALES'].sum().reset_index()
