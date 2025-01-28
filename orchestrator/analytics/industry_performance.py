@@ -119,39 +119,80 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     return resp
 
 
-def get_group_by_filter_key(cross_filters):
-    """
-    Getting group by filter key based on cross filters
-    :param cross_filters:
-    :return:
-    """
+# def get_group_by_filter_key(cross_filters):
+#     """
+#     Getting group by filter key based on cross filters
+#     :param cross_filters:
+#     :return:
+#     """
+#     print("cross_filters --> ", cross_filters)
+#     group_by_filter = '"month_name"', '"Company_Name"' # added Company_Name key for the company wise grouping
+#     if cross_filters:
+#         print(" if cross_filters --> ", cross_filters)
+#         index = 0
+#         if len([rec['value'] for rec in cross_filters if 'lubes' in rec['value'].lower()
+#                                                          and rec['key'].strip('"') == "SBU_Name"]):
+#             print(" into if cross_filters --> ", cross_filters)                                                         
+#             for key in [rec['key'] for rec in cross_filters]:
+#                 print(" into for key --> ", key)
+#                 if key in Lubes_Filters and Lubes_Filters.index(key) > index:
+#                     print(" into if key --> ", key)
+#                     index = Lubes_Filters.index(key)
+#                     print(" into if index --> ", index)
+#             group_by_filter = Lubes_Filters[index + 1]
+#             print(" into if group_by_filter --> ", group_by_filter)
+#         else:
+#             print(" into else cross_filters --> ", cross_filters)
+#             for key in [rec['key'] for rec in cross_filters]:
+#                 print(" into else key --> ", key)
+#                 if key in Base_Filters and Base_Filters.index(key) > index:
+#                     print(" into else key --> ", key)
+#                     index = Base_Filters.index(key)
+#                     print(" into else index --> ", index)
+#             group_by_filter = Base_Filters[index + 1]
+#             print(" into else group_by_filter --> ", group_by_filter)
+#     return group_by_filter
+
+def get_group_by_filter(cross_filters):
     print("cross_filters --> ", cross_filters)
-    group_by_filter = '"month_name"' # added Company_Name key for the company wise grouping
+    group_by_filter = ['"month_name"', '"Company_Name"']  # Default grouping keys
+    
     if cross_filters:
         print(" if cross_filters --> ", cross_filters)
-        index = 0
+        lubes_index = 0
+        base_index = 0
+
+        # Handle Lubes_Filters
         if len([rec['value'] for rec in cross_filters if 'lubes' in rec['value'].lower()
                                                          and rec['key'].strip('"') == "SBU_Name"]):
-            print(" into if cross_filters --> ", cross_filters)                                                         
+            print(" into if cross_filters (Lubes) --> ", cross_filters)
             for key in [rec['key'] for rec in cross_filters]:
-                print(" into for key --> ", key)
-                if key in Lubes_Filters and Lubes_Filters.index(key) > index:
-                    print(" into if key --> ", key)
-                    index = Lubes_Filters.index(key)
-                    print(" into if index --> ", index)
-            group_by_filter = Lubes_Filters[index + 1]
-            print(" into if group_by_filter --> ", group_by_filter)
-        else:
-            print(" into else cross_filters --> ", cross_filters)
-            for key in [rec['key'] for rec in cross_filters]:
-                print(" into else key --> ", key)
-                if key in Base_Filters and Base_Filters.index(key) > index:
-                    print(" into else key --> ", key)
-                    index = Base_Filters.index(key)
-                    print(" into else index --> ", index)
-            group_by_filter = Base_Filters[index + 1]
-            print(" into else group_by_filter --> ", group_by_filter)
+                print(" into for key (Lubes) --> ", key)
+                if key in Lubes_Filters and Lubes_Filters.index(key) > lubes_index:
+                    print(" into if key (Lubes) --> ", key)
+                    lubes_index = Lubes_Filters.lubes_index(key)
+                    print(" into if lubes_index --> ", lubes_index)
+            # Add next level filter for Lubes
+            lubes_group_by = Lubes_Filters[lubes_index + 1] if lubes_index + 1 < len(Lubes_Filters) else None
+            if lubes_group_by:
+                group_by_filter.append(lubes_group_by)
+                print("Lubes group_by_filter updated --> ", group_by_filter)
+
+        # Handle Base_Filters
+        for key in [rec['key'] for rec in cross_filters]:
+            print(" into for key (Base) --> ", key)
+            if key in Base_Filters and Base_Filters.index(key) > base_index:
+                print(" into if key (Base) --> ", key)
+                base_index = Base_Filters.index(key)
+                print(" into if base_index --> ", base_index)
+        # Add next level filter for Base
+        base_group_by = Base_Filters[base_index + 1] if base_index + 1 < len(Base_Filters) else None
+        if base_group_by:
+            group_by_filter.append(base_group_by)
+            print("Base group_by_filter updated --> ", group_by_filter)
+
     return group_by_filter
+
 
 
 async def industry_performance(filters, cross_filters, drill_state):
@@ -352,7 +393,7 @@ async def industry_performance(filters, cross_filters, drill_state):
         sort_key = months if group_by_filter.strip('"') == 'month_name' else sbu_order
         merged_df["data_order"] = merged_df[group_by_filter.strip('"')].map({cond: i for i, cond in enumerate(sort_key)})
         merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
-        merged_df = merged_df[merged_df[group_by_filter.strip('"')].isin(sort_key)]
+        merged_df = merged_df[merged_df[group_by_filter.strip('"')].str.capitalize().isin(sort_key)]
         merged_df.reset_index(drop=True, inplace=True)
     # If required keys not available keeping records with zero value
     # if target:
