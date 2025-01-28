@@ -163,7 +163,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
 #             print(" into else group_by_filter --> ", group_by_filter)
 #     return group_by_filter
 
-def get_group_by_filter(cross_filters):
+def get_group_by_filter_key(cross_filters):
     try:
         print("cross_filters --> ", cross_filters)
         group_by_filter = ['"month_name"', '"Company_Name"']  # Default grouping keys
