@@ -20,8 +20,8 @@ DBNames = {"m60_ta": "M60_LEVEL_METADATA", "ind_h": "industry_performance","ind_
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
 DefaultTable = 'Day'
-# MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
-MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES"}
+# MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
+MandateKeys = {"actual": "IND_ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES"}
 
 
 
@@ -321,8 +321,8 @@ async def industry_performance(filters, cross_filters, drill_state):
         '''
         if hist_data:
             hist_data = pd.DataFrame(hist_data)
-            hist_data = hist_data.groupby(group_by_filter.strip('"'))['ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
-            hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
+            hist_data = hist_data.groupby(group_by_filter.strip('"'))['IND_ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
+            hist_data['IND_ACTUAL_HISTORY_TMT_SALES'] = hist_data['IND_ACTUAL_HISTORY_TMT_SALES'].fillna(0)
             hist_data = hist_data.to_dict(orient='records')
 
     #df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
