@@ -174,8 +174,9 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
 def get_group_by_filter_key(cross_filters):
     try:
         print("cross_filters --> ", cross_filters)
-        group_by_filter = ['"month_name"', '"Company_Name"']  # Default grouping keys
-        
+        # group_by_filter = ['"month_name"', '"Company_Name"']  # Default grouping keys
+
+        group_by_filter = ['"CoName"', '"Zone_Name"']  # Default grouping keys        
         if cross_filters:
             print(" if cross_filters --> ", cross_filters)
             lubes_index = 0
@@ -231,8 +232,8 @@ async def industry_performance(filters, cross_filters, drill_state):
         start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
 
         # For Current Year and History Year removed FY format for the query 
-        curr_year = str(fiscal_year.FiscalYear.current()).strip('FY')
-        his_year = str(fiscal_year.FiscalYear.current().prev_fiscal_year).strip('FY')
+        curr_year = int(str(fiscal_year.FiscalYear.current()).strip('FY'))
+        his_year = int(str(fiscal_year.FiscalYear.current().prev_fiscal_year).strip('FY'))
         
         # For History
         start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime("%Y%m%d")
@@ -404,7 +405,7 @@ async def industry_performance(filters, cross_filters, drill_state):
                                                     date_range[1], [group_by_filter], '"DAY_ID"'))
             '''
             hist_data.extend(await collect_data([history], 'industry_performance',
-                                                    where_conditions_history, his_year, curr_year,
+                                                    where_conditions_history, his_year-1, his_year,
                                                     [group_by_filter]))
             if hist_data:
                 hist_data = pd.DataFrame(hist_data)
@@ -464,7 +465,8 @@ async def industry_performance(filters, cross_filters, drill_state):
                 if column_name not in merged_df:
                     merged_df[column_name] = ""  # Add the column to merged_df if not present
         merged_df.fillna(0, inplace=True)
-        final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+        # final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+        final_resp = [dict(zip(merged_df.columns, row)) for row in merged_df.values]
         return {"status": True, "message": "Success", "data": final_resp}
 
     except Exception as e:
