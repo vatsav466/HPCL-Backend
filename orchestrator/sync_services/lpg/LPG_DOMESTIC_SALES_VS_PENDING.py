@@ -110,8 +110,11 @@ def fetch_data(cursor, query, getData=False, params=None):
 
 def insertToDB(data, table_name, indexing_col=()):        
     for col in data.columns:
-        try:            
-            data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Int64).alias(col))    
+        if col in ["sales_volume", "pendings_volume", "bookings_volume"]:
+            data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).alias(col))
+            continue
+        try:
+            data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Int64).alias(col))
         except Exception as e:
             print("Couldn't convert to Integer :", col)
             continue
@@ -452,6 +455,31 @@ def get_pending_vs_delivered_data():
     print("Length of data After Drop :", len(data))
     print("-"*25)
     insertToDB(data, "LPG_SALES_SUMMARY_DATA", indexing_col=("JDEDistributorCode", "ConsumerType", "IsPrepaid", "CylType"))
+    
+    data = data.with_columns(
+        pl.when(
+            pl.col("CylType").fill_null("") == "C142"
+            ).then(pl.col("TotalSalesYesterday") * 14.2
+        ).when(
+            pl.col("CylType").fill_null("") == "C5"
+            ).then(pl.col("TotalSalesYesterday") * 5).alias("sales_volume"))
+    
+    data = data.with_columns(
+        pl.when(
+            pl.col("CylType").fill_null("") == "C142"
+            ).then(pl.col("BookingReceivedYesterday") * 14.2
+        ).when(
+            pl.col("CylType").fill_null("") == "C5"
+            ).then(pl.col("BookingReceivedYesterday") * 5).alias("bookings_volume"))
+    
+    data = data.with_columns(
+        pl.when(
+            pl.col("CylType").fill_null("") == "C142"
+            ).then(pl.col("Total_Pending") * 14.2
+        ).when(
+            pl.col("CylType").fill_null("") == "C5"
+            ).then(pl.col("Total_Pending") * 5).alias("pendings_volume"))
+    
     # New Changes
     month_map = {
                 "April": 1,
@@ -498,7 +526,8 @@ def get_pending_vs_delivered_data():
     monthly_query = """ 
                     SELECT 
                         "DistributorName", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "Month", "Execution_Year", "Month_Number", "Financial_Year",
-                        SUM("TotalSalesYesterday") AS "TotalSalesYesterday", SUM("BookingReceivedYesterday") AS "BookingReceivedYesterday"
+                        SUM("TotalSalesYesterday") AS "TotalSalesYesterday", SUM("BookingReceivedYesterday") AS "BookingReceivedYesterday", 
+                        SUM("sales_volume") AS "sales_volume", SUM("bookings_volume") AS "bookings_volume"
                     FROM
                         "lpg_cdcms_sales_summary"
                     GROUP BY
@@ -729,7 +758,6 @@ def get_consumer_statistics():
     
     query = """ SELECT * FROM MISC.tblConsumerSummary; """
     data = fetch_data(cursor, query, getData=True)    
-    
     data = data.with_columns(System_Idx=pl.lit(""))
     data = data.with_columns(pl.col('System_Idx').map_elements(lambda x: str(uuid.uuid4().hex)))
     
@@ -842,10 +870,10 @@ def get_consumer_statistics():
             (pl.col("RelationshipSubStatus").str.contains("1A"))
         ).then(pl.lit("Active")
         ).otherwise(pl.lit("InActive")).alias("CategoryStatus"))
-
+            
     for col in data.columns:
         if col.endswith("_y"):
-            data = data.drop(col)
+            data = data.drop(col)    
     
     data = data.with_columns((pl.col("ConsumerCount").fill_null(0).cast(pl.Int64) - pl.col("eKYCCompleted").fill_null(0).cast(pl.Int64)).alias("eKYCPending"))
             
@@ -858,8 +886,7 @@ def get_consumer_statistics():
             "LPG - NORTH CENTRAL ZONE": "NCZ",
             "LPG - EAST ZONE": "EZ"
             }
-    data = data.with_columns(pl.col("ZOName").alias("ZoneNames"))
-    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
+    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZoneNames"))    
     
     trunc_query = ''' TRUNCATE TABLE "LPG_CONSUMERS_SUMMARY";  '''
     pg_conn = psycopg2.connect(
@@ -874,6 +901,7 @@ def get_consumer_statistics():
     pg_conn.commit()
     cur.close()
     pg_conn.close()
+    
     print("-"*25)
     print("Length of data Before Drop :", len(data))
     data = data.unique("System_Idx")
