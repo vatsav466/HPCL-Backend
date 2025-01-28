@@ -13,6 +13,23 @@ async def get_va_headers(db_name):
 
 
 async def close_va_alerts(params: dict):
+    """
+
+    Args:
+        params: Dict
+        {
+            "AlarmId": "AlarmId",
+            "Status": "CLOSED",
+            "AcknowledgedBy": "UserId",
+            "ActionCode": "INVALID", Options: ["Invalid", "Valid", "False"]
+            "ActionReason":"Lack of awareness", Options: ["Person issue", "Equipment issue", "Lack of awareness", "Not following SOP", "Other"]
+            "ActionCategory":"Safety", Options: ["Safety", "Security", "Operation", "Others"]
+            "ActionDescription": "ActionDescription"
+        }
+
+    Returns:
+
+    """
     creds = await get_va_headers("VA_ALERT")
     ack_datetime = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     headers = {

@@ -113,7 +113,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "device_name": record['device_id'],
                                               "message": record['video_url'],
                                               "severity": va_alert_data["severity"],
-                                              "alert_id": alert_id,
+                                              "alert_id": record.get("alert_id", alert_id),
                                               "alert_section": "VA",
                                               "alert_history":alert_history
                                               })
