@@ -3312,7 +3312,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         lpg_cdcms_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms")
-        yesterday = datetime.now() - relativedelta(days=1)
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -3336,17 +3335,12 @@ class GlobalAnalytics:
             if conditions:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
-            lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_query_, access_filters, drill_state)
-            if "where" not in lpg_cdcms_query_.lower():
-                lpg_cdcms_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            else:
-                lpg_cdcms_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType" '
             resp = await function(query=lpg_cdcms_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -3381,8 +3375,6 @@ class GlobalAnalytics:
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         resp = await filter_data(resp, _filters)
-        # Filter rows where Execution_Date matches yesterday
-        resp = resp[resp["Execution_Date"].dt.date == yesterday.date()]
 
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -3727,7 +3719,6 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         yesterday = datetime.now() - relativedelta(days=1)
         cdcms_order_source_query_ = lpg_plant_queries.lpg_plant_query.get("cdcms_order_source")
         _filters = []
@@ -3753,17 +3744,16 @@ class GlobalAnalytics:
             if conditions:
                 cdcms_order_source_query_ += ' WHERE '
                 cdcms_order_source_query_ += ' AND '.join(conditions)
-            cdcms_order_source_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\''
-            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
         else:      
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             cdcms_order_source_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cdcms_order_source_query_, access_filters, drill_state)
             if "where" not in cdcms_order_source_query_.lower():
-                cdcms_order_source_query_ += f' WHERE "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
+                cdcms_order_source_query_ += f' WHERE "ZOName"  NOT IN (\'Null\')'
             else:
-                cdcms_order_source_query_ += f' AND "Execution_Date"::DATE = \'{yesterday.strftime("%Y-%m-%d")}\' AND "ZOName"  NOT IN (\'Null\')'
-            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "JDEDistributorCode", "ConsumerType", "CylType"'
+                cdcms_order_source_query_ += f' AND "ZOName"  NOT IN (\'Null\')'
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
 
             resp = await function(query=cdcms_order_source_query_)
             # Convert the response to a DataFrame for further processing
@@ -3796,11 +3786,6 @@ class GlobalAnalytics:
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         resp = await filter_data(resp, _filters)
-        resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-        # Filter rows where Execution_Date matches yesterday
-        resp["Execution_Date"] = pd.to_datetime(resp["Execution_Date"], errors="coerce")
-        resp = resp[resp["Execution_Date"].dt.date == yesterday.date()]
-
         for each_float_col in [
             "Total_Bookings"
         ]:
@@ -3809,7 +3794,7 @@ class GlobalAnalytics:
 
         # Fill missing values for string columns
         for each_str_col in [
-            "OrderSourceName","ZOName","ROName","SAName","JDEDistributorCode"
+            "OrderSourceName","ZOName","ROName","SAName","DistributorName"
         ]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -3833,8 +3818,8 @@ class GlobalAnalytics:
                 as_index=False).agg({
                     "Total_Bookings": "sum"
                     })
-            elif "OrderSourceName" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
-                grouped_resp = resp.groupby(["OrderSourceName","ZOName","ROName","SAName","JDEDistributorCode"],
+            elif "OrderSourceName" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["OrderSourceName","ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
                     "Total_Bookings": "sum"
                     })

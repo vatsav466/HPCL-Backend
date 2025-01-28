@@ -59,6 +59,136 @@ class LPGCDCMSActions:
     @staticmethod
     def get_next_level_drill_params(present_group):
         ...
+        
+    
+    @staticmethod
+    async def lpg_cdcms_actual_vs_historic_sales(self, filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        # Reverse mapping (for returning the short form)
+        reverse_month_mapping = {v: k for k, v in month_mapping.items()}
+        lpg_cdcms_sales_comparision_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_sales_comparision")
+        today = datetime.now()
+        if today.month < 4:
+            start_year = today.year - 1
+            prev_start_year = today.year - 2
+        else:
+            start_year = today.year
+            prev_start_year = today.year - 1
+        end_year = start_year + 1
+        prev_end_year = prev_start_year + 1
+        financial_year = f"{start_year}-{end_year}"
+        prev_financial_year = f"{prev_start_year}-{prev_end_year}"
+        
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if rec.key == '"Month"':
+                    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                lpg_cdcms_sales_comparision_query_ += ' WHERE '
+                lpg_cdcms_sales_comparision_query_ += ' AND '.join(conditions)
+            lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+            lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            lpg_cdcms_sales_comparision_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_sales_comparision_query_, access_filters, drill_state)
+            if "where" not in lpg_cdcms_sales_comparision_query_.lower():   
+                lpg_cdcms_sales_comparision_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+            else:
+                lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+            lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
+            resp = await function(query=lpg_cdcms_sales_comparision_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            resp = await self.filter_data(resp, _filters)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": resp}
+            current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['sales_volume'].sum().reset_index()
+            previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Month')['sales_volume'].sum().reset_index()
+
+            resp = pd.merge(current_year, previous_year, on='Month', how='outer', suffixes=('_current', '_previous'))
+            final_data = []
+            for _, row in resp.iterrows():
+                comparison = {
+                    "Month": row['Month'][:3],
+                    "Current_Year": financial_year,
+                    "Previous_Year": prev_financial_year,
+                    "Current_Sales": round(float(row['sales_volume_current'])/1000000, 2) if pd.notnull(row['sales_volume_current']) else 0,
+                    "Previous_Sale": round(float(row['sales_volume_previous'])/1000000, 2) if pd.notnull(row['sales_volume_previous']) else 0
+                }
+                final_data.append(comparison)
+            month_order = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+            final_data.sort(key=lambda x: month_order.index(x['Month']))
+            return {"status": True, "message": "success", "data": final_data}
+        # Execute the query
+        resp = await function(query=lpg_cdcms_sales_comparision_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        resp = await self.filter_data(resp, _filters)
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "Month" in filter_keys:
+            # Convert full month names to short form (e.g., "January" -> "Jan")
+                resp["Month"] = resp["Month"].apply(
+                lambda x: reverse_month_mapping.get(x, x)
+            )
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName"])['sales_volume'].sum().reset_index()
+                resp = pd.merge(current_year, previous_year, on=["Month", "ZOName"], how='outer', suffixes=('_current', '_previous'))
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName"])['sales_volume'].sum().reset_index()
+                resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName"], how='outer', suffixes=('_current', '_previous'))
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName"])['sales_volume'].sum().reset_index()
+                resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName", "SAName"], how='outer', suffixes=('_current', '_previous'))
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName", "ROName","SAName","DistributorName"])['sales_volume'].sum().reset_index()
+                resp = pd.merge(current_year, previous_year, on=["Month", "ZOName", "ROName", "SAName", "DistributorName"], how='outer', suffixes=('_current', '_previous'))
+            final_data = []
+            for _, row in resp.iterrows():
+                comparison = {
+                    "Month": row['Month'][:3],
+                    "Current_Year": financial_year,
+                    "Previous_Year": prev_financial_year,
+                    "Current_Sales": round(float(row['sales_volume_current'])/1000000, 2) if pd.notnull(row['sales_volume_current']) else 0,
+                    "Previous_Sale": round(float(row['sales_volume_previous'])/1000000, 2) if pd.notnull(row['sales_volume_previous']) else 0
+                }
+                if "ZOName" in row:
+                    comparison.update({"ZOName": row["ZOName"]})
+                if "ROName" in row.keys():
+                    comparison.update({"ROName": row["ROName"]})
+                if "SAName" in row.keys():
+                    comparison.update({"SAName": row["SAName"]})
+                if "DistributorName" in row.keys():
+                    comparison.update({"DistributorName": row["DistributorName"]})
+                final_data.append(comparison)
+            month_order = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+            final_data.sort(key=lambda x: month_order.index(x['Month']))
+            return {"status": True, "message": "success", "data": final_data}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     
     @staticmethod
@@ -209,12 +339,12 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_query_ += ' WHERE '
                 lpg_cdcms_query_ += ' AND '.join(conditions)
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType", "CylType"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_query_, access_filters, drill_state)
-            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
+            lpg_cdcms_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType", "CylType"'
             resp = await function(query=lpg_cdcms_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -250,11 +380,7 @@ class LPGCDCMSActions:
         ]:
             if each_float_col in resp.columns:
                 resp[each_float_col] = resp[each_float_col].fillna(0.0)
-
-        # Fill missing values for string columns
-        for each_str_col in [
-            "ZOName"
-        ]:
+        for each_str_col in ["ZOName"]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
         if filters:
@@ -286,14 +412,579 @@ class LPGCDCMSActions:
     
     
     @staticmethod
+    async def lpg_cdcms_bookings_order_source_wise(self, filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        cdcms_order_source_query_ = lpg_plant_queries.lpg_plant_query.get("cdcms_order_source")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                cdcms_order_source_query_ += ' WHERE '
+                cdcms_order_source_query_ += ' AND '.join(conditions)
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
+        else:      
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            cdcms_order_source_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cdcms_order_source_query_, access_filters, drill_state)
+            if "where" not in cdcms_order_source_query_.lower():
+                cdcms_order_source_query_ += f' WHERE "ZOName"  NOT IN (\'Null\')'
+            else:
+                cdcms_order_source_query_ += f' AND "ZOName"  NOT IN (\'Null\')'
+            cdcms_order_source_query_ += ' GROUP BY "OrderSourceName", "ZOName", "ROName", "SAName", "Execution_Date", "DistributorName", "ConsumerType", "CylType"'
+
+            resp = await function(query=cdcms_order_source_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = await self.filter_data(resp, _filters)
+            resp = resp.groupby(["OrderSourceName"], as_index=False).agg({
+                    "Total_Bookings": "sum"
+                })
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total_Bookings"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "OrderSourceName"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        resp = await function(query=cdcms_order_source_query_)        
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
+        resp = await self.filter_data(resp, _filters)
+        for each_float_col in [
+            "Total_Bookings"
+        ]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        for each_str_col in [
+            "OrderSourceName","ZOName","ROName","SAName","DistributorName"
+        ]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "OrderSourceName" in filter_keys and "ZOName" not in filter_keys:    
+                grouped_resp = resp.groupby(["OrderSourceName","ZOName"], as_index=False).agg({
+                    "Total_Bookings": "sum"
+                })
+            elif "OrderSourceName" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["OrderSourceName","ZOName","ROName"], as_index=False).agg({
+                    "Total_Bookings": "sum"
+                })
+            elif "OrderSourceName" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["OrderSourceName","ZOName","ROName","SAName"],
+                as_index=False).agg({
+                    "Total_Bookings": "sum"
+                    })
+            elif "OrderSourceName" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["OrderSourceName","ZOName","ROName","SAName","DistributorName"],
+                as_index=False).agg({
+                    "Total_Bookings": "sum"
+                    })
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_cdcms_pending_cosumer_type_wise(self, filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        lpg_pending_query_ = lpg_plant_queries.lpg_plant_query.get("overall_pending_pmuy_nmpuy")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_pending_query_  += ' WHERE '
+                lpg_pending_query_  += ' AND '.join(conditions)
+                lpg_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\')'
+            lpg_pending_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","ConsumerType" ,"DistributorName", "CylType"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            lpg_pending_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_pending_query_, access_filters, drill_state)
+            if "where" not in lpg_pending_query_.lower():                
+                lpg_pending_query_  += f' WHERE "ZOName"  NOT IN (\'Null\')'
+            else:
+                lpg_pending_query_  += f' AND "ZOName"  NOT IN (\'Null\')'
+            lpg_pending_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "DistributorName", "CylType"'
+            
+            resp = await function(query=lpg_pending_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = await self.filter_data(resp, _filters)
+            resp = resp.groupby(["ConsumerType"], as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total_pending"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "ConsumerType",
+                "DistributorName"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+
+        # Execute the query
+        resp = await function(query=lpg_pending_query_ )
+        if resp:
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = await self.filter_data(resp, _filters)
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total_pending"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "ConsumerType",
+                "DistributorName"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "ConsumerType" in filter_keys and "ZOName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+                if "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType","ZOName", "ROName"], as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType","ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+                elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ConsumerType","ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({
+                        "Total_pending": "sum",
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_cdcms_ageing(self, filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        lpg_pending_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_ageing")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                if rec.key.replace('"', '') in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+                    continue
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                lpg_pending_query_  += ' WHERE '
+                lpg_pending_query_  += ' AND '.join(conditions)
+            if not conditions:
+                lpg_pending_query_  += f' WHERE "ZOName" NOT IN ( \'Null\')'
+            else:
+                lpg_pending_query_  += f' AND "ZOName" NOT IN ( \'Null\')'
+            lpg_pending_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "DistributorName", "CylType" '
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            lpg_pending_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_pending_query_, access_filters, drill_state)
+            if "where" not in lpg_pending_query_.lower():
+                lpg_pending_query_ += f' WHERE "ZOName"  NOT IN (\'Null\')'
+            else:
+                lpg_pending_query_ += f' AND "ZOName"  NOT IN (\'Null\')'
+            lpg_pending_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "DistributorName", "CylType" '
+            resp = await function(query=lpg_pending_query_ )
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = await self.filter_data(resp, _filters)
+            
+            for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+                resp = resp.with_columns(
+                        pl.when(
+                            pl.col("CylType").fill_null("") == "C142"
+                            ).then(pl.col(col) * 14.2
+                        ).when(
+                            pl.col("CylType").fill_null("") == "C5"
+                            ).then(pl.col(col) * 5).alias(col))
+            
+            resp = resp.groupby(["ConsumerType"], as_index=False).agg({
+                    "pending_1_3_days": "sum",
+                    "pending_4_7_days": "sum",
+                    "pending_8_15_days": "sum",
+                    "pending_beyond_15_days": "sum"
+                })
+            return {"status": True, "message": "success", "data": resp}
+
+        resp = await function(query=lpg_pending_query_)
+        resp = pd.DataFrame(resp)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
+        resp = await self.filter_data(resp, _filters)
+        
+        for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+                resp = resp.with_columns(
+                        pl.when(
+                            pl.col("CylType").fill_null("") == "C142"
+                            ).then(pl.col(col) * 14.2
+                        ).when(
+                            pl.col("CylType").fill_null("") == "C5"
+                            ).then(pl.col(col) * 5).alias(col))
+        
+        for each_str_col in ["ZOName", "ROName", "SAName", "ConsumerType", "DistributorName"]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "pending_1_3_days" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                    "pending_1_3_days": "sum"
+                })
+                grouped_resp = grouped_resp.pivot(index="ZOName", columns="ConsumerType", values="pending_1_3_days").fillna(0)
+                _index = "ZOName"
+            elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                    "pending_1_3_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="ROName", columns="ConsumerType", values="pending_1_3_days").fillna(0)
+                _index = "ROName"
+            elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                            as_index=False).agg({
+                    "pending_1_3_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="SAName", columns="ConsumerType", values="pending_1_3_days").fillna(0)
+                _index = "SAName"
+            elif "pending_1_3_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                            as_index=False).agg({
+                    "pending_1_3_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_1_3_days").fillna(0)
+                _index = "DistributorName"
+            elif "pending_4_7_days" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                    "pending_4_7_days": "sum"
+                })
+                grouped_resp = grouped_resp.pivot(index="ZOName", columns="ConsumerType", values="pending_4_7_days").fillna(0)
+                _index = "ZOName"
+            elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                    "pending_4_7_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="ROName", columns="ConsumerType", values="pending_4_7_days").fillna(0)
+                _index = "ROName"
+            elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                            as_index=False).agg({
+                    "pending_4_7_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="SAName", columns="ConsumerType", values="pending_4_7_days").fillna(0)
+                _index = "SAName"
+            elif "pending_4_7_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                            as_index=False).agg({
+                    "pending_4_7_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_4_7_days").fillna(0)
+                _index = "DistributorName"
+            elif "pending_8_15_days" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                    "pending_8_15_days": "sum"
+                })
+                grouped_resp = grouped_resp.pivot(index="ZOName", columns="ConsumerType", values="pending_8_15_days").fillna(0)
+                _index = "ZOName"
+            elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                    "pending_8_15_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="ROName", columns="ConsumerType", values="pending_8_15_days").fillna(0)
+                _index = "ROName"
+            elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                            as_index=False).agg({
+                    "pending_8_15_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="SAName", columns="ConsumerType", values="pending_8_15_days").fillna(0)
+                _index = "SAName"
+            elif "pending_8_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                            as_index=False).agg({
+                    "pending_8_15_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_8_15_days").fillna(0)
+                _index = "DistributorName"
+            elif "pending_beyond_15_days" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName"], as_index=False).agg({
+                    "pending_beyond_15_days": "sum"
+                })
+                grouped_resp = grouped_resp.pivot(index="ZOName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
+                _index = "ZOName"
+            elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName"], as_index=False).agg({
+                    "pending_beyond_15_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="ROName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
+                _index = "ROName"
+            elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName"],
+                                            as_index=False).agg({
+                    "pending_beyond_15_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="SAName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
+                _index = "SAName"
+            elif "pending_beyond_15_days" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName"  in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType", "ZOName", "ROName", "SAName","DistributorName"],
+                                            as_index=False).agg({
+                    "pending_beyond_15_days": "sum",
+                })
+                grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
+                _index = "DistributorName"
+            result = [
+                        {
+                            "PMUY": row.get("PMUY", 0),
+                            "NPMUY": row.get("NPMUY", 0),
+                            _index: index
+                        }
+                        for index, row in grouped_resp.iterrows()
+                    ]
+            return {"status": True, "message": "success", "data": result}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_cdcms_domestic_sales_table(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        lpg_sale_table_ = lpg_plant_queries.lpg_plant_query.get("lpg_domestic_sale_table")
+        
+        access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+        lpg_sale_table_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_sale_table_, access_filters, drill_state)
+        
+        if not filters and not cross_filters:
+            lpg_sale_table_ += f' WHERE "ZOName" IS NOT NULL'
+            lpg_sale_table_ += ' GROUP BY "ZOName", "CylType", "ConsumerType" '
+        
+        resp = await function(query=lpg_sale_table_)
+        if not resp:
+            return {"status": True, "message": "No data available", "data": []}
+        
+        resp = pd.DataFrame(resp)
+        for each_float_col in ["Total_Booking", "Total_Sales", "Total_Pending"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        for each_str_col in ["ZOName", "CylType", "ConsumerType"]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna("").astype(str)
+        resp = resp.groupby(["ZOName", "CylType", "ConsumerType"], as_index=False).agg({
+            "Total_Booking": "sum",
+            "Total_Sales": "sum",
+            "Total_Pending": "sum"
+        })
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_cdcms_current_financial_year_sales(self, filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        financial_year = await self.get_financial_year()
+        cumulative_sales_pmuy_npmuy_query_ = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            cumulative_sales_pmuy_npmuy_query = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
+            cumulative_sales_pmuy_npmuy_query_ = cumulative_sales_pmuy_npmuy_query
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                # Now handle other cases
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                cumulative_sales_pmuy_npmuy_query_ += ' WHERE '
+                cumulative_sales_pmuy_npmuy_query_ += ' AND '.join(conditions)
+            
+            cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            cumulative_sales_pmuy_npmuy_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cumulative_sales_pmuy_npmuy_query_, access_filters, drill_state)
+
+            if not "where" in cumulative_sales_pmuy_npmuy_query_.lower():
+                cumulative_sales_pmuy_npmuy_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            else:
+                cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
+                                 
+            resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = await self.filter_data(resp, _filters)
+            resp = resp.groupby(["ConsumerType"], as_index=False).agg({
+                    "Sales": lambda x: x.sum() / 1000000
+                })
+            # Fill missing values for numerical columns
+            for each_float_col in ["Sales"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ConsumerType"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+
+            return {"status": True, "message": "success", "data": resp}
+        
+        # Execute the query
+        resp = await function(query=cumulative_sales_pmuy_npmuy_query_)
+        # Convert the response to a DataFrame for further processing
+        resp = pd.DataFrame(resp)
+        resp = await self.filter_data(resp, _filters)
+        if resp.empty:
+            return {"status": True, "message": "success", "data": []}
+        # Fill missing values for numerical columns
+        for each_float_col in ["Sales"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+        for each_str_col in ["ConsumerType", "ZOName", "ROName", "SAName", "DistributorName"]:
+            if each_str_col in resp.columns:
+                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+        if filters:
+            grouped_resp = None
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            if "ConsumerType" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName"], 
+                as_index=False).agg({"Sales": "sum"})
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName"], 
+                as_index=False).agg({"Sales": "sum"})
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName","SAName"],
+                as_index=False).agg({"Sales": "sum"})
+            elif "ConsumerType" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ConsumerType","ZOName","ROName","SAName","DistributorName"],
+                as_index=False).agg({"Sales": "sum"})
+            if grouped_resp is not None:
+                grouped_resp["Sales"] = grouped_resp["Sales"]/1000000
+                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
     async def lpg_cdcms_sakhi_registrations(self, filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await self.get_financial_year()
+        sakhi_registrations_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_sakhi_registrations")
         if filters:
-            sakhi_registrations_query = lpg_plant_queries.lpg_plant_query.get("sakhi_registrations")
-            sakhi_registrations_query_ = sakhi_registrations_query
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -309,22 +1000,14 @@ class LPGCDCMSActions:
                 sakhi_registrations_query_  += ' WHERE '
                 sakhi_registrations_query_  += ' AND '.join(conditions)
             sakhi_registrations_query_  += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            sakhi_registrations_query_  += ' GROUP BY "Month", "Month_Number", "ZoneNames", "ROName", "SAName" '
+            sakhi_registrations_query_  += ' GROUP BY "Month", "Month_Number", "ZoneNames", "ROName", "SAName", "DistributorName" '
         else:
-            sakhi_registrations_query_ = '''
-                SELECT 
-                    "Month",
-                    "Month_Number",
-                    SUM("SakhiRegisteredCount") AS "SakhiRegistered",
-                    "ZoneNames", "ROName", "SAName", "DistributorName"
-                FROM
-                    "sakhi_registrations_data"
-                WHERE
-                    "Financial_Year" IN ('2024-2025')
-                GROUP BY "Month", "Month_Number"
-            '''
+            if "where" not in sakhi_registrations_query_:
+                sakhi_registrations_query_  += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            else:
+                sakhi_registrations_query_  += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            sakhi_registrations_query_  += ' GROUP BY "Month", "Month_Number", "ZoneNames", "ROName", "SAName", "DistributorName" '
             
-        print(sakhi_registrations_query_)
         resp = await function(query=sakhi_registrations_query_)
         resp = pl.DataFrame(resp)
 

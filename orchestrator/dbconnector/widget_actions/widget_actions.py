@@ -1,7 +1,7 @@
 import urdhva_base
 import re
 from orchestrator.dbconnector import global_analytics
-from orchestrator.dbconnector.widget_actions import lpg_plant, model_mapping, lpg_plant_queries
+from orchestrator.dbconnector.widget_actions import lpg_plant, lpg_cdcms, model_mapping, lpg_plant_queries
 import hpcl_ceg_model
 
 lpg_dashboard_actions = [
@@ -146,10 +146,14 @@ class WidgetActions:
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
 
+
             # Determine the module containing the function
             if hasattr(lpg_plant.LPGPlantActions, func_name):
                 module = lpg_plant.LPGPlantActions
                 print(f"Function {func_name} found in LPGPlantActions.")
+            elif hasattr(lpg_cdcms.LPGCDCMSActions, func_name):
+                module = lpg_cdcms.LPGCDCMSActions
+                print(f"Function {func_name} found in LPGCDCMSActions.")
             elif hasattr(global_analytics.GlobalAnalytics, func_name):
                 module = global_analytics.GlobalAnalytics
                 print(f"Function {func_name} found in GlobalAnalytics.")
