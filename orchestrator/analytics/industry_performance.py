@@ -100,7 +100,15 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     try:
         if group_by_filter and not isinstance(group_by_filter, list):
             group_by_filter = [group_by_filter]
-        for grp_key in group_by_filter:
+        print("group_by_filter", group_by_filter)
+        # Flatten the group_by_filter list in case it has nested lists
+        flattened_filters = []
+        for item in group_by_filter:
+            if isinstance(item, list):
+                flattened_filters.extend(item)  # Add elements of the inner list
+            else:
+                flattened_filters.append(item)
+        for grp_key in flattened_filters:
             if grp_key.strip('"') not in req_keys and grp_key not in req_keys:
                 req_keys.append(grp_key)
         query = f"""SELECT {','.join(req_keys)} FROM "{table_name}" """
@@ -115,7 +123,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
         if conditions:
             query += f' where {" AND ".join(conditions)}'
         if group_by_filter:
-            query += f" GROUP BY {','.join(group_by_filter)}"
+            query += f" GROUP BY {','.join(flattened_filters)}"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -362,7 +370,14 @@ async def industry_performance(filters, cross_filters, drill_state):
 
             if actual_data:
                 actual_data = pd.DataFrame(actual_data)
-                actual_data = actual_data.groupby(group_by_filter.strip('"'))['IND_ACTUAL_TMT_SALES'].sum().reset_index()
+                print("group_by_filter.strip", group_by_filter)
+                if isinstance(group_by_filter, list):
+                    # If it's a list, process each item
+                    group_by_filter = [col.strip('"') for col in group_by_filter]
+                else:
+                    # If it's a string, strip directly
+                    group_by_filter = group_by_filter.strip('"')
+                actual_data = actual_data.groupby(group_by_filter)['IND_ACTUAL_TMT_SALES'].sum().reset_index()
                 actual_data['IND_ACTUAL_TMT_SALES'] = actual_data['IND_ACTUAL_TMT_SALES'].fillna(0)
                 actual_data = actual_data.to_dict(orient='records')
 
@@ -404,13 +419,30 @@ async def industry_performance(filters, cross_filters, drill_state):
             for df in df_[1:]:
                 merged_df = pd.merge(merged_df, df, on=group_by_filter.strip('"'), how='outer')  # Outer merge with df2
         # Ordering Data for Month and SBU names
-        if not merged_df.empty and group_by_filter.strip('"') in ('month_name', 'SBU_Name'):
-            sort_key = months if group_by_filter.strip('"') == 'month_name' else sbu_order
-            merged_df["data_order"] = merged_df[group_by_filter.strip('"')].map({cond: i for i, cond in enumerate(sort_key)})
-            merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
-            merged_df = merged_df[merged_df[group_by_filter.strip('"')].str.capitalize().isin(sort_key)]
-            merged_df.reset_index(drop=True, inplace=True)
-        # If required keys not available keeping records with zero value
+        if not merged_df.empty:
+            if isinstance(group_by_filter, list):
+                # Process the first element of the list for the logic
+                group_key = group_by_filter[0].strip('"')  # Use the first key in the list
+            else:
+                # Process it directly as a string
+                group_key = group_by_filter.strip('"')
+
+            if group_key in ('month_name', 'SBU_Name'):
+                # Determine the sort_key based on the group_key
+                sort_key = months if group_key == 'month_name' else sbu_order
+
+                # Add a temporary "data_order" column for sorting
+                merged_df["data_order"] = merged_df[group_key].map({cond: i for i, cond in enumerate(sort_key)})
+
+                # Sort values by "data_order" and clean up the column
+                merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
+
+                # Filter rows based on the sort_key (case-insensitive match)
+                merged_df = merged_df[merged_df[group_key].str.capitalize().isin(sort_key)]
+
+                # Reset the index after sorting and filtering
+                merged_df.reset_index(drop=True, inplace=True) 
+        #If required keys not available keeping records with zero value
         # if target:
         #     if MandateKeys["target"] not in merged_df:
         #         merged_df[MandateKeys["target"]] = 0
@@ -420,12 +452,21 @@ async def industry_performance(filters, cross_filters, drill_state):
         if history:
             if MandateKeys["history"] not in merged_df:
                 merged_df[MandateKeys["history"]] = 0
-        if group_by_filter and group_by_filter.strip('"') not in merged_df:
-            merged_df[group_by_filter.strip('"')] = ""
+        if group_by_filter:
+            # Handle case where group_by_filter is a list or a string
+            if isinstance(group_by_filter, list):
+                for filter_item in group_by_filter:
+                    column_name = filter_item.strip('"')  # Strip quotes from the filter item
+                    if column_name not in merged_df:
+                        merged_df[column_name] = ""  # Add the column to merged_df if not present
+            else:
+                column_name = group_by_filter.strip('"')  # Strip quotes if group_by_filter is a string
+                if column_name not in merged_df:
+                    merged_df[column_name] = ""  # Add the column to merged_df if not present
         merged_df.fillna(0, inplace=True)
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         return {"status": True, "message": "Success", "data": final_resp}
 
     except Exception as e:
-        return {"status": False, "message": str(e), "data": []}
         print(traceback.format_exc())
+        return {"status": False, "message": str(e), "data": []}
