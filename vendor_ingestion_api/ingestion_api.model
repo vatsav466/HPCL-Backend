@@ -107,6 +107,17 @@ Model VTS crud_disable {
         location_type optional BusinessUnit
         data list vtsBlockedTruck
     }
+
+    Action=> ingest_data_unblock_trucks_ack {
+        vendor_id str
+        location_id str
+        location_type optional BusinessUnit
+        TT_No str
+        Vehicle_Blocked_Start_Date str
+        Vehicle_Blocked_End_Date str
+        is_acknowledges optional bool
+
+    }
 }
 
 Model vaData internal {

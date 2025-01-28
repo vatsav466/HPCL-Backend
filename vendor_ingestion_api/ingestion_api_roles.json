@@ -30,6 +30,9 @@
                 },
                 {
                     "name": "ingest_data_blocked_trucks"
+                },
+                {
+                    "name": "ingest_data_unblock_trucks_ack"
                 }
             ]
         },
@@ -75,6 +78,9 @@
                 },
                 {
                     "name": "ingest_data_blocked_trucks"
+                },
+                {
+                    "name": "ingest_data_unblock_trucks_ack"
                 }
             ]
         },
@@ -516,6 +522,10 @@
         {
             "name": "ingest_data_blocked_trucks",
             "displayName": "ingest_data_blocked_trucks"
+        },
+        {
+            "name": "ingest_data_unblock_trucks_ack",
+            "displayName": "ingest_data_unblock_trucks_ack"
         },
         {
             "name": "ingest_data",

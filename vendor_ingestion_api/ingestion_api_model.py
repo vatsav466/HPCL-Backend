@@ -109,6 +109,16 @@ class Vts_Ingest_Data_Blocked_TrucksParams(pydantic.BaseModel):
     data: typing.List[vtsBlockedTruckCreate]
 
 
+class Vts_Ingest_Data_Unblock_Trucks_AckParams(pydantic.BaseModel):
+    vendor_id: str
+    location_id: str
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+    tt__no: str
+    vehicle__blocked__start__date: str
+    vehicle__blocked__end__date: str
+    is_acknowledges: typing.Optional[bool] = pydantic.Field(False, )
+
+
 class vaDataCreate(pydantic.BaseModel):
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: str
