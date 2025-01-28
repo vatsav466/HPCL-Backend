@@ -515,13 +515,13 @@ async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
     # return await widget_actions.WidgetActions.execute_widget_action(data.action, data.filters, data.drill_state)
     if data.action == 'no_of_locations':
         if data.filters[0].value == "TAS":
-            return {"status": true, "message": "success", "data": [{"count": 78}]}
+            return {"status": True, "message": "success", "data": [{"count": 78}]}
         elif data.filters[0].value == "RO":
-            return {"status": true, "message": "success", "data": [{"count": 22631}]}
+            return {"status": True, "message": "success", "data": [{"count": 22631}]}
         elif data.filters[0].value == "LPG":
-            return {"status": true, "message": "success", "data": [{"count": 56}]}
+            return {"status": True, "message": "success", "data": [{"count": 56}]}
         elif data.filters[0].value == "CP":
-            return {"status": true, "message": "success", "data": [{"count": 10}]}
+            return {"status": True, "message": "success", "data": [{"count": 10}]}
     return await widget_actions.WidgetActions.execute_widget_action(data.action, filters=data.filters, cross_filters=data.cross_filters, drill_state=data.drill_state)
 
 

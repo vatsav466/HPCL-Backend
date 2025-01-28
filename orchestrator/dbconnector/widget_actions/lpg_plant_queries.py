@@ -766,21 +766,29 @@ LIMIT 10000;''',
                                         ORDER BY 
                                         bu, alert_section, interlock_name, location_name, severity;''',
     
-    "lpg_cdcms": f'''select sum("BookingReceivedYesterday") as "Bookings", 
-                            sum("TotalSalesYesterday") as "Sales",
-                            sum("Total_Pending") as "Pending",
-                            "ZOName" as "ZOName",
-                            "ROName" as "ROName",
-                            "SAName" as "SAName",
-                            "Execution_Date",
+    "lpg_cdcms": f'''select sum("bookings_volume") as "Bookings",
+                            sum("sales_volume") as "Sales",
+                            sum("pendings_volume") as "Pending",
+                            "ZOName",
+                            "ROName",
+                            "SAName",
                             "DistributorName",
                             "ConsumerType",
                             "CylType"
                     from
                         "lpg_todays_cdcms_sales_summary"''',
     
+    "lpg_cdcms_sakhi_registrations": f''' SELECT 
+                                            "Month",
+                                            "Month_Number",
+                                            SUM("SakhiRegisteredCount") AS "SakhiRegistered",
+                                            "ZoneNames", "ROName", "SAName", "DistributorName"
+                                        FROM
+                                            "lpg_cdcms_sakhi_registrations"
+                                    ''',
+    
     "lpg_cdcms_month": f'''select
-                                sum("TotalSalesYesterday") as "Total Sales",
+                                sum("sales_volume") as "Total Sales",
                                 "Month",
                                 "Month_Number",
                                 "ZOName",
@@ -794,14 +802,13 @@ LIMIT 10000;''',
     
     "cdcms_order_source": f'''select
                                     "OrderSourceName",
-                                    "JDEDistributorCode",
+                                    "DistributorName",
 	                                "ZOName",
 	                                "ROName",
 	                                "SAName",
-                                    "Execution_Date",
                                     "ConsumerType", 
                                     "CylType",
-	                                sum("BookingReceivedYesterday") as "Total_Bookings"
+	                                sum("bookings_volume") as "Total_Bookings"
                                 from
 	                                "lpg_todays_cdcms_sales_summary"''',
                                  
@@ -811,19 +818,19 @@ LIMIT 10000;''',
                                     "ROName",
                                     "SAName",
                                     "ConsumerType",
-                                    "JDEDistributorCode",
-                                    "Execution_Date",
+                                    "DistributorName",
                                     "CylType",
-                                    sum("Total_Pending") as "Total_pending" 
+                                    sum("pendings_volume") as "Total_pending" 
                                 from
                                     "lpg_todays_cdcms_sales_summary" ''',
     "lpg_cdcms_ageing" : f'''
                         select 
-                            "ZOName" ,
+                            "ZOName",
                             "ROName",
                             "SAName",
                             "DistributorName",
                             "ConsumerType",
+                            "CylType",
                             sum("pending_1_3_days") as "pending_1_3_days",
                             sum("pending_4_7_days") as "pending_4_7_days",
                             sum("pending_8_15_days") as "pending_8_15_days",
@@ -837,7 +844,7 @@ LIMIT 10000;''',
                                             "ZOName",
                                             "ROName",
                                             "SAName",
-                                            sum("TotalSalesYesterday") as "Sales"
+                                            sum("sales_volume") as "Sales"
                                         from
                                             "lpg_monthly_cdcms_sales_summary"''',
     
@@ -1130,9 +1137,9 @@ ORDER BY
                                         "ZOName" as "ZOName",
                                         "CylType" as "CylType",
                                         "ConsumerType" as "ConsumerType",
-                                        sum("BookingReceivedYesterday") as "Total_Booking",
-                                        sum("TotalSalesYesterday") as "Total_Sales",
-                                        sum("Total_Pending") as "Total_Pending"
+                                        sum("bookings_volume") as "Total_Booking",
+                                        sum("sales_volume") as "Total_Sales",
+                                        sum("pendings_volume") as "Total_Pending"
                                     from
                                         "lpg_todays_cdcms_sales_summary" 
                                      ''',
