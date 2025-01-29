@@ -1600,26 +1600,28 @@ class LPGCDCMSActions:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
-            resp = resp.groupby(["SubCategory"], as_index=False).agg({
-                    "SafetyCheckPending": "sum"
-                })
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
+            pie_resp = resp.groupby(["SubCategory"], as_index=False).agg({
+                    "SafetyCheckPending": "sum"
+                })
+            resp = resp.groupby(["ZOName"], as_index=False).agg({
+                    "SafetyCheckPending": "sum"
+                })
             # Fill missing values for numerical columns
-            for each_float_col in [
-                "SafetyCheckPending"
-            ]:
+            for each_float_col in ["SafetyCheckPending"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in [
-                "SubCategory"
-            ]:
+            for each_str_col in ["SubCategory"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data_pie": pie_resp.to_dict(orient='records'), "data": resp.to_dict(orient='records')}
         resp = await function(query=overall_safety_check_pending_query_)
         resp = pd.DataFrame(resp)
         resp = await filter_data(resp, _filters)
+        pie_resp = resp.groupby(["SubCategory"], as_index=False).agg({
+                    "SafetyCheckPending": "sum"
+                })
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
         # Fill missing values for numerical columns
         for each_float_col in [
@@ -1637,26 +1639,22 @@ class LPGCDCMSActions:
         if filters:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            if "SubCategory" in filter_keys and "ZOName" not in filter_keys:    
-                grouped_resp = resp.groupby(["SubCategory","ZOName"], as_index=False).agg({
+            if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZOName","ROName"], as_index=False).agg({
                     "SafetyCheckPending": "sum"
                 })
-            elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.groupby(["SubCategory","ZOName","ROName"], as_index=False).agg({
-                    "SafetyCheckPending": "sum"
-                })            
-            elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.groupby(["SubCategory","ZOName","ROName","SAName"],
+            elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZOName","ROName","SAName"],
                 as_index=False).agg({
                     "SafetyCheckPending": "sum"
-                    })            
-            elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
-                grouped_resp = resp.groupby(["SubCategory","ZOName","ROName","SAName","JDEDistributorCode"],
+                    })
+            elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
+                grouped_resp = resp.groupby(["ZOName","ROName","SAName","JDEDistributorCode"],
                 as_index=False).agg({
                     "SafetyCheckPending": "sum"
                     })
             if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+                return {"status": True, "message": "success", "data_pie": pie_resp.to_dict(orient='records'), "data": grouped_resp.to_dict(orient='records')}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
