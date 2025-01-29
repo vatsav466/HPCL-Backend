@@ -992,12 +992,17 @@ class LPGCDCMSActions:
     
     
     @staticmethod
-    async def lpg_cdcms_sakhi_registrations(filters, drill_state):
+    async def lpg_cdcms_sakhi_registrations(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         sakhi_registrations_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_sakhi_registrations")
+        month_order = ["April","May","June","July","August","September","October","November","December","January","February","March"]
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
             for rec in filters:
@@ -1021,10 +1026,22 @@ class LPGCDCMSActions:
             else:
                 sakhi_registrations_query_  += f' AND "Financial_Year" IN (\'{financial_year}\')'
             sakhi_registrations_query_  += ' GROUP BY "Month", "Month_Number", "ZoneNames", "ROName", "SAName", "DistributorName" '
+            resp = await function(query=sakhi_registrations_query_)
+            resp = pl.DataFrame(resp)
+            resp = await filter_data(resp.to_pandas(), _filters)
+            resp = pl.from_pandas(resp)
+            resp = resp.groupby(["Month"]).agg([
+                    pl.sum("SakhiRegistered").alias("SakhiRegistered"),
+                    pl.sum("Month_Number").alias("Month_Number"),
+                ])
+            
+            resp.sort(key=lambda x: month_order.index(x['Month']))
+            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
             
         resp = await function(query=sakhi_registrations_query_)
         resp = pl.DataFrame(resp)
-
+        resp = await filter_data(resp.to_pandas(), _filters)
+        resp = pl.from_pandas(resp)
         # Fill missing values
         numerical_columns = ["Month_Number", "SakhiRegistered"]
         string_columns = ["Month", "ZoneNames", "ROName", "SAName"]
