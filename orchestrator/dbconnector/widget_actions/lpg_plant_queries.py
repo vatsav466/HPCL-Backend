@@ -874,6 +874,7 @@ LIMIT 10000;''',
                                             "Month",
                                             "Month_Number",
                                             "Financial_Year",
+                                            "Quarter",
                                             sum("sales_volume") as "sales_volume",
                                             "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"
                                         from

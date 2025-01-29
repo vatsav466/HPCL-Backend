@@ -97,8 +97,6 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        # Reverse mapping (for returning the short form)
-        reverse_month_mapping = {v: k for k, v in month_mapping.items()}
         lpg_cdcms_sales_comparision_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_actual_vs_historic_sales")
         today = datetime.now()
         if today.month < 4:
@@ -136,7 +134,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_sales_comparision_query_ += ' WHERE '
                 lpg_cdcms_sales_comparision_query_ += ' AND '.join(conditions)
             lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
-            lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
+            lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Quarter", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -145,7 +143,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_sales_comparision_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
             else:
                 lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
-            lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
+            lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Quarter", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
             resp = await function(query=lpg_cdcms_sales_comparision_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
@@ -153,22 +151,20 @@ class LPGCDCMSActions:
             
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
-            current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['sales_volume'].sum().reset_index()
-            previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Month')['sales_volume'].sum().reset_index()
-            resp = pd.merge(current_year, previous_year, on='Month', how='outer', suffixes=('_current', '_previous'))
+            current_year = resp[resp['Financial_Year'] == financial_year].groupby('Quarter')['sales_volume'].sum().reset_index()
+            previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Quarter')['sales_volume'].sum().reset_index()
+            resp = pd.merge(current_year, previous_year, on='Quarter', how='outer', suffixes=('_current', '_previous'))
             
             final_data = []
             for _, row in resp.iterrows():
                 comparison = {
-                    "Month": row['Month'][:3],
+                    "Quarter": row['Quarter'],
                     "Current_Year": financial_year,
                     "Previous_Year": prev_financial_year,
                     "Current_Sales": round(float(row['sales_volume_current'])/1000000, 2) if pd.notnull(row['sales_volume_current']) else 0,
                     "Previous_Sale": round(float(row['sales_volume_previous'])/1000000, 2) if pd.notnull(row['sales_volume_previous']) else 0
                 }
                 final_data.append(comparison)
-            month_order = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
-            final_data.sort(key=lambda x: month_order.index(x['Month']))
             return {"status": True, "message": "success", "data": final_data}
         # Execute the query
         resp = await function(query=lpg_cdcms_sales_comparision_query_)
@@ -176,14 +172,27 @@ class LPGCDCMSActions:
         resp = pd.DataFrame(resp)
         resp = await filter_data(resp, _filters)
         if filters:
-            grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
-            if "Month" in filter_keys:
-            # Convert full month names to short form (e.g., "January" -> "Jan")
-                resp["Month"] = resp["Month"].apply(
-                lambda x: reverse_month_mapping.get(x, x)
-            )
-            if "Month" in filter_keys and "ZOName" not in filter_keys:
+            if "Quarter" in filter_keys and "Month" not in filter_keys:
+                current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['sales_volume'].sum().reset_index()
+                previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Month')['sales_volume'].sum().reset_index()
+                resp = pd.merge(current_year, previous_year, on='Month', how='outer', suffixes=('_current', '_previous'))
+                
+                final_data = []
+                for _, row in resp.iterrows():
+                    comparison = {
+                        "Month": row['Month'][:3],
+                        "Current_Year": financial_year,
+                        "Previous_Year": prev_financial_year,
+                        "Current_Sales": round(float(row['sales_volume_current'])/1000000, 2) if pd.notnull(row['sales_volume_current']) else 0,
+                        "Previous_Sale": round(float(row['sales_volume_previous'])/1000000, 2) if pd.notnull(row['sales_volume_previous']) else 0
+                    }
+                    final_data.append(comparison)
+                month_order = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+                final_data.sort(key=lambda x: month_order.index(x['Month']))
+                return {"status": True, "message": "success", "data": final_data}
+            
+            elif "Month" in filter_keys and "ZOName" not in filter_keys:
                 current_year = resp[resp['Financial_Year'] == financial_year].groupby(["Month", "ZOName"])['sales_volume'].sum().reset_index()
                 previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby(["Month", "ZOName"])['sales_volume'].sum().reset_index()
                 resp = pd.merge(current_year, previous_year, on=["Month", "ZOName"], how='outer', suffixes=('_current', '_previous'))
