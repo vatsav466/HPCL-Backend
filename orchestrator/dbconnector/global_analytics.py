@@ -3308,13 +3308,17 @@ class GlobalAnalytics:
         
     @staticmethod
     async def card_chart(filters, cross_filters, drill_state):
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        card_query = lpg_plant_queries.lpg_plant_query.get(drill_state)
-        resp = await function(query=card_query)
-        resp = pd.DataFrame(resp)
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+        try:
+            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            card_query = lpg_plant_queries.lpg_plant_query.get(drill_state)
+            resp = await function(query=card_query)
+            resp = pd.DataFrame(resp)
+            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+        except Exception as e:
+            print("Exception in BigNumber Chart :", str(e))
+            return {"status": True, "message": "success", "data": []}
             
 
     @staticmethod
