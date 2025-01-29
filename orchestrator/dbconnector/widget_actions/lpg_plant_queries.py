@@ -1057,14 +1057,14 @@ ORDER BY
                                     FROM 
                                         "lpg_monthly_cdcms_sales_summary"
                                     WHERE 
-                                        "Financial_Year"='{financial_year}' AND "ZOName" NOT IN (\'Null\') ''',
+                                        "Financial_Year"='{financial_year}' AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_month_sales':f'''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
-                                        "Financial_Year"='{financial_year}' AND "Month"='{current_month}' AND "ZOName" NOT IN (\'Null\') ''',
+                                        "Financial_Year"='{financial_year}' AND "Month"='{current_month}' AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_week_sales': f''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
@@ -1072,31 +1072,28 @@ ORDER BY
                                         "lpg_cdcms_sales_summary"
                                     WHERE 
                                         "Execution_Date" >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::INT + 1
-                                        AND "Execution_Date" <= CURRENT_DATE; AND "ZOName" NOT IN (\'Null\') ''',
+                                        AND "Execution_Date" <= CURRENT_DATE; AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_date_sales':f'''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
-                                        "ZOName" NOT IN (\'Null\')
-                                ''',
+                                        "ZOName" IS NOT NULL ''',                                
 
     'cdcms_current_date_bookings':f'''select
                                         ROUND(CAST(SUM("bookings_volume") / 1000000 AS NUMERIC), 2) AS "Bookings"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
-                                        "ZOName" NOT IN (\'Null\')
-                                ''',
+                                        "ZOName" IS NOT NULL ''',
 
     'cdcms_current_date_pending':f'''select
                                         ROUND(CAST(SUM("pendings_volume") / 1000000 AS NUMERIC), 2) AS "Pending"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
-                                        "ZOName" NOT IN (\'Null\')
-                                ''',
+                                        "ZOName" IS NOT NULL ''',
 
     'lpg_operations_current_month_productivity': f''' SELECT 
                                                         ROUND(AVG("productivity.normal.productivity")) 
