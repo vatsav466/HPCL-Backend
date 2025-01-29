@@ -1072,7 +1072,7 @@ ORDER BY
                                         "lpg_cdcms_sales_summary"
                                     WHERE 
                                         "Execution_Date" >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::INT + 1
-                                        AND "Execution_Date" <= CURRENT_DATE; AND "ZOName" IS NOT NULL ''',
+                                        AND "Execution_Date" <= CURRENT_DATE AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_date_sales':f'''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
