@@ -150,6 +150,7 @@ class LPGCDCMSActions:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
+            
             if resp.empty:
                 return {"status": True, "message": "success", "data": resp}
             current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['sales_volume'].sum().reset_index()
@@ -880,6 +881,8 @@ class LPGCDCMSActions:
                 if col in grouped_resp.columns:
                     grouped_resp[col] = grouped_resp[col]/1000
                     grouped_resp[col] = grouped_resp[col].round(2)
+            grouped_resp = grouped_resp.assign(Total=grouped_resp["PMUY"] + grouped_resp["NPMUY"]
+                                               ).sort_values(by="Total", ascending=False).drop(columns=["Total"])
             result = [
                         {
                             "PMUY": row.get("PMUY", 0),
@@ -961,7 +964,7 @@ class LPGCDCMSActions:
                 cumulative_sales_pmuy_npmuy_query_ += ' WHERE '
                 cumulative_sales_pmuy_npmuy_query_ += ' AND '.join(conditions)
             
-            cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName" NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName" IS NOT NULL AND "Financial_Year"=\'{str(financial_year)}\''
             cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -969,9 +972,9 @@ class LPGCDCMSActions:
             cumulative_sales_pmuy_npmuy_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cumulative_sales_pmuy_npmuy_query_, access_filters, drill_state)
 
             if not "where" in cumulative_sales_pmuy_npmuy_query_.lower():
-                cumulative_sales_pmuy_npmuy_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+                cumulative_sales_pmuy_npmuy_query_ += f' WHERE "ZOName" IS NOT NULL AND "Financial_Year"=\'{str(financial_year)}\''
             else:
-                cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+                cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName" IS NOT NULL AND "Financial_Year"=\'{str(financial_year)}\''
             cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
                                  
             resp = await function(query=cumulative_sales_pmuy_npmuy_query_)

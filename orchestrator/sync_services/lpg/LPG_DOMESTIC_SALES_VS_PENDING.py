@@ -548,6 +548,15 @@ def get_pending_vs_delivered_data():
             "password": "TTNqetkiJLPM50jC",
             "port": 5432
             })
+    
+    month_to_quarter = {
+                    'April': 'Quarter-1', 'May': 'Quarter-1', 'June': 'Quarter-1',
+                    'July': 'Quarter-2', 'August': 'Quarter-2', 'September': 'Quarter-2',
+                    'October': 'Quarter-3', 'November': 'Quarter-3', 'December': 'Quarter-3',
+                    'January': 'Quarter-4', 'February': 'Quarter-4', 'March': 'Quarter-4'
+                }
+    monthly_data = monthly_data.with_columns(pl.col("Month").map_dict(month_to_quarter).alias("Quarter"))
+    
     insertToDB(monthly_data, "lpg_monthly_cdcms_sales_summary", indexing_col=["Month", "ZOName"])
     return data
         
