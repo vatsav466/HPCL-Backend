@@ -998,7 +998,6 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         sakhi_registrations_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_sakhi_registrations")
-        month_order = ["April","May","June","July","August","September","October","November","December","January","February","March"]
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -1034,7 +1033,7 @@ class LPGCDCMSActions:
                     pl.sum("SakhiRegistered").alias("SakhiRegistered"),
                     pl.first("Month_Number").alias("Month_Number"),
                 ])
-            resp.sort('Month_Number')
+            resp = resp.sort('Month_Number')
             return {"status": True, "message": "success", "data": resp.to_dicts()}
             
         resp = await function(query=sakhi_registrations_query_)
@@ -1060,20 +1059,128 @@ class LPGCDCMSActions:
 
             if "Month" in filter_keys and "ZOName" not in filter_keys:
                 grouped_resp = resp.group_by(["Month", "ZOName"]).agg([
-                    pl.sum("SakhiRegistered").alias("SakhiRegistered"),
-                    pl.sum("Month_Number").alias("Month_Number"),
+                    pl.sum("SakhiRegistered").alias("SakhiRegistered")
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
                 grouped_resp = resp.group_by(["Month", "ZOName", "ROName"]).agg([
-                    pl.sum("SakhiRegistered").alias("SakhiRegistered"),
-                    pl.sum("Month_Number").alias("Month_Number"),
+                    pl.sum("SakhiRegistered").alias("SakhiRegistered")
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
                 grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName"]).agg([
-                    pl.sum("SakhiRegistered").alias("SakhiRegistered"),
-                    pl.sum("Month_Number").alias("Month_Number"),
+                    pl.sum("SakhiRegistered").alias("SakhiRegistered")
                 ])
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
         # Convert the result to a dictionary for the response
         return {"status": True, "message": "success", "data": resp.to_dicts()}
+
+
+################################################################# CONSUMER STATS ###################################################################################
+    @staticmethod
+    async def lpg_cdcms_total_consumers(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
+        total_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_total_consumers")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                total_consumers_query_  += ' WHERE '
+                total_consumers_query_  += ' AND '.join(conditions)
+            total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL '
+            total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
+        else:
+            if not "where" in total_consumers_query_.lower():
+                total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
+            else:
+                total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
+            total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName", "Category", "SubCategory", "JDEDistributorCode"'
+            resp = await function(query=total_consumers_query_ )
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            resp.rename({"SubCategory": "ConsumerType"}, inplace=True)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            resp = await filter_data(resp, _filters)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["ZOName"], as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+            # Fill missing values for numerical columns
+            for each_float_col in [
+                "Total_Consumers"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            # Fill missing values for string columns
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "Category",
+                "SubCategory",
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        resp = await function(query=total_consumers_query_ )
+        if resp:
+            resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            for each_float_col in [
+                "Total_Consumers"
+            ]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in [
+                "ZOName",
+                "ROName",
+                "SAName",
+                "Category",
+                "SubCategory",
+                "JDEDistributorCode"
+            ]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                
+                if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName"], as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+                elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+                elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({
+                        "Total_Consumers": "sum",
+                    })
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}

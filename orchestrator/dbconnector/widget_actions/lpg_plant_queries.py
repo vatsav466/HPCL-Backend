@@ -879,7 +879,7 @@ LIMIT 10000;''',
                                         from
                                             "lpg_monthly_cdcms_sales_summary" ''',
     
-    "total_consumers": f''' select
+    "lpg_cdcms_total_consumers": f''' select
                                 "ZOName",
                                 "ROName",
                                 "SAName",
