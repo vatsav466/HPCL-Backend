@@ -25,7 +25,12 @@ DefaultTable = 'Day'
 # MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
 MandateKeys = {"actual": "IND_ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES"}
 
-
+async def calculate_market_share(filters, cross_filters, drill_state):
+    try:
+        ...
+    except Exception as e:
+        print(traceback.format_exc())
+        return {"status": False, "message": str(e), "data": []}
 
 async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_resp_format="%Y%m%d"):
     """
@@ -176,7 +181,7 @@ def get_group_by_filter_key(cross_filters):
         print("cross_filters --> ", cross_filters)
         # group_by_filter = ['"month_name"', '"Company_Name"']  # Default grouping keys
 
-        group_by_filter = ['"CoName"', '"Zone_Name"']  # Default grouping keys        
+        group_by_filter = ['"CoName"', '"Zone_Name"', '"Company_Name"', "'fiscal_year'"]  # Default grouping keys        
         if cross_filters:
             print(" if cross_filters --> ", cross_filters)
             lubes_index = 0
@@ -372,6 +377,8 @@ async def industry_performance(filters, cross_filters, drill_state):
             if actual_data:
                 actual_data = pd.DataFrame(actual_data)
                 print("group_by_filter.strip", group_by_filter)
+                print("actual_data ", actual_data)
+                print("actual_data ", actual_data.columns)
                 if isinstance(group_by_filter, list):
                     # If it's a list, process each item
                     group_by_filter_key = [col.strip('"') for col in group_by_filter]
@@ -411,6 +418,8 @@ async def industry_performance(filters, cross_filters, drill_state):
             if hist_data:
                 hist_data = pd.DataFrame(hist_data)
                 print("group_by_filter.strip", group_by_filter)
+                print("hist_data ", hist_data)
+                print("hist_data ", hist_data.columns)
                 if isinstance(group_by_filter, list):
                     # If it's a list, process each item
                     group_by_filter_key = [col.strip('"') for col in group_by_filter]
@@ -420,7 +429,8 @@ async def industry_performance(filters, cross_filters, drill_state):
                 hist_data = hist_data.groupby(group_by_filter_key)['IND_ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
                 hist_data['IND_ACTUAL_HISTORY_TMT_SALES'] = hist_data['IND_ACTUAL_HISTORY_TMT_SALES'].fillna(0)
                 hist_data = hist_data.to_dict(orient='records')
-
+        print("actual_data ", actual_data.columns)
+        print("hist_data ", hist_data.columns)
         #df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
         df_ = [pd.DataFrame(d) for d in [actual_data, hist_data] if d]
         merged_df = df_[0] if len(df_) else pd.DataFrame([])
