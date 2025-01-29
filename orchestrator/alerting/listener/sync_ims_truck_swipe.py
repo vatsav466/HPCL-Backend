@@ -52,12 +52,12 @@ async def sync_ims_indent_truck_swipe():
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-        resp = await function(
-            schema_name="IMS_SAP",
-            table_name="TRUCK_SWIPE_ENTRY_SAP_HISTORY",
-            records=ro_data,
-            conflict_columns=["LOCN_CODE", "READER_ID", "SWIPE_SEQ", "run_id"]
-        )
+        # resp = await function(
+        #     schema_name="IMS_SAP",
+        #     table_name="TRUCK_SWIPE_ENTRY_SAP_HISTORY",
+        #     records=ro_data,
+        #     conflict_columns=["LOCN_CODE", "READER_ID", "SWIPE_SEQ", "run_id"]
+        # )
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
         print(traceback.format_exc())
