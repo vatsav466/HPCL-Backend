@@ -836,9 +836,10 @@ class LPGCDCMSActions:
                 })
                 grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
                 _index = "DistributorName"
-
-            grouped_resp[col] = grouped_resp[col]/1000000
-            grouped_resp[col] = grouped_resp[col].round(2)
+            for col in ["PMUY", "NPMUY"]:
+                if col in grouped_resp.columns:
+                    grouped_resp[col] = grouped_resp[col]/1000000
+                    grouped_resp[col] = grouped_resp[col].round(2)
             result = [
                         {
                             "PMUY": row.get("PMUY", 0),
@@ -846,7 +847,7 @@ class LPGCDCMSActions:
                             _index: index
                         }
                         for index, row in grouped_resp.iterrows()
-                    ]
+                     ]
             return {"status": True, "message": "success", "data": result}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
