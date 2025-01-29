@@ -686,6 +686,7 @@ class LPGCDCMSActions:
             resp = await filter_data(resp, _filters)
             
             for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+                resp[col] = resp[col].fillna(0).astype(np.float64)
                 resp[col] = np.where(
                                 resp['CylType'].fillna('') == 'C142',
                                 resp[col] * 14.2,
@@ -701,6 +702,9 @@ class LPGCDCMSActions:
                     "pending_8_15_days": "sum",
                     "pending_beyond_15_days": "sum"
                 })
+            for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+                resp[col] = resp[col]/1000000
+                resp[col] = resp[col].round(2)
             return {"status": True, "message": "success", "data": resp}
 
         resp = await function(query=lpg_pending_query_)
@@ -710,6 +714,7 @@ class LPGCDCMSActions:
         resp = await filter_data(resp, _filters)
         
         for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+                resp[col] = resp[col].fillna(0).astype(np.float64)
                 resp[col] = np.where(
                                 resp['CylType'].fillna('') == 'C142',
                                 resp[col] * 14.2,
@@ -829,6 +834,10 @@ class LPGCDCMSActions:
                 })
                 grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
                 _index = "DistributorName"
+            
+            if grouped_resp:
+                grouped_resp[col] = grouped_resp[col]/1000000
+                grouped_resp[col] = grouped_resp[col].round(2)
             result = [
                         {
                             "PMUY": row.get("PMUY", 0),
@@ -930,6 +939,7 @@ class LPGCDCMSActions:
             resp = resp.groupby(["ConsumerType"], as_index=False).agg({
                     "Sales": lambda x: x.sum() / 1000000
                 })
+            resp["Sales"] = resp["Sales"].round(2)
             # Fill missing values for numerical columns
             for each_float_col in ["Sales"]:
                 if each_float_col in resp.columns:
@@ -974,6 +984,7 @@ class LPGCDCMSActions:
                 as_index=False).agg({"Sales": "sum"})
             if grouped_resp is not None:
                 grouped_resp["Sales"] = grouped_resp["Sales"]/1000000
+                grouped_resp["Sales"] = grouped_resp["Sales"].round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
