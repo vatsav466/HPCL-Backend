@@ -886,7 +886,8 @@ def get_consumer_statistics():
             "LPG - NORTH CENTRAL ZONE": "NCZ",
             "LPG - EAST ZONE": "EZ"
             }
-    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZoneNames"))    
+    data = data.with_columns(pl.col("ZOName").alias("ZoneNames"))
+    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
     
     trunc_query = ''' TRUNCATE TABLE "LPG_CONSUMERS_SUMMARY";  '''
     pg_conn = psycopg2.connect(
