@@ -576,11 +576,18 @@ Model Alerts {
     alert_message optional str
 
     Action=> alert_action {
+        bu BusinessUnit
+        alert_section str
         action_type AlertActionType
         alert_id str
         action_msg optional str
         days optional int
         justificationType optional str
+        category optional str
+        rca_reason optional str
+        action_description optional str
+        doc_link optional str
+        acknowledged_by optional str
         event_tags optional tags
     }
     Action=> intitiate_vts_exception {
