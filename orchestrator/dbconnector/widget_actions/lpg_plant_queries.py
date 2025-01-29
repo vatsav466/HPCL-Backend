@@ -766,7 +766,7 @@ LIMIT 10000;''',
                                         ORDER BY 
                                         bu, alert_section, interlock_name, location_name, severity;''',
     
-    "lpg_cdcms": f'''select sum("bookings_volume") as "Bookings",
+    "lpg_cdcms_booking_vs_sales_vs_pending": f'''select sum("bookings_volume") as "Bookings",
                             sum("sales_volume") as "Sales",
                             sum("pendings_volume") as "Pending",
                             "ZOName",
@@ -787,7 +787,7 @@ LIMIT 10000;''',
                                             "lpg_cdcms_sakhi_registrations"
                                     ''',
     
-    "lpg_cdcms_month": f'''select
+    "lpg_cdcms_monthly_sales": f'''select
                                 sum("sales_volume") as "Total Sales",
                                 "Month",
                                 "Month_Number",
@@ -800,7 +800,7 @@ LIMIT 10000;''',
                             from
                                 "lpg_monthly_cdcms_sales_summary"''',
     
-    "cdcms_order_source": f'''select
+    "lpg_cdcms_bookings_order_source_wise": f'''select
                                     "OrderSourceName",
                                     "DistributorName",
 	                                "ZOName",
@@ -812,7 +812,7 @@ LIMIT 10000;''',
                                 from
 	                                "lpg_todays_cdcms_sales_summary"''',
                                  
-    "overall_pending_pmuy_nmpuy": f'''
+    "lpg_cdcms_pending_cosumer_type_wise": f'''
                                 select 
                                     "ZOName",
                                     "ROName",
@@ -838,7 +838,7 @@ LIMIT 10000;''',
                         from
                             "lpg_todays_cdcms_sales_summary" ''',
     
-    "cumulative_sales_pmuy_npmuy": f'''select
+    "lpg_cdcms_current_financial_year_sales": f'''select
                                             "DistributorName",
                                             "ConsumerType",
                                             "ZOName",
@@ -848,7 +848,7 @@ LIMIT 10000;''',
                                         from
                                             "lpg_monthly_cdcms_sales_summary"''',
     
-    "overall_ctc_statistics": f'''select
+    "lpg_cdcms_overall_ctc_statistics": f'''select
                                         "Category",
                                         "JDEDistributorCode",
                                         "ZOName",
@@ -860,7 +860,7 @@ LIMIT 10000;''',
                                     from
                                         "LPG_CONSUMERS_SUMMARY"''',
 
-    'overall_safety_check_pending': f'''select
+    "lpg_cdcms_safety_check_pending": f'''select
                                             "SubCategory",
                                             "JDEDistributorCode",
                                             "ZOName",
@@ -870,7 +870,7 @@ LIMIT 10000;''',
                                         from
                                             "LPG_CONSUMERS_SUMMARY"''',
 
-    'lpg_cdcms_sales_comparision': f''' select 
+    'lpg_cdcms_actual_vs_historic_sales': f''' select 
                                             "Month",
                                             "Month_Number",
                                             "Financial_Year",
@@ -891,7 +891,8 @@ LIMIT 10000;''',
                                 "LPG_CONSUMERS_SUMMARY" ''',
     
     "sales_growth_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')''',
-    "total_suvidha": f'''select 
+    
+    "lpg_cdcms_total_suvidha": f'''select 
                             "ZOName",
                             "ROName",
                             "SAName",
@@ -901,7 +902,7 @@ LIMIT 10000;''',
                             sum("SuvidhaClub") as "SuvidhaClub" 
                         from
                             "LPG_CONSUMERS_SUMMARY" ''',
-    "ekyc_statistics": f'''
+    "lpg_cdcms_ekyc_statistics": f'''
                         SELECT
                             "ROName",
                             "SAName",
@@ -994,7 +995,7 @@ ORDER BY
     "cp_total_volume_sales": '''select sum("sale_volume")/1000 as "total_sales" 
     from "cp_transaction_updated"''',
 
-    "subsidy_exception_stats": f''' select 
+    "lpg_cdcms_exception_stats": f''' select 
                                         "ZOName" ,
                                         "ROName",
                                         "SAName" ,
@@ -1006,7 +1007,7 @@ ORDER BY
                                         "subsidy_exception_statistics_EC_data" 
                                      ''',
 
-    "subsidy_failure_stats": f'''
+    "lpg_cdcms_subsidy_failure_stats": f'''
                         SELECT 
                             "ZOName" ,
                             "ROName",
@@ -1133,7 +1134,7 @@ ORDER BY
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
-    "lpg_domestic_sale_table": f''' select 
+    "lpg_cdcms_domestic_sales_table": f''' select 
                                         "ZOName" as "ZOName",
                                         "CylType" as "CylType",
                                         "ConsumerType" as "ConsumerType",
@@ -1144,7 +1145,7 @@ ORDER BY
                                         "lpg_todays_cdcms_sales_summary" 
                                      ''',
 
-    "lpg_consumer_table": f''' select 
+    "lpg_cdcms_consumer_statistics_table": f''' select 
                                     "ZoneNames" as "ZoneNames",
                                     "SubCategory" as "SubCategory",
                                     sum("ConsumerCount") as "Total_Consumers",
