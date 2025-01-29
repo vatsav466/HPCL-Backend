@@ -122,6 +122,7 @@ Model VTS crud_disable {
 
 Model vaData internal {
     alert_id optional str
+    alert_timestamp optional str
     alert_type str
     alert_description optional str
     device_id str

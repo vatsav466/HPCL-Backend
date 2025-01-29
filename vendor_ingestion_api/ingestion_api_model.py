@@ -121,6 +121,7 @@ class Vts_Ingest_Data_Unblock_Trucks_AckParams(pydantic.BaseModel):
 
 class vaDataCreate(pydantic.BaseModel):
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    alert_timestamp: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: str
     alert_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: str
