@@ -1030,13 +1030,12 @@ class LPGCDCMSActions:
             resp = pl.DataFrame(resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
-            resp = resp.groupby(["Month"]).agg([
+            resp = resp.group_by(["Month"]).agg([
                     pl.sum("SakhiRegistered").alias("SakhiRegistered"),
-                    pl.sum("Month_Number").alias("Month_Number"),
+                    pl.first("Month_Number").alias("Month_Number"),
                 ])
-            
-            resp.sort(key=lambda x: month_order.index(x['Month']))
-            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+            resp.sort('Month_Number')
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
             
         resp = await function(query=sakhi_registrations_query_)
         resp = pl.DataFrame(resp)
@@ -1060,17 +1059,17 @@ class LPGCDCMSActions:
             filter_keys = [rec.key.strip('"') for rec in filters]
 
             if "Month" in filter_keys and "ZOName" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZOName"]).agg([
+                grouped_resp = resp.group_by(["Month", "ZOName"]).agg([
                     pl.sum("SakhiRegistered").alias("SakhiRegistered"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZOName", "ROName"]).agg([
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName"]).agg([
                     pl.sum("SakhiRegistered").alias("SakhiRegistered"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZOName", "ROName", "SAName"]).agg([
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName"]).agg([
                     pl.sum("SakhiRegistered").alias("SakhiRegistered"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
