@@ -782,7 +782,7 @@ LIMIT 10000;''',
                                             "Month",
                                             "Month_Number",
                                             SUM("SakhiRegisteredCount") AS "SakhiRegistered",
-                                            "ZoneNames", "ROName", "SAName", "DistributorName"
+                                            "ZOName", "ROName", "SAName", "DistributorName"
                                         FROM
                                             "lpg_cdcms_sakhi_registrations"
                                     ''',

@@ -1019,13 +1019,13 @@ class LPGCDCMSActions:
                 sakhi_registrations_query_  += ' WHERE '
                 sakhi_registrations_query_  += ' AND '.join(conditions)
             sakhi_registrations_query_  += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            sakhi_registrations_query_  += ' GROUP BY "Month", "Month_Number", "ZoneNames", "ROName", "SAName", "DistributorName" '
+            sakhi_registrations_query_  += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName" '
         else:
             if "where" not in sakhi_registrations_query_:
                 sakhi_registrations_query_  += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 sakhi_registrations_query_  += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            sakhi_registrations_query_  += ' GROUP BY "Month", "Month_Number", "ZoneNames", "ROName", "SAName", "DistributorName" '
+            sakhi_registrations_query_  += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName" '
             resp = await function(query=sakhi_registrations_query_)
             resp = pl.DataFrame(resp)
             resp = await filter_data(resp.to_pandas(), _filters)
@@ -1044,7 +1044,7 @@ class LPGCDCMSActions:
         resp = pl.from_pandas(resp)
         # Fill missing values
         numerical_columns = ["Month_Number", "SakhiRegistered"]
-        string_columns = ["Month", "ZoneNames", "ROName", "SAName"]
+        string_columns = ["Month", "ZOName", "ROName", "SAName"]
 
         for col in numerical_columns:
             if col in resp.columns:
@@ -1059,18 +1059,18 @@ class LPGCDCMSActions:
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
 
-            if "Month" in filter_keys and "ZoneNames" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZoneNames"]).agg([
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName"]).agg([
                     pl.sum("SakhiRegistered").alias("SakhiRegistered"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
-            elif "Month" in filter_keys and "ZoneNames" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZoneNames", "ROName"]).agg([
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName", "ROName"]).agg([
                     pl.sum("SakhiRegistered").alias("SakhiRegistered"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
-            elif "Month" in filter_keys and "ZoneNames" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZoneNames", "ROName", "SAName"]).agg([
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName", "ROName", "SAName"]).agg([
                     pl.sum("SakhiRegistered").alias("SakhiRegistered"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
