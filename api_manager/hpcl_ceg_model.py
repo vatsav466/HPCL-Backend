@@ -1145,8 +1145,8 @@ class AlertsGetResp(pydantic.BaseModel):
 
 
 class Alerts_Alert_ActionParams(pydantic.BaseModel):
-    bu: hpcl_ceg_enum.BusinessUnit
-    alert_section: str
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    alert_section: typing.Optional[str] = pydantic.Field("", **{})
     action_type: hpcl_ceg_enum.AlertActionType
     alert_id: str
     action_msg: typing.Optional[str] = pydantic.Field("", **{})

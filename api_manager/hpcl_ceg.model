@@ -576,8 +576,8 @@ Model Alerts {
     alert_message optional str
 
     Action=> alert_action {
-        bu BusinessUnit
-        alert_section str
+        bu optional str
+        alert_section optional str
         action_type AlertActionType
         alert_id str
         action_msg optional str
