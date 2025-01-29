@@ -1,4 +1,5 @@
 import urdhva_base
+import calendar
 import polars as pl
 import numpy as np
 import pandas as pd
@@ -57,8 +58,40 @@ class LPGCDCMSActions:
     @staticmethod
     def get_next_level_drill_params(present_group):
         ...
-        
     
+    
+    @staticmethod
+    async def cdcms_dropdown(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _query = ''' select * from cdcms_masters '''
+        resp = await function(query=_query)
+        df = pl.from_pandas(pd.DataFrame(resp))
+        _filters = []
+        if filters:
+            for filter in filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _filters:
+            filter_expr = pl.lit(True)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    key = key.replace('"','')
+                    if key in ["Month", "CylType", "ConsumerType"]:
+                        continue
+                    filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
+            df = df.filter(filter_expr)
+        months = [month for month in calendar.month_name if month]
+        df = df.filter(pl.col("ZOName").fill_null("") != "NULL")
+        df = df.filter(pl.col("DistributorName").fill_null("") != "NULL")
+        data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
+                "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
+                "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
+                "ConsumerType": ['PMUY', 'NPMUY']}
+        return data
+    
+    
+    # Actual vs Historic Sales
     @staticmethod
     async def lpg_cdcms_actual_vs_historic_sales(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -189,6 +222,7 @@ class LPGCDCMSActions:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
     
+    # Monthly Sales    
     @staticmethod
     async def lpg_cdcms_monthly_sales(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -312,6 +346,7 @@ class LPGCDCMSActions:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
+    # Bookings vs Sales vs Pendings
     @staticmethod
     async def lpg_cdcms_booking_vs_sales_vs_pending(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -360,7 +395,7 @@ class LPGCDCMSActions:
             # Fill missing values for numerical columns
             for each_float_col in ["Bookings", "Sales", "Pending"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col]/1000000
+                    resp[each_float_col] = resp[each_float_col]/1000
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
             for each_str_col in ["ZOName"]:
                 if each_str_col in resp.columns:
@@ -400,13 +435,14 @@ class LPGCDCMSActions:
             if grouped_resp is not None:
                 for each_float_col in ["Bookings", "Sales", "Pending"]:
                     if each_float_col in grouped_resp.columns:
-                        grouped_resp[each_float_col] = grouped_resp[each_float_col]/1000000
+                        grouped_resp[each_float_col] = grouped_resp[each_float_col]/1000
                         grouped_resp[each_float_col] = grouped_resp[each_float_col].fillna(0.0).round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
+    # Total Bookings (Order Source)
     @staticmethod
     async def lpg_cdcms_bookings_order_source_wise(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -468,8 +504,10 @@ class LPGCDCMSActions:
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            resp["Total_Bookings"] = resp["Total_Bookings"]/1000
+            resp["Total_Bookings"] = resp["Total_Bookings"].round(2)
             return {"status": True, "message": "success", "data": resp}
-        resp = await function(query=cdcms_order_source_query_)        
+        resp = await function(query=cdcms_order_source_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
         if resp.empty:
@@ -508,12 +546,13 @@ class LPGCDCMSActions:
                     "Total_Bookings": "sum"
                     })
             if grouped_resp is not None:
-                grouped_resp["Total_Bookings"] = grouped_resp["Total_Bookings"]/1000000
+                grouped_resp["Total_Bookings"] = grouped_resp["Total_Bookings"]/1000
                 grouped_resp["Total_Bookings"] = grouped_resp["Total_Bookings"].round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
+    # Overall Pending (ConsumerType)
     @staticmethod
     async def lpg_cdcms_pending_cosumer_type_wise(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -567,7 +606,7 @@ class LPGCDCMSActions:
             # Fill missing values for numerical columns
             for each_float_col in ["Total_pending"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)/1000000
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)/1000
                     resp[each_float_col] = resp[each_float_col].round(2)
             # Fill missing values for string columns
             for each_str_col in [
@@ -627,7 +666,7 @@ class LPGCDCMSActions:
                         "Total_pending": "sum",
                     })
                 if grouped_resp is not None:
-                    grouped_resp["Total_pending"] = grouped_resp["Total_pending"]/1000000
+                    grouped_resp["Total_pending"] = grouped_resp["Total_pending"]/1000
                     grouped_resp["Total_pending"] = grouped_resp["Total_pending"].round(2)
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         else:
@@ -635,6 +674,7 @@ class LPGCDCMSActions:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
+    # Overall Ageing Analysis
     @staticmethod
     async def lpg_cdcms_ageing(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -704,7 +744,7 @@ class LPGCDCMSActions:
                     "pending_beyond_15_days": "sum"
                 })
             for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
-                resp[col] = resp[col]/1000000
+                resp[col] = resp[col]/1000
                 resp[col] = resp[col].round(2)
             return {"status": True, "message": "success", "data": resp}
 
@@ -838,7 +878,7 @@ class LPGCDCMSActions:
                 _index = "DistributorName"
             for col in ["PMUY", "NPMUY"]:
                 if col in grouped_resp.columns:
-                    grouped_resp[col] = grouped_resp[col]/1000000
+                    grouped_resp[col] = grouped_resp[col]/1000
                     grouped_resp[col] = grouped_resp[col].round(2)
             result = [
                         {
@@ -852,6 +892,7 @@ class LPGCDCMSActions:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
+    # Domestic Sales Table
     @staticmethod
     async def lpg_cdcms_domestic_sales_table(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -886,6 +927,7 @@ class LPGCDCMSActions:
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
+    # Current Year Sales (ConsumerType)
     @staticmethod
     async def lpg_cdcms_current_financial_year_sales(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -919,7 +961,7 @@ class LPGCDCMSActions:
                 cumulative_sales_pmuy_npmuy_query_ += ' WHERE '
                 cumulative_sales_pmuy_npmuy_query_ += ' AND '.join(conditions)
             
-            cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
+            cumulative_sales_pmuy_npmuy_query_ += f' AND "ZOName" NOT IN (\'Null\') AND "Financial_Year"=\'{str(financial_year)}\''
             cumulative_sales_pmuy_npmuy_query_ += ' GROUP BY "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
