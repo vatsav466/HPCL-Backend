@@ -59,7 +59,7 @@ class AlertAction:
                         "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert",
                         "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
-                        "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert"}
+                        "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert", "AcceptClose": "accept_close"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -399,6 +399,16 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "R3Swipe")
+
+    @classmethod
+    async def accept_close(cls, input_data, alert_data):
+        """
+                Function to Accept and Close an alert
+                :param input_data:
+                :param alert_data:
+                :return:
+                """
+        return await cls.publish_to_camunda(input_data, alert_data, "AcceptClose")
     
     @classmethod
     async def tripped_alert(cls, input_data, alert_data):
