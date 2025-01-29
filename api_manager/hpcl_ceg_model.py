@@ -1145,11 +1145,18 @@ class AlertsGetResp(pydantic.BaseModel):
 
 
 class Alerts_Alert_ActionParams(pydantic.BaseModel):
+    bu: hpcl_ceg_enum.BusinessUnit
+    alert_section: str
     action_type: hpcl_ceg_enum.AlertActionType
     alert_id: str
     action_msg: typing.Optional[str] = pydantic.Field("", **{})
     days: typing.Optional[int] = pydantic.Field(0, **{})
     justification_type: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    rca_reason: typing.Optional[str] = pydantic.Field("", **{})
+    action_description: typing.Optional[str] = pydantic.Field("", **{})
+    doc_link: typing.Optional[str] = pydantic.Field("", **{})
+    acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
     event_tags: typing.Optional[tagsCreate] | None = None
 
 

@@ -9,6 +9,7 @@ import orchestrator.alerting.va_alert as va_alert
 import orchestrator.alerting.vts_alert as vts_alert
 import orchestrator.alerting.tas_alert as tas_alert
 import orchestrator.alerting.lpg_alert as lpg_alert
+import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.emlock_alert as emlock_alert
 
 
@@ -84,6 +85,10 @@ class AlertAction:
         if function_name:
             await cls.update_alert_history(input_data, alert_data)
             # call the function
+            # return await getattr(cls, function_name)(input_data, alert_data)
+            if input_data.get("alert_section", "") == 'VA':
+                resp = await cls.close_va_alert(alert_data, input_data)
+                print(f"VA Alert resp {resp}")
             return await getattr(cls, function_name)(input_data, alert_data)
         return False, "Alert action is not valid"
 
@@ -414,3 +419,24 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "VTS")
+
+    @classmethod
+    async def close_va_alert(cls, alert_data, input_data):
+        """
+        Args:
+            alert_data:
+
+        Returns:
+        """
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
+        params = {
+            "AlarmId": alert_data['external_id'],
+            "Status": "CLOSED",
+            "AcknowledgedBy": input_data.get("acknowledged_by", "1234"),
+            "ActionCode": "VALID",
+            "ActionReason": input_data.get("rca_reason", "Other"),
+            "ActionCategory": input_data.get("category", "Others"),
+            "ActionDescription": input_data.get("action_description", "")
+        }
+        return await va_analysis.close_va_alerts(params)
