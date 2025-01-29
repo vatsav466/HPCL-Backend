@@ -121,8 +121,8 @@ class LPGCDCMSActions:
                 return {"status": True, "message": "success", "data": resp}
             current_year = resp[resp['Financial_Year'] == financial_year].groupby('Month')['sales_volume'].sum().reset_index()
             previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Month')['sales_volume'].sum().reset_index()
-
             resp = pd.merge(current_year, previous_year, on='Month', how='outer', suffixes=('_current', '_previous'))
+            
             final_data = []
             for _, row in resp.iterrows():
                 comparison = {
@@ -243,8 +243,11 @@ class LPGCDCMSActions:
                 return {"status": True, "message": "success", "data": resp}
             resp['Month_Number'] = resp['Month_Number'].astype(str)
             resp = resp.groupby(["Month", "Month_Number"], as_index=False).agg({
-                    "Total Sales": lambda x: x.sum() / 10000000
+                    "Total Sales": "sum"
                 })
+            resp['Total Sales'] = resp['Total Sales']/1000000
+            resp['Total Sales'] = resp['Total Sales'].round(2)
+            
             resp['Month_Number'] = resp['Month_Number'].astype(int)
             resp = resp.sort_values(by="Month_Number")
             del resp["Month_Number"]
@@ -355,14 +358,11 @@ class LPGCDCMSActions:
                     "Pending": "sum"
                 })
             # Fill missing values for numerical columns
-            for each_float_col in [
-                "Bookings", "Sales", "Pending"
-            ]:
+            for each_float_col in ["Bookings", "Sales", "Pending"]:
                 if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col]/1000000
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
-            for each_str_col in [
-                "ZOName"
-            ]:
+            for each_str_col in ["ZOName"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -372,12 +372,6 @@ class LPGCDCMSActions:
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         resp = await filter_data(resp, _filters)
-        # Fill missing values for numerical columns
-        for each_float_col in [
-            "Bookings", "Sales", "Pending"
-        ]:
-            if each_float_col in resp.columns:
-                resp[each_float_col] = resp[each_float_col].fillna(0.0)
         for each_str_col in ["ZOName"]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -404,6 +398,10 @@ class LPGCDCMSActions:
                     "Pending": "sum"
                     })
             if grouped_resp is not None:
+                for each_float_col in ["Bookings", "Sales", "Pending"]:
+                    if each_float_col in grouped_resp.columns:
+                        grouped_resp[each_float_col] = grouped_resp[each_float_col]/1000000
+                        grouped_resp[each_float_col] = grouped_resp[each_float_col].fillna(0.0).round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
@@ -510,6 +508,8 @@ class LPGCDCMSActions:
                     "Total_Bookings": "sum"
                     })
             if grouped_resp is not None:
+                grouped_resp["Total_Bookings"] = grouped_resp["Total_Bookings"]/1000000
+                grouped_resp["Total_Bookings"] = grouped_resp["Total_Bookings"].round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
@@ -565,11 +565,10 @@ class LPGCDCMSActions:
                         "Total_pending": "sum",
                     })
             # Fill missing values for numerical columns
-            for each_float_col in [
-                "Total_pending"
-            ]:
+            for each_float_col in ["Total_pending"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)/1000000
+                    resp[each_float_col] = resp[each_float_col].round(2)
             # Fill missing values for string columns
             for each_str_col in [
                 "ZOName",
@@ -628,6 +627,8 @@ class LPGCDCMSActions:
                         "Total_pending": "sum",
                     })
                 if grouped_resp is not None:
+                    grouped_resp["Total_pending"] = grouped_resp["Total_pending"]/1000000
+                    grouped_resp["Total_pending"] = grouped_resp["Total_pending"].round(2)
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         else:
             return {"status": True, "message":"success", "data":[]}
@@ -685,14 +686,15 @@ class LPGCDCMSActions:
             resp = await filter_data(resp, _filters)
             
             for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
-                resp = resp.with_columns(
-                        pl.when(
-                            pl.col("CylType").fill_null("") == "C142"
-                            ).then(pl.col(col) * 14.2
-                        ).when(
-                            pl.col("CylType").fill_null("") == "C5"
-                            ).then(pl.col(col) * 5).alias(col))
-            
+                resp[col] = np.where(
+                                resp['CylType'].fillna('') == 'C142',
+                                resp[col] * 14.2,
+                                np.where(
+                                    resp['CylType'].fillna('') == 'C5',
+                                    resp[col] * 5,
+                                    resp[col]
+                                )
+                            )
             resp = resp.groupby(["ConsumerType"], as_index=False).agg({
                     "pending_1_3_days": "sum",
                     "pending_4_7_days": "sum",
@@ -708,14 +710,15 @@ class LPGCDCMSActions:
         resp = await filter_data(resp, _filters)
         
         for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
-                resp = resp.with_columns(
-                        pl.when(
-                            pl.col("CylType").fill_null("") == "C142"
-                            ).then(pl.col(col) * 14.2
-                        ).when(
-                            pl.col("CylType").fill_null("") == "C5"
-                            ).then(pl.col(col) * 5).alias(col))
-        
+                resp[col] = np.where(
+                                resp['CylType'].fillna('') == 'C142',
+                                resp[col] * 14.2,
+                                np.where(
+                                    resp['CylType'].fillna('') == 'C5',
+                                    resp[col] * 5,
+                                    resp[col]
+                                )
+                            )
         for each_str_col in ["ZOName", "ROName", "SAName", "ConsumerType", "DistributorName"]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
