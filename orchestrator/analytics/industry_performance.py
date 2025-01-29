@@ -2,6 +2,7 @@ import urdhva_base
 import json
 import traceback
 import pandas as pd
+import polars as pl
 from calendar import monthrange
 import utilities.helpers as helpers
 import dateutil.parser as dt_parser
@@ -25,12 +26,208 @@ DefaultTable = 'Day'
 # MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
 MandateKeys = {"actual": "IND_ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES"}
 
-async def calculate_market_share(filters, cross_filters, drill_state):
+async def calculate_market_share(df, segregate=False):
     try:
-        ...
+        df = df.copy()
+        df_pl = pl.from_pandas(df)
+        # Get unique values
+        unique_companies = df_pl["CoName"].unique().to_list()
+        unique_years = df_pl["fiscal_year"].unique().to_list()
+
+        # Columns to include based on selection
+        selected_columns = [col for key, col in MandateKeys.items() if col in df_pl.columns]
+
+        # Debugging
+        print("Available columns:", df_pl.columns)
+        print("Selected columns:", selected_columns)
+
+        # Compute overall market share
+        overall_share = (
+            df_pl.group_by("fiscal_year")
+            .agg([pl.col(col).sum().alias(col) for col in selected_columns])
+            .to_dicts()
+        )
+        overall_share = {
+            rec["fiscal_year"]: {col: rec[col] for col in selected_columns} for rec in overall_share
+        }
+
+        # Compute PSU market share
+        psu_share = (
+            df_pl.filter(pl.col("CoName").is_in(["IOCL", "HPCL", "BPCL"]))
+            .group_by("fiscal_year")
+            .agg([pl.col(col).sum().alias(col) for col in selected_columns])
+            .to_dicts()
+        )
+        psu_share = {
+            rec["fiscal_year"]: {col: rec[col] for col in selected_columns} for rec in psu_share
+        }
+
+        # Calculate company share
+        company_share = []
+        for year in unique_years:
+            for company in unique_companies:
+                # Filter data for company and year
+                company_data = df_pl.filter(
+                    (pl.col("CoName") == company) & (pl.col("fiscal_year") == year)
+                ).select([pl.col(col).sum().alias(col) for col in selected_columns])
+
+                company_sales = {col: company_data[col][0] if len(company_data) > 0 else 0 for col in selected_columns}
+                
+                # Compute market share percentages
+                market_share = {
+                    col: round(100 * (company_sales[col] / overall_share[year][col]), 2)
+                    if overall_share[year][col] != 0 else 0
+                    for col in selected_columns
+                }
+                psu_share_per = {
+                    col: round(100 * (company_sales[col] / psu_share[year][col]), 2)
+                    if psu_share[year][col] != 0 else 0
+                    for col in selected_columns
+                }
+
+                company_type = df_pl.filter(pl.col("CoName") == company).select("Company_Name").to_numpy()[0][0]
+                # If segregate mode is off, use a combined dictionary
+                if not segregate:
+                    company_share.append({
+                        "COMNAME": company,
+                        "COMTYPE": company_type,
+                        "FIN_YEAR": year,
+                        "CompanySize": company_sales[MandateKeys["actual"]],
+                        "Zone_Name": df_pl["Zone_Name"].unique().to_list(),
+                        "fiscal_year": df_pl["fiscal_year"].unique().to_list(),
+                        **{col: company_sales[col] for col in selected_columns},
+                        "OverAllMarketSize": overall_share[year][MandateKeys["actual"]],
+                        "PSUSize": psu_share[year][MandateKeys["actual"]],
+                        "MarketSharePer": market_share[MandateKeys["actual"]],
+                        "PSUSharePer": psu_share_per[MandateKeys["actual"]],
+                    })
+                else:
+                    # Create separate records for each metric
+                    company_share.append({
+                        "COMNAME": company,
+                        "FIN_YEAR": year,
+                        "MODEL": "CompanySize",
+                        "Value": company_sales[MandateKeys["actual"]]
+                    })
+                    company_share.append({
+                        "COMNAME": company,
+                        "FIN_YEAR": year,
+                        "MODEL": "MarketSharePer",
+                        "Value": market_share[MandateKeys["actual"]]
+                    })
+                    company_share.append({
+                        "COMNAME": company,
+                        "FIN_YEAR": year,
+                        "MODEL": "PSUSharePer",
+                        "Value": psu_share_per[MandateKeys["actual"]]
+                    })
+        df_company_share = pl.DataFrame(company_share)
+        df_company_share.write_csv("company_share_data.csv")
+        return company_share
+
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": str(e), "data": []}
+
+    # try:
+    #     df = df.copy()
+    #     df_pl = pl.from_pandas(df)
+
+    #     # Get unique values
+    #     unique_companies = df_pl["CoName"].unique().to_list()
+    #     unique_years = df_pl["fiscal_year"].unique().to_list()
+
+    #     # Columns to include based on selection
+    #     selected_columns = [col for key, col in MandateKeys.items() if col in df_pl.columns]
+
+    #     # Compute overall market share
+    #     overall_share = (
+    #         df_pl.group_by("fiscal_year")
+    #         .agg([pl.col(col).sum().alias(col) for col in selected_columns])
+    #         .to_dicts()
+    #     )
+    #     overall_share = {
+    #         rec["fiscal_year"]: {col: rec[col] for col in selected_columns} for rec in overall_share
+    #     }
+
+    #     # Compute PSU market share
+    #     psu_share = (
+    #         df_pl.filter(pl.col("CoName").is_in(["IOCL", "HPCL", "BPCL"]))
+    #         .group_by("fiscal_year")
+    #         .agg([pl.col(col).sum().alias(col) for col in selected_columns])
+    #         .to_dicts()
+    #     )
+    #     psu_share = {
+    #         rec["fiscal_year"]: {col: rec[col] for col in selected_columns} for rec in psu_share
+    #     }
+
+    #     # Create a dictionary to store the final result
+    #     company_share_dict = {}
+
+    #     # Calculate company share
+    #     for year in unique_years:
+    #         for company in unique_companies:
+    #             # Filter data for company and year
+    #             company_data = df_pl.filter(
+    #                 (pl.col("CoName") == company) & (pl.col("fiscal_year") == year)
+    #             ).select([pl.col(col).sum().alias(col) for col in selected_columns])
+
+    #             company_sales = {col: company_data[col][0] if len(company_data) > 0 else 0 for col in selected_columns}
+
+    #             # Compute market share percentages
+    #             market_share = {
+    #                 col: round(100 * (company_sales[col] / overall_share[year][col]), 2)
+    #                 if overall_share[year][col] != 0 else 0
+    #                 for col in selected_columns
+    #             }
+    #             psu_share_per = {
+    #                 col: round(100 * (company_sales[col] / psu_share[year][col]), 2)
+    #                 if psu_share[year][col] != 0 else 0
+    #                 for col in selected_columns
+    #             }
+
+    #             # Get the company type from the Company_Name column
+    #             company_type = df_pl.filter(pl.col("CoName") == company).select("Company_Name").to_numpy()[0][0]
+    #             zone_name = ", ".join(df_pl.filter(pl.col("CoName") == company).select("Zone_Name").unique().to_numpy().flatten())
+    #             # Construct company share for the current year and company
+    #             company_data_dict = {
+    #                 "COMNAME": company,  # CoName from company
+    #                 "COMTYPE": company_type,  # Company_Name from Company_Name
+    #                 "FIN_YEAR": year,
+    #                 "MarketSharePer": market_share[MandateKeys["actual"]],
+    #                 "PSUSharePer": psu_share_per[MandateKeys["actual"]],
+    #                 "OverAllMarketSize": overall_share[year][MandateKeys["actual"]],
+    #                 "PSUSize": psu_share[year][MandateKeys["actual"]],
+    #                 "Zone_Name": df_pl["Zone_Name"].unique().to_list(),
+    #                 "Zone_Value": company_sales[MandateKeys["actual"]]
+    #             }
+
+    #             # Add to the dictionary for each company
+    #             if company not in company_share_dict:
+    #                 company_share_dict[company] = []
+
+    #             company_share_dict[company].append(company_data_dict)
+
+    #     # Format the output according to the desired structure
+    #     final_result = {}
+    #     for company, share_data in company_share_dict.items():
+    #         company_data = []
+    #         for data in share_data:
+    #             company_data.append({
+    #                 "zone_name": data["Zone_Name"],
+    #                 "zone_value": data["Zone_Value"],
+    #                 "COMNAME": data["COMNAME"],
+    #                 "COMTYPE": data["COMTYPE"],  # Add COMTYPE to the final result
+    #                 "market_share": data["MarketSharePer"]
+    #             })
+    #         final_result[company] = company_data
+
+    #     return final_result
+
+    # except Exception as e:
+    #     print(traceback.format_exc())
+    #     return {"status": False, "message": str(e), "data": []}
+
 
 async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_resp_format="%Y%m%d"):
     """
@@ -181,7 +378,7 @@ def get_group_by_filter_key(cross_filters):
         print("cross_filters --> ", cross_filters)
         # group_by_filter = ['"month_name"', '"Company_Name"']  # Default grouping keys
 
-        group_by_filter = ['"CoName"', '"Zone_Name"', '"Company_Name"', "'fiscal_year'"]  # Default grouping keys        
+        group_by_filter = ['"CoName"', '"Zone_Name"', '"Company_Name"', '"fiscal_year"']  # Default grouping keys        
         if cross_filters:
             print(" if cross_filters --> ", cross_filters)
             lubes_index = 0
@@ -429,8 +626,6 @@ async def industry_performance(filters, cross_filters, drill_state):
                 hist_data = hist_data.groupby(group_by_filter_key)['IND_ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
                 hist_data['IND_ACTUAL_HISTORY_TMT_SALES'] = hist_data['IND_ACTUAL_HISTORY_TMT_SALES'].fillna(0)
                 hist_data = hist_data.to_dict(orient='records')
-        print("actual_data ", actual_data.columns)
-        print("hist_data ", hist_data.columns)
         #df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
         df_ = [pd.DataFrame(d) for d in [actual_data, hist_data] if d]
         merged_df = df_[0] if len(df_) else pd.DataFrame([])
@@ -489,9 +684,11 @@ async def industry_performance(filters, cross_filters, drill_state):
                 if column_name not in merged_df:
                     merged_df[column_name] = ""  # Add the column to merged_df if not present
         merged_df.fillna(0, inplace=True)
+        resp = await calculate_market_share(merged_df)
+        print("resp --> ", resp)
         # final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        final_resp = [dict(zip(merged_df.columns, row)) for row in merged_df.values]
-        return {"status": True, "message": "Success", "data": final_resp}
+        # final_resp = [dict(zip(merged_df.columns, row)) for row in merged_df.values]
+        return {"status": True, "message": "Success", "data": resp}
 
     except Exception as e:
         print(traceback.format_exc())
