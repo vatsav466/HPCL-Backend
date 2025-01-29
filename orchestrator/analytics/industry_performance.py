@@ -336,7 +336,7 @@ async def industry_performance(filters, cross_filters, drill_state):
                     target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True, categories=months)
                 target_data = target_data.to_dict(orient='records')
         '''
-        
+        print("get_group_by_filter_key actual", group_by_filter) 
         
         
         # Data Retrival for current financial year
@@ -374,15 +374,16 @@ async def industry_performance(filters, cross_filters, drill_state):
                 print("group_by_filter.strip", group_by_filter)
                 if isinstance(group_by_filter, list):
                     # If it's a list, process each item
-                    group_by_filter = [col.strip('"') for col in group_by_filter]
+                    group_by_filter_key = [col.strip('"') for col in group_by_filter]
                 else:
                     # If it's a string, strip directly
-                    group_by_filter = group_by_filter.strip('"')
-                actual_data = actual_data.groupby(group_by_filter)['IND_ACTUAL_TMT_SALES'].sum().reset_index()
+                    group_by_filter_key = group_by_filter.strip('"')
+                actual_data = actual_data.groupby(group_by_filter_key)['IND_ACTUAL_TMT_SALES'].sum().reset_index()
                 actual_data['IND_ACTUAL_TMT_SALES'] = actual_data['IND_ACTUAL_TMT_SALES'].fillna(0)
                 actual_data = actual_data.to_dict(orient='records')
 
         # Data Retrival for last financial year
+        print("get_group_by_filter_key", group_by_filter)
         if history:
             filter_dates = []
             day_filter_dates = []
@@ -409,7 +410,14 @@ async def industry_performance(filters, cross_filters, drill_state):
                                                     [group_by_filter]))
             if hist_data:
                 hist_data = pd.DataFrame(hist_data)
-                hist_data = hist_data.groupby(group_by_filter.strip('"'))['IND_ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
+                print("group_by_filter.strip", group_by_filter)
+                if isinstance(group_by_filter, list):
+                    # If it's a list, process each item
+                    group_by_filter_key = [col.strip('"') for col in group_by_filter]
+                else:
+                    # If it's a string, strip directly
+                    group_by_filter_key = group_by_filter.strip('"')
+                hist_data = hist_data.groupby(group_by_filter_key)['IND_ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
                 hist_data['IND_ACTUAL_HISTORY_TMT_SALES'] = hist_data['IND_ACTUAL_HISTORY_TMT_SALES'].fillna(0)
                 hist_data = hist_data.to_dict(orient='records')
 
@@ -417,8 +425,14 @@ async def industry_performance(filters, cross_filters, drill_state):
         df_ = [pd.DataFrame(d) for d in [actual_data, hist_data] if d]
         merged_df = df_[0] if len(df_) else pd.DataFrame([])
         if len(df_) > 1:
+            if isinstance(group_by_filter, list):
+                # If it's a list, process each item
+                group_by_filter_key = [col.strip('"') for col in group_by_filter]
+            else:
+                # If it's a string, strip directly
+                group_by_filter_key = group_by_filter.strip('"')
             for df in df_[1:]:
-                merged_df = pd.merge(merged_df, df, on=group_by_filter.strip('"'), how='outer')  # Outer merge with df2
+                merged_df = pd.merge(merged_df, df, on=group_by_filter_key, how='outer')  # Outer merge with df2
         # Ordering Data for Month and SBU names
         if not merged_df.empty:
             if isinstance(group_by_filter, list):
