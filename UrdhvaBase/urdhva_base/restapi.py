@@ -191,6 +191,8 @@ async def authMiddleware(request: fastapi.Request, call_next):
 
 
 def verify_security_policy(host_name, header_value):
+    if not urdhva_base.settings.origin_check_enabled or  not header_value:
+        return True
     parsed_origin = urlparse(header_value)
     return host_name == parsed_origin.netloc
 
@@ -198,11 +200,11 @@ def verify_security_policy(host_name, header_value):
 @app.middleware('http')
 async def contextMiddleware(request: fastapi.Request, call_next):
     # Verifying Content Length, To avoid man in middle attack
-    if request.headers.get("content-length"):
-        actual_body = await request.body()  # Read the request body
-        actual_length = len(actual_body)
-        if actual_length != len(request.headers.get("content-length")):
-            return fastapi.responses.Response("Content-Length mismatch", 400)
+    # if request.headers.get("content-length"):
+    #     actual_body = await request.body()  # Read the request body
+    #     actual_length = len(actual_body)
+    #     if actual_length != len(request.headers.get("content-length")):
+    #         return fastapi.responses.Response("Content-Length mismatch", 400)
     # Verifying request origin and hostname
     if not verify_security_policy(request.base_url.hostname, request.headers.get('origin')):
         return fastapi.responses.Response("Origin mismatch", 403)
