@@ -1102,7 +1102,7 @@ def generate_summary():
                 data['SiteArea'] = plant["SiteArea"]
                 data["BU"] = "LPG"
                 if "filling_heads" in data.columns:
-                    data["filling_heads"] = data["filling_heads"] + "H"
+                    data["filling_heads"] = data["filling_heads"].astype(str) + "H"
                 insertToDB(data, "lpg_operations_summary")
             current_date += timedelta(days=1)
     query = f""" TRUNCATE lpg_operations_data; """
