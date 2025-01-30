@@ -40,18 +40,18 @@ async def calculate_market_share(df, segregate=False):
         # Debugging
         print("Available columns:", df_pl.columns)
         print("Selected columns:", selected_columns)
-
+        
         # Compute overall market share
         overall_share = (
             df_pl.group_by("fiscal_year")
-            .agg([pl.col(col).sum().alias(col) / 1000 for col in selected_columns])
-            .with_columns([pl.col(col).round(2) for col in selected_columns])
+            .agg([pl.col(col).sum().cast(pl.Float64).alias(col) for col in selected_columns])
             .to_dicts()
         )
-        print("overall_share after dividing --> ", overall_share)
 
+        # Convert to a dictionary (No division here)
         overall_share = {
-            rec["fiscal_year"]: {col: rec[col] for col in selected_columns} for rec in overall_share
+            rec["fiscal_year"]: {col: float(rec[col]) for col in selected_columns}
+            for rec in overall_share
         }
 
         print("overall_share --> ", overall_share)
@@ -60,15 +60,16 @@ async def calculate_market_share(df, segregate=False):
         psu_share = (
             df_pl.filter(pl.col("CoName").is_in(["IOCL", "HPCL", "BPCL"]))
             .group_by("fiscal_year")
-            .agg([pl.col(col).sum().alias(col) / 1000 for col in selected_columns])
-            .with_columns([pl.col(col).round(2) for col in selected_columns])
+            .agg([pl.col(col).sum().cast(pl.Float64).alias(col) for col in selected_columns])
             .to_dicts()
         )
-        print("psu_share after dividing --> ", psu_share)
 
+        # Convert to a dictionary (No division here)
         psu_share = {
-            rec["fiscal_year"]: {col: rec[col] for col in selected_columns} for rec in psu_share
+            rec["fiscal_year"]: {col: float(rec[col]) for col in selected_columns}
+            for rec in psu_share
         }
+
         print("psu_share --> ", psu_share)
 
         # Calculate company share
@@ -80,16 +81,16 @@ async def calculate_market_share(df, segregate=False):
                     (pl.col("CoName") == company) & (pl.col("fiscal_year") == year)
                 ).select([pl.col(col).sum().alias(col) for col in selected_columns])
 
-                company_sales = {col: company_data[col][0] if len(company_data) > 0 else 0 for col in selected_columns}
-                
+                company_sales = {col: float(company_data[col][0]) / 1000 if len(company_data) > 0 else 0 for col in selected_columns}
+
                 # Compute market share percentages
                 market_share = {
-                    col: round(100 * (company_sales[col] / overall_share[year][col]), 2)
+                    col: round(100 * (company_sales[col] / (overall_share[year][col] / 1000)), 2)
                     if overall_share[year][col] != 0 else 0
                     for col in selected_columns
                 }
                 psu_share_per = {
-                    col: round(100 * (company_sales[col] / psu_share[year][col]), 2)
+                    col: round(100 * (company_sales[col] / (psu_share[year][col] / 1000)), 2)
                     if psu_share[year][col] != 0 else 0
                     for col in selected_columns
                 }
@@ -391,7 +392,8 @@ def get_group_by_filter_key(cross_filters):
         print("cross_filters --> ", cross_filters)
         # group_by_filter = ['"month_name"', '"Company_Name"']  # Default grouping keys
 
-        group_by_filter = ['"CoName"', '"Zone_Name"', '"Company_Name"', '"fiscal_year"']  # Default grouping keys        
+        #group_by_filter = ['"CoName"', '"Zone_Name"', '"Company_Name"', '"fiscal_year"']  # Default grouping keys        
+        group_by_filter = ['"CoName"', '"Company_Name"', '"fiscal_year"']
         if cross_filters:
             print(" if cross_filters --> ", cross_filters)
             lubes_index = 0
