@@ -3668,6 +3668,7 @@ class GlobalAnalytics:
             else:
                 handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
+            print("handled_cylinder_query_ :", handled_cylinder_query_)
             resp = await function(query=handled_cylinder_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:

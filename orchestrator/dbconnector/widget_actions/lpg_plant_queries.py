@@ -890,6 +890,11 @@ LIMIT 10000;''',
                                 sum("ConsumerCount") as "Total_Consumers"
                             from
                                 "LPG_CONSUMERS_SUMMARY" ''',
+                                
+    "lpg_cdcms_backlogs": f''' SELECT "JDEDistributorCode", "TotalSalesYesterday", "Total_Pending", 
+                                    "Execution_Date", "ZOName", "ROName", "SAName"
+                                FROM public."lpg_cdcms_sales_summary"
+                            ''',
     
     "sales_growth_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')''',
     
@@ -919,7 +924,6 @@ LIMIT 10000;''',
                         select 
                             "zone" as "zone",
                             "name" as "name",
-                            CAST("process_date" AS DATE) as "process_date",
                             "carousel" as "carousel",
                             avg("productivity.normal.productivity") as "productivity"
                         from 
@@ -930,7 +934,6 @@ LIMIT 10000;''',
                         select 
                             "zone" as "zone",
                             "name" as "name",
-                            CAST("process_date" AS DATE) as "process_date",
                             "carousel" as "carousel",
                             sum("productivity.normal.production")/1000 as "Productions" 
                         from 
@@ -941,8 +944,7 @@ LIMIT 10000;''',
                             sum("total") as "Handled",
                             sum("cylfilled") as "Cylinder_Filled",
                             "zone" as "zone",
-                            "plant" as "plant",
-                            CAST("process_date" AS DATE) as "process_date"
+                            "plant" as "plant"
                         from
                             "lpg_cs_rejections" ''',
     
