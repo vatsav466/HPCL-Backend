@@ -892,13 +892,13 @@ LIMIT 10000;''',
                                 "LPG_CONSUMERS_SUMMARY" ''',
                                 
     "lpg_cdcms_backlogs": f''' SELECT 
-                                    "JDEDistributorCode", "TotalSalesYesterday", "Total_Pending", 
+                                    "DistributorName", "TotalSalesYesterday", "Total_Pending", 
                                     "Execution_Date", "ZOName", "ROName", "SAName"
                                 FROM 
                                     "lpg_cdcms_sales_summary" ''',
     
     "lpg_cdcms_backlogs_today": f''' SELECT 
-                                        "JDEDistributorCode", "TotalSalesYesterday", "Total_Pending", 
+                                        "DistributorName", "TotalSalesYesterday", "Total_Pending", 
                                         "Execution_Date", "ZOName", "ROName", "SAName"
                                     FROM 
                                         "lpg_todays_cdcms_sales_summary" ''',
