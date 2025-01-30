@@ -1161,5 +1161,88 @@ ORDER BY
                                     sum("SuvidhaClub") as "SuvidhaClub",
                                     "CylinderType" as "CylinderType" 
                                 from
-                                    "LPG_CONSUMERS_SUMMARY" '''
+                                    "LPG_CONSUMERS_SUMMARY" ''',
+
+    "present_month_sales": f''' WITH SalesData AS (
+    SELECT 
+        rosapcode, 
+        CASE
+            WHEN item_name = 'HSD' THEN '2812000'
+            WHEN item_name = 'MS' THEN '2811000'
+            WHEN item_name = 'TURBO' THEN '3912000'
+            WHEN item_name = 'E20' THEN '2822000'
+            WHEN item_name = 'POWER 95' THEN '3672000'
+            WHEN item_name = 'POWER 99' THEN '2816000'
+            WHEN item_name = 'POWER 100' THEN '3373000'
+            ELSE NULL
+        END AS item_name_code,
+        run_id,
+        avgsales_7days
+    
+    FROM sch_inventory_forecast_dashboard
+    WHERE SUBSTRING(run_id, 1, 4) = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMM')
+AND run_id LIKE '%2300'
+)
+
+SELECT 
+    a.sap_id,
+    a.zone,
+    a.region,
+    a.sales_area,
+    a.terminal_plant_name,
+    a.location_name,
+    sd.run_id,
+    sd.avgsales_7days AS "avg_sales"
+FROM 
+    (SELECT * 
+     FROM public.alerts 
+     WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+     AND indent_status NOT IN ('Cancelled', 'Completed')) a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')''',
+
+    "previous_month_sales": '''WITH SalesData AS (
+    SELECT 
+        rosapcode, 
+        CASE
+            WHEN item_name = 'HSD' THEN '2812000'
+            WHEN item_name = 'MS' THEN '2811000'
+            WHEN item_name = 'TURBO' THEN '3912000'
+            WHEN item_name = 'E20' THEN '2822000'
+            WHEN item_name = 'POWER 95' THEN '3672000'
+            WHEN item_name = 'POWER 99' THEN '2816000'
+            WHEN item_name = 'POWER 100' THEN '3373000'
+            ELSE NULL
+        END AS item_name_code,
+        run_id,
+        avgsales_7days
+    
+    FROM sch_inventory_forecast_dashboard
+    WHERE SUBSTRING(run_id, 1, 4) = TO_CHAR((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 month', 'YYMM')
+AND run_id LIKE '%2300'
+)
+
+SELECT 
+    a.sap_id,
+    a.zone,
+    a.region ,
+    a.sales_area ,
+    a.terminal_plant_name,
+    a.location_name,
+    sd.run_id as "RUN_ID",
+    sd.avgsales_7days AS "avg_sales"
+FROM 
+    (SELECT * 
+     FROM public.alerts 
+     WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+     AND indent_status NOT IN ('Cancelled', 'Completed')) a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
+'''
 }

@@ -64,7 +64,9 @@ lpg_dashboard_actions = [
     'card_chart',
     'lpg_domestic_sale_table',
     'lpg_consumer_table',
-    'industry_performance'
+    'industry_performance',
+    'present_month_sales',
+    'previous_month_sales'
 ]
 
 # Todo:- import all widget action modules here
@@ -134,14 +136,16 @@ widget_mapping = {
     'card_chart': {},
     'lpg_domestic_sale_table': {},
     'lpg_consumer_table': {},
-    'industry_performance':{}
+    'industry_performance':{},
+    'present_month_sales': {},
+    'previous_month_sales': {}
 }
 
 
 class WidgetActions:
     @staticmethod
     # Safely resolve the module and function
-    async def execute_widget_action(func_name, filters, cross_filters, drill_state):
+    async def execute_widget_action(func_name, filters, cross_filters, drill_state,limit=0):
         try:                       
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
@@ -181,7 +185,10 @@ class WidgetActions:
             # print(f"Resolved function: {dir(func)}")
 
             # Execute the function asynchronously
-            res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
+            if func_name in ['previous_month_sales', 'present_month_sales']:
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit)
+            else:
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
             # lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
             return res
         

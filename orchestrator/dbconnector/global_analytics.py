@@ -1052,7 +1052,7 @@ class GlobalAnalytics:
             for rec in filters:
                 rec.value = rec.value.split(",")
                 #if rec.key == '"month_name"':  # Only handle the month_name case separately
-                    # Check if any value in rec.value is in month_mapping
+                # Check if any value in rec.value is in month_mapping
                 #    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
 
                 # Skip keys that should not be added to the WHERE clause
@@ -4028,3 +4028,133 @@ class GlobalAnalytics:
 
         # Final response
         return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}
+
+    @staticmethod
+    async def present_month_sales(filters, cross_filters, drill_state, limit):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        print("Charts_Connection_Vault_RoutingParams.connection_id==> ", Charts_Connection_Vault_RoutingParams.connection_id)
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_month_sales')
+        data = dict()
+        if cross_filters:
+            cross_filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                        for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in cross_filters:
+                rec.value = rec.value.split(",")
+                if len(rec.value) == 1:
+                    condition = f"{rec.key} = '{rec.value[0]}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            present_month_sales_query = present_month_sales.split("'Completed')")
+            if conditions:
+                present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND '+ ' AND '.join(conditions) + present_month_sales_query[1]
+            grouped_keys = ["location_name"]
+
+            print("grouped_keys: ", grouped_keys)
+            print(present_month_sales)
+            pres_mon_sales_resp = await function(query=present_month_sales)
+            if not pres_mon_sales_resp:
+                return {"status": True, "message": "No data", "data": []}
+            pres_mon_sales_resp = pd.DataFrame(pres_mon_sales_resp)
+
+            pres_mon_sales_resp["avg_sales"] = pres_mon_sales_resp["avg_sales"].fillna(0)
+            grouped_resp = pres_mon_sales_resp.groupby(grouped_keys, as_index=False).agg({
+                "avg_sales": lambda x: round(sum(x), 2),
+            })
+            if grouped_resp is not None:
+                grouped_resp = grouped_resp.sort_values(by="avg_sales", ascending=False)
+                print("limit", limit)
+                if limit:
+                    grouped_resp = grouped_resp.sort_values(by="avg_sales", ascending=False).head(limit)
+
+                data = grouped_resp.to_dict(orient='records')
+            return {"status": True, "message": "success", "data": data}
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                              for rec in
+                              await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            pres_mon_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales, access_filters, drill_state)
+            print(pres_mon_sales)
+            pres_mon_sales_resp = await function(query=pres_mon_sales)
+            if not pres_mon_sales_resp:
+                return {"status": True, "message": "No data", "data": []}
+            pres_mon_sales_resp = pd.DataFrame(pres_mon_sales_resp)
+            grouped_keys = ["location_name"]
+            print("grouped_keys: ", grouped_keys)
+            pres_mon_sales_resp["avg_sales"] = pres_mon_sales_resp["avg_sales"].fillna(0)
+            grouped_resp = pres_mon_sales_resp.groupby(grouped_keys, as_index=False).agg({
+                "avg_sales": lambda x: round(sum(x), 2),
+            })
+            if grouped_resp is not None:
+                grouped_resp = grouped_resp.sort_values(by="avg_sales", ascending=False)
+                print("limit: ",limit)
+                if limit:
+                    grouped_resp = grouped_resp.sort_values(by="avg_sales", ascending=False).head(limit)
+                data = grouped_resp.to_dict(orient='records')
+            return {"status": True, "message": "success", "data": data}
+
+    @staticmethod
+    async def previous_month_sales(filters, cross_filters, drill_state, limit):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        print("Charts_Connection_Vault_RoutingParams.connection_id==> ",
+              Charts_Connection_Vault_RoutingParams.connection_id)
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        previous_month_sales = lpg_plant_queries.lpg_plant_query.get('previous_month_sales')
+        data = dict()
+        if cross_filters:
+            cross_filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                        for rec in await hpcl_ceg_model.LpgOperationsRejections.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in cross_filters:
+                rec.value = rec.value.split(",")
+                if len(rec.value) == 1:
+                    condition = f"{rec.key} = '{rec.value[0]}'"
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            previous_month_sales_query = previous_month_sales.split("'Completed')")
+            if conditions:
+                previous_month_sales = previous_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(
+                    conditions) + previous_month_sales_query[1]
+            print(previous_month_sales)
+            prev_mon_sales_resp = await function(query=previous_month_sales)
+            if not prev_mon_sales_resp:
+                return {"status": True, "message": "No data", "data": []}
+            prev_mon_sales_resp = pd.DataFrame(prev_mon_sales_resp)
+
+            prev_mon_sales_resp["avg_sales"] = prev_mon_sales_resp["avg_sales"].fillna(0)
+            grouped_resp = prev_mon_sales_resp.groupby(['location_name'], as_index=False).agg({
+                "avg_sales": lambda x: round(sum(x), 2),
+            }).sort_values(by="avg_sales", ascending=False)
+            if grouped_resp is not None:
+                grouped_resp = grouped_resp.sort_values(by="avg_sales", ascending=False)
+                if limit:
+                    grouped_resp = grouped_resp.sort_values(by="avg_sales", ascending=False).head(limit)
+                data = grouped_resp.to_dict(orient='records')
+            return {"status": True, "message": "success", "data": data}
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                              for rec in
+                              await hpcl_ceg_model.LpgOperationsRejections.get_clause_conditions(formated=True)]
+            prev_mon_sales = await widget_actions.WidgetActions.apply_filter_drilldown(previous_month_sales,
+                                                                                       access_filters, drill_state)
+
+            prev_mon_sales_resp = await function(query=prev_mon_sales)
+            if not prev_mon_sales_resp:
+                return {"status": True, "message": "No data", "data": []}
+            prev_mon_sales_resp = pd.DataFrame(prev_mon_sales_resp)
+            prev_mon_sales_resp["avg_sales"] = prev_mon_sales_resp["avg_sales"].fillna(0)
+            grouped_resp = prev_mon_sales_resp.groupby(['location_name'], as_index=False).agg({
+                "avg_sales": lambda x: round(sum(x), 2),
+            })
+            if grouped_resp is not None:
+                grouped_resp = grouped_resp.sort_values(by="avg_sales", ascending=False)
+                if limit:
+                    grouped_resp = grouped_resp.sort_values(by="avg_sales", ascending=False).head(limit)
+                data = grouped_resp.to_dict(orient='records')
+            return {"status": True, "message": "success", "data": data}
