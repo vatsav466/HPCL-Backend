@@ -13,10 +13,11 @@ logger = urdhva_base.logger.Logger.getInstance("emlock_alertmanager")
 
 class EMLockAlertManager(alert_factory.AlertFactory):
     @classmethod
-    async def create_bu_alert(cls, alert_data):
+    async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
         """
         Converting/Transforming EMLock raw alert data into unique alert data format
         :param alert_data:
+        :param camunda_url:
         :return:
         """
         print("alert_data -->", alert_data)
