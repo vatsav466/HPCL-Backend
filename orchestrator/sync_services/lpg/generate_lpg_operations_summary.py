@@ -1045,7 +1045,6 @@ def generate_summary():
     )
     cursor = conn.cursor()
     df = pl.read_csv("/opt/ceg/algo/LPG/LPG_PLANTS_CREDENTIALS.csv")
-    df = df[~df['Location'].str.contains("default|tests")]
     for plant in df.iter_rows(named=True):
         location = plant["short_name"]
         ###### START DATE ######
