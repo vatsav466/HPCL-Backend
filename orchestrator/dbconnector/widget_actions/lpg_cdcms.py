@@ -1868,3 +1868,92 @@ class LPGCDCMSActions:
             return {"status": True, "message":"success", "data":[]}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_cdcms_backlogs(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        lpg_cdcms_backlogs_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_backlogs")
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_cdcms_backlogs_  += ' WHERE '
+                lpg_cdcms_backlogs_  += ' AND '.join(conditions)
+            lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
+            lpg_cdcms_backlogs_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_backlogs_, access_filters, drill_state)
+            if "where" not in lpg_cdcms_backlogs_.lower():
+                lpg_cdcms_backlogs_  += ' WHERE "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+            else:
+                lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
+            resp = await function(query=lpg_cdcms_backlogs_)
+            resp = pd.DataFrame(resp)
+            
+            
+            
+            
+            
+            if resp.empty:
+                return {"status": True, "message": "success", "data": []}
+            resp = resp.groupby(["ExceptionName"], as_index=False).agg({"Consumers": "sum","Refills": "sum"})
+            
+            for each_float_col in ["Consumers", "Refills"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            resp["ExceptionName"] = resp["ExceptionName"].fillna('').astype(str)
+            return {"status": True, "message": "success", "data": resp}
+        resp = await function(query=lpg_cdcms_backlogs_)
+        if resp:
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            for each_float_col in ["Consumers","Refills"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+            for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","ExceptionName"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "ExceptionName" in filter_keys  and "ZOName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ExceptionName","ZOName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum" })
+                if "ExceptionName" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ExceptionName", "ZOName", "ROName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum"})
+                elif "ExceptionName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ExceptionName","ZOName", "ROName", "SAName"], as_index=False).agg({
+                        "Consumers": "sum","Refills": "sum"})
+                elif "ExceptionName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ExceptionName","ZOName", "ROName", "SAName", "DistributorName"],
+                                                as_index=False).agg({"Consumers": "sum","Refills": "sum"})
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
+        # If no filters are applied, return the default response
+        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
