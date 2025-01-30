@@ -65,8 +65,8 @@ lpg_dashboard_actions = [
     'lpg_domestic_sale_table',
     'lpg_consumer_table',
     'industry_performance',
-    'present_month_sales',
-    'previous_month_sales'
+    'present_previous_month_sales',
+    'sales_drop_down'
 ]
 
 # Todo:- import all widget action modules here
@@ -137,8 +137,8 @@ widget_mapping = {
     'lpg_domestic_sale_table': {},
     'lpg_consumer_table': {},
     'industry_performance':{},
-    'present_month_sales': {},
-    'previous_month_sales': {}
+    'present_previous_month_sales': {},
+    'sales_drop_down': {}
 }
 
 
@@ -185,7 +185,7 @@ class WidgetActions:
             # print(f"Resolved function: {dir(func)}")
 
             # Execute the function asynchronously
-            if func_name in ['previous_month_sales', 'present_month_sales']:
+            if func_name == 'present_previous_month_sales':
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit)
             else:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
