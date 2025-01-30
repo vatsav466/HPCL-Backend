@@ -14,7 +14,7 @@ Db_Urls_Base = {
             "https://admin:password@localhost:9200"
         ],
         "postgres_async": [
-            "postgresql+asyncpg://localhost:5432/hpcl_ceg?user=postgres&password=1234"
+            "postgresql+asyncpg://localhost:5432/hpcl_ceg?user=ceg_user&password=TTNqetkiJLPM50jC"
         ],
         "redis": [
             "redis://localhost:6379"
@@ -48,7 +48,6 @@ class Settings(pydantic_settings.BaseSettings):
     multi_tenant_support: bool = True
     password_salt: str = "hpcl_novex_dnc"
     max_redis_connections: int = 10
-    origin_check_enabled: bool = False
 
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
@@ -76,7 +75,7 @@ class Settings(pydantic_settings.BaseSettings):
     db_multi_tenancy_model: MultiTenancyMode = MultiTenancyMode.SingleServerSingleDb
     login_count: int = 5
     base_path: str = ""
-    mft_path: str = ""
+    mft_path: str = "/opt/ceg/mft_path/"
     ui_path: str = ""
     download_path: str = "/opt/ceg/algo/orchestrator/masters"
     template_path: str = "/opt/ceg/algo/orchestrator/notification_templates"
@@ -130,12 +129,12 @@ class Settings(pydantic_settings.BaseSettings):
 
     # camunda
     # Default Camunda
-    camunda_url: str = 'http://localhost:8080'
+    camunda_url: str = 'http://10.90.38.167:8080'
     camunda_default_config: typing.Dict[str, int] = {
-        "maxTasks": 1,
+        "maxTasks": 10,
         "lockDuration": 10000,
-        "asyncResponseTimeout": 60000,
-        "retries": 3,
+        "asyncResponseTimeout": 5000,
+        "retries": 5,
         "retryTimeout": 5000,
         "sleepSeconds": 30
     }
@@ -150,7 +149,7 @@ class Settings(pydantic_settings.BaseSettings):
     rabbitmq_host: str = "localhost"
     rabbitmq_port: int = 5672
     rabbitmq_username: str = "hpcl_ceg"
-    rabbitmq_password: str = "password"
+    rabbitmq_password: str = "algo@4321"
     rabbitmq_vhost: str = "hpcl_ceg"
     rabbitmq_queue: str = "tagsdata"
     rabbitmq_auto_ack: bool = True
