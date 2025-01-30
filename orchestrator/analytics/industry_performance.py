@@ -75,7 +75,7 @@ async def calculate_market_share(df, segregate=False):
                     (pl.col("CoName") == company) & (pl.col("fiscal_year") == year)
                 ).select([pl.col(selected_key).sum().alias(selected_key)])
 
-                company_sales = float(company_data[selected_key][0]) / 1000 if len(company_data) > 0 else 0
+                company_sales = float(company_data[selected_key][0]) if len(company_data) > 0 else 0
 
                 # Compute market share percentages
                 market_share = (
