@@ -396,7 +396,7 @@ async def login(request: fastapi.Request, code: typing.Optional[str] = None,
 
 @app.get("/api/logout")
 async def logout(request: fastapi.Request):
-    response = fastapi.responses.JSONResponse({'url': f"{request.base_url}login"}, 401)
+    response = fastapi.responses.JSONResponse({'url': f"https://{request.base_url.hostname}/login"}, 401)
     cookie_id = request.cookies.get(cookie_name, None)
     if cookie_id:
         try:
@@ -408,7 +408,8 @@ async def logout(request: fastapi.Request):
         redis_client = await urdhva_base.redispool.get_redis_connection()
         rkey = f"Novex_SessionData_{cookie_id}"
         await redis_client.delete(rkey)
-    response.delete_cookie(cookie_name)
+    response.delete_cookie(cookie_name, httponly = urdhva_base.settings.session_httponly,
+                           secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
     # todo:- Need to clear dashboard sessions
     return response
     # org_extension = await get_customer_authentication_extension(urdhva_base.ctx['entity_id'])
