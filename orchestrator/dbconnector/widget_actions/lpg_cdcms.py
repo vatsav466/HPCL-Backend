@@ -1876,6 +1876,7 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         lpg_cdcms_backlogs_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_backlogs")
+        lpg_cdcms_backlogs_today_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_backlogs_today")
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -1898,62 +1899,57 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_backlogs_  += ' WHERE '
                 lpg_cdcms_backlogs_  += ' AND '.join(conditions)
+                lpg_cdcms_backlogs_today_  += ' WHERE '
+                lpg_cdcms_backlogs_today_  += ' AND '.join(conditions)
             lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
             lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
+            lpg_cdcms_backlogs_today_ += ' WHERE "CylType" = \'C142\' '
+            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
             lpg_cdcms_backlogs_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_backlogs_, access_filters, drill_state)
             if "where" not in lpg_cdcms_backlogs_.lower():
                 lpg_cdcms_backlogs_  += ' WHERE "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+                lpg_cdcms_backlogs_today_ += ' WHERE "CylType" = \'C142\' '
             else:
                 lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+                lpg_cdcms_backlogs_today_ += ' AND "CylType" = \'C142\' '
             lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
-            resp = await function(query=lpg_cdcms_backlogs_)
-            resp = pd.DataFrame(resp)
+            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
             
+            average_sales = await function(query=lpg_cdcms_backlogs_)
+            latest_pending_bookings = function(query=lpg_cdcms_backlogs_today_)
+            average_sales = pl.DataFrame(average_sales)
+            latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
             
-            
-            
-            
-            if resp.empty:
-                return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["ExceptionName"], as_index=False).agg({"Consumers": "sum","Refills": "sum"})
-            
-            for each_float_col in ["Consumers", "Refills"]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            resp["ExceptionName"] = resp["ExceptionName"].fillna('').astype(str)
-            return {"status": True, "message": "success", "data": resp}
-        resp = await function(query=lpg_cdcms_backlogs_)
-        if resp:
-            # Convert the response to a DataFrame for further processing
-            resp = pd.DataFrame(resp)
-            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-            for each_float_col in ["Consumers","Refills"]:
-                if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","ExceptionName"]:
-                if each_str_col in resp.columns:
-                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            if filters:
-                grouped_resp = None
-                filter_keys = [rec.key.strip('"') for rec in filters]
-                if "ExceptionName" in filter_keys  and "ZOName" not in filter_keys:
-                    grouped_resp = resp.groupby(["ExceptionName","ZOName"], as_index=False).agg({
-                        "Consumers": "sum","Refills": "sum" })
-                if "ExceptionName" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                    grouped_resp = resp.groupby(["ExceptionName", "ZOName", "ROName"], as_index=False).agg({
-                        "Consumers": "sum","Refills": "sum"})
-                elif "ExceptionName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                    grouped_resp = resp.groupby(["ExceptionName","ZOName", "ROName", "SAName"], as_index=False).agg({
-                        "Consumers": "sum","Refills": "sum"})
-                elif "ExceptionName" in filter_keys  and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                    grouped_resp = resp.groupby(["ExceptionName","ZOName", "ROName", "SAName", "DistributorName"],
-                                                as_index=False).agg({"Consumers": "sum","Refills": "sum"})
-                if grouped_resp is not None:
-                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+            average_sales = average_sales.group_by("ZOName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
+            latest_pending_bookings = latest_pending_bookings.group_by("ZOName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
+            backlog = latest_pending_bookings.join(average_sales, on="ZOName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
+            print("backlog :", backlog)
+            return {"status": True, "message": "success", "data": backlog.to_dicts()}
+                        
+        average_sales = await function(query=lpg_cdcms_backlogs_)
+        latest_pending_bookings = function(query=lpg_cdcms_backlogs_today_)
+        average_sales = pl.DataFrame(average_sales)
+        latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
+        
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            backlog = None
+            if "ZOName" in filter_keys  and "ROName" not in filter_keys:
+                average_sales = average_sales.group_by("ROName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
+                latest_pending_bookings = latest_pending_bookings.group_by("ROName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
+                backlog = latest_pending_bookings.join(average_sales, on="ROName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
+            elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName" not in filter_keys:
+                average_sales = average_sales.group_by("SAName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
+                latest_pending_bookings = latest_pending_bookings.group_by("SAName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
+                backlog = latest_pending_bookings.join(average_sales, on="SAName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
+            elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                average_sales = average_sales.group_by("SAName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
+                latest_pending_bookings = latest_pending_bookings.group_by("SAName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
+                backlog = latest_pending_bookings.join(average_sales, on="SAName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
+            if backlog is not None:
+                return {"status": True, "message": "success", "data": backlog.to_dicts()}
         else:
-            return {"status": True, "message":"success", "data":[]}
-        # If no filters are applied, return the default response
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+            return {"status": True, "message": "success", "data": []}
