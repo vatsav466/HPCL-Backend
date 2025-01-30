@@ -894,7 +894,7 @@ Model LpgOperations {
     zone str
     carousel float
     filling_heads float
-    carousel_count float    
+    carousel_count float
     bottling_14_2kg float
     bottling_19kg float
     bottling_total float
@@ -926,9 +926,9 @@ Model LpgOperations {
         top optional int
         bottom optional int
     }
-
+    
     Config=> {
-        access_key_mapping='zone'
+        access_key_mapping='sap_id:sap_id,short_name:plant,zone:zone'
     }
 }
 
