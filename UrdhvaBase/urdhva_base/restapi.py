@@ -191,6 +191,8 @@ async def authMiddleware(request: fastapi.Request, call_next):
 
 
 def verify_security_policy(host_name, header_value):
+    if not header_value:
+        return True
     parsed_origin = urlparse(header_value)
     return host_name == parsed_origin.netloc
 
