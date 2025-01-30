@@ -1,4 +1,5 @@
 import urdhva_base
+import json
 import requests
 import datetime
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -78,7 +79,7 @@ async def get_ro_terminal_scores(params: dict):
           }
         ]
     """
-    creds = await get_va_headers("VA_ALERT")
+    creds = await get_va_headers("VA_ALERT_SCORE")
     creds['url'] = f"https://{creds['host']}/api/Platform/v1/HPCLVendor/Scores"
     ack_datetime = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     headers = {
@@ -92,9 +93,14 @@ async def get_ro_terminal_scores(params: dict):
         "Cookie": creds['cookie'],
         "SessionToken": creds['session_token']
     }
-    response = requests.post(
-        url=creds['url'], json=params, headers=headers
+    response = requests.get(
+        url=creds['url'], params=params, headers=headers
     )
     if response.status_code // 100 == 2:
-        return {"status": True, "message": "Data fetched successfully", "data": response.json()}
+        data = response.json()
+        if 'RespBody' in data.keys() and 'Payload' in data['RespBody'].keys():
+            data = json.loads(data['RespBody']['Payload'])
+        else:
+            data = []
+        return {"status": True, "message": "Data fetched successfully", "data": data}
     return {"status": False, "message": "Data fetching unsuccessfully", "data": response.json()}
