@@ -145,7 +145,7 @@ widget_mapping = {
 class WidgetActions:
     @staticmethod
     # Safely resolve the module and function
-    async def execute_widget_action(func_name, filters, cross_filters, drill_state,limit=0):
+    async def execute_widget_action(func_name, filters, cross_filters, drill_state, limit=0, time_grain="Monthly"):
         try:                       
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
@@ -186,7 +186,7 @@ class WidgetActions:
 
             # Execute the function asynchronously
             if func_name == 'present_previous_month_sales':
-                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit)
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit, time_grain=time_grain)
             else:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
             # lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)

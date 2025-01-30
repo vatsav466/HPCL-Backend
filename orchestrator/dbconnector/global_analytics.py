@@ -4057,13 +4057,17 @@ class GlobalAnalytics:
         return data
 
     @staticmethod
-    async def present_previous_month_sales(filters, cross_filters, drill_state, limit):
+    async def present_previous_month_sales(filters, cross_filters, drill_state, limit, time_grain):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        print("Charts_Connection_Vault_RoutingParams.connection_id==> ", Charts_Connection_Vault_RoutingParams.connection_id)
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_month_sales')
-        data = dict()
+        if time_grain == 'Monthly':
+            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_month_sales')
+        elif time_grain == 'Weekly':
+            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_week_sales')
+        else:
+            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_day_sales')
+
         if cross_filters:
             cross_filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                         for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
@@ -4084,9 +4088,7 @@ class GlobalAnalytics:
             pres_mon_sales_resp = await function(query=present_month_sales)
             if not pres_mon_sales_resp:
                 return {"status": True, "message": "No data", "data": []}
-            pres_mon_sales_resp = pd.DataFrame(pres_mon_sales_resp)
-            data = pres_mon_sales_resp.to_dict(orient='records')
-            return {"status": True, "message": "success", "data": data}
+            return {"status": True, "message": "success", "data": pres_mon_sales_resp}
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                               for rec in
@@ -4099,6 +4101,4 @@ class GlobalAnalytics:
             pres_mon_sales_resp = await function(query=pres_mon_sales)
             if not pres_mon_sales_resp:
                 return {"status": True, "message": "No data", "data": []}
-            pres_mon_sales_resp = pd.DataFrame(pres_mon_sales_resp)
-            data = pres_mon_sales_resp.to_dict(orient="records")
-            return {"status": True, "message": "success", "data": data}
+            return {"status": True, "message": "success", "data": pres_mon_sales_resp}
