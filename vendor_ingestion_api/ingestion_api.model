@@ -80,17 +80,16 @@ Model vtsBlockedTruckOld internal {
 }
 
 Model vtsBlockedTruck internal {
-    alert_id optional str
-    TT_No optional str
-    Location_Name optional str
-    Transporter_Name optional str
-    Transporter_Code optional str
-    Vehicle_Blocked_Desc optional str
-    Vehicle_Blocked_Start_Date optional str
-    Vehicle_Blocked_End_Date optional str
-    Vehicle_Blocked_Instance_No optional str
-    Vehicle_Blocked_Instance_Type optional str
-    Alert_Type optional str
+    tt_no optional str
+    location_name optional str
+    transporter_name optional str
+    transporter_code optional str
+    vehicle_blocked_desc optional str
+    vehicle_blocked_start_date optional str
+    vehicle_blocked_end_date optional str
+    vehicle_blocked_instance_no optional str
+    vehicle_blocked_instance_type optional str
+    alert_type optional str
 }
 
 Model VTS crud_disable {
@@ -108,14 +107,11 @@ Model VTS crud_disable {
         data list vtsBlockedTruck
     }
 
-    Action=> ingest_data_unblock_trucks_ack {
+    Action=> ingest_data_un_blocked_trucks {
         vendor_id str
         location_id str
         location_type optional BusinessUnit
-        TT_No str
-        Vehicle_Blocked_Start_Date str
-        Vehicle_Blocked_End_Date str
-        is_acknowledges optional bool
+        data list vtsBlockedTruck
 
     }
 }
