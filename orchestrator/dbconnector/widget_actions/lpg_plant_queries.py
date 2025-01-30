@@ -892,15 +892,19 @@ LIMIT 10000;''',
                                 "LPG_CONSUMERS_SUMMARY" ''',
                                 
     "lpg_cdcms_backlogs": f''' SELECT 
-                                    "JDEDistributorCode", "TotalSalesYesterday", "Total_Pending", 
-                                    "Execution_Date", "ZOName", "ROName", "SAName"
-                                FROM 
+                                    "DistributorName",
+                                    "ZOName", "ROName", "SAName",
+                                    SUM("TotalSalesYesterday"),
+                                    SUM("Total_Pending"),
+                                FROM
                                     "lpg_cdcms_sales_summary" ''',
     
-    "lpg_cdcms_backlogs_today": f''' SELECT 
-                                        "JDEDistributorCode", "TotalSalesYesterday", "Total_Pending", 
-                                        "Execution_Date", "ZOName", "ROName", "SAName"
-                                    FROM 
+    "lpg_cdcms_backlogs_today": f''' SELECT
+                                        "DistributorName",
+                                        "ZOName", "ROName", "SAName",
+                                        SUM("TotalSalesYesterday"),
+                                        SUM("Total_Pending"),
+                                    FROM
                                         "lpg_todays_cdcms_sales_summary" ''',
     
     "sales_growth_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')''',

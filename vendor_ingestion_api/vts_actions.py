@@ -79,19 +79,17 @@ async def vts_ingest_data_blocked_trucks(data: Vts_Ingest_Data_Blocked_TrucksPar
         return False, e
 
 
-# Action ingest_data_unblock_trucks_ack
-@router.post('/ingest_data_unblock_trucks_ack', tags=['VTS'])
-async def vts_ingest_data_unblock_trucks_ack(data: Vts_Ingest_Data_Unblock_Trucks_AckParams):
+# Action ingest_data_un_blocked_trucks
+@router.post('/ingest_data_un_blocked_trucks', tags=['VTS'])
+async def vts_ingest_data_un_blocked_trucks(data: Vts_Ingest_Data_Un_Blocked_TrucksParams):
     """
-
-    Args:
-        data:
-
-    Returns:
-
-    """
+            Args:
+                data:
+            Returns:
+            """
     try:
-        logger.info(f"Received VTS data ingestion from TT UnBlocked Ack {data.location_id}({data.location_type}) {data.dict()}")
+        logger.info(
+            f"Received VTS data ingestion from TT UnBlocking {data.location_id}({data.location_type}) {data.dict()}")
         return True, "Success"
     except Exception as e:
         print(traceback.format_exc())
