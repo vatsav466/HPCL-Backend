@@ -1100,7 +1100,7 @@ def generate_summary():
                 data["sap_id"] = plant["erp_id"]
                 data["SiteRegion"] = plant["SiteRegion"]
                 data['SiteArea'] = plant["SiteArea"]
-                data["BU"] = "LPG"
+                data["bu"] = "LPG"
                 if "filling_heads" in data.columns:
                     data["filling_heads"] = data["filling_heads"].astype(str) + "H"
                 insertToDB(data, "lpg_operations_summary")
