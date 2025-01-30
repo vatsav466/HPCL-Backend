@@ -121,6 +121,10 @@ async def calculate_market_share(df, segregate=False):
                         "MODEL": "PSUSharePer",
                         "Value": psu_share_per[MandateKeys["actual"]]
                     })
+        for entry in company_share:
+            for key, value in entry.items():
+                if isinstance(value, (list, dict)):  # Convert lists/dicts to strings
+                    entry[key] = str(value)
         df_company_share = pl.DataFrame(company_share)
         df_company_share.write_csv("company_share_data.csv")
         return company_share
