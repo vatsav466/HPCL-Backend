@@ -1919,7 +1919,7 @@ class LPGCDCMSActions:
             lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
             
             average_sales = await function(query=lpg_cdcms_backlogs_)
-            latest_pending_bookings = function(query=lpg_cdcms_backlogs_today_)
+            latest_pending_bookings = await function(query=lpg_cdcms_backlogs_today_)
             average_sales = pl.DataFrame(average_sales)
             latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
             
@@ -1930,7 +1930,7 @@ class LPGCDCMSActions:
             return {"status": True, "message": "success", "data": backlog.to_dicts()}
                         
         average_sales = await function(query=lpg_cdcms_backlogs_)
-        latest_pending_bookings = function(query=lpg_cdcms_backlogs_today_)
+        latest_pending_bookings = await function(query=lpg_cdcms_backlogs_today_)
         average_sales = pl.DataFrame(average_sales)
         latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
         

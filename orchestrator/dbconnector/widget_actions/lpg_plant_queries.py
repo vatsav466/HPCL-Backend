@@ -895,7 +895,7 @@ LIMIT 10000;''',
                                     "DistributorName",
                                     "ZOName", "ROName", "SAName",
                                     SUM("TotalSalesYesterday"),
-                                    SUM("Total_Pending"),
+                                    SUM("Total_Pending")
                                 FROM
                                     "lpg_cdcms_sales_summary" ''',
     
@@ -903,7 +903,7 @@ LIMIT 10000;''',
                                         "DistributorName",
                                         "ZOName", "ROName", "SAName",
                                         SUM("TotalSalesYesterday"),
-                                        SUM("Total_Pending"),
+                                        SUM("Total_Pending")
                                     FROM
                                         "lpg_todays_cdcms_sales_summary" ''',
     
