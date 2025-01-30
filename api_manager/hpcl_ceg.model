@@ -601,7 +601,11 @@ Model Alerts {
         filters optional list DataFilters
     }
 
-    Action=> upload_image {
+    Action=> upload_document {
+    }
+
+    Action=> stored_document {
+        filename str
     }
 
     Action=> get_frequent_dryout_ro {

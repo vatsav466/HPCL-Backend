@@ -818,7 +818,10 @@
                     "name": "get_performance_index"
                 },
                 {
-                    "name": "upload_image"
+                    "name": "upload_document"
+                },
+                {
+                    "name": "stored_document"
                 },
                 {
                     "name": "get_frequent_dryout_ro"
@@ -890,7 +893,10 @@
                     "name": "get_performance_index"
                 },
                 {
-                    "name": "upload_image"
+                    "name": "upload_document"
+                },
+                {
+                    "name": "stored_document"
                 },
                 {
                     "name": "get_frequent_dryout_ro"
@@ -2776,8 +2782,12 @@
             "displayName": "get_performance_index"
         },
         {
-            "name": "upload_image",
-            "displayName": "upload_image"
+            "name": "upload_document",
+            "displayName": "upload_document"
+        },
+        {
+            "name": "stored_document",
+            "displayName": "stored_document"
         },
         {
             "name": "get_frequent_dryout_ro",
