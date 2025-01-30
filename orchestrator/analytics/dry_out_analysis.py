@@ -716,6 +716,24 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         AND tse."CARD_STATUS" = 'O'
                         AND tse."LOADED_ON" >= ir."PROD_REQD_DT"
                         AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+                ),
+                SalesData AS (
+                    SELECT 
+                        rosapcode, 
+                        CASE
+                            WHEN item_name = 'HSD' THEN '2812000'
+                            WHEN item_name = 'MS' THEN '2811000'
+                            WHEN item_name = 'TURBO' THEN '3912000'
+                            WHEN item_name = 'E20' THEN '2822000'
+                            WHEN item_name = 'POWER 95' THEN '3672000'
+                            WHEN item_name = 'POWER 99' THEN '2816000'
+                            WHEN item_name = 'POWER 100' THEN '3373000'
+                            ELSE NULL
+                        END AS item_name_code,
+                        avgsales_7days
+                    
+                    FROM sch_inventory_forecast_dashboard
+                    WHERE run_id = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMMDD-HH00')
                 )
                 SELECT 
                     a.sap_id as "SAP_ID",
@@ -744,7 +762,8 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     cd."INVOICE_NO",
 --                     cd."JDE_TRUCK_NO",
                     cd."LOADED_ON",
-                    cd."CARD_STATUS"
+                    cd."CARD_STATUS",
+                    sd.avgsales_7days as "AVGSALES_7DAYS"
                 FROM 
                     (SELECT * 
                      FROM alerts 
@@ -757,6 +776,11 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     COALESCE(substr(cd."DEALER_CODE", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
                     AND COALESCE(cd."INDENT_NO"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
                     AND COALESCE(cd."PRODUCT_CODE"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+                LEFT JOIN 
+                    SalesData sd
+                ON 
+                    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
+                    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
                 WHERE 
                     cd.rn = 1 or cd.rn is null
                 ORDER BY 
