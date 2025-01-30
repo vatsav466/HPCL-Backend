@@ -182,7 +182,7 @@ class Users_Update_User_StatusParams(pydantic.BaseModel):
 
 
 class Users_LoginParams(pydantic.BaseModel):
-    username: str
+    username: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.-]+$'})
     password: str
 
 

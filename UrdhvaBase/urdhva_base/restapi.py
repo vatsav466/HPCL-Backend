@@ -155,27 +155,31 @@ async def validate_header_based_authentication(request: fastapi.Request):
     return False, None
 
 
+def add_security_headers(response):
+    response.headers["Content-Security-Policy"] = "default-src 'self' style-src 'self' 'unsafe-inline'"
+    return response
+
+
 @app.middleware('http')
 async def authMiddleware(request: fastapi.Request, call_next):
     status, resp = await validate_header_based_authentication(request)
     if status:
-        return await call_next(request)
+        return add_security_headers(await call_next(request))
     elif not status and resp:
-        return resp
-    # return await call_next(request)
+        return add_security_headers(resp)
     response = fastapi.Response(None, 403)
     if (request.url.path in ['/docs', '/openapi.json', '/api/login', '/api/session/me', '/api/users/login'] +
             urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
             or re.match(r"/api/[\S\s\w]*authorize", request.url.path)):
-        return await call_next(request)
+        return add_security_headers(await call_next(request))
     rpt = urdhva_base.context.context.get('rpt', {})
     cookie = request.cookies.get(cookie_name, None)
     if not cookie and not rpt:
         base_url = urdhva_base.ctx["base_url"]
         if not base_url:
             response = fastapi.responses.JSONResponse("Provided entity is Invalid", 403)
-            return response
+            return add_security_headers(response)
         redirect_url = f"{request.base_url}login"
         resp_dict = {"url": redirect_url}
         response = fastapi.responses.JSONResponse(resp_dict, 401)
@@ -187,7 +191,7 @@ async def authMiddleware(request: fastapi.Request, call_next):
                     if header[0].decode() == 'location' and header[1].decode().startswith('http://'):
                         url = header[1].decode().replace('http://', 'https://')
                         response.raw_headers[index] = ('location'.encode(), url.encode())
-    return response
+    return add_security_headers(response)
 
 
 def verify_security_policy(host_name, header_value):

@@ -182,7 +182,7 @@ Model Users {
 
     // API for user login
     Action=> login {
-        username str
+        username str regex="^[a-zA-Z0-9_.-]+$"
         password str
     }
 

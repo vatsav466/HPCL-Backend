@@ -9,16 +9,16 @@
 {% set _ = kwargs.update({'min_length': input.minlen}) %}
 {% endif %}
 {% if input.regex %}
-{% set _ = kwargs.update({'regex': input.regex}) %}
+{% set _ = kwargs.update({'pattern': input.regex}) %}
 {% endif %}
 {% if input.startswith %}
-{% set _ = kwargs.update({'regex': '^'+input.startswith+'.*$'}) %}
+{% set _ = kwargs.update({'pattern': '^'+input.startswith+'.*$'}) %}
 {% endif %}
 {% if input.endswith %}
-{% set _ = kwargs.update({'regex': '^.*'+input.endswith+'$'}) %}
+{% set _ = kwargs.update({'pattern': '^.*'+input.endswith+'$'}) %}
 {% endif %}
 {% if input.contains %}
-{% set _ = kwargs.update({'regex': '^.*'+input.contains+'.*$'}) %}
+{% set _ = kwargs.update({'pattern': '^.*'+input.contains+'.*$'}) %}
 {% endif %}
 {{kwargs.items()}}
 {%- block constraints -%}**{{kwargs}}{%- endblock -%}
