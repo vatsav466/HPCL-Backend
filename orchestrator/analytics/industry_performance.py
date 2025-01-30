@@ -81,7 +81,7 @@ async def calculate_market_share(df, segregate=False):
                     (pl.col("CoName") == company) & (pl.col("fiscal_year") == year)
                 ).select([pl.col(col).sum().alias(col) for col in selected_columns])
 
-                company_sales = {col: float(company_data[col][0]) / 1000 if len(company_data) > 0 else 0 for col in selected_columns}
+                company_sales = {col: float(company_data[col][0]) if len(company_data) > 0 else 0 for col in selected_columns}
 
                 # Compute market share percentages
                 market_share = {
@@ -142,7 +142,7 @@ async def calculate_market_share(df, segregate=False):
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": str(e), "data": []}
-
+   
     # try:
     #     df = df.copy()
     #     df_pl = pl.from_pandas(df)
