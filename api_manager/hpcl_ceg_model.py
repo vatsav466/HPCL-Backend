@@ -1172,8 +1172,12 @@ class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
     filters: typing.Optional[typing.List[DataFiltersCreate]] | None = None
 
 
-class Alerts_Upload_ImageParams(pydantic.BaseModel):
+class Alerts_Upload_DocumentParams(pydantic.BaseModel):
     pass
+
+
+class Alerts_Stored_DocumentParams(pydantic.BaseModel):
+    filename: str
 
 
 class Alerts_Get_Frequent_Dryout_RoParams(pydantic.BaseModel):
@@ -1787,7 +1791,7 @@ class LpgOperationsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         collection_name = 'data_flow'
         schema_class = LpgOperationsSchema
         upsert_keys = []
-        access_key_mapping = ['zone']
+        access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone']
 
 
 class LpgOperations(urdhva_base.postgresmodel.PostgresModel):
@@ -1821,7 +1825,7 @@ class LpgOperations(urdhva_base.postgresmodel.PostgresModel):
         collection_name = 'data_flow'
         schema_class = LpgOperationsSchema
         upsert_keys = []
-        access_key_mapping = ['zone']
+        access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone']
 
 
 class LpgOperationsGetResp(pydantic.BaseModel):
