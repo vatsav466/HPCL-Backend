@@ -44,23 +44,32 @@ async def calculate_market_share(df, segregate=False):
         # Compute overall market share
         overall_share = (
             df_pl.group_by("fiscal_year")
-            .agg([pl.col(col).sum().alias(col) for col in selected_columns])
+            .agg([pl.col(col).sum().alias(col) / 1000 for col in selected_columns])
+            .with_columns([pl.col(col).round(2) for col in selected_columns])
             .to_dicts()
         )
+        print("overall_share after dividing --> ", overall_share)
+
         overall_share = {
             rec["fiscal_year"]: {col: rec[col] for col in selected_columns} for rec in overall_share
         }
+
+        print("overall_share --> ", overall_share)
 
         # Compute PSU market share
         psu_share = (
             df_pl.filter(pl.col("CoName").is_in(["IOCL", "HPCL", "BPCL"]))
             .group_by("fiscal_year")
-            .agg([pl.col(col).sum().alias(col) for col in selected_columns])
+            .agg([pl.col(col).sum().alias(col) / 1000 for col in selected_columns])
+            .with_columns([pl.col(col).round(2) for col in selected_columns])
             .to_dicts()
         )
+        print("psu_share after dividing --> ", psu_share)
+
         psu_share = {
             rec["fiscal_year"]: {col: rec[col] for col in selected_columns} for rec in psu_share
         }
+        print("psu_share --> ", psu_share)
 
         # Calculate company share
         company_share = []
@@ -93,8 +102,8 @@ async def calculate_market_share(df, segregate=False):
                         "COMTYPE": company_type,
                         "FIN_YEAR": year,
                         "CompanySize": company_sales[MandateKeys["actual"]],
-                        "Zone_Name": df_pl["Zone_Name"].unique().to_list(),
-                        "fiscal_year": df_pl["fiscal_year"].unique().to_list(),
+                        # "Zone_Name": df_pl["Zone_Name"].unique().to_list(),
+                        # "fiscal_year": df_pl["fiscal_year"].unique().to_list(),
                         **{col: company_sales[col] for col in selected_columns},
                         "OverAllMarketSize": overall_share[year][MandateKeys["actual"]],
                         "PSUSize": psu_share[year][MandateKeys["actual"]],
