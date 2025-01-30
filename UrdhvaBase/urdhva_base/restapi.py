@@ -19,6 +19,7 @@ import urdhva_base.settings
 import urdhva_base.redispool
 import urdhva_base.elasticmodel
 from pydantic.fields import Field
+from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from mangum import Mangum
 from starlette.responses import RedirectResponse
@@ -189,8 +190,25 @@ async def authMiddleware(request: fastapi.Request, call_next):
     return response
 
 
+def verify_security_policy(host_name, header_value):
+    parsed_origin = urlparse(header_value)
+    return host_name == parsed_origin.netloc
+
+
 @app.middleware('http')
 async def contextMiddleware(request: fastapi.Request, call_next):
+    # Verifying Content Length, To avoid man in middle attack
+    if request.headers.get("content-length"):
+        actual_body = await request.body()  # Read the request body
+        actual_length = len(actual_body)
+        if actual_length != len(request.headers.get("content-length")):
+            return fastapi.responses.Response("Content-Length mismatch", 400)
+    # Verifying request origin and hostname
+    if not verify_security_policy(request.base_url.hostname, request.headers.get('origin')):
+        return fastapi.responses.Response("Origin mismatch", 403)
+    # Verifying request referer and hostname
+    if not verify_security_policy(request.base_url.hostname, request.headers.get('referer')):
+        return fastapi.responses.Response("Refer mismatch", 403)
     data = {}
     cookie_id = request.cookies.get(cookie_name, None)
     redis_client = await urdhva_base.redispool.get_redis_connection()
