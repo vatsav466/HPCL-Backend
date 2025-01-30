@@ -1903,7 +1903,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_backlogs_today_  += ' AND '.join(conditions)
             lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
             lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
-            lpg_cdcms_backlogs_today_ += ' WHERE "CylType" = \'C142\' '
+            lpg_cdcms_backlogs_today_ += ' AND "CylType" = \'C142\' '
             lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
