@@ -732,7 +732,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         END AS item_name_code,
                         avgsales_7days
                     
-                    FROM "HPCL_HOS".""sch_inventory_forecast_dashboard"
+                    FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
                     WHERE run_id = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMMDD-HH00')
                 )
                 SELECT 
