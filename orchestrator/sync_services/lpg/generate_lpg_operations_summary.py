@@ -976,7 +976,7 @@ class LPG_CONSOLIDATED():
         return rows
 
 
-def insertToDB(data):
+def insertToDB(data, table_name):
     data = pl.from_pandas(data)
     pg_conn = psycopg2.connect(
                 host="10.90.38.162",
@@ -995,8 +995,6 @@ def insertToDB(data):
         dty = dtype_dict.get(str(dty))
         table_create_sql += f'"{col}" {dty},'
     table_create_sql = table_create_sql[:-1]
-
-    table_name = "LPG_OPERATIONS_SUMMARY_DATA"
 
     create_table_index = f'CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ("carousel", "short_name")'
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
@@ -1046,9 +1044,10 @@ def generate_summary():
         port=port
     )
     cursor = conn.cursor()
-    df = pd.read_csv("/opt/ceg/algo/lpg_location_master.csv")
+    df = pl.read_csv("/opt/ceg/algo/LPG/LPG_PLANTS_CREDENTIALS.csv")
     df = df[~df['Location'].str.contains("default|tests")]
-    for location in df['Location'].unique().tolist():
+    for plant in df.iter_rows(named=True):
+        location = plant["short_name"]
         ###### START DATE ######
         query = f""" SELECT MIN("process_date") FROM lpg_operations_data WHERE "Plant Name" = '{location.capitalize()}' """
         print("min query :", query)
@@ -1094,7 +1093,18 @@ def generate_summary():
                         data[col] = data[col].fillna(0).astype(np.float64)
                     except Exception as e:
                         print(f"- Could Not Convert {col} to Float -")
-                insertToDB(data)
+                insertToDB(data, "LPG_OPERATIONS_SUMMARY_DATA")
+                
+                for col in data.columns:
+                    data.rename(columns={col: col.replace(".","_")}, inplace=True)
+                data.rename(columns={"short_name": "location"}, inplace=True)
+                data["sap_id"] = plant["erp_id"]
+                data["SiteRegion"] = plant["SiteRegion"]
+                data['SiteArea'] = plant["SiteArea"]
+                data["BU"] = "LPG"
+                if "filling_heads" in data.columns:
+                    data["filling_heads"] = data["filling_heads"] + "H"
+                insertToDB(data, "lpg_operations_summary")
             current_date += timedelta(days=1)
     query = f""" TRUNCATE lpg_operations_data; """
     cursor.execute(query)
