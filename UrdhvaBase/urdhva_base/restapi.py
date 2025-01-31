@@ -156,7 +156,7 @@ async def validate_header_based_authentication(request: fastapi.Request):
 
 
 def add_security_headers(response):
-    response.headers["Content-Security-Policy"] = "default-src 'self' style-src 'self' 'unsafe-inline'"
+    # response.headers["Content-Security-Policy"] = "default-src 'self' style-src 'self' 'unsafe-inline'"
     return response
 
 
