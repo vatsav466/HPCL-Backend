@@ -747,16 +747,18 @@ class LPGCDCMSActions:
                                         resp[col]
                                     )
                                 )
-            resp = resp.groupby(["ConsumerType"], as_index=False).agg({
+            resp["Age"] = "Ageing"
+            resp = resp.groupby(["Age"], as_index=False).agg({
                     "pending_1_3_days": "sum",
                     "pending_4_7_days": "sum",
                     "pending_8_15_days": "sum",
                     "pending_beyond_15_days": "sum"
                 })
+            del resp["Age"]
             for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
                 resp[col] = resp[col]/1000
                 resp[col] = resp[col].round(2)
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
         resp = await function(query=lpg_pending_query_)
         resp = pd.DataFrame(resp)
@@ -1369,11 +1371,14 @@ class LPGCDCMSActions:
             total_suvidha_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "SubCategory", "Category", "JDEDistributorCode"'
             
             resp = await function(query=total_suvidha_query_)
-            resp = pd.DataFrame(resp)
-            resp = await filter_data(resp, _filters)
+            resp = pd.DataFrame(resp)            
+            resp = await filter_data(resp, _filters)            
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["SubCategory"], as_index=False).agg({
+            pie_resp = resp.groupby(["SubCategory"], as_index=False).agg({
+                    "SuvidhaClub": "sum"
+                })
+            resp = resp.groupby(["ZOName"], as_index=False).agg({
                         "SuvidhaClub": "sum",
                     })
             for each_float_col in [
@@ -1394,12 +1399,15 @@ class LPGCDCMSActions:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data_pie": pie_resp.to_dict(orient='records'), "data": resp.to_dict(orient='records')}
 
         resp = await function(query=total_suvidha_query_)
         if resp:
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
+            pie_resp = resp.groupby(["SubCategory"], as_index=False).agg({
+                    "SuvidhaClub": "sum"
+                })
             resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
             
             for each_float_col in ["SuvidhaClub"]:
@@ -1418,28 +1426,24 @@ class LPGCDCMSActions:
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
-                if "SubCategory" in filter_keys and "ZOName" not in filter_keys:
-                    grouped_resp = resp.groupby(["SubCategory", "ZOName"], as_index=False).agg({
+                if "ZOName" in filter_keys and "ROName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName"], as_index=False).agg({
                         "SuvidhaClub": "sum",
                     })
-                if "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName"], as_index=False).agg({
-                        "SuvidhaClub": "sum",
-                    })
-                elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName", "SAName"], as_index=False).agg({
+                elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName", "SAName"], as_index=False).agg({
                         "SuvidhaClub": "sum",
                     })  
-                elif "SubCategory" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                    grouped_resp = resp.groupby(["SubCategory","ZOName", "ROName", "SAName", "DistributorName"],
+                elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                    grouped_resp = resp.groupby(["ZOName", "ROName", "SAName", "DistributorName"],
                                                 as_index=False).agg({
                         "SuvidhaClub": "sum",
-                    })                    
+                    })
                 if grouped_resp is not None:
-                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+                    return {"status": True, "message": "success", "data_pie": pie_resp.to_dict(orient='records'), "data": grouped_resp.to_dict(orient='records')}
         else:
-            return {"status": True, "message":"success", "data":[]}
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+            return {"status": True, "message":"success", "data_pie": [], "data":[]}
+        return {"status": True, "message": "success", "data_pie": [], "data": resp.to_dict(orient='records')}
     
     
     @staticmethod
@@ -1648,8 +1652,8 @@ class LPGCDCMSActions:
                 as_index=False).agg({
                     "SafetyCheckPending": "sum"
                     })
-            elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "JDEDistributorCode" not in filter_keys:
-                grouped_resp = resp.groupby(["ZOName","ROName","SAName","JDEDistributorCode"],
+            elif "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.groupby(["ZOName","ROName","SAName","DistributorName"],
                 as_index=False).agg({
                     "SafetyCheckPending": "sum"
                     })
