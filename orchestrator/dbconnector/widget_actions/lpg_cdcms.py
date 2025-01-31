@@ -1129,6 +1129,86 @@ class LPGCDCMSActions:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
         # Convert the result to a dictionary for the response
         return {"status": True, "message": "success", "data": resp.to_dicts()}
+    
+    
+    @staticmethod
+    async def lpg_cdcms_dbc_enrollments(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        financial_year = await get_financial_year()
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            dbc_enrollments_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_dbc_enrollments")
+            dbc_enrollments_query_ = dbc_enrollments_query
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):  # Use dot notation instead of subscription
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                dbc_enrollments_query_ += ' WHERE ' 
+                dbc_enrollments_query_ += ' AND '.join(conditions)
+            dbc_enrollments_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName" '
+        else:
+            if "where" not in dbc_enrollments_query_.lower():
+                dbc_enrollments_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            else:
+                dbc_enrollments_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName" '
+        resp = await function(query=dbc_enrollments_query_)
+        resp = pl.DataFrame(resp)
+        resp = await filter_data(resp.to_pandas(), _filters)
+        resp = pl.from_pandas(resp)
+        # Fill missing values
+        numerical_columns = ["Month_Number", "DBCIssued"]
+        string_columns = ["Month", "ZOName", "ROName", "SAName"]
+
+        for col in numerical_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null(0.0))
+
+        for col in string_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+        if filters:
+            filter_keys = []
+            for rec in filters:
+                filter_keys.append(rec.key)
+            grouped_resp = None
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName"]).agg([
+                    pl.sum("DBCIssued").alias("DBCIssued"),
+                    pl.sum("Month_Number").alias("Month_Number"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName", "ROName"]).agg([
+                    pl.sum("DBCIssued").alias("DBCIssued"),
+                    pl.sum("Month_Number").alias("Month_Number"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.groupby(["Month", "ZOName", "ROName", "SAName"]).agg([
+                    pl.sum("DBCIssued").alias("DBCIssued"),
+                    pl.sum("Month_Number").alias("Month_Number"),
+                ])
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
+        resp = resp.groupby(["Month"]).agg([
+                pl.sum("DBCIssued").alias("DBCIssued"),
+                pl.first("Month_Number").alias("Month_Number"),
+            ])
+        resp = resp.sort("Month_Number")
+        return {"status": True, "message": "success", "data": resp.to_dicts()}
 
 
 ################################################################# CONSUMER STATS ###################################################################################
