@@ -1177,7 +1177,7 @@ class Alerts_Upload_DocumentParams(pydantic.BaseModel):
 
 
 class Alerts_Stored_DocumentParams(pydantic.BaseModel):
-    filename: str
+    pass
 
 
 class Alerts_Get_Frequent_Dryout_RoParams(pydantic.BaseModel):

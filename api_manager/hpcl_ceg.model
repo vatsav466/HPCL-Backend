@@ -605,7 +605,6 @@ Model Alerts {
     }
 
     Action=> stored_document {
-        filename str
     }
 
     Action=> get_frequent_dryout_ro {
