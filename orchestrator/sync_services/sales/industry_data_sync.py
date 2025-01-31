@@ -24,8 +24,16 @@ def get_industry_data():
     print(res['VALUE'].sum())
     print(type(res))
     print("cols",res.columns.tolist())
-    res = res.rename(columns = {'VALUE':'NETWEIGHT_TMT','SBU':'SBU_Name','PRODCODE':'PRODUCTCODE','PRODNAME':'ProductName','ZONE':'Zone_Name','REGIONCODE':'ORGROCD',
-        'REGIONNAME':'Region_Name','FIN_YEAR':'fiscal_year','Co':'Company_Name','MONTH':'month_name'})
+    if 'REGIONCODE' in res.columns.tolist():
+        res['REGIONCODE'] = res['REGIONCODE'].astype(int)
+
+   
+    res = res.rename(columns = {'VALUE':'netweight_tmt','SBU':'sbu_name','PRODCODE':'productcode','PRODNAME':'productname','ZONE':'zone_name','REGIONCODE':'orgrocd',
+        'REGIONNAME':'region_name','FIN_YEAR':'fiscal_year','Co':'company_name','MONTH':'month_name','PSU/PVT':'psu_pvt',
+        'Code':'code','DISTCODE':'distcode','Prod1.1':'prod1_1','Prod2':'prod2','STATECODE':'statecode','Co Name':'coname',
+        'New Code':'newcode','COMCODE':'comcode','COMNAME':'comname','Prod1':'prod1','CATEGORY':'category',
+        'TOTAL':'total','STATENAME':'statename','DISTNAME':'distname','Dist':'dist','COMP_TYPE':'com_type'})
+    res.loc[res['coname'].str.isin(['HPCL','BPCL','IOCL']),'psu_pvt'] = 'MPSU'
     if 'SBU with district wise' in res.columns:
         del res['SBU with district wise']
     if 'RO' in res.columns:

@@ -7,8 +7,7 @@ import utilities.fiscal_year as fiscal_year
 base_path = f"{os.path.dirname(fiscal_year.__file__)}/../orchestrator/masters"
 Industry_performance_23_24 = f"{base_path}/industry_data_23-24.csv"
 Industry_performance_24_25 = f"{base_path}/industry_data_24-25.csv"
-Industry_performance_23_24 = '/tmp/industry_data_23-24.csv'
-Industry_performance_24_25 = '/tmp/industry_data_24-25.csv'
+
 
 Months = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']
 Company_Mapping = {"OIL INDIA LIMITED": "OIL", "RBML": "RIL", "RSIL": "RIL", "SIMPL": "SHELL", "SEIPL": "SHELL",
