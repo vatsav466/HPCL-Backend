@@ -92,6 +92,9 @@ class LocationHealth(str, enum.Enum):
 class AlertActionType(str, enum.Enum):
     Justification = 'Justification'
     AcceptClose = 'AcceptClose'
+    FalseAlert = 'FalseAlert'
+    InvalidAlert = 'InvalidAlert'
+    ValidAlert = 'ValidAlert'
     Rejected = 'Rejected'
     Approved = 'Approved'
     Override = 'Override'

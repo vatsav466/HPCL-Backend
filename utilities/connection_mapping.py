@@ -85,6 +85,8 @@ alert_action_category = {
         "Safety": "Safety",
         "Security": "Security",
         "Operations": "Operations",
+        "FalseAlert": "FalseAlert",
+        "InvalidAlert": "InvalidAlert",
         "Other": "Other"
     },
     "VTS": {
@@ -106,6 +108,8 @@ alert_action_rca_reason = {
         "Person issue",
         "Equipment issue",
         "Lack of Awareness",
+        "InvalidAlert",
+        "FalseAlert",
         "Other"
     ]
 }
