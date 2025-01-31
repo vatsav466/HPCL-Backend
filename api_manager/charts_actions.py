@@ -474,7 +474,7 @@ async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
         # creds_details = await CredsModel.get(data.connection_id)
         # if not isinstance(creds_details, dict):
         #     creds_details = creds_details.__dict__
-        creds_details = connection_mapping.creds_type.get(data.connection_id, "1")
+        creds_details = connection_mapping.creds_type.get(f"{data.connection_id}", "1")
         return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
     except Exception as e:
         raise ValueError(e)
