@@ -52,9 +52,9 @@ Enum LocationHealth str {
 Enum AlertActionType str {
     Justification='Justification'
     AcceptClose='AcceptClose'
-    False='False'
-    Invalid='Invalid'
-    Valid='Valid'
+    FalseAlert='FalseAlert'
+    InvalidAlert='InvalidAlert'
+    ValidAlert='ValidAlert'
     Rejected='Rejected'
     Approved='Approved'
     Override='Override'

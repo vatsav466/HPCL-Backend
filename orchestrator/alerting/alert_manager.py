@@ -60,7 +60,7 @@ class AlertAction:
                         "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
                         "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert",
-                        "AcceptClose": "accept_close", "Invalid": "invalid_alert", "False": "false_alert", "Valid": "valid_alert"}
+                        "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -472,9 +472,9 @@ class AlertAction:
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
         action_code = "VALID"
-        if input_data.get("action_type") == 'Invalid':
+        if input_data.get("action_type") == 'InvalidAlert':
             action_code = 'INVALID'
-        if input_data.get("action_type") == 'False':
+        if input_data.get("action_type") == 'FalseAlert':
             action_code = 'FALSE'
         params = {
             "AlarmId": alert_data['external_id'],
