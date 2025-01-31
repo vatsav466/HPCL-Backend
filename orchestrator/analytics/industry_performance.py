@@ -209,18 +209,18 @@ async def calculate_market_share(df, segregate=False):
                         zone_data = df_pl.filter(
                             (pl.col("coname") == company) & 
                             (pl.col("fiscal_year") == fis_year)
-                        ).groupby(["zone_name", "coname", "fiscal_year"]).agg(
+                        ).group_by(["zone_name", "coname", "fiscal_year"]).agg(
                             pl.col(selected_key).sum().alias(selected_key)
                         )
                         for row in zone_data.iter_rows():
                             zone_name, _, _, company_sales = row
                             zone_value = row[3]  # Zone Value is the sales value in this case
                             market_share = (
-                                round(100 * (company_sales / (overall_share.get(fis_year, 1))), 2)
+                                round(100 * (company_sales / Decimal(overall_share.get(fis_year, 1))), 2)
                                 if overall_share.get(fis_year, 1) != 0 else 0
                             )
                             psu_share_per = (
-                                round(100 * (company_sales / (psu_share.get(fis_year, 1))), 2)
+                                round(100 * (company_sales / Decimal(psu_share.get(fis_year, 1))), 2)
                                 if psu_share.get(fis_year, 1) != 0 else 0
                             )
 
