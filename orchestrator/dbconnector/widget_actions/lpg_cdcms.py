@@ -956,8 +956,6 @@ class LPGCDCMSActions:
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
-            cumulative_sales_pmuy_npmuy_query = lpg_plant_queries.lpg_plant_query.get("cumulative_sales_pmuy_npmuy")
-            cumulative_sales_pmuy_npmuy_query_ = cumulative_sales_pmuy_npmuy_query
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
