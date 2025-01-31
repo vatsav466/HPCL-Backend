@@ -1141,9 +1141,8 @@ class LPGCDCMSActions:
         if cross_filters:
             for filter in cross_filters:
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        dbc_enrollments_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_dbc_enrollments")
         if filters:
-            dbc_enrollments_query = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_dbc_enrollments")
-            dbc_enrollments_query_ = dbc_enrollments_query
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
@@ -1170,7 +1169,6 @@ class LPGCDCMSActions:
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
         resp = pl.from_pandas(resp)
-        # Fill missing values
         numerical_columns = ["Month_Number", "DBCIssued"]
         string_columns = ["Month", "ZOName", "ROName", "SAName"]
 
