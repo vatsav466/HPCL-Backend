@@ -33,7 +33,7 @@ def get_industry_data():
         'Code':'code','DISTCODE':'distcode','Prod1.1':'prod1_1','Prod2':'prod2','STATECODE':'statecode','Co Name':'coname',
         'New Code':'newcode','COMCODE':'comcode','COMNAME':'comname','Prod1':'prod1','CATEGORY':'category',
         'TOTAL':'total','STATENAME':'statename','DISTNAME':'distname','Dist':'dist','COMP_TYPE':'com_type'})
-    res.loc[res['coname'].str.isin(['HPCL','BPCL','IOCL']),'psu_pvt'] = 'MPSU'
+    res.loc[res['coname'].isin(['HPCL','BPCL','IOCL']),'psu_pvt'] = 'MPSU'
     if 'SBU with district wise' in res.columns:
         del res['SBU with district wise']
     if 'RO' in res.columns:
