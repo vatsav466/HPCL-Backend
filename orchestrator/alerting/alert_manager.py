@@ -59,7 +59,8 @@ class AlertAction:
                         "excApprovalTimeExp": "exc_approval_time_exp_alert", "Message": "message_alert",
                         "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
-                        "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert", "AcceptClose": "accept_close"}
+                        "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert",
+                        "AcceptClose": "accept_close", "Invalid": "invalid_alert", "False": "false_alert", "Valid": "valid_alert"}
         alert_id = input_data['alert_id']
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -409,6 +410,36 @@ class AlertAction:
                 :return:
                 """
         return await cls.publish_to_camunda(input_data, alert_data, "AcceptClose")
+
+    @classmethod
+    async def invalid_alert(cls, input_data, alert_data):
+        """
+                Function to Accept and Close an alert
+                :param input_data:
+                :param alert_data:
+                :return:
+                """
+        return await cls.publish_to_camunda(input_data, alert_data, "Invalid")
+
+    @classmethod
+    async def valid_alert(cls, input_data, alert_data):
+        """
+                Function to Accept and Close an alert
+                :param input_data:
+                :param alert_data:
+                :return:
+                """
+        return await cls.publish_to_camunda(input_data, alert_data, "Valid")
+
+    @classmethod
+    async def false_alert(cls, input_data, alert_data):
+        """
+                Function to Accept and Close an alert
+                :param input_data:
+                :param alert_data:
+                :return:
+                """
+        return await cls.publish_to_camunda(input_data, alert_data, "False")
     
     @classmethod
     async def tripped_alert(cls, input_data, alert_data):
@@ -440,11 +471,16 @@ class AlertAction:
         """
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
+        action_code = "VALID"
+        if input_data.get("action_type") == 'Invalid':
+            action_code = 'INVALID'
+        if input_data.get("action_type") == 'False':
+            action_code = 'FALSE'
         params = {
             "AlarmId": alert_data['external_id'],
             "Status": "CLOSED",
             "AcknowledgedBy": input_data.get("acknowledged_by", "1234"),
-            "ActionCode": "VALID",
+            "ActionCode": action_code,
             "ActionReason": input_data.get("rca_reason", "Other"),
             "ActionCategory": input_data.get("category", "Others"),
             "ActionDescription": input_data.get("action_description", "")
