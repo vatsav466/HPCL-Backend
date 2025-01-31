@@ -1180,9 +1180,7 @@ class LPGCDCMSActions:
             if col in resp.columns:
                 resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
         if filters:
-            filter_keys = []
-            for rec in filters:
-                filter_keys.append(rec.key)
+            filter_keys = [rec.key.strip('"') for rec in filters]
             grouped_resp = None
             if "Month" in filter_keys and "ZOName" not in filter_keys:
                 grouped_resp = resp.group_by(["Month", "ZOName"]).agg([
@@ -2032,6 +2030,7 @@ class LPGCDCMSActions:
                 latest_pending_bookings = latest_pending_bookings.group_by("DistributorName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
                 backlog = latest_pending_bookings.join(average_sales, on="DistributorName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
             if backlog is not None:
+                backlog = backlog.with_columns(pl.col("Backlog").cast(pl.Utf8).cast(pl.Float64).round(2).alias("Backlog"))
                 return {"status": True, "message": "success", "data": backlog.to_dicts()}
         else:
             return {"status": True, "message": "success", "data": []}
