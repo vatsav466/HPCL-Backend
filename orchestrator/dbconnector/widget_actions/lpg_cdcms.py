@@ -1946,9 +1946,9 @@ class LPGCDCMSActions:
                 latest_pending_bookings = latest_pending_bookings.group_by("SAName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
                 backlog = latest_pending_bookings.join(average_sales, on="SAName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
             elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                average_sales = average_sales.group_by("SAName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
-                latest_pending_bookings = latest_pending_bookings.group_by("SAName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
-                backlog = latest_pending_bookings.join(average_sales, on="SAName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
+                average_sales = average_sales.group_by("DistributorName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
+                latest_pending_bookings = latest_pending_bookings.group_by("DistributorName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
+                backlog = latest_pending_bookings.join(average_sales, on="DistributorName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
             if backlog is not None:
                 return {"status": True, "message": "success", "data": backlog.to_dicts()}
         else:
