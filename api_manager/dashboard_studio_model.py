@@ -205,20 +205,20 @@ class ChartsGetResp(pydantic.BaseModel):
 
 
 class Charts_Get_TablesParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
 
 
 class Charts_Get_ColumnsParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
     table: str
 
 
 class Charts_Get_Unique_ValuesParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
     table: str
@@ -226,7 +226,7 @@ class Charts_Get_Unique_ValuesParams(pydantic.BaseModel):
 
 
 class Charts_Drill_Down_DataParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
     table: str
@@ -243,7 +243,7 @@ class Charts_Get_Dashboard_Chart_FormParams(pydantic.BaseModel):
 
 
 class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     schema: str
     table: str
     column: typing.List[str]
@@ -285,16 +285,16 @@ class Charts_Get_Auto_Complete_TextParams(pydantic.BaseModel):
 
 
 class Charts_Connection_Vault_RoutingParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     action: str
 
 
 class Charts_Get_Creds_DetailsParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
 
 
 class Charts_Get_SchemaParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: typing.Optional[str] = pydantic.Field("", **{})
 
 

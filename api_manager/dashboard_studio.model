@@ -140,25 +140,25 @@ Model Charts {
     hashed_value optional str
 
     Action=> get_tables {
-        connection_id optional str
+        connection_id optional int max=1000000
         database str
         schema str
     }
     Action=> get_columns {
-        connection_id optional str
+        connection_id optional int max=1000000
         database str
         schema str
         table str
     }
     Action=> get_unique_values {
-        connection_id optional str
+        connection_id optional int max=1000000
         database str
         schema str
         table str
         column list str
     }
     Action=> drill_down_data {
-        connection_id optional str
+        connection_id optional int max=1000000
         database str
         schema str
         table str
@@ -173,7 +173,7 @@ Model Charts {
     }
 
     Action=> get_distinct_values {
-        connection_id optional str
+        connection_id optional int max=1000000
         schema str
         table str
         column list str
@@ -215,16 +215,16 @@ Model Charts {
     }
 
     Action=> connection_vault_routing {
-        connection_id optional str
+        connection_id optional int max=1000000
         action str
     }
 
     Action=> get_creds_details {
-        connection_id optional str
+        connection_id optional int max=1000000
     }
 
     Action=> get_schema {
-        connection_id optional str
+        connection_id optional int max=1000000
         database optional str
     }
 

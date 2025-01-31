@@ -12,6 +12,7 @@ from utilities.connection_mapping import product_code_mapping, connection_mappin
 
 req_keys = {
     "TAS": ["zone", "sap_id", "name", "category"],
+    "LPG": ["zone", "sap_id", "name", "category"],
     "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"]
 }
 
