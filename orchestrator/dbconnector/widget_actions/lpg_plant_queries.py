@@ -1298,7 +1298,7 @@ ORDER BY
         END AS product_code,
         transaction_date,
         total_sales
-    FROM HPCL_HOS."ro_daily_sales"
+    FROM "HPCL_HOS".ro_daily_sales
 )
 
 SELECT 
