@@ -24,7 +24,8 @@ async def close_va_alerts(params: dict):
             "ActionCode": "INVALID", Options: ["Invalid", "Valid", "False"]
             "ActionReason":"Lack of awareness", Options: ["Person issue", "Equipment issue", "Lack of awareness", "Not following SOP", "Other"]
             "ActionCategory":"Safety", Options: ["Safety", "Security", "Operation", "Others"]
-            "ActionDescription": "ActionDescription"
+            "ActionDescription": "ActionDescription",
+            "DocLink": "",
         }
 
     Returns:

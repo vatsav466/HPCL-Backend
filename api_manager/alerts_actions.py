@@ -2,6 +2,7 @@ import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
+import os
 import re
 import pytz
 import json
@@ -201,8 +202,8 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
 
 # Action stored_document
 @router.get('/stored_document', tags=['Alerts'])
-async def alerts_stored_document(data: Alerts_Stored_DocumentParams):
-    file_path = "/opt/downloads/emlock_data_ingestion.log"
+async def alerts_stored_document(file_name: str):
+    file_path = os.path.join(urdhva_base.settings.uploads, file_name)
     return FileResponse(
-        file_path, filename="emlock_data_ingestion.log", media_type="application/octet-stream"
+        file_path, filename=file_name, media_type="application/octet-stream"
     )
