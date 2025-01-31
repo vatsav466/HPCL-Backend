@@ -4061,12 +4061,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        if time_grain == 'Monthly':
-            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_month_sales')
-        elif time_grain == 'Weekly':
-            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_week_sales')
-        else:
-            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_day_sales')
+        present_month_sales = lpg_plant_queries.lpg_plant_query.get('previous_current_month_sales')
 
         if cross_filters:
             cross_filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -4085,20 +4080,40 @@ class GlobalAnalytics:
             if limit:
                 present_month_sales += f' LIMIT {limit}'
             print(present_month_sales)
-            pres_mon_sales_resp = await function(query=present_month_sales)
-            if not pres_mon_sales_resp:
-                return {"status": True, "message": "No data", "data": []}
-            return {"status": True, "message": "success", "data": pres_mon_sales_resp}
+
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                               for rec in
                               await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
-            pres_mon_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales, access_filters, drill_state)
+            present_month_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales, access_filters, drill_state)
 
             if limit:
-                pres_mon_sales += f' LIMIT {limit}'
-            print(pres_mon_sales)
-            pres_mon_sales_resp = await function(query=pres_mon_sales)
-            if not pres_mon_sales_resp:
-                return {"status": True, "message": "No data", "data": []}
-            return {"status": True, "message": "success", "data": pres_mon_sales_resp}
+                present_month_sales += f' LIMIT {limit}'
+
+        pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
+        print(pres_mon_sales_query)
+        pres_mon_sales_resp = await function(query=pres_mon_sales_query)
+        distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
+        print("distinct_periods--> ", distinct_periods)
+        formatted_results = {}
+
+        # Iterate over the response and group the data by location_name
+        for row in pres_mon_sales_resp:
+            location_name = row["location_name"]
+            period = row["period"]
+            avg_total_sales = row["avg_total_sales"]
+
+            if location_name not in formatted_results:
+                formatted_results[location_name] = {"location_name": location_name}
+
+            # Add the period and its corresponding average sales value to the dictionary
+            formatted_results[location_name][period] = avg_total_sales
+
+
+        # Convert the dictionary to a list of results
+        final_result = list(formatted_results.values())
+        for res in final_result:
+            for p_ in distinct_periods:
+                res.setdefault(p_, 0)
+
+        return {"status": True, "message": "success", "data": final_result}
