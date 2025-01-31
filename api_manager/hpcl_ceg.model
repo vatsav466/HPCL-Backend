@@ -1224,32 +1224,32 @@ Model MomLevelFinalMetaData {
 }
 Model IndustryPerformance {
 
-    Prod1_1 optional str
-    CATEGORY optional str
-    SBU_Name optional str
-    STATENAME optional str
-    Company_Name optional str
-    ProductName optional str
-    DISTNAME optional str
-    Prod2 optional str
-    COMNAME optional str
-    PSU_PVT optional str
-    STATECODE optional str
-    ORGROCD optional str
-    Dist optional str
-    Prod1 optional str
-    DISTCODE optional str
-    COMCODE optional int
-    Code optional str
-    PRODUCTCODE optional int
-    Zone_Name optional str
-    Region_Name optional str
-    NewCode optional str
+    prod1_1 optional str
+    category optional str
+    sbu_name optional str
+    statename optional str
+    company_name optional str
+    productname optional str
+    distname optional str
+    prod2 optional str
+    comname optional str
+    psu_pvt optional str
+    statecode optional str
+    orgrocd optional str
+    dist optional str
+    prod1 optional str
+    distcode optional str
+    comcode optional int
+    code optional str
+    productcode optional int
+    zone_name optional str
+    region_name optional str
+    newcode optional str
     fiscal_year optional str
-    CoName optional str
+    coname optional str
     month_name optional str
-    NETWEIGHT_TMT optional float
-    COMP_TYPE optional str
+    netweight_tmt optional float
+    com_type optional str
     
     Config=> {
         access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'
