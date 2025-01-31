@@ -116,7 +116,8 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "alert_id": alert_id,
                                               "alert_section": "VA",
                                               "alert_history":alert_history,
-                                              "vendor_alert_id": record.get("alert_id", alert_id)
+                                              "vendor_alert_id": record.get("alert_id", alert_id),
+                                              "alert_timestamp": record.get("alert_timestamp", None)
                                               })
 
                     await cls.create_alert(interlock_details, camunda_url)
