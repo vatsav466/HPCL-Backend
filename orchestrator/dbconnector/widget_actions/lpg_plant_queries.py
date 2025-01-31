@@ -898,6 +898,17 @@ LIMIT 10000;''',
                                     SUM("Total_Pending") AS "Total_Pending"
                                 FROM
                                     "lpg_cdcms_sales_summary" ''',
+                                    
+    "lpg_cdcms_dbc_enrollments": ''' SELECT 
+                                        "ZOName" ,
+                                        "ROName",
+                                        "SAName",
+                                        "DistributorName",
+                                        "Month",
+                                        "Month_Number",
+                                        sum("DBCIssuedCount") as "DBCIssued"
+                                    from
+                                        "lpg_cdcms_dbc_enrollment" ''',
     
     "lpg_cdcms_backlogs_today": f''' SELECT
                                         "DistributorName",
