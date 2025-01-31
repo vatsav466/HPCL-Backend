@@ -180,9 +180,9 @@ async def authMiddleware(request: fastapi.Request, call_next):
         if not base_url:
             response = fastapi.responses.JSONResponse("Provided entity is Invalid", 403)
             return add_security_headers(response)
-        redirect_url = f"{request.base_url}login"
-        resp_dict = {"url": redirect_url}
-        response = fastapi.responses.JSONResponse(resp_dict, 401)
+        # redirect_url = f"https://{request.base_url.hostname}/login"
+        # resp_dict = {"url": redirect_url}
+        response = fastapi.responses.HTMLResponse("", 401)
     elif cookie or rpt:
         if await has_permission(request.method, request.scope['path']):
             response: fastapi.responses.Response = await call_next(request)
@@ -284,12 +284,12 @@ async def contextMiddleware(request: fastapi.Request, call_next):
     return resp
 
 
-@app.get("/api/login")
+# @app.get("/api/login")
 async def login_old(request: fastapi.Request, code: typing.Optional[str] = None):
     return await login(request, code, urdhva_base.ctx["entity_id"])
 
 
-@app.get("/api/{entity_id}/login")
+# @app.get("/api/{entity_id}/login")
 async def login(request: fastapi.Request, code: typing.Optional[str] = None,
                 entity_id: typing.Optional[str] = ""):
     base_url = ""
@@ -396,7 +396,8 @@ async def login(request: fastapi.Request, code: typing.Optional[str] = None,
 
 @app.get("/api/logout")
 async def logout(request: fastapi.Request):
-    response = fastapi.responses.JSONResponse({'url': f"https://{request.base_url.hostname}/login"}, 401)
+    # {'url': f"https://{request.base_url.hostname}/login"}
+    response = fastapi.responses.HTMLResponse("", 401)
     cookie_id = request.cookies.get(cookie_name, None)
     if cookie_id:
         try:
@@ -412,38 +413,6 @@ async def logout(request: fastapi.Request):
                            secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
     # todo:- Need to clear dashboard sessions
     return response
-    # org_extension = await get_customer_authentication_extension(urdhva_base.ctx['entity_id'])
-    # redis_client = await urdhva_base.redispool.get_redis_connection()
-    # if await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname):
-    #     data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
-    #     url = json.loads(data)["base_url"]
-    #     redirect_url = f"https://{url}/{org_extension}/realms/{urdhva_base.ctx['entity_id']}" \
-    #                    f"/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F" \
-    #                    f"{request.base_url.hostname}%2F"
-    # else:
-    #     redirect_url = f"https://{await get_baseurl(request)}/{org_extension}/realms/" \
-    #                    f"{urdhva_base.ctx['entity_id']}/protocol/openid-connect/" \
-    #                    f"logout?post_logout_redirect_uri=https%3A%2F%2F{request.base_url.hostname}%2F"
-    # id_auth_token = urdhva_base.context.context.get('id_auth_token', "")
-    # if id_auth_token:
-    #     redirect_url += f"&id_token_hint={id_auth_token}"
-    # response = fastapi.responses.JSONResponse({'url': redirect_url}, 401)
-    # cookie_id = request.cookies.get(cookie_name, None)
-    # if cookie_id:
-    #     try:
-    #         f = Fernet(urdhva_base.settings.fernet_key)
-    #         d = json.loads(f.decrypt(cookie_id.encode()).decode())
-    #         # print(d)
-    #         entity_id = d["entity_id"]
-    #         cookie_id = d["cookie_id"]
-    #     except:
-    #         entity_id = request.base_url.hostname.split('.')[0]
-    #     redis_client = await urdhva_base.redispool.get_redis_connection()
-    #     rkey = f"{entity_id}_SessionData_{cookie_id}"
-    #     await redis_client.delete(rkey)
-    # response.delete_cookie(cookie_name)
-    # # todo:- Need to clear dashboard sessions
-    # return response
 
 
 @app.get("/api/{entity_id}/authorize")
