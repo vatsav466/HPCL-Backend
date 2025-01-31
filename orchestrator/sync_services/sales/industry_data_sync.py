@@ -1,5 +1,5 @@
 import urdhva_base
-import orchestrator.analytics.industry_performance as ind
+import orchestrator.analytics.industry_data_normalize as ind
 import os
 import uuid
 import pyodbc
