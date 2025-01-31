@@ -1238,6 +1238,7 @@ Model IndustryPerformance {
     orgrocd optional str
     dist optional str
     prod1 optional str
+    total optional float
     distcode optional str
     comcode optional int
     code optional str
