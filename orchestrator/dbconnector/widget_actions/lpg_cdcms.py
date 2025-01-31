@@ -1185,23 +1185,23 @@ class LPGCDCMSActions:
                 filter_keys.append(rec.key)
             grouped_resp = None
             if "Month" in filter_keys and "ZOName" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZOName"]).agg([
+                grouped_resp = resp.group_by(["Month", "ZOName"]).agg([
                     pl.sum("DBCIssued").alias("DBCIssued"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZOName", "ROName"]).agg([
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName"]).agg([
                     pl.sum("DBCIssued").alias("DBCIssued"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.groupby(["Month", "ZOName", "ROName", "SAName"]).agg([
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName"]).agg([
                     pl.sum("DBCIssued").alias("DBCIssued"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
-        resp = resp.groupby(["Month"]).agg([
+        resp = resp.group_by(["Month"]).agg([
                 pl.sum("DBCIssued").alias("DBCIssued"),
                 pl.first("Month_Number").alias("Month_Number"),
             ])
