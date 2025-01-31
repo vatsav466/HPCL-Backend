@@ -1002,6 +1002,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     dry_out_in_days: Mapped[typing.Optional[str]] = mapped_column("dry_out_in_days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     origin_altid: Mapped[typing.Optional[str]] = mapped_column("origin_altid", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_message: Mapped[typing.Optional[str]] = mapped_column("alert_message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    external_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("external_timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1062,6 +1063,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
     origin_altid: typing.Optional[str] = pydantic.Field("", **{})
     alert_message: typing.Optional[str] = pydantic.Field("", **{})
+    external_timestamp: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -1129,6 +1131,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
     origin_altid: typing.Optional[str] = pydantic.Field("", **{})
     alert_message: typing.Optional[str] = pydantic.Field("", **{})
+    external_timestamp: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -2426,6 +2429,7 @@ class VaAlertHistorySchema(UrdhvaPostgresBase):
     alert_description: Mapped[typing.Optional[str]] = mapped_column("alert_description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     video_url: Mapped[typing.Optional[str]] = mapped_column("video_url", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alert_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("alert_timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class VaAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -2439,6 +2443,7 @@ class VaAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     alert_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: typing.Optional[str] = pydantic.Field("", **{})
     video_url: typing.Optional[str] = pydantic.Field("", **{})
+    alert_timestamp: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -2458,6 +2463,7 @@ class VaAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     alert_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: typing.Optional[str] = pydantic.Field("", **{})
     video_url: typing.Optional[str] = pydantic.Field("", **{})
+    alert_timestamp: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'

@@ -574,6 +574,7 @@ Model Alerts {
     dry_out_in_days optional str
     origin_altid optional str
     alert_message optional str
+    external_timestamp optional datetime
 
     Action=> alert_action {
         bu optional str
@@ -1124,6 +1125,7 @@ Model VaAlertHistory {
     alert_description optional str
     device_id optional str
     video_url optional str
+    alert_timestamp optional datetime
 
     Config=> {
         crud_operations='read'
