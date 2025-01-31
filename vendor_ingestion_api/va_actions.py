@@ -3,7 +3,9 @@ from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
 import json
+import pytz
 import requests
+import datetime
 import traceback
 import hpcl_ceg_model
 import orchestrator.alerting.alert_manager as alert_manager
@@ -46,6 +48,10 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
       
       for entry in enriched_data:
           entry['alert_section'] = entry['alert_type']
+          entry['alert_timestamp'] = datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p")
+          ist = pytz.timezone("Asia/Kolkata")
+          entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
+          entry['alert_timestamp'] = entry['alert_timestamp'].isoformat()
           await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
           # entry['vendor_alert_id'] = entry.pop("alert_id")
           await alert_manager.create_alert({**entry, "alert_type": "VA"})
