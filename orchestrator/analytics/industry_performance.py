@@ -14,12 +14,12 @@ import orchestrator.dbconnector.connector_factory as connector_factory
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
-# HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
+# HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'zone_name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
 #                      'SalesArea_Name': '"ORGSANAME"'}
-# Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
-Base_Filters = ['"month_name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
+# Base_Filters = ['"month_name"', '"SBU_Name"', '"zone_name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
+Base_Filters = ['"month_name"', '"zone_name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
-Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
+Default_Filters = [""""SBU_Name" != '0'""", """"zone_name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "ind_h": "industry_performance","ind_act": "industry_performance"}
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
@@ -27,8 +27,9 @@ DefaultTable = 'Day'
 # MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
 MandateKeys = {"actual": "IND_ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES"}
 MajorPSU = ["HPCL", "BPCL", "IOCL"]
+OTHPSU = ["HPCL", "NRL", "CPCL", "GAIL", "ONGC", "MRPL", "OIL"]
+PVT = ["HPCL", "BORL", "HMEL", "RIL", "NEL", "SHELL", "SMA", "RIL"]
 PSU = ["HPCL", "BPCL", "IOCL", "CPCL", "ONGC", "NRL", "GAIL", "MRPL", "OIL"]
-PVT = ["BORL", "HMEL", "RIL", "NEL", "SHELL", "SMA", "RIL"]
 
 '''
 Working Code
@@ -42,7 +43,7 @@ async def calculate_market_share(df, segregate=False):
         df_pl = pl.from_pandas(df)
 
         # Get unique values for companies and fiscal years
-        unique_companies = df_pl["CoName"].unique().to_list()
+        unique_companies = df_pl["coname"].unique().to_list()
         unique_years = df_pl["fiscal_year"].unique().to_list()
 
         # Determine which MandateKeys are available in the dataframe
@@ -66,7 +67,7 @@ async def calculate_market_share(df, segregate=False):
 
             # Compute PSU market share for this key (filtering for specific companies)
             psu_share = (
-                df_pl.filter(pl.col("CoName").is_in(["IOCL", "HPCL", "BPCL"]))
+                df_pl.filter(pl.col("coname").is_in(["IOCL", "HPCL", "BPCL"]))
                 .group_by("fiscal_year")
                 .agg([pl.col(selected_key).sum().cast(pl.Float64).alias(selected_key)])
                 .to_dicts()
@@ -83,7 +84,7 @@ async def calculate_market_share(df, segregate=False):
                     if selected_key == "IND_ACTUAL_HISTORY_TMT_SALES" and fis_year == current_fiscal_year:
                         continue
                     company_data = df_pl.filter(
-                        (pl.col("CoName") == company) & (pl.col("fiscal_year") == fis_year)
+                        (pl.col("coname") == company) & (pl.col("fiscal_year") == fis_year)
                     ).select([pl.col(selected_key).sum().alias(selected_key)])
 
                     company_sales = float(company_data[selected_key][0]) if len(company_data) > 0 else 0
@@ -98,7 +99,7 @@ async def calculate_market_share(df, segregate=False):
                         if psu_share.get(fis_year, 1) != 0 else 0
                     )
 
-                    company_type = df_pl.filter(pl.col("CoName") == company).select("Company_Name").to_numpy()[0][0]
+                    company_type = df_pl.filter(pl.col("coname") == company).select("company_name").to_numpy()[0][0]
 
                     # If segregate mode is off, combine all values in one dictionary
                     if not segregate:
@@ -160,7 +161,7 @@ async def calculate_market_share(df, segregate=False):
         df_pl = pl.from_pandas(df)
 
         # Get unique values for companies and fiscal years
-        unique_companies = df_pl["CoName"].unique().to_list()
+        unique_companies = df_pl["coname"].unique().to_list()
         unique_years = df_pl["fiscal_year"].unique().to_list()
 
         # Determine which MandateKeys are available in the dataframe
@@ -181,10 +182,11 @@ async def calculate_market_share(df, segregate=False):
                 .to_dicts()
             )
             overall_share = {rec["fiscal_year"]: rec[selected_key] for rec in overall_share}
-
+            
+            #TODO - filter needs to be changed upon selection
             # Compute PSU market share for this key (filtering for specific companies)
             psu_share = (
-                df_pl.filter(pl.col("CoName").is_in(["IOCL", "HPCL", "BPCL"]))
+                df_pl.filter(pl.col("coname").is_in(["IOCL", "HPCL", "BPCL"]))
                 .group_by("fiscal_year")
                 .agg([pl.col(selected_key).sum().cast(pl.Float64).alias(selected_key)])
                 .to_dicts()
@@ -201,13 +203,13 @@ async def calculate_market_share(df, segregate=False):
                     if selected_key == "IND_ACTUAL_HISTORY_TMT_SALES" and fis_year == current_fiscal_year:
                         continue
 
-                    # If Zone_Name is present, filter by Zone_Name, otherwise ignore zone filtering
-                    if "Zone_Name" in df_pl.columns:
-                        # Group by Zone_Name as well
+                    # If zone_name is present, filter by zone_name, otherwise ignore zone filtering
+                    if "zone_name" in df_pl.columns:
+                        # Group by zone_name as well
                         zone_data = df_pl.filter(
-                            (pl.col("CoName") == company) & 
+                            (pl.col("coname") == company) & 
                             (pl.col("fiscal_year") == fis_year)
-                        ).groupby(["Zone_Name", "CoName", "fiscal_year"]).agg(
+                        ).groupby(["zone_name", "coname", "fiscal_year"]).agg(
                             pl.col(selected_key).sum().alias(selected_key)
                         )
                         for row in zone_data.iter_rows():
@@ -222,7 +224,7 @@ async def calculate_market_share(df, segregate=False):
                                 if psu_share.get(fis_year, 1) != 0 else 0
                             )
 
-                            company_type = df_pl.filter(pl.col("CoName") == company).select("Company_Name").to_numpy()[0][0]
+                            company_type = df_pl.filter(pl.col("coname") == company).select("company_name").to_numpy()[0][0]
 
                             # If segregate mode is off, combine all values in one dictionary
                             if not segregate:
@@ -230,7 +232,7 @@ async def calculate_market_share(df, segregate=False):
                                     "COMNAME": company,
                                     "COMTYPE": company_type,
                                     "FIN_YEAR": fis_year,
-                                    "Zone_Name": zone_name,
+                                    "zone_name": zone_name,
                                     "Zone_Value": zone_value,  # Add the Zone Value
                                     "CompanySize": company_sales,
                                     **{selected_key: company_sales},
@@ -245,7 +247,7 @@ async def calculate_market_share(df, segregate=False):
                                     "COMNAME": company,
                                     "FIN_YEAR": fis_year,
                                     "MODEL": "CompanySize",
-                                    "Zone_Name": zone_name,
+                                    "zone_name": zone_name,
                                     "Zone_Value": zone_value,  # Add the Zone Value
                                     "Value": company_sales
                                 })
@@ -253,7 +255,7 @@ async def calculate_market_share(df, segregate=False):
                                     "COMNAME": company,
                                     "FIN_YEAR": fis_year,
                                     "MODEL": "MarketSharePer",
-                                    "Zone_Name": zone_name,
+                                    "zone_name": zone_name,
                                     "Zone_Value": zone_value,  # Add the Zone Value
                                     "Value": market_share
                                 })
@@ -261,15 +263,15 @@ async def calculate_market_share(df, segregate=False):
                                     "COMNAME": company,
                                     "FIN_YEAR": fis_year,
                                     "MODEL": "PSUSharePer",
-                                    "Zone_Name": zone_name,
+                                    "zone_name": zone_name,
                                     "Zone_Value": zone_value,  # Add the Zone Value
                                     "Value": psu_share_per
                                 })
 
                     else:
-                        # No zone filtering if Zone_Name is not present
+                        # No zone filtering if zone_name is not present
                         company_data = df_pl.filter(
-                            (pl.col("CoName") == company) & 
+                            (pl.col("coname") == company) & 
                             (pl.col("fiscal_year") == fis_year)
                         ).select([pl.col(selected_key).sum().alias(selected_key)])
 
@@ -284,7 +286,7 @@ async def calculate_market_share(df, segregate=False):
                             if psu_share.get(fis_year, 1) != 0 else 0
                         )
 
-                        company_type = df_pl.filter(pl.col("CoName") == company).select("Company_Name").to_numpy()[0][0]
+                        company_type = df_pl.filter(pl.col("coname") == company).select("company_name").to_numpy()[0][0]
 
                         # If segregate mode is off, combine all values in one dictionary
                         if not segregate:
@@ -442,10 +444,10 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
 def get_group_by_filter_key(cross_filters):
     try:
         print("cross_filters --> ", cross_filters)
-        # group_by_filter = ['"month_name"', '"Company_Name"']  # Default grouping keys
+        # group_by_filter = ['"month_name"', '"company_name"']  # Default grouping keys
 
-        #group_by_filter = ['"CoName"', '"Zone_Name"', '"Company_Name"', '"fiscal_year"']  # Default grouping keys        
-        group_by_filter = ['"CoName"', '"Company_Name"', '"fiscal_year"']
+        #group_by_filter = ['"coname"', '"zone_name"', '"company_name"', '"fiscal_year"']  # Default grouping keys        
+        group_by_filter = ['"coname"', '"company_name"', '"fiscal_year"']
         if cross_filters:
             print(" if cross_filters --> ", cross_filters)
             lubes_index = 0
@@ -515,23 +517,33 @@ async def industry_performance(filters, cross_filters, drill_state):
         actual_data = []
         hist_data = []
         #target_data = []
-        actual_d = """ ROUND(SUM("industry_performance"."NETWEIGHT_TMT")::numeric,0) AS "IND_ACTUAL_TMT_SALES" """
-        history_d = """ ROUND(SUM("industry_performance"."NETWEIGHT_TMT")::numeric,0) AS "IND_HISTORY_TMT_SALES" """
+        actual_d = """ ROUND(SUM("industry_performance"."netweight_tmt")::numeric,0) AS "IND_ACTUAL_TMT_SALES" """
+        history_d = """ ROUND(SUM("industry_performance"."netweight_tmt")::numeric,0) AS "IND_HISTORY_TMT_SALES" """
         filters_req = [condition['key'].strip('"') for condition in filters if condition['key'].strip('"') in ["A", "H", "T"]]
         if len(filters_req) == 0:
             filters.append({"key": '"A"', "cond": "equals", "value": "true"})
         # Generating filters
         where_conditions = []
+        where_conditions_history = []
         for condition in filters:
             if condition['key'].strip('"') == "A":
-                actual = f"""ROUND(SUM("{DBNames['ind_act']}"."NETWEIGHT_TMT")::numeric,0) AS "IND_ACTUAL_TMT_SALES" """
+                actual = f"""ROUND(SUM("{DBNames['ind_act']}"."netweight_tmt")::numeric,0) AS "IND_ACTUAL_TMT_SALES" """
             elif condition['key'].strip('"') == "H":
-                history = f"""ROUND(SUM("{DBNames['ind_h']}"."NETWEIGHT_TMT")::numeric,0) AS "IND_ACTUAL_HISTORY_TMT_SALES" """
+                history = f"""ROUND(SUM("{DBNames['ind_h']}"."netweight_tmt")::numeric,0) AS "IND_ACTUAL_HISTORY_TMT_SALES" """
             #elif condition['key'].strip('"') == "T":
             #    target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES" """
-            elif condition['key'].strip('"') == "MajorPSU":
-                if MajorPSU:  # Ensure the list is not empty
-                    where_conditions.append(f'"CoName" IN ({", ".join(map(lambda x: f"\'{x}\'", MajorPSU))})') # this condition is added to filter on only reuired major psu
+            # elif condition['key'].strip('"') == "MajorPSU":
+            #     if MajorPSU:  # Ensure the list is not empty
+            #         where_conditions.append(f'"coname" IN ({", ".join(map(lambda x: f"\'{x}\'", MajorPSU))})') # this condition is added to filter on only reuired major psu
+            #         where_conditions_history.append(f'"coname" IN ({", ".join(map(lambda x: f"\'{x}\'", MajorPSU))})') # this condition is added to filter on only reuired major psu
+            # elif condition['key'].strip('"') == "PSU":
+            #     if PSU:  # Ensure the list is not empty
+            #         where_conditions.append(f'"coname" IN ({", ".join(map(lambda x: f"\'{x}\'", PSU))})') # this condition is added to filter on only reuired major psu
+            #         where_conditions_history.append(f'"coname" IN ({", ".join(map(lambda x: f"\'{x}\'", PSU))})') # this condition is added to filter on only reuired major psu
+            # elif condition['key'].strip('"') == "PVT":
+            #     if PSU:  # Ensure the list is not empty
+            #         where_conditions.append(f'"coname" IN ({", ".join(map(lambda x: f"\'{x}\'", PVT))})') # this condition is added to filter on only reuired major psu
+            #         where_conditions_history.append(f'"coname" IN ({", ".join(map(lambda x: f"\'{x}\'", PVT))})') # this condition is added to filter on only reuired major psu
             elif condition['key'].strip('"') == "YTD":
                 # Calculating start and end dates for YTD for both actual and history
                 end_date_ = fiscal_year.FiscalDate.today()
@@ -587,7 +599,6 @@ async def industry_performance(filters, cross_filters, drill_state):
         for rec in cross_filters:
             rec['key'] = rec['key'].strip('"')
 
-        where_conditions_history = []
         clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
         if clause:
             where_conditions_history = [clause]
