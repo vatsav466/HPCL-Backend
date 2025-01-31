@@ -1052,7 +1052,7 @@ class GlobalAnalytics:
             for rec in filters:
                 rec.value = rec.value.split(",")
                 #if rec.key == '"month_name"':  # Only handle the month_name case separately
-                    # Check if any value in rec.value is in month_mapping
+                # Check if any value in rec.value is in month_mapping
                 #    rec.value = [month_mapping.get(val.strip(), val.strip()) for val in rec.value]
 
                 # Skip keys that should not be added to the WHERE clause
@@ -4031,3 +4031,77 @@ class GlobalAnalytics:
 
         # Final response
         return {"status": True, "message": "success", "data": combined_df.to_dict(orient="records")}
+
+    @staticmethod
+    async def sales_drop_down(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _query = ''' select * from alerts '''
+        resp = await function(query=_query)
+        df = pl.from_pandas(pd.DataFrame(resp))
+        _filters = []
+        if filters:
+            for filter in filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _filters:
+            filter_expr = pl.lit(True)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    key = key.replace('"', '')
+                    filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
+            df = df.filter(filter_expr)
+        df = df.filter(pl.col("zone").fill_null("") != "")
+        df = df.filter(pl.col("region").fill_null("") != "")
+        df = df.filter(pl.col("sales_area").fill_null("")!="")
+
+        data = {"zone": df['zone'].unique().to_list(),
+                "region": df['region'].unique().to_list(), "sales_area": df['sales_area'].unique().to_list()}
+        return data
+
+    @staticmethod
+    async def present_previous_month_sales(filters, cross_filters, drill_state, limit, time_grain):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        if time_grain == 'Monthly':
+            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_month_sales')
+        elif time_grain == 'Weekly':
+            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_week_sales')
+        else:
+            present_month_sales = lpg_plant_queries.lpg_plant_query.get('present_previous_day_sales')
+
+        if cross_filters:
+            cross_filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                        for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in cross_filters:
+                rec.value = rec.value.split(",")
+                if len(rec.value) == 1:
+                    condition = f"a.{rec.key} = '{rec.value[0]}'"
+                else:
+                    condition = f"a.{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            present_month_sales_query = present_month_sales.split("'Completed')")
+            if conditions:
+                present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(conditions) + present_month_sales_query[1]
+            if limit:
+                present_month_sales += f' LIMIT {limit}'
+            print(present_month_sales)
+            pres_mon_sales_resp = await function(query=present_month_sales)
+            if not pres_mon_sales_resp:
+                return {"status": True, "message": "No data", "data": []}
+            return {"status": True, "message": "success", "data": pres_mon_sales_resp}
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                              for rec in
+                              await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            pres_mon_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales, access_filters, drill_state)
+
+            if limit:
+                pres_mon_sales += f' LIMIT {limit}'
+            print(pres_mon_sales)
+            pres_mon_sales_resp = await function(query=pres_mon_sales)
+            if not pres_mon_sales_resp:
+                return {"status": True, "message": "No data", "data": []}
+            return {"status": True, "message": "success", "data": pres_mon_sales_resp}
