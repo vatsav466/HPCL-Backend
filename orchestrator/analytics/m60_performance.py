@@ -359,7 +359,7 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         resp = await function(schema_name = 'public',table_name="MOM_DAY_LEVEL_DATA",column_name=Charts_Get_Distinct_ValuesParams.column,where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
         print(resp)
         sorted_level = resp['data']
-
+        '''
         if "month_name" in cross_filters[0]['key']:
             sorted_level['month_name'] = cross_filters[0]['value']
         #sorted_level.pop('month_name',None)
@@ -367,6 +367,11 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         if sorted_cross_filters[-1]['key'] not in sorted_level:
             sorted_level[sorted_cross_filters[-1]['key']] = []
         sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
+        '''
+        for each_filter in sorted_cross_filters:
+            if each_filter['key'] in sorted_level:
+                sorted_level[each_filter['key']] = each_filter['value']
+            
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
     else:
