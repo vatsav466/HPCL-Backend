@@ -374,7 +374,7 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         '''
         for each_filter in sorted_cross_filters:
             if each_filter['key'] in sorted_level:
-                if len(sorted_level[each_filter['key']]) == each_filter['value']
+                if len(sorted_level[each_filter['key']]) == each_filter['value']:
                     sorted_level[each_filter['key']].append(each_filter['value'])
                 else:
                     sorted_level[each_filter['key']] = [each_filter['value']]
