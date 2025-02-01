@@ -1,11 +1,12 @@
+import os
+import psycopg2
+import traceback
+import subprocess
 import pandas as pd
 import polars as pl
 import numpy as np
-import psycopg2
-import subprocess
 from sqlalchemy import create_engine
 from datetime import datetime, timedelta
-import os
 
 
 class LPG_CONSOLIDATED():
@@ -1108,6 +1109,7 @@ def generate_summary():
                 current_date += timedelta(days=1)
     except Exception as e:
         print("-- Exception While Running Lpg Operations Data Sync --")
+        print("traceback :", traceback.format_exc())
         query = f""" TRUNCATE lpg_operations_data; """
         cursor.execute(query)
         conn.commit()
@@ -1122,3 +1124,6 @@ def generate_summary():
     print("*"*50)
     print("*"*10, " Completed ", "*"*10)
     print("*"*50)
+
+if __name__=="__main__":
+    generate_summary()
