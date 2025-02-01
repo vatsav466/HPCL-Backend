@@ -1735,15 +1735,15 @@ class Indentdryout_Get_Dryout_ReportParams(pydantic.BaseModel):
     dry_out_in_days: typing.List[str]
 
 
-class LpgOperationsSchema(UrdhvaPostgresBase):
-    __tablename__ = 'lpg_operations'
+class LpgOperationsSummarySchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_operations_summary'
     
     is_additional_carousel: Mapped[float] = mapped_column("is_additional_carousel", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
     short_name: Mapped[str] = mapped_column("short_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     carousel: Mapped[float] = mapped_column("carousel", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    filling_heads: Mapped[float] = mapped_column("filling_heads", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    filling_heads: Mapped[str] = mapped_column("filling_heads", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     carousel_count: Mapped[float] = mapped_column("carousel_count", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
     bottling_14_2kg: Mapped[float] = mapped_column("bottling_14_2kg", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
     bottling_19kg: Mapped[float] = mapped_column("bottling_19kg", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -1761,17 +1761,21 @@ class LpgOperationsSchema(UrdhvaPostgresBase):
     rejection_ort_percent: Mapped[float] = mapped_column("rejection_ort_percent", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
     rejection_cs_percent: Mapped[float] = mapped_column("rejection_cs_percent", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
     process_date: Mapped[datetime.datetime] = mapped_column("process_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    site_region: Mapped[str] = mapped_column("site_region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    site_area: Mapped[str] = mapped_column("site_area", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
 
-class LpgOperationsCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'lpg_operations'
+class LpgOperationsSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_operations_summary'
     
     is_additional_carousel: float
     short_name: str
     name: str
     zone: str
     carousel: float
-    filling_heads: float
+    filling_heads: str
     carousel_count: float
     bottling_14_2kg: float
     bottling_19kg: float
@@ -1789,23 +1793,27 @@ class LpgOperationsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     rejection_ort_percent: float
     rejection_cs_percent: float
     process_date: datetime.datetime
+    bu: str
+    sap_id: str
+    site_region: str
+    site_area: str
 
     class Config:
         collection_name = 'data_flow'
-        schema_class = LpgOperationsSchema
+        schema_class = LpgOperationsSummarySchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone']
 
 
-class LpgOperations(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'lpg_operations'
+class LpgOperationsSummary(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_operations_summary'
     
     is_additional_carousel: typing.Optional[float] | None = None
     short_name: typing.Optional[str] | None = None
     name: typing.Optional[str] | None = None
     zone: typing.Optional[str] | None = None
     carousel: typing.Optional[float] | None = None
-    filling_heads: typing.Optional[float] | None = None
+    filling_heads: typing.Optional[str] | None = None
     carousel_count: typing.Optional[float] | None = None
     bottling_14_2kg: typing.Optional[float] | None = None
     bottling_19kg: typing.Optional[float] | None = None
@@ -1823,21 +1831,25 @@ class LpgOperations(urdhva_base.postgresmodel.PostgresModel):
     rejection_ort_percent: typing.Optional[float] | None = None
     rejection_cs_percent: typing.Optional[float] | None = None
     process_date: typing.Optional[datetime.datetime] | None = None
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    site_region: typing.Optional[str] | None = None
+    site_area: typing.Optional[str] | None = None
 
     class Config:
         collection_name = 'data_flow'
-        schema_class = LpgOperationsSchema
+        schema_class = LpgOperationsSummarySchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone']
 
 
-class LpgOperationsGetResp(pydantic.BaseModel):
-    data: typing.List[LpgOperations]
+class LpgOperationsSummaryGetResp(pydantic.BaseModel):
+    data: typing.List[LpgOperationsSummary]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 
 
-class Lpgoperations_Get_Productions_RateParams(pydantic.BaseModel):
+class Lpgoperationssummary_Get_Productions_RateParams(pydantic.BaseModel):
     dimension: str
     daywise: bool
     days: int
@@ -1845,12 +1857,216 @@ class Lpgoperations_Get_Productions_RateParams(pydantic.BaseModel):
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
 
 
-class Lpgoperations_Get_Productivity_RateParams(pydantic.BaseModel):
+class Lpgoperationssummary_Get_Productivity_RateParams(pydantic.BaseModel):
     dimension: str
     daywise: bool
     days: int
     top: typing.Optional[int] = pydantic.Field(0, **{})
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
+
+
+class LpgCsRejectionsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_cs_rejections'
+    
+    process_date: Mapped[datetime.datetime] = mapped_column("process_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    system_id: Mapped[float] = mapped_column("system_id", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cyl_type: Mapped[str] = mapped_column("cyl_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    total: Mapped[float] = mapped_column("total", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cylfilled: Mapped[float] = mapped_column("cylfilled", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    totalsortout: Mapped[float] = mapped_column("totalsortout", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    commerrorsortout: Mapped[float] = mapped_column("commerrorsortout", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sortoutpercentage: Mapped[float] = mapped_column("sortoutpercentage", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    plant: Mapped[str] = mapped_column("plant", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    execution__date: Mapped[datetime.datetime] = mapped_column("execution__date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    max_date: Mapped[datetime.datetime] = mapped_column("max_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgCsRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_cs_rejections'
+    
+    process_date: datetime.datetime
+    system_id: float
+    cyl_type: str
+    total: float
+    cylfilled: float
+    totalsortout: float
+    commerrorsortout: float
+    sortoutpercentage: float
+    plant: str
+    zone: str
+    execution__date: datetime.datetime
+    max_date: datetime.datetime
+    sap_id: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgCsRejectionsSchema
+        upsert_keys = []
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+
+
+class LpgCsRejections(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_cs_rejections'
+    
+    process_date: typing.Optional[datetime.datetime] | None = None
+    system_id: typing.Optional[float] | None = None
+    cyl_type: typing.Optional[str] | None = None
+    total: typing.Optional[float] | None = None
+    cylfilled: typing.Optional[float] | None = None
+    totalsortout: typing.Optional[float] | None = None
+    commerrorsortout: typing.Optional[float] | None = None
+    sortoutpercentage: typing.Optional[float] | None = None
+    plant: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    execution__date: typing.Optional[datetime.datetime] | None = None
+    max_date: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgCsRejectionsSchema
+        upsert_keys = []
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+
+
+class LpgCsRejectionsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgCsRejections]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class LpgGdRejectionsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_gd_rejections'
+    
+    process_date: Mapped[datetime.datetime] = mapped_column("process_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    system_id: Mapped[float] = mapped_column("system_id", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cyl_type: Mapped[str] = mapped_column("cyl_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    total: Mapped[float] = mapped_column("total", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sortout: Mapped[float] = mapped_column("sortout", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sortoutpercentage: Mapped[float] = mapped_column("sortoutpercentage", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    plant: Mapped[str] = mapped_column("plant", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    execution__date: Mapped[datetime.datetime] = mapped_column("execution__date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    max_date: Mapped[datetime.datetime] = mapped_column("max_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgGdRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_gd_rejections'
+    
+    process_date: datetime.datetime
+    system_id: float
+    cyl_type: str
+    total: float
+    sortout: float
+    sortoutpercentage: float
+    plant: str
+    zone: str
+    execution__date: datetime.datetime
+    max_date: datetime.datetime
+    sap_id: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgGdRejectionsSchema
+        upsert_keys = []
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+
+
+class LpgGdRejections(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_gd_rejections'
+    
+    process_date: typing.Optional[datetime.datetime] | None = None
+    system_id: typing.Optional[float] | None = None
+    cyl_type: typing.Optional[str] | None = None
+    total: typing.Optional[float] | None = None
+    sortout: typing.Optional[float] | None = None
+    sortoutpercentage: typing.Optional[float] | None = None
+    plant: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    execution__date: typing.Optional[datetime.datetime] | None = None
+    max_date: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgGdRejectionsSchema
+        upsert_keys = []
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+
+
+class LpgGdRejectionsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgGdRejections]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class LpgPtRejectionsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'lpg_pt_rejections'
+    
+    process_date: Mapped[datetime.datetime] = mapped_column("process_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    system_id: Mapped[float] = mapped_column("system_id", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    cyl_type: Mapped[str] = mapped_column("cyl_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    total: Mapped[float] = mapped_column("total", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sortout: Mapped[float] = mapped_column("sortout", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sortoutpercentage: Mapped[float] = mapped_column("sortoutpercentage", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    plant: Mapped[str] = mapped_column("plant", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    execution__date: Mapped[datetime.datetime] = mapped_column("execution__date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    max_date: Mapped[datetime.datetime] = mapped_column("max_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class LpgPtRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'lpg_pt_rejections'
+    
+    process_date: datetime.datetime
+    system_id: float
+    cyl_type: str
+    total: float
+    sortout: float
+    sortoutpercentage: float
+    plant: str
+    zone: str
+    execution__date: datetime.datetime
+    max_date: datetime.datetime
+    sap_id: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgPtRejectionsSchema
+        upsert_keys = []
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+
+
+class LpgPtRejections(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'lpg_pt_rejections'
+    
+    process_date: typing.Optional[datetime.datetime] | None = None
+    system_id: typing.Optional[float] | None = None
+    cyl_type: typing.Optional[str] | None = None
+    total: typing.Optional[float] | None = None
+    sortout: typing.Optional[float] | None = None
+    sortoutpercentage: typing.Optional[float] | None = None
+    plant: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    execution__date: typing.Optional[datetime.datetime] | None = None
+    max_date: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = LpgPtRejectionsSchema
+        upsert_keys = []
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+
+
+class LpgPtRejectionsGetResp(pydantic.BaseModel):
+    data: typing.List[LpgPtRejections]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
 
 
 class LpgRejectionsSchema(UrdhvaPostgresBase):

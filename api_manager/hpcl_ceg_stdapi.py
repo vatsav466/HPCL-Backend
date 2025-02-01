@@ -252,29 +252,104 @@ async def delete(id: str):
     return await IndentDryOut.delete(id)
 
 
-@router.post('/lpgoperations', response_model=LpgOperations, tags=['LpgOperations'])
-async def create(inputObj: LpgOperationsCreate):
+@router.post('/lpgoperationssummary', response_model=LpgOperationsSummary, tags=['LpgOperationsSummary'])
+async def create(inputObj: LpgOperationsSummaryCreate):
     return await inputObj.create()
 
 
-@router.put('/lpgoperations', response_model=LpgOperations, tags=['LpgOperations'])
-async def update(inputObj: LpgOperations):
+@router.put('/lpgoperationssummary', response_model=LpgOperationsSummary, tags=['LpgOperationsSummary'])
+async def update(inputObj: LpgOperationsSummary):
     return await inputObj.modify()
 
 
-@router.get('/lpgoperations/{id}', response_model=LpgOperations, tags=['LpgOperations'])
+@router.get('/lpgoperationssummary/{id}', response_model=LpgOperationsSummary, tags=['LpgOperationsSummary'])
 async def get(id: str):
-    return await LpgOperations.get(id, skip_secrets=True)
+    return await LpgOperationsSummary.get(id, skip_secrets=True)
 
 
-@router.get('/lpgoperations', response_model=LpgOperationsGetResp, tags=['LpgOperations'])
+@router.get('/lpgoperationssummary', response_model=LpgOperationsSummaryGetResp, tags=['LpgOperationsSummary'])
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
-    return await LpgOperations.get_all(params, skip_secrets=True)
+    return await LpgOperationsSummary.get_all(params, skip_secrets=True)
 
 
-@router.delete('/lpgoperations/{id}', tags=['LpgOperations'])
+@router.delete('/lpgoperationssummary/{id}', tags=['LpgOperationsSummary'])
 async def delete(id: str):
-    return await LpgOperations.delete(id)
+    return await LpgOperationsSummary.delete(id)
+
+
+@router.post('/lpgcsrejections', response_model=LpgCsRejections, tags=['LpgCsRejections'])
+async def create(inputObj: LpgCsRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgcsrejections', response_model=LpgCsRejections, tags=['LpgCsRejections'])
+async def update(inputObj: LpgCsRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpgcsrejections/{id}', response_model=LpgCsRejections, tags=['LpgCsRejections'])
+async def get(id: str):
+    return await LpgCsRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpgcsrejections', response_model=LpgCsRejectionsGetResp, tags=['LpgCsRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgCsRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgcsrejections/{id}', tags=['LpgCsRejections'])
+async def delete(id: str):
+    return await LpgCsRejections.delete(id)
+
+
+@router.post('/lpggdrejections', response_model=LpgGdRejections, tags=['LpgGdRejections'])
+async def create(inputObj: LpgGdRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpggdrejections', response_model=LpgGdRejections, tags=['LpgGdRejections'])
+async def update(inputObj: LpgGdRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpggdrejections/{id}', response_model=LpgGdRejections, tags=['LpgGdRejections'])
+async def get(id: str):
+    return await LpgGdRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpggdrejections', response_model=LpgGdRejectionsGetResp, tags=['LpgGdRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgGdRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpggdrejections/{id}', tags=['LpgGdRejections'])
+async def delete(id: str):
+    return await LpgGdRejections.delete(id)
+
+
+@router.post('/lpgptrejections', response_model=LpgPtRejections, tags=['LpgPtRejections'])
+async def create(inputObj: LpgPtRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgptrejections', response_model=LpgPtRejections, tags=['LpgPtRejections'])
+async def update(inputObj: LpgPtRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpgptrejections/{id}', response_model=LpgPtRejections, tags=['LpgPtRejections'])
+async def get(id: str):
+    return await LpgPtRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpgptrejections', response_model=LpgPtRejectionsGetResp, tags=['LpgPtRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgPtRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgptrejections/{id}', tags=['LpgPtRejections'])
+async def delete(id: str):
+    return await LpgPtRejections.delete(id)
 
 
 @router.post('/lpgrejections', response_model=LpgRejections, tags=['LpgRejections'])
