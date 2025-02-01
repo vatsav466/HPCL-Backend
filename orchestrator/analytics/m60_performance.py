@@ -342,28 +342,30 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         if each_filter['key'] not in fil_list:
             fil_list[each_filter['key']] = each_filter['value']
     '''
-    
-    filter_order = [key.strip('"') for key in Base_Filters]
-    #filter_order = Base_Filters
-    sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
-    req_key = sorted_cross_filters[-1]['key']
-    req_key = f'"{req_key}"'
-    previous_keys = Base_Filters[:Base_Filters.index(req_key)]
-    previous_keys = [item.strip('"') for item in previous_keys]
-    Charts_Get_Distinct_ValuesParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Get_Distinct_ValuesParams.action = 'get_distinct_values'
-    Charts_Get_Distinct_ValuesParams.column = previous_keys
-    sorted_cross_filters[-1]['cond'] = '='
-    Charts_Get_Distinct_ValuesParams.where_cond = [sorted_cross_filters[-1]]
-    function = await charts_connection_vault_routing(Charts_Get_Distinct_ValuesParams)
-    resp = await function(schema_name = 'public',table_name="MOM_DAY_LEVEL_DATA",column_name=Charts_Get_Distinct_ValuesParams.column,where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
-    print(resp)
-    sorted_level = resp['data']
+    if len(cross_filters)>1:
+        filter_order = [key.strip('"') for key in Base_Filters]
+        #filter_order = Base_Filters
+        sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
+        req_key = sorted_cross_filters[-1]['key']
+        req_key = f'"{req_key}"'
+        previous_keys = Base_Filters[:Base_Filters.index(req_key)]
+        previous_keys = [item.strip('"') for item in previous_keys]
+        Charts_Get_Distinct_ValuesParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Get_Distinct_ValuesParams.action = 'get_distinct_values'
+        Charts_Get_Distinct_ValuesParams.column = previous_keys
+        sorted_cross_filters[-1]['cond'] = '='
+        Charts_Get_Distinct_ValuesParams.where_cond = [sorted_cross_filters[-1]]
+        function = await charts_connection_vault_routing(Charts_Get_Distinct_ValuesParams)
+        resp = await function(schema_name = 'public',table_name="MOM_DAY_LEVEL_DATA",column_name=Charts_Get_Distinct_ValuesParams.column,where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
+        print(resp)
+        sorted_level = resp['data']
 
-    sorted_level.pop('month_name',None)
-    if sorted_cross_filters[-1]['key'] not in sorted_level:
-        sorted_level[sorted_cross_filters[-1]['key']] = []
-    sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
-    final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-    return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
-
+        sorted_level.pop('month_name',None)
+        if sorted_cross_filters[-1]['key'] not in sorted_level:
+            sorted_level[sorted_cross_filters[-1]['key']] = []
+        sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
+        final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+        return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
+    else:
+        final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+        return {"status": True, "message": "Success", "data": {'data':final_resp,'level':{}}}
