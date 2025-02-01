@@ -894,13 +894,13 @@ Model IndentDryOut {
      }
 }
 
-Model LpgOperations {
+Model LpgOperationsSummary {
     is_additional_carousel float
     short_name str
     name str
     zone str
     carousel float
-    filling_heads float
+    filling_heads str
     carousel_count float
     bottling_14_2kg float
     bottling_19kg float
@@ -918,6 +918,10 @@ Model LpgOperations {
     rejection_ort_percent float
     rejection_cs_percent float
     process_date datetime
+    bu str
+    sap_id str
+    SiteRegion str
+    SiteArea str
 
     Action=> get_productions_rate {        
         dimension str
@@ -933,9 +937,64 @@ Model LpgOperations {
         top optional int
         bottom optional int
     }
-    
     Config=> {
         access_key_mapping='sap_id:sap_id,short_name:plant,zone:zone'
+    }
+}
+
+Model LpgCsRejections {
+    process_date datetime
+    system_id float
+    cyl_type str
+    total float
+    cylfilled float
+    totalsortout float
+    commerrorsortout float
+    sortoutpercentage float
+    plant str
+    zone str
+    Execution_Date datetime
+    max_date datetime
+    sap_id str
+
+    Config=> {
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
+    }
+}
+
+Model LpgGdRejections {
+    process_date datetime
+    system_id float
+    cyl_type str
+    total float
+    sortout float
+    sortoutpercentage float
+    plant str
+    zone str
+    Execution_Date datetime
+    max_date datetime
+    sap_id str
+
+    Config=> {
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
+    }
+}
+
+Model LpgPtRejections {
+    process_date datetime
+    system_id float
+    cyl_type str
+    total float
+    sortout float
+    sortoutpercentage float
+    plant str
+    zone str
+    Execution_Date datetime
+    max_date datetime
+    sap_id str
+
+    Config=> {
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
     }
 }
 

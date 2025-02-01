@@ -1462,13 +1462,13 @@
             ]
         },
         {
-            "name": "lpgoperations",
+            "name": "lpgoperationssummary",
             "type": "all",
             "ownerManagedAccess": false,
-            "displayName": "LpgOperations",
+            "displayName": "LpgOperationsSummary",
             "attributes": {},
             "uris": [
-                "/api/lpgoperations/*"
+                "/api/lpgoperationssummary/*"
             ],
             "scopes": [
                 {
@@ -1492,13 +1492,13 @@
             ]
         },
         {
-            "name": "lpgoperations_readOnly",
+            "name": "lpgoperationssummary_readOnly",
             "type": "readOnly",
             "ownerManagedAccess": false,
-            "displayName": "LpgOperations_readOnly",
+            "displayName": "LpgOperationsSummary_readOnly",
             "attributes": {},
             "uris": [
-                "/api/lpgoperations/*"
+                "/api/lpgoperationssummary/*"
             ],
             "scopes": [
                 {
@@ -1513,13 +1513,13 @@
             ]
         },
         {
-            "name": "lpgoperations_admin",
+            "name": "lpgoperationssummary_admin",
             "type": "admin",
             "ownerManagedAccess": false,
-            "displayName": "LpgOperations_admin",
+            "displayName": "LpgOperationsSummary_admin",
             "attributes": {},
             "uris": [
-                "/api/lpgoperations/*"
+                "/api/lpgoperationssummary/*"
             ],
             "scopes": [
                 {
@@ -1539,6 +1539,195 @@
                 },
                 {
                     "name": "get_productivity_rate"
+                }
+            ]
+        },
+        {
+            "name": "lpgcsrejections",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgCsRejections",
+            "attributes": {},
+            "uris": [
+                "/api/lpgcsrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgcsrejections_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgCsRejections_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgcsrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgcsrejections_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgCsRejections_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgcsrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpggdrejections",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgGdRejections",
+            "attributes": {},
+            "uris": [
+                "/api/lpggdrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpggdrejections_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgGdRejections_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpggdrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpggdrejections_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgGdRejections_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpggdrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgptrejections",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPtRejections",
+            "attributes": {},
+            "uris": [
+                "/api/lpgptrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "lpgptrejections_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPtRejections_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/lpgptrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "lpgptrejections_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "LpgPtRejections_admin",
+            "attributes": {},
+            "uris": [
+                "/api/lpgptrejections/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
                 }
             ]
         },
