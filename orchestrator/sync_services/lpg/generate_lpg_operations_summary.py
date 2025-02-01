@@ -1098,7 +1098,6 @@ def generate_summary():
                     
                     for col in data.columns:
                         data.rename(columns={col: col.replace(".","_")}, inplace=True)
-                    data.rename(columns={"short_name": "location"}, inplace=True)
                     data["sap_id"] = plant["erp_id"]
                     data["SiteRegion"] = plant["SiteRegion"]
                     data['SiteArea'] = plant["SiteArea"]
