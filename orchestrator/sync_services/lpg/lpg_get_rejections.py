@@ -248,6 +248,7 @@ def get_cs_rejections(params):
         return
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
+    data = data.with_columns(pl.lit(params["sap_id"]).alias("sap_id"))
     
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
@@ -320,6 +321,7 @@ def get_gd_rejections(params):
         return
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
+    data = data.with_columns(pl.lit(params["sap_id"]).alias("sap_id"))
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
@@ -390,6 +392,7 @@ def get_pt_rejections(params):
         return
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
+    data = data.with_columns(pl.lit(params["sap_id"]).alias("sap_id"))
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
@@ -414,6 +417,7 @@ if __name__=="__main__":
         print(f"Fetching for {plant['PlantName']}")
         params={
         "PlantName": plant["PlantName"],
+        "sap_id": plant["erp_id"],
         "zone": plant["zone"],
         "host": plant["host_ip"],
         "database": plant["db_database"],
