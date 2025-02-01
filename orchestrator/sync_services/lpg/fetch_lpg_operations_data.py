@@ -133,7 +133,7 @@ def get_data(params):
     insertToDB(data, table_name)
     
 if __name__=="__main__":
-    plants = pl.read_csv("/opt/ceg/algo/LPG_PLANTS_CREDENTIALS.csv")    
+    plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")    
     for plant in plants.iter_rows(named=True):
         print("plant :", plant["PlantName"])
         print("-"*50)

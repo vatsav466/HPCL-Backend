@@ -1045,7 +1045,7 @@ def generate_summary():
         port=port
     )
     cursor = conn.cursor()
-    df = pl.read_csv("/opt/ceg/algo/LPG/LPG_PLANTS_CREDENTIALS.csv")
+    df = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
     try:
         for plant in df.iter_rows(named=True):
             location = plant["short_name"]
