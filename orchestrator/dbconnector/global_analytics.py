@@ -3664,7 +3664,7 @@ class GlobalAnalytics:
             handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
             handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
             if not "where" in handled_cylinder_query_.lower():
                 handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
