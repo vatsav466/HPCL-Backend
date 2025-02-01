@@ -175,7 +175,8 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         elif condition['key'].strip('"') == "YTD":
             # Calculating start and end dates for YTD for both actual and history
             end_date_ = fiscal_year.FiscalDate.today()
-            end_date = end_date_.replace(day=end_date_.day-1).strftime("%Y-%m-%d")
+            end_date = helpers.get_time_stamp_by_delta(end_date_, days=1, with_month_start_day=False,
+                                                       date_time_format="%Y-%m-%d")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
             # For History
             start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
