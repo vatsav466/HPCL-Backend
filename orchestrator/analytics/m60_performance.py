@@ -367,11 +367,18 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         if sorted_cross_filters[-1]['key'] not in sorted_level:
             sorted_level[sorted_cross_filters[-1]['key']] = []
         sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
+        for each_filter in sorted_cross_filters:
+            if each_filter['key'] in sorted_level:
+                
+                sorted_level[each_filter['key']] = each_filter['value']
         '''
         for each_filter in sorted_cross_filters:
             if each_filter['key'] in sorted_level:
-                sorted_level[each_filter['key']] = each_filter['value']
-            
+                if len(sorted_level[each_filter['key']]) == each_filter['value']
+                    sorted_level[each_filter['key']].append(each_filter['value'])
+                else:
+                    sorted_level[each_filter['key']] = [each_filter['value']]
+
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
     else:
