@@ -360,7 +360,10 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         print(resp)
         sorted_level = resp['data']
 
-        sorted_level.pop('month_name',None)
+        if "month_name" in cross_filters[0]['key']:
+            sorted_level['month_name'] = cross_filters[0]['value']
+        #sorted_level.pop('month_name',None)
+        
         if sorted_cross_filters[-1]['key'] not in sorted_level:
             sorted_level[sorted_cross_filters[-1]['key']] = []
         sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
