@@ -629,7 +629,7 @@ class LPGCDCMSActions:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
         # Execute the query
         resp = await function(query=lpg_pending_query_ )
@@ -676,7 +676,7 @@ class LPGCDCMSActions:
                         "Total_pending": "sum",
                     })
                 if grouped_resp is not None:
-                    grouped_resp["Total_pending"] = grouped_resp["Total_pending"]/1000
+                    grouped_resp["Total_pending"] = grouped_resp["Total_pending"]/100000
                     grouped_resp["Total_pending"] = grouped_resp["Total_pending"].round(2)
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         else:
@@ -2034,33 +2034,33 @@ class LPGCDCMSActions:
             return {"status": True, "message": "success", "data": []}
     
     
-    # @staticmethod
-    # async def lpg_cdcms_pcc(filters, cross_filters, drill_state):
-    #     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    #     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    #     lpg_cdcms_backlogs_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_pcc")        
-    #     _filters = []
-    #     if cross_filters:
-    #         for filter in cross_filters:
-    #             _filters.append({f"{filter.key}": f"{filter.value}"})
-    #     if filters:
-    #         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
-    #                                   for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
-    #         conditions = []
-    #         for rec in filters:
-    #             rec.value = rec.value.split(",")
-    #             if isinstance(rec.value, str):
-    #                 condition = f"{rec.key} = '{rec.value}'"
-    #             else:
-    #                 if len(rec.value) == 1:
-    #                     condition = f"{rec.key} = '{rec.value[0]}'"
-    #                 else:
-    #                     condition = f"{rec.key} in {tuple(rec.value)}"
-    #             conditions.append(condition)
+    @staticmethod
+    async def lpg_cdcms_pcc(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        lpg_cdcms_backlogs_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_pcc")        
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
 
-    #         if conditions:
-    #             lpg_cdcms_backlogs_  += ' WHERE '
-    #             lpg_cdcms_backlogs_  += ' AND '.join(conditions)
-    #         lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
-    #         lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
+            if conditions:
+                lpg_cdcms_backlogs_  += ' WHERE '
+                lpg_cdcms_backlogs_  += ' AND '.join(conditions)
+            lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
