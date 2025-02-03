@@ -164,4 +164,7 @@ if __name__=="__main__":
         "port": 5432
         }
         get_data(params)
+    print("*"*50)
+    print("-- Data Insertion to lpg_operations_data completed --")
+    print("*"*50)
     generate_lpg_operations_summary.generate_summary()
