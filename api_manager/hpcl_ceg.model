@@ -544,6 +544,8 @@ Model Alerts {
     last_notified_to optional list str      // List of users to whom alert notified to
     assigned_to optional str                // User email for whom alert is assigned to
     assigned_to_role optional str           // User Role for whom alert is assigned to
+    assigned_users optional list str        // User email for whom alert is assigned to
+    assigned_user_roles optional list str   // User Role for whom alert is assigned to
 
     // Location Details
     district optional str
