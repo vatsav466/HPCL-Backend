@@ -4123,3 +4123,152 @@ class GlobalAnalytics:
                 res.setdefault(p_, 0)
 
         return {"status": True, "message": "success", "data": final_result}
+
+    @staticmethod
+    async def indent_dryout_counts(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        dryout_query = lpg_plant_queries.lpg_plant_query.get('i_dryout_ro_count')
+        intraday_query = lpg_plant_queries.lpg_plant_query.get('i_intraday_dryout_ro_count')
+        potential_query = lpg_plant_queries.lpg_plant_query.get('i_potential_dryout_ro_count')
+
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                        for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                dryout_query += ' AND '.join(conditions)
+                intraday_query += ' AND '.join(conditions)
+                potential_query += ' AND '.join(conditions)
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                              for rec in
+                              await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            dryout_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                dryout_query, access_filters, drill_state)
+
+            intraday_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                intraday_query, access_filters, drill_state)
+
+            potential_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                potential_query, access_filters, drill_state)
+
+        dryout_resp = await function(query=dryout_query)
+        intraday_resp = await function(query=intraday_query)
+        potential_resp = await function(query=potential_query)
+        print("dryout_resp: ", dryout_resp)
+        print("intraday_resp: ", intraday_resp)
+        print("potential_resp: ", potential_resp)
+
+        return {"status": True, "message": "success", "data": [
+            {
+                "dryout_count": dryout_resp[0]['total_count'] or 0,
+                "intraday_count": intraday_resp[0]['total_count'] or 0,
+                "potential_count": potential_resp[0]['total_count'] or 0
+            }
+        ]}
+
+    @staticmethod
+    async def indent_status_summary(filters, cross_filters, drill_state):
+        """
+        Args:
+            filters:
+            cross_filters:
+            drill_state:
+
+        Returns:
+            [
+                {
+                    "indent_status": "status of the indent",
+                    "dryout_status": "total_ro"
+                }
+            ]
+        """
+
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        indent_status_query = lpg_plant_queries.lpg_plant_query.get('i_indent_status_summary')
+
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                        for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            indent_status_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                indent_status_query, filters, drill_state)
+
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                              for rec in
+                              await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+            indent_status_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+                indent_status_query, access_filters, drill_state)
+        print("indent_status_query: ", indent_status_query)
+        indent_status_resp = await function(query=indent_status_query)
+        transformed_response = [
+            {
+                'indent_status': item['indent_status'],
+                item['dryout_status']: item['total_ro']
+            }
+            for item in indent_status_resp
+        ]
+        print(transformed_response)
+        return {"status": True, "message": "success", "data": transformed_response}
+
+    @staticmethod
+    async def dryout_summary_by_product(filters, cross_filters, drill_state):
+        """
+        Args:
+            filters:
+            cross_filters:
+            drill_state:
+
+        Returns:
+            [
+                {
+                    "indent_status": "status of the indent",
+                    "dryout_status": "total_ro"
+                }
+            ]
+        """
+
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        dryout_by_prod_query = lpg_plant_queries.lpg_plant_query.get('i_dryout_summary_by_product')
+
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                    for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        if filters:
+            print("filters-----", filters)
+            conditions = []
+            for rec in filters:
+                # values = ', '.join([f"'{i}'" for i in rec.value])
+                condition = f"{rec.key} = '{rec.value}' "
+                conditions.append(condition)
+
+            splitted_query = dryout_by_prod_query.split("MainFlow')")
+            dryout_by_prod_query = splitted_query[0] + "MainFlow') AND " + ' AND '.join(conditions) + splitted_query[1]
+
+
+        # else:
+        #     access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+        #                       for rec in
+        #                       await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        #     dryout_by_prod_query = await widget_actions.WidgetActions.apply_filter_drilldown(
+        #         dryout_by_prod_query, access_filters, drill_state)
+        print("dryout_by_prod_query: ", dryout_by_prod_query)
+        dryout_by_prod_resp = await function(query=dryout_by_prod_query)
+        transformed_response = [
+            {
+                'product': item['product'],
+                item['dryout_status']: item['total_ro']
+            }
+            for item in dryout_by_prod_resp
+        ]
+        print(transformed_response)
+        return {"status": True, "message": "success", "data": transformed_response}

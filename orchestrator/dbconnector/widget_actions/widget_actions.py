@@ -66,7 +66,10 @@ lpg_dashboard_actions = [
     'lpg_consumer_table',
     'industry_performance',
     'present_previous_month_sales',
-    'sales_drop_down'
+    'sales_drop_down',
+    'indent_dryout_counts',
+    'indent_status_summary',
+    'dryout_summary_by_product'
 ]
 
 # Todo:- import all widget action modules here
@@ -138,7 +141,10 @@ widget_mapping = {
     'lpg_consumer_table': {},
     'industry_performance':{},
     'present_previous_month_sales': {},
-    'sales_drop_down': {}
+    'sales_drop_down': {},
+    'indent_dryout_counts': {},
+    'indent_status_summary': {},
+    'dryout_summary_by_product': {}
 }
 
 
@@ -216,9 +222,9 @@ class WidgetActions:
             if not isinstance(filter_item, dict):
                 filter_item = filter_item.dict()
             key = filter_item['key']
-            condition = filter_item['cond']
+            condition = filter_item['cond'].strip(" ")
             value = filter_item['value']
-
+            print("condition--> ", condition)
             if condition == 'equals':
                 if '.' in key:
                     if isinstance(value, int):
@@ -236,7 +242,7 @@ class WidgetActions:
                 conditions.append(f"{key} LIKE '%{value}%'")
             elif condition == 'suffix':
                 conditions.append(f"{key} LIKE '%{value}'")
-            elif condition in [' ', 'one-off'] and isinstance(value, list):
+            elif condition in [' ', 'one-off', 'in'] and isinstance(value, list):
                 values = "', '".join(map(str, value))
                 conditions.append(f''' "{key}" IN ('{values}') ''')
             elif condition == 'pattern':
@@ -276,6 +282,7 @@ class WidgetActions:
         filter_conditions = await WidgetActions.generate_filter_clause(filters)
         if re.search(r'\bwhere\b', user_query, re.IGNORECASE):
             splitted_query = re.split(r'\bwhere\b', user_query, flags=re.IGNORECASE)
+            print('splitted_into --> ', len(splitted_query))
             splitted_query[1] = filter_conditions + " AND " + splitted_query[1]
             user_query_ = f"{splitted_query[0]} WHERE {splitted_query[1]}"
             return user_query_
