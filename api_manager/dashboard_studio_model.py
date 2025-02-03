@@ -328,6 +328,10 @@ class Charts_Previous_Present_Month_SalesParams(pydantic.BaseModel):
     sort_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class Charts_Sales_Drop_DownParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
+
+
 class DashboardOrderInternalCreate(pydantic.BaseModel):
     dashboard_id: int
     display_name: typing.Optional[str] = pydantic.Field("", **{})
