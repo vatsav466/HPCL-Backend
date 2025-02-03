@@ -616,7 +616,7 @@ class LPGCDCMSActions:
             # Fill missing values for numerical columns
             for each_float_col in ["Total_pending"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)/1000
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0)/100000
                     resp[each_float_col] = resp[each_float_col].round(2)
             # Fill missing values for string columns
             for each_str_col in [
@@ -735,18 +735,18 @@ class LPGCDCMSActions:
                 return {"status": True, "message": "success", "data": []}
             resp = await filter_data(resp, _filters)
             
-            for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
-                if col in resp.columns:
-                    resp[col] = resp[col].fillna(0).astype(np.float64)
-                    resp[col] = np.where(
-                                    resp['CylType'].fillna('') == 'C142',
-                                    resp[col] * 14.2,
-                                    np.where(
-                                        resp['CylType'].fillna('') == 'C5',
-                                        resp[col] * 5,
-                                        resp[col]
-                                    )
-                                )
+            # for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+            #     if col in resp.columns:
+            #         resp[col] = resp[col].fillna(0).astype(np.float64)
+            #         resp[col] = np.where(
+            #                         resp['CylType'].fillna('') == 'C142',
+            #                         resp[col] * 14.2,
+            #                         np.where(
+            #                             resp['CylType'].fillna('') == 'C5',
+            #                             resp[col] * 5,
+            #                             resp[col]
+            #                         )
+            #                     )
             resp["Age"] = "Ageing"
             resp = resp.groupby(["Age"], as_index=False).agg({
                     "pending_1_3_days": "sum",
@@ -766,18 +766,18 @@ class LPGCDCMSActions:
             return {"status": True, "message": "success", "data": []}
         resp = await filter_data(resp, _filters)
         
-        for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
-            if col in resp.columns:
-                resp[col] = resp[col].fillna(0).astype(np.float64)
-                resp[col] = np.where(
-                                resp['CylType'].fillna('') == 'C142',
-                                resp[col] * 14.2,
-                                np.where(
-                                    resp['CylType'].fillna('') == 'C5',
-                                    resp[col] * 5,
-                                    resp[col]
-                                )
-                            )
+        # for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
+        #     if col in resp.columns:
+        #         resp[col] = resp[col].fillna(0).astype(np.float64)
+        #         resp[col] = np.where(
+        #                         resp['CylType'].fillna('') == 'C142',
+        #                         resp[col] * 14.2,
+        #                         np.where(
+        #                             resp['CylType'].fillna('') == 'C5',
+        #                             resp[col] * 5,
+        #                             resp[col]
+        #                         )
+        #                     )
         for each_str_col in ["ZOName", "ROName", "SAName", "ConsumerType", "DistributorName"]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -888,10 +888,10 @@ class LPGCDCMSActions:
                 })
                 grouped_resp = grouped_resp.pivot(index="DistributorName", columns="ConsumerType", values="pending_beyond_15_days").fillna(0)
                 _index = "DistributorName"
-            for col in ["PMUY", "NPMUY"]:
-                if col in grouped_resp.columns:
-                    grouped_resp[col] = grouped_resp[col]/1000
-                    grouped_resp[col] = grouped_resp[col].round(2)
+            # for col in ["PMUY", "NPMUY"]:
+            #     if col in grouped_resp.columns:
+            #         grouped_resp[col] = grouped_resp[col]/1000
+            #         grouped_resp[col] = grouped_resp[col].round(2)
             grouped_resp = grouped_resp.assign(Total=grouped_resp["PMUY"] + grouped_resp["NPMUY"]
                                                ).sort_values(by="Total", ascending=False).drop(columns=["Total"])
             result = [

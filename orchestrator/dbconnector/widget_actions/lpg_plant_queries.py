@@ -820,7 +820,7 @@ LIMIT 10000;''',
                                     "ConsumerType",
                                     "DistributorName",
                                     "CylType",
-                                    sum("pendings_volume") as "Total_pending" 
+                                    sum("Total_Pending") as "Total_pending"
                                 from
                                     "lpg_todays_cdcms_sales_summary" ''',
     "lpg_cdcms_ageing" : f'''
@@ -1114,7 +1114,7 @@ ORDER BY
                                         "ZOName" IS NOT NULL ''',
 
     'cdcms_current_date_pending':f'''select
-                                        ROUND(CAST(SUM("pendings_volume") / 1000000 AS NUMERIC), 2) AS "Pending"
+                                        ROUND(CAST(SUM("Total_Pending") / 100000 AS NUMERIC), 2) AS "Pending"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
