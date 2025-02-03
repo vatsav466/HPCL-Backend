@@ -49,8 +49,8 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
       for entry in enriched_data:
           entry['alert_section'] = entry['alert_type']
           entry['alert_timestamp'] = datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p")
-          ist = pytz.timezone("Asia/Kolkata")
-          entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
+          # ist = pytz.timezone("Asia/Kolkata")
+          # entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
           entry['alert_timestamp'] = entry['alert_timestamp'].isoformat()
           await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
           # entry['vendor_alert_id'] = entry.pop("alert_id")
