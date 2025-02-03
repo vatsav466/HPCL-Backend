@@ -1365,6 +1365,6 @@ WHERE
 GROUP BY 
     a.location_name, period
 ORDER BY 
-    a.location_name, period
+    avg_total_sales 
 '''
 }

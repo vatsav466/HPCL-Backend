@@ -16,6 +16,12 @@ from sqlalchemy.orm import *
 from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
+class salesFiltersCreate(pydantic.BaseModel):
+    key: str
+    cond: typing.Optional[str] = pydantic.Field("", **{})
+    value: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+
 class currencyFormatInternalCreate(pydantic.BaseModel):
     symbol_position: typing.Optional[str] = pydantic.Field("", **{})
     symbol: typing.Optional[str] = pydantic.Field("", **{})
@@ -313,6 +319,13 @@ class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):
 
 class Charts_Generate_Embedded_UrlParams(pydantic.BaseModel):
     dash_id: str
+
+
+class Charts_Previous_Present_Month_SalesParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    sort_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class DashboardOrderInternalCreate(pydantic.BaseModel):
