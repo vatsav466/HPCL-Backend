@@ -2,7 +2,7 @@
   "tags": {
     "SAFETY_PLC.SCS0101.LSHHH0101": "1",
     "SAFETY_PLC.SCS0101.LAHHH0102": "1",
-    "SAFETY_PLC.SCS0101.RSV0102_ZSH": "1",
-      "dbcjhdwbcjkwebkjaexnl": "0"
+    "SAFETY_PLC.SCS0101.RSV0102_ZSH": "0",
+    "SAFETY_PLC.SCS0101.RSV0101_ZSL" : "0"
   }
 }
