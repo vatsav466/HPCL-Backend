@@ -152,6 +152,8 @@ def get_data(params):
 if __name__=="__main__":
     plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")    
     for plant in plants.iter_rows(named=True):
+        if plant["PlantName"].lower() == 'indore':
+            continue
         print("plant :", plant["PlantName"])
         print("-"*50)
         print(f"Fetching for {plant['PlantName']}")
