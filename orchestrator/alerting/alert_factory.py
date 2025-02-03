@@ -91,6 +91,7 @@ class AlertFactory:
                                                         'last_escalated_to': [],
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
+                                                        'assigned_users': [], 'assigned_user_roles': [],
                                                         'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
                                                         'dealer_id': str(alert_data.get('dealer_id', '')),
                                                         'product_code': str(alert_data.get('product_code', '')),
