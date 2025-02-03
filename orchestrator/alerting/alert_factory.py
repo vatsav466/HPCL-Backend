@@ -107,7 +107,7 @@ class AlertFactory:
                                                         'servicing_plant_name': str(alert_data.get('servicing_plant_name', '')),
                                                         'progress_rate': 1,
                                                         'origin_altid': alert_data.get('origin_altid',''),
-                                                        'external_timestamp': alert_data.get('alert_timestamp', None),
+                                                        'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
