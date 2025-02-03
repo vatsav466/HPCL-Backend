@@ -1114,6 +1114,7 @@ def generate_summary():
         conn.commit()
         cursor.close()
         conn.close()
+        return
     
     query = f""" TRUNCATE lpg_operations_data; """
     cursor.execute(query)

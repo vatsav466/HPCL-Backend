@@ -112,6 +112,19 @@ def fetch_data(query, getData=False, params=None):
     
 def get_data(params):
     table_name = "lpg_operations_data"
+    
+    first_insertion = False
+    query = """ SELECT DISTINCT("short_name") FROM "LPG_OPERATIONS_SUMMARY_DATA";"""
+    plant_check = fetch_data(query, getData=True, params={
+        "host": "10.90.38.162",
+        "database": "hpcl_ceg",
+        "user": "ceg_user",
+        "password": "TTNqetkiJLPM50jC",
+        "port": 5432
+    })
+    if params['PlantName'].lower() not in plant_check["short_name"]:
+        first_insertion = True
+    
     query = f""" SELECT MAX(process_date) FROM "LPG_OPERATIONS_SUMMARY_DATA" WHERE "short_name"='{params['PlantName'].lower()}'; """    
     max_date = fetch_data(query, getData=False, params={
         "host": "10.90.38.162",
@@ -122,6 +135,10 @@ def get_data(params):
     })
     
     query = f""" SELECT * FROM production_log WHERE "process_date" > '{max_date}' """
+    if first_insertion:
+        max_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        query = f""" SELECT * FROM production_log WHERE "process_date" > '{max_date}' """
+    
     data = fetch_data(query, getData=True, params=params)
     if data.is_empty():
         print(f"-- Could not insert data to {table_name} --")
