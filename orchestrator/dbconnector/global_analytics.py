@@ -3917,7 +3917,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def lpg_operations_rejetions(filters, cross_filters, drill_state):
+    async def lpg_operations_rejections(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
