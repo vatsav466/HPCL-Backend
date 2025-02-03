@@ -11,6 +11,8 @@ import hpcl_ceg_model
 import urdhva_base.context
 import urdhva_base.redispool
 import utilities.connection_mapping as connection_mapping
+import polars as pl
+import pandas as pd
 from orchestrator.dashboard.chart_factory import JSONHashing
 from orchestrator.dashboard.chart_factory import date_actions
 from orchestrator.dashboard.chart_factory import charts_helpers
@@ -582,7 +584,6 @@ async def charts_previous_present_month_sales(data: Charts_Previous_Present_Mont
             present_month_sales += f' LIMIT {limit}'
 
     pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
-    print(pres_mon_sales_query)
     pres_mon_sales_resp = await function(query=pres_mon_sales_query)
     distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
     print("distinct_periods--> ", distinct_periods)
@@ -607,3 +608,26 @@ async def charts_previous_present_month_sales(data: Charts_Previous_Present_Mont
             res.setdefault(p_, 0)
 
     return {"status": True, "message": "success", "data": final_result}
+
+
+# Action sales_drop_down
+@router.post('/sales_drop_down', tags=['Charts'])
+async def charts_sales_drop_down(data: Charts_Sales_Drop_DownParams):
+    filters = data.filters
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    _query = ''' select * from alerts '''
+    if filters:
+        _query += " where "
+        for filt in filters:
+            _query += f''' {filt.key} in ({', '.join([f"'{i}'" for i in filt.value])}) '''
+    resp = await function(query=_query)
+    df = pl.from_pandas(pd.DataFrame(resp))
+    df = df.filter(pl.col("zone").fill_null("") != "")
+    df = df.filter(pl.col("region").fill_null("") != "")
+    df = df.filter(pl.col("sales_area").fill_null("") != "")
+
+    data = {"zone": df['zone'].unique().to_list(),
+            "region": df['region'].unique().to_list(), "sales_area": df['sales_area'].unique().to_list()}
+    return data

@@ -257,6 +257,10 @@ Model Charts {
         sort_by optional str
     }
 
+    Action=> sales_drop_down {
+        filters optional list salesFilters
+    }
+
     Config=> {
         collection_name=charts
     }

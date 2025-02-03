@@ -78,6 +78,9 @@
                 },
                 {
                     "name": "previous_present_month_sales"
+                },
+                {
+                    "name": "sales_drop_down"
                 }
             ]
         },
@@ -198,6 +201,9 @@
                 },
                 {
                     "name": "previous_present_month_sales"
+                },
+                {
+                    "name": "sales_drop_down"
                 }
             ]
         },
@@ -646,6 +652,10 @@
         {
             "name": "previous_present_month_sales",
             "displayName": "previous_present_month_sales"
+        },
+        {
+            "name": "sales_drop_down",
+            "displayName": "sales_drop_down"
         },
         {
             "name": "save_dashboards",
