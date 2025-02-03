@@ -342,7 +342,7 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         if each_filter['key'] not in fil_list:
             fil_list[each_filter['key']] = each_filter['value']
     '''
-    if len(cross_filters)>1:
+    if len(cross_filters)>0:
         filter_order = [key.strip('"') for key in Base_Filters]
         #filter_order = Base_Filters
         sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
