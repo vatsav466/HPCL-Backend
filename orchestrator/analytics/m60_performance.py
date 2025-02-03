@@ -342,7 +342,7 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         if each_filter['key'] not in fil_list:
             fil_list[each_filter['key']] = each_filter['value']
     '''
-    if len(cross_filters)>1:
+    if len(cross_filters)>0:
         filter_order = [key.strip('"') for key in Base_Filters]
         #filter_order = Base_Filters
         sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
@@ -380,6 +380,12 @@ async def m60_performance(filters, cross_filters, drill_state=""):
                     sorted_level[each_filter['key']] = [each_filter['value']]
 
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+        #return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
+        #adding the below lines to return the cross_filters directly
+        sorted_level = {}
+        for each_key in sorted_cross_filters:
+            if each_key['key'] not in sorted_level:
+                sorted_level[each_key['key']] = each_key['value']
         return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
     else:
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}

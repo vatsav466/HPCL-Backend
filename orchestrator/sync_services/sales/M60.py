@@ -185,6 +185,13 @@ def insertToDB(data, table_name, indexing_col=()):
     print(data)
     pg_conn.commit()
     try:
+        cur.execute(f"""
+                    DELETE FROM "M60_LEVEL_METADATA" where "fiscal_year" ='2024-2025'
+                    """)
+        
+        cur.execute(f"""
+                    DELETE FROM "M60_LEVEL_METADATA" where "fiscal_year" ='2023-2024' and "month_name" not in ('Apr','May','Jun')
+                    """)
         query = f'''
         COPY "{table_name}"
         FROM STDIN

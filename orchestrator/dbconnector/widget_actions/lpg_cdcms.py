@@ -629,7 +629,7 @@ class LPGCDCMSActions:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
         # Execute the query
         resp = await function(query=lpg_pending_query_ )
@@ -676,7 +676,7 @@ class LPGCDCMSActions:
                         "Total_pending": "sum",
                     })
                 if grouped_resp is not None:
-                    grouped_resp["Total_pending"] = grouped_resp["Total_pending"]/1000
+                    grouped_resp["Total_pending"] = grouped_resp["Total_pending"]/100000
                     grouped_resp["Total_pending"] = grouped_resp["Total_pending"].round(2)
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         else:
@@ -2034,33 +2034,79 @@ class LPGCDCMSActions:
             return {"status": True, "message": "success", "data": []}
     
     
-    # @staticmethod
-    # async def lpg_cdcms_pcc(filters, cross_filters, drill_state):
-    #     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    #     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    #     lpg_cdcms_backlogs_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_pcc")        
-    #     _filters = []
-    #     if cross_filters:
-    #         for filter in cross_filters:
-    #             _filters.append({f"{filter.key}": f"{filter.value}"})
-    #     if filters:
-    #         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
-    #                                   for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
-    #         conditions = []
-    #         for rec in filters:
-    #             rec.value = rec.value.split(",")
-    #             if isinstance(rec.value, str):
-    #                 condition = f"{rec.key} = '{rec.value}'"
-    #             else:
-    #                 if len(rec.value) == 1:
-    #                     condition = f"{rec.key} = '{rec.value[0]}'"
-    #                 else:
-    #                     condition = f"{rec.key} in {tuple(rec.value)}"
-    #             conditions.append(condition)
+    @staticmethod
+    async def lpg_cdcms_pcc(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        lpg_cdcms_april_consumer_stats = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_april_consumer_stats")
+        lpg_cdcms_current_consumer_stats = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_current_consumer_stats")
 
-    #         if conditions:
-    #             lpg_cdcms_backlogs_  += ' WHERE '
-    #             lpg_cdcms_backlogs_  += ' AND '.join(conditions)
-    #         lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
-    #         lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+
+            if conditions:
+                lpg_cdcms_april_consumer_stats  += ' WHERE '
+                lpg_cdcms_april_consumer_stats  += ' AND '.join(conditions)
+                lpg_cdcms_current_consumer_stats  += ' WHERE '
+                lpg_cdcms_current_consumer_stats  += ' AND '.join(conditions)
+                
+            lpg_cdcms_april_consumer_stats  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+            lpg_cdcms_april_consumer_stats  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
+            lpg_cdcms_current_consumer_stats  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+            lpg_cdcms_current_consumer_stats  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
+            lpg_cdcms_pcc_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_pcc_, access_filters, drill_state)
+            if "where" not in lpg_cdcms_pcc_.lower():
+                lpg_cdcms_april_consumer_stats  += ' WHERE "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+                lpg_cdcms_current_consumer_stats  += ' WHERE "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+            else:
+                lpg_cdcms_april_consumer_stats  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+                lpg_cdcms_current_consumer_stats  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
+            lpg_cdcms_april_consumer_stats  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
+            lpg_cdcms_current_consumer_stats  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
+        
+        april_consumer_stats = await function(query=lpg_cdcms_april_consumer_stats)
+        current_consumer_stats = await function(query=lpg_cdcms_current_consumer_stats)
+        april_consumer_stats = pl.DataFrame(april_consumer_stats)
+        current_consumer_stats = pl.DataFrame(current_consumer_stats)
+        
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            pcc = None
+            if "ZOName" in filter_keys  and "ROName" not in filter_keys:
+                april_consumer_stats = april_consumer_stats.group_by("ROName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_start"))
+                current_consumer_stats = current_consumer_stats.group_by("ROName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
+                avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="ROName", how="outer").with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+            elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName"  not in filter_keys:
+                april_consumer_stats = april_consumer_stats.group_by("SAName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
+                current_consumer_stats = current_consumer_stats.group_by("SAName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
+                avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="SAName", how="outer").with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+            elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                april_consumer_stats = april_consumer_stats.group_by("DistributorName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
+                current_consumer_stats = current_consumer_stats.group_by("DistributorName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
+                avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="DistributorName", how="outer").with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+        else:
+            april_consumer_stats = april_consumer_stats.group_by("ZOName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
+            current_consumer_stats = current_consumer_stats.group_by("ZOName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
+            avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="ZOName", how="outer").with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+        
+                    

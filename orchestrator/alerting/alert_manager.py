@@ -87,7 +87,9 @@ class AlertAction:
             await cls.update_alert_history(input_data, alert_data)
             # call the function
             # return await getattr(cls, function_name)(input_data, alert_data)
-            if input_data.get("alert_section", "") == 'VA':
+
+            # For testing added below 3 lines
+            if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
                 resp = await cls.close_va_alert(alert_data, input_data)
                 print(f"VA Alert resp {resp}")
             return await getattr(cls, function_name)(input_data, alert_data)

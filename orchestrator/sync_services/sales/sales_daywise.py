@@ -177,6 +177,14 @@ def insertToDB(data, table_name, indexing_col=()):
     data.write_csv(f"/tmp/table_name.csv",separator='~')
     pg_conn.commit()
     try:
+        
+        cur.execute(f"""
+                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2024-2025'
+                    """)
+        
+        cur.execute(f"""
+                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2023-2024' and "month_name" not in ('Apr','May','Jun')
+                    """)
         query = f'''
         COPY "{table_name}"
         FROM STDIN
