@@ -281,11 +281,6 @@ class AlertFactory:
                     await redis_ins.hdel("alert_mapping", al_data['external_id'])
                 data_obj = hpcl_ceg_model.Alerts(**al_data)
                 await data_obj.modify()
-                payload = {"messageName": "interLockOk",
-                            "businessKey": al_data['unique_id'],
-                            "variables": {"alertid": {"value": alert_data['alert_id'], "type": "String"},
-                                        "closed": {"value": True, "type": "Boolean"}}}
-                await Camunda().closeWorkflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 await redis_ins.hdel("alert_camunda_url", str(al_data['id']))
                 await redis_ins.close()
 
