@@ -75,6 +75,9 @@
                 },
                 {
                     "name": "generate_embedded_url"
+                },
+                {
+                    "name": "previous_present_month_sales"
                 }
             ]
         },
@@ -192,6 +195,9 @@
                 },
                 {
                     "name": "generate_embedded_url"
+                },
+                {
+                    "name": "previous_present_month_sales"
                 }
             ]
         },
@@ -636,6 +642,10 @@
         {
             "name": "generate_embedded_url",
             "displayName": "generate_embedded_url"
+        },
+        {
+            "name": "previous_present_month_sales",
+            "displayName": "previous_present_month_sales"
         },
         {
             "name": "save_dashboards",

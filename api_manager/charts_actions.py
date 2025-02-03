@@ -17,6 +17,7 @@ from orchestrator.dashboard.chart_factory import charts_helpers
 from orchestrator.dbconnector.widget_actions import widget_actions
 from orchestrator.dashboard.chart_factory import charts_functions
 from orchestrator.dashboard.dashboard_actions.superset_embedded_dashboard import SupersetManager
+import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 router = fastapi.APIRouter(prefix='/charts')
 
 
@@ -535,3 +536,74 @@ async def charts_enable_cross_filter(data: Charts_Enable_Cross_FilterParams):
 @router.post('/generate_embedded_url', tags=['Charts'])
 async def charts_generate_embedded_url(data: Charts_Generate_Embedded_UrlParams):
     return await SupersetManager.get_embedded_dashboard_uri(data.dash_id)
+
+
+# Action previous_present_month_sales
+@router.post('/previous_present_month_sales', tags=['Charts'])
+async def charts_previous_present_month_sales(data: Charts_Previous_Present_Month_SalesParams):
+    cross_filters = data.cross_filters
+    limit = data.limit
+    time_grain = data.time_grain
+    drill_state = ""
+    sort_by = data.sort_by
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    present_month_sales = lpg_plant_queries.lpg_plant_query.get('previous_current_month_sales')
+    if cross_filters:
+        cross_filters += [WidgetFiltersCreate(**rec)
+                          for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        conditions = []
+        for rec in cross_filters:
+            if len(rec.value) == 1:
+                rec.value = rec.value[0].split(",")
+                condition = f"a.{rec.key} = '{rec.value[0]}'"
+            else:
+                condition = f"a.{rec.key} in {tuple(rec.value)}"
+            conditions.append(condition)
+
+        if conditions:
+            present_month_sales_query = present_month_sales.split("'Completed')")
+            present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(
+                conditions) + present_month_sales_query[1]
+        present_month_sales += f' {sort_by}'
+        if limit:
+            present_month_sales += f' LIMIT {limit}'
+        print(present_month_sales)
+
+    else:
+        access_filters = [WidgetFiltersCreate(**rec)
+                          for rec in
+                          await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        present_month_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales,
+                                                                                        access_filters, drill_state)
+        present_month_sales += f' {sort_by}'
+        if limit:
+            present_month_sales += f' LIMIT {limit}'
+
+    pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
+    print(pres_mon_sales_query)
+    pres_mon_sales_resp = await function(query=pres_mon_sales_query)
+    distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
+    print("distinct_periods--> ", distinct_periods)
+    formatted_results = {}
+
+    # Iterate over the response and group the data by location_name
+    for row in pres_mon_sales_resp:
+        location_name = row["location_name"]
+        period = row["period"]
+        avg_total_sales = row["avg_total_sales"]
+
+        if location_name not in formatted_results:
+            formatted_results[location_name] = {"location_name": location_name}
+
+        # Add the period and its corresponding average sales value to the dictionary
+        formatted_results[location_name][period] = avg_total_sales
+
+    # Convert the dictionary to a list of results
+    final_result = list(formatted_results.values())
+    for res in final_result:
+        for p_ in distinct_periods:
+            res.setdefault(p_, 0)
+
+    return {"status": True, "message": "success", "data": final_result}

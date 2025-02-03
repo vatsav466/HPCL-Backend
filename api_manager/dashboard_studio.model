@@ -17,6 +17,11 @@ Enum DashboardStatus str {
     Completed='Completed'
 }
 
+Model salesFilters internal {
+    key str
+    cond optional str
+    value optional list str
+}
 Model currencyFormatInternal internal {
     symbolPosition optional str
     symbol optional str
@@ -243,6 +248,13 @@ Model Charts {
 
     Action=> generate_embedded_url {
         dash_id str
+    }
+
+    Action=> previous_present_month_sales {
+        cross_filters optional list salesFilters
+        limit optional int
+        time_grain optional str
+        sort_by optional str
     }
 
     Config=> {
