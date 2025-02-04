@@ -89,10 +89,20 @@ class AlertAction:
             # return await getattr(cls, function_name)(input_data, alert_data)
 
             # For testing added below 3 lines
-            if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
+            # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
+            meg_resp = await getattr(cls, function_name)(input_data, alert_data)
+            if input_data.get("alert_section", "") == 'VA':
                 resp = await cls.close_va_alert(alert_data, input_data)
+                if not isinstance(alert_data, dict):
+                    alert_data = alert_data.__dict__
+                close_alert_data = {}
+                close_alert_data['alert_type'] = alert_data['alert_section']
+                close_alert_data['bu'] = alert_data['bu']
+                close_alert_data['alert_id'] = alert_data['id']
+                close_alert_data['interlock_id'] = alert_data['interlock_id']
+                await close_alert(close_alert_data)
                 print(f"VA Alert resp {resp}")
-            return await getattr(cls, function_name)(input_data, alert_data)
+            return meg_resp
         return False, "Alert action is not valid"
 
     @classmethod
