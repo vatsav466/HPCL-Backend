@@ -89,9 +89,10 @@ class AlertAction:
             # return await getattr(cls, function_name)(input_data, alert_data)
 
             # For testing added below 3 lines
-            # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
             meg_resp = await getattr(cls, function_name)(input_data, alert_data)
-            if input_data.get("alert_section", "") == 'VA':
+            # if input_data.get("alert_section", "") == 'VA':
+            # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
+            if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
                 resp = await cls.close_va_alert(alert_data, input_data)
                 if not isinstance(alert_data, dict):
                     alert_data = alert_data.__dict__
@@ -495,6 +496,7 @@ class AlertAction:
             "ActionCode": action_code,
             "ActionReason": input_data.get("rca_reason", "Other"),
             "ActionCategory": input_data.get("category", "Others"),
+            "doc_link": "",
             "ActionDescription": input_data.get("action_description", "")
         }
         return await va_analysis.close_va_alerts(params)
