@@ -69,7 +69,13 @@ lpg_dashboard_actions = [
     'sales_drop_down',
     'indent_dryout_counts',
     'indent_status_summary',
-    'dryout_summary_by_product'
+    'dryout_summary_by_product',
+    'detailed_dryout_summary',
+    'detailed_indent_status_summary',
+    'dryout_product_report',
+    'dryout_indent_report',
+    'product_quantity_by_location',
+    'ims_report'
 ]
 
 # Todo:- import all widget action modules here
@@ -144,7 +150,13 @@ widget_mapping = {
     'sales_drop_down': {},
     'indent_dryout_counts': {},
     'indent_status_summary': {},
-    'dryout_summary_by_product': {}
+    'dryout_summary_by_product': {},
+    'detailed_dryout_summary': {},
+    'detailed_indent_status_summary': {},
+    'dryout_product_report': {},
+    'dryout_indent_report': {},
+    'product_quantity_by_location': {},
+    'ims_report': {}
 }
 
 

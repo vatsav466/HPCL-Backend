@@ -4244,10 +4244,8 @@ class GlobalAnalytics:
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
-            print("filters-----", filters)
             conditions = []
             for rec in filters:
-                # values = ', '.join([f"'{i}'" for i in rec.value])
                 condition = f"{rec.key} = '{rec.value}' "
                 conditions.append(condition)
 
@@ -4272,3 +4270,199 @@ class GlobalAnalytics:
         ]
         print(transformed_response)
         return {"status": True, "message": "success", "data": transformed_response}
+
+    @staticmethod
+    async def detailed_dryout_summary(filters, cross_filters, drill_state):
+        """
+        Args:
+            filters:
+            cross_filters:
+            drill_state:
+
+        Returns:
+
+        """
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        detailed_dryout_query = lpg_plant_queries.lpg_plant_query.get('i_detailed_dryout_summary')
+        conditions = []
+        display_col = f''' "View 1"."zone" as "zone" '''
+        grp_col = f''' "View 1"."zone" '''
+        col_ = 'zone'
+        if cross_filters:
+            col = cross_filters[-1].key
+            print("col---> ", col)
+            if col == 'zone':
+                display_col = f''' "View 1"."region" as "region" '''
+                grp_col = f''' "View 1"."region" '''
+                col_ = 'region'
+            elif col == 'region':
+                display_col = f''' "View 1"."sales_area" as "sales_area" '''
+                grp_col = f''' "View 1"."sales_area" '''
+                col_ = 'sales_area'
+            elif col == 'sales_area':
+                display_col = f''' "View 1"."location_name" as "location_name" '''
+                grp_col = f''' "View 1"."location_name" '''
+                col_ = 'location_name'
+            for cr_filter in cross_filters:
+                condition_ = f"{cr_filter.key} = '{cr_filter.value}' "
+                conditions.append(condition_)
+
+        detailed_dryout_query = detailed_dryout_query.format(display_col=display_col, grp_col= grp_col)
+
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                    for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        if filters:
+            for rec in filters:
+                condition = f"{rec.key} = '{rec.value}' "
+                conditions.append(condition)
+        if conditions:
+            splitted_query = detailed_dryout_query.split("MainFlow')")
+            detailed_dryout_query = splitted_query[0] + "MainFlow') AND " + ' AND '.join(conditions) + splitted_query[1]
+
+        print("detailed_dryout_query: ", detailed_dryout_query)
+        detailed_dryout_resp = await function(query=detailed_dryout_query)
+        print("col_ value:", col_)
+        transformed_response = [
+            {
+                col_: item[col_],
+                item['dryout_status']: item['total_ro']
+            }
+            for item in detailed_dryout_resp
+        ]
+        print(transformed_response)
+        return {"status": True, "message": "success", "data": transformed_response}
+
+    @staticmethod
+    async def detailed_indent_status_summary(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        detailed_indent_status_query = lpg_plant_queries.lpg_plant_query.get('i_detailed_indent_status_summary')
+
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                    for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        if filters:
+            conditions = []
+            for rec in filters:
+                condition = f"{rec.key} = '{rec.value}' "
+                conditions.append(condition)
+
+            splitted_query = detailed_indent_status_query.split("MainFlow')")
+            detailed_indent_status_query = splitted_query[0] + "MainFlow') AND " + ' AND '.join(conditions) + splitted_query[1]
+
+        print("detailed_indent_status_query: ", detailed_indent_status_query)
+        detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        transformed_response = [
+            {
+                'zone': item['zone'],
+                'region': item['region'],
+                'sales_area': item['sales_area'],
+                'product_name': item['product_name'],
+                item['indent_status']: item['total_ro']
+            }
+            for item in detailed_indent_status_resp
+        ]
+        print(transformed_response)
+        return {"status": True, "message": "success", "data": transformed_response}
+
+    @staticmethod
+    async def dryout_product_report(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        detailed_indent_status_query = lpg_plant_queries.lpg_plant_query.get('i_product_report')
+
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                    for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        if filters:
+            conditions = []
+            for rec in filters:
+                condition = f"{rec.key} = '{rec.value}' "
+                conditions.append(condition)
+
+            splitted_query = detailed_indent_status_query.split("MainFlow'")
+            detailed_indent_status_query = splitted_query[0] + "MainFlow' AND " + ' AND '.join(conditions) + \
+                                           splitted_query[1]
+
+        print("detailed_indent_status_query: ", detailed_indent_status_query)
+        detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        df = pd.DataFrame(detailed_indent_status_resp)
+        return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
+
+    @staticmethod
+    async def dryout_indent_report(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        detailed_indent_status_query = lpg_plant_queries.lpg_plant_query.get('i_indent_report')
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                    for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        if filters:
+            conditions = []
+            for rec in filters:
+                condition = f"{rec.key} = '{rec.value}' "
+                conditions.append(condition)
+
+            splitted_query = detailed_indent_status_query.split("MainFlow'")
+            detailed_indent_status_query = splitted_query[0] + "MainFlow' AND " + ' AND '.join(conditions) + \
+                                           splitted_query[1]
+
+        print("detailed_indent_status_query: ", detailed_indent_status_query)
+        detailed_indent_status_resp = await function(query=detailed_indent_status_query)
+        df = pd.DataFrame(detailed_indent_status_resp)
+        return {"status": True, "message": "success", "data": df.to_dict(orient='records')}
+
+    @staticmethod
+    async def product_quantity_by_location(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        prod_qty_query = lpg_plant_queries.lpg_plant_query.get('i_product_wise_quantity_by_location')
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                    for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        if filters:
+            conditions = []
+            for rec in filters:
+                condition = f"{rec.key} = '{rec.value}' "
+                conditions.append(condition)
+
+            splitted_query = prod_qty_query.split("MainFlow'")
+            prod_qty_query = splitted_query[0] + "MainFlow' AND " + ' AND '.join(conditions) + splitted_query[1]
+
+        print("prod_qty_query: ", prod_qty_query)
+        prod_qty_resp = await function(query=prod_qty_query)
+        df = pl.DataFrame(prod_qty_resp)
+        if not df.is_empty():
+            result = df.pivot(
+                values="Quantity",
+                index="Location Name",
+                columns="Product Name"
+            )
+            return {"status": True, "message": "success", "data": result.to_dicts()}
+        return {"status": False, "message": "No data", "data": []}
+
+    @staticmethod
+    async def ims_report(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        ims_report_query = lpg_plant_queries.lpg_plant_query.get('i_ims_report')
+        filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                    for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        if filters:
+            conditions = []
+            for rec in filters:
+                condition = f"{rec.key} = '{rec.value}' "
+                conditions.append(condition)
+
+            splitted_query = ims_report_query.split("MainFlow'")
+            ims_report_query = splitted_query[0] + "MainFlow' AND " + ' AND '.join(conditions) + splitted_query[1]
+
+        print("ims_report_query: ", ims_report_query)
+        ims_report_resp = await function(query=ims_report_query)
+        df = pl.DataFrame(ims_report_resp)
+        if not df.is_empty():
+            return {"status": True, "message": "success", "data": df.to_dicts()}
+        return {"status": False, "message": "No data", "data": []}
