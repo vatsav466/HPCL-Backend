@@ -71,6 +71,7 @@ class LpgRejections:
             self.params["zone"] = data["zone"]
             self.params["device_id"] = str(data['rejection'])
             self.params["interlock_name"] = "cs_rejections"
+            self.params["sop_id"] = "SOP077"
             await create_alert(self.params)
 
 
