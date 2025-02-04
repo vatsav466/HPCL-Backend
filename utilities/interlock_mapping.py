@@ -264,7 +264,8 @@ lpg_interlock_mapping = [
     {"sop_id": "SOP027", "interlock_name": "Work Beyond time", "model": "VA", "workflow_name": "UC_LPG_SOP21_27"},
     {"sop_id": "SOP029", "interlock_name": "Healthiness of Pump Operations"},
     {"sop_id": "SOP033", "interlock_name": "Healthiness of Fire Engine"},
-    {"sop_id": "SOP034", "interlock_name": "Healthiness of Deluge Valve"}]
+    {"sop_id": "SOP034", "interlock_name": "Healthiness of Deluge Valve"},
+    {"sop_id": "SOP077", "interlock_name": "cs_rejections"}]
 
 rdi_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Product Quality Density"},
                          {"sop_id": "SOP002", "interlock_name": "Product Quality Water"},
@@ -289,7 +290,7 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
         print("filtered_data(2)", filtered_data)
-    print("filtered_data--->", filtered_data[0])
+    print("filtered_data--->", filtered_data)
     return filtered_data[0] if filtered_data else {}
 
 

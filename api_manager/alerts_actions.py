@@ -62,9 +62,9 @@ async def alerts_get_performance_index(data: Alerts_Get_Performance_IndexParams)
 
 # Action upload_document
 @router.post('/upload_document', tags=['Alerts'])
-async def alerts_upload_document(upload_file: fastapi.UploadFile = fastapi.File(None)):
+async def alerts_upload_document(bu: str, upload_file: fastapi.UploadFile = fastapi.File(None)):
     try:
-        UPLOAD_DIR = urdhva_base.settings.uploads  # Directory to save the uploaded files
+        UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, bu)  # Directory to save the uploaded files
         os.makedirs(UPLOAD_DIR, exist_ok=True)  # Ensure the upload directory exists
 
         # Validate the uploaded file type
