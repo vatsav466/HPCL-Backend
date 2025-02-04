@@ -4,6 +4,7 @@ import json
 import httpx
 import datetime
 import hpcl_ceg_model
+import utilities.helpers as helpers
 import orchestrator.alerting.ro_alert as ro_alert
 import orchestrator.alerting.va_alert as va_alert
 import orchestrator.alerting.vts_alert as vts_alert
@@ -273,10 +274,11 @@ class AlertAction:
         :return:
         """
         if input_data.get("alert_section","") in ["TAS"] and input_data.get("days",0):
-            current_time = datetime.datetime.now()
             # Add 30 days to the current time
-            future_time = current_time + datetime.timedelta(days=input_data.get("days",0))
-            maintenance_time = future_time.strftime("%Y-%m-%dT%H:%M:%S")
+            maintenance_time = helpers.get_time_stamp_by_delta(days=input_data.get("days",0), 
+                                            with_month_start_day=False, 
+                                            ascending=True,
+                                            date_time_format=None).strftime("%Y-%m-%dT%H:%M:%S")
             alert_id = alert_data.get('id') if isinstance(alert_data, dict) else getattr(alert_data, 'id', None)
             if not alert_id:
                 raise ValueError("Alert data does not have an 'id' field.")
