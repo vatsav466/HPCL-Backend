@@ -10230,393 +10230,533 @@
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 01@Mathura",
-            "device_id": "9e2eff60-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "jKrbQtlAM6rhHz5264SW",
+            "device_name": "BCU TOT LP 01@Mathura",
+            "device_id": "765a3210-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "VNDW9Bzb9hdECfj9PtVa",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-501A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-501A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 02@Mathura",
-            "device_id": "9e3e1a90-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "jhvQrdDIUEKQaJ0nX2RO",
+            "device_name": "BCU TOT LP 02@Mathura",
+            "device_id": "765d1840-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "JURloj8N2clc4Aa8wYZn",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-501B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-501B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 03@Mathura",
-            "device_id": "9e4d5cd0-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "YxCx1LkGi1pG4U7Ka92n",
+            "device_name": "BCU TOT LP 03@Mathura",
+            "device_id": "766618f0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "rjpGNPIqhZmJb2QiohlW",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-502A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-502A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 04@Mathura",
-            "device_id": "9e5c9f10-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "Crw18bpFbtUlMy4xXjhV",
+            "device_name": "BCU TOT LP 04@Mathura",
+            "device_id": "76758240-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "I9LO1UVins6YmLt5xPju",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-502B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-502B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 05@Mathura",
-            "device_id": "9e6e7960-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "c7ESuovcBA0lb93XCyE1",
+            "device_name": "BCU TOT LP 05@Mathura",
+            "device_id": "7684c480-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "EukdVAr3U8CaCejSkc1o",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-503A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-503A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 06@Mathura",
-            "device_id": "9e7b2390-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "qXj09UzpzI549Ene0W3f",
+            "device_name": "BCU TOT LP 06@Mathura",
+            "device_id": "7693dfb0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "fzqqxgXDEI67TaKZTVVD",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-503B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-503B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 07@Mathura",
-            "device_id": "9e8ab3f0-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "POXXNUB6HMdYeSJbjC99",
+            "device_name": "BCU TOT LP 07@Mathura",
+            "device_id": "76a321f0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "U97OaL1uRfJptV4Vw1M8",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-504A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-504A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 08@Mathura",
-            "device_id": "9e99cf20-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "oChNEhwe1WfmASlOlPcj",
+            "device_name": "BCU TOT LP 08@Mathura",
+            "device_id": "76b23d20-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "xORedESkTxmBdpiBGv4A",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-504B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-504B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 09@Mathura",
-            "device_id": "9ea93870-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "8uHzAZg911lHdYot94q2",
+            "device_name": "BCU TOT LP 09@Mathura",
+            "device_id": "76c1a670-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "oIPDpS8PC8rm80bbE7fj",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-505A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-505A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 10@Mathura",
-            "device_id": "9eb87ab0-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "tfvl1oeoumVupkZk7E70",
+            "device_name": "BCU TOT LP 10@Mathura",
+            "device_id": "76d0e8b0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "iDT1vrM8qfCyqjKNUSAh",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-505B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-505B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 11@Mathura",
-            "device_id": "9ec7e400-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "hRCFiJolm8foVyV59Fls",
+            "device_name": "BCU TOT LP 11@Mathura",
+            "device_id": "76e02af0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "GMBw64RPOp4dl8QOnGNR",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-506A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-506A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 12@Mathura",
-            "device_id": "9ed6d820-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "AxjNozzKZynZR6MAg3xC",
+            "device_name": "BCU TOT LP 12@Mathura",
+            "device_id": "76ef6d30-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "chbQE2uWpZj5tBMyN9OH",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-506B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-506B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 13@Mathura",
-            "device_id": "9ee68f90-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "EQIdY6ApgIPFAX4QLoCH",
+            "device_name": "BCU TOT LP 13@Mathura",
+            "device_id": "76fed680-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "fKHKxOspe2sqKsCYCcqe",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-507A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-507A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 14@Mathura",
-            "device_id": "9ef5aac0-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "ausr7MiQ5xYO6eRGJZSs",
+            "device_name": "BCU TOT LP 14@Mathura",
+            "device_id": "770df1b0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "Btb2PdyxRqUdSE6CbY4K",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-507B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-507B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 15@Mathura",
-            "device_id": "9f04c5f0-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "WWapPywDuI36PHkBgliM",
+            "device_name": "BCU TOT LP 15@Mathura",
+            "device_id": "771d5b00-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "zVSgZyKwinkp6dmGdiY0",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-508A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-508A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 16@Mathura",
-            "device_id": "9f13e120-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "B2JfVSObdJkD24KjLWji",
+            "device_name": "BCU TOT LP 16@Mathura",
+            "device_id": "772c9d40-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "9drNo1IcKpP6vmA4EVr4",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-508B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-508B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 17@Mathura",
-            "device_id": "9f234a70-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "hk0Ezki42ser7u0WRMNL",
+            "device_name": "BCU TOT LP 17@Mathura",
+            "device_id": "773bdf80-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "W4utt2e6Gp71GeTzLdm0",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-509A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-509A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 18@Mathura",
-            "device_id": "9f32b3c0-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "qVizJJ7zjT7VyHcQu0gP",
+            "device_name": "BCU TOT LP 18@Mathura",
+            "device_id": "774afab0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "hFMAbrOD2sq0kAHLaBs7",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-509B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-509B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 19@Mathura",
-            "device_id": "9f424420-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "DyvWYbhfI0kgLEVvoxzA",
+            "device_name": "BCU TOT LP 19@Mathura",
+            "device_id": "775a6400-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "iU5cvb4qJFkqfkWYPWXR",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-510A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-510A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 20@Mathura",
-            "device_id": "9f515f50-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "2OWvxMR5cNY6lxpxwsm2",
+            "device_name": "BCU TOT LP 20@Mathura",
+            "device_id": "7769a640-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "7pBZE2Mr3zieaQsQcODw",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-510B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-510B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 21@Mathura",
-            "device_id": "9f607a80-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "WrNNO8lS7vnB3NiA2Fz8",
+            "device_name": "BCU TOT LP 21@Mathura",
+            "device_id": "77790f90-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "965uihPxlWDmELCHZ6lA",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-511A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-511A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 22@Mathura",
-            "device_id": "9f6f95b0-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "RXU4m5d5PttrtcGgI3uu",
+            "device_name": "BCU TOT LP 22@Mathura",
+            "device_id": "77882ac0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "6YGpZBrBuRDrnMl3eeiu",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Dual.BC-511B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-511B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 23@Mathura",
-            "device_id": "9f7f7430-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "YQjhVQflu6DoCC3z5mbv",
+            "device_name": "BCU TOT LP 23@Mathura",
+            "device_id": "77976d00-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "oDN2KUtNwWSUqdgC3pYk",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Single.BC-512A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-512A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 24@Mathura",
-            "device_id": "9f8df320-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "xhhj82pl8lrCwaye7lyd",
+            "device_name": "BCU TOT LP 24@Mathura",
+            "device_id": "77a6af40-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "3Gs2Sl1qeSrJMp0m5WBL",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Single.BC-512B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-512B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 25@Mathura",
-            "device_id": "9f9d8380-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "9OoUFwstBaRq2uuCr0J9",
+            "device_name": "BCU TOT LP 25@Mathura",
+            "device_id": "77b5f180-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "Jm13fFMusKiyd5t9o7ve",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Single.BC-513A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-513A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 26@Mathura",
-            "device_id": "9facc5c0-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "j7iM9aDmRDiMozhBFGoI",
+            "device_name": "BCU TOT LP 26@Mathura",
+            "device_id": "77c533c0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "GBFd24t7GdCnf4RBaxN2",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Single.BC-513B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
                     "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU MFM TOT LP 27@Mathura",
-            "device_id": "9fbc2f10-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "6bKB60nR5nMlAFRBGJDZ",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
+                },
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-514A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-513B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "BCU MFM TOT LP 28@Mathura",
-            "device_id": "9fcafc20-df07-11ef-89d8-8bef67f22d63",
-            "device_type": "BCU MFM Totaliser",
-            "device_key": "06ybTrdv8dvRZ67Ig6RZ",
+            "device_name": "BCU TOT LP 27@Mathura",
+            "device_id": "77d44ef0-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "AkMksxbzdprq3NHy2f8q",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
-                    "sensor_name": "BCU Vs. MFM Totalizer MISMATCH",
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-514A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-514A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
+            "device_name": "BCU TOT LP 28@Mathura",
+            "device_id": "77e3b840-e223-11ef-89d8-8bef67f22d63",
+            "device_type": "BCU Totaliser",
+            "device_key": "fSu7mPYuWR9aFg7OfGXU",
+            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
+            "sensors": [
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
                     "sensor_tag": "SmartLoad-Single.BC-514B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-514B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
