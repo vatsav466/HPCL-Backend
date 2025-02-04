@@ -289,7 +289,7 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
         print("filtered_data(2)", filtered_data)
-    print("filtered_data--->", filtered_data[0])
+    print("filtered_data--->", filtered_data)
     return filtered_data[0] if filtered_data else {}
 
 
