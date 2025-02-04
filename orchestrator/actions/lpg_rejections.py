@@ -1,6 +1,7 @@
 import urdhva_base
 import time
 import pytz
+import asyncio
 import requests
 import datetime
 import polars as pl
@@ -43,7 +44,7 @@ class LpgRejections:
                     WHERE
                         process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
-        rejections = pd.DataFrame(rejections)
+        rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(pl.lit("cs_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter(pl.col("rejection") > 8)
@@ -62,6 +63,7 @@ class LpgRejections:
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
+            self.params["alert_type"] = 'LPG'
             self.params["bu"] = 'LPG'
             self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
@@ -85,7 +87,7 @@ class LpgRejections:
                     WHERE
                         process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
-        rejections = pd.DataFrame(rejections)
+        rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(pl.lit("gd_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 6) | (pl.col("rejection") < 1))
@@ -104,6 +106,7 @@ class LpgRejections:
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
+            self.params["alert_type"] = 'LPG'
             self.params["bu"] = 'LPG'
             self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
@@ -127,7 +130,7 @@ class LpgRejections:
                     WHERE
                         process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
-        rejections = pd.DataFrame(rejections)
+        rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(pl.lit("pt_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 12) | (pl.col("rejection") < 1))
@@ -146,6 +149,7 @@ class LpgRejections:
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
+            self.params["alert_type"] = 'LPG'
             self.params["bu"] = 'LPG'
             self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
@@ -176,3 +180,7 @@ class LpgRejections:
         else:
             return {}
         return check_alerts.to_dicts()[-1]
+    
+if __name__ == "__main__":
+    lpg = LpgRejections()
+    asyncio.run(lpg.get_current_cs_rejections())
