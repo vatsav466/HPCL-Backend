@@ -234,9 +234,8 @@ class WidgetActions:
             if not isinstance(filter_item, dict):
                 filter_item = filter_item.dict()
             key = filter_item['key']
-            condition = filter_item['cond'].strip(" ")
+            condition = filter_item['cond']
             value = filter_item['value']
-            print("condition--> ", condition)
             if condition == 'equals':
                 if '.' in key:
                     if isinstance(value, int):
@@ -294,7 +293,6 @@ class WidgetActions:
         filter_conditions = await WidgetActions.generate_filter_clause(filters)
         if re.search(r'\bwhere\b', user_query, re.IGNORECASE):
             splitted_query = re.split(r'\bwhere\b', user_query, flags=re.IGNORECASE)
-            print('splitted_into --> ', len(splitted_query))
             splitted_query[1] = filter_conditions + " AND " + splitted_query[1]
             user_query_ = f"{splitted_query[0]} WHERE {splitted_query[1]}"
             return user_query_
