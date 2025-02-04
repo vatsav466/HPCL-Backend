@@ -235,7 +235,6 @@ async def m60_performance(filters, cross_filters, drill_state=""):
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
         where_conditions_history = [clause]
-
     # Data Retrival for target data
     if target:
         group_keys = [group_by_filter]
@@ -342,6 +341,19 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         if each_filter['key'] not in fil_list:
             fil_list[each_filter['key']] = each_filter['value']
     '''
+    #This below if condition is to show the multi month selected cummulative values in the bar graph
+    if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0]:
+        print("this is inside if")
+        print("merged_df",len(merged_df))
+        print(merged_df)
+        amount_columns = merged_df.columns.difference(['month_name'])
+        result_df = pd.DataFrame({
+    'month_name': [','.join(merged_df['month_name'])],  # Concatenate month names
+})
+        for col in amount_columns:
+            result_df[col] = [merged_df[col].sum()]
+        merged_df = result_df
+
     if len(cross_filters)>0:
         filter_order = [key.strip('"') for key in Base_Filters]
         #filter_order = Base_Filters
@@ -378,14 +390,20 @@ async def m60_performance(filters, cross_filters, drill_state=""):
                     sorted_level[each_filter['key']].append(each_filter['value'])
                 else:
                     sorted_level[each_filter['key']] = [each_filter['value']]
+            if sorted_cross_filters[-1]['key'] not in sorted_level:
+                sorted_level[sorted_cross_filters[-1]['key']] = []
+                sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
+
 
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         #return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
-        #adding the below lines to return the cross_filters directly
+        #commenting the below lines to return the cross_filters directly
+        '''
         sorted_level = {}
         for each_key in sorted_cross_filters:
             if each_key['key'] not in sorted_level:
                 sorted_level[each_key['key']] = each_key['value']
+        '''
         return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
     else:
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
