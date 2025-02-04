@@ -70,6 +70,7 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_id"] = str(data['rejection'])
+            self.params["interlock_name"] = "cs_rejections"
             await create_alert(self.params)
 
 
@@ -113,6 +114,7 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_id"] = str(data['rejection'])
+            self.params["interlock_name"] = "gd_rejections"
             await create_alert(self.params)
 
 
@@ -156,12 +158,13 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_id"] = str(data['rejection'])
+            self.params["interlock_name"] = "pt_rejections"
             await create_alert(self.params)
 
 
     async def check_rejections(self, params):
         yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
-        rejection_type = params["rejection_type"]
+        rejection_type = params["interlock_name"]
         table = f"lpg_{rejection_type}"
 
         check_alerts = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])
