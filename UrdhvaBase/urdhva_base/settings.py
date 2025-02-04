@@ -14,7 +14,7 @@ Db_Urls_Base = {
             "https://admin:password@localhost:9200"
         ],
         "postgres_async": [
-            "postgresql+asyncpg://localhost:5432/hpcl_ceg?user=ceg_user&password=UUMrftkiJLPM50jD"
+            "postgresql+asyncpg://localhost:5432/hpcl_ceg?user=ceg_user&password=TTNqetkiJLPM50jC"
         ],
         "redis": [
             "redis://localhost:6379"
