@@ -319,7 +319,8 @@ class SendNotification:
         print('self.params.get("mqofrole")', self.params.get("mqofrole"))
         if self.params.get("escalationlevel_inmail"):
             self.update_alert['last_escalated_to'] = self.params.get("rolemailto").split(',')
-            self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
+            #self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
+            self.update_alert['assigned_user_roles'] = self.params.get("mqofrole", "").split(',') if self.params.get("mqofrole") else []
             self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
         else:
             self.update_alert['last_notified_to'] = self.params.get("rolemailto").split(',')
