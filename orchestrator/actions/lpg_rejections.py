@@ -37,30 +37,33 @@ class LpgRejections:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         query = f""" SELECT 
-                        AVG(sortoutpercentage)*100 AS rejection, plant, zone
+                        AVG(sortoutpercentage)*100 AS rejection, sap_id, plant, zone
                     FROM 
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY plant, zone"""
+                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pd.DataFrame(rejections)
         rejections = rejections.with_columns(pl.lit("cs_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter(pl.col("rejection") > 8)
         check_alerts = f""" SELECT 
-                                sap_id, device_id, rejection_type, created_at
+                                sap_id, device_id, created_at
                             FROM
                                 "alerts"
                             WHERE
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='cs_rejections' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        check_alerts = check_alerts.rename({"device_id": "rejection"}
-                                           ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-        rejections = rejections.filter(pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
+        if not check_alerts.is_empty():
+            check_alerts = check_alerts.rename({"device_id": "rejection"}
+                                            ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
+            rejections = rejections.filter(pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
+            self.params["sapid"] = data["sap_id"]
             self.params["bu"] = 'LPG'
+            self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
@@ -76,30 +79,33 @@ class LpgRejections:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         query = f""" SELECT
-                        AVG(sortoutpercentage)*100 AS rejection, plant, zone
+                        AVG(sortoutpercentage)*100 AS rejection, sap_id, plant, zone
                     FROM
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY plant, zone"""
+                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pd.DataFrame(rejections)
         rejections = rejections.with_columns(pl.lit("gd_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 6) | (pl.col("rejection") < 1))
         check_alerts = f""" SELECT 
-                                sap_id, device_id, rejection_type, created_at
+                                sap_id, device_id, created_at
                             FROM
                                 "alerts"
                             WHERE
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='gd_rejections' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        check_alerts = check_alerts.rename({"device_id": "rejection"}
-                                           ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-        rejections = rejections.filter(pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
+        if not check_alerts.is_empty():
+            check_alerts = check_alerts.rename({"device_id": "rejection"}
+                                            ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
+            rejections = rejections.filter(~pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
+            self.params["sapid"] = data["sap_id"]
             self.params["bu"] = 'LPG'
+            self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
@@ -115,30 +121,33 @@ class LpgRejections:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         
         query = f""" SELECT 
-                        AVG(sortoutpercentage)*100 AS rejection, plant, zone
+                        AVG(sortoutpercentage)*100 AS rejection, sap_id, plant, zone
                     FROM
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY plant, zone"""
+                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pd.DataFrame(rejections)
         rejections = rejections.with_columns(pl.lit("pt_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 12) | (pl.col("rejection") < 1))
         check_alerts = f""" SELECT
-                                sap_id, device_id, rejection_type, created_at
+                                sap_id, device_id, created_at
                             FROM
                                 "alerts"
                             WHERE
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='pt_rejections' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        check_alerts = check_alerts.rename({"device_id": "rejection"}
-                                           ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-        rejections = rejections.filter(~pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
+        if not check_alerts.is_empty():
+            check_alerts = check_alerts.rename({"device_id": "rejection"}
+                                            ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
+            rejections = rejections.filter(~pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
+            self.params["sapid"] = data["sap_id"]
             self.params["bu"] = 'LPG'
+            self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
@@ -151,12 +160,12 @@ class LpgRejections:
         rejection_type = params["rejection_type"]
         table = f"lpg_{rejection_type}"
 
-        check_alerts = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])        
+        check_alerts = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])
         check_alerts = pl.DataFrame(check_alerts)
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)        
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         current_rejection = f""" SELECT AVG(sortoutpercentage)*100 AS rejection, plant FROM "{table}" WHERE process_date > '{yesterday}' GROUP BY plant"""
         current_rejection = await function(query=current_rejection)
         current_rejection = pl.DataFrame(current_rejection)
