@@ -70,6 +70,7 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
+            self.params["device_type"] = "Check Scale Rejection"
             self.params["interlock_name"] = "cs_rejections"
             self.params["sop_id"] = "SOP077"
             await create_alert(self.params)
@@ -115,6 +116,7 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
+            self.params["device_type"] = "Valve Leakage Rejection"
             self.params["interlock_name"] = "gd_rejections"
             self.params["sop_id"] = "SOP078"
             await create_alert(self.params)
@@ -160,6 +162,7 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
+            self.params["device_type"] = "O-Ring Leakage Rejection"
             self.params["interlock_name"] = "pt_rejections"
             self.params["sop_id"] = "SOP079"
             await create_alert(self.params)
