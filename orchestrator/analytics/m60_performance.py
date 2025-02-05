@@ -12,10 +12,11 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
+
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
-Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
+Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
@@ -115,13 +116,16 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     return resp
 
 
-def get_group_by_filter_key(cross_filters):
+def get_group_by_filter_key(cross_filters, cumulative=False, drill_state='', time_grain=''):
     """
     Getting group by filter key based on cross filters
+    :param time_grain:
+    :param drill_state:
+    :param cumulative:
     :param cross_filters:
     :return:
     """
-    group_by_filter = '"month_name"'
+    group_by_filter = ['"month_name"'] if not cumulative else []
     if cross_filters:
         index = 0
         if len([rec['value'] for rec in cross_filters if 'lubes' in rec['value'].lower()
@@ -129,19 +133,31 @@ def get_group_by_filter_key(cross_filters):
             for key in [rec['key'] for rec in cross_filters]:
                 if key in Lubes_Filters and Lubes_Filters.index(key) > index:
                     index = Lubes_Filters.index(key)
-            group_by_filter = Lubes_Filters[index + 1]
+            group_by_filter = [Lubes_Filters[index + 1]]
         else:
             for key in [rec['key'] for rec in cross_filters]:
                 if key in Base_Filters and Base_Filters.index(key) > index:
                     index = Base_Filters.index(key)
-            group_by_filter = Base_Filters[index + 1]
+            group_by_filter = [Base_Filters[index + 1]]
+    elif drill_state:
+        group_by_filter = [Base_Filters[Base_Filters.index(drill_state) + 1]]
+    if time_grain == 'Monthly' and '"month_name"' not in group_by_filter:
+        group_by_filter.append('"month_name"')
     return group_by_filter
 
 
-async def m60_performance(filters, cross_filters, drill_state=""):
+async def m60_performance(filters, cross_filters, drill_state="", time_grain=""):
     if not cross_filters:
         cross_filters = []
-    group_by_filter = get_group_by_filter_key(cross_filters)
+    # Checking Cumulative enabled or not, On cumulative we should not group by month
+    cumulative = False
+    for condition in filters:
+        if condition['key'].strip('"') == "C":
+            cumulative = True
+            break
+
+    # Fetching all group by filters, return should be a list always
+    group_by_filter = get_group_by_filter_key(cross_filters, cumulative, drill_state, time_grain)
 
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
@@ -157,12 +173,18 @@ async def m60_performance(filters, cross_filters, drill_state=""):
     for index, _ in enumerate(cross_filters):
         cross_filters[index]['key'] = cross_filters[index]['key'].strip('"')
     cross_filters = [rec for rec in cross_filters if not (rec['key'] == 'month_name' and not rec['value'].strip('"'))]
+    # Modifying month name filter for cumulative
+    for filter in cross_filters:
+        if filter['key'].strip('"') == 'month_name' and ',' in filter['value']:
+            filter['cond'] = 'in'
+            filter['value'] = filter['value'].split(',')
     actual_data = []
     hist_data = []
     target_data = []
     actual_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES" """
     history_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_HISTORY_TMT_SALES" """
-    filters_req = [condition['key'].strip('"') for condition in filters if condition['key'].strip('"') in ["A", "H", "T"]]
+    filters_req = [condition['key'].strip('"') for condition in filters if
+                   condition['key'].strip('"') in ["A", "H", "T"]]
     if len(filters_req) == 0:
         filters.append({"key": '"A"', "cond": "equals", "value": "true"})
     # Generating filters
@@ -173,6 +195,8 @@ async def m60_performance(filters, cross_filters, drill_state=""):
             history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_HISTORY_TMT_SALES" """
         elif condition['key'].strip('"') == "T":
             target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES" """
+        elif condition['key'].strip('"') == "C":
+            continue
         elif condition['key'].strip('"') == "YTD":
             # Calculating start and end dates for YTD for both actual and history
             end_date_ = fiscal_year.FiscalDate.today()
@@ -190,11 +214,11 @@ async def m60_performance(filters, cross_filters, drill_state=""):
             # Calculating start and end dates
             start_date, end_date = condition['value'].split(",")
             start_date_history = dt_parser.parse(start_date)
-            start_date_history = start_date_history.replace(year=start_date_history.year-1).strftime(
+            start_date_history = start_date_history.replace(year=start_date_history.year - 1).strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
             # For History
             end_date_history = dt_parser.parse(end_date)
-            end_date_history = end_date_history.replace(year=end_date_history.year-1).strftime(
+            end_date_history = end_date_history.replace(year=end_date_history.year - 1).strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
         elif condition['key'] == '"FISCAL_YEAR"':
             # Not considering now
@@ -223,6 +247,13 @@ async def m60_performance(filters, cross_filters, drill_state=""):
                     cross_filters.append(condition)
             else:
                 cross_filters.append(condition)
+
+    def get_group_by_columns(group_by_filter):
+        if group_by_filter:
+            return [rec.replace('"', '').strip() for rec in group_by_filter]
+        else:
+            return ""
+
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
@@ -235,19 +266,24 @@ async def m60_performance(filters, cross_filters, drill_state=""):
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
         where_conditions_history = [clause]
+
     # Data Retrival for target data
     if target:
-        group_keys = [group_by_filter]
-        if group_by_filter.strip('"') != "month_name":
+        group_keys = [key for key in group_by_filter]
+        if '"month_name"' not in group_by_filter:
             group_keys.append("month_name")
         target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
-                                         where_conditions+Default_Filters, start_date, end_date, group_keys)
-        # print(json.dumps(target_data, default=str))
+                                         where_conditions + Default_Filters, start_date, end_date, group_keys)
         if target_data:
             target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
-            target_data = target_data.groupby(group_by_filter.strip('"'))['TARGET_TMT_SALES'].sum().reset_index()
-            if group_by_filter == 'month_name':
-                target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True, categories=months)
+            if group_by_filter:
+                target_data = target_data.groupby(get_group_by_columns(group_by_filter))[
+                    'TARGET_TMT_SALES'].sum().reset_index()
+            else:
+                target_data = pd.DataFrame([{'TARGET_TMT_SALES': target_data.sum()['TARGET_TMT_SALES']}])
+            if '"month_name"' in group_by_filter:
+                target_data['month_name'] = pd.CategoricalIndex(target_data['month_name'], ordered=True,
+                                                                categories=months)
             target_data = target_data.to_dict(orient='records')
 
     # Data Retrival for current financial year
@@ -265,17 +301,21 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         # For Month level aggregations from month data table
         for date_range in filter_dates:
             actual_data.extend(await collect_data([actual], 'M60_LEVEL_METADATA',
-                                                  where_conditions+Default_Filters, date_range[0], date_range[1],
-                                                  [group_by_filter]))
+                                                  where_conditions + Default_Filters, date_range[0], date_range[1],
+                                                  group_by_filter))
         # For Month level aggregations from day wise data table
         # Todo:- for optimization use single query for day filter with or condition
         for date_range in day_filter_dates:
             actual_data.extend(await collect_data([actual_d], 'MOM_DAY_LEVEL_DATA',
                                                   where_conditions + Default_Filters, date_range[0], date_range[1],
-                                                  [group_by_filter], '"DAY_ID"'))
+                                                  group_by_filter, '"DAY_ID"'))
         if actual_data:
             actual_data = pd.DataFrame(actual_data)
-            actual_data = actual_data.groupby(group_by_filter.strip('"'))['ACTUAL_TMT_SALES'].sum().reset_index()
+            if group_by_filter:
+                actual_data = actual_data.groupby(get_group_by_columns(group_by_filter))[
+                    'ACTUAL_TMT_SALES'].sum().reset_index()
+            else:
+                actual_data = pd.DataFrame([{'ACTUAL_TMT_SALES': actual_data.sum()['ACTUAL_TMT_SALES']}])
             actual_data['ACTUAL_TMT_SALES'] = actual_data['ACTUAL_TMT_SALES'].fillna(0)
             actual_data = actual_data.to_dict(orient='records')
 
@@ -293,15 +333,19 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         for date_range in filter_dates:
             hist_data.extend(await collect_data([history], 'MOM_LEVEL_FINAL_DATA',
                                                 where_conditions_history + Default_Filters, date_range[0],
-                                                date_range[1], [group_by_filter], '"YEARMONTH"'))
+                                                date_range[1], group_by_filter, '"YEARMONTH"'))
         # Todo:- for optimization use single query for day filter with or condition
         for date_range in day_filter_dates:
             hist_data.extend(await collect_data([history_d], 'MOM_DAY_LEVEL_DATA',
                                                 where_conditions_history + Default_Filters, date_range[0],
-                                                date_range[1], [group_by_filter], '"DAY_ID"'))
+                                                date_range[1], group_by_filter, '"DAY_ID"'))
         if hist_data:
             hist_data = pd.DataFrame(hist_data)
-            hist_data = hist_data.groupby(group_by_filter.strip('"'))['ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
+            if group_by_filter:
+                hist_data = hist_data.groupby(get_group_by_columns(group_by_filter))[
+                    'ACTUAL_HISTORY_TMT_SALES'].sum().reset_index()
+            else:
+                hist_data = pd.DataFrame([{'ACTUAL_HISTORY_TMT_SALES': hist_data.sum()['ACTUAL_HISTORY_TMT_SALES']}])
             hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
             hist_data = hist_data.to_dict(orient='records')
 
@@ -309,13 +353,24 @@ async def m60_performance(filters, cross_filters, drill_state=""):
     merged_df = df_[0] if len(df_) else pd.DataFrame([])
     if len(df_) > 1:
         for df in df_[1:]:
-            merged_df = pd.merge(merged_df, df, on=group_by_filter.strip('"'), how='outer')  # Outer merge with df2
+            if group_by_filter:
+                merged_df = pd.merge(merged_df, df, on=get_group_by_columns(group_by_filter),
+                                     how='outer')  # Outer merge with df2
+            else:
+                merged_df = pd.concat([merged_df, df], axis=0)
+    # Creating a data frame from concated df if no group by
+    if not group_by_filter:
+        result_df = pd.DataFrame()
+        for col in merged_df.columns:
+            result_df[col] = [merged_df[col].sum()]
+        merged_df = result_df
     # Ordering Data for Month and SBU names
-    if not merged_df.empty and group_by_filter.strip('"') in ('month_name', 'SBU_Name'):
-        sort_key = months if group_by_filter.strip('"') == 'month_name' else sbu_order
-        merged_df["data_order"] = merged_df[group_by_filter.strip('"')].map({cond: i for i, cond in enumerate(sort_key)})
+    if not merged_df.empty and ('"month_name"' in group_by_filter or '"SBU_Name"' in group_by_filter):
+        sort_key = sbu_order if '"SBU_Name"' in group_by_filter else months
+        order_key = 'SBU_Name' if '"SBU_Name"' in group_by_filter else 'month_name'
+        merged_df["data_order"] = merged_df[order_key].map({cond: i for i, cond in enumerate(sort_key)})
         merged_df = merged_df.sort_values("data_order").drop(columns="data_order")
-        merged_df = merged_df[merged_df[group_by_filter.strip('"')].isin(sort_key)]
+        merged_df = merged_df[merged_df[order_key].isin(sort_key)]
         merged_df.reset_index(drop=True, inplace=True)
     # If required keys not available keeping records with zero value
     if target:
@@ -327,38 +382,30 @@ async def m60_performance(filters, cross_filters, drill_state=""):
     if history:
         if MandateKeys["history"] not in merged_df:
             merged_df[MandateKeys["history"]] = 0
-    if group_by_filter and group_by_filter.strip('"') not in merged_df:
-        merged_df[group_by_filter.strip('"')] = ""
+    if group_by_filter:
+        for key in get_group_by_columns(group_by_filter):
+            if key not in merged_df:
+                merged_df[key] = ""
     merged_df.fillna(0, inplace=True)
-    fil_list = {}
-    '''
-    for each_filter in filters:
-        print(each_filter)
-        if each_filter['key'] not in fil_list and each_filter['key'] not in ['"A"','"H"','"T"','"YTD"']:
-            fil_list[each_filter['key']] = each_filter['value']
 
-    for each_filter in cross_filters:
-        if each_filter['key'] not in fil_list:
-            fil_list[each_filter['key']] = each_filter['value']
-    '''
-    print("filters",filters)
-    print("cross_filters",cross_filters)
-    #This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
-    #if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
-    if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name'  in merged_df.columns:
+
+    # This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
+    # if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
+    if len(where_conditions) == 1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name'  in merged_df.columns:
 
         print("this is inside if")
         print("merged_df",len(merged_df))
         print(merged_df)
         amount_columns = merged_df.columns.difference(['month_name'])
+        # Concatenate month names
         result_df = pd.DataFrame({
-    'month_name': [','.join(merged_df['month_name'])],  # Concatenate month names
-})
+            'month_name': [','.join(merged_df['month_name'])],
+                                 })
         for col in amount_columns:
             result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
 
-    if len(cross_filters)>0:
+    if len(cross_filters) > 0:
         filter_order = [key.strip('"') for key in Base_Filters]
         #filter_order = Base_Filters
         sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
@@ -372,22 +419,10 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         sorted_cross_filters[-1]['cond'] = '='
         Charts_Get_Distinct_ValuesParams.where_cond = [sorted_cross_filters[-1]]
         function = await charts_connection_vault_routing(Charts_Get_Distinct_ValuesParams)
-        resp = await function(schema_name = 'public',table_name="MOM_DAY_LEVEL_DATA",column_name=Charts_Get_Distinct_ValuesParams.column,where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
+        resp = await function(schema_name='public', table_name="MOM_DAY_LEVEL_DATA",
+                              column_name=Charts_Get_Distinct_ValuesParams.column, where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
         print(resp)
         sorted_level = resp['data']
-        '''
-        if "month_name" in cross_filters[0]['key']:
-            sorted_level['month_name'] = cross_filters[0]['value']
-        #sorted_level.pop('month_name',None)
-        
-        if sorted_cross_filters[-1]['key'] not in sorted_level:
-            sorted_level[sorted_cross_filters[-1]['key']] = []
-        sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
-        for each_filter in sorted_cross_filters:
-            if each_filter['key'] in sorted_level:
-                
-                sorted_level[each_filter['key']] = each_filter['value']
-        '''
         for each_filter in sorted_cross_filters:
             if each_filter['key'] in sorted_level:
                 if len(sorted_level[each_filter['key']]) == each_filter['value']:
@@ -398,9 +433,10 @@ async def m60_performance(filters, cross_filters, drill_state=""):
                 sorted_level[sorted_cross_filters[-1]['key']] = []
                 sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
 
-
-        final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        #return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
+        if len(group_by_filter) > 1:
+            final_resp = generate_stacked_data(merged_df)
+        else:
+            final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         #commenting the below lines to return the cross_filters directly
         '''
         sorted_level = {}
@@ -408,7 +444,28 @@ async def m60_performance(filters, cross_filters, drill_state=""):
             if each_key['key'] not in sorted_level:
                 sorted_level[each_key['key']] = each_key['value']
         '''
-        return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
+        return {"status": True, "message": "Success", "data": {'data': final_resp,'level': sorted_level}}
     else:
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        return {"status": True, "message": "Success", "data": {'data':final_resp,'level':{}}}
+        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level':{}}}
+
+
+def generate_stacked_data(df):
+    columns = df.columns.to_list()
+    numeric_cols = [col for col in columns if col in list(MandateKeys.values())]
+    month_column = 'month_name'
+    other_columns = list(set(columns) - set(numeric_cols+[month_column]))
+    if other_columns:
+        result = []
+        df['month_name'] = pd.Categorical(df['month_name'], categories=months, ordered=True)
+        for month, group in df.groupby("month_name"):
+            transformed_entry = {
+                "month_name": month,
+                **{key: group[key].tolist() for key in numeric_cols},
+                **{key: group[key].tolist() for key in other_columns}
+            }
+            result.append(transformed_entry)
+        return result
+    else:
+        return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+
