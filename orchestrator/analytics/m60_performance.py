@@ -12,7 +12,6 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
-
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
