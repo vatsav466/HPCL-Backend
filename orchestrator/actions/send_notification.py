@@ -407,8 +407,8 @@ class SendNotification:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
                 
-            if self._should_skip_notification():
-                return True, {"msg": "Notification skipped"}
+            # if self._should_skip_notification():
+            #     return True, {"msg": "Notification skipped"}
                 
             await self._prepare_base_alert_data()
             await self._process_roles_and_users()
