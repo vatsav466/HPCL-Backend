@@ -61,7 +61,9 @@ class AlertAction:
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
                         "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert",
                         "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert"}
+        event_tag_map = {"Justification": "justified", "Approved": "approved", "AcceptClose": "accept", "InvalidAlert": "invalid"}
         alert_id = input_data['alert_id']
+        input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "approved"): True}})
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         except Exception as e:
@@ -217,6 +219,7 @@ class AlertAction:
         process_variables.update({"override_days": {"type": "String", "value": input_data.get('days', '')},
                                   "msg": {"type": "String", "value": msg},
                                   "action_type": {"type": "String", "value": action_type}})
+        print("process_variables: ", process_variables)
         messaged_data = {
             "messageName": action_type,
             "businessKey": alert_data.unique_id,
