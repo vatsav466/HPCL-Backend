@@ -533,6 +533,7 @@ Model Alerts {
     vehicle_number optional str
     violation_type optional str
     clear_count optional bool
+    maintenance_time optional str
 
     // Marking Alert
     is_flagged_false optional bool
