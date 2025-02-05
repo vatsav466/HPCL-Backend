@@ -2086,8 +2086,11 @@ class LPGCDCMSActions:
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
-            lpg_cdcms_pcc_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_pcc_, access_filters, drill_state)
-            if "where" not in lpg_cdcms_pcc_.lower():
+            lpg_cdcms_pcc_sales =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_pcc_sales, access_filters, drill_state)
+            lpg_cdcms_april_consumer_stats =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_april_consumer_stats, access_filters, drill_state)
+            lpg_cdcms_current_consumer_stats =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_current_consumer_stats, access_filters, drill_state)
+            
+            if "where" not in lpg_cdcms_pcc_sales.lower():
                 lpg_cdcms_april_consumer_stats  += f' WHERE "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_current_consumer_stats += ' WHERE "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_pcc_sales += f' WHERE "CylType" = \'C142\' AND "Financial_Year"=\'{financial_year}\' '
