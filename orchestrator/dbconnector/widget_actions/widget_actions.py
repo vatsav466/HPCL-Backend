@@ -67,7 +67,16 @@ lpg_dashboard_actions = [
     'lpg_consumer_table',
     'industry_performance',
     'present_previous_month_sales',
-    'sales_drop_down'
+    'sales_drop_down',
+    'indent_dryout_counts',
+    'indent_status_summary',
+    'dryout_summary_by_product',
+    'detailed_dryout_summary',
+    'detailed_indent_status_summary',
+    'dryout_product_report',
+    'dryout_indent_report',
+    'product_quantity_by_location',
+    'ims_report'
 ]
 
 # Todo:- import all widget action modules here
@@ -140,7 +149,16 @@ widget_mapping = {
     'lpg_consumer_table': {},
     'industry_performance':{},
     'present_previous_month_sales': {},
-    'sales_drop_down': {}
+    'sales_drop_down': {},
+    'indent_dryout_counts': {},
+    'indent_status_summary': {},
+    'dryout_summary_by_product': {},
+    'detailed_dryout_summary': {},
+    'detailed_indent_status_summary': {},
+    'dryout_product_report': {},
+    'dryout_indent_report': {},
+    'product_quantity_by_location': {},
+    'ims_report': {}
 }
 
 
@@ -220,7 +238,6 @@ class WidgetActions:
             key = filter_item['key']
             condition = filter_item['cond']
             value = filter_item['value']
-
             if condition == 'equals':
                 if '.' in key:
                     if isinstance(value, int):
@@ -238,7 +255,7 @@ class WidgetActions:
                 conditions.append(f"{key} LIKE '%{value}%'")
             elif condition == 'suffix':
                 conditions.append(f"{key} LIKE '%{value}'")
-            elif condition in [' ', 'one-off'] and isinstance(value, list):
+            elif condition in [' ', 'one-off', 'in'] and isinstance(value, list):
                 values = "', '".join(map(str, value))
                 conditions.append(f''' "{key}" IN ('{values}') ''')
             elif condition == 'pattern':
