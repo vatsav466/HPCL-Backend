@@ -9,11 +9,10 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.audio import MIMEAudio
 from email.mime.multipart import MIMEMultipart
-from utilities.helpers import html_to_plain_text
-from orchestrator.notification_manager.notification_manager import NotificationManager
+import orchestrator.notification_manager.notification_manager as notification_manager
 
 
-class NotifyEMail(NotificationManager):
+class NotifyEMail(notification_manager):
     def __init__(self):
         super().__init__()
         self.notification_type = "Email"
@@ -27,7 +26,8 @@ class NotifyEMail(NotificationManager):
         creds = {"username": urdhva_base.settings.smtp_username, "password": urdhva_base.settings.smtp_password,
                  "port": urdhva_base.settings.smtp_port, "server": urdhva_base.settings.smtp_host,
                  "from": urdhva_base.settings.smtp_from_url,
-                 "connection_type": "SSL/TLS" if urdhva_base.settings.smtp_ssl_enabled else "STARTTLS"}
+                 "connection_type": "SSL/TLS" if urdhva_base.settings.smtp_ssl_enabled else "STARTTLS"
+                 if urdhva_base.settings.smtp_tls_enabled else None}
         return creds
 
     @classmethod
@@ -55,7 +55,7 @@ class NotifyEMail(NotificationManager):
             attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(filename))
             return attachment
 
-    async def publish_message(self, **kwargs):
+    def publish_message(self, **kwargs):
         """
         Handles the actual email sending process
         :param kwargs:
@@ -75,16 +75,17 @@ class NotifyEMail(NotificationManager):
         ---------------------------------------------------------------------------------------------------------
         """
         creds = self.load_credentials()
-        recipients = [kwargs['recipients']] if isinstance(kwargs['recipients'], str) else kwargs['recipients'] or []
+
+        recipients = [kwargs['to_emails']] if isinstance(kwargs['to_emails'], str) else kwargs['to_emails'] or []
 
         mail_content = MIMEMultipart('alternative' if creds.get("html_content") else 'mixed')
         mail_content['Subject'] = kwargs['subject']
-        mail_content['To'] = ",".join(kwargs['recipients'])
+        mail_content['To'] = ",".join(kwargs['to_emails'])
         mail_content['From'] = kwargs.get("from", creds['from'])
         # Reply to email
         if creds.get("reply_to"):
             mail_content['Reply-To'] = creds['reply_to']
-        mail_content.attach(MIMEText(kwargs['body'], 'html' if kwargs.get("html_content") else 'plain'))
+        mail_content.attach(MIMEText(kwargs['body'], 'html'if kwargs.get("html_content") else 'plain'))
         # Attaching files if any attachments
         for file_name in kwargs.get("attachments", []):
             mail_content.attach(self._attach_file(file_name))
@@ -99,12 +100,7 @@ class NotifyEMail(NotificationManager):
                     server.starttls(context=context)
                     server.ehlo()
             if creds.get('username') and creds.get("password"):
-                try:
-                    server.login(creds['username'], creds['password'])
-                except smtplib.SMTPAuthenticationError as e:
-                    print(f"SMTP Authentication Error: {e}")
-                except Exception as e:
-                    print(f"Unexpected Error during login: {e}")
+                server.login(creds['username'], creds['password'])
             server.sendmail(kwargs.get("from", creds['from']), recipients, mail_content.as_string())
             server.quit()
             return {"status": "success", "message": "Email sent successfully."}

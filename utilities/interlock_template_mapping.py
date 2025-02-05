@@ -10,9 +10,3 @@ class InterlockTemplateMapping(str, Enum):
 
 class TemplateMapping(str, Enum):
     ACTIVE = "INTERLOCK_ALERT"
-    NOTIFY = "INTERLOCK_ALERT"
-    REJECT = "INTERLOCK_ALERT"
-    ESCALATE = "INTERLOCK_ESCALATE"
-    EXCEPTION = "INTERLOCK_EXCEPTION"
-    BLOCK = ""
-    UNBLOCK = ""

@@ -5,10 +5,10 @@ class NotificationManager:
     @classmethod
     def load_credentials(cls):
         """
-        Function to load credentials, can be implemented by subclasses
+        Function to load credentials
         :return:
         """
-        pass
+        ...
 
     def publish_message(self, **kwargs):
         """
@@ -16,4 +16,4 @@ class NotificationManager:
         :param kwargs:
         :return:
         """
-        pass
+        ...

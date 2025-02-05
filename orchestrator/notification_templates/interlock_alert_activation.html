@@ -78,6 +78,30 @@
                                                                                     <td align="left" class="esd-block-text" esd-links-color="#477cec">
                                                                                         <p>Dear Sir/Ma’am,<br><br></p>
                                                                                         <p>This email is to notify you that HPCL CEG system has received <b>{{interlock_name}}&nbsp;</b>Interlock<b> Active</b> Signal for Asset <b>{{asset_name}} - {{asset_id}}&nbsp;</b>at <b>{{plant_location}}&nbsp;- {{plant_id}}</b> at <b>{{date_time}}</b><br><br></p>
+                                                                                        <p>Please note that this Interlock is <b>Active</b> because of <b>{{defined_condition}}</b>. Kindly login to HPCL CEG Portal <b><a href="{{portal_link}}" style="color: #477cec;">{{portal_link}}</a></b> for a detailed view.<br><br></p>
+                                                                                        <p>You are kindly requested to <b>take action within {{number_of_hours_before_escalate}} </b>. If no action is taken within this time period, HPCL CEG system will <b>escalate the same to {{nextLevelEscallationRoles}}</b><br>
+                                                                                            <br>Details regarding equipment are given below:
+                                                                                        </p>
+                                                                                    </td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        <table class="table sam-table" border="1" style="width: 100%; ">
+                                                                                            <tbody>
+                                                                                                <tr>
+                                                                                                    <td>Equipement Vendor</td>
+                                                                                                    <td>{{equipement_vendor}}</td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td>Equipement Contact (Phone)</td>
+                                                                                                    <td><a href="tel:{{equipement_contact}}" style="color: #245ed7;">{{equipement_contact}}</a></td>
+                                                                                                </tr>
+                                                                                                <tr>
+                                                                                                    <td>Equipement Contact (Phone)</td>
+                                                                                                    <td><a href="mailto:{{equipement_email}}" style="color: #245ed7;">{{equipement_email}}</a></td>
+                                                                                                </tr>
+                                                                                            </tbody>
+                                                                                        </table>
                                                                                     </td>
                                                                                 </tr>
                                                                             </tbody>

@@ -119,7 +119,6 @@ class AlertActionType(str, enum.Enum):
     UnderMaintenance = 'UnderMaintenance'
     RevocationApproved = 'RevocationApproved'
     ExceptionApproved = 'ExceptionApproved'
-    Active = 'Active'
 
 
 

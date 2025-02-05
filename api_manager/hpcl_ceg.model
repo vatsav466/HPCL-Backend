@@ -79,7 +79,6 @@ Enum AlertActionType str {
     UnderMaintenance='UnderMaintenance'
     RevocationApproved='RevocationApproved'
     ExceptionApproved='ExceptionApproved'
-    Active='Active'
 }
 
 Enum IndentStatus str {
