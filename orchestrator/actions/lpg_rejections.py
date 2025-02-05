@@ -49,7 +49,7 @@ class LpgRejections:
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter(pl.col("rejection") > 8)
         check_alerts = f""" SELECT 
-                                sap_id, device_id, created_at
+                                sap_id, device_name, created_at
                             FROM
                                 "alerts"
                             WHERE
@@ -57,7 +57,7 @@ class LpgRejections:
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         if not check_alerts.is_empty():
-            check_alerts = check_alerts.rename({"device_id": "rejection"}
+            check_alerts = check_alerts.rename({"device_name": "rejection"}
                                             ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
             rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
@@ -69,7 +69,7 @@ class LpgRejections:
             self.params["location_name"] = data["plant"]
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
-            self.params["device_id"] = str(data['rejection'])
+            self.params["device_name"] = str(data['rejection'])
             self.params["interlock_name"] = "cs_rejections"
             self.params["sop_id"] = "SOP077"
             await create_alert(self.params)
@@ -94,7 +94,7 @@ class LpgRejections:
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 6) | (pl.col("rejection") < 1))
         check_alerts = f""" SELECT 
-                                sap_id, device_id, created_at
+                                sap_id, device_name, created_at
                             FROM
                                 "alerts"
                             WHERE
@@ -102,7 +102,7 @@ class LpgRejections:
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         if not check_alerts.is_empty():
-            check_alerts = check_alerts.rename({"device_id": "rejection"}
+            check_alerts = check_alerts.rename({"device_name": "rejection"}
                                             ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
             rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
@@ -114,7 +114,7 @@ class LpgRejections:
             self.params["location_name"] = data["plant"]
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
-            self.params["device_id"] = str(data['rejection'])
+            self.params["device_name"] = str(data['rejection'])
             self.params["interlock_name"] = "gd_rejections"
             self.params["sop_id"] = "SOP078"
             await create_alert(self.params)
@@ -139,7 +139,7 @@ class LpgRejections:
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 12) | (pl.col("rejection") < 1))
         check_alerts = f""" SELECT
-                                sap_id, device_id, created_at
+                                sap_id, device_name, created_at
                             FROM
                                 "alerts"
                             WHERE
@@ -147,7 +147,7 @@ class LpgRejections:
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         if not check_alerts.is_empty():
-            check_alerts = check_alerts.rename({"device_id": "rejection"}
+            check_alerts = check_alerts.rename({"device_name": "rejection"}
                                             ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
             rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
@@ -159,7 +159,7 @@ class LpgRejections:
             self.params["location_name"] = data["plant"]
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
-            self.params["device_id"] = str(data['rejection'])
+            self.params["device_name"] = str(data['rejection'])
             self.params["interlock_name"] = "pt_rejections"
             self.params["sop_id"] = "SOP079"
             await create_alert(self.params)
