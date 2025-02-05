@@ -160,9 +160,10 @@ class AlertFactory:
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
-                if alert_data_dict.get("alert_section") not in ["VA"]:
-                    await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                    await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
+                # Uncomment below line to stop workflow for VA
+                # if alert_data_dict.get("alert_section") not in ["VA"]:
+                await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+                await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
                 # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                 #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
