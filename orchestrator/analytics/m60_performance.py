@@ -341,8 +341,12 @@ async def m60_performance(filters, cross_filters, drill_state=""):
         if each_filter['key'] not in fil_list:
             fil_list[each_filter['key']] = each_filter['value']
     '''
-    #This below if condition is to show the multi month selected cummulative values in the bar graph
-    if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0]:
+    print("filters",filters)
+    print("cross_filters",cross_filters)
+    #This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
+    #if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
+    if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name' not in cross_filters[0]['key']:
+
         print("this is inside if")
         print("merged_df",len(merged_df))
         print(merged_df)

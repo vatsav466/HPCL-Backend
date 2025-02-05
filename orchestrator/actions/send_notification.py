@@ -25,7 +25,7 @@ class SendNotification:
         self.alert_data = None
         self.params = None
         self.IST = pytz.timezone('Asia/Kolkata')
-        self.roles_mapper = hpcl_ceg_model.RoleMaster #TODO : NEED TO WRITE SEPERATE BLOCKS FOR EMAIL AND SMS BASED ON ROLES
+        self.roles_mapper = hpcl_ceg_model.RoleMaster  # TODO : NEED TO WRITE SEPERATE BLOCKS FOR EMAIL AND SMS BASED ON ROLES
         self.update_alert = {}
         self.mail_recipients = []
         self.sms_recipients = []
@@ -48,22 +48,23 @@ class SendNotification:
 
     async def process(self, params: typing.Dict):
         self.params = params
+        # return True, {"msg": "Notification skipped"}
         """Main processing method that orchestrates the notification flow"""
         try:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
-                
+
             # if self._should_skip_notification():
             #     return True, {"msg": "Notification skipped"}
-                
+
             await self._prepare_base_alert_data()
             await self._process_roles_and_users()
             await self._process_message_type()
             await self._send_notifications()
             await self._update_alert_status()
-            
+
             return await self._create_task_result()
-        
+
         except Exception as e:
             print(traceback.format_exc())
             # Log the error or add appropriate error handling
@@ -74,7 +75,7 @@ class SendNotification:
         alert_id = self.params.get("alert_id")
         print("alert_id --> ", alert_id)
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
-        
+
         if alert_data:
             self.alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
             return True
@@ -85,43 +86,43 @@ class SendNotification:
         bu = self.params.get("BU")
         sap_id = self.alert_data.get("plant_id", "")
         message_type = self.params.get("message_type")
-        
-#         # Get roles based on business unit and message type
-#         roles = await self._get_roles(bu, sap_id)
-#         # Prepare recipients and message content
-#         await self._prepare_recipients(roles)
-#         await self._prepare_message_content(bu, message_type)
+
+    #         # Get roles based on business unit and message type
+    #         roles = await self._get_roles(bu, sap_id)
+    #         # Prepare recipients and message content
+    #         await self._prepare_recipients(roles)
+    #         await self._prepare_message_content(bu, message_type)
 
     async def _get_roles(self, bu: str, sap_id: str) -> List[Dict]:
         """Get users based on dynamically generated Redis key using BU, sap_id, and role"""
         roles_key = "roles"  # Assuming all roles data is stored under a single key "roles"
         redis_client = await urdhva_base.redispool.get_redis_connection()
         all_roles_data = await redis_client.hgetall(roles_key)
-        
-#         # Filter users based on the dynamic key format
-#         matching_users = []
-#         for role_key, role_data in all_roles_data.items():
-#             # Generate the expected key format
-#             expected_key = f"{bu}_{sap_id}"
-#             if role_key.startswith(expected_key):
-#                 user_data = eval(role_data)  # Convert stored JSON string to dictionary if needed
-#                 matching_users.append({
-#                     "email": user_data.get("email"),
-#                     "phone": user_data.get("phone")
-#                 })
-        
-#         return matching_users
 
-#     async def _prepare_recipients(self, users: List[Dict]):
-#         """Prepare email and SMS recipients"""
-#         for user in users:
-#             if user.get("email"):
-#                 self.mail_recipients.append(user["email"])
-#             if user.get("phone"):
-#                 self.sms_recipients.append(user["phone"])
-                
-#         self.mail_recipients = list(dict.fromkeys(self.mail_recipients))
-#         self.sms_recipients = list(dict.fromkeys(self.sms_recipients))
+    #         # Filter users based on the dynamic key format
+    #         matching_users = []
+    #         for role_key, role_data in all_roles_data.items():
+    #             # Generate the expected key format
+    #             expected_key = f"{bu}_{sap_id}"
+    #             if role_key.startswith(expected_key):
+    #                 user_data = eval(role_data)  # Convert stored JSON string to dictionary if needed
+    #                 matching_users.append({
+    #                     "email": user_data.get("email"),
+    #                     "phone": user_data.get("phone")
+    #                 })
+
+    #         return matching_users
+
+    #     async def _prepare_recipients(self, users: List[Dict]):
+    #         """Prepare email and SMS recipients"""
+    #         for user in users:
+    #             if user.get("email"):
+    #                 self.mail_recipients.append(user["email"])
+    #             if user.get("phone"):
+    #                 self.sms_recipients.append(user["phone"])
+
+    #         self.mail_recipients = list(dict.fromkeys(self.mail_recipients))
+    #         self.sms_recipients = list(dict.fromkeys(self.sms_recipients))
 
     async def _prepare_message_content(self, bu: str, message_type: str):
         """Prepare message content (subject, body, and SMS)"""
@@ -133,14 +134,14 @@ class SendNotification:
             "status": self.update_alert.get("status", ""),
             "template": eval(f"TemplateMapping.{message_type.upper()}.value")
         }
-        
+
         # Load templates based on message type and business unit
         templates = await self._load_message_templates(template_data['template'])
-        
-#         # Render templates
-#         self.subject = Template(templates["subject"]).render(**template_data)
-#         self.body = Template(templates["body"]).render(**template_data)
-#         self.sms = Template(templates["sms"]).render(**template_data)
+
+    #         # Render templates
+    #         self.subject = Template(templates["subject"]).render(**template_data)
+    #         self.body = Template(templates["body"]).render(**template_data)
+    #         self.sms = Template(templates["sms"]).render(**template_data)
 
     async def _load_message_templates(self, template_name: str) -> Dict[str, str]:
         """Load message templates from configuration or database"""
@@ -155,14 +156,14 @@ class SendNotification:
     async def _handle_invalid_alert(self):
         """Handle case when alert is not found"""
         return False, "Alert not found"
-    
+
     async def _should_skip_notification(self) -> bool:
         """Check if notification should be skipped based on message type and status"""
         message_type = self.params.get("message_type")
         logger.info(f"self.alert_data1: {self.alert_data}")
         active_msg = self.alert_data.get("active", False)
         closed_msg = self.alert_data.get("closed", False)
-        
+
         if active_msg and message_type == "active":
             return True
         if closed_msg and message_type == "resolved":
@@ -177,7 +178,7 @@ class SendNotification:
         # opened_time = datetime.datetime.fromtimestamp(
         #     self.alert_data['created_at'], self.IST).strftime('%d-%m-%Y %H:%M:%S')
         opened_time = self.alert_data['created_at'].strftime('%d-%m-%Y %H:%M:%S')
-        
+
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
             "interlock_name": await self._get_interlock_name(),
@@ -188,7 +189,8 @@ class SendNotification:
             "portal_link": "https://ceg.hpcl.co.in",
             "user": self.params.get("user") or '',
             "asset_name": self.alert_data["device_type"],
-            "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]) # this should be location_id
+            "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"])
+            # this should be location_id
         }
 
     async def _get_interlock_name(self) -> str:
@@ -214,7 +216,7 @@ class SendNotification:
         """Handle escalation type notifications"""
         bu = self.params.get("BU")
         self.base_alert_data["action_msg"] = "ESCALATED"
-        
+
         self.update_alert["status"] = "Escalated"
         self.update_alert["isEscalated"] = True
 
@@ -254,24 +256,24 @@ class SendNotification:
         """Process approval-related notifications"""
         bu = self.params.get("BU")
         user = self.params.get("user", "").split('@')[0].strip()
-        
+
         action = f"{action_prefix} {'APPROVED' if not justify else ''}"
         self.base_alert_data["action"] = action
         self.base_alert_data["action_msg"] = f"{action} by {user}"
 
         self.update_alert["status"] = "Pending Approval" if justify else "Request Approved"
-    
+
     async def _send_notifications(self):
         """Send notifications based on business unit and message type"""
         bu = self.params.get("BU").upper()
         sop_id = self.alert_data.get('sop_id')
-        
-#         await self._send_notifications_with_sms(bu)
+
+    #         await self._send_notifications_with_sms(bu)
 
     async def _send_notifications_with_sms(self, bu: str):
         """Send notifications with SMS based on business unit"""
         message_type = self.params.get("message_type")
-        
+
         if message_type == "active":
             await self._send_active_notification()
         elif message_type == "resolved":
@@ -314,19 +316,18 @@ class SendNotification:
         """Update alert status in database"""
         alert_id = self.params.get("alert_id")
         self.update_alert['id'] = alert_id
-        print(self.params)
-        print('self.params.get("rolemailto")', self.params.get("rolemailto"))
-        print('self.params.get("mqofrole")', self.params.get("mqofrole"))
-        if self.params.get("escalationlevel_inmail"):
-            self.update_alert['last_escalated_to'] = self.params.get("rolemailto").split(',')
-            #self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
-            self.update_alert['assigned_user_roles'] = self.params.get("mqofrole", "").split(',') if self.params.get("mqofrole") else []
-            self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
-        else:
-            self.update_alert['last_notified_to'] = self.params.get("rolemailto").split(',')
-            self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
-            self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
-        print("**self.update_alert", self.update_alert)
+        # print(self.params)
+        # print('self.params.get("rolemailto")', self.params.get("rolemailto"))
+        # print('self.params.get("mqofrole")', self.params.get("mqofrole"))
+        # if self.params.get("escalationlevel_inmail"):
+        #     self.update_alert['last_escalated_to'] = self.params.get("rolemailto").split(',')
+        #     self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
+        #     self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
+        # else:
+        #     self.update_alert['last_notified_to'] = self.params.get("rolemailto").split(',')
+        #     self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
+        #     self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
+        # print("**self.update_alert", self.update_alert)
         alert_data = hpcl_ceg_model.Alerts(**self.update_alert)
         print("alert_data ", alert_data)
         await alert_data.modify()

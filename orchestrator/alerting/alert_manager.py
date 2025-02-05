@@ -62,7 +62,9 @@ class AlertAction:
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
                         "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert",
                         "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert"}
+        event_tag_map = {"Justification": "is_justify", "Approved": "is_approved", "AcceptClose": "accept", "InvalidAlert": "invalid"}
         alert_id = input_data['alert_id']
+        input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "is_approved"): True}})
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         except Exception as e:
@@ -94,7 +96,7 @@ class AlertAction:
             # if input_data.get("alert_section", "") == 'VA':
             # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
             if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
-                resp = await cls.close_va_alert(alert_data, input_data)
+                # resp = await cls.close_va_alert(alert_data, input_data)
                 if not isinstance(alert_data, dict):
                     alert_data = alert_data.__dict__
                 close_alert_data = {}
@@ -103,7 +105,7 @@ class AlertAction:
                 close_alert_data['alert_id'] = alert_data['id']
                 close_alert_data['interlock_id'] = alert_data['interlock_id']
                 await close_alert(close_alert_data)
-                print(f"VA Alert resp {resp}")
+                # print(f"VA Alert resp {resp}")
             return meg_resp
         return False, "Alert action is not valid"
 
@@ -218,6 +220,7 @@ class AlertAction:
         process_variables.update({"override_days": {"type": "String", "value": input_data.get('days', '')},
                                   "msg": {"type": "String", "value": msg},
                                   "action_type": {"type": "String", "value": action_type}})
+        print("process_variables: ", process_variables)
         messaged_data = {
             "messageName": action_type,
             "businessKey": alert_data.unique_id,
@@ -464,7 +467,7 @@ class AlertAction:
                 :param alert_data:
                 :return:
                 """
-        return await cls.publish_to_camunda(input_data, alert_data, "False")
+        return await cls.publish_to_camunda(input_data, alert_data, "FalseAlert")
     
     @classmethod
     async def tripped_alert(cls, input_data, alert_data):
