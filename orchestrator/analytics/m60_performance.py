@@ -173,6 +173,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
     for index, _ in enumerate(cross_filters):
         cross_filters[index]['key'] = cross_filters[index]['key'].strip('"')
     cross_filters = [rec for rec in cross_filters if not (rec['key'] == 'month_name' and not rec['value'].strip('"'))]
+    # Modifying month name filter for cumulative
+    for filter in cross_filters:
+        if filter['key'].strip('"') == 'month_name' and ',' in filter['value']:
+            filter['cond'] = 'in'
+            filter['value'] = filter['value'].split(',')
     actual_data = []
     hist_data = []
     target_data = []
@@ -396,7 +401,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
 
     #This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
     #if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
-    if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name'  in merged_df.columns:
+    if len(where_conditions) == 1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name'  in merged_df.columns:
 
         print("this is inside if")
         print("merged_df",len(merged_df))
