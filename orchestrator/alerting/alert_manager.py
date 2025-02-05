@@ -95,7 +95,7 @@ class AlertAction:
             # if input_data.get("alert_section", "") == 'VA':
             # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
             if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
-                resp = await cls.close_va_alert(alert_data, input_data)
+                # resp = await cls.close_va_alert(alert_data, input_data)
                 if not isinstance(alert_data, dict):
                     alert_data = alert_data.__dict__
                 close_alert_data = {}
@@ -104,7 +104,7 @@ class AlertAction:
                 close_alert_data['alert_id'] = alert_data['id']
                 close_alert_data['interlock_id'] = alert_data['interlock_id']
                 await close_alert(close_alert_data)
-                print(f"VA Alert resp {resp}")
+                # print(f"VA Alert resp {resp}")
             return meg_resp
         return False, "Alert action is not valid"
 
