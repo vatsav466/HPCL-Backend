@@ -269,7 +269,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
 
     # Data Retrival for target data
     if target:
-        group_keys = group_by_filter
+        group_keys = [key for key in group_by_filter]
         if '"month_name"' not in group_by_filter:
             group_keys.append("month_name")
         target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
@@ -405,7 +405,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
             result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
 
-    if len(cross_filters)>0:
+    if len(cross_filters) > 0:
         filter_order = [key.strip('"') for key in Base_Filters]
         #filter_order = Base_Filters
         sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
@@ -419,7 +419,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
         sorted_cross_filters[-1]['cond'] = '='
         Charts_Get_Distinct_ValuesParams.where_cond = [sorted_cross_filters[-1]]
         function = await charts_connection_vault_routing(Charts_Get_Distinct_ValuesParams)
-        resp = await function(schema_name = 'public',table_name="MOM_DAY_LEVEL_DATA",column_name=Charts_Get_Distinct_ValuesParams.column,where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
+        resp = await function(schema_name='public', table_name="MOM_DAY_LEVEL_DATA",
+                              column_name=Charts_Get_Distinct_ValuesParams.column, where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
         print(resp)
         sorted_level = resp['data']
         for each_filter in sorted_cross_filters:
@@ -435,7 +436,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
         if len(group_by_filter) > 1:
             final_resp = generate_stacked_data(merged_df)
         else:
-            final_resp =  {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+            final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         #commenting the below lines to return the cross_filters directly
         '''
         sorted_level = {}
@@ -461,7 +462,7 @@ def generate_stacked_data(df):
             transformed_entry = {
                 "month_name": month,
                 **{key: group[key].tolist() for key in numeric_cols},
-                **{key: group["Zone_Name"].tolist() for key in other_columns}
+                **{key: group[key].tolist() for key in other_columns}
             }
             result.append(transformed_entry)
         return result
