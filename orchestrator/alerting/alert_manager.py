@@ -104,7 +104,7 @@ class AlertAction:
                 close_alert_data['alert_id'] = alert_data['id']
                 close_alert_data['interlock_id'] = alert_data['interlock_id']
                 await close_alert(close_alert_data)
-                print(f"VA Alert resp {resp}")
+                # print(f"VA Alert resp {resp}")
             return meg_resp
         return False, "Alert action is not valid"
 
