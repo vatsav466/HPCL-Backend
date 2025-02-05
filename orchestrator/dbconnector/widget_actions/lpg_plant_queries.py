@@ -898,7 +898,27 @@ LIMIT 10000;''',
                                     SUM("Total_Pending") AS "Total_Pending"
                                 FROM
                                     "lpg_cdcms_sales_summary" ''',
-                                    
+    
+    "lpg_cdcms_april_consumer_stats": f''' SELECT
+                                                "JDEDistributorCode", "SubCategory", "ZOName",
+                                                "SAName", "ZOCode", "ROName",
+                                                SUM("ConsumerCount") AS "ConsumerCount"
+                                            FROM
+                                                "LPG_CONSUMER_APRIL" ''',
+    
+    "lpg_cdcms_current_consumer_stats": f''' SELECT "JDEDistributorCode", "SubCategory", "ZOName",
+                                                    "SAName", "ROName",
+                                                    SUM("ConsumerCount") AS "ConsumerCount"
+                                                FROM 
+                                                    "LPG_CONSUMERS_SUMMARY"
+                                                ''',
+                 "lpg_cdcms_pcc_sales": f''' SELECT 
+                                                "JDEDistributorCode", "ConsumerType", "CylType", "ZOName",
+                                                "SAName", "ROName", 
+                                                SUM("TotalSalesYesterday") AS "TotalSalesYesterday"
+                                            FROM
+                                                "lpg_monthly_cdcms_sales_summary" ''',
+
     "lpg_cdcms_dbc_enrollments": ''' SELECT 
                                         "ZOName" ,
                                         "ROName",
