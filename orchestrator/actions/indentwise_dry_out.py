@@ -1086,7 +1086,7 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
-            return self.is_product_delivered_ims(params=params)
+            return await self.is_product_delivered_ims(params=params)
         else:
             cris_resp = pd.DataFrame(cris_resp)
         # print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
