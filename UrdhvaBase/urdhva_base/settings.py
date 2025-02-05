@@ -140,6 +140,7 @@ class Settings(pydantic_settings.BaseSettings):
         "sleepSeconds": 30
     }
     camunda_url_config: typing.Dict[str, typing.Dict] = {}
+    camunda_url_va_config: typing.Dict[str, typing.Dict] = {}
 
     # For DB Connection Mapping
     db_connection_config: typing.Dict[str, str] = {}

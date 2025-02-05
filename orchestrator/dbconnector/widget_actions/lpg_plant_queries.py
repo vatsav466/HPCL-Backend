@@ -1366,5 +1366,844 @@ GROUP BY
     a.location_name, period
 ORDER BY 
     avg_total_sales 
+''',
+    'i_dryout_ro_count': '''select sum("alerts_view"."total_unique_count") as "total_count" from
+            (WITH max_progress_rate AS (
+            SELECT 
+                sap_id, 
+                MAX(progress_rate) AS present_stage,
+                dry_out_in_days
+            FROM alerts
+            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+              AND indent_status NOT IN ('Cancelled', 'Completed')
+            GROUP BY sap_id, dry_out_in_days
+        )
+                    SELECT 
+                        dry_out_in_days,
+                        SUM(unique_count) AS total_unique_count
+                    FROM (
+                        SELECT 
+                            dry_out_in_days, 
+                            present_stage, 
+                            COUNT(DISTINCT sap_id) AS unique_count
+                        FROM max_progress_rate
+                        WHERE present_stage != '11'
+                        GROUP BY dry_out_in_days, present_stage
+                    ) subquery
+                    GROUP BY dry_out_in_days
+                    ORDER BY dry_out_in_days)  "alerts_view" 
+        where
+            ( "alerts_view"."dry_out_in_days"  IN ('1') )''',
+
+    'i_intraday_dryout_ro_count': '''select sum("alerts_view"."total_unique_count") as "total_count" from
+            (WITH max_progress_rate AS (
+            SELECT 
+                sap_id, 
+                MAX(progress_rate) AS present_stage,
+                dry_out_in_days
+            FROM alerts
+            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+              AND indent_status NOT IN ('Cancelled', 'Completed')
+            GROUP BY sap_id, dry_out_in_days
+        )
+                    SELECT 
+                        dry_out_in_days,
+                        SUM(unique_count) AS total_unique_count
+                    FROM (
+                        SELECT 
+                            dry_out_in_days, 
+                            present_stage, 
+                            COUNT(DISTINCT sap_id) AS unique_count
+                        FROM max_progress_rate
+                        WHERE present_stage != '11'
+                        GROUP BY dry_out_in_days, present_stage
+                    ) subquery
+                    GROUP BY dry_out_in_days
+                    ORDER BY dry_out_in_days)  "alerts_view" 
+        where
+            ( "alerts_view"."dry_out_in_days"  IN ('2'))''',
+
+    'i_potential_dryout_ro_count': '''select 
+             CASE
+                WHEN SUM("alerts_view"."total_unique_count") IS NULL THEN 'Coming Soon'
+                ELSE CAST(SUM("alerts_view"."total_unique_count") AS VARCHAR)
+            END as "total_count" 
+        from
+            (WITH max_progress_rate AS (
+                                SELECT 
+                                    sap_id, 
+                                    MAX(progress_rate) AS present_stage,
+                                    dry_out_in_days
+                                FROM alerts
+                                WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                                  AND indent_status NOT IN ('Cancelled', 'Completed')
+                                GROUP BY sap_id, dry_out_in_days
+                            )
+                            SELECT 
+                                dry_out_in_days,
+                                SUM(unique_count) AS total_unique_count
+                            FROM (
+                                SELECT 
+                                    dry_out_in_days, 
+                                    present_stage, 
+                                    COUNT(DISTINCT sap_id) AS unique_count
+                                FROM max_progress_rate
+                                WHERE present_stage != '11'
+                                GROUP BY dry_out_in_days, present_stage
+                            ) subquery
+                            GROUP BY dry_out_in_days
+                            ORDER BY dry_out_in_days)  "alerts_view" 
+        where
+            ( "alerts_view"."dry_out_in_days"  IN ('3'))''',
+
+    'i_indent_status_summary': '''select 
+            "View 1"."progress_name" as "indent_status",
+            count(distinct("View 1"."sap_id")) as "total_ro",
+            "View 1"."dry_out_name" as "dryout_status" 
+        from
+            (SELECT 
+            *,
+            CASE 
+                WHEN "alerts"."progress_rate" = '1' THEN 'Indent Not Raised'
+                WHEN "alerts"."progress_rate" = '2' THEN 'Indent On Hold'
+                WHEN "alerts"."progress_rate" = '3' THEN 'Pending Indents'
+                WHEN "alerts"."progress_rate" = '4' THEN 'Truck Allocated'
+                WHEN "alerts"."progress_rate" = '5' THEN 'Sent to SAP'
+                WHEN "alerts"."progress_rate" = '6' THEN 'Sales Order Placed'
+                WHEN "alerts"."progress_rate" = '7' THEN 'R2 Swiped'
+                WHEN "alerts"."progress_rate" = '8' THEN 'Invoice Created'
+                WHEN "alerts"."progress_rate" = '9' THEN 'R3 Swiped'
+                WHEN "alerts"."progress_rate" = '10' THEN 'VTS'
+                WHEN "alerts"."progress_rate" = '11' THEN 'Indent Delivered'
+            END AS "progress_name",
+            CASE 
+                WHEN "product_code" = '2811000' THEN 'MS'
+                WHEN "product_code" = '2812000' THEN 'HSD'
+                WHEN "product_code" = '3912000' THEN 'TURBO'
+                WHEN "product_code" = '2822000' THEN 'E20'
+                WHEN "product_code" = '3672000' THEN 'POWER 95'
+                WHEN "product_code" = '2816000' THEN 'POWER 99'
+                WHEN "product_code" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            CASE 
+                WHEN "dry_out_in_days" = '1' THEN 'Fully Dry Out'
+                WHEN "dry_out_in_days" = '2' THEN 'Intra-Day Dry Out'
+                WHEN "dry_out_in_days" = '3' THEN 'Potential Dry Out'
+                ELSE 'Dry Out'
+            END AS "dry_out_name"
+        FROM 
+            "alerts"
+        WHERE 
+            "alerts"."interlock_name" IN ('Dry Out Each Indent Wise MainFlow')
+            AND (
+                (
+                    "alerts"."indent_status" = 'Completed' 
+                    AND CAST("alerts"."updated_at" AS DATE) = CURRENT_DATE
+                )
+                OR 
+                (
+                    "alerts"."indent_status" != 'Completed' 
+                    AND "alerts"."indent_status" NOT IN ('Cancelled')
+                )
+            )
+            AND "zone" IS NOT NULL AND "zone" != '' 
+            AND "sales_area" IS NOT NULL AND "sales_area" != '' 
+            AND "region" IS NOT NULL AND "region" != '')  "View 1" 
+        where
+            ( "View 1"."progress_rate"  NOT IN ('11')) and 
+            ("View 1"."progress_name" IS NOT NULL AND "View 1"."progress_name" != '')
+        group by
+            "View 1"."progress_name", "View 1"."dry_out_name" 
+        order by
+            count(("View 1"."sap_id")) desc, "View 1"."dry_out_name" asc ''',
+
+    'i_dryout_summary_by_product': '''select 
+            "View 1"."product_name" as "product",
+            count(distinct("View 1"."sap_id")) as "total_ro",
+            "View 1"."dry_out_name" as "dryout_status" 
+        from
+            (SELECT 
+            *,
+            CASE 
+                WHEN "alerts"."progress_rate" = '1' THEN 'Indent Not Raised'
+                WHEN "alerts"."progress_rate" = '2' THEN 'Indent On Hold'
+                WHEN "alerts"."progress_rate" = '3' THEN 'Pending Indents'
+                WHEN "alerts"."progress_rate" = '4' THEN 'Truck Allocated'
+                WHEN "alerts"."progress_rate" = '5' THEN 'Sent to SAP'
+                WHEN "alerts"."progress_rate" = '6' THEN 'Sales Order Placed'
+                WHEN "alerts"."progress_rate" = '7' THEN 'R2 Swiped'
+                WHEN "alerts"."progress_rate" = '8' THEN 'Invoice Created'
+                WHEN "alerts"."progress_rate" = '9' THEN 'R3 Swiped'
+                WHEN "alerts"."progress_rate" = '10' THEN 'VTS'
+                WHEN "alerts"."progress_rate" = '11' THEN 'Indent Delivered'
+            END AS "progress_name",
+            CASE 
+                WHEN "product_code" = '2811000' THEN 'MS'
+                WHEN "product_code" = '2812000' THEN 'HSD'
+                WHEN "product_code" = '3912000' THEN 'TURBO'
+                WHEN "product_code" = '2822000' THEN 'E20'
+                WHEN "product_code" = '3672000' THEN 'POWER 95'
+                WHEN "product_code" = '2816000' THEN 'POWER 99'
+                WHEN "product_code" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            CASE 
+                WHEN "dry_out_in_days" = '1' THEN 'Fully Dry Out'
+                WHEN "dry_out_in_days" = '2' THEN 'Intra-Day Dry Out'
+                WHEN "dry_out_in_days" = '3' THEN 'Potential Dry Out'
+                ELSE 'Dry Out'
+            END AS "dry_out_name"
+        FROM 
+            "alerts"
+        WHERE 
+            "alerts"."interlock_name" IN ('Dry Out Each Indent Wise MainFlow')
+            AND (
+                (
+                    "alerts"."indent_status" = 'Completed' 
+                    AND CAST("alerts"."updated_at" AS DATE) = CURRENT_DATE
+                )
+                OR 
+                (
+                    "alerts"."indent_status" != 'Completed' 
+                    AND "alerts"."indent_status" NOT IN ('Cancelled')
+                )
+            )
+            AND "zone" IS NOT NULL AND "zone" != '' 
+            AND "sales_area" IS NOT NULL AND "sales_area" != '' 
+            AND "region" IS NOT NULL AND "region" != '')  "View 1" 
+        where
+            ( "View 1"."progress_rate"  NOT IN ( '11') AND "View 1"."indent_status"  NOT IN ( 'Completed') ) 
+        group by
+            "View 1"."product_name", "View 1"."dry_out_name" 
+        order by
+            count(("View 1"."sap_id")) desc, "View 1"."dry_out_name" asc ''',
+
+    'i_detailed_dryout_summary': '''select 
+            {display_col},
+            "View 1"."dry_out_name" as "dryout_status",
+            count(distinct("View 1"."sap_id")) as "total_ro" 
+        from
+            (SELECT 
+            *,
+            CASE 
+                WHEN "alerts"."progress_rate" = '1' THEN 'Indent Not Raised'
+                WHEN "alerts"."progress_rate" = '2' THEN 'Indent On Hold'
+                WHEN "alerts"."progress_rate" = '3' THEN 'Pending Indents'
+                WHEN "alerts"."progress_rate" = '4' THEN 'Truck Allocated'
+                WHEN "alerts"."progress_rate" = '5' THEN 'Sent to SAP'
+                WHEN "alerts"."progress_rate" = '6' THEN 'Sales Order Placed'
+                WHEN "alerts"."progress_rate" = '7' THEN 'R2 Swiped'
+                WHEN "alerts"."progress_rate" = '8' THEN 'Invoice Created'
+                WHEN "alerts"."progress_rate" = '9' THEN 'R3 Swiped'
+                WHEN "alerts"."progress_rate" = '10' THEN 'VTS'
+                WHEN "alerts"."progress_rate" = '11' THEN 'Indent Delivered'
+            END AS "progress_name",
+            CASE 
+                WHEN "product_code" = '2811000' THEN 'MS'
+                WHEN "product_code" = '2812000' THEN 'HSD'
+                WHEN "product_code" = '3912000' THEN 'TURBO'
+                WHEN "product_code" = '2822000' THEN 'E20'
+                WHEN "product_code" = '3672000' THEN 'POWER 95'
+                WHEN "product_code" = '2816000' THEN 'POWER 99'
+                WHEN "product_code" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            CASE 
+                WHEN "dry_out_in_days" = '1' THEN 'Fully Dry Out'
+                WHEN "dry_out_in_days" = '2' THEN 'Intra-Day Dry Out'
+                WHEN "dry_out_in_days" = '3' THEN 'Potential Dry Out'
+                ELSE 'Dry Out'
+            END AS "dry_out_name"
+        FROM 
+            "alerts"
+        WHERE 
+            "alerts"."interlock_name" IN ('Dry Out Each Indent Wise MainFlow')
+            AND (
+                (
+                    "alerts"."indent_status" = 'Completed' 
+                    AND CAST("alerts"."updated_at" AS DATE) = CURRENT_DATE
+                )
+                OR 
+                (
+                    "alerts"."indent_status" != 'Completed' 
+                    AND "alerts"."indent_status" NOT IN ('Cancelled')
+                )
+            )
+            AND "zone" IS NOT NULL AND "zone" != '' 
+            AND "sales_area" IS NOT NULL AND "sales_area" != '' 
+            AND "region" IS NOT NULL AND "region" != '')  "View 1" 
+        where
+            ( "View 1"."progress_rate"  NOT IN ('11') ) 
+        group by
+           {grp_col}, "View 1"."dry_out_name" ''',
+
+    'i_detailed_indent_status_summary': '''select 
+            "View 1"."zone" as "zone",
+            "View 1"."region" as "region",
+            "View 1"."sales_area" as "sales_area",
+            "View 1"."product_name" as "product_name",
+            "View 1"."progress_name" as "indent_status",
+            count(distinct("View 1"."sap_id")) as "total_ro" 
+        from
+            (SELECT 
+            *,
+            CASE 
+                WHEN "alerts"."progress_rate" = '1' THEN 'Indent Not Raised'
+                WHEN "alerts"."progress_rate" = '2' THEN 'Indent On Hold'
+                WHEN "alerts"."progress_rate" = '3' THEN 'Pending Indents'
+                WHEN "alerts"."progress_rate" = '4' THEN 'Truck Allocated'
+                WHEN "alerts"."progress_rate" = '5' THEN 'Sent to SAP'
+                WHEN "alerts"."progress_rate" = '6' THEN 'Sales Order Placed'
+                WHEN "alerts"."progress_rate" = '7' THEN 'R2 Swiped'
+                WHEN "alerts"."progress_rate" = '8' THEN 'Invoice Created'
+                WHEN "alerts"."progress_rate" = '9' THEN 'R3 Swiped'
+                WHEN "alerts"."progress_rate" = '10' THEN 'VTS'
+                WHEN "alerts"."progress_rate" = '11' THEN 'Indent Delivered'
+            END AS "progress_name",
+            CASE 
+                WHEN "product_code" = '2811000' THEN 'MS'
+                WHEN "product_code" = '2812000' THEN 'HSD'
+                WHEN "product_code" = '3912000' THEN 'TURBO'
+                WHEN "product_code" = '2822000' THEN 'E20'
+                WHEN "product_code" = '3672000' THEN 'POWER 95'
+                WHEN "product_code" = '2816000' THEN 'POWER 99'
+                WHEN "product_code" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            CASE 
+                WHEN "dry_out_in_days" = '1' THEN 'Fully Dry Out'
+                WHEN "dry_out_in_days" = '2' THEN 'Intra-Day Dry Out'
+                WHEN "dry_out_in_days" = '3' THEN 'Potential Dry Out'
+                ELSE 'Dry Out'
+            END AS "dry_out_name"
+        FROM 
+            "alerts"
+        WHERE 
+            "alerts"."interlock_name" IN ('Dry Out Each Indent Wise MainFlow')
+            AND (
+                (
+                    "alerts"."indent_status" = 'Completed' 
+                    AND CAST("alerts"."updated_at" AS DATE) = CURRENT_DATE
+                )
+                OR 
+                (
+                    "alerts"."indent_status" != 'Completed' 
+                    AND "alerts"."indent_status" NOT IN ('Cancelled')
+                )
+            )
+            AND "zone" IS NOT NULL AND "zone" != '' 
+            AND "sales_area" IS NOT NULL AND "sales_area" != '' 
+            AND "region" IS NOT NULL AND "region" != '')  "View 1" 
+        where 
+            "View 1"."progress_name" IS NOT NULL AND "View 1"."progress_name" != ''
+        group by
+            "View 1"."zone", "View 1"."region", "View 1"."sales_area", "View 1"."product_name", "View 1"."progress_name" 
+        order by
+            count(("View 1"."sap_id")) desc ''',
+
+    'i_product_report': '''SELECT 
+    "dryoutreport_view"."locn_code" AS "location_code",
+    "dryoutreport_view"."location_name" AS "location_name",
+    "dryoutreport_view"."dealer_code" AS "dealer_code",
+    "dryoutreport_view"."indent_no" AS "indent_number",
+    "dryoutreport_view"."indent_status" AS "indent_status",
+    "dryoutreport_view"."product_name" AS "product_name",
+    CASE 
+        WHEN SUM("dryoutreport_view"."qty") < 1000 THEN SUM("dryoutreport_view"."qty") * 1000
+        ELSE SUM("dryoutreport_view"."qty")
+    END AS "Quantity",
+    "dryoutreport_view"."dry_out_status" AS "Dry Out Status" 
+FROM
+    (WITH CombinedData AS (
+        SELECT 
+            ir."locn_code",
+            ir."indent_no",
+            ir."indent_date",
+            ir."prod_reqd_dt",
+            ir."dealer_code",
+            ir."batch_flag",
+            ir."truck_regno",
+            ir."valid_indent",
+            ir."send_to_jde_time",
+            ir."delivery_date",
+            ir."indent_hold_release_time",
+            ir."indent_executable_time",
+            ip."prod" AS "product_code",
+            CASE 
+                WHEN ip."prod" = '2811000' THEN 'MS'
+                WHEN ip."prod" = '2812000' THEN 'HSD'
+                WHEN ip."prod" = '3912000' THEN 'TURBO'
+                WHEN ip."prod" = '2822000' THEN 'E20'
+                WHEN ip."prod" = '3672000' THEN 'POWER 95'
+                WHEN ip."prod" = '2816000' THEN 'POWER 99'
+                WHEN ip."prod" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            ip."qty",
+            ip."prod_allot_time",
+            ip."sales_orderno",
+            ip."invoice_no",
+            ip."jde_truck_no",
+            tse."LOADED_ON",
+            tse."CARD_STATUS",
+            ROW_NUMBER() OVER (
+                PARTITION BY COALESCE(ir."locn_code"::TEXT, ''), 
+                             COALESCE(ir."indent_no"::TEXT, ''), 
+                             COALESCE(ir."dealer_code"::TEXT, ''), 
+                             COALESCE(ip."prod"::TEXT, '') 
+                ORDER BY tse."LOADED_ON" ASC
+            ) AS rn
+        FROM 
+            "IMS_SAP"."INDENT_REQUEST" ir
+        LEFT JOIN 
+            "IMS_SAP"."INDENT_PRODUCTS" ip
+        ON 
+            COALESCE(ir."locn_code"::TEXT, '') = COALESCE(ip."locn_code"::TEXT, '')
+            AND COALESCE(ir."dealer_code"::TEXT, '') = COALESCE(ip."dealer_code"::TEXT, '')
+            AND COALESCE(ir."indent_no"::TEXT, '') = COALESCE(ip."indent_no"::TEXT, '')
+        LEFT JOIN 
+            "public"."TRUCK_SWIPE_ENTRY_SAP" tse
+        ON 
+            COALESCE(ir."locn_code"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
+            AND COALESCE(ir."truck_regno"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
+            AND tse."CARD_STATUS" = 'O'
+            AND tse."LOADED_ON"::timestamp >= ir."prod_reqd_dt"::timestamp
+            AND tse."LOADED_ON"::timestamp <= ir."prod_reqd_dt"::timestamp + INTERVAL '1 day'
+    )
+    SELECT 
+        a.sap_id AS sap_id,
+        a.location_name AS location_name,
+        a.terminal_plant_id AS terminal_plant_id,
+        a.indent_no AS INDENT_NO,
+        a.product_code AS product_code,
+        a.indent_status AS indent_status,
+        CASE 
+            WHEN a.dry_out_in_days = '1' THEN 'Fully Dry Out'
+            WHEN a.dry_out_in_days = '2' THEN 'IntraDay Dry Out'
+            WHEN a.dry_out_in_days = '3' THEN 'Potential Dry Out'
+            ELSE 'Dry Out'
+        END AS dry_out_status,
+        cd."locn_code",
+        cd."indent_no" AS "indent_number",
+        cd."indent_date",
+        cd."prod_reqd_dt",
+        cd."dealer_code",
+        cd."batch_flag",
+        cd."truck_regno",
+        cd."valid_indent",
+        cd."send_to_jde_time",
+        cd."delivery_date",
+        cd."indent_hold_release_time",
+        cd."indent_executable_time",
+        cd."product_code",
+        cd."product_name",
+        cd."qty",
+        cd."prod_allot_time",
+        cd."sales_orderno",
+        cd."invoice_no",
+        cd."jde_truck_no",
+        cd."LOADED_ON",
+        cd."CARD_STATUS"
+    FROM 
+        (SELECT * 
+         FROM alerts 
+         WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+         AND indent_status NOT IN ('Cancelled', 'Completed')
+         AND dry_out_in_days IN ('1', '2')) a
+    LEFT JOIN 
+        CombinedData cd
+    ON 
+        COALESCE(substr(cd."dealer_code", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
+        AND COALESCE(cd."indent_no"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
+        AND COALESCE(cd."product_code"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+    WHERE 
+        cd.rn = 1 OR cd.rn IS NULL
+    ORDER BY 
+        a.sap_id, a.indent_no) "dryoutreport_view" 
+WHERE
+    "dryoutreport_view"."indent_no" IS NOT NULL
+GROUP BY
+    "dryoutreport_view"."locn_code", "dryoutreport_view"."location_name", "dryoutreport_view"."dealer_code", 
+    "dryoutreport_view"."indent_no", "dryoutreport_view"."indent_status", "dryoutreport_view"."product_name", 
+    "dryoutreport_view"."dry_out_status" 
+ORDER BY
+    "dryoutreport_view"."indent_no" ASC, 
+    CASE 
+        WHEN SUM("dryoutreport_view"."qty") < 1000 THEN SUM("dryoutreport_view"."qty") * 1000
+        ELSE SUM("dryoutreport_view"."qty")
+    END DESC;
+''',
+
+    'i_indent_report': '''select 
+                "dryoutreport_view"."LOCN_CODE" as "Loc Code",
+                "dryoutreport_view"."location_name" as "Loc Name",
+                "dryoutreport_view"."DEALER_CODE" as "Dealer Code",
+                "dryoutreport_view"."INDENT_NO" as "Indent No",
+                "dryoutreport_view"."INDENT_DATE" as "Indent Date",
+                "dryoutreport_view"."indent_status" as "Indent Status",
+                "dryoutreport_view"."DELIVERY_DATE" as "Delivery Date",
+                "dryoutreport_view"."INVOICE_NO" as "Invoice No",
+                "dryoutreport_view"."JDE_TRUCK_NO" as "JDE Truck No",
+                "dryoutreport_view"."LOADED_ON" as "Loaded On",
+                "dryoutreport_view"."PRODUCT_NAME" as "Product Name",
+                "dryoutreport_view"."PROD_ALLOT_TIME" as "Prod Alot Time",
+                "dryoutreport_view"."SALES_ORDERNO" as "Sales Order No",
+                "dryoutreport_view"."SEND_TO_JDE_TIME" as "Send to JDE Time",
+                "dryoutreport_view"."BATCH_FLAG" as "Batch Flag",
+                "dryoutreport_view"."VALID_INDENT" as "Valid Indent",
+                CASE 
+                    WHEN SUM("dryoutreport_view"."QTY")  < 1000 THEN SUM("dryoutreport_view"."QTY") * 1000
+                    ELSE SUM("dryoutreport_view"."QTY")
+                END as "Quantity",
+                "dryoutreport_view"."CARD_STATUS" as "Card Status",
+                "dryoutreport_view"."INDENT_EXECUTABLE_TIME" as "Indent Executable Time",
+                "dryoutreport_view"."INDENT_HOLD_RELEASE_TIME" as "Indent Hold Release Time" 
+            from
+                (WITH CombinedData AS (
+                SELECT 
+                    ir."LOCN_CODE",
+                    ir."INDENT_NO",
+                    ir."INDENT_DATE",
+                    ir."PROD_REQD_DT",
+                    ir."DEALER_CODE",
+                    ir."BATCH_FLAG",
+                    ir."TRUCK_REGNO",
+                    ir."VALID_INDENT",
+                    ir."SEND_TO_JDE_TIME",
+                    ir."DELIVERY_DATE",
+                    ir."INDENT_HOLD_RELEASE_TIME",
+                    ir."INDENT_EXECUTABLE_TIME",
+                    ip."PROD" AS "PRODUCT_CODE",
+                    CASE 
+                    WHEN ip."PROD" = '2811000' THEN 'MS'
+                    WHEN ip."PROD" = '2812000' THEN 'HSD'
+                    WHEN ip."PROD" = '3912000' THEN 'TURBO'
+                    WHEN ip."PROD" = '2822000' THEN 'E20'
+                    WHEN ip."PROD" = '3672000' THEN 'POWER 95'
+                    WHEN ip."PROD" = '2816000' THEN 'POWER 99'
+                    WHEN ip."PROD" = '3373000' THEN 'POWER 100'
+                    ELSE 'Unknown'
+                END AS "PRODUCT_NAME",
+                    ip."QTY",
+                    ip."PROD_ALLOT_TIME",
+                    ip."SALES_ORDERNO",
+                    ip."INVOICE_NO",
+                    ip."JDE_TRUCK_NO",
+                    tse."LOADED_ON",
+                    tse."CARD_STATUS",
+                    ROW_NUMBER() OVER (
+                        PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
+                                     COALESCE(ir."INDENT_NO"::TEXT, ''), 
+                                     COALESCE(ir."DEALER_CODE"::TEXT, ''), 
+                                     COALESCE(ip."PROD"::TEXT, '') 
+                        ORDER BY tse."LOADED_ON" ASC
+                    ) AS rn
+                FROM 
+                    "IMS_SAP"."INDENT_REQUEST" ir
+                LEFT JOIN 
+                    "IMS_SAP"."INDENT_PRODUCTS" ip
+                ON 
+                    COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
+                    AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
+                    AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
+                LEFT JOIN 
+                    "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+                ON 
+                    COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
+                    AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
+                    AND tse."CARD_STATUS" = 'O'
+                    AND tse."LOADED_ON"::TIMESTAMP >= ir."PROD_REQD_DT"
+                    AND tse."LOADED_ON"::TIMESTAMP <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+            )
+            SELECT 
+                a.sap_id AS sap_id,
+                a.location_name AS location_name,
+                a.terminal_plant_id AS terminal_plant_id,
+                a.indent_no AS indent_no,
+                a.product_code AS product_code,
+                a.indent_status AS indent_status,
+                -- Add the CASE statement for dry_out_in_days
+                CASE 
+                    WHEN a.dry_out_in_days = '1' THEN 'Fully Dry Out'
+                    WHEN a.dry_out_in_days = '2' THEN 'IntraDay Dry Out'
+                    WHEN a.dry_out_in_days = '3' THEN 'Potential Dry Out'
+                    ELSE 'Dry Out'
+                END AS dry_out_status,
+                cd."LOCN_CODE",
+                cd."INDENT_NO",
+                cd."INDENT_DATE",
+                cd."PROD_REQD_DT",
+                cd."DEALER_CODE",
+                cd."BATCH_FLAG",
+                cd."TRUCK_REGNO",
+                cd."VALID_INDENT",
+                cd."SEND_TO_JDE_TIME",
+                cd."DELIVERY_DATE",
+                cd."INDENT_HOLD_RELEASE_TIME",
+                cd."INDENT_EXECUTABLE_TIME",
+                cd."PRODUCT_CODE",
+                cd."PRODUCT_NAME",
+                cd."QTY",
+                cd."PROD_ALLOT_TIME",
+                cd."SALES_ORDERNO",
+                cd."INVOICE_NO",
+                cd."JDE_TRUCK_NO",
+                cd."LOADED_ON",
+                cd."CARD_STATUS"
+            FROM 
+                (SELECT * 
+                 FROM alerts 
+                 WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                 AND indent_status NOT IN ('Cancelled', 'Completed')
+                 AND dry_out_in_days IN ('1', '2')) a
+            LEFT JOIN 
+                CombinedData cd
+            ON 
+                COALESCE(substr(cd."DEALER_CODE", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
+                AND COALESCE(cd."INDENT_NO"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
+                AND COALESCE(cd."PRODUCT_CODE"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+            WHERE 
+                cd.rn = 1 OR cd.rn IS NULL
+            ORDER BY 
+                a.sap_id, a.indent_no)  "dryoutreport_view" 
+            where
+                ( "dryoutreport_view"."PROD_REQD_DT" = CURRENT_DATE AND 
+                "dryoutreport_view"."INDENT_NO" IS NOT NULL ) 
+            group by
+                "dryoutreport_view"."LOCN_CODE", 
+                "dryoutreport_view"."location_name", 
+                "dryoutreport_view"."DEALER_CODE", 
+                "dryoutreport_view"."INDENT_NO", 
+                "dryoutreport_view"."INDENT_DATE", 
+                "dryoutreport_view"."indent_status", 
+                "dryoutreport_view"."DELIVERY_DATE", 
+                "dryoutreport_view"."INVOICE_NO", 
+                "dryoutreport_view"."JDE_TRUCK_NO", 
+                "dryoutreport_view"."LOADED_ON",
+                "dryoutreport_view"."PRODUCT_NAME", 
+                "dryoutreport_view"."PROD_ALLOT_TIME",
+                "dryoutreport_view"."SALES_ORDERNO", 
+                "dryoutreport_view"."SEND_TO_JDE_TIME", 
+                "dryoutreport_view"."BATCH_FLAG", 
+                "dryoutreport_view"."VALID_INDENT", 
+                "dryoutreport_view"."CARD_STATUS", 
+                "dryoutreport_view"."INDENT_EXECUTABLE_TIME", 
+                "dryoutreport_view"."INDENT_HOLD_RELEASE_TIME" 
+    ''',
+
+    'i_product_wise_quantity_by_location': '''select 
+        "dryoutreport_view"."location_name" as "Location Name",
+        CASE 
+            WHEN SUM("dryoutreport_view"."QTY")  < 1000 THEN SUM("dryoutreport_view"."QTY") * 1000
+            ELSE SUM("dryoutreport_view"."QTY")
+        END as "Quantity",
+        "dryoutreport_view"."PRODUCT_NAME" as "Product Name" 
+    from
+        (WITH CombinedData AS (
+        SELECT 
+            ir."LOCN_CODE",
+            ir."INDENT_NO",
+            ir."INDENT_DATE",
+            ir."PROD_REQD_DT",
+            ir."DEALER_CODE",
+            ir."BATCH_FLAG",
+            ir."TRUCK_REGNO",
+            ir."VALID_INDENT",
+            ir."SEND_TO_JDE_TIME",
+            ir."DELIVERY_DATE",
+            ir."INDENT_HOLD_RELEASE_TIME",
+            ir."INDENT_EXECUTABLE_TIME",
+            ip."PROD" AS "PRODUCT_CODE",
+            CASE 
+            WHEN ip."PROD" = '2811000' THEN 'MS'
+            WHEN ip."PROD" = '2812000' THEN 'HSD'
+            WHEN ip."PROD" = '3912000' THEN 'TURBO'
+            WHEN ip."PROD" = '2822000' THEN 'E20'
+            WHEN ip."PROD" = '3672000' THEN 'POWER 95'
+            WHEN ip."PROD" = '2816000' THEN 'POWER 99'
+            WHEN ip."PROD" = '3373000' THEN 'POWER 100'
+            ELSE 'Unknown'
+        END AS "PRODUCT_NAME",
+            ip."QTY",
+            ip."PROD_ALLOT_TIME",
+            ip."SALES_ORDERNO",
+            ip."INVOICE_NO",
+            ip."JDE_TRUCK_NO",
+            tse."LOADED_ON",
+            tse."CARD_STATUS",
+            ROW_NUMBER() OVER (
+                PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
+                             COALESCE(ir."INDENT_NO"::TEXT, ''), 
+                             COALESCE(ir."DEALER_CODE"::TEXT, ''), 
+                             COALESCE(ip."PROD"::TEXT, '') 
+                ORDER BY tse."LOADED_ON" ASC
+            ) AS rn
+        FROM 
+            "IMS_SAP"."INDENT_REQUEST" ir
+        LEFT JOIN 
+            "IMS_SAP"."INDENT_PRODUCTS" ip
+        ON 
+            COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
+            AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
+            AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
+        LEFT JOIN 
+            "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+        ON 
+            COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
+            AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
+            AND tse."CARD_STATUS" = 'O'
+            AND tse."LOADED_ON"::TIMESTAMP >= ir."PROD_REQD_DT"
+            AND tse."LOADED_ON"::TIMESTAMP <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+    )
+    SELECT 
+        a.sap_id AS sap_id,
+        a.location_name AS location_name,
+        a.terminal_plant_id AS terminal_plant_id,
+        a.indent_no AS indent_no,
+        a.product_code AS product_code,
+        a.indent_status AS indent_status,
+        -- Add the CASE statement for dry_out_in_days
+        CASE 
+            WHEN a.dry_out_in_days = '1' THEN 'Fully Dry Out'
+            WHEN a.dry_out_in_days = '2' THEN 'IntraDay Dry Out'
+            WHEN a.dry_out_in_days = '3' THEN 'Potential Dry Out'
+            ELSE 'Dry Out'
+        END AS dry_out_status,
+        cd."LOCN_CODE",
+        cd."INDENT_NO",
+        cd."INDENT_DATE",
+        cd."PROD_REQD_DT",
+        cd."DEALER_CODE",
+        cd."BATCH_FLAG",
+        cd."TRUCK_REGNO",
+        cd."VALID_INDENT",
+        cd."SEND_TO_JDE_TIME",
+        cd."DELIVERY_DATE",
+        cd."INDENT_HOLD_RELEASE_TIME",
+        cd."INDENT_EXECUTABLE_TIME",
+        cd."PRODUCT_CODE",
+        cd."PRODUCT_NAME",
+        cd."QTY",
+        cd."PROD_ALLOT_TIME",
+        cd."SALES_ORDERNO",
+        cd."INVOICE_NO",
+        cd."JDE_TRUCK_NO",
+        cd."LOADED_ON",
+        cd."CARD_STATUS"
+    FROM 
+        (SELECT * 
+         FROM alerts 
+         WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+         AND indent_status NOT IN ('Cancelled', 'Completed')
+         AND dry_out_in_days IN ('1', '2')) a
+    LEFT JOIN 
+        CombinedData cd
+    ON 
+        COALESCE(substr(cd."DEALER_CODE", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
+        AND COALESCE(cd."INDENT_NO"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
+        AND COALESCE(cd."PRODUCT_CODE"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+    WHERE 
+        cd.rn = 1 OR cd.rn IS NULL
+    ORDER BY 
+        a.sap_id, a.indent_no)  "dryoutreport_view" 
+    where
+        ( "dryoutreport_view"."QTY" IS NOT NULL AND "dryoutreport_view"."location_name"  NOT IN ( '') ) 
+    group by
+        "dryoutreport_view"."location_name", "dryoutreport_view"."PRODUCT_NAME" 
+''',
+
+    'i_ims_report': '''WITH cte_indents AS (
+        SELECT 
+            ir."LOCN_CODE",
+            ir."INDENT_NO",
+            ir."INDENT_DATE",
+            ir."PROD_REQD_DT",
+            ir."DEALER_CODE",
+            ir."BATCH_FLAG",
+            ir."TRUCK_REGNO",
+            ir."VALID_INDENT",
+            ir."SEND_TO_JDE_TIME",
+            ir."DELIVERY_DATE",
+            ir."INDENT_HOLD_RELEASE_TIME",
+            ir."INDENT_EXECUTABLE_TIME",
+            ip."PROD",
+            CASE 
+                WHEN ip."PROD" = '2811000' THEN 'MS'
+                WHEN ip."PROD" = '2812000' THEN 'HSD'
+                WHEN ip."PROD" = '3912000' THEN 'TURBO'
+                WHEN ip."PROD" = '2822000' THEN 'E20'
+                WHEN ip."PROD" = '3672000' THEN 'POWER 95'
+                WHEN ip."PROD" = '2816000' THEN 'POWER 99'
+                WHEN ip."PROD" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS product_name,
+            ip."QTY",
+            ip."PROD_ALLOT_TIME",
+            ip."SALES_ORDERNO",
+            ip."INVOICE_NO",
+            ip."JDE_TRUCK_NO",
+            tse."LOADED_ON",
+            tse."CARD_STATUS",
+            ROW_NUMBER() OVER (
+                PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
+                             COALESCE(ir."INDENT_NO"::TEXT, ''), 
+                             COALESCE(ir."DEALER_CODE"::TEXT, ''), 
+                             COALESCE(ip."PROD"::TEXT, '') 
+                ORDER BY tse."LOADED_ON" ASC
+            ) AS rn
+        FROM 
+            "IMS_SAP"."INDENT_REQUEST" ir
+        LEFT JOIN 
+            "IMS_SAP"."INDENT_PRODUCTS" ip
+        ON 
+            ir."LOCN_CODE" = ip."LOCN_CODE"
+            AND ir."DEALER_CODE" = ip."DEALER_CODE"
+            AND ir."INDENT_NO" = ip."INDENT_NO"
+        LEFT JOIN 
+            "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+        ON 
+            ir."LOCN_CODE" = tse."LOCN_CODE"
+            AND ir."TRUCK_REGNO" = tse."TRUCK_REGNO"
+            AND tse."CARD_STATUS" = 'O'
+            AND tse."LOADED_ON"::TIMESTAMP >= ir."PROD_REQD_DT"
+            AND tse."LOADED_ON"::TIMESTAMP <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+        WHERE 
+            ir."PROD_REQD_DT" = CURRENT_DATE
+    ),
+    alerts_cte AS (
+        SELECT * 
+        FROM alerts 
+        WHERE 
+            interlock_name = 'Dry Out Each Indent Wise MainFlow'
+            AND indent_status NOT IN ('Cancelled', 'Completed')
+            AND dry_out_in_days IN ('1', '2')
+    ),
+    ind_req_view AS (
+        SELECT *
+        FROM cte_indents
+        WHERE rn = 1
+        ORDER BY "INDENT_NO"
+    )
+    
+    SELECT 
+        ind_req_view."LOCN_CODE" AS "Location Code",
+        ind_req_view."DEALER_CODE" AS "Dealer Code",
+        ind_req_view."INDENT_NO" AS "Indent No",
+        ind_req_view."product_name" AS "Product",
+        SUM(ind_req_view."QTY") AS "Quantity"
+    FROM ind_req_view
+    LEFT JOIN alerts_cte a
+    ON 
+        COALESCE(a.sap_id::TEXT, '') = COALESCE(substr(ind_req_view."DEALER_CODE", 3, 8)::TEXT, '')
+        AND COALESCE(a.indent_no::TEXT, '') = COALESCE(ind_req_view."INDENT_NO"::TEXT, '')
+        AND COALESCE(a.product_code::TEXT, '') = COALESCE(ind_req_view."PROD"::TEXT, '')
+    WHERE
+        ind_req_view."product_name" NOT IN ('Unknown')
+    GROUP BY
+        ind_req_view."LOCN_CODE", ind_req_view."DEALER_CODE", 
+        ind_req_view."INDENT_NO", ind_req_view."product_name"
+    ORDER BY
+        SUM(ind_req_view."QTY") DESC
 '''
 }

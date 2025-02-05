@@ -95,6 +95,8 @@ class VAAlertManager(alert_factory.AlertFactory):
                     # This is because we store the alert_id in Redis with a 3-hour expiration time.
                     # If the same alert_type is received from the same device_id within the expiration period,
                     # it will be considered a duplicate, and processing will be skipped.
+
+                    # comment below line as alerts are not duplicated its old alert
                     if await redis_ins.exists(alert_id):
                         logger.info("Alert already exists")
                         continue

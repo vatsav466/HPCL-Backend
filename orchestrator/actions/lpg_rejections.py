@@ -59,7 +59,7 @@ class LpgRejections:
         if not check_alerts.is_empty():
             check_alerts = check_alerts.rename({"device_id": "rejection"}
                                             ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-            rejections = rejections.filter(pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
+            rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
@@ -104,7 +104,7 @@ class LpgRejections:
         if not check_alerts.is_empty():
             check_alerts = check_alerts.rename({"device_id": "rejection"}
                                             ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-            rejections = rejections.filter(~pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
+            rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
@@ -116,6 +116,7 @@ class LpgRejections:
             self.params["zone"] = data["zone"]
             self.params["device_id"] = str(data['rejection'])
             self.params["interlock_name"] = "gd_rejections"
+            self.params["sop_id"] = "SOP078"
             await create_alert(self.params)
 
 
@@ -148,7 +149,7 @@ class LpgRejections:
         if not check_alerts.is_empty():
             check_alerts = check_alerts.rename({"device_id": "rejection"}
                                             ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-            rejections = rejections.filter(~pl.col("sap_id").str.is_in(check_alerts["sap_id"].unique()))
+            rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
@@ -160,6 +161,7 @@ class LpgRejections:
             self.params["zone"] = data["zone"]
             self.params["device_id"] = str(data['rejection'])
             self.params["interlock_name"] = "pt_rejections"
+            self.params["sop_id"] = "SOP079"
             await create_alert(self.params)
 
 
@@ -184,7 +186,7 @@ class LpgRejections:
         else:
             return {}
         return check_alerts.to_dicts()[-1]
-    
+        
 if __name__ == "__main__":
     lpg = LpgRejections()
     asyncio.run(lpg.get_current_cs_rejections())
