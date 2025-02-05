@@ -95,7 +95,7 @@ class AlertAction:
             # if input_data.get("alert_section", "") == 'VA':
             # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
             if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
-                resp = await cls.close_va_alert(alert_data, input_data)
+                # resp = await cls.close_va_alert(alert_data, input_data)
                 if not isinstance(alert_data, dict):
                     alert_data = alert_data.__dict__
                 close_alert_data = {}
