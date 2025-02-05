@@ -22,6 +22,7 @@ table_mapping = {
 }
 
 camunda_listener_mapping = urdhva_base.settings.camunda_url_config
+camunda_listener_va_mapping = urdhva_base.settings.camunda_url_va_config
 
 # camunda_listener_mapping = {
 #     "camunda_dryout_01": {"host": "10.90.38.167", "port": 9080},

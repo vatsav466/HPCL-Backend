@@ -1,7 +1,9 @@
 import urdhva_base
 import json
+import math
 import requests
 import datetime
+import polars as pl
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 
@@ -105,3 +107,22 @@ async def get_ro_terminal_scores(params: dict):
             data = []
         return {"status": True, "message": "Data fetched successfully", "data": data}
     return {"status": False, "message": "Data fetching unsuccessfully", "data": response.json()}
+
+async def assign_values_to_dataframe(df, values):
+        """
+        Assigning camunda urls equally for each flow
+        :param df:
+        :param values:
+        :return:
+        """
+        n = len(df)
+        if n == 0:
+            df = df.with_columns(pl.Series("camunda_listener", []))
+            return df
+        if n <= 10:
+            assigned_values = values[:n]
+        else:
+            repeats = math.ceil(n / len(values))
+            assigned_values = (values * repeats)[:n]
+        df = df.with_columns(pl.Series("camunda_listener", assigned_values))
+        return df
