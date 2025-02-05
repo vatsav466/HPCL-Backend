@@ -345,7 +345,7 @@ async def m60_performance(filters, cross_filters, drill_state=""):
     print("cross_filters",cross_filters)
     #This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
     #if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
-    if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name' not in cross_filters[0]['key']:
+    if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name' not in merged_df.columns:
 
         print("this is inside if")
         print("merged_df",len(merged_df))
