@@ -299,7 +299,7 @@ class LPGCDCMSActions:
             resp['Total Sales'] = resp['Total Sales']/1000000
             resp['Total Sales'] = resp['Total Sales'].round(2)
             
-            resp['Month_Number'] = resp['Month_Number'].astype('int64')
+            resp['Month_Number'] = resp['Month_Number'].round(0)
             resp = resp.sort_values(by="Month_Number")
             del resp["Month_Number"]
             # Fill missing values for numerical columns
@@ -413,7 +413,7 @@ class LPGCDCMSActions:
             for each_float_col in ["Bookings", "Sales", "Pending"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col]/1000
-                    resp[each_float_col] = resp[each_float_col].astype('int64')
+                    resp[each_float_col] = resp[each_float_col].round(0)
             for each_str_col in ["ZOName"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -522,7 +522,7 @@ class LPGCDCMSActions:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             resp["Total_Bookings"] = resp["Total_Bookings"]/1000
-            resp["Total_Bookings"] = resp["Total_Bookings"].fillna(0).astype('int64')
+            resp["Total_Bookings"] = resp["Total_Bookings"].fillna(0).round(0)
             return {"status": True, "message": "success", "data": resp}
         resp = await function(query=cdcms_order_source_query_)
         # Convert the response to a DataFrame for further processing
@@ -624,7 +624,7 @@ class LPGCDCMSActions:
             for each_float_col in ["Total_pending"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)/100000
-                    resp[each_float_col] = resp[each_float_col].fillna(0).astype('int64')
+                    resp[each_float_col] = resp[each_float_col].fillna(0).round(0)
             # Fill missing values for string columns
             for each_str_col in [
                 "ZOName",
@@ -1002,7 +1002,7 @@ class LPGCDCMSActions:
             resp = resp.groupby(["ConsumerType"], as_index=False).agg({
                     "Sales": lambda x: x.sum() / 1000000
                 })
-            resp["Sales"] = resp["Sales"].fillna(0).astype('int64')
+            resp["Sales"] = resp["Sales"].round(0)
             
             # Fill missing values for string columns
             for each_str_col in [
