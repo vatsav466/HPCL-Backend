@@ -455,7 +455,7 @@ class AlertAction:
                 :param alert_data:
                 :return:
                 """
-        return await cls.publish_to_camunda(input_data, alert_data, "False")
+        return await cls.publish_to_camunda(input_data, alert_data, "FalseAlert")
     
     @classmethod
     async def tripped_alert(cls, input_data, alert_data):

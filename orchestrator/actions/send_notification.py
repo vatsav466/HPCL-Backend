@@ -48,6 +48,7 @@ class SendNotification:
 
     async def process(self, params: typing.Dict):
         self.params = params
+        # return True, {"msg": "Notification skipped"}
         """Main processing method that orchestrates the notification flow"""
         try:
             if not await self._load_and_validate_alert():
@@ -315,18 +316,18 @@ class SendNotification:
         """Update alert status in database"""
         alert_id = self.params.get("alert_id")
         self.update_alert['id'] = alert_id
-        print(self.params)
-        print('self.params.get("rolemailto")', self.params.get("rolemailto"))
-        print('self.params.get("mqofrole")', self.params.get("mqofrole"))
-        if self.params.get("escalationlevel_inmail"):
-            self.update_alert['last_escalated_to'] = self.params.get("rolemailto").split(',')
-            self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
-            self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
-        else:
-            self.update_alert['last_notified_to'] = self.params.get("rolemailto").split(',')
-            self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
-            self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
-        print("**self.update_alert", self.update_alert)
+        # print(self.params)
+        # print('self.params.get("rolemailto")', self.params.get("rolemailto"))
+        # print('self.params.get("mqofrole")', self.params.get("mqofrole"))
+        # if self.params.get("escalationlevel_inmail"):
+        #     self.update_alert['last_escalated_to'] = self.params.get("rolemailto").split(',')
+        #     self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
+        #     self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
+        # else:
+        #     self.update_alert['last_notified_to'] = self.params.get("rolemailto").split(',')
+        #     self.update_alert['assigned_user_roles'] = self.params.get("mqofrole").split(',')
+        #     self.update_alert['last_mailed_to'] = self.params.get("rolemailto").split(',')
+        # print("**self.update_alert", self.update_alert)
         alert_data = hpcl_ceg_model.Alerts(**self.update_alert)
         print("alert_data ", alert_data)
         await alert_data.modify()
