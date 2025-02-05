@@ -387,29 +387,20 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
             if key not in merged_df:
                 merged_df[key] = ""
     merged_df.fillna(0, inplace=True)
-    fil_list = {}
-    '''
-    for each_filter in filters:
-        print(each_filter)
-        if each_filter['key'] not in fil_list and each_filter['key'] not in ['"A"','"H"','"T"','"YTD"']:
-            fil_list[each_filter['key']] = each_filter['value']
 
-    for each_filter in cross_filters:
-        if each_filter['key'] not in fil_list:
-            fil_list[each_filter['key']] = each_filter['value']
-    '''
 
-    #This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
-    #if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
+    # This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
+    # if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
     if len(where_conditions) == 1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name'  in merged_df.columns:
 
         print("this is inside if")
         print("merged_df",len(merged_df))
         print(merged_df)
         amount_columns = merged_df.columns.difference(['month_name'])
+        # Concatenate month names
         result_df = pd.DataFrame({
-    'month_name': [','.join(merged_df['month_name'])],  # Concatenate month names
-})
+            'month_name': [','.join(merged_df['month_name'])],
+                                 })
         for col in amount_columns:
             result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
@@ -431,19 +422,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
         resp = await function(schema_name = 'public',table_name="MOM_DAY_LEVEL_DATA",column_name=Charts_Get_Distinct_ValuesParams.column,where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
         print(resp)
         sorted_level = resp['data']
-        '''
-        if "month_name" in cross_filters[0]['key']:
-            sorted_level['month_name'] = cross_filters[0]['value']
-        #sorted_level.pop('month_name',None)
-        
-        if sorted_cross_filters[-1]['key'] not in sorted_level:
-            sorted_level[sorted_cross_filters[-1]['key']] = []
-        sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
-        for each_filter in sorted_cross_filters:
-            if each_filter['key'] in sorted_level:
-                
-                sorted_level[each_filter['key']] = each_filter['value']
-        '''
         for each_filter in sorted_cross_filters:
             if each_filter['key'] in sorted_level:
                 if len(sorted_level[each_filter['key']]) == each_filter['value']:
@@ -454,9 +432,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
                 sorted_level[sorted_cross_filters[-1]['key']] = []
                 sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
 
-
-        final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        #return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
+        if len(group_by_filter) > 1:
+            final_resp = generate_stacked_data(merged_df)
+        else:
+            final_resp =  {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         #commenting the below lines to return the cross_filters directly
         '''
         sorted_level = {}
@@ -464,7 +443,28 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
             if each_key['key'] not in sorted_level:
                 sorted_level[each_key['key']] = each_key['value']
         '''
-        return {"status": True, "message": "Success", "data": {'data':final_resp,'level':sorted_level}}
+        return {"status": True, "message": "Success", "data": {'data': final_resp,'level': sorted_level}}
     else:
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        return {"status": True, "message": "Success", "data": {'data':final_resp,'level':{}}}
+        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level':{}}}
+
+
+def generate_stacked_data(df):
+    columns = df.columns.to_list()
+    numeric_cols = [col for col in columns if col in list(MandateKeys.values())]
+    month_column = 'month_name'
+    other_columns = list(set(columns) - set(numeric_cols+[month_column]))
+    if other_columns:
+        result = []
+        df['month_name'] = pd.Categorical(df['month_name'], categories=months, ordered=True)
+        for month, group in df.groupby("month_name"):
+            transformed_entry = {
+                "month_name": month,
+                **{key: group[key].tolist() for key in numeric_cols},
+                **{key: group["Zone_Name"].tolist() for key in other_columns}
+            }
+            result.append(transformed_entry)
+        return result
+    else:
+        return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+
