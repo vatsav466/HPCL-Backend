@@ -1,6 +1,7 @@
 import urdhva_base
 import typing
 import requests
+from geopy.distance import geodesic
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 default_headers = {"Content-Type": "application/json"}
@@ -112,3 +113,10 @@ async def get_unblocked_tt() -> typing.List[typing.Any]:
         return response.json()
     finally:
         session.close()
+
+async def get_distance_of_truck(start_lat: float, start_lon: float, end_lat: float, end_lon: float):
+    # Note: this is straight line route for actual need to use OSRM, google maps
+    start_coords = (start_lat, start_lon)
+    end_coords = (end_lat, end_lon)
+    distance_km = geodesic(start_coords, end_coords).kilometers
+    return round(distance_km, 2)
