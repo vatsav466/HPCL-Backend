@@ -428,16 +428,18 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
                     sorted_level[each_filter['key']] = [each_filter['value']]
             if sorted_cross_filters[-1]['key'] not in sorted_level:
                 sorted_level[sorted_cross_filters[-1]['key']] = []
-                sorted_level[sorted_cross_filters[-1]['key']] .append(sorted_cross_filters[-1]['value'])
-
+                sorted_level[sorted_cross_filters[-1]['key']].append(sorted_cross_filters[-1]['value'])
+        month_keys = []
+        if sorted_level and sorted_level.get("month_name"):
+            if isinstance(sorted_level['month_name'][0], list):
+                sorted_level['month_name'] = sorted_level['month_name'][0]
+            month_keys = sorted_level['month_name'] = sorted(sorted_level['month_name'], key=months.index)
         if len(group_by_filter) > 1:
             final_resp = generate_stacked_data(merged_df)
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        return_resp = {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level}}
-        if sorted_level and sorted_level.get("month_name"):
-            return_resp['data']['month_name'] = sorted_level["month_name"]
-        return return_resp
+        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
+                                                               'month_name': month_keys}}
     else:
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {}}}
