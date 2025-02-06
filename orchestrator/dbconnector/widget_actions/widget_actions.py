@@ -207,8 +207,10 @@ class WidgetActions:
             # print(f"Resolved function: {dir(func)}")
 
             # Execute the function asynchronously
-            if func_name == 'present_previous_month_sales':
+            if func_name in ['present_previous_month_sales']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit, time_grain=time_grain)
+            elif func_name in ['m60_performance']:
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, time_grain=time_grain)
             else:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
             # lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
@@ -240,6 +242,7 @@ class WidgetActions:
             key = filter_item['key']
             condition = filter_item['cond']
             value = filter_item['value']
+
             if condition == 'equals':
                 if '.' in key:
                     if isinstance(value, int):

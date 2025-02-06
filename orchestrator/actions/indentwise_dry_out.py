@@ -332,7 +332,7 @@ class IndentDryOut:
                 pytz.timezone('Asia/Kolkata')))
             todays_date = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
             if todays_date.date() > workflow_date.date():
-                if await self._is_indent_delivered():
+                if await self._is_indent_delivered_ims():
                     if await self._close_camunda_workflow():
                         print("Indent as been delivered but still alert is in Intial stage")
                         print("Params: ", self.params)
@@ -840,7 +840,7 @@ class IndentDryOut:
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
                                                progress_rate="7")
                 return await self.send_alert_action(is_r2_swipe=True)
-            elif await self._is_indent_delivered():
+            elif await self._is_indent_delivered_ims():
                 logger.info("R2, R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
@@ -918,7 +918,7 @@ class IndentDryOut:
             }
         }
         if not resp:
-            if await self._is_indent_delivered():
+            if await self._is_indent_delivered_ims():
                 logger.info("R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
@@ -1010,6 +1010,38 @@ class IndentDryOut:
             return await self.send_alert_action(is_created=True)
         return await self.send_alert_action(is_created=False)
 
+    async def is_product_delivered_ims(self, params: dict):
+        if not self.params:
+            self.params = params
+            await self.get_connection_name()
+        if await self._is_indent_delivered_ims():
+            input_data = {
+                "action_msg": "",
+                "event_tags": {
+                    "is_delivered": False
+                }
+            }
+            input_data["action_msg"] = "Indent Delivered"
+            input_data["action_type"] = "Created"
+            input_data["event_tags"]["is_delivered"] = True
+
+            await self.update_alert_status(
+                indent_status=IndentStatus.Completed,
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                input_data=input_data,
+                progress_rate="11"
+            )
+            await self.close_supply_chain_alert(
+                alert_id=self.params.get("alert_id"),
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                indent_status=IndentStatus.Completed
+            )
+            # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
+            return await self.send_alert_action(is_delivered=True)
+        return await self.send_alert_action(is_delivered=False)
+
     async def is_product_delivered(self, params: dict):
         if not self.params:
             self.params = params
@@ -1054,7 +1086,7 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
-            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
+            return await self.is_product_delivered_ims(params=params)
         else:
             cris_resp = pd.DataFrame(cris_resp)
         # print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
@@ -1568,5 +1600,34 @@ class IndentDryOut:
                     print(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
                     logger.info(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
                     return False
+            return True
+        return False
+
+    async def _is_indent_delivered_ims(self):
+        dealer_code = str(self.params.get("dealer_id"))
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("ims")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        alert_id = self.params.get("alert_id")
+        indent_no = self.params.get("indent_no")
+        query = f"""SELECT count(*) AS "count" FROM "IMS_SAP"."INDENT_PRODUCTS" a, "IMS_SAP"."AUTO_DC_REQUESTS" b
+                    WHERE SUBSTR(a."DEALER_CODE", 1, 10) = '{dealer_code}' 
+                    AND a."INDENT_NO" = '{indent_no}'
+                    AND SUBSTR(a."DEALER_CODE", 1, 10) = b."SHIP_TO_CUST" 
+                    AND a."LOCN_CODE" = b."ORIGIN_LOCN" 
+                    AND a."INVOICE_NO" = b."INVOICE_NO" """
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        cris_resp = await function(query=query)
+        if not cris_resp:
+            cris_resp = pd.DataFrame(
+                {"count": 0})
+        else:
+            cris_resp = pd.DataFrame(cris_resp)
+        cris_resp = cris_resp.to_dict("records")
+        if cris_resp:
+            cris_resp = cris_resp[0]
+        else:
+            cris_resp = {}
+
+        if int(cris_resp.get("count", 0)) > 0:
             return True
         return False

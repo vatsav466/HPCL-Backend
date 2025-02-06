@@ -901,7 +901,7 @@ LIMIT 10000;''',
     
     "lpg_cdcms_april_consumer_stats": f''' SELECT
                                                 "JDEDistributorCode", "SubCategory", "ZOName",
-                                                "SAName", "ZOCode", "ROName",
+                                                "SAName", "ROName",
                                                 SUM("ConsumerCount") AS "ConsumerCount"
                                             FROM
                                                 "LPG_CONSUMER_APRIL" ''',
@@ -913,7 +913,7 @@ LIMIT 10000;''',
                                                     "LPG_CONSUMERS_SUMMARY"
                                                 ''',
                  "lpg_cdcms_pcc_sales": f''' SELECT 
-                                                "JDEDistributorCode", "ConsumerType", "CylType", "ZOName",
+                                                "DistributorName", "ConsumerType", "CylType", "ZOName",
                                                 "SAName", "ROName", 
                                                 SUM("TotalSalesYesterday") AS "TotalSalesYesterday"
                                             FROM
