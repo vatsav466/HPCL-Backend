@@ -32,7 +32,7 @@ class LpgRejections:
         self.params = dict()
     
     async def get_required_variables(self):
-        return ["alert_id", "interlock_name"]
+        return ["alert_id", "interlock_name", "bu", "interlock_id", "sap_id"]
 
     async def get_current_cs_rejections(self):
         yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
