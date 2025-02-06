@@ -737,6 +737,9 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     WHERE run_id = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMMDD-HH00')
                 )
                 SELECT 
+                    a.zone as "ZONE",
+                    a.region as "REGION",
+                    a.sales_area as "SALES_AREA",
                     a.sap_id as "SAP_ID",
                     a.location_name as "LOCATION_NAME",
                     a.terminal_plant_id as "TERMINAL_PLANT_ID",
