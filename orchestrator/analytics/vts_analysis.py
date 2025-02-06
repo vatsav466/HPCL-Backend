@@ -23,7 +23,7 @@ async def is_vts_enabled(truck_no: str) -> bool:
     finally:
         session.close()
 
-async def get_tt_current_location(truck_no: str) -> typing.List[typing.Any]:
+async def get_tt_current_location(truck_no: str) -> typing.Dict[typing.Any, typing.Any]:
     creds = credential_loader.get_credentials("VTS")
     url = f"http://{creds['host']}:{creds['port']}/api/TTDetails/VTSCurrentLocation"
     session = requests.Session()

@@ -431,6 +431,7 @@ Model Alert_History internal {
     is_delivered optional bool
     is_tripped optional bool
     is_justify optional bool
+    is_vts optional bool
 }
 
 Model tags internal {
