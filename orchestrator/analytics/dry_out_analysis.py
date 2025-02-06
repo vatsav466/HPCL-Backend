@@ -693,7 +693,6 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         ip."INVOICE_NO",
                         ip."JDE_TRUCK_NO",
                         tse."LOADED_ON",
-                        tse."CARD_STATUS",
                         ROW_NUMBER() OVER (
                             PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
                                          COALESCE(ir."INDENT_NO"::TEXT, ''), 
@@ -748,25 +747,18 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     a.indent_status as "INDENT_STATUS",
                     a.dry_out_in_days as "DRY_OUT_IN_DAYS",
                     cd."LOCN_CODE" AS "ASSIGNED_TO_LOCN",
---                     cd."INDENT_NO",
---                     cd."INDENT_DATE",
                     cd."PROD_REQD_DT",
---                     cd."DEALER_CODE",
---                     cd."BATCH_FLAG",
                     cd."TRUCK_REGNO",
                     cd."VALID_INDENT",
                     cd."SEND_TO_JDE_TIME",
                     cd."DELIVERY_DATE",
                     cd."INDENT_HOLD_RELEASE_TIME",
                     cd."INDENT_EXECUTABLE_TIME",
---                     cd."PRODUCT_CODE",
                     cd."QTY",
                     cd."PROD_ALLOT_TIME",
                     cd."SALES_ORDERNO",
                     cd."INVOICE_NO",
---                     cd."JDE_TRUCK_NO",
                     cd."LOADED_ON",
-                    cd."CARD_STATUS",
                     sd.avgsales_7days as "AVGSALES_7DAYS"
                 FROM 
                     (SELECT * 
