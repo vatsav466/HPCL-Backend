@@ -1401,6 +1401,8 @@ class IndentDryOut:
                         logger.info(f"{var_name} updated successfully.")
                         break
                     else:
+                        print("url: ", url)
+                        print("payload: ", payload)
                         print(
                             f"Error updating {var_name} (attempt {attempt + 1}): {response.status_code} - {response.text}")
                         logger.info(
