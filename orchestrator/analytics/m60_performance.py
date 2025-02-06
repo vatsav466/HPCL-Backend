@@ -12,6 +12,7 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
+
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
@@ -406,7 +407,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
 
     if len(cross_filters) > 0:
         filter_order = [key.strip('"') for key in Base_Filters]
-        #filter_order = Base_Filters
         sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
         req_key = sorted_cross_filters[-1]['key']
         req_key = f'"{req_key}"'
@@ -419,7 +419,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
         Charts_Get_Distinct_ValuesParams.where_cond = [sorted_cross_filters[-1]]
         function = await charts_connection_vault_routing(Charts_Get_Distinct_ValuesParams)
         resp = await function(schema_name='public', table_name="MOM_DAY_LEVEL_DATA",
-                              column_name=Charts_Get_Distinct_ValuesParams.column, where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
+                              column_name=Charts_Get_Distinct_ValuesParams.column,
+                              where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
         print(resp)
         sorted_level = resp['data']
         for each_filter in sorted_cross_filters:
@@ -436,27 +437,44 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
             final_resp = generate_stacked_data(merged_df)
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        #commenting the below lines to return the cross_filters directly
-        '''
-        sorted_level = {}
-        for each_key in sorted_cross_filters:
-            if each_key['key'] not in sorted_level:
-                sorted_level[each_key['key']] = each_key['value']
-        '''
-        return {"status": True, "message": "Success", "data": {'data': final_resp,'level': sorted_level}}
+
+        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level}}
     else:
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level':{}}}
+        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {}}}
 
 
 def generate_stacked_data(df):
+    month_column = 'month_name'
+    df[month_column] = pd.Categorical(df[month_column], categories=months, ordered=True)
     columns = df.columns.to_list()
     numeric_cols = [col for col in columns if col in list(MandateKeys.values())]
-    month_column = 'month_name'
+    # df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
+    # return df.to_dict(orient='records')
+    for column in numeric_cols:
+        df[column].fillna(0, inplace=True)
+    df.fillna('', inplace=True)
+
     other_columns = list(set(columns) - set(numeric_cols+[month_column]))
     if other_columns:
+        # Pivot Data - Creating separate columns for Actual, History, and Target
+        df_pivot = df.pivot(index=other_columns[0], columns=month_column, values=numeric_cols)
+
+        # Flatten MultiIndex Columns and rename them
+        df_pivot.columns = [f"{month}_{metric.split('_')[0]}" for metric, month in df_pivot.columns]
+
+        # Reset Index to include 'Zone_Name'
+        df_pivot.reset_index(inplace=True)
+
+        # Keeping all nan's as zero's
+        df_pivot.fillna(0, inplace=True)
+
+        # Convert to Dictionary Format
+        result = df_pivot.to_dict(orient="records")
+        return result
+
+        # For Grouped data
         result = []
-        df['month_name'] = pd.Categorical(df['month_name'], categories=months, ordered=True)
         for month, group in df.groupby("month_name"):
             transformed_entry = {
                 "month_name": month,
