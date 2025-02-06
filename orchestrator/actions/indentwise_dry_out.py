@@ -1401,6 +1401,8 @@ class IndentDryOut:
                         logger.info(f"{var_name} updated successfully.")
                         break
                     else:
+                        print("url: ", url)
+                        print("payload: ", payload)
                         print(
                             f"Error updating {var_name} (attempt {attempt + 1}): {response.status_code} - {response.text}")
                         logger.info(
@@ -1604,7 +1606,7 @@ class IndentDryOut:
         return False
 
     async def _is_indent_delivered_ims(self):
-        dealer_code = str(self.params.get("dealer_id"))
+        dealer_code = str(self.params.get("dealer_id")).zfill(10)
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("ims")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         alert_id = self.params.get("alert_id")

@@ -12,7 +12,6 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
-
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
@@ -266,7 +265,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
         where_conditions_history = [clause]
-
     # Data Retrival for target data
     if target:
         group_keys = [key for key in group_by_filter]
@@ -435,6 +433,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
                 sorted_level['month_name'] = sorted_level['month_name'][0]
             month_keys = sorted_level['month_name'] = sorted(sorted_level['month_name'], key=months.index)
         if len(group_by_filter) > 1:
+            if 'SalesArea_Name' in merged_df.columns.tolist() or 'Region_Name' in merged_df.columns.tolist():
+                if 'ACTUAL_TMT_SALES' in merged_df.columns.tolist():
+                    merged_df['ACTUAL_TMT_SALES'] = merged_df['ACTUAL_TMT_SALES'].fillna(0).astype(int)*1000
+                if 'TARGET_TMT_SALES' in merged_df.columns.tolist():
+                    merged_df['TARGET_TMT_SALES'] = merged_df['TARGET_TMT_SALES'].fillna(0).astype(int)*1000
+                if 'ACTUAL_HISTORY_TMT_SALES' in merged_df.columns.tolist():
+                    merged_df['ACTUAL_HISTORY_TMT_SALES'] = merged_df['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(int)*1000
             final_resp = generate_stacked_data(merged_df)
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
