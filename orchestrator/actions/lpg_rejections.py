@@ -200,3 +200,5 @@ class LpgRejections:
 if __name__ == "__main__":
     lpg = LpgRejections()
     asyncio.run(lpg.get_current_cs_rejections())
+    asyncio.run(lpg.get_current_gd_rejections())
+    asyncio.run(lpg.get_current_pt_rejections())
