@@ -172,11 +172,15 @@ class LpgRejections:
 
 
     async def check_rejections(self, params):
+        if not self.params:
+            self.params = params
         yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
         rejection_type = params["interlock_name"]
         table = f"lpg_{rejection_type}"
 
         check_alerts = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])
+        if not isinstance(check_alerts, dict):
+            check_alerts = check_alerts.__dict__
         check_alerts = pl.DataFrame(check_alerts)
 
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -190,8 +194,8 @@ class LpgRejections:
             check_alerts = current_rejection.join(check_alerts, on="sap_id", how="inner")
             check_alerts = check_alerts.with_columns(pl.when(pl.col("rejection") < 8).then(pl.lit("decreased")).otherwise(pl.lit("increased")).alias("rejection_status")).select(["rejection_status"])
         else:
-            return {}
-        return check_alerts.to_dicts()[-1]
+            return False, {}
+        return True, check_alerts.to_dicts()[-1]
         
 if __name__ == "__main__":
     lpg = LpgRejections()
