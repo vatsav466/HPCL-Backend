@@ -1472,3 +1472,87 @@ Model LpgOperationsRejections {
         access_key_mapping='zone'
     }
 }
+
+Model ConsumerPumpTransactions {
+    unique_txn_id unique_field int
+    bu optional str
+    sap_id optional str
+    txn_id optional str
+    txn_type optional str
+    transaction_date optional datetime
+    txn_start_time optional datetime
+    txn_end_time optional datetime
+    price optional float
+    quantity optional float
+    amount optional float
+    fuel_equip_type optional str
+    vehicle_no optional str
+    product_id optional str
+    product optional str
+    tank_no optional str
+    tank_name optional str
+    pump_no optional str
+    nozzle_id optional str
+    global_nozzle_id optional str
+
+    Action=> bulk_update_cp_transactions {
+
+    }
+    Config=> {
+        access_key_mapping='ROID:sap_id'
+    }
+}
+
+Model ConsumerPumpTankInventory {
+    unique_txn_id unique_field int
+    bu optional str
+    sap_id optional str
+    inventory_date optional datetime
+    tank_id optional str
+    tank_name optional str
+    stock_txn_code optional str
+    stock_txn_id optional str
+    product_id optional str
+    product optional str
+    prod_gross_qty optional float
+    tank_capacity optional float
+    product_volume optional float
+    ullage optional float
+    product_level optional float
+    density optional float
+    density_at_15 optional float
+
+    Action=> bulk_update_cp_tank_inventory {
+
+    }
+
+    Config=> {
+        access_key_mapping='sap_id'
+    }
+}
+
+Model ConsumerPumpStocksReceipts {
+    unique_txn_id unique_field str
+    bu optional str
+    sap_id optional str
+    stock_receipt_id optional str
+    source optional str
+    prod_qty_start optional float
+    prod_qty_end optional float
+    product_id optional str
+    product optional str
+    quantity optional float
+    density optional float
+    amount optional float
+    tank_no optional str
+    tank_name optional str
+    decantation_start_time optional datetime
+    decantation_end_time optional datetime
+
+    Action=> bulk_update_cp_stock_receipts {
+
+    }
+    Config=> {
+        access_key_mapping='roid:sap_id'
+    }
+}

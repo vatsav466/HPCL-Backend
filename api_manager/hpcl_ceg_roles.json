@@ -2780,6 +2780,213 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "consumerpumptransactions",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTransactions",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptransactions/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "bulk_update_cp_transactions"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumptransactions_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTransactions_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptransactions/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumptransactions_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTransactions_admin",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptransactions/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "bulk_update_cp_transactions"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumptankinventory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTankInventory",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptankinventory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "bulk_update_cp_tank_inventory"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumptankinventory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTankInventory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptankinventory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumptankinventory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpTankInventory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumptankinventory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "bulk_update_cp_tank_inventory"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumpstocksreceipts",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpStocksReceipts",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumpstocksreceipts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "bulk_update_cp_stock_receipts"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumpstocksreceipts_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpStocksReceipts_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumpstocksreceipts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "consumerpumpstocksreceipts_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "ConsumerPumpStocksReceipts_admin",
+            "attributes": {},
+            "uris": [
+                "/api/consumerpumpstocksreceipts/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "bulk_update_cp_stock_receipts"
+                }
+            ]
         }
     ],
     "policies": [
@@ -3105,6 +3312,18 @@
         {
             "name": "upload_geo_master",
             "displayName": "upload_geo_master"
+        },
+        {
+            "name": "bulk_update_cp_transactions",
+            "displayName": "bulk_update_cp_transactions"
+        },
+        {
+            "name": "bulk_update_cp_tank_inventory",
+            "displayName": "bulk_update_cp_tank_inventory"
+        },
+        {
+            "name": "bulk_update_cp_stock_receipts",
+            "displayName": "bulk_update_cp_stock_receipts"
         }
     ]
 }
