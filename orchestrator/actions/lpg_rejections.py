@@ -30,6 +30,9 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 class LpgRejections:
     def __init__(self):
         self.params = dict()
+    
+    async def get_required_variables(self):
+        return ["alert_id", "interlock_name"]
 
     async def get_current_cs_rejections(self):
         yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
