@@ -453,10 +453,13 @@ def generate_stacked_data(df):
     # return df.to_dict(orient='records')
     for column in numeric_cols:
         df[column].fillna(0, inplace=True)
-    df.fillna('', inplace=True)
 
     other_columns = list(set(columns) - set(numeric_cols+[month_column]))
     if other_columns:
+        # Renaming columns to lower case
+        df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
+        numeric_cols = [key for key, value in MandateKeys.items() if value in numeric_cols]
+
         # Pivot Data - Creating separate columns for Actual, History, and Target
         df_pivot = df.pivot(index=other_columns[0], columns=month_column, values=numeric_cols)
 
