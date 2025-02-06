@@ -391,11 +391,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
 
     # This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
     # if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
-    if len(where_conditions) == 1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and 'month_name'  in merged_df.columns:
-
-        print("this is inside if")
-        print("merged_df",len(merged_df))
-        print(merged_df)
+    if (len(group_by_filter) <= 1 and len(where_conditions) == 1 and "month_name" in where_conditions[0] and
+            'IN' in where_conditions[0] and 'month_name'  in merged_df.columns):
         amount_columns = merged_df.columns.difference(['month_name'])
         # Concatenate month names
         result_df = pd.DataFrame({
@@ -437,8 +434,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
             final_resp = generate_stacked_data(merged_df)
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-
-        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level}}
+        return_resp = {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level}}
+        if sorted_level and sorted_level.get("month_name"):
+            return_resp['data']['month_name'] = sorted_level["month_name"]
+        return return_resp
     else:
         final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {}}}
