@@ -31,7 +31,7 @@ VA_Alert_Mapping = {
         "Intrusion-PersonAtPerimeter": {"name": "Intrusion Person At Perimeter", "severity": "Critical"},
         "LPGLeak-FillingGun": {"name": "Lpg Leakage Filling Gun",  "severity": "Critical"},
         "LPGLeak-Detection": {"name": "Lpg Leakage Detection",  "severity": "Critical"},
-        "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt",  "severity": "Medium"},
+        "PPE-Compliance": {"name": "Person not wearing Safety Things",  "severity": "Medium"},
         "PPE_HELMET": {"name": "Person not wearing Safety Helmet", "severity": "Medium"},
         "ABSENCE OF WHEELCHOCK": {"name": "Missing Wheel Chock", "severity": "High"}
     }
