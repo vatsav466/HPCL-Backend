@@ -78,6 +78,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                     # Retrieving the alert_mapping details for alert_type based on location_type and alert_type.
                     va_alert_data = va_alert_mapping.VA_Alert_Mapping[record['location_type']].get(
                         record['alert_section'], {})
+                    logger.info(f"va alert data: {va_alert_data}")
                     if not va_alert_data:
                         logger.info("interlock_details not found")
                         continue
@@ -106,6 +107,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
                         record['location_type'],
                         va_alert_data["name"])
+                    logger.info(f"va interlock data: {interlock_details}")
                     
                     # preparing alert_data for VA
                     interlock_details.update({"bu": record['location_type'],

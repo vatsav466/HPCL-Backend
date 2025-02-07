@@ -12,6 +12,7 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
+
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
@@ -139,6 +140,8 @@ def get_group_by_filter_key(cross_filters, cumulative=False, drill_state='', tim
                     index = Base_Filters.index(key)
             group_by_filter = [Base_Filters[index + 1]]
     elif drill_state:
+        if not drill_state.startswith('"'):
+            drill_state = f'"{drill_state}"'
         group_by_filter = [Base_Filters[Base_Filters.index(drill_state) + 1]]
     if time_grain == 'Monthly' and '"month_name"' not in group_by_filter:
         group_by_filter.append('"month_name"')
@@ -265,6 +268,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
         where_conditions_history = [clause]
+
     # Data Retrival for target data
     if target:
         group_keys = [key for key in group_by_filter]

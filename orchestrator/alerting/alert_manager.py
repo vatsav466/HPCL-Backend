@@ -198,7 +198,7 @@ class AlertAction:
                    "is_r1_swipe": {"name": "r1Swipe", "type": "Boolean"},
                    "is_r2_swipe": {"name": "r2Swipe", "type": "Boolean"},
                    "is_r3_swipe": {"name": "r3Swipe", "type": "Boolean"},
-                   "is_vts": {"name": "VTS", "type": "Boolean"},
+                   "is_vts": {"name": "vts", "type": "Boolean"},
                    "is_delivered": {"name": "delivered", "type": "Boolean"},
                    "is_tripped": {"name": "tripped", "type": "Boolean"},
                    "is_justify": {"name": "justify", "type": "Boolean"}

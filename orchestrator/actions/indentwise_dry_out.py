@@ -13,7 +13,7 @@ from hpcl_ceg_enum import AlertStatus as AlertStatus
 import orchestrator.alerting.alert_helper as alert_helper
 from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.connection_mapping as connection_mapping
-# import orchestrator.analytics.vts_analysis as vts_analysis
+import orchestrator.analytics.vts_analysis as vts_analysis
 from charts_actions import charts_connection_vault_routing
 import orchestrator.alerting.alert_manager as alert_manager
 from orchestrator.alerting.alert_manager import close_alert
@@ -91,7 +91,8 @@ class IndentDryOut:
             is_r1_swipe: bool = False,
             is_r2_swipe: bool = False,
             is_r3_swipe: bool = False,
-            is_delivered: bool = False
+            is_delivered: bool = False,
+            is_vts: bool = False
     ):
         msg_block = {
             "isAtrUploaded": is_atr_uploaded,
@@ -109,7 +110,8 @@ class IndentDryOut:
             "r1swipe": is_r1_swipe,
             "r2swipe": is_r2_swipe,
             "r3swipe": is_r3_swipe,
-            "delivered": is_delivered
+            "delivered": is_delivered,
+            "vts": is_vts
         }
         return True, msg_block
 
@@ -1248,7 +1250,54 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        input_data = {
+            "action_msg": "",
+            "event_tags": {
+                "is_vts": False
+            }
+        }
+        input_data["action_msg"] = "VTS Enabled"
+        input_data["action_type"] = "VTS"
+        input_data["event_tags"]["is_vts"] = True
+        await self.update_alert_status(indent_status=IndentStatus.VTS, input_data=input_data,
+                                       progress_rate="10")
+        resp = await self.send_alert_action(is_vts=True)
         return True, {"msg": "Success"}
+
+    async def truck_isin_vts(self, params: dict):
+        if not self.params:
+            self.params = params
+            await self.get_connection_name()
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dealer_code = str(self.params.get("dealer_id")).zfill(10)
+        indent_no = "','".join(self.params.get("indent_no").split(","))
+        query = f"""SELECT "TRUCK_REGNO" FROM "IMS_SAP"."INDENT_REQUEST" a WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' AND """ \
+                f"""a."INDENT_NO" IN ('{indent_no}') """ \
+                f"""AND a."CANCEL_INDENT" IS NULL AND a."TRUCK_REGNO" IS NOT NULL AND (a."VALID_INDENT" = 'Y' OR a."VALID_INDENT" = 'H') """ \
+                f"""AND a."BATCH_FLAG" = 'Y' """
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+        input_data = {
+            "action_msg": "",
+            "event_tags": {
+                "is_vts": False
+            }
+        }
+        if not resp:
+            return await self.send_alert_action(is_vts=False)
+        resp = resp[0]
+        truck_regno = resp.get("TRUCK_REGNO")
+        data = await vts_analysis.get_tt_current_location(truck_regno)
+        print("VTS Data: ", data)
+        if data and float(data.get("start_lat")) > 0:
+            input_data["action_msg"] = "VTS Enabled"
+            input_data["action_type"] = "VTS"
+            input_data["event_tags"]["is_vts"] = True
+            await self.update_alert_status(indent_status=IndentStatus.VTS, input_data=input_data,
+                                           progress_rate="10")
+            return await self.send_alert_action(is_vts=True)
+        return await self.send_alert_action(is_vts=False)
 
     async def indent_wait_time(self, params: dict):
         if not self.params:
