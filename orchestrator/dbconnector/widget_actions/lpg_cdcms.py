@@ -2082,7 +2082,7 @@ class LPGCDCMSActions:
             lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             
-            lpg_cdcms_pcc_sales  += f' AND "CylType" = \'C142\' AND "Financial_Year"=\'{financial_year}\' '
+            lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' '
             lpg_cdcms_pcc_sales  += ' GROUP BY "ConsumerType", "ZOName", "SAName", "ROName", "CylType", "DistributorName" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -2094,11 +2094,11 @@ class LPGCDCMSActions:
             if "where" not in lpg_cdcms_pcc_sales.lower():
                 lpg_cdcms_april_consumer_stats  += f' WHERE "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_current_consumer_stats += ' WHERE "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
-                lpg_cdcms_pcc_sales += f' WHERE "CylType" = \'C142\' AND "Financial_Year"=\'{financial_year}\' '
+                lpg_cdcms_pcc_sales += f' WHERE "Financial_Year"=\'{financial_year}\' '
             else:
                 lpg_cdcms_april_consumer_stats  += f' AND "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
-                lpg_cdcms_pcc_sales  += f' AND "CylType" = \'C142\' AND "Financial_Year"=\'{financial_year}\' '
+                lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' '
             lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_pcc_sales  += ' GROUP BY "ConsumerType", "ZOName", "SAName", "ROName", "CylType", "DistributorName" '
@@ -2114,7 +2114,7 @@ class LPGCDCMSActions:
         lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.with_columns(
             pl.when(pl.col("CylType") == "C5"
                     ).then(pl.col("TotalSalesYesterday")*5 / 14.2
-                           ).alias("TotalRefillSales"))
+                           ).otherwise(pl.col("TotalSalesYesterday")).alias("TotalRefillSales"))
         if filters:
             filter_keys = [rec.key.strip('"') for rec in filters]
             pcc = None
