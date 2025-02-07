@@ -11,10 +11,12 @@ router = fastapi.APIRouter(prefix='/consumerpumptankinventory')
 async def consumerpumptankinventory_bulk_update_cp_tank_inventory(data: Consumerpumptankinventory_Bulk_Update_Cp_Tank_InventoryParams):
     token_manager = generate_token.TokenManager()
     stocks_api_url = "https://externalapi.prime360vr.com/api/ros/stocks"
-    data = generate_token.get_transactions_api(token_manager, stocks_api_url)
+    print('stocks_api_url: ', stocks_api_url)
+    data = await generate_token.get_transactions_api(token_manager, stocks_api_url)
 
     if data:
         print('columns_stocks: ', data[0].keys())
         await ConsumerPumpTankInventory.bulk_update(data, upsert=True)
+        print('***UPDATED STOCKS***')
         return {"status": True, "message": "success", "data": []}
     return {"status": False, "message": "Data couldn't fetch from API", "data": []}

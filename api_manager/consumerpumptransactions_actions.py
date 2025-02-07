@@ -11,9 +11,11 @@ router = fastapi.APIRouter(prefix='/consumerpumptransactions')
 async def consumerpumptransactions_bulk_update_cp_transactions(data: Consumerpumptransactions_Bulk_Update_Cp_TransactionsParams):
     token_manager = generate_token.TokenManager()
     transactions_api_url = "https://externalapi.prime360vr.com/api/ros/transactions"
-    data = generate_token.get_transactions_api(token_manager, transactions_api_url)
+    print('transactions_api_url: ', transactions_api_url)
+    data = await generate_token.get_transactions_api(token_manager, transactions_api_url)
 
     if data:
         await ConsumerPumpTransactions.bulk_update(data, upsert=True)
+        print('***UPDATED TRANSACTIONS***')
         return {"status": True, "message": "success", "data": []}
     return {"status": False, "message": "Data couldn't fetch from API", "data": []}

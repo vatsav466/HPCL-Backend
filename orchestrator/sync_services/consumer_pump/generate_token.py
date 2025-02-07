@@ -1,6 +1,12 @@
-import requests
+import urdhva_base
 import time
 import pandas as pd
+import requests
+import utilities.connection_mapping as connection_mapping
+import asyncio
+from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+from charts_actions import charts_connection_vault_routing
+
 
 class TokenManager:
     def __init__(self):
@@ -85,7 +91,29 @@ def modify_datetime(df, column_names):
             df[column_name] = df[column_name].dt.tz_convert('UTC')
     return df
 
-def get_transactions_api(token_manager, api_url):
+
+async def get_last_unique_txn_id(api_type):
+    api_mapping = {
+        'transactions': ('UniquetxnID', 'consumer_pump_transactions'),
+        'receipts': ('uniquetxnID', 'consumer_pump_stocks_receipts'),
+        'stocks': ('UniquetxnID', 'consumer_pump_tank_inventory'),
+    }
+
+    if api_type not in api_mapping:
+        raise ValueError("Unsupported API Endpoint")
+
+    uniquetxnID, table_name = api_mapping[api_type]
+    query = f'SELECT unique_txn_id FROM {table_name} ORDER BY id DESC LIMIT 1'
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    last_rec_id = resp[0]['unique_txn_id'] if resp else 1
+
+    return uniquetxnID, last_rec_id
+
+
+async def get_transactions_api(token_manager, api_url):
     api_type = api_url.split('/')[-1]
     token = token_manager.get_token()
     headers = {
@@ -93,16 +121,9 @@ def get_transactions_api(token_manager, api_url):
         "Content-Type": "application/json"
     }
 
-    last_rec_id = 1
     all_data = []
-    if api_type == 'transactions':
-        uniquetxnID = 'UniquetxnID'
-    elif api_type == 'receipts':
-        uniquetxnID = 'uniquetxnID'
-    elif api_type == 'stocks':
-        uniquetxnID = 'UniquetxnID'
-    else:
-        raise "Unsupported API Endpoint"
+    uniquetxnID, last_rec_id = await get_last_unique_txn_id(api_type)
+
     while True:
         payload = {
             "lastRecId": last_rec_id,
@@ -162,7 +183,7 @@ def get_transactions_api(token_manager, api_url):
             dt_conversion_columns = ['transaction_date', 'txn_start_time', 'txn_end_time']
             df = modify_datetime(df, dt_conversion_columns)
             print('transactions_columns: ', df.columns)
-            
+
         elif api_type == 'receipts':
             receipts_column = ['uniquetxnID', 'roid', 'stockReceiptID', 'source', 'prodQtyStart', 'prodQtyEnd',
                                'localProductID', 'productName', 'quantity',
@@ -225,4 +246,4 @@ if __name__ == '__main__':
     receipts_api_url = "https://externalapi.prime360vr.com/api/ros/stocks/receipts"
     stocks_api_url = "https://externalapi.prime360vr.com/api/ros/stocks"
     alarms_api_url = "https://externalapi.prime360vr.com/api/ros/alarms"
-    print(get_transactions_api(token_manager, receipts_api_url))
+    print(asyncio.run(get_transactions_api(token_manager, receipts_api_url)))
