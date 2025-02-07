@@ -1416,6 +1416,18 @@ class IndentDryOut:
         alert_data['product_code'] = _reverse_mapping.get(prod_key, alert_data['product_code'])
         return
 
+    async def get_process_instance_id(self, business_key, camunda_url):
+        camunda_url = f"{camunda_url}/engine-rest/process-instance"
+        params = {"businessKey": business_key}
+        response = requests.get(camunda_url, params=params)
+        process_instance_id = ""
+        if response.status_code == 200:
+            instances = response.json()
+            if instances:
+                process_instance_id = instances[0]["id"]  # Get first instance ID
+                return process_instance_id
+        return process_instance_id
+
     async def update_indent_no(self, indent_no: str, loc_code: str, indent_raised_date):
         MAX_RETRIES = 5
         RETRY_DELAY = 5
@@ -1423,7 +1435,11 @@ class IndentDryOut:
 
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
-        instance_id = alert_data.get("workflow_instance_id")
+        # instance_id = alert_data.get("workflow_instance_id")
+        business_key = alert_data.get("unique_id")
+        instance_id = await self.get_process_instance_id(business_key, self.params['CAMUNDA_URL'])
+        if not instance_id:
+            instance_id = alert_data.get("workflow_instance_id")
         # CAMUNDA_URL = await helpers.get_alert_camunda_url(self.params["alert_id"],
         #                                                   f"{urdhva_base.settings.camunda_url}")
         CAMUNDA_URL = self.params['CAMUNDA_URL']
