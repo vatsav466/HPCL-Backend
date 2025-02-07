@@ -277,7 +277,6 @@ lpg_interlock_mapping = [
     {"sop_id": "SOP017", "interlock_name": "Fire/Smoke Detection", "model": "VA", "workflow_name": "VA_Leakage_Detection_With_EA"},
     {"sop_id": "SOP017", "interlock_name": "Fire Detection", "model": "VA", "workflow_name": "VA_Leakage_Detection_With_EA"},
     {"sop_id": "SOP021", "interlock_name": "Person not wearing Safety Helmet", "model": "VA", "workflow_name": "UC_LPG_SOP21_27"},
-    {"sop_id": "SOP022", "interlock_name": "Person not wearing safety Things", "model": "VA", "workflow_name": "UC_LPG_SOP21_27"},
     {"sop_id": "SOP023", "interlock_name": "Fire Extinguisher", "model": "VA", "workflow_name": "UC_LPG_SOP21_27"},
     {"sop_id": "SOP024", "interlock_name": "Fire Hose is not available", "model": "VA", "workflow_name": "UC_LPG_SOP21_27"},
     {"sop_id": "SOP025", "interlock_name": "Person not wearing Protective Clothing", "model": "VA", "workflow_name": "UC_LPG_SOP21_27"},
