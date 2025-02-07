@@ -240,6 +240,7 @@ Model Charts {
         cross_filters optional list WidgetFilters
         limit optional int
         time_grain optional str
+        resp_format optional str regex="^([a-zA-Z0-9_. ]+|)$" // stacked for stacked data, else keep as empty
     }
 
     Action=> enable_cross_filter {

@@ -132,7 +132,6 @@ widget_mapping = {
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''},
     'total_suvidha': {},
     'lpg_cdcms_ageing': {},
-    'carry_forward_analysis': {},
     'total_consumers': {},
     'ekyc_statistics': {},
     'sales_growth_ytd': {},
@@ -167,7 +166,8 @@ widget_mapping = {
 class WidgetActions:
     @staticmethod
     # Safely resolve the module and function
-    async def execute_widget_action(func_name, filters, cross_filters, drill_state, limit=0, time_grain="Monthly"):
+    async def execute_widget_action(func_name, filters, cross_filters, drill_state, limit=0, time_grain="Monthly",
+                                    resp_format=''):
         try:                       
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
@@ -210,7 +210,8 @@ class WidgetActions:
             if func_name in ['present_previous_month_sales']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit, time_grain=time_grain)
             elif func_name in ['m60_performance']:
-                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, time_grain=time_grain)
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state,
+                                 time_grain=time_grain, resp_format=resp_format)
             else:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
             # lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
