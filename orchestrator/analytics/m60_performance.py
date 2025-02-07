@@ -12,7 +12,6 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
-
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
@@ -268,7 +267,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
         where_conditions_history = [clause]
-
     # Data Retrival for target data
     if target:
         group_keys = [key for key in group_by_filter]
@@ -509,12 +507,18 @@ def generate_stacked_data(df, resp_format='', month_column=''):
                                         "data": [zone_data.loc[m, column] if m in zone_data.index else 0
                                                  for m in unique_months]})
             return {"months": unique_months, "series": series_data}
+        elif resp_format == 'cummulative' and month_column:
+            df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
+            return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
         elif resp_format == 'grouped':
             # For Grouped data
             # Converting data to month wise report
             return [{"month_name": month,  **{key: group[key].tolist() for key in numeric_cols+other_columns}}
                     for month, group in df.groupby("month_name")]
     else:
+        if resp_format == 'cummulative' and month_column:
+            df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
+            
         # For regular drill down widgets
         return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
 
