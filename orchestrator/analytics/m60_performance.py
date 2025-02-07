@@ -450,7 +450,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys}}
     else:
-        final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+        if resp_format:
+            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
+        else:
+            final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {}}}
 
 
@@ -487,7 +490,7 @@ def generate_stacked_data(df, resp_format='', month_column=''):
 
             # Convert to Dictionary Format
             return df_pivot.to_dict(orient="records")
-        elif resp_format == 'stacked':
+        elif resp_format == 'stacked' and month_column:
             # For sending data in stacked format
             # Renaming columns to lower case
             df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
@@ -496,10 +499,10 @@ def generate_stacked_data(df, resp_format='', month_column=''):
             numeric_cols = [key for key, value in MandateKeys.items() if value in numeric_cols]
 
             # Extract unique months from the dataset
-            unique_months = sorted(df["month_name"].unique(), key=lambda x: months.index(x))
+            unique_months = sorted(df[month_column].unique(), key=lambda x: months.index(x))
             series_data = []
-            for zone in df["Zone_Name"].unique():
-                zone_data = df[df["Zone_Name"] == zone].set_index("month_name")
+            for zone in df[other_columns[0]].unique():
+                zone_data = df[df[other_columns[0]] == zone].set_index(month_column)
                 for column in numeric_cols:
                     # Creating series data
                     series_data.append({"name": f"{zone} {column.title()}", "stack": column.title(),
