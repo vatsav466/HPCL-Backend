@@ -15,7 +15,6 @@ async def consumerpumptankinventory_bulk_update_cp_tank_inventory(data: Consumer
     data = await generate_token.get_transactions_api(token_manager, stocks_api_url)
 
     if data:
-        print('columns_stocks: ', data[0].keys())
         await ConsumerPumpTankInventory.bulk_update(data, upsert=True)
         print('***UPDATED STOCKS***')
         return {"status": True, "message": "success", "data": []}

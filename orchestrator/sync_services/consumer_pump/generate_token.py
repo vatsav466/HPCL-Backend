@@ -153,7 +153,7 @@ async def get_transactions_api(token_manager, api_url):
 
     if all_data:
         all_data = flatten_dict_columns(all_data, api_type)
-
+        print("Total Data Collected: ", len(all_data))
         df = pd.DataFrame(all_data)
         print("#"*50)
         if api_type == 'transactions':
@@ -182,7 +182,6 @@ async def get_transactions_api(token_manager, api_url):
             df["product"] = df["product"].replace("High Speed Diesel", "HSD")
             dt_conversion_columns = ['transaction_date', 'txn_start_time', 'txn_end_time']
             df = modify_datetime(df, dt_conversion_columns)
-            print('transactions_columns: ', df.columns)
 
         elif api_type == 'receipts':
             receipts_column = ['uniquetxnID', 'roid', 'stockReceiptID', 'source', 'prodQtyStart', 'prodQtyEnd',

@@ -15,7 +15,6 @@ async def consumerpumpstocksreceipts_bulk_update_cp_stock_receipts(data: Consume
     data = await generate_token.get_transactions_api(token_manager, receipts_api_url)
 
     if data:
-        print('columns_receipts: ', data[0].keys())
         await ConsumerPumpStocksReceipts.bulk_update(data, upsert=True)
         print('***UPDATED RECEIPTS***')
         return {"status": True, "message": "success", "data": []}

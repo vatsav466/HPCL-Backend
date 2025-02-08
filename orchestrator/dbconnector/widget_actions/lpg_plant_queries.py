@@ -2225,5 +2225,19 @@ ORDER BY
         ind_req_view."INDENT_NO", ind_req_view."product_name"
     ORDER BY
         SUM(ind_req_view."QTY") DESC
-'''
+''',
+    'cp_monthly_avg_sales': '''select 
+        TO_CHAR(DATE_TRUNC('month', transaction_date), 'Mon YYYY') as transaction_month, 
+        product,
+        avg(amount) as avg_sale_volume
+    from consumer_pump_transactions
+    group by DATE_TRUNC('month', transaction_date), product
+    order by transaction_month desc''',
+
+    'cp_top_3_sales': '''select sap_id, sum(quantity)/1000 as "Total Sales (TMT)" from consumer_pump_transactions
+            group by sap_id
+            order by "Total Sales (TMT)"
+            limit 3''',
+
+    '': ''''''
 }
