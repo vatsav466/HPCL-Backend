@@ -16,7 +16,8 @@ HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', '
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
-Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
+Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'""", """ "SBU_Name" not in ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')"""]
+#Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
@@ -211,6 +212,27 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                date_time_format=None)
             end_date_history = end_date_history.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+        elif condition['key'].strip('"') == "YTDPM":
+
+            # Calculating start and end dates for YTD for both actual and history
+            end_date_ = fiscal_year.FiscalDate.today()
+            end_date = helpers.get_time_stamp_by_delta(end_date_,years=0, days=1, with_month_start_day=True,
+                                                               date_time_format="%Y-%m-%d")
+            print("came into YTDPM")
+            start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
+            # For History
+            start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+            end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=True,
+                                                               date_time_format=None)
+
+
+            end_date_history = end_date_history.strftime(
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+           
+
+        
+        
         elif condition['key'].strip('"') == "DATE":
             # Calculating start and end dates
             start_date, end_date = condition['value'].split(",")
