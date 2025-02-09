@@ -467,14 +467,20 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
             else:
                 final_resp = generate_stacked_data(merged_df, resp_format)
+        measure_unit = 'TMT'
+        if 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
+            measure_unit = 'MT'
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
-                                                               'month_name': month_keys}}
+                                                               'month_name': month_keys,'sales_unit':measure_unit}}
     else:
         if resp_format:
             final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
-        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {}}}
+        measure_unit = 'TMT'
+        if 'Region_Name' in [x['key']for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
+            measure_unit = 'MT'
+        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {},'sales_unit':measure_unit}}
 
 
 def generate_stacked_data(df, resp_format='', month_column=''):
