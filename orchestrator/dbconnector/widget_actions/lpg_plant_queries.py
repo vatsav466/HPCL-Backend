@@ -990,19 +990,19 @@ LIMIT 10000;''',
                         from
                             "lpg_cs_rejections" ''',
     
-    "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "cp_tank_delivery_updated" ', 
+    "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "consumer_pump_transactions" ',
 
     "cp_total_dus": '''SELECT SUM("du") AS "total_du"
 FROM (
     SELECT COUNT(DISTINCT "dispensing_unit") AS "du"
-    FROM "cp_transaction_updated"
+    FROM "consumer_pump_transactions"
     GROUP BY "sap_id"
 ) AS subquery ''',
 
     "cp_total_tanks": '''SELECT SUM("tanks") AS "total_tanks"
 FROM (
     SELECT COUNT(DISTINCT "tank_no") AS "tanks"
-    FROM "cp_tank_delivery_updated"
+    FROM "consumer_pump_transactions"
     GROUP BY "sap_id"
 ) AS subquery ''',
 
@@ -1020,25 +1020,25 @@ ORDER BY
     TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY') ASC''',
 
     "cp_avg_monthly_consumption_by_location": '''SELECT 
-    AVG("sale_volume")/1000 AS "avg_sale_volume",
-	"depot" AS "plant",
-    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY') AS "start_month_year",
-    "product" AS "product"
-FROM
-    "cp_tank_delivery_updated"
-GROUP BY
-    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY'),
-    "product",
-	"depot",
-    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY')
-ORDER BY
-    "depot",TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY') ASC''',
+        AVG("sale_volume")/1000 AS "avg_sale_volume",
+        "depot" AS "plant",
+        TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY') AS "start_month_year",
+        "product" AS "product"
+    FROM
+        "cp_tank_delivery_updated"
+    GROUP BY
+        TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY'),
+        "product",
+        "depot",
+        TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY')
+    ORDER BY
+        "depot",TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY') ASC''',
 
     "cp_total_volume_consumption": '''select sum("sale_volume")/1000 as "total_consumption" 
     from "cp_tank_delivery_updated" ''',
 
-    "cp_total_volume_sales": '''select sum("sale_volume")/1000 as "total_sales" 
-    from "cp_transaction_updated"''',
+    "cp_total_volume_sales": '''select sum("quantity")/1000 as "total_sales" 
+    from "consumer_pump_transactions"''',
 
     "lpg_cdcms_exception_stats": f''' select 
                                         "ZOName" ,
@@ -2225,5 +2225,18 @@ ORDER BY
         ind_req_view."INDENT_NO", ind_req_view."product_name"
     ORDER BY
         SUM(ind_req_view."QTY") DESC
-'''
+''',
+    'cp_monthly_avg_sales': '''select 
+        TO_CHAR(DATE_TRUNC('month', transaction_date), 'Mon YYYY') as transaction_month, 
+        product,
+        avg(amount) as avg_sale_volume
+    from consumer_pump_transactions
+    group by DATE_TRUNC('month', transaction_date), product
+    order by transaction_month desc''',
+
+    'cp_top_3_sales': '''select sap_id, sum(quantity)/1000 as "Total Sales (TMT)" from consumer_pump_transactions
+            group by sap_id
+            order by "Total Sales (TMT)"
+            limit 3''',
+    '': ''''''
 }

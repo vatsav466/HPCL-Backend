@@ -690,3 +690,78 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/lpgoperationsrejections/{id}', tags=['LpgOperationsRejections'])
 async def delete(id: str):
     return await LpgOperationsRejections.delete(id)
+
+
+@router.post('/consumerpumptransactions', response_model=ConsumerPumpTransactions, tags=['ConsumerPumpTransactions'])
+async def create(inputObj: ConsumerPumpTransactionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/consumerpumptransactions', response_model=ConsumerPumpTransactions, tags=['ConsumerPumpTransactions'])
+async def update(inputObj: ConsumerPumpTransactions):
+    return await inputObj.modify()
+
+
+@router.get('/consumerpumptransactions/{id}', response_model=ConsumerPumpTransactions, tags=['ConsumerPumpTransactions'])
+async def get(id: str):
+    return await ConsumerPumpTransactions.get(id, skip_secrets=True)
+
+
+@router.get('/consumerpumptransactions', response_model=ConsumerPumpTransactionsGetResp, tags=['ConsumerPumpTransactions'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ConsumerPumpTransactions.get_all(params, skip_secrets=True)
+
+
+@router.delete('/consumerpumptransactions/{id}', tags=['ConsumerPumpTransactions'])
+async def delete(id: str):
+    return await ConsumerPumpTransactions.delete(id)
+
+
+@router.post('/consumerpumptankinventory', response_model=ConsumerPumpTankInventory, tags=['ConsumerPumpTankInventory'])
+async def create(inputObj: ConsumerPumpTankInventoryCreate):
+    return await inputObj.create()
+
+
+@router.put('/consumerpumptankinventory', response_model=ConsumerPumpTankInventory, tags=['ConsumerPumpTankInventory'])
+async def update(inputObj: ConsumerPumpTankInventory):
+    return await inputObj.modify()
+
+
+@router.get('/consumerpumptankinventory/{id}', response_model=ConsumerPumpTankInventory, tags=['ConsumerPumpTankInventory'])
+async def get(id: str):
+    return await ConsumerPumpTankInventory.get(id, skip_secrets=True)
+
+
+@router.get('/consumerpumptankinventory', response_model=ConsumerPumpTankInventoryGetResp, tags=['ConsumerPumpTankInventory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ConsumerPumpTankInventory.get_all(params, skip_secrets=True)
+
+
+@router.delete('/consumerpumptankinventory/{id}', tags=['ConsumerPumpTankInventory'])
+async def delete(id: str):
+    return await ConsumerPumpTankInventory.delete(id)
+
+
+@router.post('/consumerpumpstocksreceipts', response_model=ConsumerPumpStocksReceipts, tags=['ConsumerPumpStocksReceipts'])
+async def create(inputObj: ConsumerPumpStocksReceiptsCreate):
+    return await inputObj.create()
+
+
+@router.put('/consumerpumpstocksreceipts', response_model=ConsumerPumpStocksReceipts, tags=['ConsumerPumpStocksReceipts'])
+async def update(inputObj: ConsumerPumpStocksReceipts):
+    return await inputObj.modify()
+
+
+@router.get('/consumerpumpstocksreceipts/{id}', response_model=ConsumerPumpStocksReceipts, tags=['ConsumerPumpStocksReceipts'])
+async def get(id: str):
+    return await ConsumerPumpStocksReceipts.get(id, skip_secrets=True)
+
+
+@router.get('/consumerpumpstocksreceipts', response_model=ConsumerPumpStocksReceiptsGetResp, tags=['ConsumerPumpStocksReceipts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ConsumerPumpStocksReceipts.get_all(params, skip_secrets=True)
+
+
+@router.delete('/consumerpumpstocksreceipts/{id}', tags=['ConsumerPumpStocksReceipts'])
+async def delete(id: str):
+    return await ConsumerPumpStocksReceipts.delete(id)

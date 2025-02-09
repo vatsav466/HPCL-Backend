@@ -109,7 +109,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
         dry_out_customers = list(set([rec['dealer_id'] for rec in data['data']]))
     if zone:
         key_mapping["zone"] = zone
-    if bu == "TAS":
+    if bu in ["TAS", "LPG"]:
         for rec in bu_data.to_dict(orient='records'):
             skip_record = False
             if key_mapping:
@@ -160,9 +160,9 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                     if rec.get(key) not in value:
                         skip_record = True
                         break
-            if skip_record or not rec["region"]:
+            if skip_record or not rec.get("region"):
                 continue
-            if rec["region"]:
+            if rec.get("region"):
                 final_data["region"][rec["region"]] = {"name": rec["region"], "id": rec["region"]}
 
         # Filtering Sales Area
@@ -175,9 +175,9 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                     if rec.get(key) not in value:
                         skip_record = True
                         break
-            if skip_record or not rec["sales_area"]:
+            if skip_record or not rec.get("sales_area"):
                 continue
-            if rec["sales_area"]:
+            if rec.get("sales_area"):
                 final_data["sales_area"][rec["sales_area"]] = {"name": rec["sales_area"], "id": rec["sales_area"]}
 
         # Filtering Plant

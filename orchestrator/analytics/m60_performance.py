@@ -12,12 +12,12 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
-
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
-Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
+Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'""", """ "SBU_Name" not in ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')"""]
+#Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'NG']
@@ -148,7 +148,7 @@ def get_group_by_filter_key(cross_filters, cumulative=False, drill_state='', tim
     return group_by_filter
 
 
-async def m60_performance(filters, cross_filters, drill_state="", time_grain=""):
+async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     if not cross_filters:
         cross_filters = []
     # Checking Cumulative enabled or not, On cumulative we should not group by month
@@ -212,6 +212,27 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
                                                                date_time_format=None)
             end_date_history = end_date_history.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+        elif condition['key'].strip('"') == "YTDPM":
+
+            # Calculating start and end dates for YTD for both actual and history
+            end_date_ = fiscal_year.FiscalDate.today()
+            end_date = helpers.get_time_stamp_by_delta(end_date_,years=0, days=1, with_month_start_day=True,
+                                                               date_time_format="%Y-%m-%d")
+            print("came into YTDPM")
+            start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
+            # For History
+            start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+            end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=True,
+                                                               date_time_format=None)
+
+
+            end_date_history = end_date_history.strftime(
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+           
+
+        
+        
         elif condition['key'].strip('"') == "DATE":
             # Calculating start and end dates
             start_date, end_date = condition['value'].split(",")
@@ -268,7 +289,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
         where_conditions_history = [clause]
-
     # Data Retrival for target data
     if target:
         group_keys = [key for key in group_by_filter]
@@ -438,64 +458,89 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="")
             month_keys = sorted_level['month_name'] = sorted(sorted_level['month_name'], key=months.index)
         if len(group_by_filter) > 1:
             if 'SalesArea_Name' in merged_df.columns.tolist() or 'Region_Name' in merged_df.columns.tolist():
-                if 'ACTUAL_TMT_SALES' in merged_df.columns.tolist():
-                    merged_df['ACTUAL_TMT_SALES'] = merged_df['ACTUAL_TMT_SALES'].fillna(0).astype(int)*1000
-                if 'TARGET_TMT_SALES' in merged_df.columns.tolist():
-                    merged_df['TARGET_TMT_SALES'] = merged_df['TARGET_TMT_SALES'].fillna(0).astype(int)*1000
-                if 'ACTUAL_HISTORY_TMT_SALES' in merged_df.columns.tolist():
-                    merged_df['ACTUAL_HISTORY_TMT_SALES'] = merged_df['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(int)*1000
-            final_resp = generate_stacked_data(merged_df)
+                for column in list(MandateKeys.values()):
+                    if column in merged_df.columns.tolist():
+                        merged_df[column] = merged_df[column].fillna(0).astype(int)*1000
+            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
         else:
-            final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+            if not resp_format:
+                final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+            else:
+                final_resp = generate_stacked_data(merged_df, resp_format)
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys}}
     else:
-        final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
+        if resp_format:
+            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
+        else:
+            final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {}}}
 
 
-def generate_stacked_data(df):
-    month_column = 'month_name'
-    df[month_column] = pd.Categorical(df[month_column], categories=months, ordered=True)
+def generate_stacked_data(df, resp_format='', month_column=''):
     columns = df.columns.to_list()
     numeric_cols = [col for col in columns if col in list(MandateKeys.values())]
-    # df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
-    # return df.to_dict(orient='records')
-    for column in numeric_cols:
-        df[column].fillna(0, inplace=True)
-
-    other_columns = list(set(columns) - set(numeric_cols+[month_column]))
-    if other_columns:
-        # Renaming columns to lower case
-        df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
-        numeric_cols = [key for key, value in MandateKeys.items() if value in numeric_cols]
-
-        # Pivot Data - Creating separate columns for Actual, History, and Target
-        df_pivot = df.pivot(index=other_columns[0], columns=month_column, values=numeric_cols)
-
-        # Flatten MultiIndex Columns and rename them
-        df_pivot.columns = [f"{month}_{metric.split('_')[0]}" for metric, month in df_pivot.columns]
-
-        # Reset Index to include 'Zone_Name'
-        df_pivot.reset_index(inplace=True)
-
-        # Keeping all nan's as zero's
-        df_pivot.fillna(0, inplace=True)
-
-        # Convert to Dictionary Format
-        result = df_pivot.to_dict(orient="records")
-        return result
-
-        # For Grouped data
-        result = []
-        for month, group in df.groupby("month_name"):
-            transformed_entry = {
-                "month_name": month,
-                **{key: group[key].tolist() for key in numeric_cols},
-                **{key: group[key].tolist() for key in other_columns}
-            }
-            result.append(transformed_entry)
-        return result
+    if month_column:
+        df[month_column] = pd.Categorical(df[month_column], categories=months, ordered=True)
+        for column in numeric_cols:
+            df[column].fillna(0, inplace=True)
+        other_columns = list(set(columns) - set(numeric_cols+[month_column]))
     else:
+        other_columns = list(set(columns) - set(numeric_cols))
+    if other_columns:
+        # For Non-Stacked for data table to display month wise AHT data
+        if not resp_format:
+            # Renaming columns to lower case
+            df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
+
+            # Actual numeric columns
+            numeric_cols = [key for key, value in MandateKeys.items() if value in numeric_cols]
+
+            # Pivot Data - Creating separate columns for Actual, History, and Target
+            df_pivot = df.pivot(index=other_columns[0], columns=month_column, values=numeric_cols)
+
+            # Flatten MultiIndex Columns and rename them
+            df_pivot.columns = [f"{month}_{metric.split('_')[0]}" for metric, month in df_pivot.columns]
+
+            # Reset Index to include 'Zone_Name'
+            df_pivot.reset_index(inplace=True)
+
+            # Keeping all nan's as zero's
+            df_pivot.fillna(0, inplace=True)
+
+            # Convert to Dictionary Format
+            return df_pivot.to_dict(orient="records")
+        elif resp_format == 'stacked' and month_column:
+            # For sending data in stacked format
+            # Renaming columns to lower case
+            df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
+
+            # Actual numeric columns
+            numeric_cols = [key for key, value in MandateKeys.items() if value in numeric_cols]
+
+            # Extract unique months from the dataset
+            unique_months = sorted(df[month_column].unique(), key=lambda x: months.index(x))
+            series_data = []
+            for zone in df[other_columns[0]].unique():
+                zone_data = df[df[other_columns[0]] == zone].set_index(month_column)
+                for column in numeric_cols:
+                    # Creating series data
+                    series_data.append({"name": f"{zone} {column.title()}", "stack": column.title(),
+                                        "data": [zone_data.loc[m, column] if m in zone_data.index else 0
+                                                 for m in unique_months]})
+            return {"months": unique_months, "series": series_data}
+        elif resp_format == 'cummulative' and month_column:
+            df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
+            return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+        elif resp_format == 'grouped':
+            # For Grouped data
+            # Converting data to month wise report
+            return [{"month_name": month,  **{key: group[key].tolist() for key in numeric_cols+other_columns}}
+                    for month, group in df.groupby("month_name")]
+    else:
+        if resp_format == 'cummulative' and month_column:
+            df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
+            
+        # For regular drill down widgets
         return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
 
