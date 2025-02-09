@@ -2584,6 +2584,14 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     device_offline_count: Mapped[typing.Optional[int]] = mapped_column("device_offline_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     device_tamper_count: Mapped[typing.Optional[int]] = mapped_column("device_tamper_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     approved_by: Mapped[typing.Optional[str]] = mapped_column("approved_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    stoppage_violations_count_instance: Mapped[typing.Optional[str]] = mapped_column("stoppage_violations_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    route_deviation_count_instance: Mapped[typing.Optional[str]] = mapped_column("route_deviation_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    speed_violation_count_instance: Mapped[typing.Optional[str]] = mapped_column("speed_violation_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    main_supply_removal_count_instance: Mapped[typing.Optional[str]] = mapped_column("main_supply_removal_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    night_driving_count_instance: Mapped[typing.Optional[str]] = mapped_column("night_driving_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    no_halt_zone_count_instance: Mapped[typing.Optional[str]] = mapped_column("no_halt_zone_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_offline_count_count_instance: Mapped[typing.Optional[str]] = mapped_column("device_offline_count_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_tamper_count_instance: Mapped[typing.Optional[str]] = mapped_column("device_tamper_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -2604,6 +2612,14 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
+    stoppage_violations_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    route_deviation_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    speed_violation_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    main_supply_removal_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    night_driving_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    no_halt_zone_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    device_offline_count_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    device_tamper_count_instance: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -2630,6 +2646,14 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
+    stoppage_violations_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    route_deviation_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    speed_violation_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    main_supply_removal_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    night_driving_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    no_halt_zone_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    device_offline_count_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    device_tamper_count_instance: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
