@@ -2,6 +2,7 @@ import urdhva_base
 import json
 import asyncio
 import traceback
+import polars as pl
 import hpcl_ceg_model
 import urdhva_base.redispool
 import cache_gateway.data_cache_handler as cache_handler
@@ -66,27 +67,35 @@ async def load_roles_master(bu, sap_id, role):
     :return:
     """
     print(f"Loading data")
-    role_list = role.split(",")  
-    # Step 2: Remove leading/trailing spaces for each role
-    role_list = [r.strip() for r in role_list]
-    # Step 3: Join them correctly
-    role_str = "','".join(role_list)
-    # Step 4: Construct the query
-    query = f"bu='{{{bu}}}' and sap_id='{{{sap_id}}}' and novex_role IN ('{role_str}')"
-    params = urdhva_base.queryparams.QueryParams()
-    params.q = query  # Ensuring this is properly set and not overwriting params elsewhere.
-    resp = await hpcl_ceg_model.Users.get_all(params)  # Await response
-
-    # Handle response
-    print(resp)
-    print(dir(resp))
+    role = role.split(",") 
+    role = [r.strip() for r in role]
+    params = urdhva_base.queryparams.QueryParams(limit=100000, q=f"bu='{{{bu}}}'")
+    resp = await hpcl_ceg_model.Users.get_all(params)
     resp_dict = resp.__dict__
     if resp_dict.get('body'):
         # Decode the byte string to a normal string
         body_str = resp_dict['body'].decode('utf-8')
         data = json.loads(body_str)
-        resp = data["data"][0]
-    return resp
+        resp = data["data"]
+    for record in resp:
+        for key, value in record.items():
+            if isinstance(value, list) and not value:
+                record[key] = [None]  # Fill empty lists with None
+            elif isinstance(value, list) and all(isinstance(v, str) for v in value):
+                record[key] = value  # Keep as list of strings
+            elif isinstance(value, str):
+                record[key] = value  # Keep as string
+            else:
+                record[key] = str(value)  # Convert everything else to string
+    # Now create the DataFrame
+    df = pl.DataFrame(resp)
+    # Now apply the filter with .arr.contains for all list columns
+    resp_filtered = df.filter(
+        (pl.col("sap_id").list.contains(str(sap_id))) &
+        (pl.col("novex_role").is_in(role))
+    )
+    return resp_filtered.to_dicts()
+
 
 async def get_location_details(bu, sap_id):
     """
