@@ -71,7 +71,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         altcount = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
                                                                                                             record['location_type'],
                                                                                                             record['tl_number'], key)
-                        maintenance_time = helpers.get_time_stamp_by_delta(days=14, 
+                        maintenance_time = helpers.get_time_stamp_by_delta(days=15, 
                                             with_month_start_day=False, 
                                             ascending=False,
                                             date_time_format=None).strftime("%Y-%m-%d")
