@@ -2,30 +2,33 @@ import urdhva_base
 import json
 import asyncio
 import traceback
+import hpcl_ceg_model
 import urdhva_base.redispool
 import cache_gateway.data_cache_handler as cache_handler
-
 
 class CacheDataInstance:
     _instances = {}
 
     @classmethod
-    def get_instance(cls, cache_key, loader_func):
+    def get_instance(cls, cache_key, loader_func, fetch_args=None):
         """
-        get instance for the given cache_key
+        Get instance for the given cache_key
         """
         if cache_key not in CacheDataInstance._instances:
             print(f"Cache Key Not Available {cache_key}")
-            CacheDataInstance._instances[cache_key] = CacheDataInstance(loader_func).cache_handler
+            CacheDataInstance._instances[cache_key] = CacheDataInstance(loader_func, fetch_args).cache_handler
 
         return CacheDataInstance._instances[cache_key]
 
-    def __init__(self, loader_func):
+    def __init__(self, loader_func, fetch_args):
         """
         Initializing cache class
         """
-        self.cache_handler = cache_handler.InMemTTLCache(ttl_seconds=urdhva_base.settings.default_masters_cache_seconds,
-                                                         fetch_function=loader_func)
+        self.cache_handler = cache_handler.InMemTTLCache(
+            ttl_seconds=urdhva_base.settings.default_masters_cache_seconds,
+            fetch_function=loader_func,
+            fetch_args=fetch_args if fetch_args is not None else ()
+        )
 
 
 async def load_location_master():
@@ -57,6 +60,33 @@ async def load_location_master():
         count += 1
     return {}
 
+async def load_roles_master(bu, sap_id, role):
+    """
+    Loading roles master from redis database
+    :return:
+    """
+    print(f"Loading data")
+    role_list = role.split(",")  
+    # Step 2: Remove leading/trailing spaces for each role
+    role_list = [r.strip() for r in role_list]
+    # Step 3: Join them correctly
+    role_str = "','".join(role_list)
+    # Step 4: Construct the query
+    query = f"bu='{{{bu}}}' and sap_id='{{{sap_id}}}' and novex_role IN ('{role_str}')"
+    params = urdhva_base.queryparams.QueryParams()
+    params.q = query  # Ensuring this is properly set and not overwriting params elsewhere.
+    resp = await hpcl_ceg_model.Users.get_all(params)  # Await response
+
+    # Handle response
+    print(resp)
+    print(dir(resp))
+    resp_dict = resp.__dict__
+    if resp_dict.get('body'):
+        # Decode the byte string to a normal string
+        body_str = resp_dict['body'].decode('utf-8')
+        data = json.loads(body_str)
+        resp = data["data"][0]
+    return resp
 
 async def get_location_details(bu, sap_id):
     """
@@ -72,9 +102,24 @@ async def get_location_details(bu, sap_id):
     if not bu or not sap_id:
         print("Invalid parameters: 'bu' and 'sap_id' are required.")
         return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
-    ins = CacheDataInstance.get_instance("location_master", load_location_master)
+    ins = CacheDataInstance.get_instance("location_master", load_location_master, None)
     location_data = await ins.get(f"location_master")
     if not location_data or f"{bu.upper()}_{sap_id}" not in location_data:
         return False, {}
     return True, location_data[f"{bu.upper()}_{sap_id}"]
 
+async def get_roles(bu, sap_id, role):
+    """
+    Retrieves roles based on the provided business unit and SAP ID.
+    """
+    if not bu or not sap_id:
+        print("Invalid parameters: 'bu' and 'sap_id' are required.")
+        return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
+    
+    fetch_args = (bu, sap_id, role)
+    ins = CacheDataInstance.get_instance("roles_master", load_roles_master, fetch_args)
+    roles_data = await ins.get(f"roles_master")
+    print("roles_data --> ", roles_data)
+    if not roles_data:
+        return False, {}
+    return True, roles_data
