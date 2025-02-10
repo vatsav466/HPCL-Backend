@@ -259,7 +259,9 @@ def get_and_insert_data(cursor, query, params=None):
     data['fiscal_year'] = data['FISCALYEAR'].apply(lambda x:x.strip('FY').strip()if 'FY' in x else x)
     print(data['fiscal_year'].unique())
     print(data['ORGSBUNAME'].unique())
-    data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None else x )
+    data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' '))>2  else x )
+
+    #data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' ') >2)  else x )
     print(data['ORGSBUNAME'].unique())
     data = data.rename(columns = {'ORGSBUNAME':'SBU_Name','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
                                   'ORGSANAME':'SalesArea_Name','MATERIALGROUPNAME':'ProductName'})
@@ -812,6 +814,8 @@ E1.WEIGHT_UNIT
         WHEN ORGSBUCD = '2000'  THEN NETWEIGHT / 1000000
         WHEN ORGSBUCD = '3000'  THEN NETWEIGHT / 1000000
         WHEN ORGSBUCD = '4000'  THEN NETWEIGHT / 1000000
+        WHEN ORGSBUCD = '5500'  THEN NETWEIGHT / 1000000
+        WHEN ORGSBUCD = '5750'  THEN NETWEIGHT / 1000000
         ELSE NETWEIGHT
     END AS NETWEIGHT_TMT
 FROM (
@@ -874,7 +878,7 @@ FROM (
         LEFT OUTER JOIN PS.EDW_SALES_ORG_DIM E8 ON E2.ORG_SA_CD = E8.ORG_SA_CD
     WHERE
         E1.PS_DT_ID >= 20230401
-        AND E2.ORG_SBU_CD IN ('7000', '5000', '2000', '3000', '4000')
+        AND E2.ORG_SBU_CD IN ('7000', '5000', '2000', '3000', '4000','5500','5750')
     GROUP BY
         E2.ORG_SBU_CD,
         E8.ORG_SBU_NM,
