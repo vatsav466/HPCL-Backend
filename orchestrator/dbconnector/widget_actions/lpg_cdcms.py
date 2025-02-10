@@ -2050,7 +2050,7 @@ class LPGCDCMSActions:
         
         financial_year = await get_financial_year()
         financial_start_date = '2024-04-01'
-        
+        print("financial_year ---> ", financial_year)
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -2115,6 +2115,7 @@ class LPGCDCMSActions:
             pl.when(pl.col("CylType") == "C5"
                     ).then(pl.col("TotalSalesYesterday")*5 / 14.2
                            ).otherwise(pl.col("TotalSalesYesterday")).alias("TotalRefillSales"))
+        lpg_cdcms_pcc_sales.write_csv("/opt/ceg/algo/lpg_cdcms_pcc_sales.csv")
         if filters:
             filter_keys = [rec.key.strip('"') for rec in filters]
             pcc = None
