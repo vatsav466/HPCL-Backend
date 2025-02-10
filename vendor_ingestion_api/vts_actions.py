@@ -51,6 +51,7 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
 
       for entry in enriched_data:
           print("entry --> ", entry)
+          entry['auto_unblock'] = True
           await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()  
           await alert_manager.create_alert({**entry, "alert_type": "VTS"})
       

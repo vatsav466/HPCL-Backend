@@ -83,7 +83,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         if altcount['count']:
                             query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
                                 f"and {key}>=1 and created_at::DATE>'{maintenance_time}' and location_type='{record['location_type']}' "
-                                f"and {key}_instance=''")
+                                f"and {key}_instance='' and auto_unblock='true'")
                             data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                 resp_type='plain')
                             print("data--->",data)
@@ -92,7 +92,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         # location_id and tl_number(vehicle_number).   
                         else:
                             query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
-                                    f"and {key}>=1 and created_at::DATE>'{maintenance_time}' and location_type='{record['location_type']}'")
+                                    f"and {key}>=1 and created_at::DATE>'{maintenance_time}' and location_type='{record['location_type']}' "
+                                    f"and auto_unblock='true'")
                             data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                     resp_type='plain')
                         # check violation if frequency of records count greter than the threshold of paricular key
@@ -162,6 +163,30 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                 violation = f"{key}_instance"
                                 data[violation]=str(altcount)
                                 await hpcl_ceg_model.VtsAlertHistory(**data).modify()
+                            
+                            vts_alert_payload = {
+                                'vendor_id': alert_data['vendor_id'],
+                                'location_id': alert_data['location_id'],
+                                'location_type': alert_data['location_type'],
+                                'data': [
+                                    {
+                                      'tt_no':record['tl_number'],
+                                      'location_name': location_details['name'],
+                                      'transporter_name': '',
+                                      'transporter_code': alert_data['vendor_id'],
+                                      'vehicle_blocked_desc': f"Instance{altcount}: {key}",
+                                      'vehicle_blocked_start_date': recv_time.strftime("%Y-%m-%d"),
+                                      'vehicle_blocked_end_date': helpers.get_time_stamp_by_delta(days=details['alerting_rules'][str(altcount)]['block_duration'],
+                                                                                                  with_month_start_day=False,
+                                                                                                  ascending=True,
+                                                                                                  date_time_format=None).strftime("%Y-%m-%d"),
+                                      'vehicle_blocked_instance_no': f"Instance{altcount}",
+                                      'vehicle_blocked_instance_type': key,
+                                      'alert_type': 'VTS'
+                                    }
+                                ]
+                            }
+                            print('vts_alert_payload----->',vts_alert_payload)
                             await cls.create_alert(vts_alert_data, camunda_url)
           
                 except Exception as e:

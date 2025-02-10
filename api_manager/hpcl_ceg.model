@@ -1187,6 +1187,7 @@ Model VtsAlertHistory {
     no_halt_zone_count_instance optional str
     device_offline_count_count_instance optional str
     device_tamper_count_instance optional str
+    auto_unblock optional bool
 
     Config=> {
         crud_operations='read'

@@ -2592,6 +2592,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     no_halt_zone_count_instance: Mapped[typing.Optional[str]] = mapped_column("no_halt_zone_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_offline_count_count_instance: Mapped[typing.Optional[str]] = mapped_column("device_offline_count_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_tamper_count_instance: Mapped[typing.Optional[str]] = mapped_column("device_tamper_count_instance", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    auto_unblock: Mapped[typing.Optional[bool]] = mapped_column("auto_unblock", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -2620,6 +2621,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     no_halt_zone_count_instance: typing.Optional[str] = pydantic.Field("", **{})
     device_offline_count_count_instance: typing.Optional[str] = pydantic.Field("", **{})
     device_tamper_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    auto_unblock: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -2654,6 +2656,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     no_halt_zone_count_instance: typing.Optional[str] = pydantic.Field("", **{})
     device_offline_count_count_instance: typing.Optional[str] = pydantic.Field("", **{})
     device_tamper_count_instance: typing.Optional[str] = pydantic.Field("", **{})
+    auto_unblock: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
