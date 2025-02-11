@@ -900,7 +900,7 @@ LIMIT 10000;''',
                                     "lpg_cdcms_sales_summary" ''',
     
     "lpg_cdcms_april_consumer_stats": f''' SELECT
-                                                "JDEDistributorCode", "SubCategory", "ZOName",
+                                                "DistributorName", "SubCategory", "ZOName",
                                                 "SAName", "ROName",
                                                 SUM("ConsumerCount") AS "ConsumerCount"
                                             FROM
