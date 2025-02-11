@@ -90,6 +90,7 @@ async def load_roles_master(bu, sap_id, role):
     # Now create the DataFrame
     df = pl.DataFrame(resp)
     # Now apply the filter with .arr.contains for all list columns
+    print("role before resp_filtered ", role)
     resp_filtered = df.filter(
         (pl.col("sap_id").list.contains(str(sap_id))) &
         (pl.col("novex_role").is_in(role))
@@ -121,14 +122,17 @@ async def get_roles(bu, sap_id, role):
     """
     Retrieves roles based on the provided business unit and SAP ID.
     """
+    print("role in get roles ", role)
     if not bu or not sap_id:
         print("Invalid parameters: 'bu' and 'sap_id' are required.")
         return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
     
     fetch_args = (bu, sap_id, role)
+    print("fetch_args", fetch_args)
     ins = CacheDataInstance.get_instance("roles_master", load_roles_master, fetch_args)
-    roles_data = await ins.get(f"roles_master")
-    print("roles_data --> ", roles_data)
+    print("ins roles_data --> ", ins)
+    roles_data = await ins.get(f"roles_master", fetch_args)
+    print("get_roles roles_data --> ", roles_data)
     if not roles_data:
         return False, {}
     return True, roles_data

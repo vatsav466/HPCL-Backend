@@ -55,15 +55,23 @@ class CheckMaintenanceTime:
                 return True, {"waitTime": totalWaitTime}
             elif alert_data.get("alert_section") in ["TAS"] and alert_data.get('maintenance_time',''):
                 maintenance_time = alert_data.get('maintenance_time')
-                # Parse the string into a datetime object
-                timestamp = datetime.datetime.strptime(maintenance_time, "%Y-%m-%dT%H:%M:%S")
-                # Subtract 5 days
-                new_timestamp = timestamp - datetime.timedelta(days=5)
-                # Convert back to string in the same format
-                totalWaitTime = new_timestamp.strftime("%Y-%m-%dT%H:%M:%S")
-                #totalWaitTime = '2025-02-04T19:56:20'
+                if maintenance_time:
+                    # Parse the string into a datetime object
+                    timestamp = datetime.datetime.strptime(maintenance_time, "%Y-%m-%dT%H:%M:%S")
+                    # Subtract 5 days
+                    new_timestamp = timestamp - datetime.timedelta(days=5)
+                    # Convert back to string in the same format
+                    totalWaitTime = new_timestamp.strftime("%Y-%m-%dT%H:%M:%S")
+                    #totalWaitTime = '2025-02-04T19:56:20'
+                    return True, {"waitTime": totalWaitTime}
+                else:
+                    # Return current time + 60 seconds
+                    current_time_plus_30s = (datetime.datetime.now() + datetime.timedelta(seconds=30)).strftime("%Y-%m-%dT%H:%M:%S")
+                    return True, {"waitTime": current_time_plus_30s}
+            else:
+                totalWaitTime = 'PT1S'
                 return True, {"waitTime": totalWaitTime}
-        
+            
         except Exception as e:
             print(traceback.format_exc())
             logger.error(e)

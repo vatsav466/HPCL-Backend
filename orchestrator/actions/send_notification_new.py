@@ -9,6 +9,7 @@ from jinja2 import Template
 from typing import Dict, List
 import hpcl_ceg_model
 import hpcl_ceg_enum
+from collections import defaultdict
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
     TemplateMapping
@@ -28,7 +29,7 @@ class SendNotification:
         self.alert_data = None
         self.params = None
         self.IST = pytz.timezone('Asia/Kolkata')
-        self.roles_mapper = hpcl_ceg_model.RoleMaster
+        self.roles_mapper = {}
         self.update_alert = {}
         self.mail_recipients = []
         self.sms_recipients = []
@@ -86,31 +87,65 @@ class SendNotification:
         bu = self.params.get("BU")
         sap_id = self.alert_data.get("sap_id", "")
         message_type = self.params.get("messagetype")
+        roles_list = self.params.get("rolemailto", "")
         print("bu --> ", bu)
         print("sap_id --> ", sap_id)
         print("message_type --> ", message_type)
+        print("roles_list --> ", roles_list)
         # Get roles based on business unit and message type
-        status, roles = await cache_api_actions.get_location_data(bu, sap_id)
+        # status, roles = await cache_api_actions.get_location_data(bu, sap_id)
+        status, roles = await cache_api_actions.get_employee_details(bu=bu, location_id=sap_id, role=roles_list)
         print("roles --> ", roles)
-        self.base_alert_data["email"] = ""
-        roles["dealer_email"] = ""
-        roles["dealer_phone"] = ""
-        # Prepare recipients and message content
-        await self._prepare_recipients(roles)
+        # self.base_alert_data["email"] = [role["email"] for role in roles if "email" in role and role["email"]]
+        # print("self.base_alert_data['email']" , self.base_alert_data["email"])
+        # self.roles_mapper["roles"] = self.base_alert_data["email"]
+        # # Prepare recipients and message content
+        # print("roles --> ", roles)
+        self.roles_mapper["rolemailto"] = defaultdict(list)
+        print("self.roles_mapper['rolemailto']", self.roles_mapper["rolemailto"])
+        for role in roles:
+            role_name = role.get("novex_role", "")  # Choose appropriate key
+            email = role.get("email", "")
+            phone = role.get("phone", "")
+            
+            if email or phone:  # Ensure we only add roles with at least one contact detail
+                self.roles_mapper["rolemailto"][role_name].append({"email": email, "phone": phone})
+
+        # Convert defaultdict to a normal dictionary
+        self.roles_mapper["rolemailto"] = dict(self.roles_mapper["rolemailto"])
+        await self._prepare_recipients(self.roles_mapper["rolemailto"])
         await self._prepare_message_content(bu, message_type)
 
-    async def _prepare_recipients(self, users: List[Dict]):
+    # async def _prepare_recipients(self, users: List[Dict]):
+    #     """Prepare email and SMS recipients"""
+    #     print("users --> ", users)
+    #     # for user in users:
+    #     #     print("user ", user)
+    #     if users.get("email"):
+    #         self.mail_recipients.append(users["email"])
+    #     if users.get("phone"):
+    #         self.sms_recipients.append(users["phone"])
+                
+    #     self.mail_recipients = list(dict.fromkeys(self.mail_recipients))
+    #     self.sms_recipients = list(dict.fromkeys(self.sms_recipients))
+    async def _prepare_recipients(self, users: Dict[str, List[Dict[str, str]]]):
         """Prepare email and SMS recipients"""
         print("users --> ", users)
-        # for user in users:
-        #     print("user ", user)
-        if users.get("dealer_email"):
-            self.mail_recipients.append(users["dealer_email"])
-        if users.get("dealer_phone"):
-            self.sms_recipients.append(users["dealer_phone"])
-                
+
+        for role, user_list in users.items():  # Iterate over roles
+            for user in user_list:  # Iterate over users in each role
+                email = user.get("email")
+                phone = user.get("phone")
+
+                if email:
+                    self.mail_recipients.append(email)
+                if phone:
+                    self.sms_recipients.append(phone)
+
+        # Remove duplicates while maintaining order
         self.mail_recipients = list(dict.fromkeys(self.mail_recipients))
         self.sms_recipients = list(dict.fromkeys(self.sms_recipients))
+
 
     async def _prepare_message_content(self, bu: str, message_type: str):
         """Prepare message content (subject, body, and SMS)"""
@@ -125,9 +160,22 @@ class SendNotification:
         
         # Load templates based on message type and business unit
         templates = await self._load_message_templates(template_data['template'])
-        print("templates --> ", dir(templates))
         # Render templates
-        self.subject = Template(self.params.get("msg_subject")).render(**template_data)
+        sap_id = self.alert_data.get("sap_id", "")
+        alert_section = self.alert_data.get("alert_section", "")
+        location_name = self.alert_data.get("location_name", "")
+
+        # Construct the subject template
+        subject_template = f"{self.params.get('msg_subject', '')} for BU: {bu}, Location Name: {location_name}({sap_id})"
+
+        # Append alert_section only if it exists and is different from BU
+        if alert_section and bu != alert_section:
+            subject_template += f", Alert Section: {alert_section}"
+
+        # Render the final subject
+        self.subject = Template(subject_template).render(**template_data)
+
+        # self.subject = Template(self.params.get("msg_subject")).render(**template_data)
         self.body = Template(templates["body"]).render(**template_data)
         # self.sms = Template(templates["sms"]).render(**template_data)
 
@@ -137,7 +185,6 @@ class SendNotification:
 
         template_value = getattr(TemplateMapping, message_type, None)
         template = template_value.value if template_value else ""
-        print("template --> ", template)
         interlock_value = getattr(InterlockTemplateMapping, template_name.upper(), None)
         body = await self.read_template(interlock_value.value) if interlock_value else ""
         return {"template": template, "body": body}
@@ -170,6 +217,8 @@ class SendNotification:
             "portal_link": "https://ceg.hpcl.co.in",
             "user": self.params.get("user") or '',
             "asset_name": self.alert_data["device_type"],
+            "date_time": datetime.datetime.now(self.IST).strftime('%d-%m-%Y %H:%M:%S'),
+            "opened_time": self.alert_data['created_at'].strftime('%d-%m-%Y %H:%M:%S'),
             "asset_id": self.alert_data.get("device_name", self.alert_data["location_name"]) # this should be location_id
         }
         return self.base_alert_data
