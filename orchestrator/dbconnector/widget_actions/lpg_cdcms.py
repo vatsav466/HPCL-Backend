@@ -2124,23 +2124,23 @@ class LPGCDCMSActions:
                 april_consumer_stats = april_consumer_stats.group_by("ROName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_start"))
                 current_consumer_stats = current_consumer_stats.group_by("ROName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
                 avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="ROName", how="outer"
-                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("ROName_right")
                 lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("ROName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
-                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ROName", how="outer")
+                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ROName", how="outer").drop("ROName_right")
             elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName"  not in filter_keys:
                 april_consumer_stats = april_consumer_stats.group_by("SAName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
                 current_consumer_stats = current_consumer_stats.group_by("SAName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
                 avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="SAName", how="outer"
-                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("SAName_right")
                 lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("SAName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
-                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="SAName", how="outer")
+                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="SAName", how="outer").drop("SAName_right")
             elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
                 april_consumer_stats = april_consumer_stats.group_by("DistributorName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
                 current_consumer_stats = current_consumer_stats.group_by("DistributorName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
                 avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="DistributorName", how="outer"
-                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("DistributorName_right")
                 lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("DistributorName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
-                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="DistributorName", how="outer")
+                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="DistributorName", how="outer").drop("DistributorName_right")
         else:
             april_consumer_stats = april_consumer_stats.group_by("ZOName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_start"))
             current_consumer_stats = current_consumer_stats.group_by("ZOName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
