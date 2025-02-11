@@ -2108,7 +2108,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_pcc_sales  += ' WHERE '
                 lpg_cdcms_pcc_sales  += ' AND '.join(conditions)
             lpg_cdcms_april_consumer_stats += f' AND "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
-            lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorName", "SubCategory", "ZOName", "SAName", "ROName" '
+            lpg_cdcms_april_consumer_stats += ' GROUP BY "DistributorName", "SubCategory", "ZOName", "SAName", "ROName" '
             
             lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
@@ -2130,7 +2130,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_april_consumer_stats  += f' AND "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' AND "ZOName" IS NOT NULL'
-            lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorName", "SubCategory", "ZOName", "SAName", "ROName" '
+            lpg_cdcms_april_consumer_stats += ' GROUP BY "DistributorName", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_pcc_sales  += ' GROUP BY "ConsumerType", "ZOName", "SAName", "ROName", "CylType", "DistributorName" '
         
