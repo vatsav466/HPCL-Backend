@@ -309,7 +309,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         
         if '"month_name"' not in group_by_filter and '"C"' not in [x['key'] for x in filters]:
             group_keys.append("month_name")
-        if '"C"' not in [x[key] for x in filters]:   
+        if '"C"' not in [x['key'] for x in filters]:   
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                                    where_conditions + Default_Filters, start_date, end_date, group_keys)
         else:
