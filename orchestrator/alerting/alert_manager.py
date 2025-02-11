@@ -228,6 +228,11 @@ class AlertAction:
         }
         # print("messaged_data: ", messaged_data)
         # Posting data to camunda
+        url = helpers.get_camunda_url(
+            bu=alert_data.bu,
+            sap_id=alert_data.sap_id,
+            alert_section=alert_data.alert_section
+        )
         url = urdhva_base.settings.camunda_url + "/engine-rest/message"
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
 
