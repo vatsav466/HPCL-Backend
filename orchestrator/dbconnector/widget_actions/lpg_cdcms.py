@@ -2075,7 +2075,7 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        
+        df = pl.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_cdcms_april_consumer_stats = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_april_consumer_stats")
         lpg_cdcms_current_consumer_stats = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_current_consumer_stats")
         lpg_cdcms_pcc_sales = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_pcc_sales")
@@ -2108,7 +2108,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_pcc_sales  += ' WHERE '
                 lpg_cdcms_pcc_sales  += ' AND '.join(conditions)
             lpg_cdcms_april_consumer_stats += f' AND "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
-            lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
+            lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorName", "SubCategory", "ZOName", "SAName", "ROName" '
             
             lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
@@ -2130,7 +2130,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_april_consumer_stats  += f' AND "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' AND "ZOName" IS NOT NULL'
-            lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
+            lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorName", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_pcc_sales  += ' GROUP BY "ConsumerType", "ZOName", "SAName", "ROName", "CylType", "DistributorName" '
         
@@ -2141,6 +2141,7 @@ class LPGCDCMSActions:
         april_consumer_stats = pl.DataFrame(april_consumer_stats)
         current_consumer_stats = pl.DataFrame(current_consumer_stats)
         lpg_cdcms_pcc_sales = pl.DataFrame(lpg_cdcms_pcc_sales)
+        current_consumer_stats = current_consumer_stats.join(df, on='JDEDistributorCode', how='left')
         
         lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.with_columns(pl.col("TotalSalesYesterday").cast(pl.Float64).alias("TotalSalesYesterday"))
         lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.with_columns(
