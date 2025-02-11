@@ -946,6 +946,9 @@ class LPGCDCMSActions:
             "Total_Sales": "sum",
             "Total_Pending": "sum"
         })
+        for each_float_col in ["Total_Booking", "Total_Sales", "Total_Pending"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0).astype(int)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
