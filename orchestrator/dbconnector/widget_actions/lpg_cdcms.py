@@ -937,7 +937,7 @@ class LPGCDCMSActions:
         resp = pd.DataFrame(resp)
         for each_float_col in ["Total_Booking", "Total_Sales", "Total_Pending"]:
             if each_float_col in resp.columns:
-                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                resp[each_float_col] = resp[each_float_col].fillna(0.0) / 1000
         for each_str_col in ["ZOName", "CylType", "ConsumerType"]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna("").astype(str)
@@ -946,6 +946,9 @@ class LPGCDCMSActions:
             "Total_Sales": "sum",
             "Total_Pending": "sum"
         })
+        for each_float_col in ["Total_Booking", "Total_Sales", "Total_Pending"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0).astype(int)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
