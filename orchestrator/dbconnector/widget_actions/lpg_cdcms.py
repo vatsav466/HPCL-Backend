@@ -2103,6 +2103,7 @@ class LPGCDCMSActions:
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_pcc_sales  += ' GROUP BY "ConsumerType", "ZOName", "SAName", "ROName", "CylType", "DistributorName" '
         
+        print("lpg_cdcms_pcc_sales query :", lpg_cdcms_pcc_sales)
         april_consumer_stats = await function(query=lpg_cdcms_april_consumer_stats)
         current_consumer_stats = await function(query=lpg_cdcms_current_consumer_stats)
         lpg_cdcms_pcc_sales = await function(query=lpg_cdcms_pcc_sales)
@@ -2145,7 +2146,9 @@ class LPGCDCMSActions:
             current_consumer_stats = current_consumer_stats.group_by("ZOName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
             avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="ZOName", how="outer"
                                                            ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("ZOName_right")
+            print("TotalRefillSales:", lpg_cdcms_pcc_sales.select(["ZOName", "TotalRefillSales"]))
             lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("ZOName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
+            print("lpg_cdcms_pcc_sales:", lpg_cdcms_pcc_sales)
             pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ZOName", how="outer").drop("ZOName_right")
 
         days_in_fy_till_yesterday = await days_since_financial_year_start()
