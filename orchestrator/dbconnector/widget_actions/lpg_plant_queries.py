@@ -900,7 +900,7 @@ LIMIT 10000;''',
                                     "lpg_cdcms_sales_summary" ''',
     
     "lpg_cdcms_april_consumer_stats": f''' SELECT
-                                                "JDEDistributorCode", "SubCategory", "ZOName",
+                                                "DistributorName", "SubCategory", "ZOName",
                                                 "SAName", "ROName",
                                                 SUM("ConsumerCount") AS "ConsumerCount"
                                             FROM
@@ -2238,5 +2238,22 @@ ORDER BY
             group by sap_id
             order by "Total Sales (TMT)"
             limit 3''',
-    '': ''''''
+
+    'lpg_cdcms_totalconsumer_count': f'''SELECT 
+                                            ROUND(CAST(SUM("ConsumerCount") AS NUMERIC) / 100000, 2) AS "Total Consumers"
+                                        FROM 
+                                            "LPG_CONSUMERS_SUMMARY"
+                                        WHERE 
+                                            "ZOName" IS NOT NULL 
+                                            AND "Category" NOT IN ('Others') ''',
+
+    'lpg_cdcms_SafetyCheckPending': f''' SELECT 
+                                        ROUND(CAST(SUM("SafetyCheckPending") / 100000 AS NUMERIC), 2) AS "Total SafetyCheckPending"
+                                    FROM 
+                                        "LPG_CONSUMERS_SUMMARY" WHERE "Category" = 'Domestic' ''',
+
+    'lpg_cdcms_total_Suvidha_count': f''' SELECT 
+                                            ROUND(CAST(SUM("SuvidhaClub") / 1000 AS NUMERIC), 2) AS "Total Suvidha"
+                                        FROM 
+                                            "LPG_CONSUMERS_SUMMARY" '''
 }

@@ -937,7 +937,7 @@ class LPGCDCMSActions:
         resp = pd.DataFrame(resp)
         for each_float_col in ["Total_Booking", "Total_Sales", "Total_Pending"]:
             if each_float_col in resp.columns:
-                resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                resp[each_float_col] = resp[each_float_col].fillna(0.0) / 1000
         for each_str_col in ["ZOName", "CylType", "ConsumerType"]:
             if each_str_col in resp.columns:
                 resp[each_str_col] = resp[each_str_col].fillna("").astype(str)
@@ -946,6 +946,9 @@ class LPGCDCMSActions:
             "Total_Sales": "sum",
             "Total_Pending": "sum"
         })
+        for each_float_col in ["Total_Booking", "Total_Sales", "Total_Pending"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col].fillna(0).astype(int)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
@@ -1359,6 +1362,12 @@ class LPGCDCMSActions:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
+            resp["temp"] = "temp"
+            resp_pie = resp.groupby(["temp"], as_index=False).agg({
+                    "Completed": "sum",
+                    "Pending": "sum"
+                })
+            del resp_pie["temp"]
             resp = resp.groupby(["ZOName"], as_index=False).agg({
                     "Completed": "sum",
                     "Pending": "sum"
@@ -1373,12 +1382,18 @@ class LPGCDCMSActions:
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient="records"), "data": resp}
 
         resp = await function(query=ekyc_statistics_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
         resp = await filter_data(resp, _filters)
+        resp["temp"] = "temp"
+        resp_pie = resp.groupby(["temp"], as_index=False).agg({
+                "Completed": "sum",
+                "Pending": "sum"
+            })
+        del resp_pie["temp"]
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
@@ -1410,7 +1425,7 @@ class LPGCDCMSActions:
                 grouped_resp = resp.groupby(["ZOName", "ROName", "SAName", "DistributorName"],
                                             as_index=False).agg({"Completed": "sum", "Pending": "sum"})
             if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+                return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient='records'), "data": grouped_resp.to_dict(orient='records')}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
@@ -1565,6 +1580,14 @@ class LPGCDCMSActions:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
+            resp["temp"] = "temp"
+            resp_pie = resp.groupby(["temp"], as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                })
+            del resp_pie["temp"]
+            
             resp = resp.groupby(["Category"], as_index=False).agg({
                     "ACTC": "sum",
                     "BCTC": "sum",
@@ -1586,7 +1609,7 @@ class LPGCDCMSActions:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient='records'), "data": resp}
         
         # Execute the query
         resp = await function(query=overall_ctc_statistics_query_)        
@@ -1608,6 +1631,14 @@ class LPGCDCMSActions:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
         if filters:
+            resp["temp"] = "temp"
+            resp_pie = resp.groupby(["temp"], as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                })
+            del resp_pie["temp"]
+            
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
 
@@ -1640,8 +1671,8 @@ class LPGCDCMSActions:
                     "NCTC": "sum"
                     })
             if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+                return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient='records'), "data": grouped_resp.to_dict(orient='records')}
+        return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient='records'), "data": resp.to_dict(orient='records')}
     
     
     @staticmethod
@@ -2044,7 +2075,7 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        
+        df = pl.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_cdcms_april_consumer_stats = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_april_consumer_stats")
         lpg_cdcms_current_consumer_stats = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_current_consumer_stats")
         lpg_cdcms_pcc_sales = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_pcc_sales")
@@ -2077,7 +2108,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_pcc_sales  += ' WHERE '
                 lpg_cdcms_pcc_sales  += ' AND '.join(conditions)
             lpg_cdcms_april_consumer_stats += f' AND "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
-            lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
+            lpg_cdcms_april_consumer_stats += ' GROUP BY "DistributorName", "SubCategory", "ZOName", "SAName", "ROName" '
             
             lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
@@ -2099,11 +2130,10 @@ class LPGCDCMSActions:
                 lpg_cdcms_april_consumer_stats  += f' AND "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' AND "ZOName" IS NOT NULL'
-            lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
+            lpg_cdcms_april_consumer_stats += ' GROUP BY "DistributorName", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_pcc_sales  += ' GROUP BY "ConsumerType", "ZOName", "SAName", "ROName", "CylType", "DistributorName" '
         
-        print("lpg_cdcms_pcc_sales query :", lpg_cdcms_pcc_sales)
         april_consumer_stats = await function(query=lpg_cdcms_april_consumer_stats)
         current_consumer_stats = await function(query=lpg_cdcms_current_consumer_stats)
         lpg_cdcms_pcc_sales = await function(query=lpg_cdcms_pcc_sales)
@@ -2111,7 +2141,9 @@ class LPGCDCMSActions:
         april_consumer_stats = pl.DataFrame(april_consumer_stats)
         current_consumer_stats = pl.DataFrame(current_consumer_stats)
         lpg_cdcms_pcc_sales = pl.DataFrame(lpg_cdcms_pcc_sales)
+        current_consumer_stats = current_consumer_stats.join(df, on='JDEDistributorCode', how='left')
         
+        lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.with_columns(pl.col("TotalSalesYesterday").cast(pl.Float64).alias("TotalSalesYesterday"))
         lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.with_columns(
             pl.when(pl.col("CylType") == "C5"
                     ).then(pl.col("TotalSalesYesterday")*5 / 14.2
@@ -2124,34 +2156,33 @@ class LPGCDCMSActions:
                 april_consumer_stats = april_consumer_stats.group_by("ROName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_start"))
                 current_consumer_stats = current_consumer_stats.group_by("ROName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
                 avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="ROName", how="outer"
-                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("ROName_right")
                 lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("ROName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
-                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ROName", how="outer")
+                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ROName", how="outer").drop("ROName_right")
             elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName"  not in filter_keys:
-                april_consumer_stats = april_consumer_stats.group_by("SAName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
-                current_consumer_stats = current_consumer_stats.group_by("SAName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
+                april_consumer_stats = april_consumer_stats.group_by("SAName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_start"))
+                current_consumer_stats = current_consumer_stats.group_by("SAName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
                 avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="SAName", how="outer"
-                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("SAName_right")
                 lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("SAName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
-                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="SAName", how="outer")
+                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="SAName", how="outer").drop("SAName_right")
             elif "ZOName" in filter_keys  and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                april_consumer_stats = april_consumer_stats.group_by("DistributorName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
-                current_consumer_stats = current_consumer_stats.group_by("DistributorName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount"))
+                april_consumer_stats = april_consumer_stats.group_by("DistributorName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_start"))
+                current_consumer_stats = current_consumer_stats.group_by("DistributorName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
                 avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="DistributorName", how="outer"
-                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count"))
+                                                               ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("DistributorName_right")
                 lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("DistributorName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
-                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="DistributorName", how="outer")
+                pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="DistributorName", how="outer").drop("DistributorName_right")
         else:
             april_consumer_stats = april_consumer_stats.group_by("ZOName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_start"))
             current_consumer_stats = current_consumer_stats.group_by("ZOName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
             avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="ZOName", how="outer"
                                                            ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("ZOName_right")
-            print("TotalRefillSales:", lpg_cdcms_pcc_sales.select(["ZOName", "TotalRefillSales"]))
             lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("ZOName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
-            print("lpg_cdcms_pcc_sales:", lpg_cdcms_pcc_sales)
             pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ZOName", how="outer").drop("ZOName_right")
 
         days_in_fy_till_yesterday = await days_since_financial_year_start()
         pcc = pcc.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
         pcc = pcc.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
+        pcc = pcc.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
         return {"status": True, "message": "success", "data": pcc.to_dicts()}
