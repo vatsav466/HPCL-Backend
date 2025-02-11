@@ -1,8 +1,10 @@
 import urdhva_base
+import httpx
 import base64
 import string
 import hashlib
 import datetime
+import traceback
 import urdhva_base.redispool
 try:
     from secrets import choice
@@ -148,6 +150,31 @@ def normalize_string(input_value):
     return input_value
 
 
+async def get_location_details(bu, sap_id):
+    """
+    Retrieves location details based on the provided business unit and SAP ID.
+
+    Parameters:
+    bu (str): The business unit identifier.
+    sap_id (str): The SAP ID of the location.
+
+    Returns:
+    dict: Location details, including name, address, coordinates, etc., or None if not found.
+    """
+    if not bu or not sap_id:
+        print("Invalid parameters: 'bu' and 'sap_id' are required.")
+        return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
+    async with httpx.AsyncClient(verify=False) as client:
+        base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+        resp = await client.get(f"{base_url}/api_cache/v1/get_location_data", params={"bu": bu,
+                                                                                      'location_id': sap_id})
+        if resp.status_code // 100 == 2:
+            return resp.json()
+        else:
+            print(resp.status_code, resp.text)
+    return False, {}
+
+
 async def get_alert_camunda_url(alert_id, base_url):
     """
     API to get camunda based on the alertid
@@ -167,3 +194,81 @@ async def get_alert_camunda_url(alert_id, base_url):
             redis_ins.close()
         except:
             ...
+
+
+def validate_camunda_settings_rule(camunda_settings, location_id, bu):
+    """
+    Verifying rule configuring for camunda, Validating odd/even settings
+    :param camunda_settings:
+    :param location_id:
+    :param bu:
+    :return:
+    """
+    if not camunda_settings.get("rule"):
+        return True
+    try:
+        if camunda_settings['rule'] == "even":
+            if int(location_id) // 2 == 0:
+                return True
+        elif camunda_settings['rule'] == "odd":
+            if int(location_id) // 2 != 0:
+                return True
+    except Exception as e:
+        print(f"Exception while handling rule {e}, Traceback {traceback.format_exc()}")
+    return False
+
+
+async def get_camunda_url(bu, sap_id, alert_section):
+    """
+    Logic to decide serving camunda url for given bu and sap_id
+    :param bu:
+    :param sap_id:
+    :param alert_section:
+    :return:
+    """
+    camunda_config = urdhva_base.settings.camunda_configuration
+    default_url = urdhva_base.settings.camunda_url
+
+    # If configuration is missing or BU is not in the config, return default
+    if not camunda_config or bu not in camunda_config:
+        return default_url
+
+    status, location_data = await get_location_details(bu, sap_id)
+    if not status:
+        return default_url
+
+    # Fields to check in settings
+    match_keys = ['sap_id', 'sales_area', 'region', 'zone']
+
+    # Checking ones having alert section
+    for settings in camunda_config[bu]:
+        if settings.get('alert_section') == alert_section:
+            if (any(settings.get(k) and location_data.get(k, "") in settings[k] for k in match_keys) and
+                    validate_camunda_settings_rule(settings, sap_id, bu)):
+                return settings['url']
+
+    # Checking ones not having alert section
+    for settings in camunda_config[bu]:
+        if not settings.get('alert_section'):
+            if (any(settings.get(k) and location_data.get(k, "") in settings[k] for k in match_keys) and
+                    validate_camunda_settings_rule(settings, sap_id, bu)):
+                return settings['url']
+
+    # Checking for single URL with alert section
+    for settings in camunda_config[bu]:
+        if settings.get('alert_section') == alert_section and validate_camunda_settings_rule(settings, sap_id, bu):
+            return settings['url']
+
+    # Checking for single URL without alert section
+    for settings in camunda_config[bu]:
+        if not settings.get('alert_section') and validate_camunda_settings_rule(settings, sap_id, bu):
+            return settings['url']
+
+    # Checking for global match
+    for settings in camunda_config[bu]:
+        if (any(not settings.get(k) or "*" in settings[k] for k in match_keys) and
+                validate_camunda_settings_rule(settings, sap_id, bu)):
+            return settings['url']
+
+    return default_url
+
