@@ -24,7 +24,7 @@ async def get_location_data(bu: str, location_id: str):
 
 @app.get("/api_cache/v1/get_employee_details")
 async def get_employee_details(bu: str, location_id: str, role: str):
-    return True, {}
+    return await cache_handler.get_roles(bu, location_id, role)
 
 
 if __name__ == "__main__":

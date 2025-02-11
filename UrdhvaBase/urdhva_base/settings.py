@@ -122,6 +122,12 @@ class Settings(pydantic_settings.BaseSettings):
     smtp_tls_enabled: bool = False
     smtp_ssl_enabled: bool = False
 
+    # Whatsapp
+    whatsapp_creds: typing.Dict[str, str] = {}
+
+    # SMS
+    sms_creds: typing.Dict[str, str] = {}
+
     # LDAP Settings
     ldap_host: str = ""
     ldap_port: str = ""
@@ -142,6 +148,12 @@ class Settings(pydantic_settings.BaseSettings):
     camunda_url_config: typing.Dict[str, typing.Dict] = {}
     camunda_url_va_config: typing.Dict[str, typing.Dict] = {}
 
+    # For camunda configuration for non default one
+    # Creating separate configuration for each bu and keep applicable rules for those
+    # Sample {"TAS": [{"alert_section": "", "url": "", "sap_id": [],
+    # "zone": [], "sales_area": [], "region": [], "rule": "odd/even"}]}
+    camunda_configuration: typing.Dict[str, typing.List] = {}
+
     # For DB Connection Mapping
     db_connection_config: typing.Dict[str, str] = {}
     db_connection_mapping: typing.Dict[str, typing.Dict] = {}
@@ -156,7 +168,7 @@ class Settings(pydantic_settings.BaseSettings):
     rabbitmq_queue: str = "tagsdata"
     rabbitmq_auto_ack: bool = True
 
-    # Thingsboard
+    # ThingsBoard
     things_board_url: str = "http://localhost:8080"
     things_board_username: str = "admin"
     things_board_password: str = "password"

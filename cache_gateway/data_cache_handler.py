@@ -5,18 +5,20 @@ from typing import Callable
 
 
 class InMemTTLCache:
-    def __init__(self, ttl_seconds: int, fetch_function: Callable):
+    def __init__(self, ttl_seconds: int, fetch_function: Callable, fetch_args: tuple):
         """
-        Initialize the cache with TTL and a fetch function to refresh data.
+        Initialize the cache with TTL, a fetch function, and the necessary arguments for fetching data.
 
         :param ttl_seconds: Time-to-live (TTL) for each key in seconds.
         :param fetch_function: A callable function to fetch new data on expiry.
+        :param fetch_args: Arguments required by the fetch function.
         """
         self.store = {}  # Dictionary to store key-value pairs with expiry
         self.ttl_seconds = ttl_seconds
         self.read_lock = threading.Lock()
         self.write_lock = threading.Lock()
         self.fetch_function = fetch_function
+        self.fetch_args = fetch_args  # Store the arguments to be passed to fetch_function
 
     @classmethod
     def _is_expired(cls, expiry_time: float) -> bool:
@@ -41,7 +43,7 @@ class InMemTTLCache:
                         return value  # Return valid value
 
                 # If key is not found or expired, fetch and refresh
-                new_value = await self.fetch_function()
+                new_value = await self.fetch_function(*self.fetch_args)  # Pass the arguments to the fetch function
                 await self.set(key, new_value)
                 return new_value
             except Exception as e:

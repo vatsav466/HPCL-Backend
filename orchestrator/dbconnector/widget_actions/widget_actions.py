@@ -1,5 +1,7 @@
 import urdhva_base
 import re
+import polars as pl
+pl.Config(set_fmt_float="full")
 from orchestrator.dbconnector import global_analytics
 from orchestrator.dbconnector.widget_actions import lpg_plant, lpg_cdcms, model_mapping, lpg_plant_queries
 import hpcl_ceg_model

@@ -1,6 +1,7 @@
 import urdhva_base
 import calendar
 import polars as pl
+pl.Config(set_fmt_float="full")
 import numpy as np
 import pandas as pd
 import hpcl_ceg_model
@@ -2050,7 +2051,6 @@ class LPGCDCMSActions:
         
         financial_year = await get_financial_year()
         financial_start_date = '2024-04-01'
-        
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -2082,7 +2082,7 @@ class LPGCDCMSActions:
             lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             
-            lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' '
+            lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' AND "ZOName" IS NOT NULL'
             lpg_cdcms_pcc_sales  += ' GROUP BY "ConsumerType", "ZOName", "SAName", "ROName", "CylType", "DistributorName" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -2094,15 +2094,16 @@ class LPGCDCMSActions:
             if "where" not in lpg_cdcms_pcc_sales.lower():
                 lpg_cdcms_april_consumer_stats  += f' WHERE "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_current_consumer_stats += ' WHERE "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
-                lpg_cdcms_pcc_sales += f' WHERE "Financial_Year"=\'{financial_year}\' '
+                lpg_cdcms_pcc_sales += f' WHERE "Financial_Year"=\'{financial_year}\' AND "ZOName" IS NOT NULL'
             else:
                 lpg_cdcms_april_consumer_stats  += f' AND "SummaryDate" = \'{financial_start_date}\' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
                 lpg_cdcms_current_consumer_stats += ' AND "Category" = \'Domestic\' AND "CategoryStatus" = \'Active\' AND "RelationshipStatus" = \'A\' AND "RelationshipSubStatus" = \'1A\' AND "ConsumerCategory" = \'A\' '
-                lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' '
+                lpg_cdcms_pcc_sales  += f' AND "Financial_Year"=\'{financial_year}\' AND "ZOName" IS NOT NULL'
             lpg_cdcms_april_consumer_stats += ' GROUP BY "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_current_consumer_stats += ' GROUP BY  "JDEDistributorCode", "SubCategory", "ZOName", "SAName", "ROName" '
             lpg_cdcms_pcc_sales  += ' GROUP BY "ConsumerType", "ZOName", "SAName", "ROName", "CylType", "DistributorName" '
         
+        print("lpg_cdcms_pcc_sales query :", lpg_cdcms_pcc_sales)
         april_consumer_stats = await function(query=lpg_cdcms_april_consumer_stats)
         current_consumer_stats = await function(query=lpg_cdcms_current_consumer_stats)
         lpg_cdcms_pcc_sales = await function(query=lpg_cdcms_pcc_sales)
@@ -2115,6 +2116,7 @@ class LPGCDCMSActions:
             pl.when(pl.col("CylType") == "C5"
                     ).then(pl.col("TotalSalesYesterday")*5 / 14.2
                            ).otherwise(pl.col("TotalSalesYesterday")).alias("TotalRefillSales"))
+        
         if filters:
             filter_keys = [rec.key.strip('"') for rec in filters]
             pcc = None
@@ -2144,7 +2146,9 @@ class LPGCDCMSActions:
             current_consumer_stats = current_consumer_stats.group_by("ZOName").agg((pl.col("ConsumerCount").sum()).alias("ConsumerCount_current"))
             avg_consumer_count = april_consumer_stats.join(current_consumer_stats, on="ZOName", how="outer"
                                                            ).with_columns(((pl.col("ConsumerCount_start") + pl.col("ConsumerCount_current")) / 2).alias("avg_consumer_count")).drop("ZOName_right")
+            print("TotalRefillSales:", lpg_cdcms_pcc_sales.select(["ZOName", "TotalRefillSales"]))
             lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("ZOName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
+            print("lpg_cdcms_pcc_sales:", lpg_cdcms_pcc_sales)
             pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ZOName", how="outer").drop("ZOName_right")
 
         days_in_fy_till_yesterday = await days_since_financial_year_start()
