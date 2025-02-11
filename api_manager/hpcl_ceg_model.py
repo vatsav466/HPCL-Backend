@@ -1007,6 +1007,10 @@ class AlertsSchema(UrdhvaPostgresBase):
     origin_altid: Mapped[typing.Optional[str]] = mapped_column("origin_altid", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_message: Mapped[typing.Optional[str]] = mapped_column("alert_message", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     external_timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("external_timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    transporter_name: Mapped[typing.Optional[str]] = mapped_column("transporter_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    transporter_code: Mapped[typing.Optional[str]] = mapped_column("transporter_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vehicle_blocked_start_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_blocked_start_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    vehicle_blocked_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_blocked_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1071,6 +1075,10 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     origin_altid: typing.Optional[str] = pydantic.Field("", **{})
     alert_message: typing.Optional[str] = pydantic.Field("", **{})
     external_timestamp: typing.Optional[datetime.datetime] | None = None
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_code: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_blocked_start_date: typing.Optional[datetime.datetime] | None = None
+    vehicle_blocked_end_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -1142,6 +1150,10 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     origin_altid: typing.Optional[str] = pydantic.Field("", **{})
     alert_message: typing.Optional[str] = pydantic.Field("", **{})
     external_timestamp: typing.Optional[datetime.datetime] | None = None
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_code: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_blocked_start_date: typing.Optional[datetime.datetime] | None = None
+    vehicle_blocked_end_date: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
