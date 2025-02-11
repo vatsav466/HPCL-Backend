@@ -1362,6 +1362,12 @@ class LPGCDCMSActions:
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
+            resp["temp"] = "temp"
+            resp_pie = resp.groupby(["temp"], as_index=False).agg({
+                    "Completed": "sum",
+                    "Pending": "sum"
+                })
+            del resp_pie["temp"]
             resp = resp.groupby(["ZOName"], as_index=False).agg({
                     "Completed": "sum",
                     "Pending": "sum"
@@ -1376,12 +1382,18 @@ class LPGCDCMSActions:
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient="records"), "data": resp}
 
         resp = await function(query=ekyc_statistics_query_)
         # Convert the response to a DataFrame for further processing
         resp = pd.DataFrame(resp)
         resp = await filter_data(resp, _filters)
+        resp["temp"] = "temp"
+        resp_pie = resp.groupby(["temp"], as_index=False).agg({
+                "Completed": "sum",
+                "Pending": "sum"
+            })
+        del resp_pie["temp"]
         if resp.empty:
             return {"status": True, "message": "success", "data": []}
         resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
@@ -1413,7 +1425,7 @@ class LPGCDCMSActions:
                 grouped_resp = resp.groupby(["ZOName", "ROName", "SAName", "DistributorName"],
                                             as_index=False).agg({"Completed": "sum", "Pending": "sum"})
             if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+                return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient='records'), "data": grouped_resp.to_dict(orient='records')}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
@@ -1568,6 +1580,14 @@ class LPGCDCMSActions:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
+            resp["temp"] = "temp"
+            resp_pie = resp.groupby(["temp"], as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                })
+            del resp_pie["temp"]
+            
             resp = resp.groupby(["Category"], as_index=False).agg({
                     "ACTC": "sum",
                     "BCTC": "sum",
@@ -1589,7 +1609,7 @@ class LPGCDCMSActions:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
-            return {"status": True, "message": "success", "data": resp}
+            return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient='records'), "data": resp}
         
         # Execute the query
         resp = await function(query=overall_ctc_statistics_query_)        
@@ -1611,6 +1631,14 @@ class LPGCDCMSActions:
                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
         if filters:
+            resp["temp"] = "temp"
+            resp_pie = resp.groupby(["temp"], as_index=False).agg({
+                    "ACTC": "sum",
+                    "BCTC": "sum",
+                    "NCTC": "sum"
+                })
+            del resp_pie["temp"]
+            
             grouped_resp = None
             filter_keys = [rec.key.strip('"') for rec in filters]
 
@@ -1643,8 +1671,8 @@ class LPGCDCMSActions:
                     "NCTC": "sum"
                     })
             if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
-        return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+                return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient='records'), "data": grouped_resp.to_dict(orient='records')}
+        return {"status": True, "message": "success", "data_pie": resp_pie.to_dict(orient='records'), "data": resp.to_dict(orient='records')}
     
     
     @staticmethod
