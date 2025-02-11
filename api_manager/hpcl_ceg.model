@@ -587,6 +587,12 @@ Model Alerts {
     alert_message optional str
     external_timestamp optional datetime
 
+    // VTS
+    transporter_name optional str
+    transporter_code optional str
+    vehicle_blocked_start_date optional datetime
+    vehicle_blocked_end_date optional datetime
+
     Action=> alert_action {
         bu optional str
         alert_section optional str
