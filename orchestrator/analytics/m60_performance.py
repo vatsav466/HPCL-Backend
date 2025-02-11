@@ -320,7 +320,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
                 target_data = pd.DataFrame(target_data)
-            if group_by_filter and not cummulative:
+            if group_by_filter and not cumulative:
                 target_data = target_data.groupby(get_group_by_columns(group_by_filter))[
                     'TARGET_TMT_SALES'].sum().reset_index()
             else:
