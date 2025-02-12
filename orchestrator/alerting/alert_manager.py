@@ -126,6 +126,8 @@ class AlertAction:
         # alert_history = alert_data.alert_history
         # print("alert_history --> ", alert_history)
         # allocated_time = alert_data.updated_at
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
         if isinstance(alert_data, dict):
             allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
         else:
