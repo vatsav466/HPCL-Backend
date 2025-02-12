@@ -82,7 +82,10 @@ lpg_dashboard_actions = [
     'ims_report',
     'lpg_operations_connected_plants',
     'lpg_operations_total_plants',
-    'lpg_operations_total_handled'
+    'lpg_operations_total_handled',
+    'cdcms_current_date_pending_count',
+    'cdcms_current_date_bookings_count',
+    'cdcms_current_date_sales_count'
 ]
 
 # Todo:- import all widget action modules here
@@ -167,7 +170,10 @@ widget_mapping = {
     'ims_report': {},
     'lpg_operations_connected_plants': {},
     'lpg_operations_total_plants': {},
-    'lpg_operations_total_handled': {}
+    'lpg_operations_total_handled': {},
+    'cdcms_current_date_pending_count': {},
+    'cdcms_current_date_bookings_count': {},
+    'cdcms_current_date_sales_count': {}
 }
 
 
