@@ -83,6 +83,8 @@ lpg_dashboard_actions = [
     'lpg_operations_connected_plants',
     'lpg_operations_total_plants',
     'lpg_operations_total_handled',
+    'lpg_operations_daywise_productivity',
+    'lpg_operations_daywise_production',
     'cdcms_current_date_pending_count',
     'cdcms_current_date_bookings_count',
     'cdcms_current_date_sales_count'
@@ -171,6 +173,8 @@ widget_mapping = {
     'lpg_operations_connected_plants': {},
     'lpg_operations_total_plants': {},
     'lpg_operations_total_handled': {},
+    'lpg_operations_daywise_productivity': {},
+    'lpg_operations_daywise_production': {},
     'cdcms_current_date_pending_count': {},
     'cdcms_current_date_bookings_count': {},
     'cdcms_current_date_sales_count': {}
