@@ -8,7 +8,7 @@ do
   if [ ! -d $CodeDir/$folder ]; then
     mkdir -p $CodeDir/$folder
   fi
-  rsync -azSP $folder/ $CodeDir/$folder/ --exclude .alg_env
+  rsync -azSP $folder/ $CodeDir/$folder/ --exclude .alg_env --exclude .db_creds_env
 
 done
 

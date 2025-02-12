@@ -413,6 +413,7 @@ Model Alert_History internal {
     alert_status optional AlertStatus
     action_msg str
     remarks optional str
+    doc_link optional str
     atr_uploaded optional bool
     maintenance_exception optional bool
     revocation optional bool

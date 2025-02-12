@@ -119,7 +119,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     return resp
 
 
-def get_group_by_filter_key(cross_filters, cumulative=False, drill_state='', time_grain=''):
+def get_group_by_filter_key(cross_filters, Base_Filters,cumulative=False, drill_state='', time_grain=''):
     """
     Getting group by filter key based on cross filters
     :param time_grain:
@@ -128,8 +128,14 @@ def get_group_by_filter_key(cross_filters, cumulative=False, drill_state='', tim
     :param cross_filters:
     :return:
     """
+    if cumulative:
+        group_by_filter = ['"SBU_Name"'] if not cumulative else []
+
+    else:
+        group_by_filter = ['"month_name"'] if not cumulative else []
+
     #group_by_filter = ['"month_name"'] if not cumulative else []
-    group_by_filter = ['"SBU_Name"'] if not cumulative else []
+    #group_by_filter = ['"SBU_Name"'] if cumulative else []
     if cross_filters:
         index = 0
         if len([rec['value'] for rec in cross_filters if 'lubes' in rec['value'].lower()
@@ -164,11 +170,15 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             break
     print('#'*100)
     print("filters",cross_filters)
-    if not cross_filters:
+    if not cross_filters and cumulative:
         cumulative = True
         order = 'cumulative'
+    if cumulative:
+        Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
+    else:
+        Base_Filters = ['"month_name"','"SBU_Name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
     # Fetching all group by filters, return should be a list always
-    group_by_filter = get_group_by_filter_key(cross_filters, cumulative, drill_state, time_grain)
+    group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters,cumulative, drill_state, time_grain)
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
 
@@ -309,7 +319,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         
         if '"month_name"' not in group_by_filter and '"C"' not in [x['key'] for x in filters]:
             group_keys.append("month_name")
-        if '"C"' not in [x[key] for x in filters]:   
+        if '"C"' not in [x['key'] for x in filters]:   
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                                    where_conditions + Default_Filters, start_date, end_date, group_keys)
         else:
@@ -320,7 +330,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
                 target_data = pd.DataFrame(target_data)
-            if group_by_filter and not cummulative:
+            if group_by_filter and not cumulative:
                 target_data = target_data.groupby(get_group_by_columns(group_by_filter))[
                     'TARGET_TMT_SALES'].sum().reset_index()
             else:
@@ -446,7 +456,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         for col in amount_columns:
             result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
-
     if len(cross_filters) > 0:
         filter_order = [key.strip('"') for key in Base_Filters]
         sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
@@ -501,12 +510,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         measure_unit = 'TMT'
         if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
-        if 'cumulative' not in final_resp:
+        print("final_resp",final_resp)
+        if 'cumulative' not in final_resp and not drill_state:
                 final_resp['cumulative'] = {}
-        if len(final_resp['ACTUAL_TMT_SALES']) ==1:
+        if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1 and not drill_state:
             final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
         else:
-            for each_key in final_resp['ACTUAL_TMT_SALES']:
+            if isinstance(final_resp,dict):
+                for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
                     final_resp['cumulative'][each_key] = ''
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
@@ -518,12 +529,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         measure_unit = 'TMT'
         if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
-        if 'cumulative' not in final_resp:
+        if 'cumulative' not in final_resp  and not drill_state:
                 final_resp['cumulative'] = {}
-        if len(final_resp['ACTUAL_TMT_SALES']) ==1:
+        if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1  and not drill_state:
             final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
         else:
-            for each_key in final_resp['ACTUAL_TMT_SALES']:
+            if isinstance(final_resp,dict):
+                for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
                     final_resp['cumulative'][each_key] = ''
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {},'sales_unit':measure_unit}}
 
