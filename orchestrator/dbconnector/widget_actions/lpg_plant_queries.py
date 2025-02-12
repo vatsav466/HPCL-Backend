@@ -1141,14 +1141,14 @@ ORDER BY
                                         "ZOName" IS NOT NULL ''',
 
     'lpg_operations_current_month_productivity': f''' SELECT 
-                                                        ROUND(AVG("productivity.normal.productivity")) 
+                                                        ROUND(AVG("productivity.normal.productivity")) AS "Total Productivity"
                                                     FROM 
                                                         "LPG_OPERATIONS_SUMMARY_DATA"
                                                     WHERE 
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_productions': '''SELECT
-                                                        ROUND(AVG("productivity.normal.production"))
+                                                        ROUND(CAST(SUM("productivity.normal.production") AS NUMERIC) / 1000, 0) AS "Total Production"
                                                     FROM
                                                         "LPG_OPERATIONS_SUMMARY_DATA"
                                                     WHERE
@@ -2255,5 +2255,25 @@ ORDER BY
     'lpg_cdcms_total_Suvidha_count': f''' SELECT 
                                             ROUND(CAST(SUM("SuvidhaClub") / 1000 AS NUMERIC), 2) AS "Total Suvidha"
                                         FROM 
-                                            "LPG_CONSUMERS_SUMMARY" '''
+                                            "LPG_CONSUMERS_SUMMARY" ''',
+
+    'lpg_operations_connected_plants': f''' SELECT 
+                                        COUNT(DISTINCT "short_name") AS short_name_count
+                                    FROM 
+                                        "LPG_OPERATIONS_SUMMARY_DATA"
+                                    HAVING 
+                                        COUNT(DISTINCT "short_name") > 0 ''',
+                                    
+    'lpg_operations_total_plants': f''' SELECT 
+                                    COUNT(DISTINCT "short_name") AS short_name_count
+                                FROM 
+                                    "LPG_OPERATIONS_SUMMARY_DATA"
+                                HAVING 
+                                    COUNT(DISTINCT "short_name") > 0 ''',
+    
+    'lpg_operations_total_handled': f''' SELECT 
+                                        ROUND(CAST(SUM("total") AS NUMERIC) / 100000, 2) AS "Total Handled"
+                                    FROM 
+                                        "lpg_cs_rejections"
+                                    WHERE DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) '''                                          
 }

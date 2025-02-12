@@ -79,7 +79,10 @@ lpg_dashboard_actions = [
     'dryout_product_report',
     'dryout_indent_report',
     'product_quantity_by_location',
-    'ims_report'
+    'ims_report',
+    'lpg_operations_connected_plants',
+    'lpg_operations_total_plants',
+    'lpg_operations_total_handled'
 ]
 
 # Todo:- import all widget action modules here
@@ -161,7 +164,10 @@ widget_mapping = {
     'dryout_product_report': {},
     'dryout_indent_report': {},
     'product_quantity_by_location': {},
-    'ims_report': {}
+    'ims_report': {},
+    'lpg_operations_connected_plants': {},
+    'lpg_operations_total_plants': {},
+    'lpg_operations_total_handled': {}
 }
 
 
