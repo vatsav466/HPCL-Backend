@@ -6,6 +6,7 @@ import hashlib
 import datetime
 import traceback
 import urdhva_base.redispool
+from calendar import monthrange
 try:
     from secrets import choice
 except ImportError:
@@ -36,7 +37,7 @@ def password_generator(password_length=16, special_characters_allowed=True, case
 
 
 def get_time_stamp_by_delta(dt=None, months=0, days=0, years=0, with_month_start_day=True,
-                            date_time_format="%Y-%m-%d", ascending=False):
+                            date_time_format="%Y-%m-%d", ascending=False, with_month_end_day=False):
     """
     Get the timestamp by descending or ascending a specified number of months from the current date.
     :param dt: datetime object
@@ -46,6 +47,7 @@ def get_time_stamp_by_delta(dt=None, months=0, days=0, years=0, with_month_start
     :param with_month_start_day: whether date should start from day 1 or present day
     :param date_time_format: Format to return the date
     :param ascending: To use in incremental or decremental format
+    :param with_month_end_day: whether date should be actual or month end date
     :return: Formatted date string
     Example:
     on 2025-01-19
@@ -72,10 +74,16 @@ def get_time_stamp_by_delta(dt=None, months=0, days=0, years=0, with_month_start
     # Set the day to 1 if with_month_start_day is True
     if with_month_start_day:
         dt = dt.replace(day=1)
+    elif not months and with_month_end_day:
+        _, months_days = monthrange(dt.year, dt.month)
+        dt = dt.replace(day=months_days)
 
     # Subtract the specified number of months
     if months > 0:
         dt = dt - relativedelta(months=months) if not ascending else dt + relativedelta(months=months)
+        if with_month_end_day:
+            _, months_days = monthrange(dt.year, dt.month)
+            dt = dt.replace(day=months_days)
     elif years > 0:
         day_filter = 0
         if days > 0:
