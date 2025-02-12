@@ -990,6 +990,18 @@ LIMIT 10000;''',
                         from
                             "lpg_cs_rejections" ''',
     
+    'lpg_operations_daywise_productivity': f'''  
+                                SELECT 
+                                AVG("productivity_normal_productivity") AS "avg_productivity", 
+                                DATE("process_date") AS "process_date"
+                                FROM "lpg_operations_summary" ''',
+    
+    'lpg_operations_daywise_production': f'''  
+                                SELECT 
+                                SUM("productivity_normal_production") / 1000 AS "sum_productivity ", 
+                                DATE("process_date") AS "process_date"
+                                FROM "lpg_operations_summary" ''',
+    
     "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "consumer_pump_transactions" ',
 
     "cp_total_dus": '''SELECT SUM("du") AS "total_du"

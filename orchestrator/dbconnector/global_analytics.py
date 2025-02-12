@@ -2,6 +2,7 @@ import urdhva_base
 import json
 import calendar
 import psycopg2
+import traceback
 import polars as pl
 import numpy as np
 import pandas as pd
@@ -3727,6 +3728,111 @@ class GlobalAnalytics:
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_operations_daywise_productivity(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        if filters:
+            daywise_productivity_query = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_productivity")
+            daywise_productivity_query_ = daywise_productivity_query
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):  # Use dot notation instead of subscription
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                daywise_productivity_query_ += ' WHERE ' 
+                daywise_productivity_query_ += ' AND '.join(conditions)
+            daywise_productivity_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+            daywise_productivity_query_ += ' GROUP BY "process_date" '
+        else:
+            daywise_productivity_query_ = '''            
+                    SELECT 
+                    AVG("productivity_normal_productivity") AS "avg_productivity", 
+                    DATE("process_date") AS "process_date"
+                    FROM "lpg_operations_summary"
+                    WHERE "process_date" >= CURRENT_DATE - INTERVAL '30 days'
+                    GROUP BY DATE("process_date")
+                    ORDER BY "process_date";
+            '''
+        try:
+            query_resp = await function(query=daywise_productivity_query_)
+            resp = pl.DataFrame(query_resp)
+            numerical_columns = ["productivity_normal_productivity"]
+            string_columns = ["process_date"]
+            for col in numerical_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
+            for col in string_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
+    
+    
+    @staticmethod
+    async def lpg_operations_daywise_production(filters ,cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        if filters:
+            daywise_production_query = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_production")
+            daywise_production_query_ = daywise_production_query
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):  # Use dot notation instead of subscription
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                daywise_production_query_ += ' WHERE ' 
+                daywise_production_query_ += ' AND '.join(conditions)
+            daywise_production_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+            daywise_production_query_ += ' GROUP BY "process_date" '
+        else:
+            daywise_production_query_ = '''            
+                    SELECT 
+                            SUM("productivity_normal_production") / 1000 AS "sum_productivity ", 
+                            DATE("process_date") AS "process_date"
+                            FROM "lpg_operations_summary"
+                    WHERE "process_date" >= CURRENT_DATE - INTERVAL '30 days'
+                    GROUP BY DATE("process_date")
+                    ORDER BY "process_date";
+            '''
+        try:           
+            query_resp = await function(query=daywise_production_query_)
+            resp = pl.DataFrame(query_resp)
+            numerical_columns = ["productivity_normal_production"]
+            string_columns = ["process_date"]
+            for col in numerical_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
+            for col in string_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
+
     
 
     @staticmethod
