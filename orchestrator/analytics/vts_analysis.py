@@ -1,8 +1,8 @@
 import urdhva_base
 import typing
 import requests
+import hpcl_ceg_model
 from geopy.distance import geodesic
-from api_manager import hpcl_ceg_model
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
 
