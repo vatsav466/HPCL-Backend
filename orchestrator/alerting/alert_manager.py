@@ -143,6 +143,7 @@ class AlertAction:
                             "action_msg": input_data["action_msg"], "mail_sent_to": "",
                             "ims_datetime": input_data.get("ims_datetime", ""),
                             "prod_reqd_dt": input_data.get("prod_reqd_dt", ""),
+                            "doc_link": input_data.get("doc_link", ""),
                             "atr_uploaded": event_tags.get("is_atr_uploaded", False),
                             "maintenance_exception": event_tags.get("is_maintenance_exception", False), 
                             "revocation": event_tags.get("is_revocation", False),
@@ -501,11 +502,14 @@ class AlertAction:
         """
         Args:
             alert_data:
+            input_data:
 
         Returns:
         """
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
+        if not input_data.get("doc_link", ""):
+            input_data["doc_link"] = await cls.get_doc_link_from_alert_history(alert_data)
         action_code = "VALID"
         if input_data.get("action_type") == 'InvalidAlert':
             action_code = 'INVALID'
@@ -522,3 +526,10 @@ class AlertAction:
             "ActionDescription": input_data.get("action_description", "")
         }
         return await va_analysis.close_va_alerts(params)
+
+    @classmethod
+    async def get_doc_link_from_alert_history(cls, alert_data):
+        for alert_history in alert_data.get("alert_history", []):
+            if alert_history.get("doc_link", ""):
+                return alert_history.get("doc_link", "")
+        return ""
