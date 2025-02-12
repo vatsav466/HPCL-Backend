@@ -124,23 +124,33 @@ def calculate_market_share(df, group_by, sales_key="sales"):
         "2023-2024": "history",
         "2024-2025": "actual"
     }
+    if len(group_by) <= 1:
+        summary['cumulative'] = "CUMMULATIVE_SALES"
+        group_item = "cumulative"
+    else:
+        group_item = ""
+        for key in Base_Filters[::-1]:
+            key = key.strip('"')
+            if key in group_by:
+                group_item = key
+                break
 
     # Transforming data
     transformed_data = [
         {
             f"{prefix_map[item['fiscal_year']]}_market_share": item["market_share"],
             f"{prefix_map[item['fiscal_year']]}_hpcl_share": item["hpcl_share"],
-            "sbu_name": item["sbu_name"]
+            group_item: item[group_item]
         }
         for item in summary.to_dict(orient='records')
     ]
-    # Merging records based on sbu_name
+    # Merging records based on 'group_item'
     merged_data = defaultdict(dict)
 
     for item in transformed_data:
-        sbu = item['sbu_name']
+        sbu = item[group_item]
         merged_data[sbu].update(item)
-        merged_data[sbu]['sbu_name'] = sbu  # Ensure sbu_name is retained
+        merged_data[sbu][group_item] = sbu  # Ensure group_item is retained
 
     # Convert back to list of dictionaries
     return list(merged_data.values())
