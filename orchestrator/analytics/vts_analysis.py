@@ -2,6 +2,8 @@ import urdhva_base
 import typing
 import requests
 from geopy.distance import geodesic
+from api_manager import hpcl_ceg_model
+import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 default_headers = {"Content-Type": "application/json"}
@@ -120,3 +122,26 @@ async def get_distance_of_truck(start_lat: float, start_lon: float, end_lat: flo
     end_coords = (end_lat, end_lon)
     distance_km = geodesic(start_coords, end_coords).kilometers
     return round(distance_km, 2)
+
+async def create_vts_alert(alert_data: dict):
+    # entry['vendor_alert_id'] = entry.pop("alert_id")
+    alert_data['device_name'] = alert_data.get('vehicle_blocked_instance_no', '').strip()
+    alert_data['device_id'] = alert_data.get('vehicle_blocked_instance_no', '').strip()
+    alert_data['alert_type'] = "VTS"
+    alert_data['vehicle_number'] = alert_data.pop('tt_no')
+    alert_data['violation_type'] = alert_data.pop('vehicle_blocked_instance_type')
+    alert_data['sap_id'] = alert_data.pop('location_id')
+    alert_data['bu'] = str(alert_data.pop('location_type'))
+
+    cls = alert_factory.AlertFactory()
+    return await cls.create_alert(alert_data, urdhva_base.settings.camunda_url)
+
+async def update_alert_id_to_vts_history(alert_id: str, vts_alert_id: list[str]):
+    if vts_alert_id:
+        if not isinstance(vts_alert_id, list):
+            vts_alert_id = [vts_alert_id]
+
+        vts_alert_id = "', '".join(vts_alert_id)
+        query = (f"""update vts_alert_history set alert_id='{alert_id}' """
+                 f"""where id in ('{vts_alert_id}')""")
+        await hpcl_ceg_model.VtsAlertHistory.update_by_query(query)
