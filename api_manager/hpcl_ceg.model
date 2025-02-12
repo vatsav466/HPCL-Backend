@@ -1186,6 +1186,15 @@ Model VtsAlertHistory {
     device_offline_count optional int
     device_tamper_count optional int
     approved_by optional str
+    stoppage_violations_count_instance optional str
+    route_deviation_count_instance optional str
+    speed_violation_count_instance optional str
+    main_supply_removal_count_instance optional str
+    night_driving_count_instance optional str
+    no_halt_zone_count_instance optional str
+    device_offline_count_count_instance optional str
+    device_tamper_count_instance optional str
+    auto_unblock optional bool
 
     Config=> {
         crud_operations='read'
