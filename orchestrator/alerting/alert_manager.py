@@ -64,6 +64,8 @@ class AlertAction:
                         "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert"}
         event_tag_map = {"Justification": "is_justify", "Approved": "is_approved", "AcceptClose": "accept", "InvalidAlert": "invalid"}
         alert_id = input_data['alert_id']
+        if input_data['doc_link']:
+            input_data['doc_link'] = await helpers.get_doc_link(input_data['doc_link'])
         input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "is_approved"): True}})
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -516,7 +518,7 @@ class AlertAction:
             "ActionCode": action_code,
             "ActionReason": input_data.get("rca_reason", "Other"),
             "ActionCategory": input_data.get("category", "Others"),
-            "doc_link": "",
+            "doc_link": input_data.get("doc_link", ""),
             "ActionDescription": input_data.get("action_description", "")
         }
         return await va_analysis.close_va_alerts(params)
