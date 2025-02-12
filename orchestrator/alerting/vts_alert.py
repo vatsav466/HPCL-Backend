@@ -97,7 +97,9 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                     resp_type='plain')
                         # check violation if frequency of records count greter than the threshold of paricular key
+                        vts_alert_history_ids = []
                         if data['count'] > details['alert_threshold']:
+                            vts_alert_history_ids = [item['id'] for item in data['data'] if 'id' in item and item['id']]
                             print("data--->",data)
                             #print("count--->",data['count'])
                             finarResp = {key: []}  # Initialize with an empty list for the key
@@ -159,6 +161,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             vts_alert_data['alert_history'] = alert_history
                             vts_alert_data['clear_count'] = details['alerting_rules'][str(altcount)]['clear_count']
                             vts_alert_data['severity'] = details['severity']
+                            vts_alert_data['vts_alert_history_ids'] = vts_alert_history_ids
                             for data in data['data']:
                                 violation = f"{key}_instance"
                                 data[violation]=str(altcount)
