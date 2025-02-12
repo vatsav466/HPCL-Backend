@@ -79,10 +79,10 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         data={}
                         # if it is not first instance then check the frequency of records from the vts_alert_history
                         # within fortnight period and using {key}_instance='' example stoppage_violation_count_instance=''
-                        # and stoppage_violation_count>=1 based on bu, location_id and tl_number(vehicle_number).
+                        # and stoppage_violation_count >= 1 based on bu, location_id and tl_number(vehicle_number).
                         if altcount['count']:
                             query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
-                                f"and {key}>=1 and created_at::DATE>'{maintenance_time}' and location_type='{record['location_type']}' "
+                                f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
                                 f"and {key}_instance='' and auto_unblock='true'")
                             data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                 resp_type='plain')
@@ -92,7 +92,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         # location_id and tl_number(vehicle_number).   
                         else:
                             query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
-                                    f"and {key}>=1 and created_at::DATE>'{maintenance_time}' and location_type='{record['location_type']}' "
+                                    f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
                                     f"and auto_unblock='true'")
                             data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                     resp_type='plain')
