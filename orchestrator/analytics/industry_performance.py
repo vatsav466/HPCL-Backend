@@ -1,5 +1,5 @@
 import urdhva_base
-import json
+import re
 import pandas as pd
 from collections import defaultdict
 import utilities.helpers as helpers
@@ -17,6 +17,16 @@ OMC = {
     "OtherPSU": ["NRL", "CPCL", "GAIL", "ONGC", "MRPL", "OIL"],
     "MPSU": ["HPCL", "BPCL", "IOCL"]
 }
+
+# Define keyword mapping for key extraction
+KEYWORDS = {'sbu_name': ['SBU', 'BUSINESS UNIT'],
+            'coname': ['COMPANY', 'HPCL', 'BPCL', 'IOCL'],
+            'region_name': ['ZONE', 'REGION'],
+            'statename': ['STATE', 'STATENAME'],
+            'distname': ['DISTRICT', 'DISTNAME'],
+            'month_name': ['MONTH', 'MONTH NAME'],
+            'productname': ['PRODUCT', 'FUEL', 'PETROL', 'DIESEL']
+            }
 
 
 async def generate_industry_recommendations():
@@ -96,14 +106,14 @@ def get_date_filters(filters, resp_type="months"):
                                                                with_month_end_day=True)
         elif condition["key"] == "month_name":
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
-    filters = [condition for condition in filters if condition['key'].strip('"') in ['YTM', 'DATE', 'month_name',
-                                                                                     'OMC']]
+    filters = [condition for condition in filters if condition['key'].strip('"') not in ['YTM', 'DATE', 'month_name',
+                                                                                         'OMC', 'A', 'H', 'C']]
     if not months:
         months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%b').tolist()
     return filters, fiscal_year_pre, fiscal_year_last, [key.upper() for key in months]
 
 
-def calculate_market_share(df, group_by, sales_key="sales"):
+def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, drill_state, time_grain, sales_key="sales"):
     # Convert Decimal to float for Pandas compatibility
     df["sales"] = df["sales"].astype(float)
 
@@ -119,40 +129,118 @@ def calculate_market_share(df, group_by, sales_key="sales"):
     summary = total_sales.merge(hpcl_sales_per_year, on=group_by, how="left").fillna(0)
 
     # Mapping fiscal years to prefixes
-    prefix_map = {
-        "2023-2024": "history",
-        "2024-2025": "actual"
-    }
-    if len(group_by) <= 1:
-        summary['cumulative'] = "CUMMULATIVE_SALES"
-        group_item = "cumulative"
+    prefix_map = {}
+    if fiscal_year_pre:
+        prefix_map[fiscal_year_pre] = "actual"
+    if fiscal_year_last:
+        prefix_map[fiscal_year_last] = "history"
+
+    # if group by was less than sending an extra key  cumulative
+    if not drill_state:
+        if len(group_by) <= 1:
+            summary['cumulative'] = "CUMMULATIVE_SALES"
+            group_items = ["cumulative"]
+        else:
+            group_items = []
+            for key in Base_Filters[::-1]:
+                key = key.strip('"')
+                if key in group_by:
+                    group_items = [key]
+                    break
     else:
-        group_item = ""
-        for key in Base_Filters[::-1]:
-            key = key.strip('"')
-            if key in group_by:
-                group_item = key
-                break
+        if not drill_state.startswith('"'):
+            drill_state = f'"{drill_state}"'
+        group_items = [Base_Filters[Base_Filters.index(drill_state) + 1].strip('"'), "month_name"]
 
     # Transforming data
     transformed_data = [
         {
             f"{prefix_map[item['fiscal_year']]}_market_share": item["market_share"],
             f"{prefix_map[item['fiscal_year']]}_hpcl_share": item["hpcl_share"],
-            group_item: item[group_item]
+            **{grp_item: item[grp_item] for grp_item in group_items}
         }
         for item in summary.to_dict(orient='records')
     ]
+
     # Merging records based on 'group_item'
     merged_data = defaultdict(dict)
 
     for item in transformed_data:
-        sbu = item[group_item]
-        merged_data[sbu].update(item)
-        merged_data[sbu][group_item] = sbu  # Ensure group_item is retained
-
+        if len(group_items) == 1:
+            sbu = item[group_items[0]]
+            merged_data[sbu].update(item)
+            merged_data[sbu][group_items[0]] = sbu  # Ensure group_item is retained
+        else:
+            base_key = group_items[0]
+            for grp_item in group_items[1:]:
+                sbu = item[grp_item]
+                merged_data[f"{sbu}_{item[base_key]}"].update(item)
+                merged_data[f"{sbu}_{item[base_key]}"][grp_item] = sbu  # Ensure group_item is retained
+    if drill_state:
+        return generate_stacked_data(pd.DataFrame(list(merged_data.values())), "", "month_name")
     # Convert back to list of dictionaries
-    return list(merged_data.values())
+    df = pd.DataFrame(list(merged_data.values())).fillna(0)
+    return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+
+
+def generate_stacked_data(df, resp_format='', month_column=''):
+    mandate_keys = ['history_market_share', 'history_hpcl_share', 'actual_market_share', 'actual_hpcl_share']
+    columns = df.columns.to_list()
+    numeric_cols = [col for col in columns if col in mandate_keys]
+    if month_column:
+        df[month_column] = pd.Categorical(df[month_column], categories=[month.upper() for month in m60.months],
+                                          ordered=True)
+        for column in numeric_cols:
+            df[column].fillna(0, inplace=True)
+        other_columns = list(set(columns) - set(numeric_cols + [month_column]))
+    else:
+        other_columns = list(set(columns) - set(numeric_cols))
+    if other_columns:
+        # For Non-Stacked for data table to display month wise AHT data
+        if not resp_format:
+
+            # Pivot Data - Creating separate columns for Actual, History, and Target
+            df_pivot = df.pivot(index=other_columns[0], columns=month_column, values=numeric_cols)
+
+            # Flatten MultiIndex Columns and rename them
+            df_pivot.columns = [f"{month}_{metric}" if metric in numeric_cols else metric for metric, month in df_pivot.columns]
+
+            # Reset Index to include 'Zone_Name'
+            df_pivot.reset_index(inplace=True)
+
+            # Keeping all nan's as zero's
+            df_pivot.fillna(0, inplace=True)
+
+            # Convert to Dictionary Format
+            return df_pivot.to_dict(orient="records")
+        elif resp_format == 'stacked' and month_column:
+            # For sending data in stacked format
+
+            # Extract unique months from the dataset
+            unique_months = sorted(df[month_column].unique(), key=lambda x: m60.months.index(x))
+            series_data = []
+            for zone in df[other_columns[0]].unique():
+                zone_data = df[df[other_columns[0]] == zone].set_index(month_column)
+                for column in numeric_cols:
+                    # Creating series data
+                    series_data.append({"name": f"{zone} {column.title()}", "stack": column.title(),
+                                        "data": [zone_data.loc[m, column] if m in zone_data.index else 0
+                                                 for m in unique_months]})
+            return {"months": unique_months, "series": series_data}
+        elif resp_format == 'cummulative' and month_column:
+            df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
+            return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+        elif resp_format == 'grouped':
+            # For Grouped data
+            # Converting data to month wise report
+            return [{"month_name": month, **{key: group[key].tolist() for key in numeric_cols + other_columns}}
+                    for month, group in df.groupby("month_name")]
+    else:
+        if resp_format == 'cummulative' and month_column:
+            df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
+
+        # For regular drill down widgets
+        return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
 
 
 async def industry_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
@@ -215,6 +303,17 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     req_keys = f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
                                        "", "", group_by_filter+["coname"], "")
-    resp_data = calculate_market_share(pd.DataFrame(resp_data), group_keys)
-    df = pd.DataFrame(resp_data).fillna(0)
-    return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+    return calculate_market_share(pd.DataFrame(resp_data), group_keys, fiscal_year_pre, fiscal_year_last,
+                                       drill_state, time_grain)
+
+
+
+async def generate_response(question):
+    question = question.upper()  # Convert to lowercase
+    extracted = {key: [] for key in KEYWORDS}  # Initialize output keys
+    # Match keywords to fields
+    for key, words in KEYWORDS.items():
+        for word in words:
+            if word in question:
+                extracted[key].append(word)  # Assign the found keyword (or later a matched value)
+    return extracted
