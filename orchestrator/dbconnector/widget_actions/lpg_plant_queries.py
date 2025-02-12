@@ -2275,5 +2275,26 @@ ORDER BY
                                         ROUND(CAST(SUM("total") AS NUMERIC) / 100000, 2) AS "Total Handled"
                                     FROM 
                                         "lpg_cs_rejections"
-                                    WHERE DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) '''                                          
+                                    WHERE DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
+
+    'cdcms_current_date_pending_count': f''' select
+                                                CAST(SUM("Total_Pending")AS NUMERIC) AS "Total Pending"
+                                            from
+                                                "lpg_todays_cdcms_sales_summary"
+                                            where
+                                                "ZOName" IS NOT NULL ''',
+                                        
+    'cdcms_current_date_bookings_count': f''' select
+                                                CAST(SUM("BookingReceivedYesterday")AS NUMERIC) AS "Total Bookings"
+                                            from
+                                                "lpg_todays_cdcms_sales_summary"
+                                            where
+                                                "ZOName" IS NOT NULL ''',
+                                    
+    'cdcms_current_date_sales_count': f''' select
+                                            CAST(SUM("TotalSalesYesterday")AS NUMERIC) AS "Total Sales"
+                                        from
+                                            "lpg_todays_cdcms_sales_summary"
+                                        where
+                                            "ZOName" IS NOT NULL '''                                                                            
 }
