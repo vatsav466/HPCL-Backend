@@ -12,7 +12,7 @@ from email.mime.multipart import MIMEMultipart
 import orchestrator.notification_manager.notification_manager as notification_manager
 
 
-class NotifyEMail(notification_manager):
+class NotifyEMail(notification_manager.NotificationManager):
     def __init__(self):
         super().__init__()
         self.notification_type = "Email"
