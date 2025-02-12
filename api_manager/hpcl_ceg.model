@@ -1195,6 +1195,7 @@ Model VtsAlertHistory {
     device_offline_count_count_instance optional str
     device_tamper_count_instance optional str
     auto_unblock optional bool
+    alert_id optional str
 
     Config=> {
         crud_operations='read'
