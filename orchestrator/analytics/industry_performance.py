@@ -9,7 +9,6 @@ import orchestrator.analytics.m60_performance as m60
 from orchestrator.dbconnector.widget_actions import widget_actions
 
 
-MandateKeys = {"actual": "IND_ACTUAL_TMT_SALES", "history": "IND_ACTUAL_HISTORY_TMT_SALES"}
 Base_Filters = ['"cumulative_level"', '"sbu_name"', '"region_name"', '"statename"', '"distname"',
                 '"month_name"', '"productname"']
 OMC = {
@@ -155,16 +154,6 @@ def calculate_market_share(df, group_by, sales_key="sales"):
     # Convert back to list of dictionaries
     return list(merged_data.values())
 
-    # # Calculate HPCL's market share percentage
-    # # summary["hpcl_share_percentage"] = (summary["hpcl_share"] / summary["market_share"]) * 100
-    # summary = summary.set_index("fiscal_year").T
-    # summary.columns = [f"history" if col == "2023-2024" else f"actual" for col in summary.columns]
-    #
-    # # Reset index for final structure
-    # summary = summary.reset_index().rename(columns={"index": "metric"})
-
-    # return transformed_data
-
 
 async def industry_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     if not cross_filters:
@@ -227,4 +216,5 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
                                        "", "", group_by_filter+["coname"], "")
     resp_data = calculate_market_share(pd.DataFrame(resp_data), group_keys)
-    return {key: value.to_dict() for key, value in pd.DataFrame(resp_data).to_dict(orient='series').items()}
+    df = pd.DataFrame(resp_data).fillna(0)
+    return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
