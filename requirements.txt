@@ -22,6 +22,7 @@ sshtunnel==0.4.0
 parsedatetime==2.6
 holidays==0.61
 marshmallow==3.23.1
+geopy==2.4.1
 ###############################
 ##    Base Framework End     ##
 ###############################
