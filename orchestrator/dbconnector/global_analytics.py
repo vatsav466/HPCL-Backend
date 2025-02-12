@@ -991,7 +991,7 @@ class GlobalAnalytics:
                                                      [rec.dict() for rec in cross_filters], drill_state, time_grain,
                                                      resp_format)
     @staticmethod
-    async def industry_performance(filters, cross_filters, drill_state):
+    async def industry_performance(filters, cross_filters, drill_state, time_grain='', resp_format=''):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -999,11 +999,18 @@ class GlobalAnalytics:
             filters (list): List of filter objects to apply to the query.
             drill_state (dict): Current drill state for processing the query.
 
+
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
+            :param filters:
+            :param cross_filters:
+            :param drill_state:
+            :param resp_format:
+            :param time_grain:
         """
         return await industry_performance.industry_performance([rec.dict() for rec in filters],
-                                                     [rec.dict() for rec in cross_filters], drill_state)
+                                                               [rec.dict() for rec in cross_filters], drill_state,
+                                                               time_grain, resp_format)
 
     @staticmethod
     async def m60_performance_old(filters, cross_filters, drill_state):
