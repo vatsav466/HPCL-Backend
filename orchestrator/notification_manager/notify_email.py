@@ -85,7 +85,7 @@ class NotifyEMail(notification_manager.NotificationManager):
         # Reply to email
         if creds.get("reply_to"):
             mail_content['Reply-To'] = creds['reply_to']
-        mail_content.attach(MIMEText(kwargs['body'], 'html'if kwargs.get("html_content") else 'plain'))
+        mail_content.attach(MIMEText(kwargs['body'], 'html' if kwargs.get("html_content") else 'plain'))
         # Attaching files if any attachments
         for file_name in kwargs.get("attachments", []):
             mail_content.attach(self._attach_file(file_name))

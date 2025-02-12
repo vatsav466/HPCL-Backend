@@ -144,7 +144,7 @@ async def vts_alert_closer(alert_data, input_data):
     await close_alert(close_alert_data)
     data = {}
     data['interlock_name'] = alert_data['interlock_name']
-    data['asset_name'] = "violation_type"
+    data['asset_name'] = alert_data["violation_type"]
     data['asset_id'] = ""
     data['plant_location'] = alert_data['location_name']
     data['plant_id'] = alert_data['sap_id']
@@ -157,7 +157,8 @@ async def vts_alert_closer(alert_data, input_data):
         **{
             'to_emails': ['venu@algofusiontech.com', 'santoshkumar.s@algofusiontech.com'],
             'subject': f"VTS Alert Closed FOR {close_alert_data['bu']} BU And {alert_data['sap_id']} SAP ID",
-            'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/interlock_alert_closure.html", data=data)
+            'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/interlock_alert_closure.html", data=data),
+            'html_content': True
         }
     )
     print(f"VTS Alert Closed")
