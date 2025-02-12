@@ -4,6 +4,7 @@ import json
 import httpx
 import datetime
 import hpcl_ceg_model
+from jinja2 import Template
 import utilities.helpers as helpers
 import orchestrator.alerting.ro_alert as ro_alert
 import orchestrator.alerting.va_alert as va_alert
@@ -12,6 +13,7 @@ import orchestrator.alerting.tas_alert as tas_alert
 import orchestrator.alerting.lpg_alert as lpg_alert
 import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.emlock_alert as emlock_alert
+from orchestrator.notification_manager.notify_email import *
 
 
 async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url):
@@ -44,6 +46,121 @@ async def close_alert(alert_data):
     # print("alert_data for close alert", alert_data)
     alert_type = alert_data['alert_type']
     return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").close_bu_alert(alert_data)
+
+
+async def close_va_alert(alert_data, input_data):
+    """
+    Args:
+        alert_data:
+        input_data:
+
+    Returns:
+    """
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    if not input_data.get("doc_link", ""):
+        input_data["doc_link"] = await get_doc_link_from_alert_history(alert_data)
+    action_code = "VALID"
+    if input_data.get("action_type") == 'InvalidAlert':
+        action_code = 'INVALID'
+    if input_data.get("action_type") == 'FalseAlert':
+        action_code = 'FALSE'
+    params = {
+        "AlarmId": alert_data['external_id'],
+        "Status": "CLOSED",
+        "AcknowledgedBy": input_data.get("acknowledged_by", "1234"),
+        "ActionCode": action_code,
+        "ActionReason": input_data.get("rca_reason", "Other"),
+        "ActionCategory": input_data.get("category", "Others"),
+        "doc_link": input_data.get("doc_link", ""),
+        "ActionDescription": input_data.get("action_description", "")
+    }
+    return await va_analysis.close_va_alerts(params)
+
+
+async def get_doc_link_from_alert_history(alert_data):
+    """
+
+    Args:
+        alert_data:
+
+    Returns:
+
+    """
+    for alert_history in alert_data.get("alert_history", []):
+        if alert_history.get("doc_link", ""):
+            return alert_history.get("doc_link", "")
+    return ""
+
+
+def read_template(filename, data):
+    with open(filename, 'r') as f:
+        html_string = f.read()
+    j2_template = Template(html_string)
+    body=j2_template.render(data)
+    return body
+
+
+async def va_alert_closer(alert_data, input_data):
+    """
+
+    Args:
+        alert_data:
+        input_data:
+
+    Returns:
+
+    """
+    resp = await close_va_alert(alert_data, input_data)
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    close_alert_data = {}
+    close_alert_data['alert_type'] = alert_data['alert_section']
+    close_alert_data['bu'] = alert_data['bu']
+    close_alert_data['alert_id'] = alert_data['id']
+    close_alert_data['interlock_id'] = alert_data['interlock_id']
+    await close_alert(close_alert_data)
+    print(f"VA Alert resp {resp}")
+
+
+async def vts_alert_closer(alert_data, input_data):
+    """
+
+    Args:
+        alert_data:
+        input_data:
+
+    Returns:
+
+    """
+    # resp = await close_va_alert(alert_data, input_data)
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    close_alert_data = {}
+    close_alert_data['alert_type'] = alert_data['alert_section']
+    close_alert_data['bu'] = alert_data['bu']
+    close_alert_data['alert_id'] = alert_data['id']
+    close_alert_data['interlock_id'] = alert_data['interlock_id']
+    await close_alert(close_alert_data)
+    data = {}
+    data['interlock_name'] = alert_data['interlock_name']
+    data['asset_name'] = "violation_type"
+    data['asset_id'] = ""
+    data['plant_location'] = alert_data['location_name']
+    data['plant_id'] = alert_data['sap_id']
+    data['opened_time'] = alert_data['created_at'].strftime('%d-%m-%Y %H:%M:%S')
+    data['user'] = 'Novex User'
+    data['reason_closure'] = input_data.get("action_description", "")
+    data['portal_link'] = "https://ceg.hpcl.co.in"
+    notify_email = NotifyEMail()
+    notify_email.publish_message(
+        **{
+            'to_emails': ['venu@algofusiontech.com', 'santoshkumar.s@algofusiontech.com'],
+            'subject': f"VTS Alert Closed FOR {close_alert_data['bu']} BU And {alert_data['sap_id']} SAP ID",
+            'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/interlock_alert_closure.html", data=data)
+        }
+    )
+    print(f"VTS Alert Closed")
 
 
 class AlertAction:
@@ -98,16 +215,10 @@ class AlertAction:
             # if input_data.get("alert_section", "") == 'VA':
             # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
             if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
-                resp = await cls.close_va_alert(alert_data, input_data)
-                if not isinstance(alert_data, dict):
-                    alert_data = alert_data.__dict__
-                close_alert_data = {}
-                close_alert_data['alert_type'] = alert_data['alert_section']
-                close_alert_data['bu'] = alert_data['bu']
-                close_alert_data['alert_id'] = alert_data['id']
-                close_alert_data['interlock_id'] = alert_data['interlock_id']
-                await close_alert(close_alert_data)
-                print(f"VA Alert resp {resp}")
+                await va_alert_closer(alert_data, input_data)
+
+            if input_data.get("alert_section", "") == 'VTS' and input_data.get("action_type", "") in ["Approved"]:
+                await vts_alert_closer(alert_data, input_data)
             return meg_resp
         return False, "Alert action is not valid"
 
@@ -498,40 +609,3 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "VTS")
-
-    @classmethod
-    async def close_va_alert(cls, alert_data, input_data):
-        """
-        Args:
-            alert_data:
-            input_data:
-
-        Returns:
-        """
-        if not isinstance(alert_data, dict):
-            alert_data = alert_data.__dict__
-        if not input_data.get("doc_link", ""):
-            input_data["doc_link"] = await cls.get_doc_link_from_alert_history(alert_data)
-        action_code = "VALID"
-        if input_data.get("action_type") == 'InvalidAlert':
-            action_code = 'INVALID'
-        if input_data.get("action_type") == 'FalseAlert':
-            action_code = 'FALSE'
-        params = {
-            "AlarmId": alert_data['external_id'],
-            "Status": "CLOSED",
-            "AcknowledgedBy": input_data.get("acknowledged_by", "1234"),
-            "ActionCode": action_code,
-            "ActionReason": input_data.get("rca_reason", "Other"),
-            "ActionCategory": input_data.get("category", "Others"),
-            "doc_link": input_data.get("doc_link", ""),
-            "ActionDescription": input_data.get("action_description", "")
-        }
-        return await va_analysis.close_va_alerts(params)
-
-    @classmethod
-    async def get_doc_link_from_alert_history(cls, alert_data):
-        for alert_history in alert_data.get("alert_history", []):
-            if alert_history.get("doc_link", ""):
-                return alert_history.get("doc_link", "")
-        return ""
