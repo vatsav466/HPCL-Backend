@@ -969,7 +969,7 @@ LIMIT 10000;''',
                             "filling_heads" as "heads",
                             avg("productivity.normal.productivity") as "productivity"
                         from 
-                            "LPG_OPERATIONS_SUMMARY_DATA"
+                            "lpg_operations_summary"
                         ''',
     
     "lpg_operations_production_zone": f''' 
@@ -979,7 +979,7 @@ LIMIT 10000;''',
                             "filling_heads" as "heads",
                             sum("productivity.normal.production")/1000 as "Productions" 
                         from 
-                            "LPG_OPERATIONS_SUMMARY_DATA" ''',
+                            "lpg_operations_summary" ''',
     
     "lpg_operations_filled_cylinder": f''' 
                         select 
