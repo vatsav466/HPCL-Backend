@@ -112,8 +112,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                 finarResp[key].append(entry)
                             print("finarResp--->", finarResp)
                             max_limit = int(max(list(details['alerting_rules'].keys())))
-                            if altcount > max_limit + 1:
-                                altcount = max_limit + 1
+                            if altcount > max_limit:
+                                altcount = max_limit
                             alert_message = (
                                 f"{details['alerting_rules'][str(altcount)]['interlock_name']} Alert for Vehicle: "
                                 f"{record['tl_number']} \n Vendor ID : {record['vendor_id']} \n Report_Duration: "
@@ -162,6 +162,14 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             vts_alert_data['clear_count'] = details['alerting_rules'][str(altcount)]['clear_count']
                             vts_alert_data['severity'] = details['severity']
                             vts_alert_data['vts_alert_history_ids'] = vts_alert_history_ids
+                            vts_alert_data['transporter_name'] = ''
+                            vts_alert_data['transporter_code'] = alert_data['vendor_id']
+                            vts_alert_data['vehicle_blocked_start_date'] = recv_time.isoformat()
+                            vts_alert_data['vehicle_blocked_end_date'] = helpers.get_time_stamp_by_delta(
+                                                                            days=details['alerting_rules'][str(altcount)]['block_duration'],
+                                                                            with_month_start_day=False,
+                                                                            ascending=True,
+                                                                            date_time_format=None).isoformat()
                             for data in data['data']:
                                 violation = f"{key}_instance"
                                 data[violation]=str(altcount)
