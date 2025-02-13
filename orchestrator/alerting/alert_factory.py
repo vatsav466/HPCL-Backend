@@ -8,6 +8,7 @@ import urdhva_base.redispool
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
+import orchestrator.analytics.vts_analysis as vts_analysis
 
 logger = urdhva_base.logger.Logger.getInstance('alert_factory_log')
 
@@ -106,6 +107,10 @@ class AlertFactory:
                                                         'servicing_plant_id': str(alert_data.get('servicing_plant_id', '')),
                                                         'servicing_plant_name': str(alert_data.get('servicing_plant_name', '')),
                                                         'progress_rate': 1,
+                                                        'transporter_name': alert_data.get("transporter_name", ""),
+                                                        'transporter_code': alert_data.get("transporter_code", ""),
+                                                        'vehicle_blocked_start_date': alert_data.get("vehicle_blocked_start_date", None),
+                                                        'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
                                                         'raw_data': {}}).create()
@@ -164,6 +169,11 @@ class AlertFactory:
                 if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
+
+                # Updating for VTS Alert history with alert_id
+                if alert_data_dict.get("alert_section") == "VTS":
+                    await vts_analysis.update_alert_id_to_vts_history(alert_id=str(alert_resp['id']), vts_alert_id=alert_data_dict.get("vts_alert_history_ids", []))
+
                 # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                 #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)

@@ -413,6 +413,7 @@ Model Alert_History internal {
     alert_status optional AlertStatus
     action_msg str
     remarks optional str
+    doc_link optional str
     atr_uploaded optional bool
     maintenance_exception optional bool
     revocation optional bool
@@ -586,6 +587,12 @@ Model Alerts {
     origin_altid optional str
     alert_message optional str
     external_timestamp optional datetime
+
+    // VTS
+    transporter_name optional str
+    transporter_code optional str
+    vehicle_blocked_start_date optional datetime
+    vehicle_blocked_end_date optional datetime
 
     Action=> alert_action {
         bu optional str
@@ -1179,6 +1186,16 @@ Model VtsAlertHistory {
     device_offline_count optional int
     device_tamper_count optional int
     approved_by optional str
+    stoppage_violations_count_instance optional str
+    route_deviation_count_instance optional str
+    speed_violation_count_instance optional str
+    main_supply_removal_count_instance optional str
+    night_driving_count_instance optional str
+    no_halt_zone_count_instance optional str
+    device_offline_count_count_instance optional str
+    device_tamper_count_instance optional str
+    auto_unblock optional bool
+    alert_id optional str
 
     Config=> {
         crud_operations='read'

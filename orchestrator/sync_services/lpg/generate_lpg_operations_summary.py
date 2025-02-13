@@ -1103,7 +1103,7 @@ def generate_summary():
                     data['SiteArea'] = plant["SiteArea"]
                     data["bu"] = "LPG"
                     if "filling_heads" in data.columns:
-                        data["filling_heads"] = data["filling_heads"].astype(str) + "H"
+                        data["filling_heads"] = data["filling_heads"].astype(str).str.replace(".0","") + "H"
                     insertToDB(data, "lpg_operations_summary")
                 current_date += timedelta(days=1)
     except Exception as e:

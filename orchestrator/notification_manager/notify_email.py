@@ -12,7 +12,7 @@ from email.mime.multipart import MIMEMultipart
 import orchestrator.notification_manager.notification_manager as notification_manager
 
 
-class NotifyEMail(notification_manager):
+class NotifyEMail(notification_manager.NotificationManager):
     def __init__(self):
         super().__init__()
         self.notification_type = "Email"
@@ -85,7 +85,7 @@ class NotifyEMail(notification_manager):
         # Reply to email
         if creds.get("reply_to"):
             mail_content['Reply-To'] = creds['reply_to']
-        mail_content.attach(MIMEText(kwargs['body'], 'html'if kwargs.get("html_content") else 'plain'))
+        mail_content.attach(MIMEText(kwargs['body'], 'html' if kwargs.get("html_content") else 'plain'))
         # Attaching files if any attachments
         for file_name in kwargs.get("attachments", []):
             mail_content.attach(self._attach_file(file_name))

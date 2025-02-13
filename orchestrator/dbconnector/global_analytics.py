@@ -2,6 +2,7 @@ import urdhva_base
 import json
 import calendar
 import psycopg2
+import traceback
 import polars as pl
 import numpy as np
 import pandas as pd
@@ -1002,7 +1003,7 @@ class GlobalAnalytics:
                                                      [rec.dict() for rec in cross_filters], drill_state, time_grain,
                                                      resp_format)
     @staticmethod
-    async def industry_performance(filters, cross_filters, drill_state):
+    async def industry_performance(filters, cross_filters, drill_state, time_grain='', resp_format=''):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -1010,11 +1011,18 @@ class GlobalAnalytics:
             filters (list): List of filter objects to apply to the query.
             drill_state (dict): Current drill state for processing the query.
 
+
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
+            :param filters:
+            :param cross_filters:
+            :param drill_state:
+            :param resp_format:
+            :param time_grain:
         """
         return await industry_performance.industry_performance([rec.dict() for rec in filters],
-                                                     [rec.dict() for rec in cross_filters], drill_state)
+                                                               [rec.dict() for rec in cross_filters], drill_state,
+                                                               time_grain, resp_format)
 
     @staticmethod
     async def m60_performance_old(filters, cross_filters, drill_state):
@@ -3542,25 +3550,25 @@ class GlobalAnalytics:
                 productivity_zone_query_  += ' WHERE '
                 productivity_zone_query_  += ' AND '.join(conditions)
             productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "carousel" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "heads" '
         else:
             if not "where" in productivity_zone_query_.lower():
                 productivity_zone_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date","carousel" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "heads" '
             resp = await function(query=productivity_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+            resp = resp.groupby(["zone", "heads"], as_index=False).agg({
                         "productivity": "mean"
                     })
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3570,14 +3578,14 @@ class GlobalAnalytics:
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["zone","name","carousel"]:
+            for each_str_col in ["zone","name","heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["zone","name","heads"], as_index=False).agg({
                         "productivity": "mean"
                     })
                 if grouped_resp is not None:
@@ -3610,24 +3618,24 @@ class GlobalAnalytics:
                 production_zone_query_  += ' WHERE '
                 production_zone_query_  += ' AND '.join(conditions)
             production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "heads" '
         else:
             if not "where" in production_zone_query_.lower():
                 production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "heads" '
             resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+            resp = resp.groupby(["zone", "heads"], as_index=False).agg({
                         "Productions": "sum"
                     })
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3639,14 +3647,14 @@ class GlobalAnalytics:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["zone","name","heads"], as_index=False).agg({
                         "Productions": "sum"
                     })
                 if grouped_resp is not None:
@@ -3731,6 +3739,111 @@ class GlobalAnalytics:
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_operations_daywise_productivity(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        if filters:
+            daywise_productivity_query = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_productivity")
+            daywise_productivity_query_ = daywise_productivity_query
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):  # Use dot notation instead of subscription
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                daywise_productivity_query_ += ' WHERE ' 
+                daywise_productivity_query_ += ' AND '.join(conditions)
+            daywise_productivity_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+            daywise_productivity_query_ += ' GROUP BY "process_date" '
+        else:
+            daywise_productivity_query_ = '''            
+                    SELECT 
+                    AVG("productivity_normal_productivity") AS "avg_productivity", 
+                    DATE("process_date") AS "process_date"
+                    FROM "lpg_operations_summary"
+                    WHERE "process_date" >= CURRENT_DATE - INTERVAL '30 days'
+                    GROUP BY DATE("process_date")
+                    ORDER BY "process_date";
+            '''
+        try:
+            query_resp = await function(query=daywise_productivity_query_)
+            resp = pl.DataFrame(query_resp)
+            numerical_columns = ["productivity_normal_productivity"]
+            string_columns = ["process_date"]
+            for col in numerical_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
+            for col in string_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
+    
+    
+    @staticmethod
+    async def lpg_operations_daywise_production(filters ,cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        if filters:
+            daywise_production_query = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_production")
+            daywise_production_query_ = daywise_production_query
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):  # Use dot notation instead of subscription
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                daywise_production_query_ += ' WHERE ' 
+                daywise_production_query_ += ' AND '.join(conditions)
+            daywise_production_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+            daywise_production_query_ += ' GROUP BY "process_date" '
+        else:
+            daywise_production_query_ = '''            
+                    SELECT 
+                            SUM("productivity_normal_production") / 1000 AS "sum_productivity ", 
+                            DATE("process_date") AS "process_date"
+                            FROM "lpg_operations_summary"
+                    WHERE "process_date" >= CURRENT_DATE - INTERVAL '30 days'
+                    GROUP BY DATE("process_date")
+                    ORDER BY "process_date";
+            '''
+        try:           
+            query_resp = await function(query=daywise_production_query_)
+            resp = pl.DataFrame(query_resp)
+            numerical_columns = ["productivity_normal_production"]
+            string_columns = ["process_date"]
+            for col in numerical_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
+            for col in string_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
+
     
 
     @staticmethod
@@ -4497,3 +4610,27 @@ class GlobalAnalytics:
         if not df.is_empty():
             return {"status": True, "message": "success", "data": df.to_dicts()}
         return {"status": False, "message": "No data", "data": []}
+    
+    @staticmethod
+    async def operations_dropdown(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _query = ''' select * from lpg_operations_masters '''
+        resp = await function(query=_query)
+        df = pl.from_pandas(pd.DataFrame(resp))
+        _filters = []
+        if filters:
+            for filter in filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _filters:
+            filter_expr = pl.lit(True)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    key = key.replace('"','')
+                    filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
+            df = df.filter(filter_expr)
+        months = [month for month in calendar.month_name if month]
+        data = {"zone": df["zone"].unique().to_list(), "SiteArea": df["SiteArea"].unique().to_list(),
+                "filling_heads": ["12H", "24H", "48H", "72H"]}
+        return data
