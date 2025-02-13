@@ -55,7 +55,9 @@ class CheckMaintenanceTime:
                 return True, {"waitTime": totalWaitTime}
             elif alert_data.get("alert_section") in ["TAS"] and alert_data.get('maintenance_time',''):
                 maintenance_time = alert_data.get('maintenance_time')
-                if maintenance_time:
+                timestamp = datetime.datetime.fromisoformat(maintenance_time).replace(tzinfo=datetime.timezone.utc)
+                current_time = datetime.datetime.now(datetime.timezone.utc)   
+                if current_time>timestamp:
                     # Parse the string into a datetime object
                     timestamp = datetime.datetime.strptime(maintenance_time, "%Y-%m-%dT%H:%M:%S")
                     # Subtract 5 days

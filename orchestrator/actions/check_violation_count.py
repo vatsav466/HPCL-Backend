@@ -31,13 +31,12 @@ class CheckViolationCount:
             dt_firstday = datetime.datetime(current_date.year, 3 * current_quarter - 2, 1)
             
             # Format the start date in the same format as the database ('YYYY-MM-DD HH:MM:SS.SSSSSS')
-            start_date_time = dt_firstday.strftime("%Y-%m-%d %H:%M:%S.%f")
+            start_date_time = dt_firstday.strftime("%Y-%m-%d")
 
             # Construct the query
             query = (f"sap_id='{sap_id}' and bu='{bu}' and vehicle_number='{vehicle_number}' "
                      f"and violation_type='{violation_type}' and sop_id='SOP001' "
-                     f"and created_at >= '{start_date_time}'")
-            
+                     f"and created_at::DATE >= '{start_date_time}'")
             # Fetch the count of violations matching the query
             count = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query),resp_type='plain')
             return count
