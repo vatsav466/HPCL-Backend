@@ -4600,3 +4600,27 @@ class GlobalAnalytics:
         if not df.is_empty():
             return {"status": True, "message": "success", "data": df.to_dicts()}
         return {"status": False, "message": "No data", "data": []}
+    
+    @staticmethod
+    async def operations_dropdown(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _query = ''' select * from lpg_operations_masters '''
+        resp = await function(query=_query)
+        df = pl.from_pandas(pd.DataFrame(resp))
+        _filters = []
+        if filters:
+            for filter in filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _filters:
+            filter_expr = pl.lit(True)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    key = key.replace('"','')
+                    filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
+            df = df.filter(filter_expr)
+        months = [month for month in calendar.month_name if month]
+        data = {"zone": df["zone"].unique().to_list(), "SiteArea": df["SiteArea"].unique().to_list(),
+                "filling_heads": ["12H", "24H", "48H", "72H"]}
+        return data
