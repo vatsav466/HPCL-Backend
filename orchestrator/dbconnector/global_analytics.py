@@ -3539,25 +3539,25 @@ class GlobalAnalytics:
                 productivity_zone_query_  += ' WHERE '
                 productivity_zone_query_  += ' AND '.join(conditions)
             productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "carousel" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "heads" '
         else:
             if not "where" in productivity_zone_query_.lower():
                 productivity_zone_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date","carousel" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "heads" '
             resp = await function(query=productivity_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+            resp = resp.groupby(["zone", "heads"], as_index=False).agg({
                         "productivity": "mean"
                     })
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3567,14 +3567,14 @@ class GlobalAnalytics:
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["zone","name","carousel"]:
+            for each_str_col in ["zone","name","heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["zone","name","heads"], as_index=False).agg({
                         "productivity": "mean"
                     })
                 if grouped_resp is not None:
@@ -3607,24 +3607,24 @@ class GlobalAnalytics:
                 production_zone_query_  += ' WHERE '
                 production_zone_query_  += ' AND '.join(conditions)
             production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "heads" '
         else:
             if not "where" in production_zone_query_.lower():
                 production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "heads" '
             resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+            resp = resp.groupby(["zone", "heads"], as_index=False).agg({
                         "Productions": "sum"
                     })
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3636,14 +3636,14 @@ class GlobalAnalytics:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["zone","name","heads"], as_index=False).agg({
                         "Productions": "sum"
                     })
                 if grouped_resp is not None:
@@ -4258,7 +4258,12 @@ class GlobalAnalytics:
                         for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
-                condition = f"{rec.key} in {tuple(rec.value)}"
+                if ',' in rec.filter:
+                    rec_values = rec.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition = f"{rec.key} IN {rec_value_tup} "
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
             if conditions:
@@ -4366,7 +4371,12 @@ class GlobalAnalytics:
         if filters:
             conditions = []
             for rec in filters:
-                condition = f"{rec.key} = '{rec.value}' "
+                if ',' in rec.value:
+                    rec_values = rec.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition = f"{rec.key} IN {rec_value_tup} "
+                else:
+                    condition = f"{rec.key} = '{rec.value}' "
                 conditions.append(condition)
 
             splitted_query = dryout_by_prod_query.split("MainFlow')")
@@ -4381,13 +4391,21 @@ class GlobalAnalytics:
         #         dryout_by_prod_query, access_filters, drill_state)
         print("dryout_by_prod_query: ", dryout_by_prod_query)
         dryout_by_prod_resp = await function(query=dryout_by_prod_query)
-        transformed_response = [
-            {
-                'product': item['product'],
-                item['dryout_status']: item['total_ro']
-            }
-            for item in dryout_by_prod_resp
-        ]
+        # transformed_response = [
+        #     {
+        #         'product': item['product'],
+        #         item['dryout_status']: item['total_ro']
+        #     }
+        #     for item in dryout_by_prod_resp
+        # ]
+        grouped_data = defaultdict(dict)
+
+        for item in dryout_by_prod_resp:
+            product = item['product']
+            grouped_data[product]['product'] = product
+            grouped_data[product][item['dryout_status']] = item['total_ro']
+
+        transformed_response = list(grouped_data.values())
         print(transformed_response)
         return {"status": True, "message": "success", "data": transformed_response}
 
@@ -4426,7 +4444,12 @@ class GlobalAnalytics:
                 grp_col = f''' "View 1"."location_name" '''
                 col_ = 'location_name'
             for cr_filter in cross_filters:
-                condition_ = f"{cr_filter.key} = '{cr_filter.value}' "
+                if ',' in cr_filter.value:
+                    rec_values = cr_filter.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition_ = f"{cr_filter.key} IN {rec_value_tup} "
+                else:
+                    condition_ = f"{cr_filter.key} = '{cr_filter.value}' "
                 conditions.append(condition_)
 
         detailed_dryout_query = detailed_dryout_query.format(display_col=display_col, grp_col= grp_col)
@@ -4435,7 +4458,12 @@ class GlobalAnalytics:
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             for rec in filters:
-                condition = f"{rec.key} = '{rec.value}' "
+                if ',' in rec.value:
+                    rec_values = rec.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition = f"{rec.key} IN {rec_value_tup} "
+                else:
+                    condition = f"{rec.key} = '{rec.value}' "
                 conditions.append(condition)
         if conditions:
             splitted_query = detailed_dryout_query.split("MainFlow')")
@@ -4444,13 +4472,21 @@ class GlobalAnalytics:
         print("detailed_dryout_query: ", detailed_dryout_query)
         detailed_dryout_resp = await function(query=detailed_dryout_query)
         print("col_ value:", col_)
-        transformed_response = [
-            {
-                col_: item[col_],
-                item['dryout_status']: item['total_ro']
-            }
-            for item in detailed_dryout_resp
-        ]
+        # transformed_response = [
+        #     {
+        #         col_: item[col_],
+        #         item['dryout_status']: item['total_ro']
+        #     }
+        #     for item in detailed_dryout_resp
+        # ]
+        grouped_data = defaultdict(dict)
+
+        for item in detailed_dryout_resp:
+            product = item[col_]
+            grouped_data[product][col_] = product
+            grouped_data[product][item['dryout_status']] = item['total_ro']
+
+        transformed_response = list(grouped_data.values())
         print(transformed_response)
         return {"status": True, "message": "success", "data": transformed_response}
 
@@ -4545,7 +4581,12 @@ class GlobalAnalytics:
         if filters:
             conditions = []
             for rec in filters:
-                condition = f"{rec.key} = '{rec.value}' "
+                if ',' in rec.value:
+                    rec_values = rec.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition = f"{rec.key} IN {rec_value_tup} "
+                else:
+                    condition = f"{rec.key} = '{rec.value}' "
                 conditions.append(condition)
 
             splitted_query = prod_qty_query.split("MainFlow'")
@@ -4586,3 +4627,27 @@ class GlobalAnalytics:
         if not df.is_empty():
             return {"status": True, "message": "success", "data": df.to_dicts()}
         return {"status": False, "message": "No data", "data": []}
+    
+    @staticmethod
+    async def operations_dropdown(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _query = ''' select * from lpg_operations_masters '''
+        resp = await function(query=_query)
+        df = pl.from_pandas(pd.DataFrame(resp))
+        _filters = []
+        if filters:
+            for filter in filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _filters:
+            filter_expr = pl.lit(True)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    key = key.replace('"','')
+                    filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
+            df = df.filter(filter_expr)
+        months = [month for month in calendar.month_name if month]
+        data = {"zone": df["zone"].unique().to_list(), "SiteArea": df["SiteArea"].unique().to_list(),
+                "filling_heads": ["12H", "24H", "48H", "72H"]}
+        return data

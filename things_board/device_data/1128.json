@@ -127,6 +127,11 @@
                     "sensor_tag": "",
                     "normal_value": "0"
                 },
+		        {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-01.TANK_ALERT",
+                    "normal_value": "0"
+                },
                 {
                     "sensor_name": "RIMSEAL FAULT ALARM",
                     "sensor_tag": "",
@@ -259,6 +264,11 @@
                 {
                     "sensor_name": "RIMSEAL FIRE ALARM",
                     "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-02.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -396,6 +406,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-03.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "RIMSEAL FAULT ALARM",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -527,6 +542,11 @@
                 {
                     "sensor_name": "RIMSEAL FIRE ALARM",
                     "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-04.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -664,6 +684,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-05.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "RIMSEAL FAULT ALARM",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -680,6 +705,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-06.HIGH_LEVEL",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-06.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -932,6 +962,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-07.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "RIMSEAL FAULT ALARM",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -1066,6 +1101,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-08.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "RIMSEAL FAULT ALARM",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -1137,6 +1177,11 @@
                 {
                     "sensor_name": "ROSOV OPEN STATUS IL1",
                     "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-09.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -1216,6 +1261,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-10.HIGH_LEVEL",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-10.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -1487,6 +1537,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-14.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -1618,6 +1673,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-15.HIGH_LEVEL",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-15.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -1755,6 +1815,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-16.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -1886,6 +1951,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-17.HIGH_LEVEL",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-17.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -2023,6 +2093,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-19.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -2154,6 +2229,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-20.HIGH_LEVEL",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-20.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -2291,6 +2371,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-21.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -2422,6 +2507,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-22.HIGH_LEVEL",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-22.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -2559,6 +2649,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-23.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -2690,6 +2785,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-24.HIGH_LEVEL",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-24.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -2827,6 +2927,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-25.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -2958,6 +3063,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-26.HIGH_LEVEL",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-26.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -3229,6 +3339,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-30.TANK_ALERT",
+                    "normal_value": "0"
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -3343,6 +3458,7 @@
                     "sensor_tag": "",
                     "normal_value": "0"
                 },
+
                 {
                     "sensor_name": "RIMSEAL FAULT ALARM",
                     "sensor_tag": "",
@@ -3360,6 +3476,11 @@
                 {
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "TANK LEAKAGE STATUS ",
+                    "sensor_tag": "TANK.TK-26.TANK_ALERT",
                     "normal_value": "0"
                 },
                 {
@@ -10287,7 +10408,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-501B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-501B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10325,7 +10446,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-502B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-502B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10363,7 +10484,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-503B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-503B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10401,7 +10522,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-504B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-504B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10439,7 +10560,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-505B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-505B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10477,7 +10598,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-506B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-506B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10515,7 +10636,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-507B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-507B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10553,12 +10674,12 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-508B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-508B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
         },
-        {
+        {	
             "device_name": "BCU TOT LP 17@Mathura",
             "device_id": "1858d2e0-e929-11ef-bdaf-63952eabadd3",
             "device_type": "BCU Totaliser",
@@ -10591,7 +10712,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-509B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-509B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10629,7 +10750,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-510B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-510B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10667,7 +10788,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-511B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-511B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -11174,6 +11295,20 @@
                 {
                     "sensor_name": "K-FACTOR CHANGE STATUS",
                     "sensor_tag": "SmartLoad-Single.BC-514B.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
+            "device_name": "LRC Switch Over@Mathura",
+            "device_id": "6135fde0-e9dc-11ef-bdaf-63952eabadd3",
+            "device_type": "LRC Switchover",
+            "device_key": "TXH7PaUfnEJQ18pJZwyO",
+            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
+            "sensors": [
+                {
+                    "sensor_name": "LRC SWITCHOVER 30 DAYS STATUS",
+                    "sensor_tag": "CLIENT.LRCA.HSB_COMMS_FAIL",
                     "normal_value": "0"
                 }
             ]

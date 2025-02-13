@@ -68,7 +68,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             continue
                         # checking the instance of violation_type(key) from quarter period
                         # whether it is first instance or second instance and so on..... 
-                        altcount = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
+                        alert_count = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
                                                                                                             record['location_type'],
                                                                                                             record['tl_number'], key)
                         maintenance_time = helpers.get_time_stamp_by_delta(days=14, 
@@ -80,7 +80,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         # if it is not first instance then check the frequency of records from the vts_alert_history
                         # within fortnight period and using {key}_instance='' example stoppage_violation_count_instance=''
                         # and stoppage_violation_count >= 1 based on bu, location_id and tl_number(vehicle_number).
-                        if altcount['count']:
+                        if alert_count['count']:
                             query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
                                 f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
                                 f"and {key}_instance='' and auto_unblock='true'")
@@ -181,8 +181,14 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             vts_alert_data['clear_count'] = details['alerting_rules'][str(altcount)]['clear_count']
                             vts_alert_data['severity'] = details['severity']
                             vts_alert_data['vts_alert_history_ids'] = vts_alert_history_ids
-                            # Before creatig alert updating the violation count reccords in vts_alert_hisory 
-                            # for not to take repeated counts or record from vts_alert_history
+                            vts_alert_data['transporter_name'] = ''
+                            vts_alert_data['transporter_code'] = alert_data['vendor_id']
+                            vts_alert_data['vehicle_blocked_start_date'] = recv_time.isoformat()
+                            vts_alert_data['vehicle_blocked_end_date'] = helpers.get_time_stamp_by_delta(
+                                                                            days=details['alerting_rules'][str(altcount)]['block_duration'],
+                                                                            with_month_start_day=False,
+                                                                            ascending=True,
+                                                                            date_time_format=None).isoformat()
                             for data in data['data']:
                                 violation = f"{key}_instance"
                                 data[violation]=str(altcount+1)

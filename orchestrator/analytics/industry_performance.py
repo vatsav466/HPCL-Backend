@@ -7,8 +7,7 @@ import dateutil.parser as dt_parser
 import utilities.fiscal_year as fiscal_year
 import orchestrator.analytics.m60_performance as m60
 from orchestrator.dbconnector.widget_actions import widget_actions
-
-
+import json
 Base_Filters = ['"cumulative_level"', '"sbu_name"', '"region_name"', '"statename"', '"distname"',
                 '"month_name"', '"productname"']
 OMC = {
@@ -113,20 +112,29 @@ def get_date_filters(filters, resp_type="months"):
     return filters, fiscal_year_pre, fiscal_year_last, [key.upper() for key in months]
 
 
-def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, drill_state, time_grain, sales_key="sales"):
+def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, drill_state, time_grain, resp_format,
+                           sales_key="sales"):
     # Convert Decimal to float for Pandas compatibility
     df["sales"] = df["sales"].astype(float)
 
     # Calculate total sales per fiscal year
     total_sales = df.groupby(group_by)["sales"].sum().reset_index()
     total_sales.rename(columns={"sales": "market_share"}, inplace=True)
+    unique_companies = list(df['coname'].unique()) if resp_format == "company_level" else ["HPCL"]
+    summary = total_sales
+    if resp_format == "company_level":
+        for company in unique_companies:
+            company_share = df[df["coname"] == company].groupby(group_by)["sales"].sum().reset_index()
+            company_share.rename(columns={"sales": f"{company.lower()}_share"}, inplace=True)
+            # Merge results
+            summary = summary.merge(company_share, on=group_by, how="left").fillna(0)
+    else:
+        # Calculate HPCL's total sales per fiscal year
+        hpcl_sales_per_year = df[df["coname"] == "HPCL"].groupby(group_by)["sales"].sum().reset_index()
+        hpcl_sales_per_year.rename(columns={"sales": "hpcl_share"}, inplace=True)
 
-    # Calculate HPCL's total sales per fiscal year
-    hpcl_sales_per_year = df[df["coname"] == "HPCL"].groupby(group_by)["sales"].sum().reset_index()
-    hpcl_sales_per_year.rename(columns={"sales": "hpcl_share"}, inplace=True)
-
-    # Merge results
-    summary = total_sales.merge(hpcl_sales_per_year, on=group_by, how="left").fillna(0)
+        # Merge results
+        summary = summary.merge(hpcl_sales_per_year, on=group_by, how="left").fillna(0)
 
     # Mapping fiscal years to prefixes
     prefix_map = {}
@@ -150,13 +158,18 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     else:
         if not drill_state.startswith('"'):
             drill_state = f'"{drill_state}"'
-        group_items = [Base_Filters[Base_Filters.index(drill_state) + 1].strip('"'), "month_name"]
+
+        if time_grain == "Monthly":
+            group_items = [Base_Filters[Base_Filters.index(drill_state) + 1].strip('"'), "month_name"]
+        else:
+            group_items = [Base_Filters[Base_Filters.index(drill_state) + 1].strip('"')]
 
     # Transforming data
     transformed_data = [
         {
             f"{prefix_map[item['fiscal_year']]}_market_share": item["market_share"],
-            f"{prefix_map[item['fiscal_year']]}_hpcl_share": item["hpcl_share"],
+            **{f"{prefix_map[item['fiscal_year']]}_{company.lower()}_share":
+                   item[f"{company.lower()}_share"] for company in unique_companies},
             **{grp_item: item[grp_item] for grp_item in group_items}
         }
         for item in summary.to_dict(orient='records')
@@ -177,16 +190,37 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                 merged_data[f"{sbu}_{item[base_key]}"].update(item)
                 merged_data[f"{sbu}_{item[base_key]}"][grp_item] = sbu  # Ensure group_item is retained
     if drill_state:
-        return generate_stacked_data(pd.DataFrame(list(merged_data.values())), "", "month_name")
+        return generate_stacked_data(pd.DataFrame(list(merged_data.values())), resp_format, "month_name")
     # Convert back to list of dictionaries
     df = pd.DataFrame(list(merged_data.values())).fillna(0)
+    
+    if resp_format == 'company_level' and time_grain != 'Monthly':
+            data = df.to_dict(orient='records')
+            input_dict = data[0]
+            companies = sorted(set(
+                re.sub(r'^(history|actual)_|_share$', '', key)
+                for key in input_dict.keys()
+                if key.startswith(('history_', 'actual_'))  # Only process valid keys
+            ))
+            history_shares = {str(i): input_dict.get(f'history_{company}_share', 0.0) for i, company in enumerate(companies)}
+            actual_shares = {str(i): input_dict.get(f'actual_{company}_share', 0.0) for i, company in enumerate(companies)}
+
+            # Construct final output dictionary
+            output_dict = {
+                "history_share": history_shares,
+                "company": {str(i): company for i, company in enumerate(companies)},
+                "actual_share": actual_shares
+            }
+            #transformed_data = json.dumps(output_dict, indent=4, ensure_ascii=False)
+            transformed_data = output_dict
+            return transformed_data
+    
     return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
 
 
 def generate_stacked_data(df, resp_format='', month_column=''):
-    mandate_keys = ['history_market_share', 'history_hpcl_share', 'actual_market_share', 'actual_hpcl_share']
     columns = df.columns.to_list()
-    numeric_cols = [col for col in columns if col in mandate_keys]
+    numeric_cols = [col for col in columns if col.startswith('history') or col.startswith('actual')]
     if month_column:
         df[month_column] = pd.Categorical(df[month_column], categories=[month.upper() for month in m60.months],
                                           ordered=True)
@@ -252,7 +286,8 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
         if condition['key'].strip('"') == "C":
             cumulative = True
             break
-    omc_compare = ["BPCL", "HPCL"]
+    # omc_compare = ["BPCL", "HPCL"]
+    omc_compare = list(set([company for sublist in OMC.values() for company in sublist]))
 
     # Fetching all group by filters, return should be a list always
     group_by_filter = generate_group_by_conditions(cross_filters, cumulative, drill_state, time_grain)
@@ -304,7 +339,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
                                        "", "", group_by_filter+["coname"], "")
     return calculate_market_share(pd.DataFrame(resp_data), group_keys, fiscal_year_pre, fiscal_year_last,
-                                       drill_state, time_grain)
+                                  drill_state, time_grain, resp_format)
 
 
 
