@@ -7,8 +7,7 @@ import dateutil.parser as dt_parser
 import utilities.fiscal_year as fiscal_year
 import orchestrator.analytics.m60_performance as m60
 from orchestrator.dbconnector.widget_actions import widget_actions
-
-
+import json
 Base_Filters = ['"cumulative_level"', '"sbu_name"', '"region_name"', '"statename"', '"distname"',
                 '"month_name"', '"productname"']
 OMC = {
@@ -194,6 +193,28 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         return generate_stacked_data(pd.DataFrame(list(merged_data.values())), resp_format, "month_name")
     # Convert back to list of dictionaries
     df = pd.DataFrame(list(merged_data.values())).fillna(0)
+    
+    if resp_format == 'company_level' and time_grain != 'Monthly':
+            data = df.to_dict(orient='records')
+            input_dict = data[0]
+            companies = sorted(set(
+                re.sub(r'^(history|actual)_|_share$', '', key)
+                for key in input_dict.keys()
+                if key.startswith(('history_', 'actual_'))  # Only process valid keys
+            ))
+            history_shares = {str(i): input_dict.get(f'history_{company}_share', 0.0) for i, company in enumerate(companies)}
+            actual_shares = {str(i): input_dict.get(f'actual_{company}_share', 0.0) for i, company in enumerate(companies)}
+
+            # Construct final output dictionary
+            output_dict = {
+                "history_share": history_shares,
+                "company": {str(i): company for i, company in enumerate(companies)},
+                "actual_share": actual_shares
+            }
+            #transformed_data = json.dumps(output_dict, indent=4, ensure_ascii=False)
+            transformed_data = output_dict
+            return transformed_data
+    
     return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
 
 
