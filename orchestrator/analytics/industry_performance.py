@@ -213,7 +213,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             }
             #transformed_data = json.dumps(output_dict, indent=4, ensure_ascii=False)
             transformed_data = output_dict
-            return transformed_data
+            return {'message':'Industry Cummulative company_level Data','data':transformed_data,'status':True}
     if "month_name" in df.columns:
        
         df["month_name"] = pd.Categorical(df["month_name"], categories=[m.upper() for m in m60.months], ordered=True)
