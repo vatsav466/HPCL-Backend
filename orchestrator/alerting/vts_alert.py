@@ -112,8 +112,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                 finarResp[key].append(entry)
                             print("finarResp--->", finarResp)
                             max_limit = int(max(list(details['alerting_rules'].keys())))
-                            if altcount > max_limit:
-                                altcount = max_limit
+                            if altcount > max_limit + 1:
+                                altcount = max_limit + 1
                             alert_message = (
                                 f"{details['alerting_rules'][str(altcount)]['interlock_name']} Alert for Vehicle: "
                                 f"{record['tl_number']} Vendor: {record['vendor_id']} Report_Duration: "
