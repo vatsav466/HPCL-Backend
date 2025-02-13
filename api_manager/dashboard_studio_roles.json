@@ -81,6 +81,9 @@
                 },
                 {
                     "name": "sales_drop_down"
+                },
+                {
+                    "name": "previous_present_month_sales_by_product"
                 }
             ]
         },
@@ -204,6 +207,9 @@
                 },
                 {
                     "name": "sales_drop_down"
+                },
+                {
+                    "name": "previous_present_month_sales_by_product"
                 }
             ]
         },
@@ -656,6 +662,10 @@
         {
             "name": "sales_drop_down",
             "displayName": "sales_drop_down"
+        },
+        {
+            "name": "previous_present_month_sales_by_product",
+            "displayName": "previous_present_month_sales_by_product"
         },
         {
             "name": "save_dashboards",
