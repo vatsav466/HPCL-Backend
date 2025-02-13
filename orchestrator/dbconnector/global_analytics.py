@@ -3539,25 +3539,25 @@ class GlobalAnalytics:
                 productivity_zone_query_  += ' WHERE '
                 productivity_zone_query_  += ' AND '.join(conditions)
             productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "carousel" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "heads" '
         else:
             if not "where" in productivity_zone_query_.lower():
                 productivity_zone_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date","carousel" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "heads" '
             resp = await function(query=productivity_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+            resp = resp.groupby(["zone", "heads"], as_index=False).agg({
                         "productivity": "mean"
                     })
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3567,14 +3567,14 @@ class GlobalAnalytics:
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["zone","name","carousel"]:
+            for each_str_col in ["zone","name","heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["zone","name","heads"], as_index=False).agg({
                         "productivity": "mean"
                     })
                 if grouped_resp is not None:
@@ -3607,24 +3607,24 @@ class GlobalAnalytics:
                 production_zone_query_  += ' WHERE '
                 production_zone_query_  += ' AND '.join(conditions)
             production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "heads" '
         else:
             if not "where" in production_zone_query_.lower():
                 production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "carousel" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "heads" '
             resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["zone", "carousel"], as_index=False).agg({
+            resp = resp.groupby(["zone", "heads"], as_index=False).agg({
                         "Productions": "sum"
                     })
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3636,14 +3636,14 @@ class GlobalAnalytics:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name", "carousel"]:
+            for each_str_col in ["zone", "name", "heads"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name","carousel"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["zone","name","heads"], as_index=False).agg({
                         "Productions": "sum"
                     })
                 if grouped_resp is not None:
