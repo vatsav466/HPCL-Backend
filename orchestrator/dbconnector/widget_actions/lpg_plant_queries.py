@@ -1002,6 +1002,31 @@ LIMIT 10000;''',
                                 DATE("process_date") AS "process_date"
                                 FROM "lpg_operations_summary" ''',
     
+    'lpg_operations_current_month_production': f'''
+                                                    SELECT
+                                                        ROUND(SUM("productivity_normal_production"::numeric)/1000, 2) AS "current_month_production"
+                                                    FROM
+                                                        "lpg_operations_summary"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
+                                                ''',
+    'lpg_operations_current_month_productivity': f'''
+                                                    SELECT
+                                                        ROUND(AVG("productivity_normal_productivity"::numeric), 2) AS "current_month_productivity"
+                                                    FROM
+                                                        "lpg_operations_summary"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
+                                                ''',
+    'lpg_operations_connected_plants': f''' SELECT DISTINCT("short_name") FROM "lpg_operations_summary" order by "short_name"; ''',
+    
+    'lpg_operations_notconnected_plants': ''' SELECT DISTINCT m."short_name"
+                                            FROM 
+                                                "lpg_operations_masters" m
+                                            LEFT JOIN "lpg_operations_summary" s ON m."short_name" = s."short_name"
+                                            WHERE s."short_name" IS NULL
+                                            ORDER BY m."short_name"; ''',
+    
     "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "consumer_pump_transactions" ',
 
     "cp_total_dus": '''SELECT SUM("du") AS "total_du"
