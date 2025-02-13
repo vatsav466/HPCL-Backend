@@ -10826,7 +10826,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-512B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Single.BC-512B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10864,7 +10864,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-513B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Single.BC-513B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10902,7 +10902,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-514B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Single.BC-514B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
