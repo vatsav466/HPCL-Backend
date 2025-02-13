@@ -79,7 +79,15 @@ lpg_dashboard_actions = [
     'dryout_product_report',
     'dryout_indent_report',
     'product_quantity_by_location',
-    'ims_report'
+    'ims_report',
+    'lpg_operations_connected_plants',
+    'lpg_operations_total_plants',
+    'lpg_operations_total_handled',
+    'lpg_operations_daywise_productivity',
+    'lpg_operations_daywise_production',
+    'cdcms_current_date_pending_count',
+    'cdcms_current_date_bookings_count',
+    'cdcms_current_date_sales_count'
 ]
 
 # Todo:- import all widget action modules here
@@ -161,7 +169,15 @@ widget_mapping = {
     'dryout_product_report': {},
     'dryout_indent_report': {},
     'product_quantity_by_location': {},
-    'ims_report': {}
+    'ims_report': {},
+    'lpg_operations_connected_plants': {},
+    'lpg_operations_total_plants': {},
+    'lpg_operations_total_handled': {},
+    'lpg_operations_daywise_productivity': {},
+    'lpg_operations_daywise_production': {},
+    'cdcms_current_date_pending_count': {},
+    'cdcms_current_date_bookings_count': {},
+    'cdcms_current_date_sales_count': {}
 }
 
 
@@ -211,7 +227,7 @@ class WidgetActions:
             # Execute the function asynchronously
             if func_name in ['present_previous_month_sales_by_product']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit, time_grain=time_grain)
-            elif func_name in ['m60_performance']:
+            elif func_name in ['m60_performance', 'industry_performance']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state,
                                  time_grain=time_grain, resp_format=resp_format)
             else:

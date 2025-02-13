@@ -205,7 +205,8 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
 # Action stored_document
 @router.get('/stored_document', tags=['Alerts'])
 async def alerts_stored_document(file_name: str):
-    file_path = os.path.join(urdhva_base.settings.uploads, file_name)
+    file_path = os.path.join(urdhva_base.settings.uploads, f"{file_name}.enc")
+    file_path = f"{file_name}.enc"
     return FileResponse(
-        file_path, filename=file_name, media_type="application/octet-stream"
+        file_path, filename=os.path.basename(file_name), media_type="application/octet-stream"
     )

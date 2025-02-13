@@ -334,7 +334,34 @@ class IndentDryOut:
                 pytz.timezone('Asia/Kolkata')))
             todays_date = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
             if todays_date.date() > workflow_date.date():
-                if await self._is_indent_delivered_ims():
+                if await self._is_indent_delivered():
+                    if await self._close_camunda_workflow():
+                        print("Indent as been delivered but still alert is in Intial stage")
+                        print("Params: ", self.params)
+                        input_data = {
+                            "action_msg": "",
+                            "event_tags": {
+                                "is_delivered": False
+                            }
+                        }
+                        input_data["action_msg"] = "Indent Delivered"
+                        input_data["action_type"] = "Created"
+                        input_data["event_tags"]["is_delivered"] = True
+                        await self.update_alert_status(
+                            indent_status=IndentStatus.Completed,
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            input_data=input_data,
+                            progress_rate="11"
+                        )
+                        await self.close_supply_chain_alert(
+                            alert_id=self.params.get("alert_id"),
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            indent_status=IndentStatus.Completed
+                        )
+                    return await self.send_alert_action(is_raised=False)
+                elif await self._is_indent_delivered_ims():
                     if await self._close_camunda_workflow():
                         print("Indent as been delivered but still alert is in Intial stage")
                         print("Params: ", self.params)
@@ -1640,7 +1667,11 @@ class IndentDryOut:
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
-            instance_id = alert_data.get("workflow_instance_id")
+            # instance_id = alert_data.get("workflow_instance_id")
+            business_key = alert_data.get("unique_id")
+            instance_id = await self.get_process_instance_id(business_key, self.params['CAMUNDA_URL'])
+            if not instance_id:
+                instance_id = alert_data.get("workflow_instance_id")
             url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
             for attempt in range(MAX_RETRIES):
                 try:
