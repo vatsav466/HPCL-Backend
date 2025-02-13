@@ -632,6 +632,7 @@ async def charts_sales_drop_down(data: Charts_Sales_Drop_DownParams):
     df = df.filter(pl.col("zone").fill_null("") != "")
     df = df.filter(pl.col("region").fill_null("") != "")
     df = df.filter(pl.col("sales_area").fill_null("") != "")
+    df = df.filter(pl.col("location_name").fill_null("") != "")
 
     zones_query = ''' select distinct zone as default_zones from alerts '''
     zones_resp = await function(query=zones_query)
@@ -639,5 +640,6 @@ async def charts_sales_drop_down(data: Charts_Sales_Drop_DownParams):
     zone_df = zone_df.filter(pl.col("default_zones").fill_null("") != "")
     data = {"zone": df['zone'].unique().to_list(),
             "region": df['region'].unique().to_list(), "sales_area": df['sales_area'].unique().to_list(),
+            "location_name": df['location_name'].unique().to_list(),
             "default_zones": zone_df['default_zones'].to_list()}
     return data
