@@ -214,6 +214,14 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             #transformed_data = json.dumps(output_dict, indent=4, ensure_ascii=False)
             transformed_data = output_dict
             return transformed_data
+    if "month_name" in df.columns:
+       
+        df["month_name"] = pd.Categorical(df["month_name"], categories=[m.upper() for m in m60.months], ordered=True)
+        df = df.sort_values('month_name').reset_index(drop=True)
+    if resp_format == 'cumulative'  and time_grain == 'Monthly':
+            cols_to_cumsum = [col for col in df.columns if col != 'month_name']
+            df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
+            return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
     
     return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
 
