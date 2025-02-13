@@ -22,22 +22,10 @@ class CheckViolationCount:
         int: The violation count of the vehicle.
         """
         try:
-            # Get the current date and calculate the first day of the current quarter
-            if created_at:
-                  current_date = created_at
-            else:
-                current_date = datetime.datetime.now()
-            current_quarter = int((current_date.month - 1) / 3 + 1)
-            dt_firstday = datetime.datetime(current_date.year, 3 * current_quarter - 2, 1)
-            
-            # Format the start date in the same format as the database ('YYYY-MM-DD HH:MM:SS.SSSSSS')
-            start_date_time = dt_firstday.strftime("%Y-%m-%d %H:%M:%S.%f")
-
             # Construct the query
             query = (f"sap_id='{sap_id}' and bu='{bu}' and vehicle_number='{vehicle_number}' "
                      f"and violation_type='{violation_type}' and sop_id='SOP001' "
-                     f"and created_at >= '{start_date_time}'")
-            
+                     f"and mark_as_false = 'false'")
             # Fetch the count of violations matching the query
             count = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query),resp_type='plain')
             return count

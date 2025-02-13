@@ -66,9 +66,9 @@ class VTSAlertManager(alert_factory.AlertFactory):
                     for key, details in vts_mapping.vts_interlock_mapping.items():
                         if not record.get(key):
                             continue
-                        # checking the instance of violation_type(key) from quarter period
+                        # checking the instance of violation_type(key) from the alerts table
                         # whether it is first instance or second instance and so on..... 
-                        alert_count = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
+                        altcount = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
                                                                                                             record['location_type'],
                                                                                                             record['tl_number'], key)
                         maintenance_time = helpers.get_time_stamp_by_delta(days=14, 
@@ -80,13 +80,23 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         # if it is not first instance then check the frequency of records from the vts_alert_history
                         # within fortnight period and using {key}_instance='' example stoppage_violation_count_instance=''
                         # and stoppage_violation_count >= 1 based on bu, location_id and tl_number(vehicle_number).
-                        if alert_count['count']:
-                            query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
-                                f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
-                                f"and {key}_instance='' and auto_unblock='true'")
-                            data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
-                                                                resp_type='plain')
-                            print("data--->",data)
+                        if altcount['count']:
+                            # created_at taken from last successfully closed alert from the alerts.
+                            # if created_at is more than maintenance_time we need quey the greated than maintenance time else
+                            # if we need query based on maintenance time.
+                            last_created_at = altcount['data'][0]['created_at']
+                            if last_created_at > maintenance_time:
+                                query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
+                                         f"and {key} >= 1 and created_at > '{last_created_at}' and location_type='{record['location_type']}' "
+                                         f"and auto_unblock='true'")
+                                data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
+                                                                                    resp_type='plain')
+                            else:
+                                query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
+                                    f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
+                                    f"and auto_unblock='true'")
+                                data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
+                                                                    resp_type='plain')
                         # if it is first instance then check the frequency of records from the vts_alert_history
                         # within fortnight period and using example stoppage_violation_count>=1 based on bu, 
                         # location_id and tl_number(vehicle_number).   
@@ -98,27 +108,49 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                                                     resp_type='plain')
                         # check violation if frequency of records count greter than the threshold of paricular key
                         vts_alert_history_ids = []
+                        # data['count'] will the violation count of a violation type and 
+                        # details['alert_threshold'] will be the threshold of a violation type
                         if data['count'] > details['alert_threshold']:
                             vts_alert_history_ids = [item['id'] for item in data['data'] if 'id' in item and item['id']]
-                            print("data--->",data)
-                            #print("count--->",data['count'])
-                            finarResp = {key: []}  # Initialize with an empty list for the key
-                            altcount = alert_count['count']
-                            for item in data['data']:
-                                entry = {
-                                "created_at": item['created_at'],
-                                "vehicle_number": item['tl_number'],
-                                }
-                                finarResp[key].append(entry)
-                            print("finarResp--->", finarResp)
+                            finarResp ={}
+                            previous_data = list(reversed(altcount['data']))
+                            if altcount['count']:
+                                for i in range(altcount['count']):
+                                    instance_key = f"{i+1} Instance"
+                                    if instance_key not in finarResp:
+                                        finarResp[instance_key] = []
+                                    entry = {
+                                        "alert_type": previous_data[i]['interlock_name'],
+                                        "alert_id": previous_data[i]['unique_id'],
+                                        "created_at": previous_data[i]['created_at'].strftime('%Y-%m-%d %H:%M:%S %p'),
+                                        "vehicle_number": previous_data[i]['vehicle_number']
+                                    }
+                                    finarResp[instance_key].append(entry)
+
+                            if data['data']:
+                                new_instance_key = f"{altcount['count']+1} Instance"
+                                if new_instance_key not in finarResp:
+                                    finarResp[new_instance_key] = []  
+                                for item in data['data']:
+                                    entry = {
+                                        "violation": key,
+                                        "created_at": item['created_at'].strftime('%Y-%m-%d %H:%M:%S %p'),
+                                        "vehicle_number": item['tl_number']
+                                    }
+                                    finarResp[new_instance_key].append(entry)
+
+                            #print("finarResp--->", finarResp)
+                            # altcount will be the instance count of a violation type created in a quarter period
+                            # max_limit will be the maximum instance count of violation type
+                            altcount = altcount['count']
                             max_limit = int(max(list(details['alerting_rules'].keys())))
                             if altcount > max_limit:
                                 altcount = max_limit
                             alert_message = (
-                                f"{details['alerting_rules'][str(altcount)]['interlock_name']} Alert for Vehicle: "
-                                f"{record['tl_number']} \n Vendor ID : {record['vendor_id']} \n Report_Duration: "
-                                f"{record['report_duration']} \n {key.upper().replace('_', ' ')}: {alert_count['count']} Count"
-                                # f"Alert Summary: {finarResp}"
+                                f"Vehicle Number: {record['tl_number']} "
+                                F"Violation Type: {key} "
+                                f"Violation Count: {data['count']} "
+                                f"Violation_instance_count: {finarResp}"
                             )
                             alert_history = [
                                 {
@@ -142,8 +174,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                                                                                                     record['location_type'],
                                                                                                                     record['tl_number'],key)
                             if tripinterlockname and tripinterlockname["violation_type"]==key:
-                                logger.info("alert already exists")
-                                print("alert already exists")
+                                logger.info(f"alert already exists for bu: {vts_alert_data["bu"]} sap_id:{vts_alert_data["sap_id"]} for {key} vehicle_number:{vts_alert_data["vehicle_number"]}")
                                 continue
                             # checking if alert already is in active or not based on interlock_name if already in active
                             # then continue.
@@ -153,8 +184,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                                                                                                     interlock_details.get("interlock_name",""),
                                                                                                                     key)
                             if interlocknamecheck and interlocknamecheck['interlock_name']==interlock_details["interlock_name"]:
-                                logger.info("alert already exists")
-                                print("alert already exists")
+                                logger.info(f"alert already exists for bu: {vts_alert_data["bu"]} sap_id:{vts_alert_data["sap_id"]} for {key} vehicle_number:{vts_alert_data["vehicle_number"]}")
                                 continue
                             vts_alert_data.update(interlock_details)
                             vts_alert_data['alert_section'] = 'VTS'
@@ -170,10 +200,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                                                             with_month_start_day=False,
                                                                             ascending=True,
                                                                             date_time_format=None).isoformat()
-                            for data in data['data']:
-                                violation = f"{key}_instance"
-                                data[violation]=str(altcount)
-                                await hpcl_ceg_model.VtsAlertHistory(**data).modify()
+                            vts_alert_data['mark_as_false'] = False
                             
                             vts_alert_payload = {
                                 'vendor_id': alert_data['vendor_id'],
@@ -185,19 +212,19 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                       'location_name': location_details['name'],
                                       'transporter_name': '',
                                       'transporter_code': alert_data['vendor_id'],
-                                      'vehicle_blocked_desc': f"Instance{altcount}: {key}",
+                                      'vehicle_blocked_desc': f"Instance {altcount+1}: {key}",
                                       'vehicle_blocked_start_date': recv_time.strftime("%Y-%m-%d"),
                                       'vehicle_blocked_end_date': helpers.get_time_stamp_by_delta(days=details['alerting_rules'][str(altcount)]['block_duration'],
                                                                                                   with_month_start_day=False,
                                                                                                   ascending=True,
                                                                                                   date_time_format=None).strftime("%Y-%m-%d"),
-                                      'vehicle_blocked_instance_no': f"Instance{altcount}",
+                                      'vehicle_blocked_instance_no': f"Instance {altcount+1}",
                                       'vehicle_blocked_instance_type': key,
                                       'alert_type': 'VTS'
                                     }
                                 ]
                             }
-                            print('vts_alert_payload----->',vts_alert_payload)
+                            #print('vts_alert_payload----->',vts_alert_payload)
                             await cls.create_alert(vts_alert_data, camunda_url)
           
                 except Exception as e:
