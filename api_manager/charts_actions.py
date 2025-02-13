@@ -639,6 +639,6 @@ async def charts_sales_drop_down(data: Charts_Sales_Drop_DownParams):
     zone_df = pl.from_pandas(pd.DataFrame(zones_resp))
     zone_df = zone_df.filter(pl.col("default_zones").fill_null("") != "")
     data = {"zone": df['zone'].unique().to_list(),
-            "region": df['region'].unique().to_list(), "sales_area": df['sales_area'].unique().to_list()
+            "region": df['region'].unique().to_list(), "sales_area": df['sales_area'].unique().to_list(),
             "default_zones": zone_df['default_zones'].to_list()}
     return data
