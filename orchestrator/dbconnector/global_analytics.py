@@ -4258,7 +4258,12 @@ class GlobalAnalytics:
                         for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
-                condition = f"{rec.key} in {tuple(rec.value)}"
+                if ',' in rec.filter:
+                    rec_values = rec.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition = f"{rec.key} IN {rec_value_tup} "
+                else:
+                    condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
 
             if conditions:
@@ -4370,7 +4375,6 @@ class GlobalAnalytics:
                     rec_values = rec.value.split(',')
                     rec_value_tup = tuple([i.strip() for i in rec_values])
                     condition = f"{rec.key} IN {rec_value_tup} "
-                    print('condition_tuple: ', condition)
                 else:
                     condition = f"{rec.key} = '{rec.value}' "
                 conditions.append(condition)
@@ -4440,7 +4444,12 @@ class GlobalAnalytics:
                 grp_col = f''' "View 1"."location_name" '''
                 col_ = 'location_name'
             for cr_filter in cross_filters:
-                condition_ = f"{cr_filter.key} = '{cr_filter.value}' "
+                if ',' in cr_filter.value:
+                    rec_values = cr_filter.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition_ = f"{cr_filter.key} IN {rec_value_tup} "
+                else:
+                    condition_ = f"{cr_filter.key} = '{cr_filter.value}' "
                 conditions.append(condition_)
 
         detailed_dryout_query = detailed_dryout_query.format(display_col=display_col, grp_col= grp_col)
@@ -4449,7 +4458,12 @@ class GlobalAnalytics:
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
             for rec in filters:
-                condition = f"{rec.key} = '{rec.value}' "
+                if ',' in rec.value:
+                    rec_values = rec.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition = f"{rec.key} IN {rec_value_tup} "
+                else:
+                    condition = f"{rec.key} = '{rec.value}' "
                 conditions.append(condition)
         if conditions:
             splitted_query = detailed_dryout_query.split("MainFlow')")
@@ -4458,13 +4472,21 @@ class GlobalAnalytics:
         print("detailed_dryout_query: ", detailed_dryout_query)
         detailed_dryout_resp = await function(query=detailed_dryout_query)
         print("col_ value:", col_)
-        transformed_response = [
-            {
-                col_: item[col_],
-                item['dryout_status']: item['total_ro']
-            }
-            for item in detailed_dryout_resp
-        ]
+        # transformed_response = [
+        #     {
+        #         col_: item[col_],
+        #         item['dryout_status']: item['total_ro']
+        #     }
+        #     for item in detailed_dryout_resp
+        # ]
+        grouped_data = defaultdict(dict)
+
+        for item in detailed_dryout_resp:
+            product = item[col_]
+            grouped_data[product][col_] = product
+            grouped_data[product][item['dryout_status']] = item['total_ro']
+
+        transformed_response = list(grouped_data.values())
         print(transformed_response)
         return {"status": True, "message": "success", "data": transformed_response}
 
@@ -4559,7 +4581,12 @@ class GlobalAnalytics:
         if filters:
             conditions = []
             for rec in filters:
-                condition = f"{rec.key} = '{rec.value}' "
+                if ',' in rec.value:
+                    rec_values = rec.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition = f"{rec.key} IN {rec_value_tup} "
+                else:
+                    condition = f"{rec.key} = '{rec.value}' "
                 conditions.append(condition)
 
             splitted_query = prod_qty_query.split("MainFlow'")
