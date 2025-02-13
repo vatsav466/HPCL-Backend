@@ -69,7 +69,7 @@ lpg_dashboard_actions = [
     'lpg_domestic_sale_table',
     'lpg_consumer_table',
     'industry_performance',
-    'present_previous_month_sales',
+    'present_previous_month_sales_by_product',
     'sales_drop_down',
     'indent_dryout_counts',
     'indent_status_summary',
@@ -151,7 +151,7 @@ widget_mapping = {
     'lpg_domestic_sale_table': {},
     'lpg_consumer_table': {},
     'industry_performance':{},
-    'present_previous_month_sales': {},
+    'present_previous_month_sales_by_product': {},
     'sales_drop_down': {},
     'indent_dryout_counts': {},
     'indent_status_summary': {},
@@ -209,7 +209,7 @@ class WidgetActions:
             # print(f"Resolved function: {dir(func)}")
 
             # Execute the function asynchronously
-            if func_name in ['present_previous_month_sales']:
+            if func_name in ['present_previous_month_sales_by_product']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit, time_grain=time_grain)
             elif func_name in ['m60_performance']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state,

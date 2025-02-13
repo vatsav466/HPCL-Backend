@@ -37,6 +37,17 @@ async def filter_data(df, _filters):
         print("Exception in filtering data :", str(e))
     return df
 
+
+async def addFilterValue(rec):
+    if ',' in rec.value:
+        rec_values = rec.value.split(',')
+        rec_value_tup = tuple([i.strip() for i in rec_values])
+        condition = f"{rec.key} IN {rec_value_tup} "
+    else:
+        condition = f"{rec.key} = '{rec.value}'"
+    return condition
+
+
 class GlobalAnalytics:        
     @staticmethod
     async def analytics(filters, cross_filters, drill_state):
@@ -4070,58 +4081,58 @@ class GlobalAnalytics:
         return data
 
     @staticmethod
-    async def present_previous_month_sales(filters, cross_filters, drill_state, limit, time_grain):
+    async def present_previous_month_sales_by_product(filters, cross_filters, drill_state, limit, time_grain):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        present_month_sales = lpg_plant_queries.lpg_plant_query.get('previous_current_month_sales')
-
+        present_month_sales = lpg_plant_queries.lpg_plant_query.get('i_previous_current_month_sales_by_product')
+        cross_filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                          for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if cross_filters:
-            cross_filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                        for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
-            conditions = []
-            for rec in cross_filters:
-                rec.value = rec.value.split(",")
-                if len(rec.value) == 1:
-                    condition = f"a.{rec.key} = '{rec.value[0]}'"
-                else:
-                    condition = f"a.{rec.key} in {tuple(rec.value)}"
-                conditions.append(condition)
-            present_month_sales_query = present_month_sales.split("'Completed')")
+            conditions = [await addFilterValue(rec) for rec in cross_filters]
+            # for rec in cross_filters:
+            #     if ',' in rec.value:
+            #         rec.value = rec.value.split(",")
+            #     if len(rec.value) == 1:
+            #         condition = f"a.{rec.key} = '{rec.value[0]}'"
+            #     else:
+            #         condition = f"a.{rec.key} in {tuple(rec.value)}"
+            #     conditions.append(condition)
             if conditions:
-                present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(conditions) + present_month_sales_query[1]
+                present_month_sales_query = present_month_sales.split("'Completed')")
+                present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(
+                    conditions) + present_month_sales_query[1]
+            present_month_sales += f' {sort_by}'
             if limit:
                 present_month_sales += f' LIMIT {limit}'
             print(present_month_sales)
 
-        else:
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                              for rec in
-                              await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
-            present_month_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales, access_filters, drill_state)
-
-            if limit:
-                present_month_sales += f' LIMIT {limit}'
+        # else:
+        #     access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+        #                       for rec in
+        #                       await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        #     present_month_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales, access_filters, drill_state)
+        #
+        #     if limit:
+        #         present_month_sales += f' LIMIT {limit}'
 
         pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
-        print(pres_mon_sales_query)
         pres_mon_sales_resp = await function(query=pres_mon_sales_query)
         distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
         print("distinct_periods--> ", distinct_periods)
         formatted_results = {}
 
-        # Iterate over the response and group the data by location_name
+        # Iterate over the response and group the data by product_name
         for row in pres_mon_sales_resp:
-            location_name = row["location_name"]
+            product_name = row["product_name"]
             period = row["period"]
             avg_total_sales = row["avg_total_sales"]
 
-            if location_name not in formatted_results:
-                formatted_results[location_name] = {"location_name": location_name}
+            if product_name not in formatted_results:
+                formatted_results[product_name] = {"product_name": product_name}
 
             # Add the period and its corresponding average sales value to the dictionary
-            formatted_results[location_name][period] = avg_total_sales
-
+            formatted_results[product_name][period] = avg_total_sales
 
         # Convert the dictionary to a list of results
         final_result = list(formatted_results.values())
@@ -4143,20 +4154,19 @@ class GlobalAnalytics:
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                         for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
-            conditions = []
+            conditions = [await addFilterValue(rec) for rec in filters]
+
             for rec in filters:
-                if ',' in rec.filter:
+                if ',' in rec.value:
                     rec_values = rec.value.split(',')
                     rec_value_tup = tuple([i.strip() for i in rec_values])
-                    condition = f"{rec.key} IN {rec_value_tup} "
+                    condition = f''' "alerts_view"."{rec.key}" IN {rec_value_tup} '''
                 else:
-                    condition = f"{rec.key} in {tuple(rec.value)}"
+                    condition = f''' "alerts_view"."{rec.key}" = '{rec.value}' '''
                 conditions.append(condition)
-
-            if conditions:
-                dryout_query += ' AND '.join(conditions)
-                intraday_query += ' AND '.join(conditions)
-                potential_query += ' AND '.join(conditions)
+            dryout_query += ' AND '+' AND '.join(conditions)
+            intraday_query += ' AND '+' AND '.join(conditions)
+            potential_query += ' AND '+' AND '.join(conditions)
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                               for rec in
@@ -4169,6 +4179,10 @@ class GlobalAnalytics:
 
             potential_query = await widget_actions.WidgetActions.apply_filter_drilldown(
                 potential_query, access_filters, drill_state)
+
+        print("dryout_resp: ", dryout_query)
+        print("intraday_resp: ", intraday_query)
+        print("potential_resp: ", potential_query)
 
         dryout_resp = await function(query=dryout_query)
         intraday_resp = await function(query=intraday_query)
@@ -4256,15 +4270,7 @@ class GlobalAnalytics:
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
-            conditions = []
-            for rec in filters:
-                if ',' in rec.value:
-                    rec_values = rec.value.split(',')
-                    rec_value_tup = tuple([i.strip() for i in rec_values])
-                    condition = f"{rec.key} IN {rec_value_tup} "
-                else:
-                    condition = f"{rec.key} = '{rec.value}' "
-                conditions.append(condition)
+            conditions = [await addFilterValue(rec) for rec in filters]
 
             splitted_query = dryout_by_prod_query.split("MainFlow')")
             dryout_by_prod_query = splitted_query[0] + "MainFlow') AND " + ' AND '.join(conditions) + splitted_query[1]
@@ -4330,28 +4336,14 @@ class GlobalAnalytics:
                 display_col = f''' "View 1"."location_name" as "location_name" '''
                 grp_col = f''' "View 1"."location_name" '''
                 col_ = 'location_name'
-            for cr_filter in cross_filters:
-                if ',' in cr_filter.value:
-                    rec_values = cr_filter.value.split(',')
-                    rec_value_tup = tuple([i.strip() for i in rec_values])
-                    condition_ = f"{cr_filter.key} IN {rec_value_tup} "
-                else:
-                    condition_ = f"{cr_filter.key} = '{cr_filter.value}' "
-                conditions.append(condition_)
+            conditions.extend([await addFilterValue(cr_filter) for cr_filter in cross_filters])
 
         detailed_dryout_query = detailed_dryout_query.format(display_col=display_col, grp_col= grp_col)
 
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
-            for rec in filters:
-                if ',' in rec.value:
-                    rec_values = rec.value.split(',')
-                    rec_value_tup = tuple([i.strip() for i in rec_values])
-                    condition = f"{rec.key} IN {rec_value_tup} "
-                else:
-                    condition = f"{rec.key} = '{rec.value}' "
-                conditions.append(condition)
+            conditions.extend([await addFilterValue(rec) for rec in filters])
         if conditions:
             splitted_query = detailed_dryout_query.split("MainFlow')")
             detailed_dryout_query = splitted_query[0] + "MainFlow') AND " + ' AND '.join(conditions) + splitted_query[1]
@@ -4466,16 +4458,7 @@ class GlobalAnalytics:
         filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                     for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
         if filters:
-            conditions = []
-            for rec in filters:
-                if ',' in rec.value:
-                    rec_values = rec.value.split(',')
-                    rec_value_tup = tuple([i.strip() for i in rec_values])
-                    condition = f"{rec.key} IN {rec_value_tup} "
-                else:
-                    condition = f"{rec.key} = '{rec.value}' "
-                conditions.append(condition)
-
+            conditions = [await addFilterValue(rec) for rec in filters]
             splitted_query = prod_qty_query.split("MainFlow'")
             prod_qty_query = splitted_query[0] + "MainFlow' AND " + ' AND '.join(conditions) + splitted_query[1]
 

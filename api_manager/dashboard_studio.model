@@ -262,6 +262,13 @@ Model Charts {
         filters optional list salesFilters
     }
 
+    Action=> previous_present_month_sales_by_product {
+        cross_filters optional list salesFilters
+        limit optional int
+        time_grain optional str
+        sort_by optional str
+    }
+
     Config=> {
         collection_name=charts
     }
