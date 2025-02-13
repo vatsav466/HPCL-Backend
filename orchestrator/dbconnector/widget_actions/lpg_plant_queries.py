@@ -966,7 +966,7 @@ LIMIT 10000;''',
                         select 
                             "zone" as "zone",
                             "name" as "name",
-                            "carousel" as "carousel",
+                            "filling_heads" as "heads",
                             avg("productivity.normal.productivity") as "productivity"
                         from 
                             "LPG_OPERATIONS_SUMMARY_DATA"
@@ -976,7 +976,7 @@ LIMIT 10000;''',
                         select 
                             "zone" as "zone",
                             "name" as "name",
-                            "carousel" as "carousel",
+                            "filling_heads" as "heads",
                             sum("productivity.normal.production")/1000 as "Productions" 
                         from 
                             "LPG_OPERATIONS_SUMMARY_DATA" ''',
