@@ -4253,7 +4253,13 @@ class GlobalAnalytics:
         if filters:
             conditions = []
             for rec in filters:
-                condition = f"{rec.key} = '{rec.value}' "
+                if ',' in rec.value:
+                    rec_values = rec.value.split(',')
+                    rec_value_tup = tuple([i.strip() for i in rec_values])
+                    condition = f"{rec.key} IN {rec_value_tup} "
+                    print('condition_tuple: ', condition)
+                else:
+                    condition = f"{rec.key} = '{rec.value}' "
                 conditions.append(condition)
 
             splitted_query = dryout_by_prod_query.split("MainFlow')")
@@ -4268,13 +4274,21 @@ class GlobalAnalytics:
         #         dryout_by_prod_query, access_filters, drill_state)
         print("dryout_by_prod_query: ", dryout_by_prod_query)
         dryout_by_prod_resp = await function(query=dryout_by_prod_query)
-        transformed_response = [
-            {
-                'product': item['product'],
-                item['dryout_status']: item['total_ro']
-            }
-            for item in dryout_by_prod_resp
-        ]
+        # transformed_response = [
+        #     {
+        #         'product': item['product'],
+        #         item['dryout_status']: item['total_ro']
+        #     }
+        #     for item in dryout_by_prod_resp
+        # ]
+        grouped_data = defaultdict(dict)
+
+        for item in dryout_by_prod_resp:
+            product = item['product']
+            grouped_data[product]['product'] = product
+            grouped_data[product][item['dryout_status']] = item['total_ro']
+
+        transformed_response = list(grouped_data.values())
         print(transformed_response)
         return {"status": True, "message": "success", "data": transformed_response}
 
