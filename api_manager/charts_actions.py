@@ -645,7 +645,6 @@ async def charts_sales_drop_down(data: Charts_Sales_Drop_DownParams):
                     WHEN "product_code" = '3672000' THEN 'POWER 95'
                     WHEN "product_code" = '2816000' THEN 'POWER 99'
                     WHEN "product_code" = '3373000' THEN 'POWER 100'
-                    ELSE 'Unknown'
                 END AS "product_name"
                     from alerts '''
     if filters:

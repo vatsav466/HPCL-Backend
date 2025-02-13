@@ -2289,7 +2289,6 @@ SELECT
         WHEN a.product_code = '3672000' THEN 'POWER 95'
         WHEN a.product_code = '2816000' THEN 'POWER 99'
         WHEN a.product_code = '3373000' THEN 'POWER 100'
-        ELSE 'Unknown'
     END AS product_name,
     AVG(sd.total_sales) AS avg_total_sales
 FROM 
