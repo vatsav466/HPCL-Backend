@@ -620,7 +620,7 @@ async def charts_sales_drop_down(data: Charts_Sales_Drop_DownParams):
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    _query = ''' select * from alerts '''
+    _query = ''' select distinct zone, region, sales_area from alerts '''
     if filters:
         _query += " where "
         _filters = []
