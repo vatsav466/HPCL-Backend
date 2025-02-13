@@ -967,7 +967,7 @@ LIMIT 10000;''',
                             "zone" as "zone",
                             "name" as "name",
                             "filling_heads" as "heads",
-                            avg("productivity.normal.productivity") as "productivity"
+                            avg("productivity_normal_productivity") as "productivity"
                         from 
                             "lpg_operations_summary"
                         ''',
@@ -977,7 +977,7 @@ LIMIT 10000;''',
                             "zone" as "zone",
                             "name" as "name",
                             "filling_heads" as "heads",
-                            sum("productivity.normal.production")/1000 as "Productions" 
+                            sum("productivity_normal_production")/1000 as "Productions"
                         from 
                             "lpg_operations_summary" ''',
     
