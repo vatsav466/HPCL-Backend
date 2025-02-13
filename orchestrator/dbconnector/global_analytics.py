@@ -3672,19 +3672,14 @@ class GlobalAnalytics:
         try:
             lpg_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary"
             master_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_masters"
-            lpg_df = await function(query=lpg_query)
+            df = await function(query=lpg_query)
             master_df = await function(query=master_query)
-            lpg_df = pl.DataFrame(lpg_df)
+            df = pl.DataFrame(df)
             master_df = pl.DataFrame(master_df)
-            
-            df = lpg_df.join(master_df, on="plant_name", how="outer")
-            df = df.with_columns(
-                pl.when(pl.col("plant_name").is_not_null())
-                .then(pl.lit("Connected"))
-                .otherwise(pl.lit("Not Connected"))
-                .alias("status")
-            ).select(["plant_name", "status"])
-            return {"status": True, "message": "success", "data": df.to_dicts()}
+            master_df = master_df.with_columns(
+                pl.when(pl.col("plant_name").is_in(df["plant_name"])
+                ).then(pl.lit("Connected")).otherwise(pl.lit("Not Connected")).alias("status"))
+            return {"status": True, "message": "success", "data": master_df.to_dicts()}
         except Exception as e:
             print(traceback.format_exc())
             return {"status": False, "message": f"Error: {e}"}
