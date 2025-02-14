@@ -2402,5 +2402,67 @@ ORDER BY
                                         from
                                             "lpg_todays_cdcms_sales_summary"
                                         where
-                                            "ZOName" IS NOT NULL '''                                                                            
+                                            "ZOName" IS NOT NULL ''',
+    'i_previous_current_month_amount_litres': f'''WITH SalesData AS (
+    SELECT 
+        ro_sap_code, 
+        CASE
+            WHEN product_no = '1322000' THEN '2811000'
+            WHEN product_no = '1683000' THEN '2812000'
+            WHEN product_no = '1683100' THEN '3912000'
+            WHEN product_no = '1322000' THEN '2822000'
+            WHEN product_no = '3672000' THEN '3672000'
+            WHEN product_no = '2682000' THEN '2816000'
+            WHEN product_no = '3373000' THEN '3373000'
+            ELSE NULL
+        END AS product_code,
+        transaction_date,
+        txn_amount,
+        total_sales
+    FROM "public".ro_daily_sales
+)
+
+SELECT 
+    a.location_name,
+    CASE 
+        WHEN 'monthly' = 'monthly' THEN TO_CHAR(DATE_TRUNC('month', sd.transaction_date::TIMESTAMP), 'Mon YYYY')
+        WHEN 'monthly' = 'weekly' THEN TO_CHAR(DATE_TRUNC('week', sd.transaction_date::TIMESTAMP), 'DD-MM-YYYY')
+        WHEN 'monthly' = 'daily' THEN TO_CHAR(sd.transaction_date::TIMESTAMP, 'DD-MM-YYYY')
+    END AS period,
+    AVG(sd.txn_amount) AS avg_txn_amount,
+    AVG(sd.total_sales) AS avg_total_sales
+FROM 
+    public.alerts a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.ro_sap_code::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.product_code::TEXT, '')
+WHERE 
+    a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    AND a.indent_status NOT IN ('Cancelled', 'Completed')
+    AND (
+        -- Handling aggregation for Monthly, Weekly, Daily
+
+        -- For Monthly: Check if the transaction date is in the current or previous month
+        CASE 
+            WHEN 'monthly' = 'monthly' THEN 
+                (DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE) 
+                 OR DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month'))
+
+        -- For Weekly: Check if the transaction date is in the current or previous week
+        WHEN 'monthly' = 'weekly' THEN 
+            (DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE)
+             OR DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week'))
+
+        -- For Daily: Check if the transaction date is in the current or previous day
+        WHEN 'monthly' = 'daily' THEN 
+            (sd.transaction_date::DATE = CURRENT_DATE 
+             OR sd.transaction_date::DATE = CURRENT_DATE - INTERVAL '1 day')
+        END
+    )
+GROUP BY 
+    a.location_name,period
+ORDER BY 
+    avg_txn_amount, avg_total_sales'''
 }

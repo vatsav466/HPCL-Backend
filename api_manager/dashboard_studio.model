@@ -269,6 +269,13 @@ Model Charts {
         sort_by optional str
     }
 
+    Action=> previous_present_month_amount_litres {
+        cross_filters optional list salesFilters
+        limit optional int
+        time_grain optional str
+        sort_by optional str
+    }
+
     Config=> {
         collection_name=charts
     }

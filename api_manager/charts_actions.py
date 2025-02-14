@@ -756,3 +756,83 @@ async def charts_previous_present_month_sales_by_product(data: Charts_Previous_P
             res.setdefault(p_, 0)
 
     return {"status": True, "message": "success", "data": final_result}
+
+
+# Action previous_present_month_amount_litres
+@router.post('/previous_present_month_amount_litres', tags=['Charts'])
+async def charts_previous_present_month_amount_litres(data: Charts_Previous_Present_Month_Amount_LitresParams):
+    cross_filters = data.cross_filters
+    limit = data.limit
+    time_grain = data.time_grain
+    drill_state = ""
+    sort_by = data.sort_by
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    present_month_sales = lpg_plant_queries.lpg_plant_query.get('i_previous_current_month_amount_litres')
+    product_mapper = {
+        "MS": "2811000",
+        "HSD": "2812000",
+        "TURBO": "3912000",
+        "E20": "2822000",
+        "POWER 95": "3672000",
+        "POWER 99": "2816000",
+        "POWER 100": "3373000"
+    }
+    cross_filters += [WidgetFiltersCreate(**rec)
+                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+    if cross_filters:
+        conditions = []
+        for rec in cross_filters:
+            if len(rec.value) == 1:
+                rec.value = rec.value[0].split(",")
+                if rec.key == 'product_name':
+                    condition = f"a.product_code = '{product_mapper.get(rec.value[0])}'"
+                else:
+                    condition = f"a.{rec.key} = '{rec.value[0]}'"
+            else:
+                if rec.key == 'product_name':
+                    vals = tuple([product_mapper.get(i) for i in rec.value])
+                    condition = f"a.product_code in {vals}"
+                else:
+                    condition = f"a.{rec.key} in {tuple(rec.value)}"
+            conditions.append(condition)
+
+        if conditions:
+            present_month_sales_query = present_month_sales.split("'Completed')")
+            present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(
+                conditions) + present_month_sales_query[1]
+    present_month_sales += f' {sort_by}'
+    if limit:
+        present_month_sales += f' LIMIT {limit}'
+    pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
+    print(pres_mon_sales_query)
+    pres_mon_sales_resp = await function(query=pres_mon_sales_query)
+    distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
+    print("distinct_periods--> ", distinct_periods)
+    formatted_results = {}
+
+    # Iterate over the response and group the data by location_name
+    for row in pres_mon_sales_resp:
+        location_name = row["location_name"]
+        period = row["period"]
+        avg_total_sales = row["avg_total_sales"]
+        avg_txn_amount = row["avg_txn_amount"]
+
+        if location_name not in formatted_results:
+            formatted_results[location_name] = {"location_name": location_name}
+
+        # Add the period and its corresponding average sales value to the dictionary
+        formatted_results[location_name].setdefault('amount', {})
+        formatted_results[location_name].setdefault('litres', {})
+
+        formatted_results[location_name]['amount'].update({period: avg_txn_amount})
+        formatted_results[location_name]['litres'].update({period: avg_total_sales})
+
+    # Convert the dictionary to a list of results
+    final_result = list(formatted_results.values())
+    # for res in final_result:
+    #     for p_ in distinct_periods:
+    #         res.setdefault(p_, 0)
+
+    return {"status": True, "message": "success", "data": final_result}

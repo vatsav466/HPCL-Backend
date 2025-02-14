@@ -4236,7 +4236,7 @@ class GlobalAnalytics:
                 present_month_sales_query = present_month_sales.split("'Completed')")
                 present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(
                     conditions) + present_month_sales_query[1]
-            present_month_sales += f' {sort_by}'
+            # present_month_sales += f' {sort_by}'
             if limit:
                 present_month_sales += f' LIMIT {limit}'
             print(present_month_sales)
