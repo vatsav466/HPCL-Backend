@@ -13,6 +13,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-01.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -150,6 +155,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-02.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-02.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
@@ -291,6 +301,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-03.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -428,6 +443,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-04.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-04.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
@@ -569,6 +589,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-05.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -706,6 +731,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-06.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-06.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -847,6 +877,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-07.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -984,6 +1019,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-08.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-08.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
@@ -1125,6 +1165,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-09.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -1262,6 +1307,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-10.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-10.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -1403,6 +1453,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-13.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -1535,6 +1590,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-14.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-14.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -1676,6 +1736,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-15.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS ",
                     "sensor_tag": "TANK.TK-15.TANK_ALERT",
                     "normal_value": "0"
@@ -1813,6 +1878,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-16.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-16.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -1954,6 +2024,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-17.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS ",
                     "sensor_tag": "TANK.TK-17.TANK_ALERT",
                     "normal_value": "0"
@@ -2091,6 +2166,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-19.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-19.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -2232,6 +2312,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-20.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS ",
                     "sensor_tag": "TANK.TK-20.TANK_ALERT",
                     "normal_value": "0"
@@ -2369,6 +2454,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-21.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-21.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -2510,6 +2600,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-22.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS ",
                     "sensor_tag": "TANK.TK-22.TANK_ALERT",
                     "normal_value": "0"
@@ -2647,6 +2742,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-23.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-23.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -2788,6 +2888,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-24.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS ",
                     "sensor_tag": "TANK.TK-24.TANK_ALERT",
                     "normal_value": "0"
@@ -2925,6 +3030,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "TANK.TK-25.HIGH_LEVEL",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-25.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -3066,6 +3176,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-26.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS ",
                     "sensor_tag": "TANK.TK-26.TANK_ALERT",
                     "normal_value": "0"
@@ -3205,6 +3320,11 @@
                     "normal_value": "0"
                 },
                 {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-29.LEVEL",
+                    "normal_value": ""
+                },
+                {
                     "sensor_name": "TANK LEAKAGE STATUS",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -3337,6 +3457,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-30.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
@@ -3477,6 +3602,11 @@
                     "sensor_name": "Primary Gauge HIGH",
                     "sensor_tag": "",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Primary Gauge Level",
+                    "sensor_tag": "TANK.TK-31.LEVEL",
+                    "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS ",
