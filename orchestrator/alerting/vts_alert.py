@@ -88,13 +88,13 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             if last_created_at > maintenance_time:
                                 query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
                                          f"and {key} >= 1 and created_at > '{last_created_at}' and location_type='{record['location_type']}' "
-                                         f"and auto_unblock='true'")
+                                         f"and auto_unblock != 'false'")
                                 data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                                     resp_type='plain')
                             else:
                                 query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
                                     f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
-                                    f"and auto_unblock='true'")
+                                    f"and auto_unblock != 'false'")
                                 data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                     resp_type='plain')
                         # if it is first instance then check the frequency of records from the vts_alert_history
@@ -103,7 +103,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         else:
                             query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
                                     f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
-                                    f"and auto_unblock='true'")
+                                    f"and auto_unblock != 'false'")
                             data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                     resp_type='plain')
                         # check violation if frequency of records count greter than the threshold of paricular key
