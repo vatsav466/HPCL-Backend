@@ -71,11 +71,13 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         altcount = await check_violation_count.CheckViolationCount().check_violation_count(record['location_id'],
                                                                                                             record['location_type'],
                                                                                                             record['tl_number'], key)
-                        maintenance_time = helpers.get_time_stamp_by_delta(days=14, 
+                        '''maintenance_time = helpers.get_time_stamp_by_delta(days=14, 
                                             with_month_start_day=False, 
                                             ascending=False,
                                             date_time_format=None).strftime("%Y-%m-%d")
-                        maintenance_time = datetime.datetime.strptime(maintenance_time, "%Y-%m-%d")
+                        #maintenance_time = datetime.datetime.strptime(maintenance_time, "%Y-%m-%d")'''
+                        fortnight_stating_date, fortnight_ending_date = await check_violation_count.CheckViolationCount().get_violation_period()
+                        fortnight_stating_date = datetime.datetime.strptime(fortnight_stating_date, "%Y-%m-%d")
                         data={}
                         # if it is not first instance then check the frequency of records from the vts_alert_history
                         # within fortnight period and using {key}_instance='' example stoppage_violation_count_instance=''
@@ -85,7 +87,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             # if created_at is more than maintenance_time we need quey the greated than maintenance time else
                             # if we need query based on maintenance time.
                             last_created_at = altcount['data'][0]['created_at']
-                            if last_created_at > maintenance_time:
+                            #print("last_created_at---->",last_created_at)
+                            if last_created_at > fortnight_stating_date:
                                 query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
                                          f"and {key} >= 1 and created_at > '{last_created_at}' and location_type='{record['location_type']}' "
                                          f"and auto_unblock != 'false'")
@@ -93,8 +96,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                                                                     resp_type='plain')
                             else:
                                 query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
-                                    f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
-                                    f"and auto_unblock != 'false'")
+                                    f"and {key}>=1 and created_at::DATE>='{fortnight_stating_date}' and location_type='{record['location_type']}' "
+                                    f"and auto_unblock!='false'")
                                 data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                     resp_type='plain')
                         # if it is first instance then check the frequency of records from the vts_alert_history
@@ -102,8 +105,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                         # location_id and tl_number(vehicle_number).   
                         else:
                             query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
-                                    f"and {key} >= 1 and created_at::DATE >= '{maintenance_time}' and location_type='{record['location_type']}' "
-                                    f"and auto_unblock != 'false'")
+                                    f"and {key}>=1 and created_at::DATE>='{fortnight_stating_date}' and location_type='{record['location_type']}' "
+                                    f"and auto_unblock!='false'")
                             data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                                     resp_type='plain')
                         # check violation if frequency of records count greter than the threshold of paricular key
