@@ -41,13 +41,14 @@ class LpgRejections:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         query = f""" SELECT 
-                        AVG(sortoutpercentage)*100 AS rejection, sap_id, plant, zone
+                        SUM(total) AS total, SUM(totalsortout) AS totalsortout, sap_id, plant, zone
                     FROM 
                         "{table}"
                     WHERE
                         process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
+        rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
         rejections = rejections.with_columns(pl.lit("cs_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter(pl.col("rejection") > 8)
@@ -87,13 +88,14 @@ class LpgRejections:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
         query = f""" SELECT
-                        AVG(sortoutpercentage)*100 AS rejection, sap_id, plant, zone
+                        SUM(total) AS total, SUM(sortout) as totalsortout, sap_id, plant, zone
                     FROM
                         "{table}"
                     WHERE
                         process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
+        rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
         rejections = rejections.with_columns(pl.lit("gd_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 6) | (pl.col("rejection") < 1))
@@ -133,13 +135,14 @@ class LpgRejections:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         
         query = f""" SELECT 
-                        AVG(sortoutpercentage)*100 AS rejection, sap_id, plant, zone
+                        SUM(total) AS total, SUM(sortout) as totalsortout, sap_id, plant, zone
                     FROM
                         "{table}"
                     WHERE
                         process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
+        rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
         rejections = rejections.with_columns(pl.lit("pt_rejections").alias("rejection_type"))
         rejections = rejections.sort("rejection").with_columns(pl.col("rejection").round(2).alias("rejection"))
         rejections = rejections.filter((pl.col("rejection") > 12) | (pl.col("rejection") < 1))
