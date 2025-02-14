@@ -226,7 +226,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
     
     data = {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
-    companies = sorted(set(key.split("_")[1] for key in data.keys() if "_" in key and key != "cumulative" and "actual" not in key))
+    companies = sorted(set(key.split("_")[1] for key in data.keys() if "_" in key and key != "cumulative" and "actual" not in key and "month_name" not in key))
     data['company'] = companies
     return {'message':'Industry_Performance','status':True,'data':data}
 
