@@ -59,10 +59,10 @@ class LpgRejections:
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='cs_rejections' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        if not check_alerts.is_empty():
-            check_alerts = check_alerts.rename({"device_name": "rejection"}
-                                            ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-            rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
+        # if not check_alerts.is_empty():
+        #     check_alerts = check_alerts.rename({"device_name": "rejection"}
+        #                                     ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
+        #     rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
@@ -105,10 +105,10 @@ class LpgRejections:
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='gd_rejections' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        if not check_alerts.is_empty():
-            check_alerts = check_alerts.rename({"device_name": "rejection"}
-                                            ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-            rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
+        # if not check_alerts.is_empty():
+        #     check_alerts = check_alerts.rename({"device_name": "rejection"}
+        #                                     ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
+        #     rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
@@ -151,10 +151,10 @@ class LpgRejections:
                                 "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='pt_rejections' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
-        if not check_alerts.is_empty():
-            check_alerts = check_alerts.rename({"device_name": "rejection"}
-                                            ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
-            rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
+        # if not check_alerts.is_empty():
+        #     check_alerts = check_alerts.rename({"device_name": "rejection"}
+        #                                     ).with_columns(pl.col("rejection").fill_null(0).cast(pl.Float64).alias("rejection"))
+        #     rejections = rejections.filter(~pl.col("sap_id").is_in(check_alerts["sap_id"].unique()))
         for data in rejections.iter_rows(named=True):
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
