@@ -2181,12 +2181,13 @@ class LPGCDCMSActions:
             lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.group_by("ZOName").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"))
             pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ZOName", how="outer").drop("ZOName_right")
 
+        days_in_fy_till_yesterday = await days_since_financial_year_start()
         pcc = pcc.with_columns(pl.lit("temp").alias("temp"))
         overall_num = pcc.group_by("temp").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"), (pl.col("avg_consumer_count").sum()).alias("avg_consumer_count"))
+        overall_num = overall_num.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
         overall_num = overall_num.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
         overall_num = overall_num.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
-        
-        days_in_fy_till_yesterday = await days_since_financial_year_start()
+                
         pcc = pcc.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
         pcc = pcc.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
         pcc = pcc.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
