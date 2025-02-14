@@ -106,14 +106,14 @@ def get_date_filters(filters, resp_type="months"):
         elif condition["key"] == "month_name":
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
     filters = [condition for condition in filters if condition['key'].strip('"') not in ['YTM', 'DATE', 'month_name',
-                                                                                         'OMC', 'A', 'H', 'C']]
+                                                                                        'inc','OMC', 'A', 'H', 'C']]
     if not months:
         months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%b').tolist()
     return filters, fiscal_year_pre, fiscal_year_last, [key.upper() for key in months]
 
 
 def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, drill_state, time_grain, resp_format,
-                           sales_key="sales"):
+                           filters,sales_key="sales"):
     # Convert Decimal to float for Pandas compatibility
     df["sales"] = df["sales"].astype(float)
 
@@ -218,11 +218,18 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
        
         df["month_name"] = pd.Categorical(df["month_name"], categories=[m.upper() for m in m60.months], ordered=True)
         df = df.sort_values('month_name').reset_index(drop=True)
-    if resp_format == 'cumulative'  and time_grain == 'Monthly':
+    if resp_format == 'company_level'  and time_grain == 'Monthly'and '"inc"' in [x['key'] for x in filters]:
+            print("this is inside if")
+
             cols_to_cumsum = [col for col in df.columns if col != 'month_name']
             df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
             return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
     
+    data = {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+    companies = sorted(set(key.split("_")[1] for key in data.keys() if "_" in key and key != "cumulative" and "actual" not in key and "month_name" not in key))
+    data['company'] = companies
+    return {'message':'Industry_Performance','status':True,'data':data}
+
     return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
     
 
@@ -301,14 +308,16 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     # Fetching all group by filters, return should be a list always
     group_by_filter = generate_group_by_conditions(cross_filters, cumulative, drill_state, time_grain)
     print(group_by_filter)
-
+    org_filters = filters
     # OMC comparing filters
     for filter in filters:
         if filter['key'].strip('"') == "OMC" and filter['value']:
             if OMC.get(filter['value']):
-                omc_compare = OMC[filter['value']]
+                omc_compare = list(set(OMC[filter['value']]+["HPCL"]))
             else:
-                omc_compare = list(set([filter['value'].split(",")] + ["HPCL"]))
+                print("filter",filter)
+
+                omc_compare = list(set([filter['value'].split(",")[0]] + ["HPCL"]))
             break
 
     # Assigning empty variables
@@ -348,7 +357,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
                                        "", "", group_by_filter+["coname"], "")
     return calculate_market_share(pd.DataFrame(resp_data), group_keys, fiscal_year_pre, fiscal_year_last,
-                                  drill_state, time_grain, resp_format)
+                                  drill_state, time_grain, resp_format,org_filters)
 
 
 

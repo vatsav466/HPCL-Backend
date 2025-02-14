@@ -84,6 +84,9 @@
                 },
                 {
                     "name": "previous_present_month_sales_by_product"
+                },
+                {
+                    "name": "previous_present_month_amount_litres"
                 }
             ]
         },
@@ -210,6 +213,9 @@
                 },
                 {
                     "name": "previous_present_month_sales_by_product"
+                },
+                {
+                    "name": "previous_present_month_amount_litres"
                 }
             ]
         },
@@ -666,6 +672,10 @@
         {
             "name": "previous_present_month_sales_by_product",
             "displayName": "previous_present_month_sales_by_product"
+        },
+        {
+            "name": "previous_present_month_amount_litres",
+            "displayName": "previous_present_month_amount_litres"
         },
         {
             "name": "save_dashboards",

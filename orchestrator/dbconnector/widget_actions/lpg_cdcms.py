@@ -2037,16 +2037,33 @@ class LPGCDCMSActions:
             average_sales = pl.DataFrame(average_sales)
             latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
             
+            
+            # Overall Number
+            overall_average_sales = average_sales.with_columns(pl.lit("temp").alias("temp"))
+            overall_average_sales = overall_average_sales.group_by("temp").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
+            overall_latest_pending_bookings = latest_pending_bookings.with_columns(pl.lit("temp").alias("temp"))
+            overall_latest_pending_bookings = overall_latest_pending_bookings.group_by("temp").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
+            overall_backlog = overall_latest_pending_bookings.join(overall_average_sales, on="temp", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
+            
+            
             average_sales = average_sales.group_by("ZOName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
             latest_pending_bookings = latest_pending_bookings.group_by("ZOName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
             backlog = latest_pending_bookings.join(average_sales, on="ZOName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
+                        
             print("backlog :", backlog)
-            return {"status": True, "message": "success", "data": backlog.to_dicts()}
+            return {"status": True, "message": "success", "overall_number": overall_backlog["Backlog"][-1], "data": backlog.to_dicts()}
                         
         average_sales = await function(query=lpg_cdcms_backlogs_)
         latest_pending_bookings = await function(query=lpg_cdcms_backlogs_today_)
         average_sales = pl.DataFrame(average_sales)
         latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
+        
+        # Overall Number
+        overall_average_sales = average_sales.with_columns(pl.lit("temp").alias("temp"))
+        overall_average_sales = overall_average_sales.group_by("temp").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
+        overall_latest_pending_bookings = latest_pending_bookings.with_columns(pl.lit("temp").alias("temp"))
+        overall_latest_pending_bookings = overall_latest_pending_bookings.group_by("temp").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
+        overall_backlog = overall_latest_pending_bookings.join(overall_average_sales, on="temp", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
         
         if filters:
             filter_keys = [rec.key.strip('"') for rec in filters]
@@ -2065,7 +2082,7 @@ class LPGCDCMSActions:
                 backlog = latest_pending_bookings.join(average_sales, on="DistributorName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
             if backlog is not None:
                 backlog = backlog.with_columns(pl.col("Backlog").cast(pl.Utf8).cast(pl.Float64).round(2).alias("Backlog"))
-                return {"status": True, "message": "success", "data": backlog.to_dicts()}
+                return {"status": True, "message": "success", "overall_number": overall_backlog["Backlog"][-1], "data": backlog.to_dicts()}
         else:
             return {"status": True, "message": "success", "data": []}
     
@@ -2182,7 +2199,13 @@ class LPGCDCMSActions:
             pcc = avg_consumer_count.join(lpg_cdcms_pcc_sales, on="ZOName", how="outer").drop("ZOName_right")
 
         days_in_fy_till_yesterday = await days_since_financial_year_start()
+        pcc = pcc.with_columns(pl.lit("temp").alias("temp"))
+        overall_num = pcc.group_by("temp").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"), (pl.col("avg_consumer_count").sum()).alias("avg_consumer_count"))
+        overall_num = overall_num.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        overall_num = overall_num.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
+        overall_num = overall_num.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
+                
         pcc = pcc.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
         pcc = pcc.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
         pcc = pcc.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
-        return {"status": True, "message": "success", "data": pcc.to_dicts()}
+        return {"status": True, "message": "success", "overal_number": overall_num["pcc_prorated"][-1],"data": pcc.to_dicts()}

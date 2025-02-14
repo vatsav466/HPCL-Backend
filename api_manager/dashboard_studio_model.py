@@ -340,6 +340,13 @@ class Charts_Previous_Present_Month_Sales_By_ProductParams(pydantic.BaseModel):
     sort_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class Charts_Previous_Present_Month_Amount_LitresParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    sort_by: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class DashboardOrderInternalCreate(pydantic.BaseModel):
     dashboard_id: int
     display_name: typing.Optional[str] = pydantic.Field("", **{})
