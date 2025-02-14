@@ -2419,7 +2419,7 @@ ORDER BY
         transaction_date,
         txn_amount,
         total_sales
-    FROM "public".ro_daily_sales
+    FROM "HPCL_HOS".ro_daily_sales
 )
 
 SELECT 
