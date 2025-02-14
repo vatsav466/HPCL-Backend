@@ -223,7 +223,8 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
             return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
     
-    return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+    return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
+    
 
 
 def generate_stacked_data(df, resp_format='', month_column=''):
