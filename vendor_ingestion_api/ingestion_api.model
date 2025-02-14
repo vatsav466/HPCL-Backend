@@ -195,6 +195,16 @@ Model emlockData internal {
     approved_by optional str
 }
 
+Model emlockVendorData internal {
+    location_type optional BusinessUnit
+    emlock_exception_id str
+    terminal_code str
+    truck_number str
+    exception_type str
+    ro_code str
+    created_datetime str
+}
+
 Model EMLock crud_disable {
     Action=> ingest_data {
         vendor_id str
