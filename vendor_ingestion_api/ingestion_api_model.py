@@ -187,6 +187,16 @@ class emlockDataCreate(pydantic.BaseModel):
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class emlockVendorDataCreate(pydantic.BaseModel):
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+    emlock_exception_id: str
+    terminal_code: str
+    truck_number: str
+    exception_type: str
+    ro_code: str
+    created_datetime: str
+
+
 class Emlock_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     data: typing.Optional[typing.List[emlockDataCreate]] | None = None
