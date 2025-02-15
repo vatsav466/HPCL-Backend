@@ -236,6 +236,19 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                date_time_format=None)
             end_date_history = end_date_history.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+        elif condition['key'].strip('"') == "FYC":
+            print("condition",condition)
+            condition =[x for x in filters if x['key'] =='"DATE"']
+            print("condition",condition)
+            # Calculating start and end dates for YTD for both actual and history
+            start_date, end_date = condition[0]['value'].split(",")
+            start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
+            #end_date = dt_parser.parse(end_date)
+            start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+            end_date_history =fiscal_year.FiscalYear.current().prev_fiscal_year.end.strftime("%Y%m%d" if DefaultTable == "Day" else "%Y%m") 
+            
+            print("start_date",start_date)
         elif condition['key'].strip('"') == "YTDPM":
 
             # Calculating start and end dates for YTD for both actual and history
@@ -257,7 +270,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
 
         
         
-        elif condition['key'].strip('"') == "DATE":
+        elif condition['key'].strip('"') == "DATE" and '"FYC"' not in [x['key'] for x in filters]:
             # Calculating start and end dates
             start_date, end_date = condition['value'].split(",")
             start_date_history = dt_parser.parse(start_date)
@@ -293,14 +306,15 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         condition["value"] = value
                     cross_filters.append(condition)
             else:
-                cross_filters.append(condition)
+                if condition['key'] == 'DATE' and '"FYC"' not in [x['key'] for x in filters]:
+                    cross_filters.append(condition)
+                print("cross filters in else in else",cross_filters)
 
     def get_group_by_columns(group_by_filter):
         if group_by_filter:
             return [rec.replace('"', '').strip() for rec in group_by_filter]
         else:
             return ""
-
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:

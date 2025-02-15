@@ -106,7 +106,7 @@ def get_date_filters(filters, resp_type="months"):
         elif condition["key"] == "month_name":
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
     filters = [condition for condition in filters if condition['key'].strip('"') not in ['YTM', 'DATE', 'month_name',
-                                                                                        'inc','OMC', 'A', 'H', 'C']]
+                                                                                        'table','table_month','inc','OMC', 'A', 'H', 'C']]
     if not months:
         months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%b').tolist()
     return filters, fiscal_year_pre, fiscal_year_last, [key.upper() for key in months]
@@ -220,11 +220,115 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         df = df.sort_values('month_name').reset_index(drop=True)
     if resp_format == 'company_level'  and time_grain == 'Monthly'and '"inc"' in [x['key'] for x in filters]:
             print("this is inside if")
-
             cols_to_cumsum = [col for col in df.columns if col != 'month_name']
             df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
-            return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
-    
+            return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
+    if '"table_month"' in [x['key'] for x in filters]:
+        req_month = [x['value'] for x in filters if x['key'] =='"table_month"'][0]
+        if req_month:
+            df = df[df['month_name'] == req_month.strip('"')]
+            for col in df.select_dtypes(include=['category']).columns:
+                df[col] = df[col].astype(str).fillna('')
+
+            df = df.fillna('')
+            data = df.to_dict(orient='records')
+            list1 =data
+            cumulative_volumes = defaultdict(int)
+            cumulative_market_shares = defaultdict(float)
+            monthly_volumes = defaultdict(int)
+            monthly_market_shares = defaultdict(float)
+            # Iterate through list1 to calculate cumulative and monthly data
+            for entry in list1:
+                month_name = entry['month_name']
+                actual_market_share = entry['actual_market_share']
+                
+                for company in ['bpcl', 'hpcl', 'iocl', 'ril', 'gail', 'hmel', 'mrpl', 'nel', 'nrl', 'oil', 'ongc', 'shell']:
+                    actual_share = entry[f'actual_{company}_share']
+                    historical_share = entry[f'history_{company}_share']
+                    
+                    # Calculate monthly volume
+                    monthly_volumes[company] += actual_share
+                    
+                    # Calculate monthly market share (handle division by zero)
+                    if actual_market_share != 0.0:
+                        monthly_market_shares[company] = (actual_share / actual_market_share) * 100
+                    else:
+                        monthly_market_shares[company] = 0.0
+                    
+                    # Calculate cumulative volume
+                    cumulative_volumes[company] += actual_share
+                    
+                    # Calculate cumulative market share (handle division by zero)
+                    if sum(cumulative_volumes.values()) != 0.0:
+                        cumulative_market_shares[company] = (cumulative_volumes[company] / sum(cumulative_volumes.values())) * 100
+                    else:
+                        cumulative_market_shares[company] = 0.0
+
+            # Prepare the final list2 format
+            list2 = []
+            for company in monthly_volumes.keys():
+                # Calculate historical market share for the company
+                historical_market_share = (sum([entry[f'history_{company}_share'] for entry in list1]) / sum([entry['history_market_share'] for entry in list1])) * 100 if sum([entry['history_market_share'] for entry in list1]) != 0.0 else 0.0
+                
+                company_data = {
+                    'company': company.upper(),
+                    'monthly': {
+                        'volume': {
+                            'actual': monthly_volumes[company],
+                            'historical': sum([entry[f'history_{company}_share'] for entry in list1])
+                        },
+                        'marketShare': {
+                            'actual': monthly_market_shares[company],
+                            'historical': historical_market_share,
+                            'change': monthly_market_shares[company] - historical_market_share
+                        }
+                    },
+                    'cumulative': {
+                        'volume': {
+                            'actual': cumulative_volumes[company],
+                            'historical': sum([entry[f'history_{company}_share'] for entry in list1])
+                        },
+                        'marketShare': {
+                            'actual': cumulative_market_shares[company],
+                            'historical': historical_market_share,
+                            'change': cumulative_market_shares[company] - historical_market_share
+                        }
+                    }
+                }
+                list2.append(company_data)
+
+            # Add the industry summary
+            industry_data = {
+                'company': 'Industry',
+                'monthly': {
+                    'volume': {
+                        'actual': sum(monthly_volumes.values()),
+                        'historical': sum([entry['history_market_share'] for entry in list1])
+                    },
+                    'marketShare': {
+                        'actual': 100,
+                        'historical': 100,
+                        'change': None
+                    }
+                },
+                'cumulative': {
+                    'volume': {
+                        'actual': sum(cumulative_volumes.values()),
+                        'historical': sum([entry['history_market_share'] for entry in list1])
+                    },
+                    'marketShare': {
+                        'actual': 100,
+                        'historical': 100,
+                        'change': None
+                    }
+                }
+            }
+            list2.append(industry_data)
+        return {'message':'Industry_Performance_TableData','status':True,'data':list2}
+
+
+    # Print the transformed list2
+    print(list2)            
     data = {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
     companies = sorted(set(key.split("_")[1] for key in data.keys() if "_" in key and key != "cumulative" and "actual" not in key and "month_name" not in key))
     data['company'] = companies
