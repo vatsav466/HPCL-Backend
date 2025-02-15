@@ -240,6 +240,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             print("condition",condition)
             condition =[x for x in filters if x['key'] =='"DATE"']
             print("condition",condition)
+            # Calculating start and end dates for YTD for both actual and history
             start_date, end_date = condition[0]['value'].split(",")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
             #end_date = dt_parser.parse(end_date)
