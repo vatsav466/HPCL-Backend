@@ -306,7 +306,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         condition["value"] = value
                     cross_filters.append(condition)
             else:
-                if condition['key'] == 'DATE' and '"FYC"' not in [x['key'] for x in filters]:
+                if condition['key'] == 'DATE':
+                    if '"FYC"' not in [x['key'] for x in filters]:
+                        cross_filters.append(condition)
+                else:
                     cross_filters.append(condition)
                 print("cross filters in else in else",cross_filters)
 
@@ -532,7 +535,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         else:
             if isinstance(final_resp,dict):
                 for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
-                    if 'cumulative' not in final_resp:
+                    #if 'cumulative' not in final_resp and not drill_state:
+                    if 'cumulative' not in final_resp and not drill_state:
                         final_resp['cumulative'] = {}
                     print("final_resp",final_resp)
                     final_resp['cumulative'][each_key] = ''
@@ -546,14 +550,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         measure_unit = 'TMT'
         if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
-        if 'cumulative' not in final_resp  and not drill_state:
+        if 'cumulative' not in final_resp:
                 final_resp['cumulative'] = {}
         if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1  and not drill_state:
             final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
         else:
             if isinstance(final_resp,dict):
                 for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
-                    if 'cumulative' not in final_resp:
+                    if 'cumulative' not in final_resp :
                         final_resp['cumulative'] = {}
                     final_resp['cumulative'][each_key] = ''
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {},'sales_unit':measure_unit}}
