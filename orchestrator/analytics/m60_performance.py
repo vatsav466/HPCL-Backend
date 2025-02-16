@@ -532,6 +532,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         else:
             if isinstance(final_resp,dict):
                 for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
+                    if 'cumulative' not in final_resp:
+                        final_resp['cumulative'] = {}
+                    print("final_resp",final_resp)
                     final_resp['cumulative'][each_key] = ''
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
