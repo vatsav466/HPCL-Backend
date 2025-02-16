@@ -207,8 +207,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     actual_data = []
     hist_data = []
     target_data = []
-    actual_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES" """
-    history_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_HISTORY_TMT_SALES" """
+    actual_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
+    history_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
     filters_req = [condition['key'].strip('"') for condition in filters if
                    condition['key'].strip('"') in ["A", "H", "T"]]
     if len(filters_req) == 0:
@@ -216,11 +216,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     # Generating filters
     for condition in filters:
         if condition['key'].strip('"') == "A":
-            actual = f"""ROUND(SUM("{DBNames['m60_ta']}"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_TMT_SALES" """
+            actual = f"""ROUND(SUM("{DBNames['m60_ta']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
         elif condition['key'].strip('"') == "H":
-            history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,0) AS "ACTUAL_HISTORY_TMT_SALES" """
+            history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
         elif condition['key'].strip('"') == "T":
-            target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,0) AS "TARGET_TMT_SALES" """
+            target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES" """
         elif condition['key'].strip('"') == "C":
             continue
         elif condition['key'].strip('"') == "YTD":
