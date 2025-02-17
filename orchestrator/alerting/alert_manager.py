@@ -13,6 +13,7 @@ import orchestrator.alerting.tas_alert as tas_alert
 import orchestrator.alerting.lpg_alert as lpg_alert
 import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.emlock_alert as emlock_alert
+import orchestrator.analytics.vts_analysis as vts_analysis
 from orchestrator.notification_manager.notify_email import *
 
 
@@ -77,6 +78,56 @@ async def close_va_alert(alert_data, input_data):
     }
     return await va_analysis.close_va_alerts(params)
 
+async def close_vts_alert(alert_data, input_data):
+    """
+
+    Args:
+        alert_data:
+        input_data:
+
+    Returns:
+
+    """
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    if not input_data.get("doc_link", ""):
+        input_data["doc_link"] = await get_doc_link_from_alert_history(alert_data)
+    un_block_datetime = str(alert_data['vehicle_blocked_end_date'].isoformat()) if input_data.get("is_autoblock", False) else str(urdhva_base.utilities.get_present_time().isoformat())
+    approved_datetime = await get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
+    params = {
+            "TT_No": alert_data['vehicle_number'],
+            "UnBlockedBy": "NOVEX_USER",
+            "UnBlockedDateTime": un_block_datetime,
+            "UnBlockedRemarks": await get_approved_remarks(alert_data, is_approved=False),
+            "ApprovedBy": "NOVEX_USER",
+            "ApprovedDateTime": approved_datetime,
+            "ApprovedRemarks": await get_approved_remarks(alert_data, is_approved=True),
+            "BlockStartDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
+            "BlockEndDate": str(alert_data['vehicle_blocked_start_date'].isoformat()),
+            "WaivedOff": False,
+            "AlertID": alert_data['id'],
+            "DocLink": {
+                "DocPaths": [input_data["doc_link"]]
+            }
+        }
+    print("Un block tt params: ", params)
+    return True, "Success"
+    # return await vts_analysis.post_unblocked_tt(params)
+
+async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):
+    if get_approved_time:
+        for alert_history in alert_data.get("alert_history", []):
+            if alert_history['action_type'] == 'Approved':
+                return alert_history['processed_time']
+        return ""
+    for alert_history in alert_data.get("alert_history", []):
+        if is_approved:
+            if alert_history['action_type'] == 'Approved':
+                return alert_history['action_msg']
+        else:
+            if alert_history['action_type'] not in ['Created', 'Approved']:
+                return alert_history['action_msg']
+    return ""
 
 async def get_doc_link_from_alert_history(alert_data):
     """
@@ -133,7 +184,6 @@ async def vts_alert_closer(alert_data, input_data):
     Returns:
 
     """
-    # resp = await close_va_alert(alert_data, input_data)
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
     close_alert_data = {}
@@ -162,6 +212,8 @@ async def vts_alert_closer(alert_data, input_data):
         }
     )
     print(f"VTS Alert Closed")
+    resp = await close_vts_alert(alert_data, input_data)
+    print("Alert Closed in VTS Portal: ", resp)
 
 
 class AlertAction:
