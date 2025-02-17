@@ -51,7 +51,7 @@ merge.write_csv("/Users/mac_1/Downloads/HPCL/Raw_Location_Master/HPCL_lpg_matche
 """
 
 ROLE MASTER MAPPING
-"""
+
 import polars as pl
 
 sod = pl.read_csv("/Users/mac_1/Downloads/HPCL/ROLE_MASTERS/SOD_ROLE_MASTER.csv", infer_schema_length=0)
@@ -132,3 +132,54 @@ sod_merge.write_csv("/Users/mac_1/Downloads/HPCL/ROLE_MASTERS/SOD_ROLE_MASTER_UP
 lpg_loc = pl.read_csv("/Users/mac_1/Downloads/HPCL/ROLE_MASTERS/LPG.csv", infer_schema_length=0)
 lpg_merge = novex_lpg_col.join(lpg_loc.select(["sap_id"]), left_on="LOCATION", right_on="sap_id", how="full")
 lpg_merge.write_csv("/Users/mac_1/Downloads/HPCL/ROLE_MASTERS/LPG_ROLE_MASTER_UPDATED.csv")
+
+"""
+"""
+import polars as pl
+
+df = pl.read_csv("/Users/mac_1/Downloads/HPCL/ROLE_MASTERS/LPG_ROLE_MASTER_UPDATED.csv", infer_schema_length=0)
+loc = pl.read_csv("/Users/mac_1/PycharmProjects/Cloud/dnc_backend_v2/orchestrator/masterdata/novex_users.csv", infer_schema_length=0)
+left_df = df.with_columns(
+        left_merge=pl.lit("Left")
+    )
+
+right_df = loc.with_columns(
+        right_merge=pl.lit("Right")
+    )
+right_df = right_df.filter(pl.col("BU") == "LPG")
+print(right_df)
+# exit()
+merge = left_df.join(right_df, on="LOCATION", how='full')
+
+final_df = (
+            merge
+            .with_columns(
+                _merge=pl.when((pl.col('left_merge').is_not_null()) & (pl.col("right_merge").is_null()))
+                .then(pl.lit('left_only'))
+                .when((pl.col('left_merge').is_null()) & (pl.col("right_merge").is_not_null()))
+                .then(pl.lit('right_only'))
+                .otherwise(pl.lit('both'))
+                .alias('_merge')
+            )
+        )
+
+final_df.write_csv("/Users/mac_1/Downloads/test_data.csv")
+
+"""
+
+import polars as pl
+
+# Load CSV files
+df = pl.read_csv("/Users/mac_1/PycharmProjects/Cloud/dnc_backend_v2/orchestrator/masterdata/LPG_ROLE_MASTER.csv", infer_schema_length=0)
+loc = pl.read_csv("/Users/mac_1/PycharmProjects/Cloud/dnc_backend_v2/orchestrator/masterdata/novex_users.csv", infer_schema_length=0)
+
+# Identify missing rows (anti-join)
+missing_rows = df.join(loc, on="LOCATION", how="anti")  # Replace "column_name" with the common key column
+
+# Append missing rows to loc
+updated_loc = pl.concat([loc, missing_rows], how="diagonal_relaxed")
+
+# Save the updated loc file
+updated_loc.write_csv("/Users/mac_1/PycharmProjects/Cloud/dnc_backend_v2/orchestrator/masterdata/novex_users_updated.csv")
+
+print("Missing rows added and saved successfully!")
