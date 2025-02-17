@@ -117,7 +117,10 @@ class AlertFactory:
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             if alert_data.get("alert_section",'') in ["VA"]:
-                await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
+                if alert_data.get("bu","") in ["TAS"]:
+                    await redis_ins.setex(alert_data['alert_id'], 15*60, alert_resp['id'])
+                else:
+                    await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
