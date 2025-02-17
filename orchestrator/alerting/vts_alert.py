@@ -153,7 +153,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             alert_message = (
                                 f"Vehicle Number: {record['tl_number']} "
                                 F"Violation Type: {key} "
-                                f"Violation Count: {alert_count['count']} "
+                                f"Violation Count: {data['count']} "
                                 f"Violation_instance_count: {finarResp}"
                             )
                             alert_history = [
