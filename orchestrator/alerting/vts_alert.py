@@ -76,6 +76,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                             ascending=False,
                                             date_time_format=None).strftime("%Y-%m-%d")
                         maintenance_time = datetime.datetime.strptime(maintenance_time, "%Y-%m-%d")
+                        #print("maintenance_time----->",maintenance_time)
                         #fortnight_stating_date, fortnight_ending_date = await check_violation_count.CheckViolationCount().get_violation_period()
                         #fortnight_stating_date = datetime.datetime.strptime(fortnight_stating_date, "%Y-%m-%d")
                         data={}
@@ -90,11 +91,9 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             #print("last_created_at---->",last_created_at)
                             last_created_at = alert_count['data'][0]['created_at']
                             if last_created_at > maintenance_time:
-                                query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
-                                         f"and {key} >= 1 and created_at > '{last_created_at}' and location_type='{record['location_type']}' "
-                                         f"and auto_unblock != 'false'")
-                                data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
-                                                                                    resp_type='plain')
+                                logger.info(f"Instance Already created for this vehicle_number:{record['tl_number']} bu:{record['location_type']} sap_id:{record['location_id']}")
+                                #print(f"Instance Already created for this vehicle_number:{record['tl_number']} bu:{record['location_type']} sap_id:{record['location_id']}")
+                                continue
                             else:
                                 query = (f"location_id='{record['location_id']}' and tl_number='{record['tl_number']}' "
                                     f"and {key}>=1 and created_at::DATE>='{maintenance_time}' and location_type='{record['location_type']}' "
