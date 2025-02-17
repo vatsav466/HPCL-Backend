@@ -1211,6 +1211,82 @@ class LPGCDCMSActions:
             ])
         resp = resp.sort("Month_Number")
         return {"status": True, "message": "success", "data": resp.to_dicts()}
+    
+    
+    @staticmethod
+    async def lpg_cdcms_nc_stats(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        financial_year = await get_financial_year()
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        lpg_cdcms_nc_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_nc_query")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                lpg_cdcms_nc_query_ += ' WHERE ' 
+                lpg_cdcms_nc_query_ += ' AND '.join(conditions)
+            lpg_cdcms_nc_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_nc_query_ += ' GROUP BY "Month", month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+        else:
+            if "where" not in lpg_cdcms_nc_query_.lower():
+                lpg_cdcms_nc_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            else:
+                lpg_cdcms_nc_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+        resp = await function(query=lpg_cdcms_nc_query_)
+        resp = pl.DataFrame(resp)
+        resp = await filter_data(resp.to_pandas(), _filters)
+        resp = pl.from_pandas(resp)
+        numerical_columns = ["month_number", "new_connection"]
+        string_columns = ["Month", "ZOName", "ROName", "SAName"]
+
+        for col in numerical_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null(0.0))
+
+        for col in string_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            grouped_resp = None
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName"]).agg([
+                    pl.sum("new_connection").alias("new_connection"),
+                    pl.first("month_number").alias("month_number"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName"]).agg([
+                    pl.sum("new_connection").alias("new_connection"),
+                    pl.first("month_number").alias("month_number"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName"]).agg([
+                    pl.sum("new_connection").alias("new_connection"),
+                    pl.first("month_number").alias("month_number"),
+                ])
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
+        resp = resp.group_by(["Month"]).agg([
+                pl.sum("new_connection").alias("new_connection"),
+                pl.first("month_number").alias("month_number"),
+            ])
+        resp = resp.sort("month_number")
+        return {"status": True, "message": "success", "data": resp.to_dicts()}
 
 
 ################################################################# CONSUMER STATS ###################################################################################

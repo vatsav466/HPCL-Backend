@@ -930,6 +930,17 @@ LIMIT 10000;''',
                                     from
                                         "lpg_cdcms_dbc_enrollment" ''',
     
+    "lpg_cdcms_nc_query": '''SELECT 
+                                "ZOName" ,
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "Month",
+                                "Month_Number",
+                                sum("new_connection") as "new_connection"
+                            FROM
+                                "lpg_cdcms_nc_data" ''',
+    
     "lpg_cdcms_backlogs_today": f''' SELECT
                                         "DistributorName",
                                         "ZOName", "ROName", "SAName",
