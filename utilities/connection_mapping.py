@@ -88,6 +88,7 @@ alert_action_category = {
         "Operations": "Operations",
         "FalseAlert": "FalseAlert",
         "InvalidAlert": "InvalidAlert",
+        "Quality": "Quality",
         "Other": "Other"
     },
     "VTS": {
@@ -111,6 +112,8 @@ alert_action_rca_reason = {
         "Lack of Awareness",
         "InvalidAlert",
         "FalseAlert",
+        "Maintenance Issue",
+        "Calibration Issue",
         "Other"
     ]
 }
