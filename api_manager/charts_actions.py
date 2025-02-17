@@ -764,7 +764,6 @@ async def charts_previous_present_month_amount_litres(data: Charts_Previous_Pres
     cross_filters = data.cross_filters
     limit = data.limit
     time_grain = data.time_grain
-    drill_state = ""
     sort_by = data.sort_by
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -811,8 +810,8 @@ async def charts_previous_present_month_amount_litres(data: Charts_Previous_Pres
     distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
     print("distinct_periods--> ", distinct_periods)
     formatted_results = {}
-
-    # Iterate over the response and group the data by location_name
+    amount = 'amount'
+    litres = 'litres'
     for row in pres_mon_sales_resp:
         location_name = row["location_name"]
         period = row["period"]
@@ -822,17 +821,16 @@ async def charts_previous_present_month_amount_litres(data: Charts_Previous_Pres
         if location_name not in formatted_results:
             formatted_results[location_name] = {"location_name": location_name}
 
-        # Add the period and its corresponding average sales value to the dictionary
-        formatted_results[location_name].setdefault('amount', {})
-        formatted_results[location_name].setdefault('litres', {})
+        formatted_results[location_name].setdefault(amount, {})
+        formatted_results[location_name].setdefault(litres, {})
 
-        formatted_results[location_name]['amount'].update({period: avg_txn_amount})
-        formatted_results[location_name]['litres'].update({period: avg_total_sales})
+        formatted_results[location_name][amount].update({period: avg_txn_amount})
+        formatted_results[location_name][litres].update({period: avg_total_sales})
 
-    # Convert the dictionary to a list of results
     final_result = list(formatted_results.values())
-    # for res in final_result:
-    #     for p_ in distinct_periods:
-    #         res.setdefault(p_, 0)
+    for res in final_result:
+        for p_ in distinct_periods:
+            res[amount].setdefault(p_, 0)
+            res[litres].setdefault(p_, 0)
 
     return {"status": True, "message": "success", "data": final_result}

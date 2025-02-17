@@ -2403,7 +2403,7 @@ ORDER BY
                                             "lpg_todays_cdcms_sales_summary"
                                         where
                                             "ZOName" IS NOT NULL ''',
-    'i_previous_current_month_amount_litres': f'''WITH SalesData AS (
+    'i_previous_current_month_amount_litres': '''WITH SalesData AS (
     SELECT 
         ro_sap_code, 
         CASE
@@ -2425,9 +2425,9 @@ ORDER BY
 SELECT 
     a.location_name,
     CASE 
-        WHEN 'monthly' = 'monthly' THEN TO_CHAR(DATE_TRUNC('month', sd.transaction_date::TIMESTAMP), 'Mon YYYY')
-        WHEN 'monthly' = 'weekly' THEN TO_CHAR(DATE_TRUNC('week', sd.transaction_date::TIMESTAMP), 'DD-MM-YYYY')
-        WHEN 'monthly' = 'daily' THEN TO_CHAR(sd.transaction_date::TIMESTAMP, 'DD-MM-YYYY')
+        WHEN '{time_grain}' = 'monthly' THEN TO_CHAR(DATE_TRUNC('month', sd.transaction_date::TIMESTAMP), 'Mon YYYY')
+        WHEN '{time_grain}' = 'weekly' THEN TO_CHAR(DATE_TRUNC('week', sd.transaction_date::TIMESTAMP), 'DD-MM-YYYY')
+        WHEN '{time_grain}' = 'daily' THEN TO_CHAR(sd.transaction_date::TIMESTAMP, 'DD-MM-YYYY')
     END AS period,
     AVG(sd.txn_amount) AS avg_txn_amount,
     AVG(sd.total_sales) AS avg_total_sales
@@ -2446,17 +2446,17 @@ WHERE
 
         -- For Monthly: Check if the transaction date is in the current or previous month
         CASE 
-            WHEN 'monthly' = 'monthly' THEN 
+            WHEN '{time_grain}' = 'monthly' THEN 
                 (DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE) 
                  OR DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month'))
 
         -- For Weekly: Check if the transaction date is in the current or previous week
-        WHEN 'monthly' = 'weekly' THEN 
+        WHEN '{time_grain}' = 'weekly' THEN 
             (DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE)
              OR DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week'))
 
         -- For Daily: Check if the transaction date is in the current or previous day
-        WHEN 'monthly' = 'daily' THEN 
+        WHEN '{time_grain}' = 'daily' THEN 
             (sd.transaction_date::DATE = CURRENT_DATE 
              OR sd.transaction_date::DATE = CURRENT_DATE - INTERVAL '1 day')
         END
