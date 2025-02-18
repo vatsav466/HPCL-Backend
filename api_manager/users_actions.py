@@ -37,8 +37,67 @@ async def users_login(request: fastapi.Request, data: Users_LoginParams):
 
 # Action update_user_status
 @router.post('/update_user_status', tags=['Users'])
-async def users_update_user_status(data: Users_Update_User_StatusParams):
-    ...
+async def users_update_user_status(request: fastapi.Request, data: Users_Update_User_StatusParams):
+
+    try:
+        user_name = data.username  # Assuming ⁠ user_id ⁠ is the primary key
+        query = f"username='{user_name}'"
+        params = urdhva_base.queryparams.QueryParams()
+        params.fields = []
+        params.q = query
+        resp = await Users.get_all(params, resp_type="plain")
+        print("resp --> ", resp)
+        if not isinstance(resp, dict):
+            resp = resp._dict_
+
+        if resp["data"]:
+            resp = resp["data"][0]
+            specific_columns = ["sap_id", "region", "sales_area", "zone"]
+            for key in specific_columns:
+                if getattr(data, key, None) == "*":
+                    setattr(data, key, [])
+                elif getattr(data, key, None):
+                    setattr(data, key, [rec.strip() for rec in getattr(data, key).split(",")])
+
+            if data.username:
+                resp['first_name'] = data.first_name
+                resp['last_name'] = data.last_name
+                resp['region'] = data.region
+                resp['state'] = data.state
+                resp['zone'] = data.zone
+                resp['sap_id'] = data.sap_id
+                resp['bu'] = data.bu
+                resp['sales_area'] = data.sales_area
+                resp['novex_role'] = data.novex_role
+                res = Users(
+                    **resp
+                    # **{
+                    #     "first_name": data.first_name,
+                    #     "last_name": data.last_name,
+                    #     "region": data.region,
+                    #     "state": data.state,
+                    #     "zone": data.zone,
+                    #     "sap_id": data.sap_id,
+                    #     "bu": data.bu,
+                    #     "sales_area": data.sales_area,
+                    #     "novex_role": data.novex_role
+                    # }
+                )
+                resp = await res.modify()
+                return {"status": True, "message": "Successfully updated credential", "data": resp}
+
+            else:
+                return {"status": False, "message": "No Message Found", "data": []}
+
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        print(traceback.format_exc())
+        return {
+            "status": False,
+            "message": "An error occurred while updating user status.",
+            "error": str(e),
+            "traceback": error_trace
+        }
 
 
 # Action logout
