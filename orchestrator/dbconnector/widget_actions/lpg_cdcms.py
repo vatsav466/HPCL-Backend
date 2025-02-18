@@ -1287,8 +1287,8 @@ class LPGCDCMSActions:
             ])
         resp = resp.sort("month_number")
         return {"status": True, "message": "success", "data": resp.to_dicts()}
-
-
+    
+    
 ################################################################# CONSUMER STATS ###################################################################################
     @staticmethod
     async def lpg_cdcms_total_consumers(filters, cross_filters, drill_state):
@@ -2058,6 +2058,202 @@ class LPGCDCMSActions:
             return {"status": True, "message":"success", "data":[]}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+
+    
+    @staticmethod
+    async def lpg_cdcms_subsidy_central_consumers(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        financial_year = await get_financial_year()
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        lpg_cdcms_subsidy_central_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_consumers")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                lpg_cdcms_subsidy_central_consumers_query_ += ' WHERE ' 
+                lpg_cdcms_subsidy_central_consumers_query_ += ' AND '.join(conditions)
+            lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "ConsumerType", "Month_Name", month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_central_consumers_query_.lower():
+                lpg_cdcms_subsidy_central_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            else:
+                lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "ConsumerType", "Month_Name", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+        resp = await function(query=lpg_cdcms_subsidy_central_consumers_query_)
+        resp = pl.DataFrame(resp)
+        resp = await filter_data(resp.to_pandas(), _filters)
+        resp = pl.from_pandas(resp)
+        numerical_columns = ["month_number", "consumer_count"]
+        string_columns = ["ConsumerType", "Month", "ZOName", "ROName", "SAName", "DistributorName"]
+
+        for col in numerical_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null(0.0))
+
+        for col in string_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            grouped_resp = None
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.group_by(["ConsumerType", "Month", "ZOName"]).agg([
+                    pl.sum("consumer_count").alias("consumer_count"),
+                ])
+                grouped_resp = grouped_resp.pivot(index="ZOName", on="ConsumerType", values="consumer_count")
+                _index = "ZOName"
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.group_by(["ConsumerType", "Month", "ZOName", "ROName"]).agg([
+                    pl.sum("consumer_count").alias("consumer_count"),
+                ])
+                grouped_resp = grouped_resp.pivot(index="ROName", on="ConsumerType", values="consumer_count")
+                _index = "ROName"
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.group_by(["ConsumerType", "Month", "ZOName", "ROName", "SAName"]).agg([
+                    pl.sum("consumer_count").alias("consumer_count"),
+                ])
+                grouped_resp = grouped_resp.pivot(index="SAName", on="ConsumerType", values="consumer_count")
+                _index = "SAName"
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.group_by(["ConsumerType", "Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                    pl.sum("consumer_count").alias("consumer_count"),
+                ])
+                grouped_resp = grouped_resp.pivot(index="DistributorName", on="ConsumerType", values="consumer_count")
+                _index = "DistributorName"
+            if grouped_resp is not None:
+                result = [
+                        {
+                            "PMUY": row.get("PMUY", 0),
+                            "NPMUY": row.get("NPMUY", 0),
+                            _index: index
+                        }
+                        for index, row in grouped_resp.iter_rows(named=True)
+                     ]
+                return {"status": True, "message": "success", "data": result}
+        resp = resp.group_by(["Month"]).agg([
+                pl.sum("consumer_count").alias("consumer_count"),
+                pl.first("month_number").alias("month_number"),
+            ])
+        resp = resp.sort("month_number")
+        grouped_resp = grouped_resp.pivot(index="Month", on="ConsumerType", values="consumer_count")
+        _index = "Month"
+        result = [
+                    {
+                        "PMUY": row.get("PMUY", 0),
+                        "NPMUY": row.get("NPMUY", 0),
+                        _index: index
+                    }
+                    for index, row in grouped_resp.iter_rows(named=True)
+                ]
+        return {"status": True, "message": "success", "data": result}
+
+    
+    @staticmethod
+    async def lpg_cdcms_subsidy_central_transaction(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        financial_year = await get_financial_year()
+        _filters = []
+        if cross_filters:
+            for filter in cross_filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        lpg_cdcms_subsidy_central_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_transaction")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                lpg_cdcms_subsidy_central_transaction_query_ += ' WHERE ' 
+                lpg_cdcms_subsidy_central_transaction_query_ += ' AND '.join(conditions)
+            lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month_Name", month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_central_transaction_query_.lower():
+                lpg_cdcms_subsidy_central_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            else:
+                lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month_Name", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+        resp = await function(query=lpg_cdcms_subsidy_central_transaction_query_)
+        resp = pl.DataFrame(resp)
+        resp = await filter_data(resp.to_pandas(), _filters)
+        resp = pl.from_pandas(resp) 
+        numerical_columns = ["month_number", "transaction_count"]
+        string_columns = ["Month", "ZOName", "ROName", "SAName", "DistributorName"]
+
+        for col in numerical_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null(0.0))
+
+        for col in string_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            grouped_resp = None
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName"]).agg([
+                    pl.sum("transaction_count").alias("transaction_count"),
+                ])
+                grouped_resp = grouped_resp.pivot(index="ZOName", on="ConsumerType", values="transaction_count")
+                _index = "ZOName"
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName"]).agg([
+                    pl.sum("transaction_count").alias("transaction_count"),
+                ])
+                grouped_resp = grouped_resp.pivot(index="ROName", on="ConsumerType", values="transaction_count")
+                _index = "ROName"
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName"]).agg([
+                    pl.sum("transaction_count").alias("transaction_count"),
+                ])
+                grouped_resp = grouped_resp.pivot(index="SAName", on="ConsumerType", values="transaction_count")
+                _index = "SAName"
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                    pl.sum("transaction_count").alias("transaction_count"),
+                ])
+                grouped_resp = grouped_resp.pivot(index="DistributorName", on="ConsumerType", values="transaction_count")
+                _index = "DistributorName"
+            if grouped_resp is not None:
+                result = [
+                        {
+                            "PMUY": row.get("PMUY", 0),
+                            "NPMUY": row.get("NPMUY", 0),
+                            _index: index
+                        }
+                        for index, row in grouped_resp.iter_rows(named=True)
+                     ]
+                return {"status": True, "message": "success", "data": result}
+        resp = resp.group_by(["Month"]).agg([
+                pl.sum("transaction_count").alias("transaction_count"),
+                pl.first("month_number").alias("month_number"),
+            ])
+        resp = resp.sort("month_number")
+        return {"status": True, "message": "success", "data": resp.to_dicts()}
     
     
     @staticmethod
