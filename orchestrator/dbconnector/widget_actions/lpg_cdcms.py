@@ -2136,14 +2136,13 @@ class LPGCDCMSActions:
                 grouped_resp = grouped_resp.pivot(index="DistributorName", on="ConsumerType", values="consumer_count")
                 _index = "DistributorName"
             if grouped_resp is not None:
-                result = [
-                        {
-                            "PMUY": row.get("PMUY", 0),
-                            "NPMUY": row.get("NPMUY", 0),
-                            _index: index
-                        }
-                        for index, row in grouped_resp.iter_rows(named=True)
-                     ]
+                result = []
+                for row in grouped_resp.iter_rows(named=True):
+                    result.append({
+                        "PMUY": row.get("PMUY", 0),
+                        "NPMUY": row.get("NPMUY", 0),
+                        _index: row.get(_index, "")
+                    })
                 return {"status": True, "message": "success", "data": result}
         resp = resp.group_by(["ConsumerType", "Month"]).agg([
                 pl.sum("consumer_count").alias("consumer_count"),
@@ -2152,14 +2151,13 @@ class LPGCDCMSActions:
         resp = resp.sort("month_number")
         resp = resp.pivot(index="Month", on="ConsumerType", values="consumer_count")
         _index = "Month"
-        result = [
-                    {
-                        "PMUY": row.get("PMUY", 0),
-                        "NPMUY": row.get("NPMUY", 0),
-                        _index: index
-                    }
-                    for index, row in resp.iter_rows(named=True)
-                ]
+        result = []
+        for row in resp.iter_rows(named=True):
+            result.append({
+                "PMUY": row.get("PMUY", 0),
+                "NPMUY": row.get("NPMUY", 0),
+                _index: row.get(_index, "")
+            })
         return {"status": True, "message": "success", "data": result}
 
     
@@ -2239,14 +2237,13 @@ class LPGCDCMSActions:
                 grouped_resp = grouped_resp.pivot(index="DistributorName", on="ConsumerType", values="transaction_count")
                 _index = "DistributorName"
             if grouped_resp is not None:
-                result = [
-                        {
-                            "PMUY": row.get("PMUY", 0),
-                            "NPMUY": row.get("NPMUY", 0),
-                            _index: index
-                        }
-                        for index, row in grouped_resp.iter_rows(named=True)
-                     ]
+                result = []
+                for row in resp.iter_rows(named=True):
+                    result.append({
+                        "PMUY": row.get("PMUY", 0),
+                        "NPMUY": row.get("NPMUY", 0),
+                        _index: row.get(_index, "")
+                    })
                 return {"status": True, "message": "success", "data": result}
         resp = resp.group_by(["ConsumerType", "Month"]).agg([
                 pl.sum("transaction_count").alias("transaction_count"),
@@ -2255,14 +2252,13 @@ class LPGCDCMSActions:
         resp = resp.sort("month_number")
         resp = resp.pivot(index="Month", on="ConsumerType", values="transaction_count")
         _index = "Month"
-        result = [
-                        {
-                            "PMUY": row.get("PMUY", 0),
-                            "NPMUY": row.get("NPMUY", 0),
-                            _index: index
-                        }
-                        for index, row in resp.iter_rows(named=True)
-                     ]
+        result = []
+        for row in resp.iter_rows(named=True):
+            result.append({
+                "PMUY": row.get("PMUY", 0),
+                "NPMUY": row.get("NPMUY", 0),
+                _index: row.get(_index, "")
+            })
         return {"status": True, "message": "success", "data": resp.to_dicts()}
     
     
