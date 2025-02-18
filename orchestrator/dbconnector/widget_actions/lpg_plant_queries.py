@@ -1124,7 +1124,7 @@ ORDER BY
     'lpg_cdcms_subsidy_central_consumers': f''' 
                             SELECT 
                                 "ConsumerType",
-                                "Month_Name" AS "Month",
+                                "Month_Name",
                                 "month_number",
                                 "ZOName",
                                 "ROName",
@@ -1137,7 +1137,7 @@ ORDER BY
     'lpg_cdcms_subsidy_central_transaction': f''' 
                             SELECT 
                                 "ConsumerType",
-                                "Month_Name" AS "Month",
+                                "Month_Name",
                                 "month_number",
                                 "ZOName",
                                 "ROName",
