@@ -2145,7 +2145,7 @@ class LPGCDCMSActions:
                         for index, row in grouped_resp.iter_rows(named=True)
                      ]
                 return {"status": True, "message": "success", "data": result}
-        resp = resp.group_by(["Month"]).agg([
+        resp = resp.group_by(["ConsumerType", "Month"]).agg([
                 pl.sum("consumer_count").alias("consumer_count"),
                 pl.first("month_number").alias("month_number"),
             ])
@@ -2215,25 +2215,25 @@ class LPGCDCMSActions:
             filter_keys = [rec.key.strip('"') for rec in filters]
             grouped_resp = None
             if "Month" in filter_keys and "ZOName" not in filter_keys:
-                grouped_resp = resp.group_by(["Month", "ZOName"]).agg([
+                grouped_resp = resp.group_by(["ConsumerType", "Month", "ZOName"]).agg([
                     pl.sum("transaction_count").alias("transaction_count"),
                 ])
                 grouped_resp = grouped_resp.pivot(index="ZOName", on="ConsumerType", values="transaction_count")
                 _index = "ZOName"
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
-                grouped_resp = resp.group_by(["Month", "ZOName", "ROName"]).agg([
+                grouped_resp = resp.group_by(["ConsumerType", "Month", "ZOName", "ROName"]).agg([
                     pl.sum("transaction_count").alias("transaction_count"),
                 ])
                 grouped_resp = grouped_resp.pivot(index="ROName", on="ConsumerType", values="transaction_count")
                 _index = "ROName"
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
-                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName"]).agg([
+                grouped_resp = resp.group_by(["ConsumerType", "Month", "ZOName", "ROName", "SAName"]).agg([
                     pl.sum("transaction_count").alias("transaction_count"),
                 ])
                 grouped_resp = grouped_resp.pivot(index="SAName", on="ConsumerType", values="transaction_count")
                 _index = "SAName"
             elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
-                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                grouped_resp = resp.group_by(["ConsumerType", "Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
                     pl.sum("transaction_count").alias("transaction_count"),
                 ])
                 grouped_resp = grouped_resp.pivot(index="DistributorName", on="ConsumerType", values="transaction_count")
@@ -2248,7 +2248,7 @@ class LPGCDCMSActions:
                         for index, row in grouped_resp.iter_rows(named=True)
                      ]
                 return {"status": True, "message": "success", "data": result}
-        resp = resp.group_by(["Month"]).agg([
+        resp = resp.group_by(["ConsumerType", "Month"]).agg([
                 pl.sum("transaction_count").alias("transaction_count"),
                 pl.first("month_number").alias("month_number"),
             ])
