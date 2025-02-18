@@ -936,7 +936,7 @@ LIMIT 10000;''',
                                 "SAName",
                                 "DistributorName",
                                 "Month",
-                                "Month_Number",
+                                "month_number",
                                 sum("new_connection") as "new_connection"
                             FROM
                                 "lpg_cdcms_nc_data" ''',
@@ -1120,6 +1120,30 @@ ORDER BY
                             sum("Refills") as "Refills"
                         FROM
                             "subsidy_failure_statistics_PEC_data"''',
+    
+    'lpg_cdcms_subsidy_central_consumers': f''' 
+                            SELECT 
+                                "Month_Name" AS "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("Consumer_Count") as "consumer_count"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
+    
+    'lpg_cdcms_subsidy_central_transaction': f''' 
+                            SELECT 
+                                "Month_Name" AS "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("Transaction_Count") as "transaction_count"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
     
     "cs_query" : f'''
                     select 
