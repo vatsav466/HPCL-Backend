@@ -1001,6 +1001,15 @@ LIMIT 10000;''',
                         from
                             "lpg_cs_rejections" ''',
     
+    'productivity_overtime_vs_break_production': f'''  
+                            SELECT 
+                              "zone",
+                              "short_name" as "plant",
+                              SUM("productivity_break_production")/1000 as break_production,
+                              SUM("productivity_overtime_production")/1000 as overtime_production
+                            FROM 
+                                "lpg_operations_summary" ''',
+    
     'lpg_operations_daywise_productivity': f'''  
                                 SELECT 
                                 AVG("productivity_normal_productivity") AS "avg_productivity", 
