@@ -2257,7 +2257,7 @@ class LPGCDCMSActions:
                 "NPMUY": row.get("NPMUY", 0),
                 _index: row.get(_index, "")
             })
-        return {"status": True, "message": "success", "data": resp.to_dicts()}
+        return {"status": True, "message": "success", "data": result}
     
     
     @staticmethod
