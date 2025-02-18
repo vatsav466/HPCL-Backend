@@ -181,7 +181,7 @@ vts_interlock_mapping = {
             },
             "1": {
                 "interlock_name": "NoHalt Zone SecondTime",
-                "block_duration": 365,
+                "block_duration": 730,
                 "block_msg": "2 years",
                 "clear_count": True
             },
@@ -308,31 +308,31 @@ vts_interlock_mapping = {
                 "block_msg": "Permanent",
                 "clear_count": True
             },
-            "0": {
+            "1": {
                 "interlock_name": "VTS PowerDisconnect SecondTime",
                 "block_duration": 365,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
-            "0": {
+            "2": {
                 "interlock_name": "VTS PowerDisconnect ThirdTime",
                 "block_duration": 365,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
-            "0": {
+            "3": {
                 "interlock_name": "VTS PowerDisconnect FourthTime",
                 "block_duration": 365,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
-            "0": {
+            "4": {
                 "interlock_name": "VTS PowerDisconnect FifthTime",
                 "block_duration": 365,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
-            "0": {
+            "5": {
                 "interlock_name": "VTS PowerDisconnect SixthTime",
                 "block_duration": 365,
                 "block_msg": "Permanent",
