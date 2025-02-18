@@ -235,6 +235,363 @@ rca_reason = {
     ]
 }
 
+alert_action = {
+    "TAS": {
+        "TAS": {
+            "alert_section": "TAS",
+            "close_alert_func": "",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Person issue",
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Other"
+            ]
+        },
+        "VA": {
+            "alert_section": "VA",
+            "close_alert_func": "va_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Person issue",
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Other"
+            ]
+        },
+        "VTS": {
+            "alert_section": "VTS",
+            "close_alert_func": "vts_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Pilferage": "Pilferage",
+                "Operations": "Operations"
+            },
+            "rca_reason": [
+                "Health Issue",
+                "Person Issue",
+                "Equipment issue",
+                "Location/Outlet Near by",
+                "Other"
+            ]
+        }
+    },
+    "LPG": {
+        "LPG": {
+            "alert_section": "LPG",
+            "close_alert_func": "",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": []
+        },
+        "VA": {
+            "alert_section": "VA",
+            "close_alert_func": "va_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Person issue",
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Maintenance Issue",
+                "Calibration Issue",
+                "Other"
+            ]
+        },
+        "VTS": {
+            "alert_section": "VTS",
+            "close_alert_func": "vts_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Pilferage": "Pilferage",
+                "Operations": "Operations"
+            },
+            "rca_reason": [
+                "Health Issue",
+                "Person Issue",
+                "Equipment issue",
+                "Location/Outlet Near by",
+                "Other"
+            ]
+        }
+    },
+    "RO": {
+        "RO": {
+            "alert_section": "RO",
+            "close_alert_func": "",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": []
+        },
+        "VA": {
+            "alert_section": "VA",
+            "close_alert_func": "va_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Person issue",
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Other"
+            ]
+        },
+        "VTS": {
+            "alert_section": "VTS",
+            "close_alert_func": "vts_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Pilferage": "Pilferage",
+                "Operations": "Operations"
+            },
+            "rca_reason": [
+                "Health Issue",
+                "Person Issue",
+                "Equipment issue",
+                "Location/Outlet Near by",
+                "Other"
+            ]
+        }
+    }
+}
+
 dry_out_query = f"""SELECT
                         "title",
                         "value" AS "Site_Count",
