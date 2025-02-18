@@ -2087,7 +2087,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_consumers_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_consumers_query_ += ' AND '.join(conditions)
             lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "ConsumerType", "Month_Name", month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "ConsumerType", "Month_Name", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
         else:
             if "where" not in lpg_cdcms_subsidy_central_consumers_query_.lower():
                 lpg_cdcms_subsidy_central_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
@@ -2150,7 +2150,7 @@ class LPGCDCMSActions:
                 pl.first("month_number").alias("month_number"),
             ])
         resp = resp.sort("month_number")
-        grouped_resp = grouped_resp.pivot(index="Month", on="ConsumerType", values="consumer_count")
+        resp = resp.pivot(index="Month", on="ConsumerType", values="consumer_count")
         _index = "Month"
         result = [
                     {
@@ -2158,7 +2158,7 @@ class LPGCDCMSActions:
                         "NPMUY": row.get("NPMUY", 0),
                         _index: index
                     }
-                    for index, row in grouped_resp.iter_rows(named=True)
+                    for index, row in resp.iter_rows(named=True)
                 ]
         return {"status": True, "message": "success", "data": result}
 
@@ -2253,6 +2253,16 @@ class LPGCDCMSActions:
                 pl.first("month_number").alias("month_number"),
             ])
         resp = resp.sort("month_number")
+        resp = resp.pivot(index="Month", on="ConsumerType", values="transaction_count")
+        _index = "Month"
+        result = [
+                        {
+                            "PMUY": row.get("PMUY", 0),
+                            "NPMUY": row.get("NPMUY", 0),
+                            _index: index
+                        }
+                        for index, row in resp.iter_rows(named=True)
+                     ]
         return {"status": True, "message": "success", "data": resp.to_dicts()}
     
     
