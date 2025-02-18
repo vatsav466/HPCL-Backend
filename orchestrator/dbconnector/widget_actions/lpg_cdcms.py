@@ -2247,6 +2247,7 @@ class LPGCDCMSActions:
                 pl.first("month_number").alias("month_number"),
             ])
         resp = resp.sort("month_number")
+        resp = resp.with_columns(pl.col("transaction_count").fill_null(0).cast(pl.Float64).alias("transaction_count"))
         resp = resp.pivot(index="Month_Name", on="ConsumerType", values="transaction_count")
         _index = "Month_Name"
         result = []
