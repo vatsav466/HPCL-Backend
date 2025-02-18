@@ -983,7 +983,7 @@ class GlobalAnalytics:
         return resp
 
     @staticmethod
-    async def m60_performance(filters, cross_filters, drill_state, time_grain='', resp_format=''):
+    async def m60_performance(filters, cross_filters, drill_state, time_grain='', resp_format='',resp_level = ''):
         """
         Fetches the sales performance data for the given filters and drill state.
 
@@ -1003,14 +1003,13 @@ class GlobalAnalytics:
                                                      [rec.dict() for rec in cross_filters], drill_state, time_grain,
                                                      resp_format)
     @staticmethod
-    async def industry_performance(filters, cross_filters, drill_state, time_grain='', resp_format=''):
+    async def industry_performance(filters, cross_filters, drill_state, time_grain='', resp_format='',resp_level=''):
         """
         Fetches the sales performance data for the given filters and drill state.
 
         Parameters:
             filters (list): List of filter objects to apply to the query.
             drill_state (dict): Current drill state for processing the query.
-
 
         Returns:
             dict: Contains the status, a success message, and the sales performance data.
@@ -1022,7 +1021,7 @@ class GlobalAnalytics:
         """
         return await industry_performance.industry_performance([rec.dict() for rec in filters],
                                                                [rec.dict() for rec in cross_filters], drill_state,
-                                                               time_grain, resp_format)
+                                                               time_grain, resp_format,resp_level)
 
     @staticmethod
     async def m60_performance_old(filters, cross_filters, drill_state):
@@ -3375,7 +3374,6 @@ class GlobalAnalytics:
         query += " GROUP BY execution_date::DATE"
         resp = await function(query=query)
         return resp
-                
 
     @staticmethod
     async def location_wise_distribution(filters, cross_filters, drill_state):
@@ -3524,8 +3522,6 @@ class GlobalAnalytics:
         resp = await function(query=cp_query)
 
         return {"status": True, "message": "success", "data": resp}
-    
-    
     @staticmethod
     async def lpg_operations_productivity_zone(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
