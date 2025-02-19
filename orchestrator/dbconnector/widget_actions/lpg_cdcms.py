@@ -1279,6 +1279,11 @@ class LPGCDCMSActions:
                     pl.sum("new_connection").alias("new_connection"),
                     pl.first("month_number").alias("month_number"),
                 ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                    pl.sum("new_connection").alias("new_connection"),
+                    pl.first("month_number").alias("month_number"),
+                ])
             if grouped_resp is not None:
                 return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
         resp = resp.group_by(["Month"]).agg([
