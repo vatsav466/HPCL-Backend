@@ -1104,6 +1104,9 @@ def generate_summary():
                     data["bu"] = "LPG"
                     if "filling_heads" in data.columns:
                         data["filling_heads"] = data["filling_heads"].astype(str).str.replace(".0","") + "H"
+                    data['updated_at'] = datetime.now()
+                    data['created_at'] = data['updated_at']
+                    data['entity_id'] = data["sap_id"]
                     insertToDB(data, "lpg_operations_summary")
                 current_date += timedelta(days=1)
     except Exception as e:
