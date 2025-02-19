@@ -2139,6 +2139,7 @@ class LPGCDCMSActions:
             if grouped_resp is not None:
                 grouped_resp = grouped_resp.with_columns(pl.col("consumer_count").fill_null(0).cast(pl.Float64).alias("consumer_count"))
                 grouped_resp = grouped_resp.pivot(index=_index, on="ConsumerType", values="consumer_count")
+                grouped_resp = grouped_resp.with_columns(pl.all().fill_null(0))
                 result = []
                 for row in grouped_resp.iter_rows(named=True):
                     result.append({
@@ -2239,6 +2240,7 @@ class LPGCDCMSActions:
             if grouped_resp is not None:
                 grouped_resp = grouped_resp.with_columns(pl.col("transaction_count").fill_null(0).cast(pl.Float64).alias("transaction_count"))
                 grouped_resp = grouped_resp.pivot(index=_index, on="ConsumerType", values="transaction_count")
+                grouped_resp = grouped_resp.with_columns(pl.all().fill_null(0))
                 result = []
                 for row in grouped_resp.iter_rows(named=True):
                     result.append({
@@ -2339,6 +2341,7 @@ class LPGCDCMSActions:
             if grouped_resp is not None:
                 grouped_resp = grouped_resp.with_columns(pl.col("SubsidyAmount").fill_null(0).cast(pl.Float64).alias("SubsidyAmount"))
                 grouped_resp = grouped_resp.pivot(index=_index, on="ConsumerType", values="SubsidyAmount")
+                grouped_resp = grouped_resp.with_columns(pl.all().fill_null(0))
                 result = []
                 for row in grouped_resp.iter_rows(named=True):
                     result.append({
@@ -2439,6 +2442,7 @@ class LPGCDCMSActions:
             if grouped_resp is not None:
                 grouped_resp = grouped_resp.with_columns(pl.col("consumer_count").fill_null(0).cast(pl.Float64).alias("consumer_count"))
                 grouped_resp = grouped_resp.pivot(index=_index, on="ConsumerType", values="consumer_count")
+                grouped_resp = grouped_resp.with_columns(pl.all().fill_null(0))
                 result = []
                 for row in grouped_resp.iter_rows(named=True):
                     result.append({
@@ -2539,6 +2543,7 @@ class LPGCDCMSActions:
             if grouped_resp is not None:
                 grouped_resp = grouped_resp.with_columns(pl.col("transaction_count").fill_null(0).cast(pl.Float64).alias("transaction_count"))
                 grouped_resp = grouped_resp.pivot(index=_index, on="ConsumerType", values="transaction_count")
+                grouped_resp = grouped_resp.with_columns(pl.all().fill_null(0))
                 result = []
                 for row in grouped_resp.iter_rows(named=True):
                     result.append({
@@ -2639,6 +2644,7 @@ class LPGCDCMSActions:
             if grouped_resp is not None:
                 grouped_resp = grouped_resp.with_columns(pl.col("SubsidyAmount").fill_null(0).cast(pl.Float64).alias("SubsidyAmount"))
                 grouped_resp = grouped_resp.pivot(index=_index, on="ConsumerType", values="SubsidyAmount")
+                grouped_resp = grouped_resp.with_columns(pl.all().fill_null(0))
                 result = []
                 for row in grouped_resp.iter_rows(named=True):
                     result.append({
