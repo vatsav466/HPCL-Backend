@@ -125,7 +125,7 @@ class AuthenticationManager:
         Returns:
             None
         """
-        data = hpcl_ceg_model.Users.get_aggr_data(f"select username from users where "
+        data = await hpcl_ceg_model.Users.get_aggr_data(f"select username from users where "
                                                   f"lower(username)='{username.lower()}'", skip_total=True)
         if data["data"]:
             for user in data["data"]:
