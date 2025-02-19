@@ -1147,6 +1147,19 @@ ORDER BY
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
     
+    'lpg_cdcms_subsidy_central_amount':f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month_Name",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("SubsidyAmount") as "SubsidyAmount"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
+    
     "cs_query" : f'''
                     select 
                         "zone" as "zone",
