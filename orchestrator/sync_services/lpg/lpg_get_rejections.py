@@ -262,6 +262,9 @@ def get_cs_rejections(params):
     
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))    
     data = data.with_columns(pl.lit(max_date).alias("max_date"))
+    data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
+    data = data.with_columns(pl.col('updated_at').alias('created_at'))
+    data = data.with_columns(pl.col('sap_id').alias('entity_id'))
         
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
@@ -328,6 +331,9 @@ def get_gd_rejections(params):
                       ).then(pl.lit("19 KG")).otherwise(pl.lit("5 KG")).alias("cyl_type"))
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))    
     data = data.with_columns(pl.lit(max_date).alias("max_date"))
+    data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
+    data = data.with_columns(pl.col('updated_at').alias('created_at'))
+    data = data.with_columns(pl.col('sap_id').alias('entity_id'))
         
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
@@ -394,6 +400,9 @@ def get_pt_rejections(params):
                       ).then(pl.lit("19 KG")).otherwise(pl.lit("5 KG")).alias("cyl_type"))
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
     data = data.with_columns(pl.lit(max_date).alias("max_date"))
+    data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
+    data = data.with_columns(pl.col('updated_at').alias('created_at'))
+    data = data.with_columns(pl.col('sap_id').alias('entity_id'))
     
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
