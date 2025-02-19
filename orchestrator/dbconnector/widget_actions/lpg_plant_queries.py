@@ -1171,7 +1171,7 @@ ORDER BY
                                 "DistributorName",
                                 SUM("Consumer_Count") as "consumer_count"
                             FROM
-                                "lpg_cdcms_subsidy_central" ''',
+                                "lpg_cdcms_subsidy_state" ''',
     
     "cs_query" : f'''
                     select 
