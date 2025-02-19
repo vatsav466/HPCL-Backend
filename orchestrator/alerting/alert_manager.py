@@ -247,12 +247,13 @@ class AlertAction:
                         "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
                         "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert",
-                        "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert"}
+                        "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert",
+                        "Blocked": "block_alert", "UnBlocked": "unblock_alert", "Interrupt": "interrupt_alert", "Request": "request_alert"}
         event_tag_map = {"Justification": "is_justify", "Approved": "is_approved", "AcceptClose": "accept", "InvalidAlert": "invalid"}
         alert_id = input_data['alert_id']
         if input_data['doc_link']:
             input_data['doc_link'] = await helpers.get_doc_link(input_data['doc_link'])
-        input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "is_approved"): True}})
+        # input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "is_approved"): True}})
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         except Exception as e:
@@ -309,6 +310,10 @@ class AlertAction:
         #  history, fetching users, roles, ...
         # print("input_data for alert--> ", input_data)
         alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data, 'alert_history', [])
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
         # alert_history = alert_data.alert_history
         # print("alert_history --> ", alert_history)
         # allocated_time = alert_data.updated_at
@@ -329,6 +334,7 @@ class AlertAction:
         alert_history.append({"allocated_time": allocated_time.isoformat() if isinstance(allocated_time, datetime.datetime) else allocated_time,
                             "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],
                             "action_msg": input_data["action_msg"], "mail_sent_to": "",
+                            "action_by": rpt.get("email", "NOVEX_USER"),
                             "ims_datetime": input_data.get("ims_datetime", ""),
                             "prod_reqd_dt": input_data.get("prod_reqd_dt", ""),
                             "doc_link": input_data.get("doc_link", ""),
@@ -350,7 +356,11 @@ class AlertAction:
                             "is_vts": event_tags.get("is_vts", False),
                             "is_delivered": event_tags.get("is_delivered", False),
                             "is_tripped": event_tags.get("is_tripped", False),
-                            "is_justify": event_tags.get("is_justify", False)     
+                            "is_justify": event_tags.get("is_justify", False),
+                            "is_blocked": event_tags.get("is_blocked", False),
+                            "is_unblocked": event_tags.get("is_unblocked", False),
+                            "is_interrupt": event_tags.get("is_interrupt", False),
+                            "is_extra": event_tags.get("is_extra", False)
                         })
         # print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
@@ -392,7 +402,11 @@ class AlertAction:
                    "is_vts": {"name": "vts", "type": "Boolean"},
                    "is_delivered": {"name": "delivered", "type": "Boolean"},
                    "is_tripped": {"name": "tripped", "type": "Boolean"},
-                   "is_justify": {"name": "justify", "type": "Boolean"}
+                   "is_justify": {"name": "justify", "type": "Boolean"},
+                   "is_blocked": {"name": "blocked", "type": "Boolean"},
+                   "is_unblocked": {"name": "unblocked", "type": "Boolean"},
+                   "is_interrupt": {"name": "interrupt", "type": "Boolean"},
+                   "is_extra": {"name": "request", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -684,3 +698,43 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "VTS")
+
+    @classmethod
+    async def block_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Blocked")
+
+    @classmethod
+    async def unblock_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "UnBlocked")
+
+    @classmethod
+    async def interrupt_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Interrupt")
+
+    @classmethod
+    async def request_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Request")
