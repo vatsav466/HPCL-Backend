@@ -130,6 +130,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                            filters,sales_key="sales"):
     # Convert Decimal to float for Pandas compatibility
     df["sales"] = df["sales"].astype(float)
+
     # Calculate total sales per fiscal year
     if 'sbu_name' in df.columns.tolist():
         df.loc[df['sbu_name'] =='','sbu_name'] = 'Unknown'
@@ -150,6 +151,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
 
         # Merge results
         summary = summary.merge(hpcl_sales_per_year, on=group_by, how="left").fillna(0)
+
     # Mapping fiscal years to prefixes
     prefix_map = {}
     if fiscal_year_pre:
@@ -285,6 +287,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         df = df.sort_values('month_name').reset_index(drop=True)
     if resp_format == 'company_level'  and time_grain == 'Monthly'and '"inc"' in [x['key'] for x in filters]:
             print("this is inside if")
+
             cols_to_cumsum = [col for col in df.columns if col != 'month_name']
             df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
             return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
@@ -460,7 +463,6 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     return {'message':'Industry_Performance','status':True,'data':data}
 
     return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
-    
 
 
 def generate_stacked_data(df, resp_format='', month_column=''):
