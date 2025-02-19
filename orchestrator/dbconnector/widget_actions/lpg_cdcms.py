@@ -1240,7 +1240,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_nc_query_ += ' WHERE ' 
                 lpg_cdcms_nc_query_ += ' AND '.join(conditions)
             lpg_cdcms_nc_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_nc_query_ += ' GROUP BY "Month", month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
         else:
             if "where" not in lpg_cdcms_nc_query_.lower():
                 lpg_cdcms_nc_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
