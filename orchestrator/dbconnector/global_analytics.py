@@ -3867,16 +3867,16 @@ class GlobalAnalytics:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_productivity_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_productivity_query_, access_filters, drill_state)
-            daywise_productivity_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+            daywise_productivity_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' '
             daywise_productivity_query_ += ' GROUP BY "process_date" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_productivity_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_productivity_query_, access_filters, drill_state)
             if not "where" in daywise_productivity_query_.lower():
-                daywise_productivity_query_ += ' WHERE "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+                daywise_productivity_query_ += ' WHERE "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' '
             else:
-                daywise_productivity_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+                daywise_productivity_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' '
             daywise_productivity_query_ += ' GROUP BY "process_date" '
         try:
             query_resp = await function(query=daywise_productivity_query_)
@@ -3920,16 +3920,16 @@ class GlobalAnalytics:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_production_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_production_query_, access_filters, drill_state)
-            daywise_production_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+            daywise_production_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' '
             daywise_production_query_ += ' GROUP BY "process_date" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_production_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_production_query_, access_filters, drill_state)
             if not "where" in daywise_production_query_.lower():
-                daywise_production_query_ = ' WHERE "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+                daywise_production_query_ += ' WHERE "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' '
             else:
-                daywise_production_query_ = ' AND "process_date" >= CURRENT_DATE - INTERVAL 30 days'
+                daywise_production_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' '
             daywise_production_query_ += ' GROUP BY "process_date" '
         try:           
             query_resp = await function(query=daywise_production_query_)
