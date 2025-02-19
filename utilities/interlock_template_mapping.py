@@ -16,3 +16,5 @@ class TemplateMapping(str, Enum):
     EXCEPTION = "INTERLOCK_EXCEPTION"
     BLOCK = ""
     UNBLOCK = ""
+    JUSTIFIED="INTERLOCK_ALERT"
+    RESOLVED=""

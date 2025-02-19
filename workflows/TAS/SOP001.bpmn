@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0eq55gg" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.31.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0eq55gg" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.27.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
   <bpmn:process id="TASTANKOVERFILLPREVENTIONSOP001" name="TANK_OVERFILL_PREVENTION_SOP001" isExecutable="true" camunda:historyTimeToLive="101">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_10nrgqd</bpmn:outgoing>
@@ -22,7 +22,7 @@
       <bpmn:outgoing>Flow_1m25b2d</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_10nrgqd" sourceRef="StartEvent_1" targetRef="Activity_0kga0ap" />
-    <bpmn:serviceTask id="Activity_106cc18" name="Resolve alret" camunda:type="external" camunda:topic="tas_workflow_consumer_2">
+    <bpmn:serviceTask id="Activity_106cc18" name="Resolve alert" camunda:type="external" camunda:topic="tas_workflow_consumer_2">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="close">true</camunda:inputParameter>
@@ -44,10 +44,10 @@
     </bpmn:intermediateCatchEvent>
     <bpmn:sequenceFlow id="Flow_0amuir3" sourceRef="Event_0kc5zt0" targetRef="Activity_07c2sl6" />
     <bpmn:endEvent id="Event_0hzsdz4">
-      <bpmn:incoming>Flow_13wlale</bpmn:incoming>
+      <bpmn:incoming>Flow_0m271o0</bpmn:incoming>
       <bpmn:terminateEventDefinition id="TerminateEventDefinition_1ftxak1" />
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_13wlale" sourceRef="Activity_106cc18" targetRef="Event_0hzsdz4" />
+    <bpmn:sequenceFlow id="Flow_13wlale" sourceRef="Activity_106cc18" targetRef="Activity_0lwx61m" />
     <bpmn:serviceTask id="Activity_07c2sl6" name="Send Escalation to Zonal TAS Officer|Zonal HSSE|Zonal Operations Head" camunda:type="external" camunda:topic="tas_workflow_consumer_3">
       <bpmn:extensionElements>
         <camunda:inputOutput>
@@ -130,6 +130,22 @@
     </bpmn:intermediateCatchEvent>
     <bpmn:sequenceFlow id="Flow_1lkjoel" sourceRef="Gateway_0w1kc1u" targetRef="Event_025n9zl" />
     <bpmn:sequenceFlow id="Flow_1qs06f9" sourceRef="Event_025n9zl" targetRef="Activity_106cc18" />
+    <bpmn:serviceTask id="Activity_0lwx61m" name="Send Notification Tas Officer | Location in charge" camunda:type="external" camunda:topic="tas_workflow_consumer_1">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="rolemailto">TAS Officer,Location In-charge</camunda:inputParameter>
+          <camunda:inputParameter name="messagetype">active</camunda:inputParameter>
+          <camunda:inputParameter name="msg_subject">Interlock Activate</camunda:inputParameter>
+          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_13wlale</bpmn:incoming>
+      <bpmn:outgoing>Flow_0m271o0</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0m271o0" sourceRef="Activity_0lwx61m" targetRef="Event_0hzsdz4" />
   </bpmn:process>
   <bpmn:message id="Message_23a1mtd" name="interLockOk" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
@@ -150,9 +166,6 @@
         <bpmndi:BPMNLabel>
           <dc:Bounds x="609" y="155" width="43" height="14" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0hzsdz4_di" bpmnElement="Event_0hzsdz4">
-        <dc:Bounds x="962" y="249" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_07c2sl6_di" bpmnElement="Activity_07c2sl6">
         <dc:Bounds x="720" y="90" width="100" height="80" />
@@ -187,6 +200,13 @@
           <dc:Bounds x="595" y="292" width="73" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0hzsdz4_di" bpmnElement="Event_0hzsdz4">
+        <dc:Bounds x="982" y="249" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1isiial" bpmnElement="Activity_0lwx61m">
+        <dc:Bounds x="850" y="227" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_10nrgqd_di" bpmnElement="Flow_10nrgqd">
         <di:waypoint x="215" y="267" />
         <di:waypoint x="270" y="267" />
@@ -197,7 +217,7 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_13wlale_di" bpmnElement="Flow_13wlale">
         <di:waypoint x="800" y="267" />
-        <di:waypoint x="962" y="267" />
+        <di:waypoint x="850" y="267" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_02izmw9_di" bpmnElement="Flow_02izmw9">
         <di:waypoint x="820" y="130" />
@@ -231,6 +251,10 @@
       <bpmndi:BPMNEdge id="Flow_1qs06f9_di" bpmnElement="Flow_1qs06f9">
         <di:waypoint x="648" y="267" />
         <di:waypoint x="700" y="267" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0m271o0_di" bpmnElement="Flow_0m271o0">
+        <di:waypoint x="950" y="267" />
+        <di:waypoint x="982" y="267" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
