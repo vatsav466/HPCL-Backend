@@ -2240,7 +2240,7 @@ class LPGCDCMSActions:
                 grouped_resp = grouped_resp.with_columns(pl.col("transaction_count").fill_null(0).cast(pl.Float64).alias("transaction_count"))
                 grouped_resp = grouped_resp.pivot(index=_index, on="ConsumerType", values="transaction_count")
                 result = []
-                for row in resp.iter_rows(named=True):
+                for row in grouped_resp.iter_rows(named=True):
                     result.append({
                         "PMUY": row.get("PMUY", 0),
                         "NPMUY": row.get("NPMUY", 0),
@@ -2540,7 +2540,7 @@ class LPGCDCMSActions:
                 grouped_resp = grouped_resp.with_columns(pl.col("transaction_count").fill_null(0).cast(pl.Float64).alias("transaction_count"))
                 grouped_resp = grouped_resp.pivot(index=_index, on="ConsumerType", values="transaction_count")
                 result = []
-                for row in resp.iter_rows(named=True):
+                for row in grouped_resp.iter_rows(named=True):
                     result.append({
                         "PMUY": row.get("PMUY", 0),
                         "NPMUY": row.get("NPMUY", 0),
