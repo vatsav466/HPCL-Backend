@@ -83,6 +83,10 @@ Enum AlertActionType str {
     Notified='Notified'
     Escalated='Escalated'
     Resolved='Resolved'
+    Blocked='Blocked'
+    UnBlocked='UnBlocked'
+    Request='Request'
+    Interrupt='Interrupt'
 }
 
 Enum IndentStatus str {
@@ -431,6 +435,7 @@ Model Alert_History internal {
     ims_datetime optional str
     prod_reqd_dt optional str
     mail_sent_to optional str
+    action_by optional str
     action_type AlertActionType
     alert_status optional AlertStatus
     action_msg str
@@ -455,6 +460,10 @@ Model Alert_History internal {
     is_tripped optional bool
     is_justify optional bool
     is_vts optional bool
+    is_blocked optional bool
+    is_unblocked optional bool
+    is_interrupt optional bool
+    is_extra optional bool
 }
 
 Model tags internal {
@@ -477,6 +486,10 @@ Model tags internal {
     isDelivered optional bool
     isTripped optional bool
     isJustify optional bool
+    isBlocked optional bool
+    isUnBlocked optional bool
+    isInterrupt optional bool
+    isExtra optional bool
 }
 
 Model Interlock {

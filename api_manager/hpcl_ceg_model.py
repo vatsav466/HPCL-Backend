@@ -719,6 +719,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     ims_datetime: typing.Optional[str] = pydantic.Field("", **{})
     prod_reqd_dt: typing.Optional[str] = pydantic.Field("", **{})
     mail_sent_to: typing.Optional[str] = pydantic.Field("", **{})
+    action_by: typing.Optional[str] = pydantic.Field("", **{})
     action_type: hpcl_ceg_enum.AlertActionType
     alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
     action_msg: str
@@ -743,6 +744,10 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     is_tripped: typing.Optional[bool] = pydantic.Field(False, )
     is_justify: typing.Optional[bool] = pydantic.Field(False, )
     is_vts: typing.Optional[bool] = pydantic.Field(False, )
+    is_blocked: typing.Optional[bool] = pydantic.Field(False, )
+    is_unblocked: typing.Optional[bool] = pydantic.Field(False, )
+    is_interrupt: typing.Optional[bool] = pydantic.Field(False, )
+    is_extra: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -765,6 +770,10 @@ class tagsCreate(pydantic.BaseModel):
     is_delivered: typing.Optional[bool] = pydantic.Field(False, )
     is_tripped: typing.Optional[bool] = pydantic.Field(False, )
     is_justify: typing.Optional[bool] = pydantic.Field(False, )
+    is_blocked: typing.Optional[bool] = pydantic.Field(False, )
+    is_un_blocked: typing.Optional[bool] = pydantic.Field(False, )
+    is_interrupt: typing.Optional[bool] = pydantic.Field(False, )
+    is_extra: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):

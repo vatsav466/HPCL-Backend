@@ -123,6 +123,10 @@ class AlertActionType(str, enum.Enum):
     Notified = 'Notified'
     Escalated = 'Escalated'
     Resolved = 'Resolved'
+    Blocked = 'Blocked'
+    UnBlocked = 'UnBlocked'
+    Request = 'Request'
+    Interrupt = 'Interrupt'
 
 
 
