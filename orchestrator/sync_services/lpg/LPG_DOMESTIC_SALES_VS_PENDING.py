@@ -773,7 +773,7 @@ def get_subsidy_central_stats():
                         ELSE
                             CONCAT(YEAR(H.Bank_Debit_Date) - 1, '-', YEAR(H.Bank_Debit_Date))
                     END AS Financial_Year,
-                    DATENAME(MONTH, H.Bank_Debit_Date) AS Month,
+                    DATENAME(MONTH, H.Bank_Debit_Date) AS Month_Name,
                     COUNT(D.Refill_Id) AS Transaction_Count,
                     SUM(D.Net_Amt_Payable) AS SubsidyAmount,
                     COUNT(DISTINCT D.LPG_ID) AS Consumer_Count
@@ -881,8 +881,9 @@ def get_subsidy_central_stats():
     
     data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
-    data = data.with_columns(pl.col("Month").replace(month_order).alias("month_number"))
-    data = data.rename({"Consumer_Scheme": "ConsumerType"})
+    data = data.with_columns(pl.col("Month_Name").replace(month_order).alias("month_number"))
+    data = data.rename({"Consumer_Scheme": "ConsumerType", "Month_Name": "Month"})
+    data = data.unique("System_Idx")
     for col in data.columns:
         if col.endswith("_y"):
             data = data.drop(col)
@@ -939,7 +940,7 @@ def get_subsidy_state_stats():
                         ELSE
                             CONCAT(YEAR(H.Bank_Debit_Date) - 1, '-', YEAR(H.Bank_Debit_Date))
                     END AS Financial_Year,
-                    DATENAME(MONTH, H.Bank_Debit_Date) AS Month,
+                    DATENAME(MONTH, H.Bank_Debit_Date) AS Month_Name,
                     COUNT(D.Refill_Id) AS Transaction_Count,
                     SUM(D.Net_Amt_Payable) AS SubsidyAmount,
                     COUNT(DISTINCT D.LPG_ID) AS Consumer_Count
@@ -1051,8 +1052,8 @@ def get_subsidy_state_stats():
                    'October': 6, 'November': 7, 'December': 8, 'January': 9, 'February': 10, 'March': 11}
     data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
-    data = data.with_columns(pl.col("Month").replace(month_order).alias("month_number"))
-    data = data.rename({"Consumer_Scheme": "ConsumerType"})
+    data = data.with_columns(pl.col("Month_Name").replace(month_order).alias("month_number"))
+    data = data.rename({"Consumer_Scheme": "ConsumerType", "Month_Name": "Month"})
     data = data.unique("System_Idx")
     for col in data.columns:
         if col.endswith("_y"):
@@ -1360,6 +1361,6 @@ def get_consumer_statistics():
 if __name__=="__main__":
     get_pending_vs_delivered_data()
     get_consumer_statistics()
-    get_new_connection_data()
+    get_new_connection_data()    
+    get_subsidy_state_stats()
     get_subsidy_central_stats()
-    
