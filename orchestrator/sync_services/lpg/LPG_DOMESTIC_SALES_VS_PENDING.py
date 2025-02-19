@@ -773,7 +773,7 @@ def get_subsidy_central_stats():
                         ELSE
                             CONCAT(YEAR(H.Bank_Debit_Date) - 1, '-', YEAR(H.Bank_Debit_Date))
                     END AS Financial_Year,
-                    DATENAME(MONTH, H.Bank_Debit_Date) AS Month_Name,
+                    DATENAME(MONTH, H.Bank_Debit_Date) AS Month,
                     COUNT(D.Refill_Id) AS Transaction_Count,
                     SUM(D.Net_Amt_Payable) AS SubsidyAmount,
                     COUNT(DISTINCT D.LPG_ID) AS Consumer_Count
@@ -881,7 +881,7 @@ def get_subsidy_central_stats():
     
     data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
-    data = data.with_columns(pl.col("Month_Name").replace(month_order).alias("month_number"))
+    data = data.with_columns(pl.col("Month").replace(month_order).alias("month_number"))
     data = data.rename({"Consumer_Scheme": "ConsumerType"})
     for col in data.columns:
         if col.endswith("_y"):
@@ -895,7 +895,7 @@ def get_subsidy_central_stats():
             "password": "TTNqetkiJLPM50jC",
             "port": 5432
             })
-    insertToDB(data, "lpg_cdcms_subsidy_central", indexing_col=("ZOName", "Financial_Year", "Month_Name"))
+    insertToDB(data, "lpg_cdcms_subsidy_central", indexing_col=("ZOName", "Financial_Year", "Month"))
     print(data)
 
 
@@ -926,6 +926,147 @@ def calculate_financial_year(df):
         )
         .alias("Financial_Year")
     ])
+
+def get_subsidy_state_stats():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = """ SELECT 
+                    D.Distributor_Code,
+                    D.Consumer_Scheme,
+                    CASE
+                        WHEN MONTH(H.Bank_Debit_Date) >= 4 THEN
+                            CONCAT(YEAR(H.Bank_Debit_Date), '-', YEAR(H.Bank_Debit_Date) + 1)
+                        ELSE
+                            CONCAT(YEAR(H.Bank_Debit_Date) - 1, '-', YEAR(H.Bank_Debit_Date))
+                    END AS Financial_Year,
+                    DATENAME(MONTH, H.Bank_Debit_Date) AS Month,
+                    COUNT(D.Refill_Id) AS Transaction_Count,
+                    SUM(D.Net_Amt_Payable) AS SubsidyAmount,
+                    COUNT(DISTINCT D.LPG_ID) AS Consumer_Count
+                FROM 
+                    CLDP_PFMS.tblStateRefillBatchDetails D WITH(NOLOCK)
+                    INNER JOIN CLDP_PFMS.tblRefillResponseBatchHeader H WITH(NOLOCK)
+                    ON H.PFMS_Batch_ID = D.PFMS_Batch_ID
+                WHERE 
+                    D.Payout_Status = 'SU'
+                GROUP BY 
+                    D.Consumer_Scheme,
+                    D.Distributor_Code,
+                    CASE
+                        WHEN MONTH(H.Bank_Debit_Date) >= 4 THEN
+                            CONCAT(YEAR(H.Bank_Debit_Date), '-', YEAR(H.Bank_Debit_Date) + 1)
+                        ELSE
+                            CONCAT(YEAR(H.Bank_Debit_Date) - 1, '-', YEAR(H.Bank_Debit_Date))
+                    END,
+                    DATENAME(MONTH, H.Bank_Debit_Date),
+                    MONTH(H.Bank_Debit_Date)
+                ORDER BY 
+                    Financial_Year,
+                    MONTH(H.Bank_Debit_Date) """
+
+
+    data = fetch_data(cursor, query, getData=True)
+    print(data)
+    data = data.with_columns(System_Idx=pl.lit(""))
+    data = data.with_columns(pl.col('System_Idx').map_elements(lambda x: str(uuid.uuid4().hex)))
+
+    tblDistributorMaster = """ SELECT * FROM DCMs.tblDistributorMaster; """
+    tblDistributorMaster = fetch_data(cursor, tblDistributorMaster, getData=True)
+
+    tblDistributorMaster = tblDistributorMaster.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
+    data = data.with_columns(pl.col("Distributor_Code").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
+    # Getting SACode
+    data = _merge_data(
+        left_df=data,
+        right_df=tblDistributorMaster.select(["JDEDistributorCode", "DistributorName", "SACode", "StateCode", "DistrictCode", "TalukaCode", "CityCode"]),
+        left_on=["JDEDistributorCode"],
+        right_on=["JDEDistributorCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblSAMaster = """ SELECT * FROM DCMs.tblSAMaster; """
+    tblSAMaster = fetch_data(cursor, tblSAMaster, getData=True)
+
+    # Getting SAName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblSAMaster.select(["SACode", "ROCode", "SAName"]),
+        left_on=["SACode"],
+        right_on=["SACode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblROMaster =  """ SELECT * FROM DCMs.tblROMaster; """
+    tblROMaster = fetch_data(cursor, tblROMaster, getData=True)
+
+    # Getting ROName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblROMaster.select(["ROCode", "ZOCode", "ROName"]),
+        left_on=["ROCode"],
+        right_on=["ROCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblZOMaster =  """ SELECT * FROM DCMs.tblZOMaster; """
+    tblZOMaster = fetch_data(cursor, tblZOMaster, getData=True)
+
+    # Getting ZOName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblZOMaster.select(["ZOCode", "ZOName"]),
+        left_on=["ZOCode"],
+        right_on=["ZOCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+
+    zoneMap = {
+            "LPG - NORTH WEST ZONE": "NWZ",
+            "LPG - NORTH ZONE": "NZ",
+            "LPG - WEST ZONE": "WZ",
+            "LPG - SOUTH CENTRAL ZONE": "SCZ",
+            "LPG - SOUTH ZONE": "SZ",
+            "LPG - NORTH CENTRAL ZONE": "NCZ",
+            "LPG - EAST ZONE": "EZ"
+            }
+
+    month_order = {'April': 0, 'May': 1, 'June': 2, 'July': 3, 'August': 4, 'September': 5,
+                   'October': 6, 'November': 7, 'December': 8, 'January': 9, 'February': 10, 'March': 11}
+    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
+    data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
+    data = data.with_columns(pl.col("Month").replace(month_order).alias("month_number"))
+    data = data.rename({"Consumer_Scheme": "ConsumerType"})
+    data = data.unique("System_Idx")
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+    trunc_query = """ TRUNCATE lpg_cdcms_subsidy_state; """
+    fetch_data(cursor, trunc_query, getData=False, params={
+            "host": "10.90.38.162",
+            "database": "hpcl_ceg",
+            "user": "ceg_user",
+            "password": "TTNqetkiJLPM50jC",
+            "port": 5432
+            })
+
+    insertToDB(data, "lpg_cdcms_subsidy_state", indexing_col=("ZOName", "Financial_Year", "Month"))
 
 
 def get_new_connection_data():
