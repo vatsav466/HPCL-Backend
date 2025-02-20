@@ -747,7 +747,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     is_blocked: typing.Optional[bool] = pydantic.Field(False, )
     is_unblocked: typing.Optional[bool] = pydantic.Field(False, )
     is_interrupt: typing.Optional[bool] = pydantic.Field(False, )
-    is_extra: typing.Optional[bool] = pydantic.Field(False, )
+    is_extra_days: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -773,7 +773,7 @@ class tagsCreate(pydantic.BaseModel):
     is_blocked: typing.Optional[bool] = pydantic.Field(False, )
     is_un_blocked: typing.Optional[bool] = pydantic.Field(False, )
     is_interrupt: typing.Optional[bool] = pydantic.Field(False, )
-    is_extra: typing.Optional[bool] = pydantic.Field(False, )
+    is_extra_days: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class InterlockSchema(UrdhvaPostgresBase):
