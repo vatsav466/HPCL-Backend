@@ -62,6 +62,15 @@ async def close_va_alert(alert_data, input_data):
         alert_data = alert_data.__dict__
     if not input_data.get("doc_link", ""):
         input_data["doc_link"] = await get_doc_link_from_alert_history(alert_data)
+
+    if input_data['doc_link']:
+        if isinstance(input_data['doc_link'], list):
+            input_data['doc_link'] = input_data['doc_link'][0]
+        else:
+            input_data['doc_link'] = ""
+    else:
+        input_data['doc_link'] = ""
+
     action_code = "VALID"
     if input_data.get("action_type") == 'InvalidAlert':
         action_code = 'INVALID'
@@ -89,6 +98,11 @@ async def close_vts_alert(alert_data, input_data):
     Returns:
 
     """
+    if urdhva_base.context.context.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
+
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
     if not input_data.get("doc_link", ""):
@@ -97,10 +111,10 @@ async def close_vts_alert(alert_data, input_data):
     approved_datetime = await get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
     params = {
             "TT_No": alert_data['vehicle_number'],
-            "UnBlockedBy": "NOVEX_USER",
+            "UnBlockedBy": rpt.get("email", "NOVEX_USER"),
             "UnBlockedDateTime": un_block_datetime,
             "UnBlockedRemarks": await get_approved_remarks(alert_data, is_approved=False),
-            "ApprovedBy": "NOVEX_USER",
+            "ApprovedBy": rpt.get("email", "NOVEX_USER"),
             "ApprovedDateTime": approved_datetime,
             "ApprovedRemarks": await get_approved_remarks(alert_data, is_approved=True),
             "BlockStartDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
@@ -108,7 +122,7 @@ async def close_vts_alert(alert_data, input_data):
             "WaivedOff": False,
             "AlertID": alert_data['id'],
             "DocLink": {
-                "DocPaths": [input_data["doc_link"]]
+                "DocPaths": input_data["doc_link"] if input_data['doc_link'] else []
             }
         }
     print("Un block tt params: ", params)
@@ -118,15 +132,17 @@ async def close_vts_alert(alert_data, input_data):
 async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):
     if get_approved_time:
         for alert_history in alert_data.get("alert_history", []):
-            if alert_history['action_type'] == 'Approved':
-                return alert_history['processed_time']
+            if alert_history.get('is_approved', False):
+                if alert_history['action_type'] == 'Approved':
+                    return alert_history['processed_time']
         return ""
     for alert_history in alert_data.get("alert_history", []):
         if is_approved:
-            if alert_history['action_type'] == 'Approved':
-                return alert_history['action_msg']
+            if alert_history.get('is_approved', False):
+                if alert_history['action_type'] == 'Approved':
+                    return alert_history['action_msg']
         else:
-            if alert_history['action_type'] not in ['Created', 'Approved']:
+            if alert_history['action_type'] not in ['Created', 'Approved', 'VTS']:
                 return alert_history['action_msg']
     return ""
 
@@ -139,10 +155,11 @@ async def get_doc_link_from_alert_history(alert_data):
     Returns:
 
     """
+    doc_link = []
     for alert_history in alert_data.get("alert_history", []):
         if alert_history.get("doc_link", ""):
-            return alert_history.get("doc_link", "")
-    return ""
+            doc_link.append(alert_history.get("doc_link", ""))
+    return doc_link
 
 
 def read_template(filename, data):
@@ -360,7 +377,7 @@ class AlertAction:
                             "is_blocked": event_tags.get("is_blocked", False),
                             "is_unblocked": event_tags.get("is_unblocked", False),
                             "is_interrupt": event_tags.get("is_interrupt", False),
-                            "is_extra": event_tags.get("is_extra", False)
+                            "is_extra_days": event_tags.get("is_extra_days", False)
                         })
         # print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
@@ -406,7 +423,7 @@ class AlertAction:
                    "is_blocked": {"name": "blocked", "type": "Boolean"},
                    "is_unblocked": {"name": "unblocked", "type": "Boolean"},
                    "is_interrupt": {"name": "interrupt", "type": "Boolean"},
-                   "is_extra": {"name": "request", "type": "Boolean"}
+                   "is_extra_days": {"name": "request", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}

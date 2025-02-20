@@ -463,7 +463,7 @@ Model Alert_History internal {
     is_blocked optional bool
     is_unblocked optional bool
     is_interrupt optional bool
-    is_extra optional bool
+    is_extra_days optional bool
 }
 
 Model tags internal {
@@ -489,7 +489,7 @@ Model tags internal {
     isBlocked optional bool
     isUnBlocked optional bool
     isInterrupt optional bool
-    isExtra optional bool
+    isExtraDays optional bool
 }
 
 Model Interlock {
@@ -674,6 +674,7 @@ Model Alerts {
 
     Action=> get_closed_alerts_details {
         bu str
+        alert_id str
         alert_section str
         interlock_name str
     }

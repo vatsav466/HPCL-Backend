@@ -24,6 +24,11 @@ class SendVtsCommand:
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
 
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
+
         if params.get("interrupt").lower() == 'block':
             input_data = {
                 "TT_No": alert_data['vehicle_number'],
@@ -44,13 +49,13 @@ class SendVtsCommand:
             un_block_datetime = str(alert_data['vehicle_blocked_end_date'].isoformat()) if params.get(
                 "auto_unblock", False) else str(urdhva_base.utilities.get_present_time().isoformat())
             approved_datetime = await alert_manager.get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
-            alert_data["doc_link"] = await alert_manager.get_doc_link_from_alert_history(alert_data)
+            doc_link = await alert_manager.get_doc_link_from_alert_history(alert_data)
             params = {
                 "TT_No": alert_data['vehicle_number'],
-                "UnBlockedBy": "NOVEX_USER",
+                "UnBlockedBy": rpt.get("email", "NOVEX_USER"),
                 "UnBlockedDateTime": un_block_datetime,
                 "UnBlockedRemarks": await alert_manager.get_approved_remarks(alert_data, is_approved=False),
-                "ApprovedBy": "NOVEX_USER",
+                "ApprovedBy": rpt.get("email", "NOVEX_USER"),
                 "ApprovedDateTime": approved_datetime,
                 "ApprovedRemarks": await alert_manager.get_approved_remarks(alert_data, is_approved=True),
                 "BlockStartDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
@@ -58,7 +63,7 @@ class SendVtsCommand:
                 "WaivedOff": params.get("WaivedOff", False),
                 "AlertID": alert_data['id'],
                 "DocLink": {
-                    "DocPaths": [alert_data["doc_link"]]
+                    "DocPaths": doc_link if doc_link else []
                 }
             }
             # await vts_analysis.post_unblocked_tt(params)
