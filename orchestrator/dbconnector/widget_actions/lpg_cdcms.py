@@ -95,7 +95,7 @@ class LPGCDCMSActions:
         data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
                 "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
                 "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
-                "ConsumerType": ['PMUY', 'NPMUY']}
+                "ConsumerType": ['PMUY', 'NPMUY'], "Financial_Year": ["2023-2024", "2024-2025"]}
         return data
     
     
