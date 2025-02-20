@@ -2,6 +2,7 @@ import urdhva_base
 import re
 import json
 import pandas as pd
+import numpy as np
 from typing import List, Dict
 from collections import defaultdict
 import utilities.helpers as helpers
@@ -127,7 +128,7 @@ def get_date_filters(filters, resp_type="months"):
 
 
 def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, drill_state, time_grain, resp_format,resp_level,
-                           filters,sales_key="sales"):
+                           filters,resp_format_org,sales_key="sales"):
     # Convert Decimal to float for Pandas compatibility
     df["sales"] = df["sales"].astype(float)
     # Calculate total sales per fiscal year
@@ -288,6 +289,42 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             cols_to_cumsum = [col for col in df.columns if col != 'month_name']
             df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
             return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
+    if resp_format == 'company_level' and (resp_level =='sbu_level' or resp_level =='product_level') and  resp_format_org == 'company_level_heatmap':
+        com_name = [x['value'] for x in filters if x['key'] =='"company_name"'][0]
+        cols = [col for col in df.columns if com_name in col or 'month_name' in col or 'sbu_name' in col or 'productname' in col]
+        print("com_name",com_name)
+        df = df[cols]
+        for col in df.columns:
+            if 'actual' in col or 'history' in col:
+                
+                #df[col] = df[col].fillna(0).astype(float)
+                df[col] = df[col].astype(str).replace('nan', '0').astype(float)
+
+        import json
+        month_mapper = {m: m.capitalize() for m in ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]}
+        list1 = df.to_dict(orient='records')
+        output = {}
+        if resp_level =='sbu_level':
+         req_key = 'sbu_name'
+         req_names = set(item['sbu_name'] for item in list1)
+        if resp_level == 'product_level':
+            req_names = set(item['productname'] for item in list1)
+            req_key = 'productname'
+        for entry in list1:
+            req_name = entry[req_key].upper()  # Ensure consistent uppercase handling
+            month = month_mapper[entry["month_name"]]
+            actual = entry[f"actual_{com_name}_share"] if entry[f"actual_{com_name}_share"] is not None else 0.0
+            history = entry[f"history_{com_name}_share"] if entry[f"history_{com_name}_share"] is not None else 0.0
+
+            if req_name not in output and 'sbu_level' in resp_level:
+                output[req_name] = {"sbu_name": req_name.capitalize()}  # Convert back to title case for output
+            if req_name not in output and 'product_level' in resp_level:
+                output[req_name] = {"productname": req_name.capitalize()}
+            # Sum values if they exist already
+            output[req_name][f"{month}_actual"] = output[req_name].get(f"{month}_actual", 0.0) + actual
+            output[req_name][f"{month}_history"] = output[req_name].get(f"{month}_history", 0.0) + history
+        return {'message':'Industry Cummulative company_level Data','data':list(output.values()),'status':True,'company':unique_companies}
+
     if resp_format == 'company_level' and (resp_level =='sbu_level' or resp_level =='product_level') and  resp_format == 'company_level':
         print("came into resp level")
         print("len(df)",len(df))
@@ -346,6 +383,71 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         print("list2",list2)
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':list2,'company':unique_companies}
 
+
+    if '"table_month"' in [x['key'] for x in filters]:
+        req_month = [x['value'] for x in filters if x['key'] =='"table_month"'][0]
+        if req_month:
+            for col in df.columns.tolist():
+                if 'actual' in col or 'history' in col:
+                    df[col] = df[col].astype(np.float64).fillna(0) 
+            print(df.dtypes) 
+            df_filtered = df[df["month_name"] == req_month.strip('"')]
+            print(df_filtered.dtypes)
+            print(df)
+            print(df_filtered)
+            # Extract company names dynamically by removing prefix 'actual_' from column names
+            company_columns = [col.replace("actual_", "").replace("_share","") for col in df.columns if col.startswith("actual_")]
+
+            output = []
+
+            for company in company_columns:
+                # Fetch actual and historical values for the current company in APR
+                actual_volume = df_filtered[f"actual_{company}_share"].sum()
+                historical_volume = df_filtered[f"history_{company}_share"].sum()
+
+                # Compute market share change
+                market_share_change = historical_volume - actual_volume
+
+                # Compute cumulative values from the full dataset
+                cumulative_actual = df[f"actual_{company}_share"].sum()
+                cumulative_historical = df[f"history_{company}_share"].sum()
+                cumulative_market_share_change = cumulative_historical - cumulative_actual
+
+                # Build output JSON structure
+                output.append({
+                    "company": company.upper(),  # Capitalizing company names
+                    "monthly": {
+                        "volume": {
+                            "actual": round(actual_volume,2),
+                            "historical": round(historical_volume,2)
+                        },
+                        "marketShare": {
+                            "actual": round((actual_volume / historical_volume * 100),2) if historical_volume else 0,
+                            "historical": round(historical_volume,2),
+                            "change": round(market_share_change,2)
+                        }
+                    },
+                    "cumulative": {
+                        "volume": {
+                            "actual": round(cumulative_actual,2),
+                            "historical": round(cumulative_historical,2)
+                        },
+                        "marketShare": {
+                            "actual": round((cumulative_actual / cumulative_historical * 100),2) if cumulative_historical else 0,
+                            "historical": round((cumulative_historical / df["history_market_share"].sum() * 100),2) if "history_market_share" in df.columns else None,
+                            "change": round(cumulative_market_share_change,2)
+                        }
+                    }
+                })
+
+            # Print or save output
+            #list2 = json.dumps(output, indent=2)
+            print("output type",type(output))
+            for each in output:
+                 for each_ele in each:
+                    if each[each_ele] is None:
+                        each[each_ele] = ''
+            return {'message':'Industry_Performance__latest_TableData','status':True,'data':output}
 
     if '"table_month"' in [x['key'] for x in filters]:
         req_month = [x['value'] for x in filters if x['key'] =='"table_month"'][0]
@@ -523,6 +625,12 @@ def generate_stacked_data(df, resp_format='', month_column=''):
 
 
 async def industry_performance(filters, cross_filters, drill_state="", time_grain="", resp_format="",resp_level=""):
+    resp_format_org=resp_format
+    if resp_format =='company_level_heatmap':
+        resp_format = 'company_level'
+        resp_format_org = 'company_level_heatmap'
+    print("resp_format_org",resp_format_org)
+    print("resp_format",resp_format)
     if resp_format == 'growth_table':
         return await industry_performance_compare(filters, [])
     elif resp_format == 'omc_cumulative':
@@ -592,7 +700,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
                                        "", "", group_by_filter+["coname"], "")
     return calculate_market_share(pd.DataFrame(resp_data), group_keys, fiscal_year_pre, fiscal_year_last,
-                                  drill_state, time_grain, resp_format,resp_level,org_filters)
+                                  drill_state, time_grain, resp_format,resp_level,org_filters,resp_format_org)
 
 
 def generate_growth_query(
