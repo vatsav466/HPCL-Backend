@@ -142,7 +142,7 @@ async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved
                 if alert_history['action_type'] == 'Approved':
                     return alert_history['action_msg']
         else:
-            if alert_history['action_type'] not in ['Created', 'Approved']:
+            if alert_history['action_type'] not in ['Created', 'Approved', 'VTS']:
                 return alert_history['action_msg']
     return ""
 
