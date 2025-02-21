@@ -188,6 +188,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                 group_items = [Base_Filters[Base_Filters.index(drill_state) + 1].strip('"')]
     print("resp_level",resp_level)
     if '"ind_analytics"' in [x['key'] for x in filters]:
+        final_output = []
         data = summary.to_dict(orient = 'records')
         summary.to_csv('/tmp/df_req.csv',index = False)
         transformed_data = defaultdict(lambda: defaultdict(dict))
@@ -232,8 +233,8 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                         entry[f"{company}_MktSh_{fiscal_year}"] = round(market_share, 1)
 
                 final_output.append(entry)
-        return {'message':'Industry Analytics','data':final_output,'status':True}
-        print("updated_dicts",data)
+        return {'message': 'Industry Analytics', 'data': final_output, 'status':True, "company": unique_companies}
+        # print("updated_dicts",data)
     if 'sbu_level' in resp_level or 'product_level' in resp_level:
         print("this is sbu level if")
         summary.to_csv('/tmp/summary_data.csv',index = False)
