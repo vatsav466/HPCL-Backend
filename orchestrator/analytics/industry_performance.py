@@ -62,16 +62,20 @@ def generate_group_by_conditions(filters,cross_filters, cumulative=False, drill_
     if "fiscal_year" not in group_by_filter:
         group_by_filter.append("fiscal_year")
     print("resp_level",resp_level)
-    if isinstance(resp_level,list):
-        for x in resp_level:
-            group_by_filter.append(x)
+    #if isinstance(resp_level,list):
+    #    for x in resp_level:
+    #        group_by_filter.append(x)
     if resp_level =='sbu_level':
         print("sbu_level",resp_level)
         group_by_filter.append("sbu_name")
     if resp_level =='product_level':
         print("productname",resp_level)
         group_by_filter.append("productname")
-    
+    if resp_level == "sbu_level,product_level":
+        group_by_filter.extend(['sbu_name','productname'])
+    if isinstance(resp_level,list):
+        group_by_filter.extend(['sbu_name','productname'])
+    print("group_by_filter1111",group_by_filter)
     return group_by_filter
 
 
@@ -123,7 +127,7 @@ def get_date_filters(filters, resp_type="months"):
         elif condition["key"] == "month_name":
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
     filters = [condition for condition in filters if condition['key'].strip('"') not in ['YTM', 'DATE', 'month_name',
-                                                                                      'table_graph','fiscal_year','company_name', 'table','table_month','inc','OMC', 'A', 'H', 'C']]
+                                                                                     'ind_analytics','table_graph','fiscal_year','company_name', 'table','table_month','inc','OMC', 'A', 'H', 'C']]
     if not months:
         months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%b').tolist()
     return filters, fiscal_year_pre, fiscal_year_last, [key.upper() for key in months]
@@ -183,6 +187,53 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         else:
                 group_items = [Base_Filters[Base_Filters.index(drill_state) + 1].strip('"')]
     print("resp_level",resp_level)
+    if '"ind_analytics"' in [x['key'] for x in filters]:
+        data = summary.to_dict(orient = 'records')
+        summary.to_csv('/tmp/df_req.csv',index = False)
+        transformed_data = defaultdict(lambda: defaultdict(dict))
+        for entry in data:
+            sbu = entry["sbu_name"]
+            product = entry["productname"]
+            year = entry["fiscal_year"]
+            market_share = entry["market_share"]
+
+            # Store sales data
+            transformed_data[(sbu, product)][f"Total_Sales_{year}"] = market_share
+            transformed_data[(sbu, product)][f"HPCL_Sales_{year}"] = entry["hpcl_share"]
+            transformed_data[(sbu, product)][f"BPCL_Sales_{year}"] = entry["bpcl_share"]
+            transformed_data[(sbu, product)][f"IOC_Sales_{year}"] = entry["iocl_share"]
+
+            # Convert to list format
+            final_output = []
+
+            for (sbu, product), values in transformed_data.items():
+                entry = {"SBU": sbu, "PROD": product}
+
+                years = sorted([y.split("-")[1] for y in values.keys() if "Total_Sales" in y])
+
+                for i in range(len(years)):
+                    curr_year = years[i]
+                    prev_year = str(int(curr_year) - 1)
+                    fiscal_year = f"{prev_year}-{curr_year}"
+                    prev_fiscal_year = f"{int(prev_year)-1}-{prev_year}"
+
+                    total_sales = values.get(f"Total_Sales_{fiscal_year}", 0)
+                    prev_total_sales = values.get(f"Total_Sales_{prev_fiscal_year}", 0)
+
+                    for company in ["HPCL", "BPCL", "IOC"]:
+                        sales = values.get(f"{company}_Sales_{fiscal_year}", 0)
+                        prev_sales = values.get(f"{company}_Sales_{prev_fiscal_year}", 0)
+
+                        growth = 100.0 if prev_sales == 0 else ((sales - prev_sales) / prev_sales) * 100
+                        market_share = (sales / total_sales) * 100 if total_sales else 0
+
+                        entry[f"{company}_Sales_{fiscal_year}"] = sales
+                        entry[f"{company}_Gr_{fiscal_year}"] = round(growth, 1)
+                        entry[f"{company}_MktSh_{fiscal_year}"] = round(market_share, 1)
+
+                final_output.append(entry)
+        return {'message':'Industry Analytics','data':final_output,'status':True}
+        print("updated_dicts",data)
     if 'sbu_level' in resp_level or 'product_level' in resp_level:
         print("this is sbu level if")
         summary.to_csv('/tmp/summary_data.csv',index = False)
@@ -708,7 +759,25 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     filters.append({"key": "coname", "cond": "one-off", "value": omc_compare})
 
     where_conditions = []
-    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters + filters)
+    print("filters are",filters)
+    print("cross_filters",cross_filters)
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters +filters)
+    '''
+    if '"ind_analytics"' in [x['key'] for x in filters]:
+        print("inside ind") 
+        key_mapping = {
+            '"sbu_level"': 'sbu_name',
+            '"product_level"': 'product_name'
+        }
+        where_filters = filters
+        for item in where_filters:
+            if item['key'] in key_mapping:
+                item['key'] = key_mapping[item['key']]
+        where_filters = [x for x in where_filters if x['key']!= '"ind_analytics"']
+        clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters + where_filters)
+    else:
+        clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters + filters)
+    '''
     if clause:
         where_conditions = [clause]
     group_keys = [key.strip('"') for key in group_by_filter]
