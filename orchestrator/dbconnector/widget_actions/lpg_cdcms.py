@@ -2725,7 +2725,9 @@ class LPGCDCMSActions:
             latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
             
             average_sales = await filter_data(average_sales.to_pandas(), _filters)
-            latest_pending_bookings = await filter_data(latest_pending_bookings.to_pandas(), _filters)            
+            latest_pending_bookings = await filter_data(latest_pending_bookings.to_pandas(), _filters)     
+            average_sales = pl.from_pandas(average_sales)
+            latest_pending_bookings = pl.from_pandas(latest_pending_bookings)       
             
             # Overall Number
             overall_average_sales = average_sales.with_columns(pl.lit("temp").alias("temp"))
@@ -2748,6 +2750,8 @@ class LPGCDCMSActions:
         
         average_sales = await filter_data(average_sales.to_pandas(), _filters)
         latest_pending_bookings = await filter_data(latest_pending_bookings.to_pandas(), _filters)
+        average_sales = pl.from_pandas(average_sales)
+        latest_pending_bookings = pl.from_pandas(latest_pending_bookings)       
         
         # Overall Number
         overall_average_sales = average_sales.with_columns(pl.lit("temp").alias("temp"))
@@ -2855,6 +2859,10 @@ class LPGCDCMSActions:
         april_consumer_stats = await filter_data(april_consumer_stats.to_pandas(), _filters)
         current_consumer_stats = await filter_data(current_consumer_stats.to_pandas(), _filters)
         lpg_cdcms_pcc_sales = await filter_data(lpg_cdcms_pcc_sales.to_pandas(), _filters)
+        
+        april_consumer_stats = pl.from_pandas(april_consumer_stats)
+        current_consumer_stats = pl.from_pandas(current_consumer_stats)
+        lpg_cdcms_pcc_sales = pl.from_pandas(lpg_cdcms_pcc_sales)                
         
         current_consumer_stats = current_consumer_stats.join(df, on='JDEDistributorCode', how='left')
         
