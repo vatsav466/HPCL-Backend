@@ -191,49 +191,50 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         data = summary.to_dict(orient = 'records')
         summary.to_csv('/tmp/df_req.csv',index = False)
         transformed_data = defaultdict(lambda: defaultdict(dict))
+        company_columns = [col for col in data[0].keys() if col.endswith("_share") and col not in ["market_share"]]
+        companies = [col.replace("_share", "").upper() for col in company_columns]
+
         for entry in data:
             sbu = entry["sbu_name"]
             product = entry["productname"]
             year = entry["fiscal_year"]
             market_share = entry["market_share"]
-
             # Store sales data
             transformed_data[(sbu, product)][f"Total_Sales_{year}"] = market_share
-            transformed_data[(sbu, product)][f"HPCL_Sales_{year}"] = entry["hpcl_share"]
-            transformed_data[(sbu, product)][f"BPCL_Sales_{year}"] = entry["bpcl_share"]
-            transformed_data[(sbu, product)][f"IOC_Sales_{year}"] = entry["iocl_share"]
+            for company in companies:
+                transformed_data[(sbu, product)][f"{company}_Sales_{year}"] = entry[f"{company.lower()}_share"]
 
-            # Convert to list format
-            final_output = []
+        # Convert to list format
+        final_output = []
 
-            for (sbu, product), values in transformed_data.items():
-                entry = {"SBU": sbu, "PROD": product}
-
-                years = sorted([y.split("-")[1] for y in values.keys() if "Total_Sales" in y])
-
-                for i in range(len(years)):
-                    curr_year = years[i]
-                    prev_year = str(int(curr_year) - 1)
-                    fiscal_year = f"{prev_year}-{curr_year}"
-                    prev_fiscal_year = f"{int(prev_year)-1}-{prev_year}"
-
-                    total_sales = values.get(f"Total_Sales_{fiscal_year}", 0)
-                    prev_total_sales = values.get(f"Total_Sales_{prev_fiscal_year}", 0)
-
-                    for company in ["HPCL", "BPCL", "IOC"]:
-                        sales = values.get(f"{company}_Sales_{fiscal_year}", 0)
-                        prev_sales = values.get(f"{company}_Sales_{prev_fiscal_year}", 0)
-
-                        growth = 100.0 if prev_sales == 0 else ((sales - prev_sales) / prev_sales) * 100
-                        market_share = (sales / total_sales) * 100 if total_sales else 0
-
-                        entry[f"{company}_Sales_{fiscal_year}"] = sales
-                        entry[f"{company}_Gr_{fiscal_year}"] = round(growth, 1)
-                        entry[f"{company}_MktSh_{fiscal_year}"] = round(market_share, 1)
-
-                final_output.append(entry)
-        return {'message':'Industry Analytics','data':final_output,'status':True}
-        print("updated_dicts",data)
+        for (sbu, product), values in transformed_data.items():
+            entry = {"SBU": sbu, "PROD": product}
+            
+            years = sorted([y.split("-")[1] for y in values.keys() if "Total_Sales" in y])
+            
+            for i in range(len(years)):
+                curr_year = years[i]
+                prev_year = str(int(curr_year) - 1)
+                fiscal_year = f"{prev_year}-{curr_year}"
+                prev_fiscal_year = f"{int(prev_year)-1}-{prev_year}"
+                
+                total_sales = values.get(f"Total_Sales_{fiscal_year}", 0)
+                prev_total_sales = values.get(f"Total_Sales_{prev_fiscal_year}", 0)
+                
+                for company in companies:
+                    sales = values.get(f"{company}_Sales_{fiscal_year}", 0)
+                    prev_sales = values.get(f"{company}_Sales_{prev_fiscal_year}", 0)
+                    
+                    growth = 100.0 if prev_sales == 0 else ((sales - prev_sales) / prev_sales) * 100
+                    market_share = (sales / total_sales) * 100 if total_sales else 0
+                    
+                    entry[f"{company}_Sales_{fiscal_year}"] = sales
+                    entry[f"{company}_Gr_{fiscal_year}"] = round(growth, 1)
+                    entry[f"{company}_MktSh_{fiscal_year}"] = round(market_share, 1)
+            
+            final_output.append(entry)
+        return {'message':'Industry Analytics','data':final_output,'status':True,'company':unique_companies}
+        
     if 'sbu_level' in resp_level or 'product_level' in resp_level:
         print("this is sbu level if")
         summary.to_csv('/tmp/summary_data.csv',index = False)
