@@ -2703,9 +2703,9 @@ class LPGCDCMSActions:
                 lpg_cdcms_backlogs_today_  += ' WHERE '
                 lpg_cdcms_backlogs_today_  += ' AND '.join(conditions)
             lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
-            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
+            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName", "ConsumerType" '
             lpg_cdcms_backlogs_today_ += ' AND "CylType" = \'C142\' '
-            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
+            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName", "ConsumerType" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
@@ -2716,14 +2716,16 @@ class LPGCDCMSActions:
             else:
                 lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
                 lpg_cdcms_backlogs_today_ += ' AND "CylType" = \'C142\' '
-            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
-            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
+            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName", "ConsumerType"'
+            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName", "ConsumerType"'
             
             average_sales = await function(query=lpg_cdcms_backlogs_)
             latest_pending_bookings = await function(query=lpg_cdcms_backlogs_today_)
             average_sales = pl.DataFrame(average_sales)
             latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
             
+            average_sales = await filter_data(average_sales.to_pandas(), _filters)
+            latest_pending_bookings = await filter_data(latest_pending_bookings.to_pandas(), _filters)            
             
             # Overall Number
             overall_average_sales = average_sales.with_columns(pl.lit("temp").alias("temp"))
@@ -2736,14 +2738,16 @@ class LPGCDCMSActions:
             average_sales = average_sales.group_by("ZOName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
             latest_pending_bookings = latest_pending_bookings.group_by("ZOName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
             backlog = latest_pending_bookings.join(average_sales, on="ZOName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
-                        
-            print("backlog :", backlog)
+
             return {"status": True, "message": "success", "overall_number": overall_backlog["Backlog"][-1], "data": backlog.to_dicts()}
                         
         average_sales = await function(query=lpg_cdcms_backlogs_)
         latest_pending_bookings = await function(query=lpg_cdcms_backlogs_today_)
         average_sales = pl.DataFrame(average_sales)
         latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
+        
+        average_sales = await filter_data(average_sales.to_pandas(), _filters)
+        latest_pending_bookings = await filter_data(latest_pending_bookings.to_pandas(), _filters)
         
         # Overall Number
         overall_average_sales = average_sales.with_columns(pl.lit("temp").alias("temp"))
@@ -2785,7 +2789,7 @@ class LPGCDCMSActions:
         lpg_cdcms_pcc_sales = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_pcc_sales")
         
         financial_year = await get_financial_year()
-        financial_start_date = '2024-04-01'
+        financial_start_date = financial_year.split("-")[0] + "-04-01"
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -2844,7 +2848,14 @@ class LPGCDCMSActions:
         
         april_consumer_stats = pl.DataFrame(april_consumer_stats)
         current_consumer_stats = pl.DataFrame(current_consumer_stats)
-        lpg_cdcms_pcc_sales = pl.DataFrame(lpg_cdcms_pcc_sales)
+        lpg_cdcms_pcc_sales = pl.DataFrame(lpg_cdcms_pcc_sales)       
+        current_consumer_stats = current_consumer_stats.rename({"SubCategory": "ConsumerType"})
+        april_consumer_stats = april_consumer_stats.rename({"SubCategory": "ConsumerType"})
+        
+        april_consumer_stats = await filter_data(april_consumer_stats.to_pandas(), _filters)
+        current_consumer_stats = await filter_data(current_consumer_stats.to_pandas(), _filters)
+        lpg_cdcms_pcc_sales = await filter_data(lpg_cdcms_pcc_sales.to_pandas(), _filters)
+        
         current_consumer_stats = current_consumer_stats.join(df, on='JDEDistributorCode', how='left')
         
         lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.with_columns(pl.col("TotalSalesYesterday").cast(pl.Float64).alias("TotalSalesYesterday"))

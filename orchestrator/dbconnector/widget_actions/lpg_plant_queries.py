@@ -893,7 +893,7 @@ LIMIT 10000;''',
                                 
     "lpg_cdcms_backlogs": f''' SELECT 
                                     "DistributorName",
-                                    "ZOName", "ROName", "SAName",
+                                    "ZOName", "ROName", "SAName", "ConsumerType",
                                     SUM("TotalSalesYesterday") AS "TotalSalesYesterday" ,
                                     SUM("Total_Pending") AS "Total_Pending"
                                 FROM
@@ -943,7 +943,7 @@ LIMIT 10000;''',
     
     "lpg_cdcms_backlogs_today": f''' SELECT
                                         "DistributorName",
-                                        "ZOName", "ROName", "SAName",
+                                        "ZOName", "ROName", "SAName", "ConsumerType",
                                         SUM("TotalSalesYesterday") AS "TotalSalesYesterday",
                                         SUM("Total_Pending") AS "Total_Pending"
                                     FROM
