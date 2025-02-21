@@ -1255,7 +1255,7 @@ ORDER BY
                                         AND "Execution_Date" <= CURRENT_DATE AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_date_sales':f'''select
-                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales",
                                         ROUND(CAST(SUM("TotalSalesYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
