@@ -1271,7 +1271,7 @@ ORDER BY
                                         "ZOName" IS NOT NULL ''',
 
     'cdcms_current_date_pending':f'''select
-                                        ROUND(CAST(SUM("pendings_volume") / 100000 AS NUMERIC), 2) AS "Pending",
+                                        ROUND(CAST(SUM("pendings_volume") / 1000000 AS NUMERIC), 2) AS "Pending",
                                         ROUND(CAST(SUM("Total_Pending") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
