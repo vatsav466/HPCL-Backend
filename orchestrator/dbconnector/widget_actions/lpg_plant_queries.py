@@ -1256,20 +1256,23 @@ ORDER BY
     
     'cdcms_current_date_sales':f'''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+                                        ROUND(CAST(SUM("TotalSalesYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
                                         "ZOName" IS NOT NULL ''',                                
 
     'cdcms_current_date_bookings':f'''select
-                                        ROUND(CAST(SUM("bookings_volume") / 1000000 AS NUMERIC), 2) AS "Bookings"
+                                        ROUND(CAST(SUM("bookings_volume") / 1000000 AS NUMERIC), 2) AS "Bookings",
+                                        ROUND(CAST(SUM("BookingReceivedYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
                                         "ZOName" IS NOT NULL ''',
 
     'cdcms_current_date_pending':f'''select
-                                        ROUND(CAST(SUM("Total_Pending") / 100000 AS NUMERIC), 2) AS "Pending"
+                                        ROUND(CAST(SUM("pendings_volume") / 100000 AS NUMERIC), 2) AS "Pending",
+                                        ROUND(CAST(SUM("Total_Pending") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
