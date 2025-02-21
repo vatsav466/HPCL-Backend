@@ -4,6 +4,7 @@ import httpx
 import datetime
 import traceback
 import hpcl_ceg_model
+import utilities.helpers as helpers
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -59,7 +60,9 @@ class TASAlertManager(alert_factory.AlertFactory):
                                             "action_msg": f"{alert_data['interlock_name']} Interlock "
                                                           f"created for device {device_data}",
                                             "action_type": "InterlockCreated"}]
-            return await cls.create_alert(alert_data)
+            camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
+                                                        alert_section="TAS")
+            return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
             print(traceback.format_exc())
@@ -121,6 +124,9 @@ class TASAlertManager(alert_factory.AlertFactory):
                                   "closed": {"value": True, "type": "Boolean"}}}
                 
                 url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+                url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
+                                                    alert_section="TAS")
+                url += "/engine-rest/message"
                 r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
                 if int(r.status_code / 100) != 2:
                     print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
