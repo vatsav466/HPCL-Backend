@@ -926,6 +926,7 @@ LIMIT 10000;''',
                                         "DistributorName",
                                         "Month",
                                         "Month_Number",
+                                        "ConsumerType",
                                         sum("DBCIssuedCount") as "DBCIssued"
                                     from
                                         "lpg_cdcms_dbc_enrollment" ''',
@@ -937,6 +938,7 @@ LIMIT 10000;''',
                                 "DistributorName",
                                 "Month",
                                 "month_number",
+                                "ConsumerType",
                                 sum("new_connection") as "new_connection"
                             FROM
                                 "lpg_cdcms_nc_data" ''',

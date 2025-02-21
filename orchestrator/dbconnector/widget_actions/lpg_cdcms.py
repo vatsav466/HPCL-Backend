@@ -1164,13 +1164,13 @@ class LPGCDCMSActions:
                 dbc_enrollments_query_ += ' WHERE ' 
                 dbc_enrollments_query_ += ' AND '.join(conditions)
             dbc_enrollments_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName" '
+            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         else:
             if "where" not in dbc_enrollments_query_.lower():
                 dbc_enrollments_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 dbc_enrollments_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName" '
+            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         resp = await function(query=dbc_enrollments_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -1240,13 +1240,13 @@ class LPGCDCMSActions:
                 lpg_cdcms_nc_query_ += ' WHERE ' 
                 lpg_cdcms_nc_query_ += ' AND '.join(conditions)
             lpg_cdcms_nc_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         else:
             if "where" not in lpg_cdcms_nc_query_.lower():
                 lpg_cdcms_nc_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 lpg_cdcms_nc_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         resp = await function(query=lpg_cdcms_nc_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
