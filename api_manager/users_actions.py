@@ -1,6 +1,7 @@
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
+import traceback
 import urdhva_base.settings
 import urdhva_base.queryparams as queryparams
 import authenticator.authentication_manager_ad as auth_manager
@@ -37,8 +38,42 @@ async def users_login(request: fastapi.Request, data: Users_LoginParams):
 
 # Action update_user_status
 @router.post('/update_user_status', tags=['Users'])
-async def users_update_user_status(data: Users_Update_User_StatusParams):
-    ...
+async def users_update_user_status(request: fastapi.Request, data: Users_Update_User_StatusParams):
+    if not data.username:
+        return False, "Invalid input"
+    try:
+        user_name = data.username  # Assuming user_id is the primary key
+        query = f"username='{user_name}'"
+        params = urdhva_base.queryparams.QueryParams()
+        params.fields = []
+        params.q = query
+        resp = await Users.get_all(params, resp_type="plain")
+
+        if not isinstance(resp, dict):
+            resp = resp._dict_
+
+        if resp["data"]:
+            resp = resp["data"][0]
+            specific_columns = ["sap_id", "region", "sales_area", "zone"]
+            for key in specific_columns:
+                if not hasattr(data, key) or "*" in getattr(data, key):
+                    setattr(data, key, [])
+
+            resp['first_name'] = data.first_name
+            resp['last_name'] = data.last_name
+            resp['region'] = data.region
+            resp['state'] = data.state
+            resp['zone'] = data.zone
+            resp['sap_id'] = data.sap_id
+            resp['bu'] = data.bu
+            resp['sales_area'] = data.sales_area
+            resp['novex_role'] = data.novex_role
+            await Users(**resp).modify()
+            return True, "User updated successfully"
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return False, "Error updating user details, Contact support"
 
 
 # Action logout

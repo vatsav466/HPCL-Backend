@@ -117,7 +117,10 @@ class AlertFactory:
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             if alert_data.get("alert_section",'') in ["VA"]:
-                await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
+                if alert_data.get("bu","") in ["TAS"]:
+                    await redis_ins.setex(alert_data['alert_id'], 15*60, alert_resp['id'])
+                else:
+                    await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
@@ -173,6 +176,14 @@ class AlertFactory:
                 # Updating for VTS Alert history with alert_id
                 if alert_data_dict.get("alert_section") == "VTS":
                     await vts_analysis.update_alert_id_to_vts_history(alert_id=str(alert_resp['id']), vts_alert_id=alert_data_dict.get("vts_alert_history_ids", []))
+                    blocked_tt_data = dict()
+                    blocked_tt_data['TT_No'] = alert_data_dict.get('vehicle_number','')
+                    blocked_tt_data['BlockStartDate'] = alert_data_dict['vehicle_blocked_start_date'].strftime("%d/%b/%Y 00:00")
+                    blocked_tt_data['BlockEndDate'] = alert_data_dict['vehicle_blocked_end_date'].strftime("%d/%b/%Y 00:00")
+                    blocked_tt_data['BlockedRemarks'] = alert_data_dict['device_name']
+                    print("blocked_tt_data: ", blocked_tt_data)
+                    # resp = await vts_analysis.post_blocked_tt(blocked_tt_data)
+                    # print("Data Pushed to VTS Vendor", resp)
 
                 # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                 #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)

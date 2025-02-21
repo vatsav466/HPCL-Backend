@@ -930,6 +930,17 @@ LIMIT 10000;''',
                                     from
                                         "lpg_cdcms_dbc_enrollment" ''',
     
+    "lpg_cdcms_nc_query": '''SELECT 
+                                "ZOName" ,
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "Month",
+                                "month_number",
+                                sum("new_connection") as "new_connection"
+                            FROM
+                                "lpg_cdcms_nc_data" ''',
+    
     "lpg_cdcms_backlogs_today": f''' SELECT
                                         "DistributorName",
                                         "ZOName", "ROName", "SAName",
@@ -989,6 +1000,15 @@ LIMIT 10000;''',
                             "plant" as "plant"
                         from
                             "lpg_cs_rejections" ''',
+    
+    'productivity_overtime_vs_break_production': f'''  
+                            SELECT 
+                              "zone",
+                              "short_name" as "plant",
+                              SUM("productivity_break_production")/1000 as break_production,
+                              SUM("productivity_overtime_production")/1000 as overtime_production
+                            FROM 
+                                "lpg_operations_summary" ''',
     
     'lpg_operations_daywise_productivity': f'''  
                                 SELECT 
@@ -1100,6 +1120,84 @@ ORDER BY
                             sum("Refills") as "Refills"
                         FROM
                             "subsidy_failure_statistics_PEC_data"''',
+    
+    'lpg_cdcms_subsidy_central_consumers': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("Consumer_Count") as "consumer_count"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
+    
+    'lpg_cdcms_subsidy_central_transaction': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("Transaction_Count") as "transaction_count"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
+    
+    'lpg_cdcms_subsidy_central_amount':f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("SubsidyAmount") as "SubsidyAmount"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
+    
+    'lpg_cdcms_subsidy_state_consumers': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("Consumer_Count") as "consumer_count"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
+    
+    'lpg_cdcms_subsidy_state_transaction': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("Transaction_Count") as "transaction_count"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
+    
+    'lpg_cdcms_subsidy_state_amount':f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("SubsidyAmount") as "SubsidyAmount"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
     
     "cs_query" : f'''
                     select 

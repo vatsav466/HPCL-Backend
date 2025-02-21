@@ -643,7 +643,7 @@ class SendNotification:
             "action_msg": self.base_alert_data.get("action_msg"),
             "assigned_user_roles": self.params.get("mqofrole", "") or "",  # Ensure it's a string
             # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
-            "last_mailed_to": self.roles_mapper.get("rolemailto", [])
+            "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
         })
 
         if self.params.get("escalationlevel_inmail"):

@@ -182,24 +182,34 @@ async def alerts_get_frequent_dryout_terminals(data: Alerts_Get_Frequent_Dryout_
 @router.post('/get_closed_alerts_details', tags=['Alerts'])
 async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_DetailsParams):
     close_alert_details = {
-        "actions": {
-            "Justify": "Justification",
-            "Accept & Close": "AcceptClose",
-            "Approve": "Approved",
-            "Reject": "Rejected"
-        },
-        "category": {
-        },
-        "rca_reason": {
-        }
+        "actions": {},
+        "category": {},
+        "rca_reason": []
     }
-    if data.alert_section in ['VA', 'VTS']:
-        if data.alert_section == "VA":
-            close_alert_details['actions'].update({"FalseAlert": "FalseAlert", "InvalidAlert": "InvalidAlert"})
-        del close_alert_details['actions']['Reject']
-    close_alert_details["category"] = connection_mapping.alert_action_category.get(data.alert_section, {"Others": "Others"})
-    close_alert_details["rca_reason"] = connection_mapping.alert_action_rca_reason.get(data.alert_section, ["Others"])
+    action_data = connection_mapping.alert_action.get(data.bu)[data.alert_section]
+    close_alert_details['category'] = action_data.get("category", {"Others": "Others"})
+    close_alert_details['rca_reason'] = action_data.get("rca_reason", ["Other"])
+    close_alert_details['actions'] = {key: value['name'] for key, value in action_data.get("actions", {}).items()}
     return close_alert_details
+    # close_alert_details = {
+    #     "actions": {
+    #         "Justify": "Justification",
+    #         "Accept & Close": "AcceptClose",
+    #         "Approve": "Approved",
+    #         "Reject": "Rejected"
+    #     },
+    #     "category": {
+    #     },
+    #     "rca_reason": {
+    #     }
+    # }
+    # if data.alert_section in ['VA', 'VTS']:
+    #     if data.alert_section in ["VA", "VTS"]:
+    #         close_alert_details['actions'].update({"FalseAlert": "FalseAlert", "InvalidAlert": "InvalidAlert"})
+    #     del close_alert_details['actions']['Reject']
+    # close_alert_details["category"] = connection_mapping.alert_action_category.get(data.alert_section, {"Others": "Others"})
+    # close_alert_details["rca_reason"] = connection_mapping.alert_action_rca_reason.get(data.alert_section, ["Others"])
+    # return close_alert_details
 
 
 # Action stored_document

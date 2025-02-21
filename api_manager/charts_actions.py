@@ -528,7 +528,8 @@ async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
                                                                     cross_filters=data.cross_filters,
                                                                     drill_state=data.drill_state, limit=data.limit,
                                                                     time_grain=data.time_grain,
-                                                                    resp_format=data.resp_format)
+                                                                    resp_format=data.resp_format,
+                                                                    resp_level = data.resp_level)
 
 
 # Action enable_cross_filter

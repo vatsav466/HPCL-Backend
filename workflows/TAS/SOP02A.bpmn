@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1ly1wfl" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.27.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.22.0">
+  <bpmn:process id="ESDFIREEFFECTS" name="Effects SOP02A and SOP023A" isExecutable="true" camunda:historyTimeToLive="101">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0t3o9dd</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0t3o9dd" sourceRef="StartEvent_1" targetRef="Activity_1e4p5ws" />
+    <bpmn:sequenceFlow id="Flow_0wus5q2" sourceRef="Activity_1e4p5ws" targetRef="Gateway_0863rjs" />
+    <bpmn:parallelGateway id="Gateway_0863rjs">
+      <bpmn:incoming>Flow_0wus5q2</bpmn:incoming>
+      <bpmn:outgoing>Flow_0yvgw89</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0fwg5pb</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="Flow_0yvgw89" sourceRef="Gateway_0863rjs" targetRef="Event_0g68vui" />
+    <bpmn:sequenceFlow id="Flow_02wl4zk" sourceRef="Event_0g68vui" targetRef="Activity_1ogofoa" />
+    <bpmn:sequenceFlow id="Flow_07tljha" sourceRef="Activity_1ogofoa" targetRef="Activity_15o29vk" />
+    <bpmn:endEvent id="Event_1xs5wmb">
+      <bpmn:incoming>Flow_0nhvi16</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_0efxfuj" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0fwg5pb" sourceRef="Gateway_0863rjs" targetRef="Event_1473jrf" />
+    <bpmn:sequenceFlow id="Flow_153x1yv" sourceRef="Event_1473jrf" targetRef="Activity_0hviwp2" />
+    <bpmn:sequenceFlow id="Flow_00upwcu" sourceRef="Activity_0hviwp2" targetRef="Event_06aqufq" />
+    <bpmn:sequenceFlow id="Flow_1ltb7df" sourceRef="Event_06aqufq" targetRef="Activity_1uak9v8" />
+    <bpmn:sequenceFlow id="Flow_0xtdq10" sourceRef="Activity_1uak9v8" targetRef="Event_1qqovvz" />
+    <bpmn:sequenceFlow id="Flow_0w5nk91" sourceRef="Event_1qqovvz" targetRef="Activity_0f11v18" />
+    <bpmn:serviceTask id="Activity_1e4p5ws" name="Send Notification Tas Officer | Location In charge" camunda:type="external" camunda:topic="tas_workflow_consumer_1">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="escalationlevel_inmail">1</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">TAS Officer,Location In-Charge</camunda:inputParameter>
+          <camunda:inputParameter name="messagetype">active</camunda:inputParameter>
+          <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
+          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0t3o9dd</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wus5q2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1ogofoa" name="Resolve Alert" camunda:type="external" camunda:topic="tas_workflow_consumer_5">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="close">true</camunda:inputParameter>
+          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">close_alert</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">CloseAlert</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">closealert</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_02wl4zk</bpmn:incoming>
+      <bpmn:outgoing>Flow_07tljha</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0hviwp2" name="send escalation to Zonal Tas Officer | zonal HSSE | Zonal Operation Head" camunda:type="external" camunda:topic="tas_workflow_consumer_2">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="escalationtime_inmail">24 Hours</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel_inmail">1</camunda:inputParameter>
+          <camunda:inputParameter name="messagetype">escalation</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Zonal TAS Officer,Zonal HSSE,Zonal Operations Head</camunda:inputParameter>
+          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
+          <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_153x1yv</bpmn:incoming>
+      <bpmn:outgoing>Flow_00upwcu</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_1uak9v8" name="send Escalation to Zonal SOD Head | HQO TAS coordinator" camunda:type="external" camunda:topic="tas_workflow_consumer_3">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="escalationtime_inmail">48 Hours</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel_inmail">2</camunda:inputParameter>
+          <camunda:inputParameter name="messagetype">escalation</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Zonal SOD Head,HQO TAS Coordinator</camunda:inputParameter>
+          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
+          <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1ltb7df</bpmn:incoming>
+      <bpmn:outgoing>Flow_0xtdq10</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Activity_0f11v18" name="send Escalation to Zonal SOD Head | HQO TAS coordinator" camunda:type="external" camunda:topic="tas_workflow_consumer_4">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="escalationtime_inmail">72 Hours</camunda:inputParameter>
+          <camunda:inputParameter name="escalationlevel_inmail">3</camunda:inputParameter>
+          <camunda:inputParameter name="messagetype">escalation</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">HQO Operations Team,HQO HSSE Team</camunda:inputParameter>
+          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
+          <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0w5nk91</bpmn:incoming>
+    </bpmn:serviceTask>
+    <bpmn:intermediateCatchEvent id="Event_0g68vui" name="Novex to close maintenance alerts">
+      <bpmn:incoming>Flow_0yvgw89</bpmn:incoming>
+      <bpmn:outgoing>Flow_02wl4zk</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0qnir1a" messageRef="Message_0cb5e0b" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Event_1473jrf" name="24 Hours">
+      <bpmn:incoming>Flow_0fwg5pb</bpmn:incoming>
+      <bpmn:outgoing>Flow_153x1yv</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_062qvzk">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT24H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Event_06aqufq" name="48 Hours">
+      <bpmn:incoming>Flow_00upwcu</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ltb7df</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0r2r424">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT24H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Event_1qqovvz" name="72 Hours">
+      <bpmn:incoming>Flow_0xtdq10</bpmn:incoming>
+      <bpmn:outgoing>Flow_0w5nk91</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_086j7l7">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT24H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Activity_15o29vk" name="Send Notification Tas Officer | Location In charge" camunda:type="external" camunda:topic="tas_workflow_consumer_1">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="rolemailto">TAS Officer,Location In-Charge</camunda:inputParameter>
+          <camunda:inputParameter name="messagetype">resolved</camunda:inputParameter>
+          <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
+          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
+          <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
+          <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_07tljha</bpmn:incoming>
+      <bpmn:outgoing>Flow_0nhvi16</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0nhvi16" sourceRef="Activity_15o29vk" targetRef="Event_1xs5wmb" />
+  </bpmn:process>
+  <bpmn:message id="Message_0cb5e0b" name="interLockOk" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ESDFIREEFFECTS">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="182" y="302" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1d2gev8_di" bpmnElement="Gateway_0863rjs">
+        <dc:Bounds x="425" y="295" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0de0kdq_di" bpmnElement="Activity_1e4p5ws">
+        <dc:Bounds x="270" y="280" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1n99ke8_di" bpmnElement="Activity_1ogofoa">
+        <dc:Bounds x="630" y="280" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0awndx5_di" bpmnElement="Activity_0hviwp2">
+        <dc:Bounds x="520" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1tq4zgb_di" bpmnElement="Activity_1uak9v8">
+        <dc:Bounds x="760" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1kskptw_di" bpmnElement="Activity_0f11v18">
+        <dc:Bounds x="1000" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1cir6sm_di" bpmnElement="Event_0g68vui">
+        <dc:Bounds x="532" y="302" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="515" y="345" width="73" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_15zd71i_di" bpmnElement="Event_1473jrf">
+        <dc:Bounds x="432" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="429" y="72" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0f21gza_di" bpmnElement="Event_06aqufq">
+        <dc:Bounds x="672" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="669" y="145" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1o45leg_di" bpmnElement="Event_1qqovvz">
+        <dc:Bounds x="912" y="102" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="909" y="145" width="45" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0g2il4l_di" bpmnElement="Event_1xs5wmb">
+        <dc:Bounds x="1002" y="302" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1fq260u" bpmnElement="Activity_15o29vk">
+        <dc:Bounds x="810" y="280" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0t3o9dd_di" bpmnElement="Flow_0t3o9dd">
+        <di:waypoint x="218" y="320" />
+        <di:waypoint x="270" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wus5q2_di" bpmnElement="Flow_0wus5q2">
+        <di:waypoint x="370" y="320" />
+        <di:waypoint x="425" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0yvgw89_di" bpmnElement="Flow_0yvgw89">
+        <di:waypoint x="475" y="320" />
+        <di:waypoint x="532" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02wl4zk_di" bpmnElement="Flow_02wl4zk">
+        <di:waypoint x="568" y="320" />
+        <di:waypoint x="630" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07tljha_di" bpmnElement="Flow_07tljha">
+        <di:waypoint x="730" y="320" />
+        <di:waypoint x="810" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fwg5pb_di" bpmnElement="Flow_0fwg5pb">
+        <di:waypoint x="450" y="295" />
+        <di:waypoint x="450" y="138" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_153x1yv_di" bpmnElement="Flow_153x1yv">
+        <di:waypoint x="468" y="120" />
+        <di:waypoint x="520" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00upwcu_di" bpmnElement="Flow_00upwcu">
+        <di:waypoint x="620" y="120" />
+        <di:waypoint x="672" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ltb7df_di" bpmnElement="Flow_1ltb7df">
+        <di:waypoint x="708" y="120" />
+        <di:waypoint x="760" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xtdq10_di" bpmnElement="Flow_0xtdq10">
+        <di:waypoint x="860" y="120" />
+        <di:waypoint x="912" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0w5nk91_di" bpmnElement="Flow_0w5nk91">
+        <di:waypoint x="948" y="120" />
+        <di:waypoint x="1000" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nhvi16_di" bpmnElement="Flow_0nhvi16">
+        <di:waypoint x="910" y="320" />
+        <di:waypoint x="1002" y="320" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

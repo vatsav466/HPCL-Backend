@@ -12,7 +12,9 @@ import orchestrator.alerting.vts_alert as vts_alert
 import orchestrator.alerting.tas_alert as tas_alert
 import orchestrator.alerting.lpg_alert as lpg_alert
 import orchestrator.analytics.va_analysis as va_analysis
+import utilities.connection_mapping as connection_mapping
 import orchestrator.alerting.emlock_alert as emlock_alert
+import orchestrator.analytics.vts_analysis as vts_analysis
 from orchestrator.notification_manager.notify_email import *
 
 
@@ -60,6 +62,15 @@ async def close_va_alert(alert_data, input_data):
         alert_data = alert_data.__dict__
     if not input_data.get("doc_link", ""):
         input_data["doc_link"] = await get_doc_link_from_alert_history(alert_data)
+
+    if input_data['doc_link']:
+        if isinstance(input_data['doc_link'], list):
+            input_data['doc_link'] = input_data['doc_link'][0]
+        else:
+            input_data['doc_link'] = ""
+    else:
+        input_data['doc_link'] = ""
+
     action_code = "VALID"
     if input_data.get("action_type") == 'InvalidAlert':
         action_code = 'INVALID'
@@ -77,6 +88,63 @@ async def close_va_alert(alert_data, input_data):
     }
     return await va_analysis.close_va_alerts(params)
 
+async def close_vts_alert(alert_data, input_data):
+    """
+
+    Args:
+        alert_data:
+        input_data:
+
+    Returns:
+
+    """
+    if urdhva_base.context.context.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
+
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    if not input_data.get("doc_link", ""):
+        input_data["doc_link"] = await get_doc_link_from_alert_history(alert_data)
+    un_block_datetime = str(alert_data['vehicle_blocked_end_date'].isoformat()) if input_data.get("is_autoblock", False) else str(urdhva_base.utilities.get_present_time().isoformat())
+    approved_datetime = await get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
+    params = {
+            "TT_No": alert_data['vehicle_number'],
+            "UnBlockedBy": rpt.get("email", "NOVEX_USER"),
+            "UnBlockedDateTime": un_block_datetime,
+            "UnBlockedRemarks": await get_approved_remarks(alert_data, is_approved=False),
+            "ApprovedBy": rpt.get("email", "NOVEX_USER"),
+            "ApprovedDateTime": approved_datetime,
+            "ApprovedRemarks": await get_approved_remarks(alert_data, is_approved=True),
+            "BlockStartDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
+            "BlockEndDate": str(alert_data['vehicle_blocked_start_date'].isoformat()),
+            "WaivedOff": False,
+            "AlertID": alert_data['id'],
+            "DocLink": {
+                "DocPaths": input_data["doc_link"] if input_data['doc_link'] else []
+            }
+        }
+    print("Un block tt params: ", params)
+    return True, "Success"
+    # return await vts_analysis.post_unblocked_tt(params)
+
+async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):
+    if get_approved_time:
+        for alert_history in alert_data.get("alert_history", []):
+            if alert_history.get('is_approved', False):
+                if alert_history['action_type'] == 'Approved':
+                    return alert_history['processed_time']
+        return ""
+    for alert_history in alert_data.get("alert_history", []):
+        if is_approved:
+            if alert_history.get('is_approved', False):
+                if alert_history['action_type'] == 'Approved':
+                    return alert_history['action_msg']
+        else:
+            if alert_history['action_type'] not in ['Created', 'Approved', 'VTS']:
+                return alert_history['action_msg']
+    return ""
 
 async def get_doc_link_from_alert_history(alert_data):
     """
@@ -87,10 +155,11 @@ async def get_doc_link_from_alert_history(alert_data):
     Returns:
 
     """
+    doc_link = []
     for alert_history in alert_data.get("alert_history", []):
         if alert_history.get("doc_link", ""):
-            return alert_history.get("doc_link", "")
-    return ""
+            doc_link.append(alert_history.get("doc_link", ""))
+    return doc_link
 
 
 def read_template(filename, data):
@@ -133,7 +202,6 @@ async def vts_alert_closer(alert_data, input_data):
     Returns:
 
     """
-    # resp = await close_va_alert(alert_data, input_data)
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
     close_alert_data = {}
@@ -162,6 +230,23 @@ async def vts_alert_closer(alert_data, input_data):
         }
     )
     print(f"VTS Alert Closed")
+    resp = await close_vts_alert(alert_data, input_data)
+    print("Alert Closed in VTS Portal: ", resp)
+
+async def _is_close_alert(input_data):
+    """
+
+    Args:
+        input_data:
+
+    Returns:
+
+    """
+    action_data = connection_mapping.alert_action.get(input_data['bu'])[input_data['alert_section']]
+    for key, values in action_data['actions'].items():
+        if values['name'] == input_data['action_type']:
+            return values['close_alert'], action_data['close_alert_func']
+    return False, ""
 
 
 class AlertAction:
@@ -179,12 +264,13 @@ class AlertAction:
                         "Raised": "raised_alert", "Cancelled": "cancel_alert", "Allocated": "allocate_alert",
                         "SentToSap": "sent_to_sap_alert", "OrderPlaced": "order_placed_alert",
                         "Created": "created_alert", "Tripped": "tripped_alert", "VTS": "vts_alert",
-                        "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert"}
+                        "AcceptClose": "accept_close", "InvalidAlert": "invalid_alert", "FalseAlert": "false_alert", "ValidAlert": "valid_alert",
+                        "Blocked": "block_alert", "UnBlocked": "unblock_alert", "Interrupt": "interrupt_alert", "Request": "request_alert"}
         event_tag_map = {"Justification": "is_justify", "Approved": "is_approved", "AcceptClose": "accept", "InvalidAlert": "invalid"}
         alert_id = input_data['alert_id']
         if input_data['doc_link']:
             input_data['doc_link'] = await helpers.get_doc_link(input_data['doc_link'])
-        input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "is_approved"): True}})
+        # input_data.update({"event_tags": {event_tag_map.get(input_data['action_type'], "is_approved"): True}})
         try:
             alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         except Exception as e:
@@ -213,13 +299,19 @@ class AlertAction:
 
             # For testing added below 3 lines
             meg_resp = await getattr(cls, function_name)(input_data, alert_data)
-            # if input_data.get("alert_section", "") == 'VA':
-            # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") not in ["Justification", "Rejected"]:
-            if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
-                await va_alert_closer(alert_data, input_data)
 
-            if input_data.get("alert_section", "") == 'VTS' and input_data.get("action_type", "") in ["Approved"]:
-                await vts_alert_closer(alert_data, input_data)
+            status, func = await _is_close_alert(input_data)
+            if status and func:
+                await eval(func)(alert_data=alert_data, input_data=input_data)
+            # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
+            # if input_data.get("alert_section", "") == 'VA':
+            #     if await _is_close_alert(input_data):
+            #         await va_alert_closer(alert_data, input_data)
+
+            # if input_data.get("alert_section", "") == 'VTS' and input_data.get("action_type", "") in ["Approved"]:
+            # if input_data.get("alert_section", "") == 'VTS':
+            #     if await _is_close_alert(input_data):
+            #         await vts_alert_closer(alert_data, input_data)
             return meg_resp
         return False, "Alert action is not valid"
 
@@ -235,6 +327,10 @@ class AlertAction:
         #  history, fetching users, roles, ...
         # print("input_data for alert--> ", input_data)
         alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data, 'alert_history', [])
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
         # alert_history = alert_data.alert_history
         # print("alert_history --> ", alert_history)
         # allocated_time = alert_data.updated_at
@@ -255,6 +351,7 @@ class AlertAction:
         alert_history.append({"allocated_time": allocated_time.isoformat() if isinstance(allocated_time, datetime.datetime) else allocated_time,
                             "processed_time": processed_time.isoformat(), "action_type": input_data["action_type"],
                             "action_msg": input_data["action_msg"], "mail_sent_to": "",
+                            "action_by": rpt.get("email", "NOVEX_USER"),
                             "ims_datetime": input_data.get("ims_datetime", ""),
                             "prod_reqd_dt": input_data.get("prod_reqd_dt", ""),
                             "doc_link": input_data.get("doc_link", ""),
@@ -276,7 +373,11 @@ class AlertAction:
                             "is_vts": event_tags.get("is_vts", False),
                             "is_delivered": event_tags.get("is_delivered", False),
                             "is_tripped": event_tags.get("is_tripped", False),
-                            "is_justify": event_tags.get("is_justify", False)     
+                            "is_justify": event_tags.get("is_justify", False),
+                            "is_blocked": event_tags.get("is_blocked", False),
+                            "is_unblocked": event_tags.get("is_unblocked", False),
+                            "is_interrupt": event_tags.get("is_interrupt", False),
+                            "is_extra_days": event_tags.get("is_extra_days", False)
                         })
         # print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
@@ -318,7 +419,11 @@ class AlertAction:
                    "is_vts": {"name": "vts", "type": "Boolean"},
                    "is_delivered": {"name": "delivered", "type": "Boolean"},
                    "is_tripped": {"name": "tripped", "type": "Boolean"},
-                   "is_justify": {"name": "justify", "type": "Boolean"}
+                   "is_justify": {"name": "justify", "type": "Boolean"},
+                   "is_blocked": {"name": "blocked", "type": "Boolean"},
+                   "is_unblocked": {"name": "unblocked", "type": "Boolean"},
+                   "is_interrupt": {"name": "interrupt", "type": "Boolean"},
+                   "is_extra_days": {"name": "request", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -610,3 +715,43 @@ class AlertAction:
         :return:
         """
         return await cls.publish_to_camunda(input_data, alert_data, "VTS")
+
+    @classmethod
+    async def block_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Blocked")
+
+    @classmethod
+    async def unblock_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "UnBlocked")
+
+    @classmethod
+    async def interrupt_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Interrupt")
+
+    @classmethod
+    async def request_alert(cls, input_data, alert_data):
+        """
+        Function to VTS an alert
+        :param input_data:
+        :param alert_data:
+        :return:
+        """
+        return await cls.publish_to_camunda(input_data, alert_data, "Request")

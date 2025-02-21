@@ -113,4 +113,30 @@ class CheckViolationCount:
             print(traceback.format_exc())
             logger.error(e)
     
+
+    async def get_violation_period(self,duration_days=15):
+        """
+        Returns the current violation period dynamically based on today's date.
+        
+        :param duration_days: Number of days for each violation period.
+        :return: Tuple containing violation start and end dates as strings.
+        """
+        today = datetime.datetime.today()
+        #today = datetime.datetime(2025, 3, 2)
+        print("Today's Date:", today.strftime("%Y-%m-%d"))
+
+        # Base start date (first known violation period start)
+        base_start = datetime.datetime(2025, 2, 1)
+
+        # Calculate how many complete 15-day cycles have passed since Feb 1, 2025
+        days_difference = (today - base_start).days
+        cycle_number = days_difference // duration_days  # Which 15-day cycle it belongs to
+
+        # Compute the correct violation start and end dates
+        violation_start = base_start + datetime.timedelta(days=cycle_number * duration_days)
+        violation_end = violation_start + datetime.timedelta(days=duration_days - 1)
+        
+        return violation_start.strftime("%Y-%m-%d"), violation_end.strftime("%Y-%m-%d")
+
+    
         

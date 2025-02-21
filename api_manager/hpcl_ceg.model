@@ -83,6 +83,10 @@ Enum AlertActionType str {
     Notified='Notified'
     Escalated='Escalated'
     Resolved='Resolved'
+    Blocked='Blocked'
+    UnBlocked='UnBlocked'
+    Request='Request'
+    Interrupt='Interrupt'
 }
 
 Enum IndentStatus str {
@@ -185,6 +189,15 @@ Model Users {
     Action=> update_user_status {
         enable bool
         username str
+        first_name str
+        last_name str
+        region optional list str
+        state index_field list str
+        zone index_field list str
+        sap_id index_field list str
+        bu index_field list BusinessUnit
+        sales_area index_field list str
+        novex_role index_field str
     }
 
     // API for user login
@@ -264,6 +277,19 @@ Model LocationMaster {
     }
 
     Action=> upload_tags_data {
+    }
+    
+    Action=> update_location_master {
+        sap_id index_field str
+        name index_field str
+        city optional str
+        district optional index_field str
+        region optional index_field str
+        state optional index_field str
+        zone optional index_field str
+        address optional str
+        pincode optional str 
+        sales_area optional str
     }
 
     Config=> {
@@ -409,6 +435,7 @@ Model Alert_History internal {
     ims_datetime optional str
     prod_reqd_dt optional str
     mail_sent_to optional str
+    action_by optional str
     action_type AlertActionType
     alert_status optional AlertStatus
     action_msg str
@@ -433,6 +460,10 @@ Model Alert_History internal {
     is_tripped optional bool
     is_justify optional bool
     is_vts optional bool
+    is_blocked optional bool
+    is_unblocked optional bool
+    is_interrupt optional bool
+    is_extra_days optional bool
 }
 
 Model tags internal {
@@ -455,6 +486,10 @@ Model tags internal {
     isDelivered optional bool
     isTripped optional bool
     isJustify optional bool
+    isBlocked optional bool
+    isUnBlocked optional bool
+    isInterrupt optional bool
+    isExtraDays optional bool
 }
 
 Model Interlock {
@@ -639,6 +674,7 @@ Model Alerts {
 
     Action=> get_closed_alerts_details {
         bu str
+        alert_id str
         alert_section str
         interlock_name str
     }
@@ -1565,5 +1601,136 @@ Model ConsumerPumpStocksReceipts {
     }
     Config=> {
         access_key_mapping='roid:sap_id'
+    }
+}
+
+Model HostSickTts {
+    load_number optional int
+    truck_number optional str
+    created_date optional date
+    customer_name optional str
+    compartment_number optional int
+    product_name optional str
+    required_qty optional int
+    loaded_qty optional int
+    sick_declared_by optional str
+    sick_date optional datetime
+    remarks optional str
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostCancelledTts {
+    load_number optional int
+    truck_number optional str
+    created_date optional datetime
+    customer_name optional str
+    product_name optional str
+    required_qty optional int
+    cancelled_by optional str
+    cancelled_date optional datetime
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostKFactorChanges {
+    sr_number optional int
+    bay_number optional str
+    bcu_number optional str
+    timestamp optional datetime
+    bcu_parameter optional str
+    initial_setting optional str
+    final_setting optional str
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostLocalLoadedTts {
+    sr_number optional int
+    bay_number optional str
+    bcu_number optional str
+    recipe_number optional str
+    truck_number optional str
+    card_number optional str
+    start_totalizer optional int
+    end_totalizer optional int
+    loaded_qty optional int
+    transaction_end_time optional datetime
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostBayReAssignment {
+    created_date optional datetime
+    load_number optional int
+    fan_number optional str
+    truck_number optional str
+    customer_name optional str
+    compartment_number optional int
+    product_name optional str
+    required_qty optional int
+    loaded_qty optional int
+    reassigned_bay optional str
+    bay_reassignment_time optional datetime
+    remarks optional str
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostManualBayAssigned {
+    sr_number optional int
+    user_name optional str
+    timestamp optional datetime
+    text optional str
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostManualFanPrinted {
+    manual_fan_count optional int
+    auto_fan_count optional int
+    total_count optional int
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostUnauthorisedFlow {
+    bay_number optional str
+    bcu_number optional str
+    meter_number optional int
+    timestamp optional datetime
+    start_totalizer optional int
+    end_totalizer optional int
+    net_totalizer optional int
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostOverLoadedTts{
+    load_number optional int
+    truck_number optional str
+    compartment_number optional int
+    product_name optional str
+    required_qty optional int
+    loaded_qty optional int
+
+    Config=> {
+        access_key_mapping=''
     }
 }

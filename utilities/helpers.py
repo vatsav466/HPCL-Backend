@@ -1,7 +1,9 @@
 import urdhva_base
+import time
 import httpx
 import base64
 import string
+import asyncio
 import hashlib
 import datetime
 import traceback
@@ -169,17 +171,27 @@ async def get_location_details(bu, sap_id):
     Returns:
     dict: Location details, including name, address, coordinates, etc., or None if not found.
     """
-    if not bu or not sap_id:
-        print("Invalid parameters: 'bu' and 'sap_id' are required.")
-        return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
-    async with httpx.AsyncClient(verify=False) as client:
-        base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
-        resp = await client.get(f"{base_url}/api_cache/v1/get_location_data", params={"bu": bu,
-                                                                                      'location_id': sap_id})
-        if resp.status_code // 100 == 2:
-            return resp.json()
+    MAX_RETRIES = 5
+    RETRY_DELAY = 2
+    for attempt in range(MAX_RETRIES):
+        try:
+            if not bu or not sap_id:
+                print("Invalid parameters: 'bu' and 'sap_id' are required.")
+                return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
+            async with httpx.AsyncClient(verify=False) as client:
+                base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+                resp = await client.get(f"{base_url}/api_cache/v1/get_location_data", params={"bu": bu,
+                                                                                            'location_id': sap_id})
+                if resp.status_code // 100 == 2:
+                    return resp.json()
+                else:
+                    print(resp.status_code, resp.text)
+        except Exception as e:
+            print("Error In getting location details: ", e)
+        if attempt < MAX_RETRIES - 1:
+            time.sleep(RETRY_DELAY * (2 ** attempt))
         else:
-            print(resp.status_code, resp.text)
+            return False, {}
     return False, {}
 
 

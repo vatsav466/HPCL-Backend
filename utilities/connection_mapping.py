@@ -88,6 +88,7 @@ alert_action_category = {
         "Operations": "Operations",
         "FalseAlert": "FalseAlert",
         "InvalidAlert": "InvalidAlert",
+        "Quality": "Quality",
         "Other": "Other"
     },
     "VTS": {
@@ -111,6 +112,8 @@ alert_action_rca_reason = {
         "Lack of Awareness",
         "InvalidAlert",
         "FalseAlert",
+        "Maintenance Issue",
+        "Calibration Issue",
         "Other"
     ]
 }
@@ -230,6 +233,405 @@ rca_reason = {
         "System software or firmware issues.",
         "Others"
     ]
+}
+
+alert_action = {
+    "TAS": {
+        "TAS": {
+            "alert_section": "TAS",
+            "close_alert_func": "",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Person issue",
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Other"
+            ]
+        },
+        "VA": {
+            "alert_section": "VA",
+            "close_alert_func": "va_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Person issue",
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Other"
+            ]
+        },
+        "VTS": {
+            "alert_section": "VTS",
+            "close_alert_func": "vts_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Pilferage": "Pilferage",
+                "Operations": "Operations"
+            },
+            "rca_reason": [
+                "Health Issue",
+                "Person Issue",
+                "Equipment issue",
+                "Location/Outlet Near by",
+                "Other"
+            ]
+        }
+    },
+    "LPG": {
+        "LPG": {
+            "alert_section": "LPG",
+            "close_alert_func": "",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": []
+        },
+        "VA": {
+            "alert_section": "VA",
+            "close_alert_func": "va_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Person issue",
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Maintenance Issue",
+                "Calibration Issue",
+                "Other"
+            ]
+        },
+        "VTS": {
+            "alert_section": "VTS",
+            "close_alert_func": "vts_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Pilferage": "Pilferage",
+                "Operations": "Operations"
+            },
+            "rca_reason": [
+                "Health Issue",
+                "Person Issue",
+                "Equipment issue",
+                "Location/Outlet Near by",
+                "Other"
+            ]
+        }
+    },
+    "RO": {
+        "RO": {
+            "alert_section": "RO",
+            "close_alert_func": "",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": []
+        },
+        "VA": {
+            "alert_section": "VA",
+            "close_alert_func": "va_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Security": "Security",
+                "Operations": "Operations",
+                "FalseAlert": "FalseAlert",
+                "InvalidAlert": "InvalidAlert",
+                "Quality": "Quality",
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Person issue",
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Other"
+            ]
+        },
+        "VTS": {
+            "alert_section": "VTS",
+            "close_alert_func": "vts_alert_closer",
+            "actions": {
+                "Justify": {
+                    "name": "Justification",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Accept & Close": {
+                    "name": "AcceptClose",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                },
+                "FalseAlert": {
+                    "name": "FalseAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "InvalidAlert": {
+                    "name": "InvalidAlert",
+                    "close_alert": False,
+                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                }
+            },
+            "category": {
+                "Safety": "Safety",
+                "Pilferage": "Pilferage",
+                "Operations": "Operations"
+            },
+            "rca_reason": [
+                "Health Issue",
+                "Person Issue",
+                "Equipment issue",
+                "Location/Outlet Near by",
+                "Other"
+            ]
+        }
+    }
 }
 
 dry_out_query = f"""SELECT

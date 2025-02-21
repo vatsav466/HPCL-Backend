@@ -63,8 +63,16 @@ lpg_dashboard_actions = [
     'lpg_operations_rejections',
     'subsidy_failure_stats',
     'subsidy_exception_stats',
+    'lpg_cdcms_subsidy_central_consumers',
+    'lpg_cdcms_subsidy_central_transaction',
+    'lpg_cdcms_subsidy_central_amount',
+    'lpg_cdcms_subsidy_state_consumers',
+    'lpg_cdcms_subsidy_state_transaction',
+    'lpg_cdcms_subsidy_state_amount',
     'lpg_cdcms_sales_comparision',
     'lpg_cdcms_pcc',
+    'lpg_cdcms_dbc_enrollments',
+    'lpg_cdcms_nc_stats',
     'card_chart',
     'lpg_domestic_sale_table',
     'lpg_consumer_table',
@@ -153,8 +161,16 @@ widget_mapping = {
     'lpg_operations_rejections': {},
     'subsidy_failure_stats': {},
     'subsidy_exception_stats': {},
+    'lpg_cdcms_subsidy_central_consumers': {},
+    'lpg_cdcms_subsidy_central_transaction': {},
+    'lpg_cdcms_subsidy_central_amount': {},
+    'lpg_cdcms_subsidy_state_consumers': {},
+    'lpg_cdcms_subsidy_state_transaction': {},
+    'lpg_cdcms_subsidy_state_amount': {},
     'lpg_cdcms_sales_comparision': {},
     'lpg_cdcms_pcc': {},
+    'lpg_cdcms_dbc_enrollments': {},
+    'lpg_cdcms_nc_stats': {},
     'card_chart': {},
     'lpg_domestic_sale_table': {},
     'lpg_consumer_table': {},
@@ -185,11 +201,10 @@ class WidgetActions:
     @staticmethod
     # Safely resolve the module and function
     async def execute_widget_action(func_name, filters, cross_filters, drill_state, limit=0, time_grain="Monthly",
-                                    resp_format=''):
+                                    resp_format='',resp_level=''):
         try:                       
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
-
 
             # Determine the module containing the function
             if hasattr(lpg_plant.LPGPlantActions, func_name):
@@ -229,7 +244,7 @@ class WidgetActions:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit, time_grain=time_grain)
             elif func_name in ['m60_performance', 'industry_performance']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state,
-                                 time_grain=time_grain, resp_format=resp_format)
+                                 time_grain=time_grain, resp_format=resp_format,resp_level=resp_level)
             else:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
             # lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
