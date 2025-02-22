@@ -783,10 +783,12 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
 
     for cond in filters:
         cond['key'] = cond['key'].strip('"')
-        value = [mnt_name.strip() for mnt_name in cond["value"].split(",")]
-        if len(value) > 1:
-            cond["cond"] = 'one-off'
-            cond["value"] = value
+        if isinstance(cond["value"], str):
+            value = [mnt_name.strip() for mnt_name in cond["value"].split(",")]
+            if len(value) > 1:
+                cond["cond"] = 'one-off'
+                cond["value"] = value
+                
     where_conditions = []
     print("filters are", filters)
     print("cross_filters", cross_filters)
