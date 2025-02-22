@@ -1,8 +1,7 @@
-import urdhva_base
 import json
 import pika
 import traceback
-from orchestrator.connection_vault.databases.postgresql import Postgresql
+from postgresql import Postgresql
 
 class RabbitMQConsumer:
     def __init__(self, config_path="config.json"):
@@ -43,17 +42,17 @@ class RabbitMQConsumer:
         """
         try:
             data = json.loads(body)
-            changed_data = data.get("changed_data", [])
+            table_name = data.get("table_name")  # Extract table name
+            records = data.get("changed_data", [])  # Extract records
 
-            if not changed_data:
-                print("No data to process.")
+            if not table_name or not records:
+                print("Missing table name or records.")
                 return
-            else:
-                Postgresql().create_table()
             
-            print(f"Received data: {changed_data}")
+            print(f"Creating table: {table_name} with records: {records}")
 
-            # Here, you can add database insertion logic.
+            # Call create_table function
+            Postgresql().create_table("", table_name, records)
 
         except Exception as e:
             print(traceback.format_exc())

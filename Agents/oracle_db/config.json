@@ -17,5 +17,13 @@
     "conn_user": "hpcl_ceg",
     "conn_secret": "algo#ceg@4321",
     "conn_channel": "test_sync",
-    "conn_vhost": "hpcl_ceg"
+    "conn_vhost": "hpcl_ceg",
+
+    "postgresql": {
+        "host": "10.90.38.162",
+        "port": 5432,
+        "user_name": "ceg_user",
+        "password": "TTNqetkiJLPM50jC",
+        "database_name": "hpcl_ceg"
+    }
 }

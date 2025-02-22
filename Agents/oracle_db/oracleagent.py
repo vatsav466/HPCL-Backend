@@ -30,6 +30,7 @@ with open("config.json", "r") as config_file:
 # Extract Oracle credentials and table names
 oracle_config = config["oracle"]
 table_names = config["oracle_tables"]
+sap_id = config["sap_id"]
 
 class BaseAction:
     def __init__(self, params: typing.Dict, sleep_duration=30):
@@ -441,20 +442,27 @@ class DataMonitor:
             tasks = [self.oracle.get_data(table_name=table) for table in self.table_names]
             results = await asyncio.gather(*tasks)
 
-            print("results ---> ", results)
-            # print(type(results), results[:2])  # Debugging output
+            print("results ---> ", results)  # Debugging output
 
-            processed_results = []
+            processed_results = {}
+            sap_id = self.config.get("sap_id")  # Fetch sap_id from config
 
-            for item in results:
+            for table, item in zip(self.table_names, results):
                 if isinstance(item, dict):  # Handle error messages
-                    print("Error:", item)
+                    print(f"Error in {table}:", item)
                     continue  # Skip errors
                 
                 if isinstance(item, pl.DataFrame) and item.shape[0] > 0:  # Skip empty DataFrames
-                    processed_results += item.to_dicts()
+                    records = item.to_dicts()
+                    
+                    # Add sap_id to each record
+                    for record in records:
+                        record["sap_id"] = sap_id  
+                    
+                    processed_results[table] = records  # Store data under table name
+            
             print("processed_results --> ", processed_results)
-            return processed_results  # Return as a set
+            return processed_results  # Return as a dictionary
         except Exception as e:
             print(traceback.format_exc())
             print(e)
