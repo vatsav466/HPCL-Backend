@@ -22,7 +22,7 @@ class RabbitMQProducer:
         """
         Send a list of dictionaries to RabbitMQ queue.
         """
-        print("Into send_to_rabbitmq")
+        print("Into send_to_rabbitmq", data)
         try:
             print("Into try block")
             credentials = pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password)
@@ -39,7 +39,7 @@ class RabbitMQProducer:
             channel.queue_declare(queue=self.queue_name, durable=True)
 
             # Convert list of dictionaries to JSON
-            message = json.dumps({"changed_data": data}, default=str)  # Convert datetime objects to string
+            message = json.dumps(data, default=str)  # Convert datetime objects to string
 
             channel.basic_publish(exchange='', routing_key=self.queue_name, body=message)
             connection.close()

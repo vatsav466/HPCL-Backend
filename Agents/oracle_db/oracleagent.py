@@ -418,21 +418,37 @@ class DataMonitor:
 
     async def compare_and_send(self, current_data):
         """
-        Compare current data with previous data and send only changed records to RabbitMQ
+        Compare current data with previous data and send only changed records to RabbitMQ.
         """
-        # Find new records (records in current_data but not in previous_data)
         try:
-            new_records = [record for record in current_data if record not in self.previous_data]
+            changed_data = {}  # To store only changed records per table
 
-            if new_records:
-                RabbitMQProducer().send_to_rabbitmq(new_records)  # Ensure async call
-            print("test data", current_data)
-            self.previous_data = current_data  # Update previous data
-            print("self.previous_data  ", self.previous_data)
-        
+            for table_name, records in current_data.items():
+                if not isinstance(records, list):  # Ensure records are lists
+                    print(f"⚠ Warning: Expected list for table {table_name}, but got {type(records)}")
+                    continue
+                
+                # Get previous records (if any) for the same table
+                previous_records = self.previous_data.get(table_name, []) if self.previous_data else []
+
+                # Find new records (in current_data but not in previous_data)
+                new_records = [record for record in records if record not in previous_records]
+
+                if new_records:
+                    changed_data[table_name] = new_records  # Store only changed records
+
+            # Send only changed records
+            if changed_data:
+                RabbitMQProducer().send_to_rabbitmq(changed_data)  # Ensure async call
+                print("✅ Sent changed data to RabbitMQ:", changed_data)
+            
+            # Update previous_data with the current data
+            self.previous_data = current_data.copy()
+
         except Exception as e:
             print(traceback.format_exc())
-            print(e)
+            print(f"❌ Error in compare_and_send: {e}")
+
 
     async def fetch_data(self):
         """
@@ -445,7 +461,6 @@ class DataMonitor:
             print("results ---> ", results)  # Debugging output
 
             processed_results = {}
-            sap_id = self.config.get("sap_id")  # Fetch sap_id from config
 
             for table, item in zip(self.table_names, results):
                 if isinstance(item, dict):  # Handle error messages
