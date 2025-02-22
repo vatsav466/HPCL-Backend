@@ -37,7 +37,7 @@ KEYWORDS = {'sbu_name': ['SBU', 'BUSINESS UNIT'],
             }
 
 
-def generate_group_by_conditions(filters,cross_filters, cumulative=False, drill_state='', time_grain='',resp_level= ''):
+def generate_group_by_conditions(filters,cross_filters, cumulative=False, drill_state='', time_grain='', resp_level= ''):
     """
     Getting group by filter key based on cross filters
     :param time_grain:
@@ -137,6 +137,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                            filters,resp_format_org,sales_key="sales"):
     # Convert Decimal to float for Pandas compatibility
     df["sales"] = df["sales"].astype(float)
+
     # Calculate total sales per fiscal year
     if 'sbu_name' in df.columns.tolist():
         df.loc[df['sbu_name'] =='','sbu_name'] = 'Unknown'
@@ -157,6 +158,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
 
         # Merge results
         summary = summary.merge(hpcl_sales_per_year, on=group_by, how="left").fillna(0)
+
     # Mapping fiscal years to prefixes
     prefix_map = {}
     if fiscal_year_pre:
@@ -340,6 +342,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         df = df.sort_values('month_name').reset_index(drop=True)
     if resp_format == 'company_level'  and time_grain == 'Monthly'and '"inc"' in [x['key'] for x in filters]:
             print("this is inside if")
+
             cols_to_cumsum = [col for col in df.columns if col != 'month_name']
             df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
             return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
@@ -631,13 +634,12 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     return {'message':'Industry_Performance','status':True,'data':data}
 
     return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
-    
 
 
 def generate_stacked_data(df, resp_format='', month_column=''):
     columns = df.columns.to_list()
     numeric_cols = [col for col in columns if col.startswith('history') or col.startswith('actual')]
-    if month_column:
+    if month_column and month_column in df.columns:
         df[month_column] = pd.Categorical(df[month_column], categories=[month.upper() for month in m60.months],
                                           ordered=True)
         for column in numeric_cols:
@@ -689,8 +691,9 @@ def generate_stacked_data(df, resp_format='', month_column=''):
         if resp_format == 'cummulative' and month_column:
             df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
 
-        # For regular drill down widgets
-        return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+    # For regular drill down widgets
+    df.fillna(0, inplace=True)
+    return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
 
 
 async def industry_performance(filters, cross_filters, drill_state="", time_grain="", resp_format="",resp_level=""):
@@ -741,6 +744,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
         filters.append({"key": "fiscal_year", "cond": "equals", "value": fiscal_year_last})
     elif fiscal_year_pre and fiscal_year_last:
         filters.append({"key": "fiscal_year", "cond": "one-off", "value": [fiscal_year_pre, fiscal_year_last]})
+
     for index, _ in enumerate(cross_filters):
         cross_filters[index]['key'] = cross_filters[index]['key'].strip('"')
 
