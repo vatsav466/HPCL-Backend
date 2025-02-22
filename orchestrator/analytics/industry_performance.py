@@ -1120,10 +1120,14 @@ async def generate_omc_compare_data(filters, drill_state):
     for entry in structured_data:
         total_sales = sum(entry['Sales'].values())
         for company in entry['Sales']:
-            entry['Market Share'][company] = round(entry['Sales'][company] / total_sales * 100, 2)
+            entry['Market Share'][company] = round(entry['Sales'].get(company, 0) / total_sales * 100, 2)
         for company in entry['Sales']:
-            entry['Growth'][company] = round((entry['Sales'][company] -
-                                              entry['History'][company]) / entry['History'][company] * 100, 2)
+            if entry['History'].get(company, 0):
+                entry['Growth'][company] = round((entry['Sales'].get(company, 0) -
+                                                  entry['History'].get(company, 0)) /
+                                                 entry['History'].get(company, 0) * 100, 2)
+            else:
+                entry['Growth'][company] = 100
 
     return structured_data
 
