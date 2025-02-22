@@ -1,0 +1,21 @@
+{
+    "oracle": {
+        "host": "10.1.83.130",
+        "port": 1521,
+        "sid": "ORCL",
+        "user_name": "hostdncinterface",
+        "password": "dnc#25hpcl"
+    },
+    "oracle_tables": [
+        "HOST_SICKTTS", "HOST_CANCELLEDTTS", "HOST_KFACTORCHANGES",
+        "HOST_LOCALLOADEDTTS", "HOST_BAYREASSIGNMENT", "HOST_MANUALBAYASSIGNED", 
+        "HOST_MANUALFANPRINTED", "HOST_UNAUTHORIZEDFLOW", "HOST_OVERLOADEDTTS"],
+
+    
+    "conn_host": "10.90.38.167",
+    "conn_port": "5672",
+    "conn_user": "hpcl_ceg",
+    "conn_secret": "algo#ceg@4321",
+    "conn_channel": "test_sync",
+    "conn_vhost": "hpcl_ceg"
+}
