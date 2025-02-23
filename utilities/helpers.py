@@ -228,10 +228,10 @@ def validate_camunda_settings_rule(camunda_settings, location_id, bu):
         return True
     try:
         if camunda_settings['rule'] == "even":
-            if int(location_id) // 2 == 0:
+            if int(location_id) % 2 == 0:
                 return True
         elif camunda_settings['rule'] == "odd":
-            if int(location_id) // 2 != 0:
+            if int(location_id) % 2 != 0:
                 return True
     except Exception as e:
         print(f"Exception while handling rule {e}, Traceback {traceback.format_exc()}")
