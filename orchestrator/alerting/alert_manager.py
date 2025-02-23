@@ -132,17 +132,17 @@ async def close_vts_alert(alert_data, input_data):
 async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):
     if get_approved_time:
         for alert_history in alert_data.get("alert_history", []):
-            if alert_history['is_approved']:
+            if alert_history.get('is_approved', False):
                 if alert_history['action_type'] == 'Approved':
                     return alert_history['processed_time']
         return ""
     for alert_history in alert_data.get("alert_history", []):
         if is_approved:
-            if alert_history['is_approved']:
+            if alert_history.get('is_approved', False):
                 if alert_history['action_type'] == 'Approved':
                     return alert_history['action_msg']
         else:
-            if alert_history['action_type'] not in ['Created', 'Approved']:
+            if alert_history['action_type'] not in ['Created', 'Approved', 'VTS']:
                 return alert_history['action_msg']
     return ""
 
