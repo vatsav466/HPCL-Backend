@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1vd8roa" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.27.0">
-  <bpmn:process id="TASSOP001730DAYS5thInstance" name="TAS_SOP001_730DAYS_5th_Instance" isExecutable="true" camunda:historyTimeToLive="10">
+  <bpmn:process id="TASSOP001730DAYS1stInstance" name="TAS_SOP001_730DAYS_1st_Instance" isExecutable="true" camunda:historyTimeToLive="10">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_0idhsrt</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:serviceTask id="Activity_1n9drcw" name="Send Notification to first level notification" camunda:type="external" camunda:topic="vts_workflow_consumer_13">
+    <bpmn:serviceTask id="Activity_1n9drcw" name="Send Notification to first level notification" camunda:type="external" camunda:topic="vts_workflow_consumer_14">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="escalationlevel_inmail">1</camunda:inputParameter>
-          <camunda:inputParameter name="mqofrole">HQO HSSE Team</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">Safety officer </camunda:inputParameter>
           <camunda:inputParameter name="escalationtime_inmail">7 days</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO HSSE Team,HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Safety officer,Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">active</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
@@ -40,9 +40,9 @@
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="mqof">-1</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO HSSE Team,HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Safety officer,Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">resolved</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
@@ -57,7 +57,7 @@
         <camunda:inputOutput>
           <camunda:inputParameter name="auto_unblock">false</camunda:inputParameter>
           <camunda:inputParameter name="close">true</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">close_alert</camunda:inputParameter>
           <camunda:inputParameter name="class_name">CloseAlert</camunda:inputParameter>
           <camunda:inputParameter name="function_name">closealert</camunda:inputParameter>
@@ -87,17 +87,17 @@
     <bpmn:sequenceFlow id="Flow_18lrwnv" sourceRef="Gateway_12d1ukj" targetRef="Event_0f60pvt" />
     <bpmn:sequenceFlow id="Flow_0i2lmtt" sourceRef="Event_0f60pvt" targetRef="Activity_0zyfuc4" />
     <bpmn:sequenceFlow id="Flow_18u06g7" sourceRef="Event_07vw90u" targetRef="Gateway_12ne1an" />
-    <bpmn:serviceTask id="Activity_0zyfuc4" name="Notify to HQO Operations Team" camunda:type="external" camunda:topic="vts_workflow_consumer_3">
+    <bpmn:serviceTask id="Activity_0zyfuc4" name="Notify to LIC" camunda:type="external" camunda:topic="vts_workflow_consumer_3">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="mqof">-1</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
-          <camunda:inputParameter name="mqofrole">HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
@@ -114,13 +114,13 @@
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="mqof">-1</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO HSSE Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Safety officer</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">reject</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
-          <camunda:inputParameter name="mqofrole">HQO HSSE Team</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">Safety officer</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
@@ -172,9 +172,9 @@
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="mqof">-1</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO HSSE Team,HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Safety officer,Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">resolved</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
@@ -189,7 +189,7 @@
         <camunda:inputOutput>
           <camunda:inputParameter name="auto_unblock">true</camunda:inputParameter>
           <camunda:inputParameter name="close">true</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">close_alert</camunda:inputParameter>
           <camunda:inputParameter name="class_name">CloseAlert</camunda:inputParameter>
           <camunda:inputParameter name="function_name">closealert</camunda:inputParameter>
@@ -207,7 +207,7 @@
     <bpmn:serviceTask id="Activity_1396waa" name="Block" camunda:type="external" camunda:topic="vts_workflow_consumer_7">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="interrupt">block</camunda:inputParameter>
           <camunda:inputParameter name="vehicle">true</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_vts_command</camunda:inputParameter>
@@ -225,7 +225,7 @@
     <bpmn:serviceTask id="Activity_0ljcl4k" name="Unblock" camunda:type="external" camunda:topic="vts_workflow_consumer_8">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="interrupt">unblock</camunda:inputParameter>
           <camunda:inputParameter name="vehicle">true</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_vts_command</camunda:inputParameter>
@@ -253,7 +253,7 @@
     <bpmn:serviceTask id="Activity_02gtfsl" name="Unblock" camunda:type="external" camunda:topic="vts_workflow_consumer_9">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="interrupt">unblock</camunda:inputParameter>
           <camunda:inputParameter name="vehicle">true</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_vts_command</camunda:inputParameter>
@@ -268,17 +268,17 @@
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_16whi30" sourceRef="Event_0hjp3ij" targetRef="Activity_02gtfsl" />
     <bpmn:sequenceFlow id="Flow_0qjk8xu" sourceRef="Activity_02gtfsl" targetRef="Activity_0ufvasd" />
-    <bpmn:serviceTask id="Activity_1soed14" name="Notify to HQO Operations Team" camunda:type="external" camunda:topic="vts_workflow_consumer_10">
+    <bpmn:serviceTask id="Activity_1soed14" name="Notify to LIC" camunda:type="external" camunda:topic="vts_workflow_consumer_10">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="mqof">-1</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
-          <camunda:inputParameter name="mqofrole">HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
@@ -291,13 +291,13 @@
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="mqof">-1</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO HSSE Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Safety officer</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">reject</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
-          <camunda:inputParameter name="mqofrole">HQO HSSE Team</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">Safety officer</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
@@ -312,13 +312,13 @@
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="mqof">-1</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO HSSE Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Safety officer</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">reject</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
-          <camunda:inputParameter name="mqofrole">HQO HSSE Team</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">Safety officer</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
@@ -329,17 +329,17 @@
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">#{not approved}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_1b4vfoq" sourceRef="Activity_0ps74cq" targetRef="Event_1xircao" />
-    <bpmn:serviceTask id="Activity_113zd5r" name="Notify to HQO Operations Team" camunda:type="external" camunda:topic="vts_workflow_consumer_14">
+    <bpmn:serviceTask id="Activity_113zd5r" name="Notify to LIC" camunda:type="external" camunda:topic="vts_workflow_consumer_13">
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="mqof">-1</camunda:inputParameter>
-          <camunda:inputParameter name="rolemailto">HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="rolemailto">Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">notify</camunda:inputParameter>
-          <camunda:inputParameter name="BU">TAS</camunda:inputParameter>
+          <camunda:inputParameter name="BU">LPG</camunda:inputParameter>
           <camunda:inputParameter name="module_name">send_notification</camunda:inputParameter>
           <camunda:inputParameter name="class_name">SendNotification</camunda:inputParameter>
           <camunda:inputParameter name="function_name">handle_task_notification</camunda:inputParameter>
-          <camunda:inputParameter name="mqofrole">HQO Operations Team</camunda:inputParameter>
+          <camunda:inputParameter name="mqofrole">Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Interlock Active</camunda:inputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
@@ -356,7 +356,7 @@
   <bpmn:message id="Message_0tjs0ox" name="Approved" />
   <bpmn:message id="Message_0aggcmq" name="AcceptClose" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="TASSOP001730DAYS5thInstance">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="TASSOP001730DAYS1stInstance">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="152" y="142" width="36" height="36" />
       </bpmndi:BPMNShape>
