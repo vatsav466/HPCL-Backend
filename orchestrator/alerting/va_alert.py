@@ -123,7 +123,9 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "vendor_alert_id": record.get("alert_id", alert_id),
                                               "alert_timestamp": record.get("alert_timestamp", None)
                                               })
-
+                    
+                    camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['location_id'],
+                                                        alert_section="VA")
                     await cls.create_alert(interlock_details, camunda_url)
                 except Exception as e:
                     print(traceback.format_exc())

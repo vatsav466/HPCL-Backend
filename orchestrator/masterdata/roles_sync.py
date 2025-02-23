@@ -52,9 +52,9 @@ async def sync_user_roles():
                                                                                "Video Analytics"]}], "name": "LPG",
                                       "status": True},
                     "Sales Performance": {"allowed_pages": [{"menu_name": "Sales Performance",
-                                                             "allowed_sub_menus": ["Sales Performance",
-                                                                                   "Industry Performance",
-                                                                                   "Performance Insights"]}],
+                                                            "allowed_sub_menus": ["Sales Performance",
+                                                                                  "Industry Performance",
+                                                                                  "Performance Insights"]}],
                                           "name": "Sales", "status": True},
                     "Admin": {"allowed_pages": [], "status": True}
                     }
