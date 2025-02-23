@@ -1132,6 +1132,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "Financial_Year",
                                 SUM("Consumer_Count") as "consumer_count"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
@@ -1302,21 +1303,21 @@ ORDER BY
                                                             DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_cs_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "cs_rejection"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "cs_rejection"
                                                     FROM
                                                         "lpg_cs_rejections"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_gd_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "gd_rejection"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "gd_rejection"
                                                     FROM
                                                         "lpg_gd_rejections"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_pt_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "pt_rejection"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "pt_rejection"
                                                     FROM
                                                         "lpg_pt_rejections"
                                                     WHERE
