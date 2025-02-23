@@ -186,7 +186,7 @@ class AlertFactory:
                     # print("Data Pushed to VTS Vendor", resp)
 
                 if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
-                    continue
+                    return True, "alert created"
                 await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:
