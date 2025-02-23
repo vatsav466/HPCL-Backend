@@ -73,27 +73,43 @@ class Postgresql:
         self.insert_data(schema_name, table_name, sample_records)
 
     def insert_data(self, schema_name, table_name, records):
-        """Insert data into PostgreSQL table."""
+        """
+        Insert data into PostgreSQL table with upsert (INSERT ON CONFLICT DO UPDATE) 
+        using all columns as conflict keys.
+        """
         if not isinstance(records, pl.DataFrame) or records.is_empty():
             print(f"⚠ Warning: No records to insert into {table_name}.")
             return
-        schema_name = schema_name or self.get_default_schema()
 
+        schema_name = schema_name or self.get_default_schema()
         connection = self.get_connection()
         cursor = connection.cursor()
 
         columns = records.columns
         values_placeholder = ', '.join(['%s'] * len(columns))
+
+        # Generate the conflict clause using all columns
+        conflict_target = ", ".join([f'"{col}"' for col in columns])
+        update_assignments = ", ".join([f'"{col}" = EXCLUDED."{col}"' for col in columns])
+
         insert_query = f'INSERT INTO "{schema_name}"."{table_name}" ({", ".join([f'"{col}"' for col in columns])}) VALUES ({values_placeholder})'
+        
+        # Use ON CONFLICT with a unique constraint that includes all columns
+        upsert_query = f"""
+            {insert_query}
+            ON CONFLICT ({conflict_target}) DO UPDATE 
+            SET {update_assignments}
+        """
 
         try:
             values = [tuple(row) for row in records.iter_rows()]
-            cursor.executemany(insert_query, values)
+            cursor.executemany(upsert_query, values)
             connection.commit()
-            print(f"✅ {len(values)} records inserted into {table_name}")
+            print(f"✅ {len(values)} records upserted into {table_name}")
         except Exception as e:
-            print(f"❌ Error inserting data: {e}")
+            print(f"❌ Error upserting data: {e}")
             connection.rollback()
         finally:
             cursor.close()
             connection.close()
+

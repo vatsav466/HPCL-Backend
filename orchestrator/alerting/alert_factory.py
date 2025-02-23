@@ -169,9 +169,9 @@ class AlertFactory:
                 workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 # Uncomment below line to stop workflow for VA
-                if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
-                    await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                    await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
+                # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
+                #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+                #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
 
                 # Updating for VTS Alert history with alert_id
                 if alert_data_dict.get("alert_section") == "VTS":
@@ -185,12 +185,10 @@ class AlertFactory:
                     # resp = await vts_analysis.post_blocked_tt(blocked_tt_data)
                     # print("Data Pushed to VTS Vendor", resp)
 
-                # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
-                #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
-                # else:
-                #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
+                if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
+                    continue
+                await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+                await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:
                 print(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
