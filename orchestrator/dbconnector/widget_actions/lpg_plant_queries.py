@@ -987,9 +987,8 @@ LIMIT 10000;''',
     
     "lpg_operations_production_zone": f''' 
                         select 
-                            "zone" as "zone",
-                            "name" as "name",
-                            "filling_heads" as "heads",
+                            "zone",
+                            "name",
                             sum("productivity_normal_production")/1000 as "Productions"
                         from 
                             "lpg_operations_summary" ''',
