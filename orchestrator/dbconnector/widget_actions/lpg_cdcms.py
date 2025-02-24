@@ -1203,7 +1203,12 @@ class LPGCDCMSActions:
                     pl.sum("DBCIssued").alias("DBCIssued"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
-            if grouped_resp is not None:
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                    pl.sum("DBCIssued").alias("DBCIssued"),
+                    pl.sum("Month_Number").alias("Month_Number"),
+                ])
+            if grouped_resp is not None:    
                 return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
         resp = resp.group_by(["Month"]).agg([
                 pl.sum("DBCIssued").alias("DBCIssued"),
@@ -2021,6 +2026,7 @@ class LPGCDCMSActions:
             lpg_exception_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode", "ExceptionName"'
             resp = await function(query=lpg_exception_stats_ )
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["ExceptionName"], as_index=False
@@ -2036,6 +2042,7 @@ class LPGCDCMSActions:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
             resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
+            resp = await filter_data(resp, _filters)
             for each_float_col in ["Consumers","Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
