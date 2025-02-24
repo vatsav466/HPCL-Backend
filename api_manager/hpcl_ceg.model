@@ -1661,8 +1661,8 @@ Model HostLocalLoadedTts {
     recipe_number optional str
     truck_number optional str
     card_number optional str
-    start_totalizer optional int
-    end_totalizer optional int
+    start_totalizer optional float
+    end_totalizer optional float
     loaded_qty optional int
     transaction_end_time optional datetime
     sap_id optional str
@@ -1720,9 +1720,9 @@ Model HostUnauthorisedFlow {
     bcu_number optional str
     meter_number optional int
     timestamp optional datetime
-    start_totalizer optional int
-    end_totalizer optional int
-    net_totalizer optional int
+    start_totalizer optional float
+    end_totalizer optional float
+    net_totalizer optional float
     sap_id optional str
 
     Config=> {
@@ -1742,5 +1742,15 @@ Model HostOverLoadedTts{
 
     Config=> {
         access_key_mapping=''
+    }
+}
+
+Model TagsData {
+    sap_id optional str
+    name optional str
+    device_type optional str
+    device_count optional str
+
+    Action=> things_board_device_data{
     }
 }

@@ -3560,6 +3560,75 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "tagsdata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TagsData",
+            "attributes": {},
+            "uris": [
+                "/api/tagsdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "things_board_device_data"
+                }
+            ]
+        },
+        {
+            "name": "tagsdata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TagsData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tagsdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tagsdata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TagsData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tagsdata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "things_board_device_data"
+                }
+            ]
         }
     ],
     "policies": [
@@ -3901,6 +3970,10 @@
         {
             "name": "bulk_update_cp_stock_receipts",
             "displayName": "bulk_update_cp_stock_receipts"
+        },
+        {
+            "name": "things_board_device_data",
+            "displayName": "things_board_device_data"
         }
     ]
 }

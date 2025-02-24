@@ -60,7 +60,7 @@ class Postgresql:
         # Check if the model exists in hpcl_ceg_model
         model = getattr(hpcl_ceg_model, table_name, None)
         if model is None:
-            raise ValueError(f"❌ Model '{table_name}' not found in hpcl_ceg_model.")
+            raise ValueError(f"Model '{table_name}' not found in hpcl_ceg_model.")
 
         # Upsert the data - Ensure `await` is used
         result = await model.bulk_update(data, upsert=False)  # Use upsert=True if needed

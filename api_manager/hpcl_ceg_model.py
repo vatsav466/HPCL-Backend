@@ -4437,3 +4437,51 @@ class HostOverLoadedTtsGetResp(pydantic.BaseModel):
     data: typing.List[HostOverLoadedTts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class TagsDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tags_data'
+    
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_count: Mapped[typing.Optional[str]] = mapped_column("device_count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tags_data'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    device_count: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = TagsDataSchema
+        upsert_keys = []
+
+
+class TagsData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tags_data'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    device_count: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = TagsDataSchema
+        upsert_keys = []
+
+
+class TagsDataGetResp(pydantic.BaseModel):
+    data: typing.List[TagsData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tagsdata_Things_Board_Device_DataParams(pydantic.BaseModel):
+    pass
+    
