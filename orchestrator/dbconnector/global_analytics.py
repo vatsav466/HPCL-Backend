@@ -3631,7 +3631,7 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
             production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "heads" '
+            production_zone_query_  += ' GROUP BY "zone", "name" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -3640,18 +3640,18 @@ class GlobalAnalytics:
                 production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             else:
                 production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "heads" '
+            production_zone_query_  += ' GROUP BY "zone", "name" '
             resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
-            resp = resp.groupby(["zone", "heads"], as_index=False).agg({
+            resp = resp.groupby(["zone"], as_index=False).agg({
                         "Productions": "sum"
                     })
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["zone", "name", "heads"]:
+            for each_str_col in ["zone", "name"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3663,14 +3663,14 @@ class GlobalAnalytics:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name", "heads"]:
+            for each_str_col in ["zone", "name"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name","heads"], as_index=False).agg({
+                    grouped_resp = resp.groupby(["zone","name"], as_index=False).agg({
                         "Productions": "sum"
                     })
                 if grouped_resp is not None:
