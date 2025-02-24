@@ -1100,15 +1100,15 @@ ORDER BY
     from "consumer_pump_transactions"''',
 
     "lpg_cdcms_exception_stats": f''' select 
-                                        "ZOName" ,
+                                        "ZOName",
                                         "ROName",
-                                        "SAName" ,
-                                        "JDEDistributorCode",
-                                        "ExceptionName" as "ExceptionName" ,
+                                        "SAName",
+                                        "DistributorName",
+                                        "ExceptionName",
                                         SUM("Consumers") AS "Consumers",
                                         SUM("Refills") AS "Refills"
                                     from
-                                        "subsidy_exception_statistics_EC_data" 
+                                        "subsidy_exception_statistics" 
                                      ''',
 
     "lpg_cdcms_subsidy_failure_stats": f'''
@@ -1116,12 +1116,12 @@ ORDER BY
                             "ZOName" ,
                             "ROName",
                             "SAName",
-                            "JDEDistributorCode",
-                            "PaymentErrorName" as "PaymentErrorName",
+                            "DistributorName",
+                            "PaymentErrorName",
                             sum("Consumers") as "Consumers",
                             sum("Refills") as "Refills"
                         FROM
-                            "subsidy_failure_statistics_PEC_data"''',
+                            "subsidy_failure_statistics"''',
     
     'lpg_cdcms_subsidy_central_consumers': f''' 
                             SELECT 

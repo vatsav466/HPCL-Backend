@@ -1895,7 +1895,6 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_failure_stats_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_failure_stats")
         _filters = []
         if cross_filters:
@@ -1920,7 +1919,7 @@ class LPGCDCMSActions:
                 lpg_failure_stats_  += ' WHERE '
                 lpg_failure_stats_  += ' AND '.join(conditions)
             lpg_failure_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_failure_stats_  += ' GROUP BY "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","PaymentErrorName"'
+            lpg_failure_stats_  += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyFailureData.get_clause_conditions(formated=True)]
@@ -1929,9 +1928,10 @@ class LPGCDCMSActions:
                 lpg_failure_stats_  += ' WHERE "ZOName" IS NOT NULL'
             else:
                 lpg_failure_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_failure_stats_  += ' GROUP BY "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","PaymentErrorName"'
+            lpg_failure_stats_  += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName"'
             resp = await function(query=lpg_failure_stats_)
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["PaymentErrorName"], as_index=False
@@ -1940,7 +1940,7 @@ class LPGCDCMSActions:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             for each_str_col in [
-                "ZOName", "ROName", "SAName", "JDEDistributorCode", "PaymentErrorName"
+                "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName"
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -1951,12 +1951,12 @@ class LPGCDCMSActions:
         if resp:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-            for each_float_col in ["Consumers","Refills"]:
+            resp = await filter_data(resp, _filters)
+            for each_float_col in ["Consumers", "Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
 
-            for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","PaymentErrorName"]:
+            for each_str_col in ["ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
@@ -1989,7 +1989,6 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_exception_stats_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_exception_stats")
         _filters = []
         if cross_filters:
@@ -2014,7 +2013,7 @@ class LPGCDCMSActions:
                 lpg_exception_stats_  += ' WHERE '
                 lpg_exception_stats_  += ' AND '.join(conditions)
             lpg_exception_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_exception_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","ExceptionName"'
+            lpg_exception_stats_  += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName","ExceptionName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
@@ -2023,7 +2022,7 @@ class LPGCDCMSActions:
                 lpg_exception_stats_  += ' WHERE "ZOName" IS NOT NULL'
             else:
                 lpg_exception_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_exception_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode", "ExceptionName"'
+            lpg_exception_stats_  += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName"'
             resp = await function(query=lpg_exception_stats_ )
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
@@ -2041,12 +2040,11 @@ class LPGCDCMSActions:
         if resp:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
             resp = await filter_data(resp, _filters)
-            for each_float_col in ["Consumers","Refills"]:
+            for each_float_col in ["Consumers", "Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","ExceptionName"]:
+            for each_str_col in ["ZOName", "ROName", "SAName", "DistributorName", "ExceptionName"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
