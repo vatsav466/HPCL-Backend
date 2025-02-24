@@ -1070,6 +1070,173 @@ def get_subsidy_state_stats():
     insertToDB(data, "lpg_cdcms_subsidy_state", indexing_col=("ZOName", "Financial_Year", "Month"))
 
 
+def process_subsidy_data(data, cursor, table_name, code="payment"):
+    data = data.with_columns(System_Idx=pl.lit(""))
+    data = data.with_columns(pl.col('System_Idx').map_elements(lambda x: str(uuid.uuid4().hex)))
+    if code == "payment":
+        query = """ SELECT * FROM "Subsidy_PaymentErrorMaster" """
+        PaymentErrorCodeMaster = fetch_data(cursor, query, getData=True, params={
+            "host": "10.90.38.162",
+            "database": "hpcl_ceg",
+            "user": "ceg_user",
+            "password": "TTNqetkiJLPM50jC",
+            "port": 5432
+            })
+        # Getting PaymentError Description
+        data = _merge_data(
+            left_df=data,
+            right_df=PaymentErrorCodeMaster,
+            left_on=["PaymentErrorCode"],
+            right_on=["Code"],
+            how="left",
+            suffixes="_y",
+            indicator=False
+        )
+    if code == "exception":
+        # INNER JOIN CLDP_PFMS.tblCLDPErrorMaster E With(nolock) ON E.EXCEPTION_CODE = D.Exception_Code;
+        query = """ SELECT * FROM "Subsidy_ExceptionMaster" """
+        ExceptionMaster = fetch_data(cursor, query, getData=True, params={
+            "host": "10.90.38.162",
+            "database": "hpcl_ceg",
+            "user": "ceg_user",
+            "password": "TTNqetkiJLPM50jC",
+            "port": 5432
+            })
+
+        # Getting Exception Name and Description
+        data = _merge_data(
+            left_df=data,
+            right_df=ExceptionMaster,
+            left_on=["Exception_Code"],
+            right_on=["EXCEPTION_CODE"],
+            how="left",
+            suffixes="_y",
+            indicator=False
+        )
+
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblDistributorMaster = """ SELECT * FROM DCMs.tblDistributorMaster; """
+    tblDistributorMaster = fetch_data(cursor, tblDistributorMaster, getData=True)
+
+    tblDistributorMaster = tblDistributorMaster.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
+    data = data.with_columns(pl.col("Distributor_Code").fill_null(0).cast(pl.Int64).alias("Distributor_Code"))
+    # Getting SACode
+    data = _merge_data(
+        left_df=data,
+        right_df=tblDistributorMaster.select(["JDEDistributorCode", "DistributorName", "SACode", "StateCode"]),
+        left_on=["Distributor_Code"],
+        right_on=["JDEDistributorCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblSAMaster = """ SELECT * FROM DCMs.tblSAMaster; """
+    tblSAMaster = fetch_data(cursor, tblSAMaster, getData=True)
+
+    # Getting SAName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblSAMaster.select(["SACode", "ROCode", "SAName"]),
+        left_on=["SACode"],
+        right_on=["SACode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblROMaster =  """ SELECT * FROM DCMs.tblROMaster; """
+    tblROMaster = fetch_data(cursor, tblROMaster, getData=True)
+
+    # Getting ROName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblROMaster.select(["ROCode", "ZOCode", "ROName"]),
+        left_on=["ROCode"],
+        right_on=["ROCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblZOMaster =  """ SELECT * FROM DCMs.tblZOMaster; """
+    tblZOMaster = fetch_data(cursor, tblZOMaster, getData=True)
+
+    # Getting ZOName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblZOMaster.select(["ZOCode", "ZOName"]),
+        left_on=["ZOCode"],
+        right_on=["ZOCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+    data = data.unique("System_Idx")
+    data = data.drop("System_Idx")
+    
+    if code == "payment":    
+        data = data.filter(pl.col('PaymentErrorName').fill_null('') != "")
+        indexing_columns = ["PaymentErrorName", "DistributorName"]
+    elif code == "exception":
+        data = data.filter(pl.col('ExceptionName').fill_null('') != "")
+        indexing_columns = ["ExceptionName", "DistributorName"]
+    zoneMap = {
+            "LPG - NORTH WEST ZONE": "NWZ",
+            "LPG - NORTH ZONE": "NZ",
+            "LPG - WEST ZONE": "WZ",
+            "LPG - SOUTH CENTRAL ZONE": "SCZ",
+            "LPG - SOUTH ZONE": "SZ",
+            "LPG - NORTH CENTRAL ZONE": "NCZ",
+            "LPG - EAST ZONE": "EZ"
+            }
+    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))    
+    insertToDB(data, table_name, indexing_col=indexing_columns)
+
+
+def get_subsidy_exception_failure_data():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    failure = """ SELECT 
+                        PaymentErrorCode, Distributor_Code, 
+                        COUNT(1) AS Refills, COUNT(DISTINCT LPG_ID) AS Consumers 
+                    FROM 
+                        CLDP_PFMS.tblDailyRefillBatchDetails D WITH (NOLOCK) 
+                    WHERE 
+                        Delivery_Date_Time >= '2022-04-01' AND Payout_Status = 'FL' 
+                    GROUP BY 
+                        PaymentErrorCode, Distributor_Code """
+    exception = """ SELECT 
+                        Exception_Code, Distributor_Code, 
+                        COUNT(1) AS Refills, COUNT(distinct LPG_ID) AS Consumers
+                    FROM 
+                        CLDP_PFMS.tblDailyRefillBatchDetails D WITH(NOLOCK) 
+                    WHERE 
+                        Delivery_Date_Time >= '2022-04-01' AND Exception_Code IS NOT NULL 
+                    GROUP BY 
+                        Exception_Code, Distributor_Code """
+                        
+    failure = fetch_data(cursor, failure, getData=True)
+    exception = fetch_data(cursor, exception, getData=True)
+    process_subsidy_data(failure, cursor, "subsidy_failure_statistics", code="payment")
+    process_subsidy_data(exception, cursor, "subsidy_exception_statistics", code="exception")
+
+
 def get_new_connection_data():
     connection = get_db_connection()
     cursor = connection.cursor()
@@ -1364,3 +1531,4 @@ if __name__=="__main__":
     get_new_connection_data()    
     get_subsidy_state_stats()
     get_subsidy_central_stats()
+    get_subsidy_exception_failure_data()
