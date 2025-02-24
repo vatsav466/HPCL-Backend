@@ -1206,6 +1206,16 @@ def process_subsidy_data(data, cursor, table_name, code="payment"):
             "LPG - EAST ZONE": "EZ"
             }
     data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))    
+    
+    trunc_query = f""" TRUNCATE "{table_name}"; """
+    fetch_data(cursor, trunc_query, getData=False, params={
+            "host": "10.90.38.162",
+            "database": "hpcl_ceg",
+            "user": "ceg_user",
+            "password": "TTNqetkiJLPM50jC",
+            "port": 5432
+            })
+    
     insertToDB(data, table_name, indexing_col=indexing_columns)
 
 
