@@ -1616,6 +1616,7 @@ Model HostSickTts {
     sick_declared_by optional str
     sick_date optional datetime
     remarks optional str
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1631,6 +1632,7 @@ Model HostCancelledTts {
     required_qty optional int
     cancelled_by optional str
     cancelled_date optional datetime
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1645,6 +1647,7 @@ Model HostKFactorChanges {
     bcu_parameter optional str
     initial_setting optional str
     final_setting optional str
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1662,6 +1665,7 @@ Model HostLocalLoadedTts {
     end_totalizer optional int
     loaded_qty optional int
     transaction_end_time optional datetime
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1681,6 +1685,7 @@ Model HostBayReAssignment {
     reassigned_bay optional str
     bay_reassignment_time optional datetime
     remarks optional str
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1692,6 +1697,7 @@ Model HostManualBayAssigned {
     user_name optional str
     timestamp optional datetime
     text optional str
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1702,6 +1708,7 @@ Model HostManualFanPrinted {
     manual_fan_count optional int
     auto_fan_count optional int
     total_count optional int
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1716,6 +1723,7 @@ Model HostUnauthorisedFlow {
     start_totalizer optional int
     end_totalizer optional int
     net_totalizer optional int
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1726,9 +1734,11 @@ Model HostOverLoadedTts{
     load_number optional int
     truck_number optional str
     compartment_number optional int
+    blend_name optional str
     product_name optional str
     required_qty optional int
     loaded_qty optional int
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
