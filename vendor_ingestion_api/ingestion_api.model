@@ -201,7 +201,7 @@ Model emlockVendorData internal {
     terminal_code str
     truck_number str
     exception_type str
-    ro_code str
+    ro_code optional str
     created_datetime str
 }
 
