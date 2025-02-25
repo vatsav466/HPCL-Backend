@@ -282,7 +282,7 @@ alert_action = {
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Approve": {
@@ -292,12 +292,7 @@ alert_action = {
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
-                    "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
-                },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 }
             },
@@ -411,7 +406,7 @@ alert_action = {
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Approve": {
@@ -421,12 +416,7 @@ alert_action = {
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
-                    "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
-                },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 }
             },
@@ -542,7 +532,7 @@ alert_action = {
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Approve": {
@@ -552,12 +542,7 @@ alert_action = {
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
-                    "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
-                },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 }
             },
