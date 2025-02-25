@@ -343,10 +343,10 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -474,10 +474,10 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -603,10 +603,10 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
