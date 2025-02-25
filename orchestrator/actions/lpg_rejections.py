@@ -35,7 +35,8 @@ class LpgRejections:
         return ["alert_id", "interlock_name", "bu", "interlock_id", "sap_id"]
 
     async def get_current_cs_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_cs_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -45,7 +46,8 @@ class LpgRejections:
                     FROM 
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
+                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
+                        
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -81,7 +83,8 @@ class LpgRejections:
 
 
     async def get_current_gd_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_gd_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -92,7 +95,7 @@ class LpgRejections:
                     FROM
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
+                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -128,7 +131,8 @@ class LpgRejections:
 
 
     async def get_current_pt_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_pt_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -139,7 +143,7 @@ class LpgRejections:
                     FROM
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
+                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -174,30 +178,32 @@ class LpgRejections:
             await create_alert(self.params)
 
 
-    async def check_rejections(self, params):
+    async def check_rejections(self, params):        
         if not self.params:
             self.params = params
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         rejection_type = params["interlock_name"]
         table = f"lpg_{rejection_type}"
+        print(f"- Checking Rejection of {table} -")
 
         check_alerts = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])
         if not isinstance(check_alerts, dict):
             check_alerts = check_alerts.__dict__
-        check_alerts = pl.DataFrame(check_alerts)
-
+        check_alerts = pl.DataFrame([check_alerts])        
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_rejection = f""" SELECT AVG(sortoutpercentage)*100 AS rejection, plant FROM "{table}" WHERE process_date > '{yesterday}' GROUP BY plant"""
+        current_rejection = f""" SELECT AVG(sortoutpercentage)*100 AS rejection, plant, sap_id FROM "{table}" WHERE process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY plant, sap_id"""
         current_rejection = await function(query=current_rejection)
         current_rejection = pl.DataFrame(current_rejection)
-
+        print("check_alerts", check_alerts)
         if not check_alerts.is_empty():
             check_alerts = current_rejection.join(check_alerts, on="sap_id", how="inner")
             check_alerts = check_alerts.with_columns(pl.when(pl.col("rejection") < 8).then(pl.lit("decreased")).otherwise(pl.lit("increased")).alias("rejection_status")).select(["rejection_status"])
         else:
             return False, {}
+        print("check_alerts :", check_alerts.to_dicts()[-1])
         return True, check_alerts.to_dicts()[-1]
         
 if __name__ == "__main__":

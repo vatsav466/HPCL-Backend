@@ -230,6 +230,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                 ]
                             }
                             #print('vts_alert_payload----->',vts_alert_payload)
+                            camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['location_id'],
+                                                        alert_section="VTS")
                             await cls.create_alert(vts_alert_data, camunda_url)
           
                 except Exception as e:

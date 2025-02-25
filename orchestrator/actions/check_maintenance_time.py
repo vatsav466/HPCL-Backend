@@ -57,7 +57,7 @@ class CheckMaintenanceTime:
                 maintenance_time = alert_data.get('maintenance_time')
                 timestamp = datetime.datetime.fromisoformat(maintenance_time).replace(tzinfo=datetime.timezone.utc)
                 current_time = datetime.datetime.now(datetime.timezone.utc)   
-                if current_time>timestamp:
+                if current_time<timestamp:
                     # Parse the string into a datetime object
                     timestamp = datetime.datetime.strptime(maintenance_time, "%Y-%m-%dT%H:%M:%S")
                     # Subtract 5 days

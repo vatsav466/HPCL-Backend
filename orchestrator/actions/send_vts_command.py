@@ -1,11 +1,8 @@
 import urdhva_base
 import pytz
-import json
-import requests
-from requests.auth import HTTPBasicAuth
-import asyncio
 import datetime
 import hpcl_ceg_model
+import orchestrator.analytics.vts_analysis as vts_analysis
 import orchestrator.alerting.alert_manager as alert_manager
 
 logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
@@ -14,46 +11,68 @@ logger = urdhva_base.logger.Logger.getInstance("actions-processing-log")
 class SendVtsCommand:
 
     async def get_required_variables(self):
-        return ["alert_id", "interrupt", "vehicle"]
+        return ["alert_id", "interrupt", "WaivedOff", "auto_unblock", "BU"]
     
     async def sendvtscommand(self, params):
         print("params --->", params)
-        IST = pytz.timezone('Asia/Kolkata')
-        currtime = datetime.datetime.now(IST).strftime('%d-%m-%Y %H:%M:%S')
-        interuptName = params.get('interrupt')
-        isvehicle = params.get('vehicle')
-        processcodemap = {'RO': '1', 'TAS': '2', 'VTS': '3', 'TAS_vehicle': '3', 'LPG_vehicle': '4'}
+        if 'WaivedOff' in params.keys():
+            params['WaivedOff'] = True if params['WaivedOff'] == 'true' else False
+        if 'auto_unblock' in params.keys():
+            params['auto_unblock'] = True if params['auto_unblock'] == 'true' else False
 
         alert_data = await hpcl_ceg_model.Alerts.get(params.get('alert_id'))
-
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
-        
-        flag = 'B'
-        if interuptName.lower() == 'unblock':
-            flag = 'U'
-        alert_message=''
-        alert_history=[]
-        if alert_data:
-            print("SAP",alert_data)
-            if flag=='B':
-                alert_message = (
-                                f"Alert details Alert ID: {alert_data.get('unique_id','')}, status: Block, Vehicle: {alert_data.get('vehicle_number','')} trip details are sent successfully to VTS to block the Vehicle " 
-                            )
-                alert_data["action_msg"] = alert_message
-                alert_data["action_type"] = "VTS"
-            else:
-                print("Failed")
-                alert_message = (
-                                f"Alert details Alert ID: {alert_data.get('unique_id','')}, status: Unblock, Vehicle: {alert_data.get('vehicle_number','')} trip details are sent successfully to VTS to Unblock the Vehicle " 
-                            )
-                alert_data["action_msg"] = alert_message
-                alert_data["action_type"] = "VTS"  # Replace with an appropriate value
-                #alert_data["alert_status"]: "Open"  # Replace with the correct alert status
-            print("alert_data",alert_data)
+
+        if urdhva_base.context.context.exists():
+            rpt = urdhva_base.context.context.get('rpt', {})
+        else:
+            rpt = {}
+
+        if params.get("interrupt").lower() == 'block':
+            input_data = {
+                "TT_No": alert_data['vehicle_number'],
+                "BlockStartDate": alert_data['vehicle_blocked_start_date'].isoformat(),
+                "BlockEndDate": alert_data['vehicle_blocked_end_date'].isoformat(),
+                "BlockedRemarks": alert_data['device_name']
+            }
+            # await vts_analysis.post_blocked_tt(input_data)
+            alert_message = (
+                f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Block, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to block the Vehicle "
+            )
+            alert_data["action_msg"] = alert_message
+            alert_data["action_type"] = "VTS"
             await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
             return True, {"sapcommandsent": True}
-        else:
-            return False, {"sapcommandsent": False}
-        
- 
+
+        if params.get("interrupt").lower() == 'unblock':
+            un_block_datetime = str(alert_data['vehicle_blocked_end_date'].isoformat()) if params.get(
+                "auto_unblock", False) else str(urdhva_base.utilities.get_present_time().isoformat())
+            approved_datetime = await alert_manager.get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
+            doc_link = await alert_manager.get_doc_link_from_alert_history(alert_data)
+            params = {
+                "TT_No": alert_data['vehicle_number'],
+                "UnBlockedBy": rpt.get("email", "NOVEX_USER"),
+                "UnBlockedDateTime": un_block_datetime,
+                "UnBlockedRemarks": await alert_manager.get_approved_remarks(alert_data, is_approved=False),
+                "ApprovedBy": rpt.get("email", "NOVEX_USER"),
+                "ApprovedDateTime": approved_datetime,
+                "ApprovedRemarks": await alert_manager.get_approved_remarks(alert_data, is_approved=True),
+                "BlockStartDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
+                "BlockEndDate": str(alert_data['vehicle_blocked_start_date'].isoformat()),
+                "WaivedOff": params.get("WaivedOff", False),
+                "AlertID": alert_data['id'],
+                "DocLink": {
+                    "DocPaths": doc_link if doc_link else []
+                }
+            }
+            # await vts_analysis.post_unblocked_tt(params)
+            alert_message = (
+                f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Unblock, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to Unblock the Vehicle "
+            )
+            alert_data["action_msg"] = alert_message
+            alert_data["action_type"] = "VTS"
+            await alert_manager.AlertAction().update_alert_history(input_data=alert_data, alert_data=alert_data)
+            return True, {"sapcommandsent": True}
+
+        return False, {"sapcommandsent": False}

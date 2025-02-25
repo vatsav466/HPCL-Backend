@@ -51,6 +51,11 @@ async def sync_user_roles():
                                                                                "LPG Plant",
                                                                                "Video Analytics"]}], "name": "LPG",
                                       "status": True},
+                    "Sales Performance": {"allowed_pages": [{"menu_name": "Sales Performance",
+                                                            "allowed_sub_menus": ["Sales Performance",
+                                                                                  "Industry Performance",
+                                                                                  "Performance Insights"]}],
+                                          "name": "Sales", "status": True},
                     "Admin": {"allowed_pages": [], "status": True}
                     }
     await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"]}

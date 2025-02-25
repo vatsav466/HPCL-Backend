@@ -24,7 +24,7 @@ class NotifyEMail(NotificationManager):
         :return:
         """
         creds = {"username": urdhva_base.settings.smtp_username, "password": urdhva_base.settings.smtp_password,
-                 "port": urdhva_base.settings.smtp_port, "server": urdhva_base.settings.smtp_host,
+                 "port": 465 if urdhva_base.settings.smtp_ssl_enabled else urdhva_base.settings.smtp_port, "server": urdhva_base.settings.smtp_host,
                  "from": urdhva_base.settings.smtp_from_url,
                  "connection_type": "SSL/TLS" if urdhva_base.settings.smtp_ssl_enabled else "STARTTLS"}
         return creds

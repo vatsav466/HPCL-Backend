@@ -990,3 +990,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/hostoverloadedtts/{id}', tags=['HostOverLoadedTts'])
 async def delete(id: str):
     return await HostOverLoadedTts.delete(id)
+
+
+@router.post('/tagsdata', response_model=TagsData, tags=['TagsData'])
+async def create(inputObj: TagsDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/tagsdata', response_model=TagsData, tags=['TagsData'])
+async def update(inputObj: TagsData):
+    return await inputObj.modify()
+
+
+@router.get('/tagsdata/{id}', response_model=TagsData, tags=['TagsData'])
+async def get(id: str):
+    return await TagsData.get(id, skip_secrets=True)
+
+
+@router.get('/tagsdata', response_model=TagsDataGetResp, tags=['TagsData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TagsData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/tagsdata/{id}', tags=['TagsData'])
+async def delete(id: str):
+    return await TagsData.delete(id)

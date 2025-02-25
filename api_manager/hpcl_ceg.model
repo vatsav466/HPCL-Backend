@@ -83,6 +83,10 @@ Enum AlertActionType str {
     Notified='Notified'
     Escalated='Escalated'
     Resolved='Resolved'
+    Blocked='Blocked'
+    UnBlocked='UnBlocked'
+    Request='Request'
+    Interrupt='Interrupt'
 }
 
 Enum IndentStatus str {
@@ -431,6 +435,7 @@ Model Alert_History internal {
     ims_datetime optional str
     prod_reqd_dt optional str
     mail_sent_to optional str
+    action_by optional str
     action_type AlertActionType
     alert_status optional AlertStatus
     action_msg str
@@ -455,6 +460,10 @@ Model Alert_History internal {
     is_tripped optional bool
     is_justify optional bool
     is_vts optional bool
+    is_blocked optional bool
+    is_unblocked optional bool
+    is_interrupt optional bool
+    is_extra_days optional bool
 }
 
 Model tags internal {
@@ -477,6 +486,10 @@ Model tags internal {
     isDelivered optional bool
     isTripped optional bool
     isJustify optional bool
+    isBlocked optional bool
+    isUnBlocked optional bool
+    isInterrupt optional bool
+    isExtraDays optional bool
 }
 
 Model Interlock {
@@ -661,6 +674,7 @@ Model Alerts {
 
     Action=> get_closed_alerts_details {
         bu str
+        alert_id str
         alert_section str
         interlock_name str
     }
@@ -1603,6 +1617,7 @@ Model HostSickTts {
     sick_declared_by optional str
     sick_date optional datetime
     remarks optional str
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1618,6 +1633,7 @@ Model HostCancelledTts {
     required_qty optional int
     cancelled_by optional str
     cancelled_date optional datetime
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1632,6 +1648,7 @@ Model HostKFactorChanges {
     bcu_parameter optional str
     initial_setting optional str
     final_setting optional str
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1645,10 +1662,11 @@ Model HostLocalLoadedTts {
     recipe_number optional str
     truck_number optional str
     card_number optional str
-    start_totalizer optional int
-    end_totalizer optional int
+    start_totalizer optional float
+    end_totalizer optional float
     loaded_qty optional int
     transaction_end_time optional datetime
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1668,6 +1686,7 @@ Model HostBayReAssignment {
     reassigned_bay optional str
     bay_reassignment_time optional datetime
     remarks optional str
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1679,6 +1698,7 @@ Model HostManualBayAssigned {
     user_name optional str
     timestamp optional datetime
     text optional str
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1689,6 +1709,7 @@ Model HostManualFanPrinted {
     manual_fan_count optional int
     auto_fan_count optional int
     total_count optional int
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1700,9 +1721,10 @@ Model HostUnauthorisedFlow {
     bcu_number optional str
     meter_number optional int
     timestamp optional datetime
-    start_totalizer optional int
-    end_totalizer optional int
-    net_totalizer optional int
+    start_totalizer optional float
+    end_totalizer optional float
+    net_totalizer optional float
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
@@ -1713,11 +1735,23 @@ Model HostOverLoadedTts{
     load_number optional int
     truck_number optional str
     compartment_number optional int
+    blend_name optional str
     product_name optional str
     required_qty optional int
     loaded_qty optional int
+    sap_id optional str
 
     Config=> {
         access_key_mapping=''
+    }
+}
+
+Model TagsData {
+    sap_id optional str
+    name optional str
+    device_type optional str
+    device_count optional str
+
+    Action=> things_board_device_data{
     }
 }

@@ -893,7 +893,7 @@ LIMIT 10000;''',
                                 
     "lpg_cdcms_backlogs": f''' SELECT 
                                     "DistributorName",
-                                    "ZOName", "ROName", "SAName",
+                                    "ZOName", "ROName", "SAName", "ConsumerType",
                                     SUM("TotalSalesYesterday") AS "TotalSalesYesterday" ,
                                     SUM("Total_Pending") AS "Total_Pending"
                                 FROM
@@ -926,6 +926,7 @@ LIMIT 10000;''',
                                         "DistributorName",
                                         "Month",
                                         "Month_Number",
+                                        "ConsumerType",
                                         sum("DBCIssuedCount") as "DBCIssued"
                                     from
                                         "lpg_cdcms_dbc_enrollment" ''',
@@ -937,13 +938,14 @@ LIMIT 10000;''',
                                 "DistributorName",
                                 "Month",
                                 "month_number",
+                                "ConsumerType",
                                 sum("new_connection") as "new_connection"
                             FROM
                                 "lpg_cdcms_nc_data" ''',
     
     "lpg_cdcms_backlogs_today": f''' SELECT
                                         "DistributorName",
-                                        "ZOName", "ROName", "SAName",
+                                        "ZOName", "ROName", "SAName", "ConsumerType",
                                         SUM("TotalSalesYesterday") AS "TotalSalesYesterday",
                                         SUM("Total_Pending") AS "Total_Pending"
                                     FROM
@@ -985,9 +987,8 @@ LIMIT 10000;''',
     
     "lpg_operations_production_zone": f''' 
                         select 
-                            "zone" as "zone",
-                            "name" as "name",
-                            "filling_heads" as "heads",
+                            "zone",
+                            "name",
                             sum("productivity_normal_production")/1000 as "Productions"
                         from 
                             "lpg_operations_summary" ''',
@@ -1098,15 +1099,15 @@ ORDER BY
     from "consumer_pump_transactions"''',
 
     "lpg_cdcms_exception_stats": f''' select 
-                                        "ZOName" ,
+                                        "ZOName",
                                         "ROName",
-                                        "SAName" ,
-                                        "JDEDistributorCode",
-                                        "ExceptionName" as "ExceptionName" ,
+                                        "SAName",
+                                        "DistributorName",
+                                        "ExceptionName",
                                         SUM("Consumers") AS "Consumers",
                                         SUM("Refills") AS "Refills"
                                     from
-                                        "subsidy_exception_statistics_EC_data" 
+                                        "subsidy_exception_statistics" 
                                      ''',
 
     "lpg_cdcms_subsidy_failure_stats": f'''
@@ -1114,12 +1115,12 @@ ORDER BY
                             "ZOName" ,
                             "ROName",
                             "SAName",
-                            "JDEDistributorCode",
-                            "PaymentErrorName" as "PaymentErrorName",
+                            "DistributorName",
+                            "PaymentErrorName",
                             sum("Consumers") as "Consumers",
                             sum("Refills") as "Refills"
                         FROM
-                            "subsidy_failure_statistics_PEC_data"''',
+                            "subsidy_failure_statistics"''',
     
     'lpg_cdcms_subsidy_central_consumers': f''' 
                             SELECT 
@@ -1130,6 +1131,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "Financial_Year",
                                 SUM("Consumer_Count") as "consumer_count"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
@@ -1159,6 +1161,45 @@ ORDER BY
                                 SUM("SubsidyAmount") as "SubsidyAmount"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
+    
+    'lpg_cdcms_subsidy_state_consumers': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("Consumer_Count") as "consumer_count"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
+    
+    'lpg_cdcms_subsidy_state_transaction': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("Transaction_Count") as "transaction_count"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
+    
+    'lpg_cdcms_subsidy_state_amount':f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                SUM("SubsidyAmount") as "SubsidyAmount"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
     
     "cs_query" : f'''
                     select 
@@ -1216,21 +1257,24 @@ ORDER BY
                                         AND "Execution_Date" <= CURRENT_DATE AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_date_sales':f'''select
-                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales",
+                                        ROUND(CAST(SUM("TotalSalesYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
                                         "ZOName" IS NOT NULL ''',                                
 
     'cdcms_current_date_bookings':f'''select
-                                        ROUND(CAST(SUM("bookings_volume") / 1000000 AS NUMERIC), 2) AS "Bookings"
+                                        ROUND(CAST(SUM("bookings_volume") / 1000000 AS NUMERIC), 2) AS "Bookings",
+                                        ROUND(CAST(SUM("BookingReceivedYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
                                         "ZOName" IS NOT NULL ''',
 
     'cdcms_current_date_pending':f'''select
-                                        ROUND(CAST(SUM("Total_Pending") / 100000 AS NUMERIC), 2) AS "Pending"
+                                        ROUND(CAST(SUM("pendings_volume") / 1000000 AS NUMERIC), 2) AS "Pending",
+                                        ROUND(CAST(SUM("Total_Pending") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
@@ -1258,21 +1302,21 @@ ORDER BY
                                                             DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_cs_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "cs_rejection"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "cs_rejection"
                                                     FROM
                                                         "lpg_cs_rejections"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_gd_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "gd_rejection"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "gd_rejection"
                                                     FROM
                                                         "lpg_gd_rejections"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_pt_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "pt_rejection"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "pt_rejection"
                                                     FROM
                                                         "lpg_pt_rejections"
                                                     WHERE
