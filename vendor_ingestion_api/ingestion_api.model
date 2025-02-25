@@ -208,7 +208,7 @@ Model emlockVendorData internal {
 Model EMLock crud_disable {
     Action=> ingest_data {
         vendor_id str
-        data optional list emlockData
+        data optional list emlockVendorData
     }
 }
 
