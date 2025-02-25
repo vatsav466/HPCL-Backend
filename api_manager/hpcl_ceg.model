@@ -1658,7 +1658,7 @@ Model HostLocalLoadedTts {
     sr_number optional int
     bay_number optional str
     bcu_number optional str
-    recipe_number optional str
+    recipe_name optional str
     truck_number optional str
     card_number optional str
     start_totalizer optional float
