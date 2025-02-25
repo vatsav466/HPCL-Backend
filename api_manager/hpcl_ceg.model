@@ -797,9 +797,9 @@ Model productsDetails internal {
 }
 
 Model IndentDryOutDataFilters internal {
-    key str
-    cond str
-    value list str
+    key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
+    cond str regex="^([a-zA-Z0-9_.\-=! ]+|)$"
+    value list str regex="^([a-zA-Z0-9_.\-=\" ]+|)$"
 }
 
 // Model for dry-out analysis, Per product one will get created
@@ -989,6 +989,7 @@ Model LpgOperationsSummary {
         top optional int
         bottom optional int
     }
+    
     Config=> {
         access_key_mapping='sap_id:sap_id,short_name:plant,zone:zone'
     }

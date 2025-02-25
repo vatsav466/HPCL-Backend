@@ -134,6 +134,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                            resp_level,
                            filters, resp_format_org, sales_key="sales"):
     # Convert Decimal to float for Pandas compatibility
+
     if "sales" in  df.columns.tolist():
         df["sales"] = df["sales"].astype(float)
 
@@ -157,6 +158,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
 
         # Merge results
         summary = summary.merge(hpcl_sales_per_year, on=group_by, how="left").fillna(0)
+
     # Mapping fiscal years to prefixes
     prefix_map = {}
     if fiscal_year_pre:
@@ -401,6 +403,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     if "month_name" in df.columns:
         df["month_name"] = pd.Categorical(df["month_name"], categories=[m.upper() for m in m60.months], ordered=True)
         df = df.sort_values('month_name').reset_index(drop=True)
+
     if resp_format == 'company_level' and time_grain == 'Monthly' and '"inc"' in [x['key'] for x in filters]:
         print("this is inside if")
 
@@ -447,6 +450,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
 
     if resp_format == 'company_level' and (
             resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format == 'company_level':
+
         months = df['month_name'].unique().tolist()
         company = [x['value'].strip('"') for x in filters if x['key'] == '"company_name"'][0].lower()
         for col in df.columns.tolist():
@@ -579,7 +583,6 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     return {'message':'Industry_Performance','status':True,'data':data}
 
     return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
-    
 
 
 def generate_stacked_data(df, resp_format='', month_column=''):
