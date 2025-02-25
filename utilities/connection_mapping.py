@@ -294,6 +294,11 @@ alert_action = {
                     "name": "FalseAlert",
                     "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -418,6 +423,11 @@ alert_action = {
                     "name": "FalseAlert",
                     "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -544,6 +554,11 @@ alert_action = {
                     "name": "FalseAlert",
                     "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {

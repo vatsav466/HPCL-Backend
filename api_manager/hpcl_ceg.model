@@ -464,6 +464,7 @@ Model Alert_History internal {
     is_unblocked optional bool
     is_interrupt optional bool
     is_extra_days optional bool
+    is_rejected optional bool
 }
 
 Model tags internal {
