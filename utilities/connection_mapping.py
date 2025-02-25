@@ -246,8 +246,8 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "Accept & Close": {
-                    "name": "AcceptClose",
+                "Maintenance": {
+                    "name": "Maintenance",
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
@@ -264,19 +264,10 @@ alert_action = {
             },
             "category": {
                 "Safety": "Safety",
-                "Security": "Security",
-                "Operations": "Operations",
-                "FalseAlert": "FalseAlert",
-                "InvalidAlert": "InvalidAlert",
-                "Quality": "Quality",
-                "Other": "Other"
+                "Process": "Process"
             },
             "rca_reason": [
-                "Person issue",
                 "Equipment issue",
-                "Lack of Awareness",
-                "InvalidAlert",
-                "FalseAlert",
                 "Other"
             ]
         },
