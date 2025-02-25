@@ -168,14 +168,10 @@ class Settings(pydantic_settings.BaseSettings):
     rabbitmq_queue: str = "tagsdata"
     rabbitmq_auto_ack: bool = True
 
-    # Thingsboard
+    # ThingsBoard
     things_board_url: str = "http://localhost:8080"
     things_board_username: str = "admin"
     things_board_password: str = "password"
-
-    # Max user password retries
-    max_password_retires: int = 3
-    lockout_time: int = 60
 
     # Timezone settings
     time_zone: str = "Asia/Kolkata"

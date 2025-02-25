@@ -79,7 +79,6 @@ class {{input.name}}Create({%- if not input.is_internal -%}{{input.dbbase[1]}}{%
         {%- for attr in input.attrs %}{%- if attr.unique_field %}{%- set x = upsert_keys.keys.append(attr.name) -%}{%- endif  -%}{%- endfor -%}
     class Config:
         collection_name = '{{input.config.collection_name or 'data_flow'}}'
-        extra = "forbid"  # Disallow extra fields
         {%- if 'postgresmodel' in input.dbbase[2] %}
         schema_class = {% if not input.config.parent_table %}{{input.name}}Schema{% else %}{{input.config.parent_table}}Schema{% endif %}
         upsert_keys = {{upsert_keys.keys}}
@@ -133,7 +132,6 @@ class {{input.name}}({{input.dbbase[2]}}):
         {%- for attr in input.attrs %}{%- if attr.unique_field %}{%- set x = upsert_keys.keys.append(attr.name) -%}{%- endif  -%}{%- endfor -%}
     class Config:
         collection_name = '{{input.config.collection_name or 'data_flow'}}'
-        extra = "forbid"  # Disallow extra fields
         {%- if 'postgresmodel' in input.dbbase[2] %}
         schema_class = {% if not input.config.parent_table %}{{input.name}}Schema{% else %}{{input.config.parent_table}}Schema{% endif %}
         upsert_keys = {{upsert_keys.keys}}
@@ -221,7 +219,5 @@ class {{input.name.title()}}_{{action.name.title()}}Params(pydantic.BaseModel):
     {% if not action.params %}
     pass
     {% endif %}
-    class Config:
-        extra = "forbid"  # Disallow extra fields
 {%- endfor %}
 {% endif %}
