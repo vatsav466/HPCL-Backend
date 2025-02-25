@@ -463,7 +463,7 @@ class AlertAction:
         }
         # print("messaged_data: ", messaged_data)
         # Posting data to camunda
-        url = helpers.get_camunda_url(
+        url = await helpers.get_camunda_url(
             bu=alert_data.bu,
             sap_id=alert_data.sap_id,
             alert_section=alert_data.alert_section
