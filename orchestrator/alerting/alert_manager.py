@@ -390,7 +390,8 @@ class AlertAction:
                             "is_blocked": event_tags.get("is_blocked", False),
                             "is_unblocked": event_tags.get("is_unblocked", False),
                             "is_interrupt": event_tags.get("is_interrupt", False),
-                            "is_extra_days": event_tags.get("is_extra_days", False)
+                            "is_extra_days": event_tags.get("is_extra_days", False),
+                            "is_rejected": event_tags.get("is_rejected", False)
                         })
         # print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
@@ -436,7 +437,8 @@ class AlertAction:
                    "is_blocked": {"name": "blocked", "type": "Boolean"},
                    "is_unblocked": {"name": "unblocked", "type": "Boolean"},
                    "is_interrupt": {"name": "interrupt", "type": "Boolean"},
-                   "is_extra_days": {"name": "request", "type": "Boolean"}
+                   "is_extra_days": {"name": "request", "type": "Boolean"},
+                   "is_rejected": {"name": "reject", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
