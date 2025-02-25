@@ -94,7 +94,8 @@ class LPGCDCMSActions:
         df = df.filter(pl.col("DistributorName").fill_null("") != "NULL")
         data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
                 "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
-                "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
+                "DistributorName": df["DistributorName"].unique().to_list(), 
+                "StateCode": df["StateCode"].unique().to_list(), "CylType": ['C142','C5'], 
                 "ConsumerType": ['PMUY', 'NPMUY'], "Financial_Year": ["2023-2024", "2024-2025"]}
         return data
     
@@ -2101,13 +2102,13 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_consumers_query_ += ' AND '.join(conditions)
             if not _fy:
                 lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             if "where" not in lpg_cdcms_subsidy_central_consumers_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_central_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             elif not _fy:
                 lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_consumers_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2202,13 +2203,13 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_transaction_query_ += ' AND '.join(conditions)
             lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             if "where" not in lpg_cdcms_subsidy_central_transaction_query_.lower():
                 lpg_cdcms_subsidy_central_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_transaction_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2303,13 +2304,13 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_amount_query_ += ' AND '.join(conditions)
             lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             if "where" not in lpg_cdcms_subsidy_central_amount_query_.lower():
                 lpg_cdcms_subsidy_central_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_amount_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2404,13 +2405,13 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_consumers_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_consumers_query_ += ' AND '.join(conditions)
             lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             if "where" not in lpg_cdcms_subsidy_state_consumers_query_.lower():
                 lpg_cdcms_subsidy_state_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_consumers_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2505,13 +2506,13 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_transaction_query_ += ' AND '.join(conditions)
             lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             if "where" not in lpg_cdcms_subsidy_state_transaction_query_.lower():
                 lpg_cdcms_subsidy_state_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_transaction_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2606,13 +2607,13 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_amount_query_ += ' AND '.join(conditions)
             lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             if "where" not in lpg_cdcms_subsidy_state_amount_query_.lower():
                 lpg_cdcms_subsidy_state_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_amount_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)

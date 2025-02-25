@@ -87,8 +87,10 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP001", "interlock_name": "EM Locks : VTS Offline - Lorry", "model": "VTS"},
 
                          {"sop_id": "SOP001", "interlock_name": "Tank Overfill Protection", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
-                         {"sop_id": "SOP01A", "interlock_name": "Tank overfill prevention close inlet MOV", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
-                         {"sop_id": "SOP01A", "interlock_name": "Tank overfill prevention close inlet ROSOV", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
+                         {"sop_id": "SOP01A", "interlock_name": "Tank overfill prevention close inlet1 MOV", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
+                         {"sop_id": "SOP01A", "interlock_name": "Tank overfill prevention close inlet1 ROSOV", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
+                         {"sop_id": "SOP01A", "interlock_name": "Tank overfill prevention close inlet2 MOV", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
+                         {"sop_id": "SOP01A", "interlock_name": "Tank overfill prevention close inlet2 ROSOV", "workflow_name": "TAS TANK OVERFILL PREVENTION SOP001"},
                          {"sop_id": "SOP002", "interlock_name": "Plant ESD Closure of Effect", "workflow_name": "TAS ESD CLOSURE OF EFFECT SOP002"},
                          {"sop_id": "SOP002", "interlock_name": "EM Locks : VTS Offline - Customer", "model": "VTS", "workflow_name": ""},
                          {"sop_id": "SOP02A", "interlock_name": "All ROSOVs closed", "workflow_name": "ESD FIRE EFFECTS"},

@@ -1131,6 +1131,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 "Financial_Year",
                                 SUM("Consumer_Count") as "consumer_count"
                             FROM
@@ -1145,6 +1146,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("Transaction_Count") as "transaction_count"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
@@ -1158,6 +1160,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("SubsidyAmount") as "SubsidyAmount"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
@@ -1171,6 +1174,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("Consumer_Count") as "consumer_count"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
@@ -1184,6 +1188,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("Transaction_Count") as "transaction_count"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
@@ -1197,6 +1202,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("SubsidyAmount") as "SubsidyAmount"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
