@@ -469,6 +469,7 @@ class AlertAction:
             alert_section=alert_data.alert_section
         )
         # url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+        url += "/engine-rest/message"
         print("url: ", url)
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
 
