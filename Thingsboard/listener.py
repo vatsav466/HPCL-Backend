@@ -74,7 +74,7 @@ class TelemetryService:
                     if not success:
                         all_success = False
                 else:
-                    print(f"Missing TagPath: {tag_path} in message. Available tags: {list(tags_data.keys())}")
+                    # print(f"Missing TagPath: {tag_path} in message. Available tags: {list(tags_data.keys())}")
                     all_success = False
         return all_success
 
@@ -151,7 +151,7 @@ class RabbitMQListener:
 
 
 def main():
-    sap_ids = ["1999", "1128", "2001", "11919"]  # Add all the SAP IDs you want to listen for
+    sap_ids = ["1999","1128", "11919"]  # Add all the SAP IDs you want to listen for
     threads = []
     for sap_id in sap_ids:
         listener = RabbitMQListener(sap_id)
