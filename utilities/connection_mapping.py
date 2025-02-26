@@ -246,8 +246,8 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "Accept & Close": {
-                    "name": "AcceptClose",
+                "Maintenance": {
+                    "name": "Maintenance",
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
@@ -264,19 +264,10 @@ alert_action = {
             },
             "category": {
                 "Safety": "Safety",
-                "Security": "Security",
-                "Operations": "Operations",
-                "FalseAlert": "FalseAlert",
-                "InvalidAlert": "InvalidAlert",
-                "Quality": "Quality",
-                "Other": "Other"
+                "Process": "Process"
             },
             "rca_reason": [
-                "Person issue",
                 "Equipment issue",
-                "Lack of Awareness",
-                "InvalidAlert",
-                "FalseAlert",
                 "Other"
             ]
         },
@@ -291,7 +282,7 @@ alert_action = {
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Approve": {
@@ -301,13 +292,13 @@ alert_action = {
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -352,10 +343,10 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -420,7 +411,7 @@ alert_action = {
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Approve": {
@@ -430,13 +421,13 @@ alert_action = {
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -483,10 +474,10 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -551,7 +542,7 @@ alert_action = {
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Approve": {
@@ -561,13 +552,13 @@ alert_action = {
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
@@ -612,10 +603,10 @@ alert_action = {
                     "close_alert": False,
                     "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
                 },
-                "InvalidAlert": {
-                    "name": "InvalidAlert",
+                "Reject": {
+                    "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety officer", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Location In-charge", "Zonal HSSE", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {

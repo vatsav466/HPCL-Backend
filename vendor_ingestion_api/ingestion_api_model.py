@@ -193,13 +193,13 @@ class emlockVendorDataCreate(pydantic.BaseModel):
     terminal_code: str
     truck_number: str
     exception_type: str
-    ro_code: str
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
     created_datetime: str
 
 
 class Emlock_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
-    data: typing.Optional[typing.List[emlockDataCreate]] | None = None
+    data: typing.Optional[typing.List[emlockVendorDataCreate]] | None = None
 
 
 class Taslistener_Get_DataParams(pydantic.BaseModel):

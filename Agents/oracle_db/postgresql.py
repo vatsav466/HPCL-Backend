@@ -63,5 +63,5 @@ class Postgresql:
             raise ValueError(f"Model '{table_name}' not found in hpcl_ceg_model.")
 
         # Upsert the data - Ensure `await` is used
-        result = await model.bulk_update(data, upsert=False)  # Use upsert=True if needed
+        result = await model.bulk_update(data, upsert=True)  # Use upsert=True if needed
         print(result)

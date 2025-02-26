@@ -26,7 +26,12 @@ async def emlock_ingest_data(data: Emlock_Ingest_DataParams):
     try:
         logger.info(f"Received EMLock data ingestion from vendor {data.vendor_id} {data.dict()}")
         await alert_manager.create_alert({**data.dict(), "alert_type": "EMLock"})
-        return True, "Success"
+        redis_ins = await urdhva_base.redispool.get_redis_connection()
+        vendor = "hpcl_emlock"
+        db_access_key = ""
+        if await redis_ins.hexists("vendor_auth", f"{vendor}_access_key"):
+            db_access_key = await redis_ins.hget("vendor_auth", f"{vendor}_access_key")
+        return {"status": True, "message": "Ok"}
     
     except Exception as e:
         print(traceback.format_exc())

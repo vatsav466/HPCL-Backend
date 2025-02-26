@@ -50,6 +50,19 @@ async def close_alert(alert_data):
     return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").close_bu_alert(alert_data)
 
 
+async def get_function_mapping():
+    function_map = {
+        "Justification": "is_justify", "Rejected": "is_rejected", "Approved": "is_approved",
+        "Override": "is_override", "interLockOk": "is_interlockok",
+        "excApprovalTimeExp": "is_exc_approval_time_exp", "Message": "is_message",
+        "Raised": "is_raised", "Cancelled": "is_cancelled", "Allocated": "is_allocated",
+        "SentToSap": "is_sent_to_sap", "OrderPlaced": "is_order_placed",
+        "Created": "is_created", "Tripped": "is_tripped", "VTS": "is_vts",
+        "AcceptClose": "is_accept", "InvalidAlert": "is_invalid", "FalseAlert": "is_false", "ValidAlert": "is_valid",
+        "Blocked": "is_blocked", "UnBlocked": "is_unblocked", "Interrupt": "is_interrupt", "Request": "is_extra_days"
+    }
+    return function_map
+
 async def close_va_alert(alert_data, input_data):
     """
     Args:
@@ -377,7 +390,8 @@ class AlertAction:
                             "is_blocked": event_tags.get("is_blocked", False),
                             "is_unblocked": event_tags.get("is_unblocked", False),
                             "is_interrupt": event_tags.get("is_interrupt", False),
-                            "is_extra_days": event_tags.get("is_extra_days", False)
+                            "is_extra_days": event_tags.get("is_extra_days", False),
+                            "is_rejected": event_tags.get("is_rejected", False)
                         })
         # print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
@@ -423,7 +437,8 @@ class AlertAction:
                    "is_blocked": {"name": "blocked", "type": "Boolean"},
                    "is_unblocked": {"name": "unblocked", "type": "Boolean"},
                    "is_interrupt": {"name": "interrupt", "type": "Boolean"},
-                   "is_extra_days": {"name": "request", "type": "Boolean"}
+                   "is_extra_days": {"name": "request", "type": "Boolean"},
+                   "is_rejected": {"name": "reject", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -450,12 +465,14 @@ class AlertAction:
         }
         # print("messaged_data: ", messaged_data)
         # Posting data to camunda
-        url = helpers.get_camunda_url(
+        url = await helpers.get_camunda_url(
             bu=alert_data.bu,
             sap_id=alert_data.sap_id,
             alert_section=alert_data.alert_section
         )
-        url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+        # url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+        url += "/engine-rest/message"
+        print("url: ", url)
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
 
         if int(r.status_code / 100) != 2:
@@ -483,6 +500,8 @@ class AlertAction:
         :param alert_data:
         :return:
         """
+        if alert_data.alert_section in ["VA", "VTS"]:
+            return await cls.publish_to_camunda(input_data, alert_data, "Approved")
         return await cls.publish_to_camunda(input_data, alert_data, "Reject")
 
     @classmethod

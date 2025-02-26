@@ -152,6 +152,7 @@ Model Users {
     last_name str
     password optional secret
     employee_id index_field unique_field str
+    employee_number optional str
     // Allocated Role
     // ALL for all
     bu index_field list BusinessUnit
@@ -464,6 +465,7 @@ Model Alert_History internal {
     is_unblocked optional bool
     is_interrupt optional bool
     is_extra_days optional bool
+    is_rejected optional bool
 }
 
 Model tags internal {
@@ -797,9 +799,9 @@ Model productsDetails internal {
 }
 
 Model IndentDryOutDataFilters internal {
-    key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
-    cond str regex="^([a-zA-Z0-9_.\-=! ]+|)$"
-    value list str regex="^([a-zA-Z0-9_.\-=\" ]+|)$"
+    key str
+    cond str
+    value list str
 }
 
 // Model for dry-out analysis, Per product one will get created
@@ -989,7 +991,6 @@ Model LpgOperationsSummary {
         top optional int
         bottom optional int
     }
-    
     Config=> {
         access_key_mapping='sap_id:sap_id,short_name:plant,zone:zone'
     }
@@ -1621,6 +1622,7 @@ Model HostSickTts {
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='load_number,truck_number,created_date,customer_name,compartment_number,product_name,sick_date'
     }
 }
 
@@ -1637,6 +1639,7 @@ Model HostCancelledTts {
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='load_number,truck_number,created_date,customer_name,product_name,cancelled_date'
     }
 }
 
@@ -1652,6 +1655,7 @@ Model HostKFactorChanges {
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='bcu_number,timestamp,initial_setting,final_setting'
     }
 }
 
@@ -1659,7 +1663,7 @@ Model HostLocalLoadedTts {
     sr_number optional int
     bay_number optional str
     bcu_number optional str
-    recipe_number optional str
+    recipe_name optional str
     truck_number optional str
     card_number optional str
     start_totalizer optional float
@@ -1670,6 +1674,7 @@ Model HostLocalLoadedTts {
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='bcu_number,truck_number,card_number,transaction_end_time'
     }
 }
 
@@ -1690,6 +1695,7 @@ Model HostBayReAssignment {
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='load_number,truck_number,customer_name,compartment_number,product_name,bay_reassignment_time'
     }
 }
 
@@ -1702,6 +1708,7 @@ Model HostManualBayAssigned {
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='user_name,timestamp'
     }
 }
 
@@ -1713,6 +1720,7 @@ Model HostManualFanPrinted {
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='manual_fan_count,auto_fan_count,total_count'
     }
 }
 
@@ -1728,6 +1736,7 @@ Model HostUnauthorisedFlow {
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='bcu_number,meter_number,timestamp'
     }
 }
 
@@ -1743,6 +1752,7 @@ Model HostOverLoadedTts{
 
     Config=> {
         access_key_mapping=''
+        upsert_keys='load_number,truck_number,compartment_number,blend_name'
     }
 }
 

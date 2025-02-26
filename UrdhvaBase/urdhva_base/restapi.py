@@ -20,14 +20,7 @@ import urdhva_base.redispool
 import urdhva_base.elasticmodel
 from pydantic.fields import Field
 from urllib.parse import urlparse
-from slowapi.extension import Limiter
 from cryptography.fernet import Fernet
-from slowapi.util import get_remote_address
-from starlette.responses import JSONResponse
-from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-
 from mangum import Mangum
 from starlette.responses import RedirectResponse
 
@@ -35,23 +28,6 @@ logger = urdhva_base.Logger.getInstance("urdhva_api")
 
 app = fastapi.FastAPI()
 cookie_name = urdhva_base.settings.cookie_name
-
-@app.exception_handler(RateLimitExceeded)
-def rate_limit_exceeded_handler(request: fastapi.Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=429,
-        content={"detail": "Rate limit exceeded. Try again later."}
-    )
-
-# Set a default limit (e.g., 1000 requests per minute)
-limiter = Limiter(key_func=get_remote_address, application_limits=["1000/second"])
-
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
-
-# Add SlowAPI middleware (built-in middleware)
-app.add_middleware(SlowAPIMiddleware)
-
 
 
 # This function will give keycloak auth redirection url based on realm name given
