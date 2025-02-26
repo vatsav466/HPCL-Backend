@@ -1025,7 +1025,7 @@ LIMIT 10000;''',
                                 SELECT 
                                 "zone",
                                 "SiteArea" AS "plant",
-                                SUM("productivity_normal_production") / 1000 AS "sum_productivity ", 
+                                SUM("productivity_normal_production") / 1000 AS "sum_production", 
                                 DATE("process_date") AS "process_date"
                                 FROM "lpg_operations_summary" ''',
     
