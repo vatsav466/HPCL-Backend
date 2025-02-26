@@ -643,7 +643,7 @@ class SendNotification:
             None
         """
         alert_id = self.params.get("alert_id")
-
+        print("self.params ---> ", self.params)
         # Ensure self.update_alert is initialized as a dictionary
         self.update_alert = getattr(self, "update_alert", {}) or {}
 
@@ -655,6 +655,7 @@ class SendNotification:
             # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
             "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
         })
+        print("self.update_alert ---> ", self.update_alert)
 
         if self.params.get("escalationlevel_inmail"):
             self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
@@ -677,7 +678,7 @@ class SendNotification:
             "assigned_user_roles": self.update_alert["assigned_user_roles"],
             "last_mailed_to": self.update_alert["last_mailed_to"]
         })
-
+        print(" before updating alert_data ---> ", alert_data)
         # Update the database
         await hpcl_ceg_model.Alerts(**alert_data).modify()
 

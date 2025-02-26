@@ -24,7 +24,7 @@ class NotifyEMail(NotificationManager):
         :return:
         """
         creds = {"username": urdhva_base.settings.smtp_username, "password": urdhva_base.settings.smtp_password,
-                 "port": 465 if urdhva_base.settings.smtp_ssl_enabled else urdhva_base.settings.smtp_port, "server": urdhva_base.settings.smtp_host,
+                 "port": urdhva_base.settings.smtp_port, "server": urdhva_base.settings.smtp_host,
                  "from": urdhva_base.settings.smtp_from_url,
                  "connection_type": "SSL/TLS" if urdhva_base.settings.smtp_ssl_enabled else "STARTTLS"}
         return creds
@@ -108,17 +108,24 @@ class NotifyEMail(NotificationManager):
                 except Exception as e:
                     print(f"Unexpected Error during login: {e}")
             server.sendmail(kwargs.get("from", creds['from']), recipients, mail_content.as_string())
+            print("Email before quit")
             server.quit()
+            print({"status": "success", "message": "Email sent successfully."})
             return {"status": "success", "message": "Email sent successfully."}
 
         except smtplib.SMTPAuthenticationError:
+            print({"status": "failed", "message": "Authentication Error: Invalid Username or Password."})
             return {"status": "failed", "message": "Authentication Error: Invalid Username or Password."}
         except smtplib.SMTPException as e:
+            print({"status": "failed", "message": f"SMTP Error: {e}"})
             return {"status": "failed", "message": f"SMTP Error: {e}"}
         except ssl.SSLError as e:
+            print({"status": "failed", "data": f"SSL Error {e}"})
             return {"status": "failed", "data": f"SSL Error {e}"}
         except OSError as e:
+            print({"status": "failed", "data": str(e)})
             return {"status": "failed", "data": str(e)}
         except Exception as e:
+            print({"status": "failed", "message": f"Unexpected Error: {e}"})
             return {"status": "failed", "message": f"Unexpected Error: {e}"}
 
