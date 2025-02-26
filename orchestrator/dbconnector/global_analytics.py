@@ -3963,8 +3963,9 @@ class GlobalAnalytics:
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.group_by(["process_date"]).agg([
-                    pl.mean("avg_productivity").alias("avg_productivity"),
+                    pl.mean("avg_productivity").round(2).alias("avg_productivity"),
                 ])
+            resp = resp.with_columns(pl.col("process_date").dt.strftime("%Y-%m-%d").alias("process_date"))
             numerical_columns = ["productivity_normal_productivity"]
             string_columns = ["process_date"]
             for col in numerical_columns:
@@ -4025,8 +4026,9 @@ class GlobalAnalytics:
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.group_by(["process_date"]).agg([
-                    pl.mean("sum_production").alias("sum_production"),
+                    pl.mean("sum_production").round(2).alias("sum_production"),
                 ])
+            resp = resp.with_columns(pl.col("process_date").dt.strftime("%Y-%m-%d").alias("process_date"))
             numerical_columns = ["sum_production"]
             string_columns = ["process_date"]
             for col in numerical_columns:
