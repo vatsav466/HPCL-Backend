@@ -16,6 +16,12 @@ from sqlalchemy.orm import *
 from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
+class salesFiltersCreate(pydantic.BaseModel):
+    key: str
+    cond: typing.Optional[str] = pydantic.Field("", **{})
+    value: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+
+
 class currencyFormatInternalCreate(pydantic.BaseModel):
     symbol_position: typing.Optional[str] = pydantic.Field("", **{})
     symbol: typing.Optional[str] = pydantic.Field("", **{})
@@ -205,20 +211,20 @@ class ChartsGetResp(pydantic.BaseModel):
 
 
 class Charts_Get_TablesParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
 
 
 class Charts_Get_ColumnsParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
     table: str
 
 
 class Charts_Get_Unique_ValuesParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
     table: str
@@ -226,7 +232,7 @@ class Charts_Get_Unique_ValuesParams(pydantic.BaseModel):
 
 
 class Charts_Drill_Down_DataParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
     table: str
@@ -243,7 +249,7 @@ class Charts_Get_Dashboard_Chart_FormParams(pydantic.BaseModel):
 
 
 class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     schema: str
     table: str
     column: typing.List[str]
@@ -285,16 +291,16 @@ class Charts_Get_Auto_Complete_TextParams(pydantic.BaseModel):
 
 
 class Charts_Connection_Vault_RoutingParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     action: str
 
 
 class Charts_Get_Creds_DetailsParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
 
 
 class Charts_Get_SchemaParams(pydantic.BaseModel):
-    connection_id: typing.Optional[str] = pydantic.Field("", **{})
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: typing.Optional[str] = pydantic.Field("", **{})
 
 
@@ -303,6 +309,10 @@ class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
     action: str
     drill_state: typing.Optional[str] = pydantic.Field("", **{})
     cross_filters: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    resp_format: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9_. ]+|)$'})
+    resp_level: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):
@@ -311,6 +321,31 @@ class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):
 
 class Charts_Generate_Embedded_UrlParams(pydantic.BaseModel):
     dash_id: str
+
+
+class Charts_Previous_Present_Month_SalesParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    sort_by: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Charts_Sales_Drop_DownParams(pydantic.BaseModel):
+    filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
+
+
+class Charts_Previous_Present_Month_Sales_By_ProductParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    sort_by: typing.Optional[str] = pydantic.Field("", **{})
+
+
+class Charts_Previous_Present_Month_Amount_LitresParams(pydantic.BaseModel):
+    cross_filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
+    limit: typing.Optional[int] = pydantic.Field(0, **{})
+    time_grain: typing.Optional[str] = pydantic.Field("", **{})
+    sort_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class DashboardOrderInternalCreate(pydantic.BaseModel):

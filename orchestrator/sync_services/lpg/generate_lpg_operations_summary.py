@@ -1,11 +1,12 @@
+import os
+import psycopg2
+import traceback
+import subprocess
 import pandas as pd
 import polars as pl
 import numpy as np
-import psycopg2
-import subprocess
 from sqlalchemy import create_engine
 from datetime import datetime, timedelta
-import os
 
 
 class LPG_CONSOLIDATED():
@@ -976,7 +977,7 @@ class LPG_CONSOLIDATED():
         return rows
 
 
-def insertToDB(data):
+def insertToDB(data, table_name):
     data = pl.from_pandas(data)
     pg_conn = psycopg2.connect(
                 host="10.90.38.162",
@@ -995,8 +996,6 @@ def insertToDB(data):
         dty = dtype_dict.get(str(dty))
         table_create_sql += f'"{col}" {dty},'
     table_create_sql = table_create_sql[:-1]
-
-    table_name = "LPG_OPERATIONS_SUMMARY_DATA"
 
     create_table_index = f'CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ("carousel", "short_name")'
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
@@ -1046,56 +1045,80 @@ def generate_summary():
         port=port
     )
     cursor = conn.cursor()
-    df = pd.read_csv("/opt/ceg/algo/lpg_location_master.csv")
-    df = df[~df['Location'].str.contains("default|tests")]
-    for location in df['Location'].unique().tolist():
-        ###### START DATE ######
-        query = f""" SELECT MIN("process_date") FROM lpg_operations_data WHERE "Plant Name" = '{location.capitalize()}' """
-        print("min query :", query)
+    df = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
+    try:
+        for plant in df.iter_rows(named=True):
+            location = plant["short_name"]
+            ###### START DATE ######
+            query = f""" SELECT MIN("process_date") FROM lpg_operations_data WHERE "Plant Name" = '{location.capitalize()}' """
+            print("min query :", query)
+            cursor.execute(query)
+            start_date = cursor.fetchone()[0]
+            if start_date:
+                start_date = start_date.strftime("%Y-%m-%d")
+            if isinstance(start_date, str):
+                start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            ###### END DATE ######
+            query = f""" SELECT MAX("process_date") FROM lpg_operations_data WHERE "Plant Name" = '{location.capitalize()}' """
+            print("max query :", query)
+            cursor.execute(query)
+            end_date = cursor.fetchone()[0]
+            if end_date:
+                end_date = end_date.strftime("%Y-%m-%d")
+            if isinstance(end_date, str):
+                end_date = datetime.strptime(end_date, "%Y-%m-%d")
+            current_date = start_date
+            if not start_date:
+                print("*"*50)
+                print(f"No Data Found for {location}")
+                print("*"*50)
+                continue
+            print(f"Processing --> {location} from {start_date.date()} to {end_date.date()}")
+            # Process each date for this location
+            while current_date <= end_date:
+                print("-"*50)
+                print("DATE --->", current_date)
+                print("-"*50)
+                fromDate = current_date.strftime("%Y-%m-%d")
+                toDate = current_date.strftime("%Y-%m-%d")            
+                print("location -->", location)
+                ins = LPG_CONSOLIDATED(host, database, user, password, port, location)
+                data = ins.getPerformanceData(fromDate, toDate, location)
+                print("*-"*25)
+                print(f"Summary of {location}  :")
+                print(data)
+                print("*-"*25)
+                if not data.empty:
+                    for col in data.columns:
+                        try:
+                            data[col] = data[col].fillna(0).astype(np.float64)
+                        except Exception as e:
+                            print(f"- Could Not Convert {col} to Float -")
+                    insertToDB(data, "LPG_OPERATIONS_SUMMARY_DATA")
+                    
+                    for col in data.columns:
+                        data.rename(columns={col: col.replace(".","_")}, inplace=True)
+                    data["sap_id"] = plant["erp_id"]
+                    data["SiteRegion"] = plant["SiteRegion"]
+                    data['SiteArea'] = plant["SiteArea"]
+                    data["bu"] = "LPG"
+                    if "filling_heads" in data.columns:
+                        data["filling_heads"] = data["filling_heads"].astype(str).str.replace(".0","") + "H"
+                    data['updated_at'] = datetime.now()
+                    data['created_at'] = data['updated_at']
+                    data['entity_id'] = data["sap_id"]
+                    insertToDB(data, "lpg_operations_summary")
+                current_date += timedelta(days=1)
+    except Exception as e:
+        print("-- Exception While Running Lpg Operations Data Sync --")
+        print("traceback :", traceback.format_exc())
+        query = f""" TRUNCATE lpg_operations_data; """
         cursor.execute(query)
-        start_date = cursor.fetchone()[0]
-        if start_date:
-            start_date = start_date.strftime("%Y-%m-%d")
-        if isinstance(start_date, str):
-            start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        ###### END DATE ######
-        query = f""" SELECT MAX("process_date") FROM lpg_operations_data WHERE "Plant Name" = '{location.capitalize()}' """
-        print("max query :", query)
-        cursor.execute(query)
-        end_date = cursor.fetchone()[0]
-        if end_date:
-            end_date = end_date.strftime("%Y-%m-%d")
-        if isinstance(end_date, str):
-            end_date = datetime.strptime(end_date, "%Y-%m-%d")
-        current_date = start_date
-        if not start_date:
-            print("*"*50)
-            print(f"No Data Found for {location}")
-            print("*"*50)
-            continue
-        print(f"Processing --> {location} from {start_date.date()} to {end_date.date()}")
-        # Process each date for this location
-        while current_date <= end_date:
-            print("-"*50)
-            print("DATE --->", current_date)
-            print("-"*50)
-            fromDate = current_date.strftime("%Y-%m-%d")
-            toDate = current_date.strftime("%Y-%m-%d")            
-            print("location -->", location)
-            ins = LPG_CONSOLIDATED(host, database, user, password, port, location)
-            data = ins.getPerformanceData(fromDate, toDate, location)
-            print("*-"*25)
-            print(f"Summary of {location}  :")
-            print(data)
-            print("*-"*25)
-            if not data.empty:
-                for col in data.columns:
-                    try:
-                        data[col] = data[col].fillna(0).astype(np.float64)
-                    except Exception as e:
-                        print(f"- Could Not Convert {col} to Float -")
-                insertToDB(data)
-            current_date += timedelta(days=1)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return
+    
     query = f""" TRUNCATE lpg_operations_data; """
     cursor.execute(query)
     conn.commit()
@@ -1104,3 +1127,6 @@ def generate_summary():
     print("*"*50)
     print("*"*10, " Completed ", "*"*10)
     print("*"*50)
+
+if __name__=="__main__":
+    generate_summary()

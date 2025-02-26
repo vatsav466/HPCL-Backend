@@ -1,9 +1,14 @@
 import urdhva_base
+import time
+import httpx
 import base64
 import string
+import asyncio
 import hashlib
 import datetime
+import traceback
 import urdhva_base.redispool
+from calendar import monthrange
 try:
     from secrets import choice
 except ImportError:
@@ -34,7 +39,7 @@ def password_generator(password_length=16, special_characters_allowed=True, case
 
 
 def get_time_stamp_by_delta(dt=None, months=0, days=0, years=0, with_month_start_day=True,
-                            date_time_format="%Y-%m-%d", ascending=False):
+                            date_time_format="%Y-%m-%d", ascending=False, with_month_end_day=False):
     """
     Get the timestamp by descending or ascending a specified number of months from the current date.
     :param dt: datetime object
@@ -44,6 +49,7 @@ def get_time_stamp_by_delta(dt=None, months=0, days=0, years=0, with_month_start
     :param with_month_start_day: whether date should start from day 1 or present day
     :param date_time_format: Format to return the date
     :param ascending: To use in incremental or decremental format
+    :param with_month_end_day: whether date should be actual or month end date
     :return: Formatted date string
     Example:
     on 2025-01-19
@@ -70,10 +76,16 @@ def get_time_stamp_by_delta(dt=None, months=0, days=0, years=0, with_month_start
     # Set the day to 1 if with_month_start_day is True
     if with_month_start_day:
         dt = dt.replace(day=1)
+    elif not months and with_month_end_day:
+        _, months_days = monthrange(dt.year, dt.month)
+        dt = dt.replace(day=months_days)
 
     # Subtract the specified number of months
     if months > 0:
         dt = dt - relativedelta(months=months) if not ascending else dt + relativedelta(months=months)
+        if with_month_end_day:
+            _, months_days = monthrange(dt.year, dt.month)
+            dt = dt.replace(day=months_days)
     elif years > 0:
         day_filter = 0
         if days > 0:
@@ -148,6 +160,41 @@ def normalize_string(input_value):
     return input_value
 
 
+async def get_location_details(bu, sap_id):
+    """
+    Retrieves location details based on the provided business unit and SAP ID.
+
+    Parameters:
+    bu (str): The business unit identifier.
+    sap_id (str): The SAP ID of the location.
+
+    Returns:
+    dict: Location details, including name, address, coordinates, etc., or None if not found.
+    """
+    MAX_RETRIES = 5
+    RETRY_DELAY = 2
+    for attempt in range(MAX_RETRIES):
+        try:
+            if not bu or not sap_id:
+                print("Invalid parameters: 'bu' and 'sap_id' are required.")
+                return False, {"msg": "Invalid parameters: 'bu' and 'sap_id' are required."}
+            async with httpx.AsyncClient(verify=False) as client:
+                base_url = f"http://{urdhva_base.settings.cache_gateway_host}:{urdhva_base.settings.cache_gateway_port}"
+                resp = await client.get(f"{base_url}/api_cache/v1/get_location_data", params={"bu": bu,
+                                                                                            'location_id': sap_id})
+                if resp.status_code // 100 == 2:
+                    return resp.json()
+                else:
+                    print(resp.status_code, resp.text)
+        except Exception as e:
+            print("Error In getting location details: ", e)
+        if attempt < MAX_RETRIES - 1:
+            time.sleep(RETRY_DELAY * (2 ** attempt))
+        else:
+            return False, {}
+    return False, {}
+
+
 async def get_alert_camunda_url(alert_id, base_url):
     """
     API to get camunda based on the alertid
@@ -167,3 +214,83 @@ async def get_alert_camunda_url(alert_id, base_url):
             redis_ins.close()
         except:
             ...
+
+
+def validate_camunda_settings_rule(camunda_settings, location_id, bu):
+    """
+    Verifying rule configuring for camunda, Validating odd/even settings
+    :param camunda_settings:
+    :param location_id:
+    :param bu:
+    :return:
+    """
+    if not camunda_settings.get("rule"):
+        return True
+    try:
+        if camunda_settings['rule'] == "even":
+            if int(location_id) % 2 == 0:
+                return True
+        elif camunda_settings['rule'] == "odd":
+            if int(location_id) % 2 != 0:
+                return True
+    except Exception as e:
+        print(f"Exception while handling rule {e}, Traceback {traceback.format_exc()}")
+    return False
+
+
+async def get_camunda_url(bu, sap_id, alert_section):
+    """
+    Logic to decide serving camunda url for given bu and sap_id
+    :param bu:
+    :param sap_id:
+    :param alert_section:
+    :return:
+    """
+    camunda_config = urdhva_base.settings.camunda_configuration
+    default_url = urdhva_base.settings.camunda_url
+
+    # If configuration is missing or BU is not in the config, return default
+    if not camunda_config or bu not in camunda_config:
+        return default_url
+
+    status, location_data = await get_location_details(bu, sap_id)
+    if not status:
+        return default_url
+
+    # Fields to check in settings
+    match_keys = ['sap_id', 'sales_area', 'region', 'zone']
+
+    # Checking ones having alert section
+    for settings in camunda_config[bu]:
+        if settings.get('alert_section') == alert_section:
+            if (any(settings.get(k) and location_data.get(k, "") in settings[k] for k in match_keys) and
+                    validate_camunda_settings_rule(settings, sap_id, bu)):
+                return settings['url']
+
+    # Checking ones not having alert section
+    for settings in camunda_config[bu]:
+        if not settings.get('alert_section'):
+            if (any(settings.get(k) and location_data.get(k, "") in settings[k] for k in match_keys) and
+                    validate_camunda_settings_rule(settings, sap_id, bu)):
+                return settings['url']
+
+    # Checking for single URL with alert section
+    for settings in camunda_config[bu]:
+        if settings.get('alert_section') == alert_section and validate_camunda_settings_rule(settings, sap_id, bu):
+            return settings['url']
+
+    # Checking for single URL without alert section
+    for settings in camunda_config[bu]:
+        if not settings.get('alert_section') and validate_camunda_settings_rule(settings, sap_id, bu):
+            return settings['url']
+
+    # Checking for global match
+    for settings in camunda_config[bu]:
+        if (any(not settings.get(k) or "*" in settings[k] for k in match_keys) and
+                validate_camunda_settings_rule(settings, sap_id, bu)):
+            return settings['url']
+
+    return default_url
+
+async def get_doc_link(file_name: str):
+    return f"https://10.90.38.161/api/alerts/stored_document?file_name={file_name}"

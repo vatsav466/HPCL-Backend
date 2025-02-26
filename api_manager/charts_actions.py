@@ -11,12 +11,15 @@ import hpcl_ceg_model
 import urdhva_base.context
 import urdhva_base.redispool
 import utilities.connection_mapping as connection_mapping
+import polars as pl
+import pandas as pd
 from orchestrator.dashboard.chart_factory import JSONHashing
 from orchestrator.dashboard.chart_factory import date_actions
 from orchestrator.dashboard.chart_factory import charts_helpers
 from orchestrator.dbconnector.widget_actions import widget_actions
 from orchestrator.dashboard.chart_factory import charts_functions
 from orchestrator.dashboard.dashboard_actions.superset_embedded_dashboard import SupersetManager
+import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 router = fastapi.APIRouter(prefix='/charts')
 
 
@@ -474,7 +477,7 @@ async def charts_get_creds_details(data: Charts_Get_Creds_DetailsParams):
         # creds_details = await CredsModel.get(data.connection_id)
         # if not isinstance(creds_details, dict):
         #     creds_details = creds_details.__dict__
-        creds_details = connection_mapping.creds_type.get(data.connection_id, "1")
+        creds_details = connection_mapping.creds_type.get(f"{data.connection_id}", "1")
         return {"cred_model": creds_details['cred_model'], "cred_type": creds_details['cred_type']}
     except Exception as e:
         raise ValueError(e)
@@ -512,17 +515,21 @@ async def charts_generate_vis_data(data: Charts_Generate_Vis_DataParams):
     :param data:
     :return:
     """
-    # return await widget_actions.WidgetActions.execute_widget_action(data.action, data.filters, data.drill_state)
     if data.action == 'no_of_locations':
         if data.filters[0].value == "TAS":
-            return {"status": true, "message": "success", "data": [{"count": 78}]}
+            return {"status": True, "message": "success", "data": [{"count": 78}]}
         elif data.filters[0].value == "RO":
-            return {"status": true, "message": "success", "data": [{"count": 22631}]}
+            return {"status": True, "message": "success", "data": [{"count": 22631}]}
         elif data.filters[0].value == "LPG":
-            return {"status": true, "message": "success", "data": [{"count": 56}]}
+            return {"status": True, "message": "success", "data": [{"count": 56}]}
         elif data.filters[0].value == "CP":
-            return {"status": true, "message": "success", "data": [{"count": 10}]}
-    return await widget_actions.WidgetActions.execute_widget_action(data.action, filters=data.filters, cross_filters=data.cross_filters, drill_state=data.drill_state)
+            return {"status": True, "message": "success", "data": [{"count": 10}]}
+    return await widget_actions.WidgetActions.execute_widget_action(data.action, filters=data.filters,
+                                                                    cross_filters=data.cross_filters,
+                                                                    drill_state=data.drill_state, limit=data.limit,
+                                                                    time_grain=data.time_grain,
+                                                                    resp_format=data.resp_format,
+                                                                    resp_level = data.resp_level)
 
 
 # Action enable_cross_filter
@@ -535,3 +542,296 @@ async def charts_enable_cross_filter(data: Charts_Enable_Cross_FilterParams):
 @router.post('/generate_embedded_url', tags=['Charts'])
 async def charts_generate_embedded_url(data: Charts_Generate_Embedded_UrlParams):
     return await SupersetManager.get_embedded_dashboard_uri(data.dash_id)
+
+
+# Action previous_present_month_sales
+@router.post('/previous_present_month_sales', tags=['Charts'])
+async def charts_previous_present_month_sales(data: Charts_Previous_Present_Month_SalesParams):
+    cross_filters = data.cross_filters
+    limit = data.limit
+    time_grain = data.time_grain
+    drill_state = ""
+    sort_by = data.sort_by
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    present_month_sales = lpg_plant_queries.lpg_plant_query.get('previous_current_month_sales')
+    product_mapper = {
+        "MS": "2811000",
+        "HSD": "2812000",
+        "TURBO": "3912000",
+        "E20": "2822000",
+        "POWER 95": "3672000",
+        "POWER 99": "2816000",
+        "POWER 100": "3373000"
+    }
+    if cross_filters:
+        cross_filters += [WidgetFiltersCreate(**rec)
+                          for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        conditions = []
+        for rec in cross_filters:
+            if len(rec.value) == 1:
+                rec.value = rec.value[0].split(",")
+                if rec.key == 'product_name':
+                    condition = f"a.product_code = '{product_mapper.get(rec.value[0])}'"
+                else:
+                    condition = f"a.{rec.key} = '{rec.value[0]}'"
+            else:
+                if rec.key == 'product_name':
+                    vals = tuple([product_mapper.get(i) for i in rec.value])
+                    condition = f"a.product_code in {vals}"
+                else:
+                    condition = f"a.{rec.key} in {tuple(rec.value)}"
+            conditions.append(condition)
+
+        if conditions:
+            present_month_sales_query = present_month_sales.split("'Completed')")
+            present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(
+                conditions) + present_month_sales_query[1]
+        present_month_sales += f' {sort_by}'
+        if limit:
+            present_month_sales += f' LIMIT {limit}'
+        print(present_month_sales)
+
+    else:
+        access_filters = [WidgetFiltersCreate(**rec)
+                          for rec in
+                          await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        present_month_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales,
+                                                                                        access_filters, drill_state)
+        present_month_sales += f' {sort_by}'
+        if limit:
+            present_month_sales += f' LIMIT {limit}'
+
+    pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
+    pres_mon_sales_resp = await function(query=pres_mon_sales_query)
+    distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
+    print("distinct_periods--> ", distinct_periods)
+    formatted_results = {}
+
+    # Iterate over the response and group the data by location_name
+    for row in pres_mon_sales_resp:
+        location_name = row["location_name"]
+        period = row["period"]
+        avg_total_sales = row["avg_total_sales"]
+
+        if location_name not in formatted_results:
+            formatted_results[location_name] = {"location_name": location_name}
+
+        # Add the period and its corresponding average sales value to the dictionary
+        formatted_results[location_name][period] = avg_total_sales
+
+    # Convert the dictionary to a list of results
+    final_result = list(formatted_results.values())
+    for res in final_result:
+        for p_ in distinct_periods:
+            res.setdefault(p_, 0)
+
+    return {"status": True, "message": "success", "data": final_result}
+
+
+# Action sales_drop_down
+@router.post('/sales_drop_down', tags=['Charts'])
+async def charts_sales_drop_down(data: Charts_Sales_Drop_DownParams):
+    filters = data.filters
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    _query = ''' select distinct zone, region, sales_area ,
+                    CASE 
+                    WHEN "product_code" = '2811000' THEN 'MS'
+                    WHEN "product_code" = '2812000' THEN 'HSD'
+                    WHEN "product_code" = '3912000' THEN 'TURBO'
+                    WHEN "product_code" = '2822000' THEN 'E20'
+                    WHEN "product_code" = '3672000' THEN 'POWER 95'
+                    WHEN "product_code" = '2816000' THEN 'POWER 99'
+                    WHEN "product_code" = '3373000' THEN 'POWER 100'
+                END AS "product_name"
+                    from alerts '''
+    if filters:
+        _query += " where "
+        _filters = []
+        for filt in filters:
+            _filters.append(f''' {filt.key} in ({', '.join([f"'{i}'" for i in filt.value])}) ''')
+        _query += ' and '.join(_filters)
+    resp = await function(query=_query)
+    df = pl.from_pandas(pd.DataFrame(resp))
+    df = df.filter(pl.col("zone").fill_null("") != "")
+    df = df.filter(pl.col("region").fill_null("") != "")
+    df = df.filter(pl.col("sales_area").fill_null("") != "")
+    df = df.filter(pl.col("product_name").fill_null("") != "")
+
+    zones_query = ''' select distinct zone as default_zones from alerts '''
+    zones_resp = await function(query=zones_query)
+    zone_df = pl.from_pandas(pd.DataFrame(zones_resp))
+    zone_df = zone_df.filter(pl.col("default_zones").fill_null("") != "")
+    data = {"zone": df['zone'].unique().to_list(),
+            "region": df['region'].unique().to_list(), "sales_area": df['sales_area'].unique().to_list(),
+            "product_name": df['product_name'].unique().to_list(),
+            "default_zones": zone_df['default_zones'].to_list()}
+    return data
+
+
+# Action previous_present_month_sales_by_product
+@router.post('/previous_present_month_sales_by_product', tags=['Charts'])
+async def charts_previous_present_month_sales_by_product(data: Charts_Previous_Present_Month_Sales_By_ProductParams):
+    cross_filters = data.cross_filters
+    limit = data.limit
+    time_grain = data.time_grain
+    drill_state = ""
+    sort_by = data.sort_by
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    present_month_sales = lpg_plant_queries.lpg_plant_query.get('i_previous_current_month_sales_by_product')
+    product_mapper = {
+            "MS": "2811000",
+            "HSD": "2812000",
+            "TURBO": "3912000",
+            "E20": "2822000",
+            "POWER 95": "3672000",
+            "POWER 99": "2816000",
+            "POWER 100": "3373000"
+        }
+    if cross_filters:
+        cross_filters += [WidgetFiltersCreate(**rec)
+                          for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        conditions = []
+        for rec in cross_filters:
+            if len(rec.value) == 1:
+                rec.value = rec.value[0].split(",")
+                if rec.key == 'product_name':
+                    condition = f"a.product_code = '{product_mapper.get(rec.value[0])}'"
+                else:
+                    condition = f"a.{rec.key} = '{rec.value[0]}'"
+            else:
+                if rec.key == 'product_name':
+                    vals = tuple([product_mapper.get(i) for i in rec.value])
+                    condition = f"a.product_code in {vals}"
+                else:
+                    condition = f"a.{rec.key} in {tuple(rec.value)}"
+            conditions.append(condition)
+
+        if conditions:
+            present_month_sales_query = present_month_sales.split("'Completed')")
+            present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(
+                conditions) + present_month_sales_query[1]
+        present_month_sales += f' {sort_by}'
+        if limit:
+            present_month_sales += f' LIMIT {limit}'
+        print(present_month_sales)
+
+    else:
+        access_filters = [WidgetFiltersCreate(**rec)
+                          for rec in
+                          await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+        present_month_sales = await widget_actions.WidgetActions.apply_filter_drilldown(present_month_sales,
+                                                                                        access_filters, drill_state)
+        present_month_sales += f' {sort_by}'
+        if limit:
+            present_month_sales += f' LIMIT {limit}'
+
+    pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
+    print(pres_mon_sales_query)
+    pres_mon_sales_resp = await function(query=pres_mon_sales_query)
+    distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
+    print("distinct_periods--> ", distinct_periods)
+    formatted_results = {}
+
+    # Iterate over the response and group the data by location_name
+    for row in pres_mon_sales_resp:
+        product_name = row["product_name"]
+        period = row["period"]
+        avg_total_sales = row["avg_total_sales"]
+
+        if product_name not in formatted_results:
+            formatted_results[product_name] = {"product_name": product_name}
+
+        # Add the period and its corresponding average sales value to the dictionary
+        formatted_results[product_name][period] = avg_total_sales
+
+    # Convert the dictionary to a list of results
+    final_result = list(formatted_results.values())
+    for res in final_result:
+        for p_ in distinct_periods:
+            res.setdefault(p_, 0)
+
+    return {"status": True, "message": "success", "data": final_result}
+
+
+# Action previous_present_month_amount_litres
+@router.post('/previous_present_month_amount_litres', tags=['Charts'])
+async def charts_previous_present_month_amount_litres(data: Charts_Previous_Present_Month_Amount_LitresParams):
+    cross_filters = data.cross_filters
+    limit = data.limit
+    time_grain = data.time_grain
+    sort_by = data.sort_by
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    present_month_sales = lpg_plant_queries.lpg_plant_query.get('i_previous_current_month_amount_litres')
+    product_mapper = {
+        "MS": "2811000",
+        "HSD": "2812000",
+        "TURBO": "3912000",
+        "E20": "2822000",
+        "POWER 95": "3672000",
+        "POWER 99": "2816000",
+        "POWER 100": "3373000"
+    }
+    cross_filters += [WidgetFiltersCreate(**rec)
+                      for rec in await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)]
+    if cross_filters:
+        conditions = []
+        for rec in cross_filters:
+            if len(rec.value) == 1:
+                rec.value = rec.value[0].split(",")
+                if rec.key == 'product_name':
+                    condition = f"a.product_code = '{product_mapper.get(rec.value[0])}'"
+                else:
+                    condition = f"a.{rec.key} = '{rec.value[0]}'"
+            else:
+                if rec.key == 'product_name':
+                    vals = tuple([product_mapper.get(i) for i in rec.value])
+                    condition = f"a.product_code in {vals}"
+                else:
+                    condition = f"a.{rec.key} in {tuple(rec.value)}"
+            conditions.append(condition)
+
+        if conditions:
+            present_month_sales_query = present_month_sales.split("'Completed')")
+            present_month_sales = present_month_sales_query[0] + "'Completed')" + ' AND ' + ' AND '.join(
+                conditions) + present_month_sales_query[1]
+    present_month_sales += f' {sort_by}'
+    if limit:
+        present_month_sales += f' LIMIT {limit}'
+    pres_mon_sales_query = present_month_sales.format(time_grain=time_grain.lower())
+    print(pres_mon_sales_query)
+    pres_mon_sales_resp = await function(query=pres_mon_sales_query)
+    distinct_periods = list(set(item['period'] for item in pres_mon_sales_resp))
+    print("distinct_periods--> ", distinct_periods)
+    formatted_results = {}
+    amount = 'amount'
+    litres = 'litres'
+    for row in pres_mon_sales_resp:
+        location_name = row["location_name"]
+        period = row["period"]
+        avg_total_sales = row["avg_total_sales"]
+        avg_txn_amount = row["avg_txn_amount"]
+
+        if location_name not in formatted_results:
+            formatted_results[location_name] = {"location_name": location_name}
+
+        formatted_results[location_name].setdefault(amount, {})
+        formatted_results[location_name].setdefault(litres, {})
+
+        formatted_results[location_name][amount].update({period: avg_txn_amount})
+        formatted_results[location_name][litres].update({period: avg_total_sales})
+
+    final_result = list(formatted_results.values())
+    for res in final_result:
+        for p_ in distinct_periods:
+            res[amount].setdefault(p_, 0)
+            res[litres].setdefault(p_, 0)
+
+    return {"status": True, "message": "success", "data": final_result}

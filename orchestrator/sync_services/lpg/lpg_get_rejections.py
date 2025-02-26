@@ -14,6 +14,12 @@ def insertToDB(data, table_name, indexing_col=[]):
     print("-"*50)
     print(f"-- Inserting Data to {table_name} --")
     print("Length of Data :", len(data))
+    for col in data.columns:
+        try:
+            if not col in ["sap_id"]:
+                data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).alias(col))
+        except Exception as e:
+            continue
     pg_conn = psycopg2.connect(
                 host="10.90.38.162",
                 database="hpcl_ceg",
@@ -64,8 +70,8 @@ def insertToDB(data, table_name, indexing_col=[]):
                 cur.copy_expert(query, f)
                 pg_conn.commit()
         cur.close()
-        if os.path.exists(f'/Users/apple/Documents/{table_name}.csv'):
-            os.remove(f'/Users/apple/Documents/{table_name}.csv')
+        if os.path.exists(f'/tmp/{table_name}.csv'):
+            os.remove(f'/tmp/{table_name}.csv')
         print(f"-- Data has been inserted to {table_name} --")
     except Exception as e:
         print("Error :", str(e))
@@ -127,8 +133,6 @@ def fetch_data(query, getData=False, params=None, internal=False):
 
     
 def get_cs_rejections(params):
-    #if params['PlantName'].lower()=='hoshiarpur':
-    #    return
     table_name = "lpg_cs_rejections"
     # query = """ WITH base_data AS (
     #                 SELECT
@@ -179,7 +183,7 @@ def get_cs_rejections(params):
     #                     ELSE 0 
     #                 END as sortOutPercentage
     #             FROM aggregated_stats
-    #             ORDER BY process_date; """
+    #             ORDER BY process_date; """    
         
     query = f""" SELECT MAX(max_date) from lpg_cs_rejections WHERE "plant"='{params['PlantName']}'; """
     last_date = fetch_data(query, getData=False, params=params, internal=True)
@@ -248,6 +252,7 @@ def get_cs_rejections(params):
         return
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
+    data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
     
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
@@ -257,12 +262,10 @@ def get_cs_rejections(params):
     
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))    
     data = data.with_columns(pl.lit(max_date).alias("max_date"))
-    
-    for col in data.columns:
-        try:
-            data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).alias(col))
-        except Exception as e:
-            continue    
+    data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
+    data = data.with_columns(pl.col('updated_at').alias('created_at'))
+    data = data.with_columns(pl.col('sap_id').alias('entity_id'))
+        
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
 
@@ -320,6 +323,7 @@ def get_gd_rejections(params):
         return
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
+    data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
@@ -327,12 +331,10 @@ def get_gd_rejections(params):
                       ).then(pl.lit("19 KG")).otherwise(pl.lit("5 KG")).alias("cyl_type"))
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))    
     data = data.with_columns(pl.lit(max_date).alias("max_date"))
-    
-    for col in data.columns:
-        try:
-            data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).alias(col))
-        except Exception as e:
-            continue
+    data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
+    data = data.with_columns(pl.col('updated_at').alias('created_at'))
+    data = data.with_columns(pl.col('sap_id').alias('entity_id'))
+        
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
 
@@ -390,6 +392,7 @@ def get_pt_rejections(params):
         return
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
+    data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
@@ -397,23 +400,22 @@ def get_pt_rejections(params):
                       ).then(pl.lit("19 KG")).otherwise(pl.lit("5 KG")).alias("cyl_type"))
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
     data = data.with_columns(pl.lit(max_date).alias("max_date"))
+    data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
+    data = data.with_columns(pl.col('updated_at').alias('created_at'))
+    data = data.with_columns(pl.col('sap_id').alias('entity_id'))
     
-    for col in data.columns:
-        try:
-            data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).alias(col))
-        except Exception as e:
-            continue    
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
     
             
 if __name__=="__main__":
-    plants = pl.read_csv("/opt/ceg/algo/LPG_PLANTS_CREDENTIALS.csv")    
+    plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
     for plant in plants.iter_rows(named=True):
         print("-"*50)
         print(f"Fetching for {plant['PlantName']}")
         params={
         "PlantName": plant["PlantName"],
+        "sap_id": plant["erp_id"],
         "zone": plant["zone"],
         "host": plant["host_ip"],
         "database": plant["db_database"],

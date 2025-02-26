@@ -48,6 +48,7 @@ class Settings(pydantic_settings.BaseSettings):
     multi_tenant_support: bool = True
     password_salt: str = "hpcl_novex_dnc"
     max_redis_connections: int = 10
+    origin_check_enabled: bool = False
 
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
@@ -87,7 +88,7 @@ class Settings(pydantic_settings.BaseSettings):
     enable_echo: bool = True
 
     # Session configuration settings
-    session_same_site: str = 'lax'
+    session_same_site: str = 'Strict'
     session_secure: bool = True
     session_httponly: bool = True
 
@@ -121,6 +122,12 @@ class Settings(pydantic_settings.BaseSettings):
     smtp_tls_enabled: bool = False
     smtp_ssl_enabled: bool = False
 
+    # Whatsapp
+    whatsapp_creds: typing.Dict[str, str] = {}
+
+    # SMS
+    sms_creds: typing.Dict[str, str] = {}
+
     # LDAP Settings
     ldap_host: str = ""
     ldap_port: str = ""
@@ -139,6 +146,13 @@ class Settings(pydantic_settings.BaseSettings):
         "sleepSeconds": 30
     }
     camunda_url_config: typing.Dict[str, typing.Dict] = {}
+    camunda_url_va_config: typing.Dict[str, typing.Dict] = {}
+
+    # For camunda configuration for non default one
+    # Creating separate configuration for each bu and keep applicable rules for those
+    # Sample {"TAS": [{"alert_section": "", "url": "", "sap_id": [],
+    # "zone": [], "sales_area": [], "region": [], "rule": "odd/even"}]}
+    camunda_configuration: typing.Dict[str, typing.List] = {}
 
     # For DB Connection Mapping
     db_connection_config: typing.Dict[str, str] = {}
@@ -154,7 +168,7 @@ class Settings(pydantic_settings.BaseSettings):
     rabbitmq_queue: str = "tagsdata"
     rabbitmq_auto_ack: bool = True
 
-    # Thingsboard
+    # ThingsBoard
     things_board_url: str = "http://localhost:8080"
     things_board_username: str = "admin"
     things_board_password: str = "password"

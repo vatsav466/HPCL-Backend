@@ -252,29 +252,104 @@ async def delete(id: str):
     return await IndentDryOut.delete(id)
 
 
-@router.post('/lpgoperations', response_model=LpgOperations, tags=['LpgOperations'])
-async def create(inputObj: LpgOperationsCreate):
+@router.post('/lpgoperationssummary', response_model=LpgOperationsSummary, tags=['LpgOperationsSummary'])
+async def create(inputObj: LpgOperationsSummaryCreate):
     return await inputObj.create()
 
 
-@router.put('/lpgoperations', response_model=LpgOperations, tags=['LpgOperations'])
-async def update(inputObj: LpgOperations):
+@router.put('/lpgoperationssummary', response_model=LpgOperationsSummary, tags=['LpgOperationsSummary'])
+async def update(inputObj: LpgOperationsSummary):
     return await inputObj.modify()
 
 
-@router.get('/lpgoperations/{id}', response_model=LpgOperations, tags=['LpgOperations'])
+@router.get('/lpgoperationssummary/{id}', response_model=LpgOperationsSummary, tags=['LpgOperationsSummary'])
 async def get(id: str):
-    return await LpgOperations.get(id, skip_secrets=True)
+    return await LpgOperationsSummary.get(id, skip_secrets=True)
 
 
-@router.get('/lpgoperations', response_model=LpgOperationsGetResp, tags=['LpgOperations'])
+@router.get('/lpgoperationssummary', response_model=LpgOperationsSummaryGetResp, tags=['LpgOperationsSummary'])
 async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
-    return await LpgOperations.get_all(params, skip_secrets=True)
+    return await LpgOperationsSummary.get_all(params, skip_secrets=True)
 
 
-@router.delete('/lpgoperations/{id}', tags=['LpgOperations'])
+@router.delete('/lpgoperationssummary/{id}', tags=['LpgOperationsSummary'])
 async def delete(id: str):
-    return await LpgOperations.delete(id)
+    return await LpgOperationsSummary.delete(id)
+
+
+@router.post('/lpgcsrejections', response_model=LpgCsRejections, tags=['LpgCsRejections'])
+async def create(inputObj: LpgCsRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgcsrejections', response_model=LpgCsRejections, tags=['LpgCsRejections'])
+async def update(inputObj: LpgCsRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpgcsrejections/{id}', response_model=LpgCsRejections, tags=['LpgCsRejections'])
+async def get(id: str):
+    return await LpgCsRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpgcsrejections', response_model=LpgCsRejectionsGetResp, tags=['LpgCsRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgCsRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgcsrejections/{id}', tags=['LpgCsRejections'])
+async def delete(id: str):
+    return await LpgCsRejections.delete(id)
+
+
+@router.post('/lpggdrejections', response_model=LpgGdRejections, tags=['LpgGdRejections'])
+async def create(inputObj: LpgGdRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpggdrejections', response_model=LpgGdRejections, tags=['LpgGdRejections'])
+async def update(inputObj: LpgGdRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpggdrejections/{id}', response_model=LpgGdRejections, tags=['LpgGdRejections'])
+async def get(id: str):
+    return await LpgGdRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpggdrejections', response_model=LpgGdRejectionsGetResp, tags=['LpgGdRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgGdRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpggdrejections/{id}', tags=['LpgGdRejections'])
+async def delete(id: str):
+    return await LpgGdRejections.delete(id)
+
+
+@router.post('/lpgptrejections', response_model=LpgPtRejections, tags=['LpgPtRejections'])
+async def create(inputObj: LpgPtRejectionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/lpgptrejections', response_model=LpgPtRejections, tags=['LpgPtRejections'])
+async def update(inputObj: LpgPtRejections):
+    return await inputObj.modify()
+
+
+@router.get('/lpgptrejections/{id}', response_model=LpgPtRejections, tags=['LpgPtRejections'])
+async def get(id: str):
+    return await LpgPtRejections.get(id, skip_secrets=True)
+
+
+@router.get('/lpgptrejections', response_model=LpgPtRejectionsGetResp, tags=['LpgPtRejections'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await LpgPtRejections.get_all(params, skip_secrets=True)
+
+
+@router.delete('/lpgptrejections/{id}', tags=['LpgPtRejections'])
+async def delete(id: str):
+    return await LpgPtRejections.delete(id)
 
 
 @router.post('/lpgrejections', response_model=LpgRejections, tags=['LpgRejections'])
@@ -615,3 +690,328 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/lpgoperationsrejections/{id}', tags=['LpgOperationsRejections'])
 async def delete(id: str):
     return await LpgOperationsRejections.delete(id)
+
+
+@router.post('/consumerpumptransactions', response_model=ConsumerPumpTransactions, tags=['ConsumerPumpTransactions'])
+async def create(inputObj: ConsumerPumpTransactionsCreate):
+    return await inputObj.create()
+
+
+@router.put('/consumerpumptransactions', response_model=ConsumerPumpTransactions, tags=['ConsumerPumpTransactions'])
+async def update(inputObj: ConsumerPumpTransactions):
+    return await inputObj.modify()
+
+
+@router.get('/consumerpumptransactions/{id}', response_model=ConsumerPumpTransactions, tags=['ConsumerPumpTransactions'])
+async def get(id: str):
+    return await ConsumerPumpTransactions.get(id, skip_secrets=True)
+
+
+@router.get('/consumerpumptransactions', response_model=ConsumerPumpTransactionsGetResp, tags=['ConsumerPumpTransactions'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ConsumerPumpTransactions.get_all(params, skip_secrets=True)
+
+
+@router.delete('/consumerpumptransactions/{id}', tags=['ConsumerPumpTransactions'])
+async def delete(id: str):
+    return await ConsumerPumpTransactions.delete(id)
+
+
+@router.post('/consumerpumptankinventory', response_model=ConsumerPumpTankInventory, tags=['ConsumerPumpTankInventory'])
+async def create(inputObj: ConsumerPumpTankInventoryCreate):
+    return await inputObj.create()
+
+
+@router.put('/consumerpumptankinventory', response_model=ConsumerPumpTankInventory, tags=['ConsumerPumpTankInventory'])
+async def update(inputObj: ConsumerPumpTankInventory):
+    return await inputObj.modify()
+
+
+@router.get('/consumerpumptankinventory/{id}', response_model=ConsumerPumpTankInventory, tags=['ConsumerPumpTankInventory'])
+async def get(id: str):
+    return await ConsumerPumpTankInventory.get(id, skip_secrets=True)
+
+
+@router.get('/consumerpumptankinventory', response_model=ConsumerPumpTankInventoryGetResp, tags=['ConsumerPumpTankInventory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ConsumerPumpTankInventory.get_all(params, skip_secrets=True)
+
+
+@router.delete('/consumerpumptankinventory/{id}', tags=['ConsumerPumpTankInventory'])
+async def delete(id: str):
+    return await ConsumerPumpTankInventory.delete(id)
+
+
+@router.post('/consumerpumpstocksreceipts', response_model=ConsumerPumpStocksReceipts, tags=['ConsumerPumpStocksReceipts'])
+async def create(inputObj: ConsumerPumpStocksReceiptsCreate):
+    return await inputObj.create()
+
+
+@router.put('/consumerpumpstocksreceipts', response_model=ConsumerPumpStocksReceipts, tags=['ConsumerPumpStocksReceipts'])
+async def update(inputObj: ConsumerPumpStocksReceipts):
+    return await inputObj.modify()
+
+
+@router.get('/consumerpumpstocksreceipts/{id}', response_model=ConsumerPumpStocksReceipts, tags=['ConsumerPumpStocksReceipts'])
+async def get(id: str):
+    return await ConsumerPumpStocksReceipts.get(id, skip_secrets=True)
+
+
+@router.get('/consumerpumpstocksreceipts', response_model=ConsumerPumpStocksReceiptsGetResp, tags=['ConsumerPumpStocksReceipts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ConsumerPumpStocksReceipts.get_all(params, skip_secrets=True)
+
+
+@router.delete('/consumerpumpstocksreceipts/{id}', tags=['ConsumerPumpStocksReceipts'])
+async def delete(id: str):
+    return await ConsumerPumpStocksReceipts.delete(id)
+
+
+@router.post('/hostsicktts', response_model=HostSickTts, tags=['HostSickTts'])
+async def create(inputObj: HostSickTtsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostsicktts', response_model=HostSickTts, tags=['HostSickTts'])
+async def update(inputObj: HostSickTts):
+    return await inputObj.modify()
+
+
+@router.get('/hostsicktts/{id}', response_model=HostSickTts, tags=['HostSickTts'])
+async def get(id: str):
+    return await HostSickTts.get(id, skip_secrets=True)
+
+
+@router.get('/hostsicktts', response_model=HostSickTtsGetResp, tags=['HostSickTts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostSickTts.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostsicktts/{id}', tags=['HostSickTts'])
+async def delete(id: str):
+    return await HostSickTts.delete(id)
+
+
+@router.post('/hostcancelledtts', response_model=HostCancelledTts, tags=['HostCancelledTts'])
+async def create(inputObj: HostCancelledTtsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostcancelledtts', response_model=HostCancelledTts, tags=['HostCancelledTts'])
+async def update(inputObj: HostCancelledTts):
+    return await inputObj.modify()
+
+
+@router.get('/hostcancelledtts/{id}', response_model=HostCancelledTts, tags=['HostCancelledTts'])
+async def get(id: str):
+    return await HostCancelledTts.get(id, skip_secrets=True)
+
+
+@router.get('/hostcancelledtts', response_model=HostCancelledTtsGetResp, tags=['HostCancelledTts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostCancelledTts.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostcancelledtts/{id}', tags=['HostCancelledTts'])
+async def delete(id: str):
+    return await HostCancelledTts.delete(id)
+
+
+@router.post('/hostkfactorchanges', response_model=HostKFactorChanges, tags=['HostKFactorChanges'])
+async def create(inputObj: HostKFactorChangesCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostkfactorchanges', response_model=HostKFactorChanges, tags=['HostKFactorChanges'])
+async def update(inputObj: HostKFactorChanges):
+    return await inputObj.modify()
+
+
+@router.get('/hostkfactorchanges/{id}', response_model=HostKFactorChanges, tags=['HostKFactorChanges'])
+async def get(id: str):
+    return await HostKFactorChanges.get(id, skip_secrets=True)
+
+
+@router.get('/hostkfactorchanges', response_model=HostKFactorChangesGetResp, tags=['HostKFactorChanges'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostKFactorChanges.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostkfactorchanges/{id}', tags=['HostKFactorChanges'])
+async def delete(id: str):
+    return await HostKFactorChanges.delete(id)
+
+
+@router.post('/hostlocalloadedtts', response_model=HostLocalLoadedTts, tags=['HostLocalLoadedTts'])
+async def create(inputObj: HostLocalLoadedTtsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostlocalloadedtts', response_model=HostLocalLoadedTts, tags=['HostLocalLoadedTts'])
+async def update(inputObj: HostLocalLoadedTts):
+    return await inputObj.modify()
+
+
+@router.get('/hostlocalloadedtts/{id}', response_model=HostLocalLoadedTts, tags=['HostLocalLoadedTts'])
+async def get(id: str):
+    return await HostLocalLoadedTts.get(id, skip_secrets=True)
+
+
+@router.get('/hostlocalloadedtts', response_model=HostLocalLoadedTtsGetResp, tags=['HostLocalLoadedTts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostLocalLoadedTts.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostlocalloadedtts/{id}', tags=['HostLocalLoadedTts'])
+async def delete(id: str):
+    return await HostLocalLoadedTts.delete(id)
+
+
+@router.post('/hostbayreassignment', response_model=HostBayReAssignment, tags=['HostBayReAssignment'])
+async def create(inputObj: HostBayReAssignmentCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostbayreassignment', response_model=HostBayReAssignment, tags=['HostBayReAssignment'])
+async def update(inputObj: HostBayReAssignment):
+    return await inputObj.modify()
+
+
+@router.get('/hostbayreassignment/{id}', response_model=HostBayReAssignment, tags=['HostBayReAssignment'])
+async def get(id: str):
+    return await HostBayReAssignment.get(id, skip_secrets=True)
+
+
+@router.get('/hostbayreassignment', response_model=HostBayReAssignmentGetResp, tags=['HostBayReAssignment'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostBayReAssignment.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostbayreassignment/{id}', tags=['HostBayReAssignment'])
+async def delete(id: str):
+    return await HostBayReAssignment.delete(id)
+
+
+@router.post('/hostmanualbayassigned', response_model=HostManualBayAssigned, tags=['HostManualBayAssigned'])
+async def create(inputObj: HostManualBayAssignedCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostmanualbayassigned', response_model=HostManualBayAssigned, tags=['HostManualBayAssigned'])
+async def update(inputObj: HostManualBayAssigned):
+    return await inputObj.modify()
+
+
+@router.get('/hostmanualbayassigned/{id}', response_model=HostManualBayAssigned, tags=['HostManualBayAssigned'])
+async def get(id: str):
+    return await HostManualBayAssigned.get(id, skip_secrets=True)
+
+
+@router.get('/hostmanualbayassigned', response_model=HostManualBayAssignedGetResp, tags=['HostManualBayAssigned'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostManualBayAssigned.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostmanualbayassigned/{id}', tags=['HostManualBayAssigned'])
+async def delete(id: str):
+    return await HostManualBayAssigned.delete(id)
+
+
+@router.post('/hostmanualfanprinted', response_model=HostManualFanPrinted, tags=['HostManualFanPrinted'])
+async def create(inputObj: HostManualFanPrintedCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostmanualfanprinted', response_model=HostManualFanPrinted, tags=['HostManualFanPrinted'])
+async def update(inputObj: HostManualFanPrinted):
+    return await inputObj.modify()
+
+
+@router.get('/hostmanualfanprinted/{id}', response_model=HostManualFanPrinted, tags=['HostManualFanPrinted'])
+async def get(id: str):
+    return await HostManualFanPrinted.get(id, skip_secrets=True)
+
+
+@router.get('/hostmanualfanprinted', response_model=HostManualFanPrintedGetResp, tags=['HostManualFanPrinted'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostManualFanPrinted.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostmanualfanprinted/{id}', tags=['HostManualFanPrinted'])
+async def delete(id: str):
+    return await HostManualFanPrinted.delete(id)
+
+
+@router.post('/hostunauthorisedflow', response_model=HostUnauthorisedFlow, tags=['HostUnauthorisedFlow'])
+async def create(inputObj: HostUnauthorisedFlowCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostunauthorisedflow', response_model=HostUnauthorisedFlow, tags=['HostUnauthorisedFlow'])
+async def update(inputObj: HostUnauthorisedFlow):
+    return await inputObj.modify()
+
+
+@router.get('/hostunauthorisedflow/{id}', response_model=HostUnauthorisedFlow, tags=['HostUnauthorisedFlow'])
+async def get(id: str):
+    return await HostUnauthorisedFlow.get(id, skip_secrets=True)
+
+
+@router.get('/hostunauthorisedflow', response_model=HostUnauthorisedFlowGetResp, tags=['HostUnauthorisedFlow'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostUnauthorisedFlow.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostunauthorisedflow/{id}', tags=['HostUnauthorisedFlow'])
+async def delete(id: str):
+    return await HostUnauthorisedFlow.delete(id)
+
+
+@router.post('/hostoverloadedtts', response_model=HostOverLoadedTts, tags=['HostOverLoadedTts'])
+async def create(inputObj: HostOverLoadedTtsCreate):
+    return await inputObj.create()
+
+
+@router.put('/hostoverloadedtts', response_model=HostOverLoadedTts, tags=['HostOverLoadedTts'])
+async def update(inputObj: HostOverLoadedTts):
+    return await inputObj.modify()
+
+
+@router.get('/hostoverloadedtts/{id}', response_model=HostOverLoadedTts, tags=['HostOverLoadedTts'])
+async def get(id: str):
+    return await HostOverLoadedTts.get(id, skip_secrets=True)
+
+
+@router.get('/hostoverloadedtts', response_model=HostOverLoadedTtsGetResp, tags=['HostOverLoadedTts'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await HostOverLoadedTts.get_all(params, skip_secrets=True)
+
+
+@router.delete('/hostoverloadedtts/{id}', tags=['HostOverLoadedTts'])
+async def delete(id: str):
+    return await HostOverLoadedTts.delete(id)
+
+
+@router.post('/tagsdata', response_model=TagsData, tags=['TagsData'])
+async def create(inputObj: TagsDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/tagsdata', response_model=TagsData, tags=['TagsData'])
+async def update(inputObj: TagsData):
+    return await inputObj.modify()
+
+
+@router.get('/tagsdata/{id}', response_model=TagsData, tags=['TagsData'])
+async def get(id: str):
+    return await TagsData.get(id, skip_secrets=True)
+
+
+@router.get('/tagsdata', response_model=TagsDataGetResp, tags=['TagsData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TagsData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/tagsdata/{id}', tags=['TagsData'])
+async def delete(id: str):
+    return await TagsData.delete(id)

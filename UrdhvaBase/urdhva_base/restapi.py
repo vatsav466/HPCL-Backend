@@ -19,6 +19,7 @@ import urdhva_base.settings
 import urdhva_base.redispool
 import urdhva_base.elasticmodel
 from pydantic.fields import Field
+from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from mangum import Mangum
 from starlette.responses import RedirectResponse
@@ -154,30 +155,34 @@ async def validate_header_based_authentication(request: fastapi.Request):
     return False, None
 
 
+def add_security_headers(response):
+    # response.headers["Content-Security-Policy"] = "default-src 'self' style-src 'self' 'unsafe-inline'"
+    return response
+
+
 @app.middleware('http')
 async def authMiddleware(request: fastapi.Request, call_next):
     status, resp = await validate_header_based_authentication(request)
     if status:
-        return await call_next(request)
+        return add_security_headers(await call_next(request))
     elif not status and resp:
-        return resp
-    # return await call_next(request)
+        return add_security_headers(resp)
     response = fastapi.Response(None, 403)
     if (request.url.path in ['/docs', '/openapi.json', '/api/login', '/api/session/me', '/api/users/login'] +
             urdhva_base.settings.noauth_urls or \
             re.match(r"/api/[\S\s\w]*login\b(?![a-zA-Z])", request.url.path) \
             or re.match(r"/api/[\S\s\w]*authorize", request.url.path)):
-        return await call_next(request)
+        return add_security_headers(await call_next(request))
     rpt = urdhva_base.context.context.get('rpt', {})
     cookie = request.cookies.get(cookie_name, None)
     if not cookie and not rpt:
         base_url = urdhva_base.ctx["base_url"]
         if not base_url:
             response = fastapi.responses.JSONResponse("Provided entity is Invalid", 403)
-            return response
-        redirect_url = f"{request.base_url}login"
-        resp_dict = {"url": redirect_url}
-        response = fastapi.responses.JSONResponse(resp_dict, 401)
+            return add_security_headers(response)
+        # redirect_url = f"https://{request.base_url.hostname}/login"
+        # resp_dict = {"url": redirect_url}
+        response = fastapi.responses.HTMLResponse("", 401)
     elif cookie or rpt:
         if await has_permission(request.method, request.scope['path']):
             response: fastapi.responses.Response = await call_next(request)
@@ -186,11 +191,30 @@ async def authMiddleware(request: fastapi.Request, call_next):
                     if header[0].decode() == 'location' and header[1].decode().startswith('http://'):
                         url = header[1].decode().replace('http://', 'https://')
                         response.raw_headers[index] = ('location'.encode(), url.encode())
-    return response
+    return add_security_headers(response)
+
+
+def verify_security_policy(host_name, header_value):
+    if not urdhva_base.settings.origin_check_enabled or  not header_value:
+        return True
+    parsed_origin = urlparse(header_value)
+    return host_name == parsed_origin.netloc
 
 
 @app.middleware('http')
 async def contextMiddleware(request: fastapi.Request, call_next):
+    # Verifying Content Length, To avoid man in middle attack
+    # if request.headers.get("content-length"):
+    #     actual_body = await request.body()  # Read the request body
+    #     actual_length = len(actual_body)
+    #     if actual_length != len(request.headers.get("content-length")):
+    #         return fastapi.responses.Response("Content-Length mismatch", 400)
+    # Verifying request origin and hostname
+    if not verify_security_policy(request.base_url.hostname, request.headers.get('origin')):
+        return fastapi.responses.Response("Origin mismatch", 403)
+    # Verifying request referer and hostname
+    if not verify_security_policy(request.base_url.hostname, request.headers.get('referer')):
+        return fastapi.responses.Response("Refer mismatch", 403)
     data = {}
     cookie_id = request.cookies.get(cookie_name, None)
     redis_client = await urdhva_base.redispool.get_redis_connection()
@@ -260,12 +284,12 @@ async def contextMiddleware(request: fastapi.Request, call_next):
     return resp
 
 
-@app.get("/api/login")
+# @app.get("/api/login")
 async def login_old(request: fastapi.Request, code: typing.Optional[str] = None):
     return await login(request, code, urdhva_base.ctx["entity_id"])
 
 
-@app.get("/api/{entity_id}/login")
+# @app.get("/api/{entity_id}/login")
 async def login(request: fastapi.Request, code: typing.Optional[str] = None,
                 entity_id: typing.Optional[str] = ""):
     base_url = ""
@@ -372,7 +396,8 @@ async def login(request: fastapi.Request, code: typing.Optional[str] = None,
 
 @app.get("/api/logout")
 async def logout(request: fastapi.Request):
-    response = fastapi.responses.JSONResponse({'url': f"{request.base_url}login"}, 401)
+    # {'url': f"https://{request.base_url.hostname}/login"}
+    response = fastapi.responses.HTMLResponse("", 401)
     cookie_id = request.cookies.get(cookie_name, None)
     if cookie_id:
         try:
@@ -384,41 +409,10 @@ async def logout(request: fastapi.Request):
         redis_client = await urdhva_base.redispool.get_redis_connection()
         rkey = f"Novex_SessionData_{cookie_id}"
         await redis_client.delete(rkey)
-    response.delete_cookie(cookie_name)
+    response.delete_cookie(cookie_name, httponly = urdhva_base.settings.session_httponly,
+                           secure=urdhva_base.settings.session_secure, samesite=urdhva_base.settings.session_same_site)
     # todo:- Need to clear dashboard sessions
     return response
-    # org_extension = await get_customer_authentication_extension(urdhva_base.ctx['entity_id'])
-    # redis_client = await urdhva_base.redispool.get_redis_connection()
-    # if await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname):
-    #     data = await redis_client.hget(f"{urdhva_base.ctx['entity_id']}_domainMapping", request.base_url.hostname)
-    #     url = json.loads(data)["base_url"]
-    #     redirect_url = f"https://{url}/{org_extension}/realms/{urdhva_base.ctx['entity_id']}" \
-    #                    f"/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F" \
-    #                    f"{request.base_url.hostname}%2F"
-    # else:
-    #     redirect_url = f"https://{await get_baseurl(request)}/{org_extension}/realms/" \
-    #                    f"{urdhva_base.ctx['entity_id']}/protocol/openid-connect/" \
-    #                    f"logout?post_logout_redirect_uri=https%3A%2F%2F{request.base_url.hostname}%2F"
-    # id_auth_token = urdhva_base.context.context.get('id_auth_token', "")
-    # if id_auth_token:
-    #     redirect_url += f"&id_token_hint={id_auth_token}"
-    # response = fastapi.responses.JSONResponse({'url': redirect_url}, 401)
-    # cookie_id = request.cookies.get(cookie_name, None)
-    # if cookie_id:
-    #     try:
-    #         f = Fernet(urdhva_base.settings.fernet_key)
-    #         d = json.loads(f.decrypt(cookie_id.encode()).decode())
-    #         # print(d)
-    #         entity_id = d["entity_id"]
-    #         cookie_id = d["cookie_id"]
-    #     except:
-    #         entity_id = request.base_url.hostname.split('.')[0]
-    #     redis_client = await urdhva_base.redispool.get_redis_connection()
-    #     rkey = f"{entity_id}_SessionData_{cookie_id}"
-    #     await redis_client.delete(rkey)
-    # response.delete_cookie(cookie_name)
-    # # todo:- Need to clear dashboard sessions
-    # return response
 
 
 @app.get("/api/{entity_id}/authorize")

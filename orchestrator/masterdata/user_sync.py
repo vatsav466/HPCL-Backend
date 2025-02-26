@@ -17,6 +17,7 @@ async def sync_users(file_path):
     if not os.path.exists(file_path):
         print(f"Given file {file_path} not exists")
         return
+
     if file_path.endswith(".csv"):
         df = pd.read_csv(file_path)
     elif file_path.endswith(".xlsx"):
@@ -24,38 +25,59 @@ async def sync_users(file_path):
     else:
         print(f"Invalid file format")
         return
+
     df = df[df['EMPLOYEE_NUMBER'].notna()]
     df = df.fillna('')
-    df['LOCATION'] = df['LOCATION'].astype(str)
-    df['LOCATION'] = df['LOCATION'].apply(lambda x: convert_float_string(x))
-    df['EMPLOYEE_NUMBER'] = df['EMPLOYEE_NUMBER'].astype(str)
-    df['EMPLOYEE_NUMBER'] = df['EMPLOYEE_NUMBER'].apply(lambda x: convert_float_string(x))
+    df['LOCATION'] = df['LOCATION'].astype(str).apply(lambda x: convert_float_string(x))
+    df['EMPLOYEE_NUMBER'] = df['EMPLOYEE_NUMBER'].astype(str).apply(lambda x: convert_float_string(x))
+    
     df['username'] = df['EMPLOYEE_NUMBER']
     df['employee_id'] = df['EMPLOYEE_NUMBER']
     df['sap_id'] = df['LOCATION']
-    df['email'] = df['EMP_EMAIL']
+    df['email'] = df['EMPLOYEE_EMAIL']
+    
     if 'Zone' in df.columns:
-        df['zone'] = df['Zone']
+        df['zone'] = df['ZONE']
     if 'Region' in df.columns:
-        df['region'] = df['Region']
+        df['region'] = df['REGION']
+
     df['first_name'] = df['EMPLOYEE_NAME']
     df['last_name'] = ''
     df['system_role'] = df['ROLE_NAME']
-    df['novex_role'] = df['Novex Role']
-    df['is_ad_user'] = True
-    df['status'] = True
+    df['novex_role'] = df['NOVEX_ROLE']
     df['bu'] = df['BU']
+    df['employee_number'] = df['EMPLOYEE_NUMBER']
+
+    # Fetch existing user records
+    existing_users = await hpcl_ceg_model.Users.get_all(resp_type='plain')  # Assuming a method to fetch all users
+    print("existing_users --> ", existing_users)
+    existing_users_map = {user['employee_id']: user for user in existing_users["data"]}
+
     df = df.drop_duplicates(subset=['employee_id'], keep=False)
+    # Ensure required columns exist
     for key in ['region', 'state', 'zone', 'sales_area', 'escalation_level']:
         if key not in df.columns:
             df[key] = ''
+
     df = df[['region', 'state', 'zone', 'sales_area', 'escalation_level', 'username', 'employee_id', 'sap_id', 'email',
-             'first_name', 'last_name', 'system_role', 'novex_role', 'bu', 'status', 'is_ad_user']]
+             'first_name', 'last_name', 'system_role', 'novex_role', 'bu']]
+
     df = df[df['employee_id'] != '']
     data = df.to_dict(orient='records')
+
+    # Retain `status` and `is_ad_user` for existing users, set `False` for new ones
     for record in data:
+        emp_id = record['employee_id']
+        if emp_id in existing_users_map:
+            record['status'] = existing_users_map[emp_id]['status']
+            record['is_ad_user'] = existing_users_map[emp_id]['is_ad_user']
+        else:
+            record['status'] = True
+            record['is_ad_user'] = True
+
         for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area']:
             record[key] = [rec.strip() for rec in record[key].split(",")] if record[key] else []
+
     await hpcl_ceg_model.Users.bulk_update(data, upsert=True)
 
 

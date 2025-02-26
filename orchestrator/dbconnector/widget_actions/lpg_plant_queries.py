@@ -766,21 +766,29 @@ LIMIT 10000;''',
                                         ORDER BY 
                                         bu, alert_section, interlock_name, location_name, severity;''',
     
-    "lpg_cdcms": f'''select sum("BookingReceivedYesterday") as "Bookings", 
-                            sum("TotalSalesYesterday") as "Sales",
-                            sum("Total_Pending") as "Pending",
-                            "ZOName" as "ZOName",
-                            "ROName" as "ROName",
-                            "SAName" as "SAName",
-                            "Execution_Date",
+    "lpg_cdcms_booking_vs_sales_vs_pending": f'''select sum("bookings_volume") as "Bookings",
+                            sum("sales_volume") as "Sales",
+                            sum("pendings_volume") as "Pending",
+                            "ZOName",
+                            "ROName",
+                            "SAName",
                             "DistributorName",
                             "ConsumerType",
                             "CylType"
                     from
                         "lpg_todays_cdcms_sales_summary"''',
     
-    "lpg_cdcms_month": f'''select
-                                sum("TotalSalesYesterday") as "Total Sales",
+    "lpg_cdcms_sakhi_registrations": f''' SELECT 
+                                            "Month",
+                                            "Month_Number",
+                                            SUM("SakhiRegisteredCount") AS "SakhiRegistered",
+                                            "ZOName", "ROName", "SAName", "DistributorName"
+                                        FROM
+                                            "lpg_cdcms_sakhi_registrations"
+                                    ''',
+    
+    "lpg_cdcms_monthly_sales": f'''select
+                                sum("sales_volume") as "Total Sales",
                                 "Month",
                                 "Month_Number",
                                 "ZOName",
@@ -792,38 +800,37 @@ LIMIT 10000;''',
                             from
                                 "lpg_monthly_cdcms_sales_summary"''',
     
-    "cdcms_order_source": f'''select
+    "lpg_cdcms_bookings_order_source_wise": f'''select
                                     "OrderSourceName",
-                                    "JDEDistributorCode",
+                                    "DistributorName",
 	                                "ZOName",
 	                                "ROName",
 	                                "SAName",
-                                    "Execution_Date",
                                     "ConsumerType", 
                                     "CylType",
-	                                sum("BookingReceivedYesterday") as "Total_Bookings"
+	                                sum("bookings_volume") as "Total_Bookings"
                                 from
 	                                "lpg_todays_cdcms_sales_summary"''',
                                  
-    "overall_pending_pmuy_nmpuy": f'''
+    "lpg_cdcms_pending_cosumer_type_wise": f'''
                                 select 
                                     "ZOName",
                                     "ROName",
                                     "SAName",
                                     "ConsumerType",
-                                    "JDEDistributorCode",
-                                    "Execution_Date",
+                                    "DistributorName",
                                     "CylType",
-                                    sum("Total_Pending") as "Total_pending" 
+                                    sum("Total_Pending") as "Total_pending"
                                 from
                                     "lpg_todays_cdcms_sales_summary" ''',
     "lpg_cdcms_ageing" : f'''
                         select 
-                            "ZOName" ,
+                            "ZOName",
                             "ROName",
                             "SAName",
                             "DistributorName",
                             "ConsumerType",
+                            "CylType",
                             sum("pending_1_3_days") as "pending_1_3_days",
                             sum("pending_4_7_days") as "pending_4_7_days",
                             sum("pending_8_15_days") as "pending_8_15_days",
@@ -831,17 +838,17 @@ LIMIT 10000;''',
                         from
                             "lpg_todays_cdcms_sales_summary" ''',
     
-    "cumulative_sales_pmuy_npmuy": f'''select
+    "lpg_cdcms_current_financial_year_sales": f'''select
                                             "DistributorName",
                                             "ConsumerType",
                                             "ZOName",
                                             "ROName",
                                             "SAName",
-                                            sum("TotalSalesYesterday") as "Sales"
+                                            sum("sales_volume") as "Sales"
                                         from
                                             "lpg_monthly_cdcms_sales_summary"''',
     
-    "overall_ctc_statistics": f'''select
+    "lpg_cdcms_overall_ctc_statistics": f'''select
                                         "Category",
                                         "JDEDistributorCode",
                                         "ZOName",
@@ -853,7 +860,7 @@ LIMIT 10000;''',
                                     from
                                         "LPG_CONSUMERS_SUMMARY"''',
 
-    'overall_safety_check_pending': f'''select
+    "lpg_cdcms_safety_check_pending": f'''select
                                             "SubCategory",
                                             "JDEDistributorCode",
                                             "ZOName",
@@ -863,16 +870,17 @@ LIMIT 10000;''',
                                         from
                                             "LPG_CONSUMERS_SUMMARY"''',
 
-    'lpg_cdcms_sales_comparision': f''' select 
+    'lpg_cdcms_actual_vs_historic_sales': f''' select 
                                             "Month",
                                             "Month_Number",
                                             "Financial_Year",
-                                            sum("TotalSalesYesterday") as "Total_Sales",
+                                            "Quarter",
+                                            sum("sales_volume") as "sales_volume",
                                             "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"
                                         from
                                             "lpg_monthly_cdcms_sales_summary" ''',
     
-    "total_consumers": f''' select
+    "lpg_cdcms_total_consumers": f''' select
                                 "ZOName",
                                 "ROName",
                                 "SAName",
@@ -882,9 +890,70 @@ LIMIT 10000;''',
                                 sum("ConsumerCount") as "Total_Consumers"
                             from
                                 "LPG_CONSUMERS_SUMMARY" ''',
+                                
+    "lpg_cdcms_backlogs": f''' SELECT 
+                                    "DistributorName",
+                                    "ZOName", "ROName", "SAName", "ConsumerType",
+                                    SUM("TotalSalesYesterday") AS "TotalSalesYesterday" ,
+                                    SUM("Total_Pending") AS "Total_Pending"
+                                FROM
+                                    "lpg_cdcms_sales_summary" ''',
+    
+    "lpg_cdcms_april_consumer_stats": f''' SELECT
+                                                "DistributorName", "SubCategory", "ZOName",
+                                                "SAName", "ROName",
+                                                SUM("ConsumerCount") AS "ConsumerCount"
+                                            FROM
+                                                "LPG_CONSUMER_APRIL" ''',
+    
+    "lpg_cdcms_current_consumer_stats": f''' SELECT "JDEDistributorCode", "SubCategory", "ZOName",
+                                                    "SAName", "ROName",
+                                                    SUM("ConsumerCount") AS "ConsumerCount"
+                                                FROM 
+                                                    "LPG_CONSUMERS_SUMMARY"
+                                                ''',
+                 "lpg_cdcms_pcc_sales": f''' SELECT 
+                                                "DistributorName", "ConsumerType", "CylType", "ZOName",
+                                                "SAName", "ROName", 
+                                                SUM("TotalSalesYesterday") AS "TotalSalesYesterday"
+                                            FROM
+                                                "lpg_monthly_cdcms_sales_summary" ''',
+
+    "lpg_cdcms_dbc_enrollments": ''' SELECT 
+                                        "ZOName" ,
+                                        "ROName",
+                                        "SAName",
+                                        "DistributorName",
+                                        "Month",
+                                        "Month_Number",
+                                        "ConsumerType",
+                                        sum("DBCIssuedCount") as "DBCIssued"
+                                    from
+                                        "lpg_cdcms_dbc_enrollment" ''',
+    
+    "lpg_cdcms_nc_query": '''SELECT 
+                                "ZOName" ,
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "Month",
+                                "month_number",
+                                "ConsumerType",
+                                sum("new_connection") as "new_connection"
+                            FROM
+                                "lpg_cdcms_nc_data" ''',
+    
+    "lpg_cdcms_backlogs_today": f''' SELECT
+                                        "DistributorName",
+                                        "ZOName", "ROName", "SAName", "ConsumerType",
+                                        SUM("TotalSalesYesterday") AS "TotalSalesYesterday",
+                                        SUM("Total_Pending") AS "Total_Pending"
+                                    FROM
+                                        "lpg_todays_cdcms_sales_summary" ''',
     
     "sales_growth_ytd": f'''select * from "MOM_DAY_LEVEL_DATA" where "MOM_DAY_LEVEL_DATA"."fiscal_year" in ('2023-2024','2024-2025')''',
-    "total_suvidha": f'''select 
+    
+    "lpg_cdcms_total_suvidha": f'''select 
                             "ZOName",
                             "ROName",
                             "SAName",
@@ -894,7 +963,7 @@ LIMIT 10000;''',
                             sum("SuvidhaClub") as "SuvidhaClub" 
                         from
                             "LPG_CONSUMERS_SUMMARY" ''',
-    "ekyc_statistics": f'''
+    "lpg_cdcms_ekyc_statistics": f'''
                         SELECT
                             "ROName",
                             "SAName",
@@ -908,48 +977,96 @@ LIMIT 10000;''',
     
     "lpg_operations_productivity_zone": f'''   
                         select 
-                            "zone" as "zone",
-                            "name" as "name",
-                            CAST("process_date" AS DATE) as "process_date",
-                            "carousel" as "carousel",
-                            avg("productivity.normal.productivity") as "productivity"
+                            "zone",
+                            "name",
+                            "SiteArea" AS "plant",
+                            "filling_heads" as "carousel_type",
+                            avg("productivity_normal_productivity") as "productivity"
                         from 
-                            "LPG_OPERATIONS_SUMMARY_DATA"
+                            "lpg_operations_summary"
                         ''',
     
     "lpg_operations_production_zone": f''' 
                         select 
-                            "zone" as "zone",
-                            "name" as "name",
-                            CAST("process_date" AS DATE) as "process_date",
-                            "carousel" as "carousel",
-                            sum("productivity.normal.production")/1000 as "Productions" 
+                            "zone",
+                            "name",
+                            "SiteArea" AS "plant",
+                            sum("productivity_normal_production")/1000 as "Productions"
                         from 
-                            "LPG_OPERATIONS_SUMMARY_DATA" ''',
+                            "lpg_operations_summary" ''',
     
     "lpg_operations_filled_cylinder": f''' 
                         select 
                             sum("total") as "Handled",
                             sum("cylfilled") as "Cylinder_Filled",
                             "zone" as "zone",
-                            "plant" as "plant",
-                            CAST("process_date" AS DATE) as "process_date"
+                            "plant" as "plant"
                         from
                             "lpg_cs_rejections" ''',
     
-    "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "cp_tank_delivery_updated" ', 
+    'productivity_overtime_vs_break_production': f'''  
+                            SELECT 
+                              "zone",
+                              "short_name" as "plant",
+                              SUM("productivity_break_production")/1000 as break_production,
+                              SUM("productivity_overtime_production")/1000 as overtime_production
+                            FROM 
+                                "lpg_operations_summary" ''',
+    
+    'lpg_operations_daywise_productivity': f'''  
+                                SELECT 
+                                "zone",
+                                "SiteArea" AS "plant",
+                                AVG("productivity_normal_productivity") AS "avg_productivity", 
+                                DATE("process_date") AS "process_date"
+                                FROM "lpg_operations_summary" ''',
+    
+    'lpg_operations_daywise_production': f'''  
+                                SELECT 
+                                "zone",
+                                "SiteArea" AS "plant",
+                                SUM("productivity_normal_production") / 1000 AS "sum_productivity ", 
+                                DATE("process_date") AS "process_date"
+                                FROM "lpg_operations_summary" ''',
+    
+    'lpg_operations_current_month_production': f'''
+                                                    SELECT
+                                                        ROUND(SUM("productivity_normal_production"::numeric)/1000, 2) AS "current_month_production"
+                                                    FROM
+                                                        "lpg_operations_summary"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
+                                                ''',
+    'lpg_operations_current_month_productivity': f'''
+                                                    SELECT
+                                                        ROUND(AVG("productivity_normal_productivity"::numeric), 2) AS "current_month_productivity"
+                                                    FROM
+                                                        "lpg_operations_summary"
+                                                    WHERE
+                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
+                                                ''',
+    'lpg_operations_connected_plants': f''' SELECT DISTINCT("short_name") FROM "lpg_operations_summary" order by "short_name"; ''',
+    
+    'lpg_operations_notconnected_plants': ''' SELECT DISTINCT m."short_name"
+                                            FROM 
+                                                "lpg_operations_masters" m
+                                            LEFT JOIN "lpg_operations_summary" s ON m."short_name" = s."short_name"
+                                            WHERE s."short_name" IS NULL
+                                            ORDER BY m."short_name"; ''',
+    
+    "cp_total_locations": 'select count(distinct("sap_id")) as "total_plants" from "consumer_pump_transactions" ',
 
     "cp_total_dus": '''SELECT SUM("du") AS "total_du"
 FROM (
     SELECT COUNT(DISTINCT "dispensing_unit") AS "du"
-    FROM "cp_transaction_updated"
+    FROM "consumer_pump_transactions"
     GROUP BY "sap_id"
 ) AS subquery ''',
 
     "cp_total_tanks": '''SELECT SUM("tanks") AS "total_tanks"
 FROM (
     SELECT COUNT(DISTINCT "tank_no") AS "tanks"
-    FROM "cp_tank_delivery_updated"
+    FROM "consumer_pump_transactions"
     GROUP BY "sap_id"
 ) AS subquery ''',
 
@@ -967,49 +1084,134 @@ ORDER BY
     TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY') ASC''',
 
     "cp_avg_monthly_consumption_by_location": '''SELECT 
-    AVG("sale_volume")/1000 AS "avg_sale_volume",
-	"depot" AS "plant",
-    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY') AS "start_month_year",
-    "product" AS "product"
-FROM
-    "cp_tank_delivery_updated"
-GROUP BY
-    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY'),
-    "product",
-	"depot",
-    TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY')
-ORDER BY
-    "depot",TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY') ASC''',
+        AVG("sale_volume")/1000 AS "avg_sale_volume",
+        "depot" AS "plant",
+        TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY') AS "start_month_year",
+        "product" AS "product"
+    FROM
+        "cp_tank_delivery_updated"
+    GROUP BY
+        TO_CHAR(CAST("start_date" AS TIMESTAMP), 'Mon YYYY'),
+        "product",
+        "depot",
+        TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY')
+    ORDER BY
+        "depot",TO_CHAR(CAST("start_date" AS TIMESTAMP), 'MM-YYYY') ASC''',
 
     "cp_total_volume_consumption": '''select sum("sale_volume")/1000 as "total_consumption" 
     from "cp_tank_delivery_updated" ''',
 
-    "cp_total_volume_sales": '''select sum("sale_volume")/1000 as "total_sales" 
-    from "cp_transaction_updated"''',
+    "cp_total_volume_sales": '''select sum("quantity")/1000 as "total_sales" 
+    from "consumer_pump_transactions"''',
 
-    "subsidy_exception_stats": f''' select 
-                                        "ZOName" ,
+    "lpg_cdcms_exception_stats": f''' select 
+                                        "ZOName",
                                         "ROName",
-                                        "SAName" ,
-                                        "JDEDistributorCode",
-                                        "ExceptionName" as "ExceptionName" ,
+                                        "SAName",
+                                        "DistributorName",
+                                        "ExceptionName",
                                         SUM("Consumers") AS "Consumers",
                                         SUM("Refills") AS "Refills"
                                     from
-                                        "subsidy_exception_statistics_EC_data" 
+                                        "subsidy_exception_statistics" 
                                      ''',
 
-    "subsidy_failure_stats": f'''
+    "lpg_cdcms_subsidy_failure_stats": f'''
                         SELECT 
                             "ZOName" ,
                             "ROName",
                             "SAName",
-                            "JDEDistributorCode",
-                            "PaymentErrorName" as "PaymentErrorName",
+                            "DistributorName",
+                            "PaymentErrorName",
                             sum("Consumers") as "Consumers",
                             sum("Refills") as "Refills"
                         FROM
-                            "subsidy_failure_statistics_PEC_data"''',
+                            "subsidy_failure_statistics"''',
+    
+    'lpg_cdcms_subsidy_central_consumers': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "StateCode",
+                                "Financial_Year",
+                                SUM("Consumer_Count") as "consumer_count"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
+    
+    'lpg_cdcms_subsidy_central_transaction': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "StateCode",
+                                SUM("Transaction_Count") as "transaction_count"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
+    
+    'lpg_cdcms_subsidy_central_amount':f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "StateCode",
+                                SUM("SubsidyAmount") as "SubsidyAmount"
+                            FROM
+                                "lpg_cdcms_subsidy_central" ''',
+    
+    'lpg_cdcms_subsidy_state_consumers': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "StateCode",
+                                SUM("Consumer_Count") as "consumer_count"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
+    
+    'lpg_cdcms_subsidy_state_transaction': f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "StateCode",
+                                SUM("Transaction_Count") as "transaction_count"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
+    
+    'lpg_cdcms_subsidy_state_amount':f''' 
+                            SELECT 
+                                "ConsumerType",
+                                "Month",
+                                "month_number",
+                                "ZOName",
+                                "ROName",
+                                "SAName",
+                                "DistributorName",
+                                "StateCode",
+                                SUM("SubsidyAmount") as "SubsidyAmount"
+                            FROM
+                                "lpg_cdcms_subsidy_state" ''',
     
     "cs_query" : f'''
                     select 
@@ -1043,53 +1245,62 @@ ORDER BY
                     from
                         "lpg_gd_rejections"
                 ''',
-                
-    'cdcms_current_year_sales':f'''select 
-                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
-                                    from
+                    
+    'cdcms_current_year_sales':f''' SELECT 
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+                                    FROM 
                                         "lpg_monthly_cdcms_sales_summary"
-                                    where
-                                        "Financial_Year"='{financial_year}' ''',
+                                    WHERE 
+                                        "Financial_Year"='{financial_year}' AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_month_sales':f'''select
-                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
-                                        "Financial_Year"='{financial_year}' AND "Month"='{current_month}' ''',
+                                        "Financial_Year"='{financial_year}' AND "Month"='{current_month}' AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_week_sales': f''' SELECT 
-                                        round(sum("TotalSalesYesterday")/10000000, 2) as "total_sales"
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     FROM
                                         "lpg_cdcms_sales_summary"
                                     WHERE 
                                         "Execution_Date" >= CURRENT_DATE - EXTRACT(DOW FROM CURRENT_DATE)::INT + 1
-                                        AND "Execution_Date" <= CURRENT_DATE; ''',
+                                        AND "Execution_Date" <= CURRENT_DATE AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_date_sales':f'''select
-                                        round(sum("TotalSalesYesterday")/100000, 2) as "total_sales" 
+                                        ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales",
+                                        ROUND(CAST(SUM("TotalSalesYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
-                                ''',
+                                    where
+                                        "ZOName" IS NOT NULL ''',                                
+
     'cdcms_current_date_bookings':f'''select
-                                        round(sum("BookingReceivedYesterday")/100000, 2) as "Bookings" 
+                                        ROUND(CAST(SUM("bookings_volume") / 1000000 AS NUMERIC), 2) AS "Bookings",
+                                        ROUND(CAST(SUM("BookingReceivedYesterday") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
-                                ''',
+                                    where
+                                        "ZOName" IS NOT NULL ''',
+
     'cdcms_current_date_pending':f'''select
-                                        round(sum("Total_Pending")/100000, 2) as "Pending"
+                                        ROUND(CAST(SUM("pendings_volume") / 1000000 AS NUMERIC), 2) AS "Pending",
+                                        ROUND(CAST(SUM("Total_Pending") / 100000 AS NUMERIC), 2) AS "no_of_cylinders"
                                     from
                                         "lpg_todays_cdcms_sales_summary"
-                                ''',
+                                    where
+                                        "ZOName" IS NOT NULL ''',
+
     'lpg_operations_current_month_productivity': f''' SELECT 
-                                                        ROUND(AVG("productivity.normal.productivity")) 
+                                                        ROUND(AVG("productivity.normal.productivity")) AS "Total Productivity"
                                                     FROM 
                                                         "LPG_OPERATIONS_SUMMARY_DATA"
                                                     WHERE 
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_productions': '''SELECT
-                                                        ROUND(AVG("productivity.normal.production"))
+                                                        ROUND(CAST(SUM("productivity.normal.production") AS NUMERIC) / 1000, 0) AS "Total Production"
                                                     FROM
                                                         "LPG_OPERATIONS_SUMMARY_DATA"
                                                     WHERE
@@ -1103,38 +1314,38 @@ ORDER BY
                                                             DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_cs_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "Cylinders_Filled"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "cs_rejection"
                                                     FROM
                                                         "lpg_cs_rejections"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_gd_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "Cylinders_Filled"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "gd_rejection"
                                                     FROM
                                                         "lpg_gd_rejections"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_pt_rejection': ''' SELECT
-                                                        ROUND(AVG("sortoutpercentage"::numeric), 2) * 100 AS "Cylinders_Filled"
+                                                        ROUND(AVG("sortoutpercentage"::numeric), 3) * 100 AS "pt_rejection"
                                                     FROM
                                                         "lpg_pt_rejections"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
-    "lpg_domestic_sale_table": f''' select 
+    "lpg_cdcms_domestic_sales_table": f''' select 
                                         "ZOName" as "ZOName",
                                         "CylType" as "CylType",
                                         "ConsumerType" as "ConsumerType",
-                                        sum("BookingReceivedYesterday") as "Total_Booking",
-                                        sum("TotalSalesYesterday") as "Total_Sales",
-                                        sum("Total_Pending") as "Total_Pending"
+                                        sum("bookings_volume") as "Total_Booking",
+                                        sum("sales_volume") as "Total_Sales",
+                                        sum("pendings_volume") as "Total_Pending"
                                     from
                                         "lpg_todays_cdcms_sales_summary" 
                                      ''',
 
-    "lpg_consumer_table": f''' select 
+    "lpg_cdcms_consumer_statistics_table": f''' select 
                                     "ZoneNames" as "ZoneNames",
                                     "SubCategory" as "SubCategory",
                                     sum("ConsumerCount") as "Total_Consumers",
@@ -1144,5 +1355,1229 @@ ORDER BY
                                     sum("SuvidhaClub") as "SuvidhaClub",
                                     "CylinderType" as "CylinderType" 
                                 from
-                                    "LPG_CONSUMERS_SUMMARY" '''
+                                    "LPG_CONSUMERS_SUMMARY" ''',
+
+    "present_previous_month_sales": '''WITH SalesData AS (
+    SELECT 
+        rosapcode, 
+        CASE
+            WHEN item_name = 'HSD' THEN '2812000'
+            WHEN item_name = 'MS' THEN '2811000'
+            WHEN item_name = 'TURBO' THEN '3912000'
+            WHEN item_name = 'E20' THEN '2822000'
+            WHEN item_name = 'POWER 95' THEN '3672000'
+            WHEN item_name = 'POWER 99' THEN '2816000'
+            WHEN item_name = 'POWER 100' THEN '3373000'
+            ELSE NULL
+        END AS item_name_code,
+        run_id,
+        avgsales_7days
+    FROM sch_inventory_forecast_dashboard
+    WHERE run_id LIKE '%2300'
+)
+
+SELECT 
+    a.location_name,
+    SUM(CASE WHEN TO_CHAR(TO_DATE(SUBSTRING(sd.run_id FROM 1 FOR 6), 'DDMMYY'), 'YYYY-MM') = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM') THEN sd.avgsales_7days ELSE 0 END) AS present_month,
+    SUM(CASE WHEN TO_CHAR(TO_DATE(SUBSTRING(sd.run_id FROM 1 FOR 6), 'DDMMYY'), 'YYYY-MM') = TO_CHAR((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata') - INTERVAL '1 month', 'YYYY-MM') THEN sd.avgsales_7days ELSE 0 END) AS previous_month
+FROM 
+    public.alerts a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
+WHERE 
+    a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    AND a.indent_status NOT IN ('Cancelled', 'Completed')
+GROUP BY 
+    a.location_name
+ORDER BY 
+    present_month DESC 
+''',
+    "present_previous_week_sales": '''WITH SalesData AS (
+    SELECT 
+        rosapcode, 
+        CASE
+            WHEN item_name = 'HSD' THEN '2812000'
+            WHEN item_name = 'MS' THEN '2811000'
+            WHEN item_name = 'TURBO' THEN '3912000'
+            WHEN item_name = 'E20' THEN '2822000'
+            WHEN item_name = 'POWER 95' THEN '3672000'
+            WHEN item_name = 'POWER 99' THEN '2816000'
+            WHEN item_name = 'POWER 100' THEN '3373000'
+            ELSE NULL
+        END AS item_name_code,
+        run_id,
+        avgsales_7days,
+        TO_DATE(SUBSTRING(run_id FROM 1 FOR 6), 'DDMMYY') AS run_date
+    FROM sch_inventory_forecast_dashboard
+    WHERE run_id LIKE '%2300'
+)
+
+SELECT 
+    a.location_name,
+    SUM(CASE WHEN EXTRACT(week FROM sd.run_date) = EXTRACT(week FROM CURRENT_DATE) 
+             AND EXTRACT(year FROM sd.run_date) = EXTRACT(year FROM CURRENT_DATE) 
+             THEN sd.avgsales_7days ELSE 0 END) AS present_week,
+    SUM(CASE WHEN EXTRACT(week FROM sd.run_date) = EXTRACT(week FROM CURRENT_DATE - INTERVAL '1 week') 
+             AND EXTRACT(year FROM sd.run_date) = EXTRACT(year FROM CURRENT_DATE - INTERVAL '1 week') 
+             THEN sd.avgsales_7days ELSE 0 END) AS previous_week
+FROM 
+    public.alerts a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
+WHERE 
+    a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    AND a.indent_status NOT IN ('Cancelled', 'Completed')
+GROUP BY 
+    a.location_name
+ORDER BY 
+    present_week DESC
+''',
+    'present_previous_day_sales': '''WITH SalesData AS (
+    SELECT 
+        rosapcode, 
+        CASE
+            WHEN item_name = 'HSD' THEN '2812000'
+            WHEN item_name = 'MS' THEN '2811000'
+            WHEN item_name = 'TURBO' THEN '3912000'
+            WHEN item_name = 'E20' THEN '2822000'
+            WHEN item_name = 'POWER 95' THEN '3672000'
+            WHEN item_name = 'POWER 99' THEN '2816000'
+            WHEN item_name = 'POWER 100' THEN '3373000'
+            ELSE NULL
+        END AS item_name_code,
+        run_id,
+        avgsales_7days,
+        TO_DATE(SUBSTRING(run_id FROM 1 FOR 6), 'DDMMYY') AS run_date
+    FROM sch_inventory_forecast_dashboard
+    WHERE run_id LIKE '%2300'
+)
+
+SELECT 
+    a.location_name,
+    SUM(CASE WHEN sd.run_date = CURRENT_DATE THEN sd.avgsales_7days ELSE 0 END) AS present_day,
+    SUM(CASE WHEN sd.run_date = CURRENT_DATE - INTERVAL '1 day' THEN sd.avgsales_7days ELSE 0 END) AS previous_day
+FROM 
+    public.alerts a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
+WHERE 
+    a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    AND a.indent_status NOT IN ('Cancelled', 'Completed')
+GROUP BY 
+    a.location_name
+ORDER BY 
+    present_day DESC
+''',
+    'previous_current_month_sales': '''WITH SalesData AS (
+    SELECT 
+        ro_sap_code, 
+        CASE
+            WHEN product_no = '1322000' THEN '2811000'
+            WHEN product_no = '1683000' THEN '2812000'
+            WHEN product_no = '1683100' THEN '3912000'
+            WHEN product_no = '1322000' THEN '2822000'
+            WHEN product_no = '3672000' THEN '3672000'
+            WHEN product_no = '2682000' THEN '2816000'
+            WHEN product_no = '3373000' THEN '3373000'
+            ELSE NULL
+        END AS product_code,
+        transaction_date,
+        total_sales
+    FROM "HPCL_HOS".ro_daily_sales
+)
+
+SELECT 
+    a.location_name, 
+    -- Handle time grain and aggregate based on the period
+    CASE 
+        WHEN '{time_grain}' = 'monthly' THEN TO_CHAR(DATE_TRUNC('month', sd.transaction_date::TIMESTAMP), 'Mon YYYY')
+        WHEN '{time_grain}' = 'weekly' THEN TO_CHAR(DATE_TRUNC('week', sd.transaction_date::TIMESTAMP), 'DD-MM-YYYY')
+        WHEN '{time_grain}' = 'daily' THEN TO_CHAR(sd.transaction_date::TIMESTAMP, 'DD-MM-YYYY')
+    END AS period,
+    AVG(sd.total_sales) AS avg_total_sales
+FROM 
+    public.alerts a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.ro_sap_code::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.product_code::TEXT, '')
+WHERE 
+    a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    AND a.indent_status NOT IN ('Cancelled', 'Completed')
+    AND (
+        -- Handling aggregation for Monthly, Weekly, Daily
+
+        -- For Monthly: Check if the transaction date is in the current or previous month
+        CASE 
+            WHEN '{time_grain}' = 'monthly' THEN 
+                (DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE) 
+                 OR DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month'))
+
+        -- For Weekly: Check if the transaction date is in the current or previous week
+        WHEN '{time_grain}' = 'weekly' THEN 
+            (DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE)
+             OR DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week'))
+
+        -- For Daily: Check if the transaction date is in the current or previous day
+        WHEN '{time_grain}' = 'daily' THEN 
+            (sd.transaction_date::DATE = CURRENT_DATE 
+             OR sd.transaction_date::DATE = CURRENT_DATE - INTERVAL '1 day')
+        END
+    )
+GROUP BY 
+    a.location_name, period
+ORDER BY 
+    avg_total_sales 
+''',
+    'i_dryout_ro_count': '''select sum("alerts_view"."total_unique_count") as "total_count" from
+            (WITH max_progress_rate AS (
+            SELECT 
+                sap_id, 
+                MAX(progress_rate) AS present_stage,
+                dry_out_in_days
+            FROM alerts
+            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+              AND indent_status NOT IN ('Cancelled', 'Completed')
+            GROUP BY sap_id, dry_out_in_days
+        )
+                    SELECT 
+                        dry_out_in_days,
+                        SUM(unique_count) AS total_unique_count
+                    FROM (
+                        SELECT 
+                            dry_out_in_days, 
+                            present_stage, 
+                            COUNT(DISTINCT sap_id) AS unique_count
+                        FROM max_progress_rate
+                        WHERE present_stage != '11'
+                        GROUP BY dry_out_in_days, present_stage
+                    ) subquery
+                    GROUP BY dry_out_in_days
+                    ORDER BY dry_out_in_days)  "alerts_view" 
+        where
+            ( "alerts_view"."dry_out_in_days"  IN ('1') )''',
+
+    'i_intraday_dryout_ro_count': '''select sum("alerts_view"."total_unique_count") as "total_count" from
+            (WITH max_progress_rate AS (
+            SELECT 
+                sap_id, 
+                MAX(progress_rate) AS present_stage,
+                dry_out_in_days
+            FROM alerts
+            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+              AND indent_status NOT IN ('Cancelled', 'Completed')
+            GROUP BY sap_id, dry_out_in_days
+        )
+                    SELECT 
+                        dry_out_in_days,
+                        SUM(unique_count) AS total_unique_count
+                    FROM (
+                        SELECT 
+                            dry_out_in_days, 
+                            present_stage, 
+                            COUNT(DISTINCT sap_id) AS unique_count
+                        FROM max_progress_rate
+                        WHERE present_stage != '11'
+                        GROUP BY dry_out_in_days, present_stage
+                    ) subquery
+                    GROUP BY dry_out_in_days
+                    ORDER BY dry_out_in_days)  "alerts_view" 
+        where
+            ( "alerts_view"."dry_out_in_days"  IN ('2'))''',
+
+    'i_potential_dryout_ro_count': '''select 
+             CASE
+                WHEN SUM("alerts_view"."total_unique_count") IS NULL THEN 'Coming Soon'
+                ELSE CAST(SUM("alerts_view"."total_unique_count") AS VARCHAR)
+            END as "total_count" 
+        from
+            (WITH max_progress_rate AS (
+                                SELECT 
+                                    sap_id, 
+                                    MAX(progress_rate) AS present_stage,
+                                    dry_out_in_days
+                                FROM alerts
+                                WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                                  AND indent_status NOT IN ('Cancelled', 'Completed')
+                                GROUP BY sap_id, dry_out_in_days
+                            )
+                            SELECT 
+                                dry_out_in_days,
+                                SUM(unique_count) AS total_unique_count
+                            FROM (
+                                SELECT 
+                                    dry_out_in_days, 
+                                    present_stage, 
+                                    COUNT(DISTINCT sap_id) AS unique_count
+                                FROM max_progress_rate
+                                WHERE present_stage != '11'
+                                GROUP BY dry_out_in_days, present_stage
+                            ) subquery
+                            GROUP BY dry_out_in_days
+                            ORDER BY dry_out_in_days)  "alerts_view" 
+        where
+            ( "alerts_view"."dry_out_in_days"  IN ('3'))''',
+
+    'i_indent_status_summary': '''select 
+            "View 1"."progress_name" as "indent_status",
+            count(distinct("View 1"."sap_id")) as "total_ro",
+            "View 1"."dry_out_name" as "dryout_status" 
+        from
+            (SELECT 
+            *,
+            CASE 
+                WHEN "alerts"."progress_rate" = '1' THEN 'Indent Not Raised'
+                WHEN "alerts"."progress_rate" = '2' THEN 'Indent On Hold'
+                WHEN "alerts"."progress_rate" = '3' THEN 'Pending Indents'
+                WHEN "alerts"."progress_rate" = '4' THEN 'Truck Allocated'
+                WHEN "alerts"."progress_rate" = '5' THEN 'Sent to SAP'
+                WHEN "alerts"."progress_rate" = '6' THEN 'Sales Order Placed'
+                WHEN "alerts"."progress_rate" = '7' THEN 'R2 Swiped'
+                WHEN "alerts"."progress_rate" = '8' THEN 'Invoice Created'
+                WHEN "alerts"."progress_rate" = '9' THEN 'R3 Swiped'
+                WHEN "alerts"."progress_rate" = '10' THEN 'VTS'
+                WHEN "alerts"."progress_rate" = '11' THEN 'Indent Delivered'
+            END AS "progress_name",
+            CASE 
+                WHEN "product_code" = '2811000' THEN 'MS'
+                WHEN "product_code" = '2812000' THEN 'HSD'
+                WHEN "product_code" = '3912000' THEN 'TURBO'
+                WHEN "product_code" = '2822000' THEN 'E20'
+                WHEN "product_code" = '3672000' THEN 'POWER 95'
+                WHEN "product_code" = '2816000' THEN 'POWER 99'
+                WHEN "product_code" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            CASE 
+                WHEN "dry_out_in_days" = '1' THEN 'Fully Dry Out'
+                WHEN "dry_out_in_days" = '2' THEN 'Intra-Day Dry Out'
+                WHEN "dry_out_in_days" = '3' THEN 'Potential Dry Out'
+                ELSE 'Dry Out'
+            END AS "dry_out_name"
+        FROM 
+            "alerts"
+        WHERE 
+            "alerts"."interlock_name" IN ('Dry Out Each Indent Wise MainFlow')
+            AND (
+                (
+                    "alerts"."indent_status" = 'Completed' 
+                    AND CAST("alerts"."updated_at" AS DATE) = CURRENT_DATE
+                )
+                OR 
+                (
+                    "alerts"."indent_status" != 'Completed' 
+                    AND "alerts"."indent_status" NOT IN ('Cancelled')
+                )
+            )
+            AND "zone" IS NOT NULL AND "zone" != '' 
+            AND "sales_area" IS NOT NULL AND "sales_area" != '' 
+            AND "region" IS NOT NULL AND "region" != '')  "View 1" 
+        where
+            ( "View 1"."progress_rate"  NOT IN ('11')) and 
+            ("View 1"."progress_name" IS NOT NULL AND "View 1"."progress_name" != '')
+        group by
+            "View 1"."progress_name", "View 1"."dry_out_name" 
+        order by
+            count(("View 1"."sap_id")) desc, "View 1"."dry_out_name" asc ''',
+
+    'i_dryout_summary_by_product': '''select 
+            "View 1"."product_name" as "product",
+            count(distinct("View 1"."sap_id")) as "total_ro",
+            "View 1"."dry_out_name" as "dryout_status" 
+        from
+            (SELECT 
+            *,
+            CASE 
+                WHEN "alerts"."progress_rate" = '1' THEN 'Indent Not Raised'
+                WHEN "alerts"."progress_rate" = '2' THEN 'Indent On Hold'
+                WHEN "alerts"."progress_rate" = '3' THEN 'Pending Indents'
+                WHEN "alerts"."progress_rate" = '4' THEN 'Truck Allocated'
+                WHEN "alerts"."progress_rate" = '5' THEN 'Sent to SAP'
+                WHEN "alerts"."progress_rate" = '6' THEN 'Sales Order Placed'
+                WHEN "alerts"."progress_rate" = '7' THEN 'R2 Swiped'
+                WHEN "alerts"."progress_rate" = '8' THEN 'Invoice Created'
+                WHEN "alerts"."progress_rate" = '9' THEN 'R3 Swiped'
+                WHEN "alerts"."progress_rate" = '10' THEN 'VTS'
+                WHEN "alerts"."progress_rate" = '11' THEN 'Indent Delivered'
+            END AS "progress_name",
+            CASE 
+                WHEN "product_code" = '2811000' THEN 'MS'
+                WHEN "product_code" = '2812000' THEN 'HSD'
+                WHEN "product_code" = '3912000' THEN 'TURBO'
+                WHEN "product_code" = '2822000' THEN 'E20'
+                WHEN "product_code" = '3672000' THEN 'POWER 95'
+                WHEN "product_code" = '2816000' THEN 'POWER 99'
+                WHEN "product_code" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            CASE 
+                WHEN "dry_out_in_days" = '1' THEN 'Fully Dry Out'
+                WHEN "dry_out_in_days" = '2' THEN 'Intra-Day Dry Out'
+                WHEN "dry_out_in_days" = '3' THEN 'Potential Dry Out'
+                ELSE 'Dry Out'
+            END AS "dry_out_name"
+        FROM 
+            "alerts"
+        WHERE 
+            "alerts"."interlock_name" IN ('Dry Out Each Indent Wise MainFlow')
+            AND (
+                (
+                    "alerts"."indent_status" = 'Completed' 
+                    AND CAST("alerts"."updated_at" AS DATE) = CURRENT_DATE
+                )
+                OR 
+                (
+                    "alerts"."indent_status" != 'Completed' 
+                    AND "alerts"."indent_status" NOT IN ('Cancelled')
+                )
+            )
+            AND "zone" IS NOT NULL AND "zone" != '' 
+            AND "sales_area" IS NOT NULL AND "sales_area" != '' 
+            AND "region" IS NOT NULL AND "region" != '')  "View 1" 
+        where
+            ( "View 1"."progress_rate"  NOT IN ( '11') AND "View 1"."indent_status"  NOT IN ( 'Completed') ) 
+        group by
+            "View 1"."product_name", "View 1"."dry_out_name" 
+        order by
+            count(("View 1"."sap_id")) desc, "View 1"."dry_out_name" asc ''',
+
+    'i_detailed_dryout_summary': '''select 
+            {display_col},
+            "View 1"."dry_out_name" as "dryout_status",
+            count(distinct("View 1"."sap_id")) as "total_ro" 
+        from
+            (SELECT 
+            *,
+            CASE 
+                WHEN "alerts"."progress_rate" = '1' THEN 'Indent Not Raised'
+                WHEN "alerts"."progress_rate" = '2' THEN 'Indent On Hold'
+                WHEN "alerts"."progress_rate" = '3' THEN 'Pending Indents'
+                WHEN "alerts"."progress_rate" = '4' THEN 'Truck Allocated'
+                WHEN "alerts"."progress_rate" = '5' THEN 'Sent to SAP'
+                WHEN "alerts"."progress_rate" = '6' THEN 'Sales Order Placed'
+                WHEN "alerts"."progress_rate" = '7' THEN 'R2 Swiped'
+                WHEN "alerts"."progress_rate" = '8' THEN 'Invoice Created'
+                WHEN "alerts"."progress_rate" = '9' THEN 'R3 Swiped'
+                WHEN "alerts"."progress_rate" = '10' THEN 'VTS'
+                WHEN "alerts"."progress_rate" = '11' THEN 'Indent Delivered'
+            END AS "progress_name",
+            CASE 
+                WHEN "product_code" = '2811000' THEN 'MS'
+                WHEN "product_code" = '2812000' THEN 'HSD'
+                WHEN "product_code" = '3912000' THEN 'TURBO'
+                WHEN "product_code" = '2822000' THEN 'E20'
+                WHEN "product_code" = '3672000' THEN 'POWER 95'
+                WHEN "product_code" = '2816000' THEN 'POWER 99'
+                WHEN "product_code" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            CASE 
+                WHEN "dry_out_in_days" = '1' THEN 'Fully Dry Out'
+                WHEN "dry_out_in_days" = '2' THEN 'Intra-Day Dry Out'
+                WHEN "dry_out_in_days" = '3' THEN 'Potential Dry Out'
+                ELSE 'Dry Out'
+            END AS "dry_out_name"
+        FROM 
+            "alerts"
+        WHERE 
+            "alerts"."interlock_name" IN ('Dry Out Each Indent Wise MainFlow')
+            AND (
+                (
+                    "alerts"."indent_status" = 'Completed' 
+                    AND CAST("alerts"."updated_at" AS DATE) = CURRENT_DATE
+                )
+                OR 
+                (
+                    "alerts"."indent_status" != 'Completed' 
+                    AND "alerts"."indent_status" NOT IN ('Cancelled')
+                )
+            )
+            AND "zone" IS NOT NULL AND "zone" != '' 
+            AND "sales_area" IS NOT NULL AND "sales_area" != '' 
+            AND "region" IS NOT NULL AND "region" != '')  "View 1" 
+        where
+            ( "View 1"."progress_rate"  NOT IN ('11') ) 
+        group by
+           {grp_col}, "View 1"."dry_out_name" ''',
+
+    'i_detailed_indent_status_summary': '''select 
+            "View 1"."zone" as "zone",
+            "View 1"."region" as "region",
+            "View 1"."sales_area" as "sales_area",
+            "View 1"."product_name" as "product_name",
+            "View 1"."progress_name" as "indent_status",
+            count(distinct("View 1"."sap_id")) as "total_ro" 
+        from
+            (SELECT 
+            *,
+            CASE 
+                WHEN "alerts"."progress_rate" = '1' THEN 'Indent Not Raised'
+                WHEN "alerts"."progress_rate" = '2' THEN 'Indent On Hold'
+                WHEN "alerts"."progress_rate" = '3' THEN 'Pending Indents'
+                WHEN "alerts"."progress_rate" = '4' THEN 'Truck Allocated'
+                WHEN "alerts"."progress_rate" = '5' THEN 'Sent to SAP'
+                WHEN "alerts"."progress_rate" = '6' THEN 'Sales Order Placed'
+                WHEN "alerts"."progress_rate" = '7' THEN 'R2 Swiped'
+                WHEN "alerts"."progress_rate" = '8' THEN 'Invoice Created'
+                WHEN "alerts"."progress_rate" = '9' THEN 'R3 Swiped'
+                WHEN "alerts"."progress_rate" = '10' THEN 'VTS'
+                WHEN "alerts"."progress_rate" = '11' THEN 'Indent Delivered'
+            END AS "progress_name",
+            CASE 
+                WHEN "product_code" = '2811000' THEN 'MS'
+                WHEN "product_code" = '2812000' THEN 'HSD'
+                WHEN "product_code" = '3912000' THEN 'TURBO'
+                WHEN "product_code" = '2822000' THEN 'E20'
+                WHEN "product_code" = '3672000' THEN 'POWER 95'
+                WHEN "product_code" = '2816000' THEN 'POWER 99'
+                WHEN "product_code" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            CASE 
+                WHEN "dry_out_in_days" = '1' THEN 'Fully Dry Out'
+                WHEN "dry_out_in_days" = '2' THEN 'Intra-Day Dry Out'
+                WHEN "dry_out_in_days" = '3' THEN 'Potential Dry Out'
+                ELSE 'Dry Out'
+            END AS "dry_out_name"
+        FROM 
+            "alerts"
+        WHERE 
+            "alerts"."interlock_name" IN ('Dry Out Each Indent Wise MainFlow')
+            AND (
+                (
+                    "alerts"."indent_status" = 'Completed' 
+                    AND CAST("alerts"."updated_at" AS DATE) = CURRENT_DATE
+                )
+                OR 
+                (
+                    "alerts"."indent_status" != 'Completed' 
+                    AND "alerts"."indent_status" NOT IN ('Cancelled')
+                )
+            )
+            AND "zone" IS NOT NULL AND "zone" != '' 
+            AND "sales_area" IS NOT NULL AND "sales_area" != '' 
+            AND "region" IS NOT NULL AND "region" != '')  "View 1" 
+        where 
+            "View 1"."progress_name" IS NOT NULL AND "View 1"."progress_name" != ''
+        group by
+            "View 1"."zone", "View 1"."region", "View 1"."sales_area", "View 1"."product_name", "View 1"."progress_name" 
+        order by
+            count(("View 1"."sap_id")) desc ''',
+
+    'i_product_report': '''SELECT 
+    "dryoutreport_view"."locn_code" AS "location_code",
+    "dryoutreport_view"."location_name" AS "location_name",
+    "dryoutreport_view"."dealer_code" AS "dealer_code",
+    "dryoutreport_view"."indent_no" AS "indent_number",
+    "dryoutreport_view"."indent_status" AS "indent_status",
+    "dryoutreport_view"."product_name" AS "product_name",
+    CASE 
+        WHEN SUM("dryoutreport_view"."qty") < 1000 THEN SUM("dryoutreport_view"."qty") * 1000
+        ELSE SUM("dryoutreport_view"."qty")
+    END AS "Quantity",
+    "dryoutreport_view"."dry_out_status" AS "Dry Out Status" 
+FROM
+    (WITH CombinedData AS (
+        SELECT 
+            ir."locn_code",
+            ir."indent_no",
+            ir."indent_date",
+            ir."prod_reqd_dt",
+            ir."dealer_code",
+            ir."batch_flag",
+            ir."truck_regno",
+            ir."valid_indent",
+            ir."send_to_jde_time",
+            ir."delivery_date",
+            ir."indent_hold_release_time",
+            ir."indent_executable_time",
+            ip."prod" AS "product_code",
+            CASE 
+                WHEN ip."prod" = '2811000' THEN 'MS'
+                WHEN ip."prod" = '2812000' THEN 'HSD'
+                WHEN ip."prod" = '3912000' THEN 'TURBO'
+                WHEN ip."prod" = '2822000' THEN 'E20'
+                WHEN ip."prod" = '3672000' THEN 'POWER 95'
+                WHEN ip."prod" = '2816000' THEN 'POWER 99'
+                WHEN ip."prod" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS "product_name",
+            ip."qty",
+            ip."prod_allot_time",
+            ip."sales_orderno",
+            ip."invoice_no",
+            ip."jde_truck_no",
+            tse."LOADED_ON",
+            tse."CARD_STATUS",
+            ROW_NUMBER() OVER (
+                PARTITION BY COALESCE(ir."locn_code"::TEXT, ''), 
+                             COALESCE(ir."indent_no"::TEXT, ''), 
+                             COALESCE(ir."dealer_code"::TEXT, ''), 
+                             COALESCE(ip."prod"::TEXT, '') 
+                ORDER BY tse."LOADED_ON" ASC
+            ) AS rn
+        FROM 
+            "IMS_SAP"."INDENT_REQUEST" ir
+        LEFT JOIN 
+            "IMS_SAP"."INDENT_PRODUCTS" ip
+        ON 
+            COALESCE(ir."locn_code"::TEXT, '') = COALESCE(ip."locn_code"::TEXT, '')
+            AND COALESCE(ir."dealer_code"::TEXT, '') = COALESCE(ip."dealer_code"::TEXT, '')
+            AND COALESCE(ir."indent_no"::TEXT, '') = COALESCE(ip."indent_no"::TEXT, '')
+        LEFT JOIN 
+            "public"."TRUCK_SWIPE_ENTRY_SAP" tse
+        ON 
+            COALESCE(ir."locn_code"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
+            AND COALESCE(ir."truck_regno"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
+            AND tse."CARD_STATUS" = 'O'
+            AND tse."LOADED_ON"::timestamp >= ir."prod_reqd_dt"::timestamp
+            AND tse."LOADED_ON"::timestamp <= ir."prod_reqd_dt"::timestamp + INTERVAL '1 day'
+    )
+    SELECT 
+        a.sap_id AS sap_id,
+        a.location_name AS location_name,
+        a.terminal_plant_id AS terminal_plant_id,
+        a.indent_no AS INDENT_NO,
+        a.product_code AS product_code,
+        a.indent_status AS indent_status,
+        CASE 
+            WHEN a.dry_out_in_days = '1' THEN 'Fully Dry Out'
+            WHEN a.dry_out_in_days = '2' THEN 'IntraDay Dry Out'
+            WHEN a.dry_out_in_days = '3' THEN 'Potential Dry Out'
+            ELSE 'Dry Out'
+        END AS dry_out_status,
+        cd."locn_code",
+        cd."indent_no" AS "indent_number",
+        cd."indent_date",
+        cd."prod_reqd_dt",
+        cd."dealer_code",
+        cd."batch_flag",
+        cd."truck_regno",
+        cd."valid_indent",
+        cd."send_to_jde_time",
+        cd."delivery_date",
+        cd."indent_hold_release_time",
+        cd."indent_executable_time",
+        cd."product_code",
+        cd."product_name",
+        cd."qty",
+        cd."prod_allot_time",
+        cd."sales_orderno",
+        cd."invoice_no",
+        cd."jde_truck_no",
+        cd."LOADED_ON",
+        cd."CARD_STATUS"
+    FROM 
+        (SELECT * 
+         FROM alerts 
+         WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+         AND indent_status NOT IN ('Cancelled', 'Completed')
+         AND dry_out_in_days IN ('1', '2')) a
+    LEFT JOIN 
+        CombinedData cd
+    ON 
+        COALESCE(substr(cd."dealer_code", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
+        AND COALESCE(cd."indent_no"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
+        AND COALESCE(cd."product_code"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+    WHERE 
+        cd.rn = 1 OR cd.rn IS NULL
+    ORDER BY 
+        a.sap_id, a.indent_no) "dryoutreport_view" 
+WHERE
+    "dryoutreport_view"."indent_no" IS NOT NULL
+GROUP BY
+    "dryoutreport_view"."locn_code", "dryoutreport_view"."location_name", "dryoutreport_view"."dealer_code", 
+    "dryoutreport_view"."indent_no", "dryoutreport_view"."indent_status", "dryoutreport_view"."product_name", 
+    "dryoutreport_view"."dry_out_status" 
+ORDER BY
+    "dryoutreport_view"."indent_no" ASC, 
+    CASE 
+        WHEN SUM("dryoutreport_view"."qty") < 1000 THEN SUM("dryoutreport_view"."qty") * 1000
+        ELSE SUM("dryoutreport_view"."qty")
+    END DESC;
+''',
+
+    'i_indent_report': '''select 
+                "dryoutreport_view"."LOCN_CODE" as "Loc Code",
+                "dryoutreport_view"."location_name" as "Loc Name",
+                "dryoutreport_view"."DEALER_CODE" as "Dealer Code",
+                "dryoutreport_view"."INDENT_NO" as "Indent No",
+                "dryoutreport_view"."INDENT_DATE" as "Indent Date",
+                "dryoutreport_view"."indent_status" as "Indent Status",
+                "dryoutreport_view"."DELIVERY_DATE" as "Delivery Date",
+                "dryoutreport_view"."INVOICE_NO" as "Invoice No",
+                "dryoutreport_view"."JDE_TRUCK_NO" as "JDE Truck No",
+                "dryoutreport_view"."LOADED_ON" as "Loaded On",
+                "dryoutreport_view"."PRODUCT_NAME" as "Product Name",
+                "dryoutreport_view"."PROD_ALLOT_TIME" as "Prod Alot Time",
+                "dryoutreport_view"."SALES_ORDERNO" as "Sales Order No",
+                "dryoutreport_view"."SEND_TO_JDE_TIME" as "Send to JDE Time",
+                "dryoutreport_view"."BATCH_FLAG" as "Batch Flag",
+                "dryoutreport_view"."VALID_INDENT" as "Valid Indent",
+                CASE 
+                    WHEN SUM("dryoutreport_view"."QTY")  < 1000 THEN SUM("dryoutreport_view"."QTY") * 1000
+                    ELSE SUM("dryoutreport_view"."QTY")
+                END as "Quantity",
+                "dryoutreport_view"."CARD_STATUS" as "Card Status",
+                "dryoutreport_view"."INDENT_EXECUTABLE_TIME" as "Indent Executable Time",
+                "dryoutreport_view"."INDENT_HOLD_RELEASE_TIME" as "Indent Hold Release Time" 
+            from
+                (WITH CombinedData AS (
+                SELECT 
+                    ir."LOCN_CODE",
+                    ir."INDENT_NO",
+                    ir."INDENT_DATE",
+                    ir."PROD_REQD_DT",
+                    ir."DEALER_CODE",
+                    ir."BATCH_FLAG",
+                    ir."TRUCK_REGNO",
+                    ir."VALID_INDENT",
+                    ir."SEND_TO_JDE_TIME",
+                    ir."DELIVERY_DATE",
+                    ir."INDENT_HOLD_RELEASE_TIME",
+                    ir."INDENT_EXECUTABLE_TIME",
+                    ip."PROD" AS "PRODUCT_CODE",
+                    CASE 
+                    WHEN ip."PROD" = '2811000' THEN 'MS'
+                    WHEN ip."PROD" = '2812000' THEN 'HSD'
+                    WHEN ip."PROD" = '3912000' THEN 'TURBO'
+                    WHEN ip."PROD" = '2822000' THEN 'E20'
+                    WHEN ip."PROD" = '3672000' THEN 'POWER 95'
+                    WHEN ip."PROD" = '2816000' THEN 'POWER 99'
+                    WHEN ip."PROD" = '3373000' THEN 'POWER 100'
+                    ELSE 'Unknown'
+                END AS "PRODUCT_NAME",
+                    ip."QTY",
+                    ip."PROD_ALLOT_TIME",
+                    ip."SALES_ORDERNO",
+                    ip."INVOICE_NO",
+                    ip."JDE_TRUCK_NO",
+                    tse."LOADED_ON",
+                    tse."CARD_STATUS",
+                    ROW_NUMBER() OVER (
+                        PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
+                                     COALESCE(ir."INDENT_NO"::TEXT, ''), 
+                                     COALESCE(ir."DEALER_CODE"::TEXT, ''), 
+                                     COALESCE(ip."PROD"::TEXT, '') 
+                        ORDER BY tse."LOADED_ON" ASC
+                    ) AS rn
+                FROM 
+                    "IMS_SAP"."INDENT_REQUEST" ir
+                LEFT JOIN 
+                    "IMS_SAP"."INDENT_PRODUCTS" ip
+                ON 
+                    COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
+                    AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
+                    AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
+                LEFT JOIN 
+                    "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+                ON 
+                    COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
+                    AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
+                    AND tse."CARD_STATUS" = 'O'
+                    AND tse."LOADED_ON"::TIMESTAMP >= ir."PROD_REQD_DT"
+                    AND tse."LOADED_ON"::TIMESTAMP <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+            )
+            SELECT 
+                a.sap_id AS sap_id,
+                a.location_name AS location_name,
+                a.terminal_plant_id AS terminal_plant_id,
+                a.indent_no AS indent_no,
+                a.product_code AS product_code,
+                a.indent_status AS indent_status,
+                -- Add the CASE statement for dry_out_in_days
+                CASE 
+                    WHEN a.dry_out_in_days = '1' THEN 'Fully Dry Out'
+                    WHEN a.dry_out_in_days = '2' THEN 'IntraDay Dry Out'
+                    WHEN a.dry_out_in_days = '3' THEN 'Potential Dry Out'
+                    ELSE 'Dry Out'
+                END AS dry_out_status,
+                cd."LOCN_CODE",
+                cd."INDENT_NO",
+                cd."INDENT_DATE",
+                cd."PROD_REQD_DT",
+                cd."DEALER_CODE",
+                cd."BATCH_FLAG",
+                cd."TRUCK_REGNO",
+                cd."VALID_INDENT",
+                cd."SEND_TO_JDE_TIME",
+                cd."DELIVERY_DATE",
+                cd."INDENT_HOLD_RELEASE_TIME",
+                cd."INDENT_EXECUTABLE_TIME",
+                cd."PRODUCT_CODE",
+                cd."PRODUCT_NAME",
+                cd."QTY",
+                cd."PROD_ALLOT_TIME",
+                cd."SALES_ORDERNO",
+                cd."INVOICE_NO",
+                cd."JDE_TRUCK_NO",
+                cd."LOADED_ON",
+                cd."CARD_STATUS"
+            FROM 
+                (SELECT * 
+                 FROM alerts 
+                 WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                 AND indent_status NOT IN ('Cancelled', 'Completed')
+                 AND dry_out_in_days IN ('1', '2')) a
+            LEFT JOIN 
+                CombinedData cd
+            ON 
+                COALESCE(substr(cd."DEALER_CODE", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
+                AND COALESCE(cd."INDENT_NO"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
+                AND COALESCE(cd."PRODUCT_CODE"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+            WHERE 
+                cd.rn = 1 OR cd.rn IS NULL
+            ORDER BY 
+                a.sap_id, a.indent_no)  "dryoutreport_view" 
+            where
+                ( "dryoutreport_view"."PROD_REQD_DT" = CURRENT_DATE AND 
+                "dryoutreport_view"."INDENT_NO" IS NOT NULL ) 
+            group by
+                "dryoutreport_view"."LOCN_CODE", 
+                "dryoutreport_view"."location_name", 
+                "dryoutreport_view"."DEALER_CODE", 
+                "dryoutreport_view"."INDENT_NO", 
+                "dryoutreport_view"."INDENT_DATE", 
+                "dryoutreport_view"."indent_status", 
+                "dryoutreport_view"."DELIVERY_DATE", 
+                "dryoutreport_view"."INVOICE_NO", 
+                "dryoutreport_view"."JDE_TRUCK_NO", 
+                "dryoutreport_view"."LOADED_ON",
+                "dryoutreport_view"."PRODUCT_NAME", 
+                "dryoutreport_view"."PROD_ALLOT_TIME",
+                "dryoutreport_view"."SALES_ORDERNO", 
+                "dryoutreport_view"."SEND_TO_JDE_TIME", 
+                "dryoutreport_view"."BATCH_FLAG", 
+                "dryoutreport_view"."VALID_INDENT", 
+                "dryoutreport_view"."CARD_STATUS", 
+                "dryoutreport_view"."INDENT_EXECUTABLE_TIME", 
+                "dryoutreport_view"."INDENT_HOLD_RELEASE_TIME" 
+    ''',
+
+    'i_product_wise_quantity_by_location': '''select 
+        "dryoutreport_view"."location_name" as "Location Name",
+        CASE 
+            WHEN SUM("dryoutreport_view"."QTY")  < 1000 THEN SUM("dryoutreport_view"."QTY") * 1000
+            ELSE SUM("dryoutreport_view"."QTY")
+        END as "Quantity",
+        "dryoutreport_view"."PRODUCT_NAME" as "Product Name" 
+    from
+        (WITH CombinedData AS (
+        SELECT 
+            ir."LOCN_CODE",
+            ir."INDENT_NO",
+            ir."INDENT_DATE",
+            ir."PROD_REQD_DT",
+            ir."DEALER_CODE",
+            ir."BATCH_FLAG",
+            ir."TRUCK_REGNO",
+            ir."VALID_INDENT",
+            ir."SEND_TO_JDE_TIME",
+            ir."DELIVERY_DATE",
+            ir."INDENT_HOLD_RELEASE_TIME",
+            ir."INDENT_EXECUTABLE_TIME",
+            ip."PROD" AS "PRODUCT_CODE",
+            CASE 
+            WHEN ip."PROD" = '2811000' THEN 'MS'
+            WHEN ip."PROD" = '2812000' THEN 'HSD'
+            WHEN ip."PROD" = '3912000' THEN 'TURBO'
+            WHEN ip."PROD" = '2822000' THEN 'E20'
+            WHEN ip."PROD" = '3672000' THEN 'POWER 95'
+            WHEN ip."PROD" = '2816000' THEN 'POWER 99'
+            WHEN ip."PROD" = '3373000' THEN 'POWER 100'
+            ELSE 'Unknown'
+        END AS "PRODUCT_NAME",
+            ip."QTY",
+            ip."PROD_ALLOT_TIME",
+            ip."SALES_ORDERNO",
+            ip."INVOICE_NO",
+            ip."JDE_TRUCK_NO",
+            tse."LOADED_ON",
+            tse."CARD_STATUS",
+            ROW_NUMBER() OVER (
+                PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
+                             COALESCE(ir."INDENT_NO"::TEXT, ''), 
+                             COALESCE(ir."DEALER_CODE"::TEXT, ''), 
+                             COALESCE(ip."PROD"::TEXT, '') 
+                ORDER BY tse."LOADED_ON" ASC
+            ) AS rn
+        FROM 
+            "IMS_SAP"."INDENT_REQUEST" ir
+        LEFT JOIN 
+            "IMS_SAP"."INDENT_PRODUCTS" ip
+        ON 
+            COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
+            AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
+            AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
+        LEFT JOIN 
+            "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+        ON 
+            COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
+            AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
+            AND tse."CARD_STATUS" = 'O'
+            AND tse."LOADED_ON"::TIMESTAMP >= ir."PROD_REQD_DT"
+            AND tse."LOADED_ON"::TIMESTAMP <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+    )
+    SELECT 
+        a.sap_id AS sap_id,
+        a.location_name AS location_name,
+        a.terminal_plant_id AS terminal_plant_id,
+        a.indent_no AS indent_no,
+        a.product_code AS product_code,
+        a.indent_status AS indent_status,
+        -- Add the CASE statement for dry_out_in_days
+        CASE 
+            WHEN a.dry_out_in_days = '1' THEN 'Fully Dry Out'
+            WHEN a.dry_out_in_days = '2' THEN 'IntraDay Dry Out'
+            WHEN a.dry_out_in_days = '3' THEN 'Potential Dry Out'
+            ELSE 'Dry Out'
+        END AS dry_out_status,
+        cd."LOCN_CODE",
+        cd."INDENT_NO",
+        cd."INDENT_DATE",
+        cd."PROD_REQD_DT",
+        cd."DEALER_CODE",
+        cd."BATCH_FLAG",
+        cd."TRUCK_REGNO",
+        cd."VALID_INDENT",
+        cd."SEND_TO_JDE_TIME",
+        cd."DELIVERY_DATE",
+        cd."INDENT_HOLD_RELEASE_TIME",
+        cd."INDENT_EXECUTABLE_TIME",
+        cd."PRODUCT_CODE",
+        cd."PRODUCT_NAME",
+        cd."QTY",
+        cd."PROD_ALLOT_TIME",
+        cd."SALES_ORDERNO",
+        cd."INVOICE_NO",
+        cd."JDE_TRUCK_NO",
+        cd."LOADED_ON",
+        cd."CARD_STATUS"
+    FROM 
+        (SELECT * 
+         FROM alerts 
+         WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+         AND indent_status NOT IN ('Cancelled', 'Completed')
+         AND dry_out_in_days IN ('1', '2')) a
+    LEFT JOIN 
+        CombinedData cd
+    ON 
+        COALESCE(substr(cd."DEALER_CODE", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
+        AND COALESCE(cd."INDENT_NO"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
+        AND COALESCE(cd."PRODUCT_CODE"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+    WHERE 
+        cd.rn = 1 OR cd.rn IS NULL
+    ORDER BY 
+        a.sap_id, a.indent_no)  "dryoutreport_view" 
+    where
+        ( "dryoutreport_view"."QTY" IS NOT NULL AND "dryoutreport_view"."location_name"  NOT IN ( '') ) 
+    group by
+        "dryoutreport_view"."location_name", "dryoutreport_view"."PRODUCT_NAME" 
+''',
+
+    'i_ims_report': '''WITH cte_indents AS (
+        SELECT 
+            ir."LOCN_CODE",
+            ir."INDENT_NO",
+            ir."INDENT_DATE",
+            ir."PROD_REQD_DT",
+            ir."DEALER_CODE",
+            ir."BATCH_FLAG",
+            ir."TRUCK_REGNO",
+            ir."VALID_INDENT",
+            ir."SEND_TO_JDE_TIME",
+            ir."DELIVERY_DATE",
+            ir."INDENT_HOLD_RELEASE_TIME",
+            ir."INDENT_EXECUTABLE_TIME",
+            ip."PROD",
+            CASE 
+                WHEN ip."PROD" = '2811000' THEN 'MS'
+                WHEN ip."PROD" = '2812000' THEN 'HSD'
+                WHEN ip."PROD" = '3912000' THEN 'TURBO'
+                WHEN ip."PROD" = '2822000' THEN 'E20'
+                WHEN ip."PROD" = '3672000' THEN 'POWER 95'
+                WHEN ip."PROD" = '2816000' THEN 'POWER 99'
+                WHEN ip."PROD" = '3373000' THEN 'POWER 100'
+                ELSE 'Unknown'
+            END AS product_name,
+            ip."QTY",
+            ip."PROD_ALLOT_TIME",
+            ip."SALES_ORDERNO",
+            ip."INVOICE_NO",
+            ip."JDE_TRUCK_NO",
+            tse."LOADED_ON",
+            tse."CARD_STATUS",
+            ROW_NUMBER() OVER (
+                PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
+                             COALESCE(ir."INDENT_NO"::TEXT, ''), 
+                             COALESCE(ir."DEALER_CODE"::TEXT, ''), 
+                             COALESCE(ip."PROD"::TEXT, '') 
+                ORDER BY tse."LOADED_ON" ASC
+            ) AS rn
+        FROM 
+            "IMS_SAP"."INDENT_REQUEST" ir
+        LEFT JOIN 
+            "IMS_SAP"."INDENT_PRODUCTS" ip
+        ON 
+            ir."LOCN_CODE" = ip."LOCN_CODE"
+            AND ir."DEALER_CODE" = ip."DEALER_CODE"
+            AND ir."INDENT_NO" = ip."INDENT_NO"
+        LEFT JOIN 
+            "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+        ON 
+            ir."LOCN_CODE" = tse."LOCN_CODE"
+            AND ir."TRUCK_REGNO" = tse."TRUCK_REGNO"
+            AND tse."CARD_STATUS" = 'O'
+            AND tse."LOADED_ON"::TIMESTAMP >= ir."PROD_REQD_DT"
+            AND tse."LOADED_ON"::TIMESTAMP <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+        WHERE 
+            ir."PROD_REQD_DT" = CURRENT_DATE
+    ),
+    alerts_cte AS (
+        SELECT * 
+        FROM alerts 
+        WHERE 
+            interlock_name = 'Dry Out Each Indent Wise MainFlow'
+            AND indent_status NOT IN ('Cancelled', 'Completed')
+            AND dry_out_in_days IN ('1', '2')
+    ),
+    ind_req_view AS (
+        SELECT *
+        FROM cte_indents
+        WHERE rn = 1
+        ORDER BY "INDENT_NO"
+    )
+    
+    SELECT 
+        ind_req_view."LOCN_CODE" AS "Location Code",
+        ind_req_view."DEALER_CODE" AS "Dealer Code",
+        ind_req_view."INDENT_NO" AS "Indent No",
+        ind_req_view."product_name" AS "Product",
+        SUM(ind_req_view."QTY") AS "Quantity"
+    FROM ind_req_view
+    LEFT JOIN alerts_cte a
+    ON 
+        COALESCE(a.sap_id::TEXT, '') = COALESCE(substr(ind_req_view."DEALER_CODE", 3, 8)::TEXT, '')
+        AND COALESCE(a.indent_no::TEXT, '') = COALESCE(ind_req_view."INDENT_NO"::TEXT, '')
+        AND COALESCE(a.product_code::TEXT, '') = COALESCE(ind_req_view."PROD"::TEXT, '')
+    WHERE
+        ind_req_view."product_name" NOT IN ('Unknown')
+    GROUP BY
+        ind_req_view."LOCN_CODE", ind_req_view."DEALER_CODE", 
+        ind_req_view."INDENT_NO", ind_req_view."product_name"
+    ORDER BY
+        SUM(ind_req_view."QTY") DESC
+''',
+    'cp_monthly_avg_sales': '''select 
+        TO_CHAR(DATE_TRUNC('month', transaction_date), 'Mon YYYY') as transaction_month, 
+        product,
+        avg(amount) as avg_sale_volume
+    from consumer_pump_transactions
+    group by DATE_TRUNC('month', transaction_date), product
+    order by transaction_month desc''',
+
+    'cp_top_3_sales': '''select sap_id, sum(quantity)/1000 as "Total Sales (TMT)" from consumer_pump_transactions
+            group by sap_id
+            order by "Total Sales (TMT)"
+            limit 3''',
+
+    'lpg_cdcms_totalconsumer_count': f'''SELECT 
+                                            ROUND(CAST(SUM("ConsumerCount") AS NUMERIC) / 100000, 2) AS "Total Consumers"
+                                        FROM 
+                                            "LPG_CONSUMERS_SUMMARY"
+                                        WHERE 
+                                            "ZOName" IS NOT NULL 
+                                            AND "Category" NOT IN ('Others') ''',
+
+    'lpg_cdcms_SafetyCheckPending': f''' SELECT 
+                                        ROUND(CAST(SUM("SafetyCheckPending") / 100000 AS NUMERIC), 2) AS "Total SafetyCheckPending"
+                                    FROM 
+                                        "LPG_CONSUMERS_SUMMARY" WHERE "Category" = 'Domestic' ''',
+
+    'lpg_cdcms_total_Suvidha_count': f''' SELECT 
+                                            ROUND(CAST(SUM("SuvidhaClub") / 1000 AS NUMERIC), 2) AS "Total Suvidha"
+                                        FROM 
+                                            "LPG_CONSUMERS_SUMMARY" ''',
+    'i_previous_current_month_sales_by_product': '''WITH SalesData AS (
+    SELECT 
+        ro_sap_code, 
+        CASE
+            WHEN product_no = '1322000' THEN '2811000'
+            WHEN product_no = '1683000' THEN '2812000'
+            WHEN product_no = '1683100' THEN '3912000'
+            WHEN product_no = '1322000' THEN '2822000'
+            WHEN product_no = '3672000' THEN '3672000'
+            WHEN product_no = '2682000' THEN '2816000'
+            WHEN product_no = '3373000' THEN '3373000'
+            ELSE NULL
+        END AS product_code,
+        transaction_date,
+        total_sales
+    FROM "HPCL_HOS".ro_daily_sales
+)
+
+SELECT 
+    -- Handle time grain and aggregate based on the period
+    CASE 
+        WHEN '{time_grain}' = 'monthly' THEN TO_CHAR(DATE_TRUNC('month', sd.transaction_date::TIMESTAMP), 'Mon YYYY')
+        WHEN '{time_grain}' = 'weekly' THEN TO_CHAR(DATE_TRUNC('week', sd.transaction_date::TIMESTAMP), 'DD-MM-YYYY')
+        WHEN '{time_grain}' = 'daily' THEN TO_CHAR(sd.transaction_date::TIMESTAMP, 'DD-MM-YYYY')
+    END AS period,
+    CASE 
+        WHEN a.product_code = '2811000' THEN 'MS'
+        WHEN a.product_code = '2812000' THEN 'HSD'
+        WHEN a.product_code = '3912000' THEN 'TURBO'
+        WHEN a.product_code = '2822000' THEN 'E20'
+        WHEN a.product_code = '3672000' THEN 'POWER 95'
+        WHEN a.product_code = '2816000' THEN 'POWER 99'
+        WHEN a.product_code = '3373000' THEN 'POWER 100'
+    END AS product_name,
+    AVG(sd.total_sales) AS avg_total_sales
+FROM 
+    public.alerts a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.ro_sap_code::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.product_code::TEXT, '')
+WHERE 
+    a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    AND a.indent_status NOT IN ('Cancelled', 'Completed')
+    AND (
+        -- Handling aggregation for Monthly, Weekly, Daily
+
+        -- For Monthly: Check if the transaction date is in the current or previous month
+        CASE 
+            WHEN '{time_grain}' = 'monthly' THEN 
+                (DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE) 
+                 OR DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month'))
+
+        -- For Weekly: Check if the transaction date is in the current or previous week
+        WHEN '{time_grain}' = 'weekly' THEN 
+            (DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE)
+             OR DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week'))
+
+        -- For Daily: Check if the transaction date is in the current or previous day
+        WHEN '{time_grain}' = 'daily' THEN 
+            (sd.transaction_date::DATE = CURRENT_DATE 
+             OR sd.transaction_date::DATE = CURRENT_DATE - INTERVAL '1 day')
+        END
+    )
+GROUP BY 
+    product_name, period
+ORDER BY 
+    avg_total_sales ''',
+
+    'lpg_operations_connected_plants': f''' SELECT 
+                                        COUNT(DISTINCT "short_name") AS short_name_count
+                                    FROM 
+                                        "LPG_OPERATIONS_SUMMARY_DATA"
+                                    HAVING 
+                                        COUNT(DISTINCT "short_name") > 0 ''',
+                                    
+    'lpg_operations_total_plants': f''' SELECT 
+                                    COUNT(DISTINCT "short_name") AS short_name_count
+                                FROM 
+                                    "LPG_OPERATIONS_SUMMARY_DATA"
+                                HAVING 
+                                    COUNT(DISTINCT "short_name") > 0 ''',
+    
+    'lpg_operations_total_handled': f''' SELECT 
+                                        ROUND(CAST(SUM("total") AS NUMERIC) / 100000, 2) AS "Total Handled"
+                                    FROM 
+                                        "lpg_cs_rejections"
+                                    WHERE DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE) ''',
+
+    'cdcms_current_date_pending_count': f''' select
+                                                CAST(SUM("Total_Pending")AS NUMERIC) AS "Total Pending"
+                                            from
+                                                "lpg_todays_cdcms_sales_summary"
+                                            where
+                                                "ZOName" IS NOT NULL ''',
+                                        
+    'cdcms_current_date_bookings_count': f''' select
+                                                CAST(SUM("BookingReceivedYesterday")AS NUMERIC) AS "Total Bookings"
+                                            from
+                                                "lpg_todays_cdcms_sales_summary"
+                                            where
+                                                "ZOName" IS NOT NULL ''',
+                                    
+    'cdcms_current_date_sales_count': f''' select
+                                            CAST(SUM("TotalSalesYesterday")AS NUMERIC) AS "Total Sales"
+                                        from
+                                            "lpg_todays_cdcms_sales_summary"
+                                        where
+                                            "ZOName" IS NOT NULL ''',
+    'i_previous_current_month_amount_litres': '''WITH SalesData AS (
+    SELECT 
+        ro_sap_code, 
+        CASE
+            WHEN product_no = '1322000' THEN '2811000'
+            WHEN product_no = '1683000' THEN '2812000'
+            WHEN product_no = '1683100' THEN '3912000'
+            WHEN product_no = '1322000' THEN '2822000'
+            WHEN product_no = '3672000' THEN '3672000'
+            WHEN product_no = '2682000' THEN '2816000'
+            WHEN product_no = '3373000' THEN '3373000'
+            ELSE NULL
+        END AS product_code,
+        transaction_date,
+        txn_amount,
+        total_sales
+    FROM "HPCL_HOS".ro_daily_sales
+)
+
+SELECT 
+    a.location_name,
+    CASE 
+        WHEN '{time_grain}' = 'monthly' THEN TO_CHAR(DATE_TRUNC('month', sd.transaction_date::TIMESTAMP), 'Mon YYYY')
+        WHEN '{time_grain}' = 'weekly' THEN TO_CHAR(DATE_TRUNC('week', sd.transaction_date::TIMESTAMP), 'DD-MM-YYYY')
+        WHEN '{time_grain}' = 'daily' THEN TO_CHAR(sd.transaction_date::TIMESTAMP, 'DD-MM-YYYY')
+    END AS period,
+    AVG(sd.txn_amount) AS avg_txn_amount,
+    AVG(sd.total_sales) AS avg_total_sales
+FROM 
+    public.alerts a
+LEFT JOIN 
+    SalesData sd
+ON 
+    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.ro_sap_code::TEXT, '')
+    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.product_code::TEXT, '')
+WHERE 
+    a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+    AND a.indent_status NOT IN ('Cancelled', 'Completed')
+    AND (
+        -- Handling aggregation for Monthly, Weekly, Daily
+
+        -- For Monthly: Check if the transaction date is in the current or previous month
+        CASE 
+            WHEN '{time_grain}' = 'monthly' THEN 
+                (DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE) 
+                 OR DATE_TRUNC('month', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month'))
+
+        -- For Weekly: Check if the transaction date is in the current or previous week
+        WHEN '{time_grain}' = 'weekly' THEN 
+            (DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE)
+             OR DATE_TRUNC('week', sd.transaction_date::TIMESTAMP) = DATE_TRUNC('week', CURRENT_DATE - INTERVAL '1 week'))
+
+        -- For Daily: Check if the transaction date is in the current or previous day
+        WHEN '{time_grain}' = 'daily' THEN 
+            (sd.transaction_date::DATE = CURRENT_DATE 
+             OR sd.transaction_date::DATE = CURRENT_DATE - INTERVAL '1 day')
+        END
+    )
+GROUP BY 
+    a.location_name,period
+ORDER BY 
+    avg_txn_amount, avg_total_sales'''
 }

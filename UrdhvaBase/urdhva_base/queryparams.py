@@ -1,23 +1,14 @@
-import typing
-import fastapi
+from typing import Optional
+from fastapi import Query
+from pydantic import BaseModel, Field
 
 
-class QueryParams:
-    def __init__(self, q: str = fastapi.Query(None, description="Filter query to be executed against database."),
-                 # example: typing.Any = "{'conditions': [{'op': 'OR', 'q': [{'a' > 20, 'b' > 30}, {'c' > 30}]}] -> "
-                 #                       "select <fields> from x where (a > 20 AND b > 30) OR (c > 30)",
-                 search_text: str = fastapi.Query(None, description="Content to search on"),
-                 skip: int = 0,
-                 limit: int = 100,
-                 sort: str = None,
-                 fields: str = None,
-                 view: str = fastapi.Query(None, description="An Optional parameter for action views, "
-                                                             "This parameter will get discarded for api call's")):
-        self.q = q
-        self.search_text = search_text
-        self.skip = skip
-        self.limit = limit
-        self.sort = sort
-        self.fields = fields
-        self.view = view
-
+class QueryParams(BaseModel):
+    q: Optional[str] = Query(None, description="Filter query to be executed against the database.")
+    search_text: Optional[str] = Query(None, description="Content to search on")
+    skip: int = Field(0, ge=0, le=10000, description="Number of records to skip")
+    limit: int = Field(100, ge=0, le=100000, description="Max number of records to fetch")
+    sort: Optional[str] = None
+    fields: Optional[str] = None
+    view: Optional[str] = Query(None,
+                                description="An optional parameter for action views. This parameter will be discarded for API calls")

@@ -1,7 +1,9 @@
 import urdhva_base
 import re
+import polars as pl
+pl.Config(set_fmt_float="full")
 from orchestrator.dbconnector import global_analytics
-from orchestrator.dbconnector.widget_actions import lpg_plant, model_mapping, lpg_plant_queries
+from orchestrator.dbconnector.widget_actions import lpg_plant, lpg_cdcms, model_mapping, lpg_plant_queries
 import hpcl_ceg_model
 
 lpg_dashboard_actions = [
@@ -58,12 +60,42 @@ lpg_dashboard_actions = [
     'lpg_operations_productivity_zone',
     'lpg_operations_production_zone',
     'lpg_operations_filled_cylinder',
+    'lpg_operations_rejections',
     'subsidy_failure_stats',
     'subsidy_exception_stats',
+    'lpg_cdcms_subsidy_central_consumers',
+    'lpg_cdcms_subsidy_central_transaction',
+    'lpg_cdcms_subsidy_central_amount',
+    'lpg_cdcms_subsidy_state_consumers',
+    'lpg_cdcms_subsidy_state_transaction',
+    'lpg_cdcms_subsidy_state_amount',
     'lpg_cdcms_sales_comparision',
+    'lpg_cdcms_pcc',
+    'lpg_cdcms_dbc_enrollments',
+    'lpg_cdcms_nc_stats',
     'card_chart',
     'lpg_domestic_sale_table',
-    'lpg_consumer_table'
+    'lpg_consumer_table',
+    'industry_performance',
+    'present_previous_month_sales_by_product',
+    'sales_drop_down',
+    'indent_dryout_counts',
+    'indent_status_summary',
+    'dryout_summary_by_product',
+    'detailed_dryout_summary',
+    'detailed_indent_status_summary',
+    'dryout_product_report',
+    'dryout_indent_report',
+    'product_quantity_by_location',
+    'ims_report',
+    'lpg_operations_connected_plants',
+    'lpg_operations_total_plants',
+    'lpg_operations_total_handled',
+    'lpg_operations_daywise_productivity',
+    'lpg_operations_daywise_production',
+    'cdcms_current_date_pending_count',
+    'cdcms_current_date_bookings_count',
+    'cdcms_current_date_sales_count'
 ]
 
 # Todo:- import all widget action modules here
@@ -118,7 +150,6 @@ widget_mapping = {
     'lpg_ca_cdm': {'module_name': '', 'func_name': ''},
     'total_suvidha': {},
     'lpg_cdcms_ageing': {},
-    'carry_forward_analysis': {},
     'total_consumers': {},
     'ekyc_statistics': {},
     'sales_growth_ytd': {},
@@ -127,19 +158,50 @@ widget_mapping = {
     'lpg_operations_productivity_zone': {},
     'lpg_operations_production_zone': {},
     'lpg_operations_filled_cylinder': {},
+    'lpg_operations_rejections': {},
     'subsidy_failure_stats': {},
     'subsidy_exception_stats': {},
+    'lpg_cdcms_subsidy_central_consumers': {},
+    'lpg_cdcms_subsidy_central_transaction': {},
+    'lpg_cdcms_subsidy_central_amount': {},
+    'lpg_cdcms_subsidy_state_consumers': {},
+    'lpg_cdcms_subsidy_state_transaction': {},
+    'lpg_cdcms_subsidy_state_amount': {},
     'lpg_cdcms_sales_comparision': {},
+    'lpg_cdcms_pcc': {},
+    'lpg_cdcms_dbc_enrollments': {},
+    'lpg_cdcms_nc_stats': {},
     'card_chart': {},
     'lpg_domestic_sale_table': {},
-    'lpg_consumer_table': {}
+    'lpg_consumer_table': {},
+    'industry_performance':{},
+    'present_previous_month_sales_by_product': {},
+    'sales_drop_down': {},
+    'indent_dryout_counts': {},
+    'indent_status_summary': {},
+    'dryout_summary_by_product': {},
+    'detailed_dryout_summary': {},
+    'detailed_indent_status_summary': {},
+    'dryout_product_report': {},
+    'dryout_indent_report': {},
+    'product_quantity_by_location': {},
+    'ims_report': {},
+    'lpg_operations_connected_plants': {},
+    'lpg_operations_total_plants': {},
+    'lpg_operations_total_handled': {},
+    'lpg_operations_daywise_productivity': {},
+    'lpg_operations_daywise_production': {},
+    'cdcms_current_date_pending_count': {},
+    'cdcms_current_date_bookings_count': {},
+    'cdcms_current_date_sales_count': {}
 }
 
 
 class WidgetActions:
     @staticmethod
     # Safely resolve the module and function
-    async def execute_widget_action(func_name, filters, cross_filters, drill_state):
+    async def execute_widget_action(func_name, filters, cross_filters, drill_state, limit=0, time_grain="Monthly",
+                                    resp_format='',resp_level=''):
         try:                       
             # Debugging: Log the input function name
             print(f"Received func_name: {func_name}")
@@ -148,6 +210,9 @@ class WidgetActions:
             if hasattr(lpg_plant.LPGPlantActions, func_name):
                 module = lpg_plant.LPGPlantActions
                 print(f"Function {func_name} found in LPGPlantActions.")
+            elif hasattr(lpg_cdcms.LPGCDCMSActions, func_name):
+                module = lpg_cdcms.LPGCDCMSActions
+                print(f"Function {func_name} found in LPGCDCMSActions.")
             elif hasattr(global_analytics.GlobalAnalytics, func_name):
                 module = global_analytics.GlobalAnalytics
                 print(f"Function {func_name} found in GlobalAnalytics.")
@@ -175,7 +240,13 @@ class WidgetActions:
             # print(f"Resolved function: {dir(func)}")
 
             # Execute the function asynchronously
-            res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
+            if func_name in ['present_previous_month_sales_by_product']:
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit, time_grain=time_grain)
+            elif func_name in ['m60_performance', 'industry_performance']:
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state,
+                                 time_grain=time_grain, resp_format=resp_format,resp_level=resp_level)
+            else:
+                res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state)
             # lpg_plant_queries.lpg_plant_query[func_name] = widget_mapping[func_name].get('filter_applied', action_query)
             return res
         
@@ -223,7 +294,7 @@ class WidgetActions:
                 conditions.append(f"{key} LIKE '%{value}%'")
             elif condition == 'suffix':
                 conditions.append(f"{key} LIKE '%{value}'")
-            elif condition in [' ', 'one-off'] and isinstance(value, list):
+            elif condition in [' ', 'one-off', 'in'] and isinstance(value, list):
                 values = "', '".join(map(str, value))
                 conditions.append(f''' "{key}" IN ('{values}') ''')
             elif condition == 'pattern':

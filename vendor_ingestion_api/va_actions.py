@@ -3,9 +3,14 @@ from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
 import json
+import pytz
 import requests
+import datetime
 import traceback
+import polars as pl
 import hpcl_ceg_model
+import orchestrator.analytics.va_analysis as va_analysis
+import utilities.connection_mapping as connection_mapping
 import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/va')
@@ -43,12 +48,24 @@ async def va_ingest_data(data: Va_Ingest_DataParams):
       else:
           logger.error(f"Invalid data structure: data.data is not a list or is empty")
           return {"status": False, "message": "Invalid data", "data": []}
-      
+
+      enriched_data = pl.DataFrame(enriched_data)
+      enriched_data = await va_analysis.assign_values_to_dataframe(
+          enriched_data, list(connection_mapping.camunda_listener_va_mapping.values())
+      )
+      enriched_data = enriched_data.to_dicts()
       for entry in enriched_data:
           entry['alert_section'] = entry['alert_type']
+          entry['alert_timestamp'] = datetime.datetime.strptime(entry['alert_timestamp'], "%m/%d/%Y %I:%M:%S %p")
+          # ist = pytz.timezone("Asia/Kolkata")
+          # entry['alert_timestamp'] = entry['alert_timestamp'].astimezone(ist)
+          entry['alert_timestamp'] = entry['alert_timestamp'].isoformat()
           await hpcl_ceg_model.VaAlertHistoryCreate(**entry).create()
-          entry['va_alert_id'] = entry.pop("alert_id")
-          await alert_manager.create_alert({**entry, "alert_type": "VA"})
+          # entry['vendor_alert_id'] = entry.pop("alert_id")
+          camunda_url = urdhva_base.settings.camunda_url
+          if 'camunda_host' in entry.keys():
+            camunda_url = f"http://{entry['camunda_host']}:{entry['camunda_port']}"
+          await alert_manager.create_alert({**entry, "alert_type": "VA"}, camunda_url=camunda_url)
     
       return True, "Success"
         

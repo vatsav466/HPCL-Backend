@@ -13,7 +13,7 @@ from hpcl_ceg_enum import AlertStatus as AlertStatus
 import orchestrator.alerting.alert_helper as alert_helper
 from hpcl_ceg_enum import IndentStatus as IndentStatus
 import utilities.connection_mapping as connection_mapping
-# import orchestrator.analytics.vts_analysis as vts_analysis
+import orchestrator.analytics.vts_analysis as vts_analysis
 from charts_actions import charts_connection_vault_routing
 import orchestrator.alerting.alert_manager as alert_manager
 from orchestrator.alerting.alert_manager import close_alert
@@ -91,7 +91,8 @@ class IndentDryOut:
             is_r1_swipe: bool = False,
             is_r2_swipe: bool = False,
             is_r3_swipe: bool = False,
-            is_delivered: bool = False
+            is_delivered: bool = False,
+            is_vts: bool = False
     ):
         msg_block = {
             "isAtrUploaded": is_atr_uploaded,
@@ -109,7 +110,8 @@ class IndentDryOut:
             "r1swipe": is_r1_swipe,
             "r2swipe": is_r2_swipe,
             "r3swipe": is_r3_swipe,
-            "delivered": is_delivered
+            "delivered": is_delivered,
+            "vts": is_vts
         }
         return True, msg_block
 
@@ -333,6 +335,33 @@ class IndentDryOut:
             todays_date = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
             if todays_date.date() > workflow_date.date():
                 if await self._is_indent_delivered():
+                    if await self._close_camunda_workflow():
+                        print("Indent as been delivered but still alert is in Intial stage")
+                        print("Params: ", self.params)
+                        input_data = {
+                            "action_msg": "",
+                            "event_tags": {
+                                "is_delivered": False
+                            }
+                        }
+                        input_data["action_msg"] = "Indent Delivered"
+                        input_data["action_type"] = "Created"
+                        input_data["event_tags"]["is_delivered"] = True
+                        await self.update_alert_status(
+                            indent_status=IndentStatus.Completed,
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            input_data=input_data,
+                            progress_rate="11"
+                        )
+                        await self.close_supply_chain_alert(
+                            alert_id=self.params.get("alert_id"),
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            indent_status=IndentStatus.Completed
+                        )
+                    return await self.send_alert_action(is_raised=False)
+                elif await self._is_indent_delivered_ims():
                     if await self._close_camunda_workflow():
                         print("Indent as been delivered but still alert is in Intial stage")
                         print("Params: ", self.params)
@@ -840,7 +869,7 @@ class IndentDryOut:
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
                                                progress_rate="7")
                 return await self.send_alert_action(is_r2_swipe=True)
-            elif await self._is_indent_delivered():
+            elif await self._is_indent_delivered_ims():
                 logger.info("R2, R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
@@ -918,7 +947,7 @@ class IndentDryOut:
             }
         }
         if not resp:
-            if await self._is_indent_delivered():
+            if await self._is_indent_delivered_ims():
                 logger.info("R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
@@ -1010,6 +1039,38 @@ class IndentDryOut:
             return await self.send_alert_action(is_created=True)
         return await self.send_alert_action(is_created=False)
 
+    async def is_product_delivered_ims(self, params: dict):
+        if not self.params:
+            self.params = params
+            await self.get_connection_name()
+        if await self._is_indent_delivered_ims():
+            input_data = {
+                "action_msg": "",
+                "event_tags": {
+                    "is_delivered": False
+                }
+            }
+            input_data["action_msg"] = "Indent Delivered"
+            input_data["action_type"] = "Created"
+            input_data["event_tags"]["is_delivered"] = True
+
+            await self.update_alert_status(
+                indent_status=IndentStatus.Completed,
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                input_data=input_data,
+                progress_rate="11"
+            )
+            await self.close_supply_chain_alert(
+                alert_id=self.params.get("alert_id"),
+                alert_status=AlertStatus.Close,
+                alert_state=AlertState.Resolved,
+                indent_status=IndentStatus.Completed
+            )
+            # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
+            return await self.send_alert_action(is_delivered=True)
+        return await self.send_alert_action(is_delivered=False)
+
     async def is_product_delivered(self, params: dict):
         if not self.params:
             self.params = params
@@ -1054,7 +1115,7 @@ class IndentDryOut:
         function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         cris_resp = await function(query=query)
         if not cris_resp:
-            cris_resp = pd.DataFrame({"item_name": [], "rosapcode": [], "tank_no": [], "product_no": [], "status": [], "product_grp": []})
+            return await self.is_product_delivered_ims(params=params)
         else:
             cris_resp = pd.DataFrame(cris_resp)
         # print("cris_resp: ", cris_resp[["item_name", "rosapcode", "status", "product_grp"]])
@@ -1216,7 +1277,54 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        input_data = {
+            "action_msg": "",
+            "event_tags": {
+                "is_vts": False
+            }
+        }
+        input_data["action_msg"] = "VTS Enabled"
+        input_data["action_type"] = "VTS"
+        input_data["event_tags"]["is_vts"] = True
+        await self.update_alert_status(indent_status=IndentStatus.VTS, input_data=input_data,
+                                       progress_rate="10")
+        resp = await self.send_alert_action(is_vts=True)
         return True, {"msg": "Success"}
+
+    async def truck_isin_vts(self, params: dict):
+        if not self.params:
+            self.params = params
+            await self.get_connection_name()
+        Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        dealer_code = str(self.params.get("dealer_id")).zfill(10)
+        indent_no = "','".join(self.params.get("indent_no").split(","))
+        query = f"""SELECT "TRUCK_REGNO" FROM "IMS_SAP"."INDENT_REQUEST" a WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' AND """ \
+                f"""a."INDENT_NO" IN ('{indent_no}') """ \
+                f"""AND a."CANCEL_INDENT" IS NULL AND a."TRUCK_REGNO" IS NOT NULL AND (a."VALID_INDENT" = 'Y' OR a."VALID_INDENT" = 'H') """ \
+                f"""AND a."BATCH_FLAG" = 'Y' """
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+        input_data = {
+            "action_msg": "",
+            "event_tags": {
+                "is_vts": False
+            }
+        }
+        if not resp:
+            return await self.send_alert_action(is_vts=False)
+        resp = resp[0]
+        truck_regno = resp.get("TRUCK_REGNO")
+        data = await vts_analysis.get_tt_current_location(truck_regno)
+        print("VTS Data: ", data)
+        if data and float(data.get("start_lat")) > 0:
+            input_data["action_msg"] = "VTS Enabled"
+            input_data["action_type"] = "VTS"
+            input_data["event_tags"]["is_vts"] = True
+            await self.update_alert_status(indent_status=IndentStatus.VTS, input_data=input_data,
+                                           progress_rate="10")
+            return await self.send_alert_action(is_vts=True)
+        return await self.send_alert_action(is_vts=False)
 
     async def indent_wait_time(self, params: dict):
         if not self.params:
@@ -1335,6 +1443,18 @@ class IndentDryOut:
         alert_data['product_code'] = _reverse_mapping.get(prod_key, alert_data['product_code'])
         return
 
+    async def get_process_instance_id(self, business_key, camunda_url):
+        camunda_url = f"{camunda_url}/engine-rest/process-instance"
+        params = {"businessKey": business_key}
+        response = requests.get(camunda_url, params=params)
+        process_instance_id = ""
+        if response.status_code == 200:
+            instances = response.json()
+            if instances:
+                process_instance_id = instances[0]["id"]  # Get first instance ID
+                return process_instance_id
+        return process_instance_id
+
     async def update_indent_no(self, indent_no: str, loc_code: str, indent_raised_date):
         MAX_RETRIES = 5
         RETRY_DELAY = 5
@@ -1342,7 +1462,11 @@ class IndentDryOut:
 
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
-        instance_id = alert_data.get("workflow_instance_id")
+        # instance_id = alert_data.get("workflow_instance_id")
+        business_key = alert_data.get("unique_id")
+        instance_id = await self.get_process_instance_id(business_key, self.params['CAMUNDA_URL'])
+        if not instance_id:
+            instance_id = alert_data.get("workflow_instance_id")
         # CAMUNDA_URL = await helpers.get_alert_camunda_url(self.params["alert_id"],
         #                                                   f"{urdhva_base.settings.camunda_url}")
         CAMUNDA_URL = self.params['CAMUNDA_URL']
@@ -1369,6 +1493,8 @@ class IndentDryOut:
                         logger.info(f"{var_name} updated successfully.")
                         break
                     else:
+                        print("url: ", url)
+                        print("payload: ", payload)
                         print(
                             f"Error updating {var_name} (attempt {attempt + 1}): {response.status_code} - {response.text}")
                         logger.info(
@@ -1541,7 +1667,11 @@ class IndentDryOut:
 
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
-            instance_id = alert_data.get("workflow_instance_id")
+            # instance_id = alert_data.get("workflow_instance_id")
+            business_key = alert_data.get("unique_id")
+            instance_id = await self.get_process_instance_id(business_key, self.params['CAMUNDA_URL'])
+            if not instance_id:
+                instance_id = alert_data.get("workflow_instance_id")
             url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
             for attempt in range(MAX_RETRIES):
                 try:
@@ -1568,5 +1698,34 @@ class IndentDryOut:
                     print(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
                     logger.info(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
                     return False
+            return True
+        return False
+
+    async def _is_indent_delivered_ims(self):
+        dealer_code = str(self.params.get("dealer_id")).zfill(10)
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("ims")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        alert_id = self.params.get("alert_id")
+        indent_no = self.params.get("indent_no")
+        query = f"""SELECT count(*) AS "count" FROM "IMS_SAP"."INDENT_PRODUCTS" a, "IMS_SAP"."AUTO_DC_REQUESTS" b
+                    WHERE SUBSTR(a."DEALER_CODE", 1, 10) = '{dealer_code}' 
+                    AND a."INDENT_NO" = '{indent_no}'
+                    AND SUBSTR(a."DEALER_CODE", 1, 10) = b."SHIP_TO_CUST" 
+                    AND a."LOCN_CODE" = b."ORIGIN_LOCN" 
+                    AND a."INVOICE_NO" = b."INVOICE_NO" """
+        function = await charts_actions.charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        cris_resp = await function(query=query)
+        if not cris_resp:
+            cris_resp = pd.DataFrame(
+                {"count": 0})
+        else:
+            cris_resp = pd.DataFrame(cris_resp)
+        cris_resp = cris_resp.to_dict("records")
+        if cris_resp:
+            cris_resp = cris_resp[0]
+        else:
+            cris_resp = {}
+
+        if int(cris_resp.get("count", 0)) > 0:
             return True
         return False

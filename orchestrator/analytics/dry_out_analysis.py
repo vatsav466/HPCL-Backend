@@ -12,6 +12,7 @@ from utilities.connection_mapping import product_code_mapping, connection_mappin
 
 req_keys = {
     "TAS": ["zone", "sap_id", "name", "category"],
+    "LPG": ["zone", "sap_id", "name", "category"],
     "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"]
 }
 
@@ -108,7 +109,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
         dry_out_customers = list(set([rec['dealer_id'] for rec in data['data']]))
     if zone:
         key_mapping["zone"] = zone
-    if bu == "TAS":
+    if bu in ["TAS", "LPG"]:
         for rec in bu_data.to_dict(orient='records'):
             skip_record = False
             if key_mapping:
@@ -159,9 +160,9 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                     if rec.get(key) not in value:
                         skip_record = True
                         break
-            if skip_record or not rec["region"]:
+            if skip_record or not rec.get("region"):
                 continue
-            if rec["region"]:
+            if rec.get("region"):
                 final_data["region"][rec["region"]] = {"name": rec["region"], "id": rec["region"]}
 
         # Filtering Sales Area
@@ -174,9 +175,9 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                     if rec.get(key) not in value:
                         skip_record = True
                         break
-            if skip_record or not rec["sales_area"]:
+            if skip_record or not rec.get("sales_area"):
                 continue
-            if rec["sales_area"]:
+            if rec.get("sales_area"):
                 final_data["sales_area"][rec["sales_area"]] = {"name": rec["sales_area"], "id": rec["sales_area"]}
 
         # Filtering Plant
@@ -669,7 +670,8 @@ async def _get_ims_day_wise_report(report_date: str):
     stats_resp = stats_resp.drop_duplicates(subset=["LOCN_CODE", "INDENT_NO", "DEALER_CODE", "PROD"], keep='first')
     return stats_resp.to_dict(orient='records')
 
-async def _get_dry_out_ims_report(dry_out_in_days='1'):
+async def _get_dry_out_ims_report(dry_out_in_days=['1']):
+    dry_out_in_days = "', '".join(x for x in dry_out_in_days)
     query = f"""WITH CombinedData AS (
                     SELECT 
                         ir."LOCN_CODE",
@@ -691,7 +693,6 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
                         ip."INVOICE_NO",
                         ip."JDE_TRUCK_NO",
                         tse."LOADED_ON",
-                        tse."CARD_STATUS",
                         ROW_NUMBER() OVER (
                             PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
                                          COALESCE(ir."INDENT_NO"::TEXT, ''), 
@@ -715,8 +716,29 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
                         AND tse."CARD_STATUS" = 'O'
                         AND tse."LOADED_ON" >= ir."PROD_REQD_DT"
                         AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+                ),
+                SalesData AS (
+                    SELECT 
+                        rosapcode, 
+                        CASE
+                            WHEN item_name = 'HSD' THEN '2812000'
+                            WHEN item_name = 'MS' THEN '2811000'
+                            WHEN item_name = 'TURBO' THEN '3912000'
+                            WHEN item_name = 'E20' THEN '2822000'
+                            WHEN item_name = 'POWER 95' THEN '3672000'
+                            WHEN item_name = 'POWER 99' THEN '2816000'
+                            WHEN item_name = 'POWER 100' THEN '3373000'
+                            ELSE NULL
+                        END AS item_name_code,
+                        avgsales_7days
+                    
+                    FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
+                    WHERE run_id = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMMDD-HH00')
                 )
                 SELECT 
+                    a.zone as "ZONE",
+                    a.region as "REGION",
+                    a.sales_area as "SALES_AREA",
                     a.sap_id as "SAP_ID",
                     a.location_name as "LOCATION_NAME",
                     a.terminal_plant_id as "TERMINAL_PLANT_ID",
@@ -725,41 +747,40 @@ async def _get_dry_out_ims_report(dry_out_in_days='1'):
                     a.indent_status as "INDENT_STATUS",
                     a.dry_out_in_days as "DRY_OUT_IN_DAYS",
                     cd."LOCN_CODE" AS "ASSIGNED_TO_LOCN",
---                     cd."INDENT_NO",
---                     cd."INDENT_DATE",
                     cd."PROD_REQD_DT",
---                     cd."DEALER_CODE",
---                     cd."BATCH_FLAG",
                     cd."TRUCK_REGNO",
                     cd."VALID_INDENT",
                     cd."SEND_TO_JDE_TIME",
                     cd."DELIVERY_DATE",
                     cd."INDENT_HOLD_RELEASE_TIME",
                     cd."INDENT_EXECUTABLE_TIME",
---                     cd."PRODUCT_CODE",
                     cd."QTY",
                     cd."PROD_ALLOT_TIME",
                     cd."SALES_ORDERNO",
                     cd."INVOICE_NO",
---                     cd."JDE_TRUCK_NO",
                     cd."LOADED_ON",
-                    cd."CARD_STATUS"
+                    sd.avgsales_7days as "AVGSALES_7DAYS"
                 FROM 
                     (SELECT * 
                      FROM alerts 
                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
                      AND indent_status NOT IN ('Cancelled', 'Completed')
-                     AND dry_out_in_days = '{dry_out_in_days}') a
+                     AND dry_out_in_days IN ('{dry_out_in_days}')) a
                 LEFT JOIN 
                     CombinedData cd
                 ON 
                     COALESCE(substr(cd."DEALER_CODE", 3, 8)::TEXT, '') = COALESCE(a.sap_id::TEXT, '')
                     AND COALESCE(cd."INDENT_NO"::TEXT, '') = COALESCE(a.indent_no::TEXT, '')
                     AND COALESCE(cd."PRODUCT_CODE"::TEXT, '') = COALESCE(a.product_code::TEXT, '')
+                LEFT JOIN 
+                    SalesData sd
+                ON 
+                    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
+                    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
                 WHERE 
                     cd.rn = 1 or cd.rn is null
                 ORDER BY 
-                    a.sap_id, a.indent_no;"""
+                    a.indent_no desc;"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'

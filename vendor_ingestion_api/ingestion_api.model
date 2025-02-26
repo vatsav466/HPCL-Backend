@@ -60,7 +60,7 @@ Model vtsDataUpdated internal {
     endlongitude optional str
 }
 
-Model vtsBlockedTruck internal {
+Model vtsBlockedTruckOld internal {
     alert_id str
     alert_type str
     action_type optional str
@@ -79,6 +79,19 @@ Model vtsBlockedTruck internal {
     unblocked_datetime optional str
 }
 
+Model vtsBlockedTruck internal {
+    tt_no optional str
+    location_name optional str
+    transporter_name optional str
+    transporter_code optional str
+    vehicle_blocked_desc optional str
+    vehicle_blocked_start_date optional str
+    vehicle_blocked_end_date optional str
+    vehicle_blocked_instance_no optional str
+    vehicle_blocked_instance_type optional str
+    alert_type optional str
+}
+
 Model VTS crud_disable {
     Action=> ingest_data {
         vendor_id str
@@ -93,10 +106,19 @@ Model VTS crud_disable {
         location_type optional BusinessUnit
         data list vtsBlockedTruck
     }
+
+    Action=> ingest_data_un_blocked_trucks {
+        vendor_id str
+        location_id str
+        location_type optional BusinessUnit
+        data list vtsBlockedTruck
+
+    }
 }
 
 Model vaData internal {
     alert_id optional str
+    alert_timestamp optional str
     alert_type str
     alert_description optional str
     device_id str
@@ -173,10 +195,20 @@ Model emlockData internal {
     approved_by optional str
 }
 
+Model emlockVendorData internal {
+    location_type optional BusinessUnit
+    emlock_exception_id str
+    terminal_code str
+    truck_number str
+    exception_type str
+    ro_code optional str
+    created_datetime str
+}
+
 Model EMLock crud_disable {
     Action=> ingest_data {
         vendor_id str
-        data optional list emlockData
+        data optional list emlockVendorData
     }
 }
 

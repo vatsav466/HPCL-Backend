@@ -52,6 +52,9 @@ Enum LocationHealth str {
 Enum AlertActionType str {
     Justification='Justification'
     AcceptClose='AcceptClose'
+    FalseAlert='FalseAlert'
+    InvalidAlert='InvalidAlert'
+    ValidAlert='ValidAlert'
     Rejected='Rejected'
     Approved='Approved'
     Override='Override'
@@ -76,6 +79,14 @@ Enum AlertActionType str {
     UnderMaintenance='UnderMaintenance'
     RevocationApproved='RevocationApproved'
     ExceptionApproved='ExceptionApproved'
+    Active='Active'
+    Notified='Notified'
+    Escalated='Escalated'
+    Resolved='Resolved'
+    Blocked='Blocked'
+    UnBlocked='UnBlocked'
+    Request='Request'
+    Interrupt='Interrupt'
 }
 
 Enum IndentStatus str {
@@ -141,6 +152,7 @@ Model Users {
     last_name str
     password optional secret
     employee_id index_field unique_field str
+    employee_number optional str
     // Allocated Role
     // ALL for all
     bu index_field list BusinessUnit
@@ -178,11 +190,20 @@ Model Users {
     Action=> update_user_status {
         enable bool
         username str
+        first_name str
+        last_name str
+        region optional list str
+        state index_field list str
+        zone index_field list str
+        sap_id index_field list str
+        bu index_field list BusinessUnit
+        sales_area index_field list str
+        novex_role index_field str
     }
 
     // API for user login
     Action=> login {
-        username str
+        username str regex="^[a-zA-Z0-9_.-]+$"
         password str
     }
 
@@ -257,6 +278,19 @@ Model LocationMaster {
     }
 
     Action=> upload_tags_data {
+    }
+    
+    Action=> update_location_master {
+        sap_id index_field str
+        name index_field str
+        city optional str
+        district optional index_field str
+        region optional index_field str
+        state optional index_field str
+        zone optional index_field str
+        address optional str
+        pincode optional str 
+        sales_area optional str
     }
 
     Config=> {
@@ -402,10 +436,12 @@ Model Alert_History internal {
     ims_datetime optional str
     prod_reqd_dt optional str
     mail_sent_to optional str
+    action_by optional str
     action_type AlertActionType
     alert_status optional AlertStatus
     action_msg str
     remarks optional str
+    doc_link optional str
     atr_uploaded optional bool
     maintenance_exception optional bool
     revocation optional bool
@@ -424,6 +460,12 @@ Model Alert_History internal {
     is_delivered optional bool
     is_tripped optional bool
     is_justify optional bool
+    is_vts optional bool
+    is_blocked optional bool
+    is_unblocked optional bool
+    is_interrupt optional bool
+    is_extra_days optional bool
+    is_rejected optional bool
 }
 
 Model tags internal {
@@ -446,6 +488,10 @@ Model tags internal {
     isDelivered optional bool
     isTripped optional bool
     isJustify optional bool
+    isBlocked optional bool
+    isUnBlocked optional bool
+    isInterrupt optional bool
+    isExtraDays optional bool
 }
 
 Model Interlock {
@@ -526,6 +572,7 @@ Model Alerts {
     vehicle_number optional str
     violation_type optional str
     clear_count optional bool
+    maintenance_time optional str
 
     // Marking Alert
     is_flagged_false optional bool
@@ -541,6 +588,8 @@ Model Alerts {
     last_notified_to optional list str      // List of users to whom alert notified to
     assigned_to optional str                // User email for whom alert is assigned to
     assigned_to_role optional str           // User Role for whom alert is assigned to
+    assigned_users optional list str        // User email for whom alert is assigned to
+    assigned_user_roles optional list str   // User Role for whom alert is assigned to
 
     // Location Details
     district optional str
@@ -574,13 +623,28 @@ Model Alerts {
     dry_out_in_days optional str
     origin_altid optional str
     alert_message optional str
+    external_timestamp optional datetime
+
+    // VTS
+    transporter_name optional str
+    transporter_code optional str
+    vehicle_blocked_start_date optional datetime
+    vehicle_blocked_end_date optional datetime
+    mark_as_false optional bool
 
     Action=> alert_action {
+        bu optional str
+        alert_section optional str
         action_type AlertActionType
         alert_id str
         action_msg optional str
         days optional int
         justificationType optional str
+        category optional str
+        rca_reason optional str
+        action_description optional str
+        doc_link optional str
+        acknowledged_by optional str
         event_tags optional tags
     }
     Action=> intitiate_vts_exception {
@@ -594,7 +658,10 @@ Model Alerts {
         filters optional list DataFilters
     }
 
-    Action=> upload_image {
+    Action=> upload_document {
+    }
+
+    Action=> stored_document {
     }
 
     Action=> get_frequent_dryout_ro {
@@ -609,6 +676,7 @@ Model Alerts {
 
     Action=> get_closed_alerts_details {
         bu str
+        alert_id str
         alert_section str
         interlock_name str
     }
@@ -871,9 +939,8 @@ Model IndentDryOut {
 
     }
 
-    Action=> download_dryout_report {
-        filters list IndentDryOutDataFilters
-        report_name str
+    Action=> get_dryout_report {
+        dry_out_in_days list str
     }
     
      Config=> {
@@ -881,14 +948,14 @@ Model IndentDryOut {
      }
 }
 
-Model LpgOperations {
+Model LpgOperationsSummary {
     is_additional_carousel float
     short_name str
     name str
     zone str
     carousel float
-    filling_heads float
-    carousel_count float    
+    filling_heads str
+    carousel_count float
     bottling_14_2kg float
     bottling_19kg float
     bottling_total float
@@ -905,6 +972,10 @@ Model LpgOperations {
     rejection_ort_percent float
     rejection_cs_percent float
     process_date datetime
+    bu str
+    sap_id str
+    SiteRegion str
+    SiteArea str
 
     Action=> get_productions_rate {        
         dimension str
@@ -920,9 +991,64 @@ Model LpgOperations {
         top optional int
         bottom optional int
     }
+    Config=> {
+        access_key_mapping='sap_id:sap_id,short_name:plant,zone:zone'
+    }
+}
+
+Model LpgCsRejections {
+    process_date datetime
+    system_id float
+    cyl_type str
+    total float
+    cylfilled float
+    totalsortout float
+    commerrorsortout float
+    sortoutpercentage float
+    plant str
+    zone str
+    Execution_Date datetime
+    max_date datetime
+    sap_id str
 
     Config=> {
-        access_key_mapping='zone'
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
+    }
+}
+
+Model LpgGdRejections {
+    process_date datetime
+    system_id float
+    cyl_type str
+    total float
+    sortout float
+    sortoutpercentage float
+    plant str
+    zone str
+    Execution_Date datetime
+    max_date datetime
+    sap_id str
+
+    Config=> {
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
+    }
+}
+
+Model LpgPtRejections {
+    process_date datetime
+    system_id float
+    cyl_type str
+    total float
+    sortout float
+    sortoutpercentage float
+    plant str
+    zone str
+    Execution_Date datetime
+    max_date datetime
+    sap_id str
+
+    Config=> {
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
     }
 }
 
@@ -1099,6 +1225,8 @@ Model VtsAlertHistory {
     device_offline_count optional int
     device_tamper_count optional int
     approved_by optional str
+    auto_unblock optional bool
+    alert_id optional str
 
     Config=> {
         crud_operations='read'
@@ -1115,6 +1243,7 @@ Model VaAlertHistory {
     alert_description optional str
     device_id optional str
     video_url optional str
+    alert_timestamp optional datetime
 
     Config=> {
         crud_operations='read'
@@ -1215,32 +1344,33 @@ Model MomLevelFinalMetaData {
 }
 Model IndustryPerformance {
 
-    Prod1_1 optional str
-    CATEGORY optional str
-    SBU_Name optional str
-    STATENAME optional str
-    Company_Name optional str
-    ProductName optional str
-    DISTNAME optional str
-    Prod2 optional str
-    COMNAME optional str
-    PSU_PVT optional str
-    STATECODE optional str
-    ORGROCD optional str
-    Dist optional str
-    Prod1 optional str
-    DISTCODE optional str
-    COMCODE optional int
-    Code optional str
-    PRODUCTCODE optional int
-    Zone_Name optional str
-    Region_Name optional str
-    NewCode optional str
+    prod1_1 optional str
+    category optional str
+    sbu_name optional str
+    statename optional str
+    company_name optional str
+    productname optional str
+    distname optional str
+    prod2 optional str
+    comname optional str
+    psu_pvt optional str
+    statecode optional str
+    orgrocd optional str
+    dist optional str
+    prod1 optional str
+    total optional float
+    distcode optional str
+    comcode optional int
+    code optional str
+    productcode optional int
+    zone_name optional str
+    region_name optional str
+    newcode optional str
     fiscal_year optional str
-    CoName optional str
+    coname optional str
     month_name optional str
-    NETWEIGHT_TMT optional float
-    COMP_TYPE optional str
+    netweight_tmt optional float
+    com_type optional str
     
     Config=> {
         access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'
@@ -1389,5 +1519,249 @@ Model LpgOperationsRejections {
 
     Config=> {
         access_key_mapping='zone'
+    }
+}
+
+Model ConsumerPumpTransactions {
+    unique_txn_id unique_field int
+    bu optional str
+    sap_id optional str
+    txn_id optional str
+    txn_type optional str
+    transaction_date optional datetime
+    txn_start_time optional datetime
+    txn_end_time optional datetime
+    price optional float
+    quantity optional float
+    amount optional float
+    fuel_equip_type optional str
+    vehicle_no optional str
+    product_id optional str
+    product optional str
+    tank_no optional str
+    tank_name optional str
+    pump_no optional str
+    nozzle_id optional str
+    global_nozzle_id optional str
+
+    Action=> bulk_update_cp_transactions {
+
+    }
+    Config=> {
+        access_key_mapping='ROID:sap_id'
+    }
+}
+
+Model ConsumerPumpTankInventory {
+    unique_txn_id unique_field int
+    bu optional str
+    sap_id optional str
+    inventory_date optional datetime
+    tank_id optional str
+    tank_name optional str
+    stock_txn_code optional str
+    stock_txn_id optional str
+    product_id optional str
+    product optional str
+    prod_gross_qty optional float
+    tank_capacity optional float
+    product_volume optional float
+    ullage optional float
+    product_level optional float
+    density optional float
+    density_at_15 optional float
+
+    Action=> bulk_update_cp_tank_inventory {
+
+    }
+
+    Config=> {
+        access_key_mapping='sap_id'
+    }
+}
+
+Model ConsumerPumpStocksReceipts {
+    unique_txn_id unique_field str
+    bu optional str
+    sap_id optional str
+    stock_receipt_id optional str
+    source optional str
+    prod_qty_start optional float
+    prod_qty_end optional float
+    product_id optional str
+    product optional str
+    quantity optional float
+    density optional float
+    amount optional float
+    tank_no optional str
+    tank_name optional str
+    decantation_start_time optional datetime
+    decantation_end_time optional datetime
+
+    Action=> bulk_update_cp_stock_receipts {
+
+    }
+    Config=> {
+        access_key_mapping='roid:sap_id'
+    }
+}
+
+Model HostSickTts {
+    load_number optional int
+    truck_number optional str
+    created_date optional date
+    customer_name optional str
+    compartment_number optional int
+    product_name optional str
+    required_qty optional int
+    loaded_qty optional int
+    sick_declared_by optional str
+    sick_date optional datetime
+    remarks optional str
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='load_number,truck_number,created_date,customer_name,compartment_number,product_name,sick_date'
+    }
+}
+
+Model HostCancelledTts {
+    load_number optional int
+    truck_number optional str
+    created_date optional datetime
+    customer_name optional str
+    product_name optional str
+    required_qty optional int
+    cancelled_by optional str
+    cancelled_date optional datetime
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='load_number,truck_number,created_date,customer_name,product_name,cancelled_date'
+    }
+}
+
+Model HostKFactorChanges {
+    sr_number optional int
+    bay_number optional str
+    bcu_number optional str
+    timestamp optional datetime
+    bcu_parameter optional str
+    initial_setting optional str
+    final_setting optional str
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='bcu_number,timestamp,initial_setting,final_setting'
+    }
+}
+
+Model HostLocalLoadedTts {
+    sr_number optional int
+    bay_number optional str
+    bcu_number optional str
+    recipe_name optional str
+    truck_number optional str
+    card_number optional str
+    start_totalizer optional float
+    end_totalizer optional float
+    loaded_qty optional int
+    transaction_end_time optional datetime
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='bcu_number,truck_number,card_number,transaction_end_time'
+    }
+}
+
+Model HostBayReAssignment {
+    created_date optional datetime
+    load_number optional int
+    fan_number optional str
+    truck_number optional str
+    customer_name optional str
+    compartment_number optional int
+    product_name optional str
+    required_qty optional int
+    loaded_qty optional int
+    reassigned_bay optional str
+    bay_reassignment_time optional datetime
+    remarks optional str
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='load_number,truck_number,customer_name,compartment_number,product_name,bay_reassignment_time'
+    }
+}
+
+Model HostManualBayAssigned {
+    sr_number optional int
+    user_name optional str
+    timestamp optional datetime
+    text optional str
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='user_name,timestamp'
+    }
+}
+
+Model HostManualFanPrinted {
+    manual_fan_count optional int
+    auto_fan_count optional int
+    total_count optional int
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='manual_fan_count,auto_fan_count,total_count'
+    }
+}
+
+Model HostUnauthorisedFlow {
+    bay_number optional str
+    bcu_number optional str
+    meter_number optional int
+    timestamp optional datetime
+    start_totalizer optional float
+    end_totalizer optional float
+    net_totalizer optional float
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='bcu_number,meter_number,timestamp'
+    }
+}
+
+Model HostOverLoadedTts{
+    load_number optional int
+    truck_number optional str
+    compartment_number optional int
+    blend_name optional str
+    product_name optional str
+    required_qty optional int
+    loaded_qty optional int
+    sap_id optional str
+
+    Config=> {
+        access_key_mapping=''
+        upsert_keys='load_number,truck_number,compartment_number,blend_name'
+    }
+}
+
+Model TagsData {
+    sap_id optional str
+    name optional str
+    device_type optional str
+    device_count optional str
+
+    Action=> things_board_device_data{
     }
 }

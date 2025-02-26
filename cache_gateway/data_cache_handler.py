@@ -5,18 +5,22 @@ from typing import Callable
 
 
 class InMemTTLCache:
-    def __init__(self, ttl_seconds: int, fetch_function: Callable):
+    def __init__(self, ttl_seconds: int, fetch_function: Callable, fetch_args=None):
         """
-        Initialize the cache with TTL and a fetch function to refresh data.
+        Initialize the cache with TTL, a fetch function, and the necessary arguments for fetching data.
 
         :param ttl_seconds: Time-to-live (TTL) for each key in seconds.
         :param fetch_function: A callable function to fetch new data on expiry.
+        :param fetch_args: Arguments required by the fetch function.
         """
         self.store = {}  # Dictionary to store key-value pairs with expiry
         self.ttl_seconds = ttl_seconds
         self.read_lock = threading.Lock()
         self.write_lock = threading.Lock()
         self.fetch_function = fetch_function
+        print("fetch_args --> ", fetch_args)
+        self.fetch_args = fetch_args if fetch_args is not None else ()  # Initialize as empty tuple if None
+        print("self.fetch_args --> ", self.fetch_args)
 
     @classmethod
     def _is_expired(cls, expiry_time: float) -> bool:
@@ -27,21 +31,23 @@ class InMemTTLCache:
         """
         return time.time() > expiry_time
 
-    async def get(self, key):
+    async def get(self, key, fetch_args=None):
         """
         Get the value for a key. If expired or not found, fetch and refresh it.
         :param key: The key to retrieve.
         :return: The value for the key.
         """
+        if fetch_args:
+            self.fetch_args = fetch_args
         with self.read_lock:
             try:
                 if key in self.store:
                     value, expiry_time = self.store[key]
                     if value not in [{}, []] and not self._is_expired(expiry_time):
                         return value  # Return valid value
-
+                print("self.fetch_args --> ", self.fetch_args)
                 # If key is not found or expired, fetch and refresh
-                new_value = await self.fetch_function()
+                new_value = await self.fetch_function(*self.fetch_args)  # Pass the arguments to the fetch function
                 await self.set(key, new_value)
                 return new_value
             except Exception as e:

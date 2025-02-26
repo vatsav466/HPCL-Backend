@@ -34,3 +34,28 @@ def get_credentials(db_name: str) -> dict:
         raise ValueError(f"Missing credentials for {db_name}")
 
     return credentials
+
+def get_va_creds(db_name: str) -> dict:
+    """
+
+    Args:
+        db_name:
+
+    Returns:
+
+    """
+    db_name = db_name.upper()
+    credentials = {
+        "host": os.getenv(f"{db_name}_HOST"),
+        "user": os.getenv(f"{db_name}_USER"),
+        "cust_id": os.getenv(f"{db_name}_CUST_ID"),
+        "application_id": os.getenv(f"{db_name}_APPLICATION_ID"),
+        "session_token": os.getenv(f"{db_name}_SESSION_TOKEN"),
+        "cookie": os.getenv(f"{db_name}_COOKIE")
+    }
+
+    # Check if any credential is missing
+    if None in credentials.values():
+        raise ValueError(f"Missing credentials for {db_name}")
+
+    return credentials

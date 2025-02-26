@@ -1,7 +1,10 @@
 import urdhva_base
 import json
+import httpx
 import datetime
 import traceback
+import hpcl_ceg_model
+import utilities.helpers as helpers
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_factory as alert_factory
 
@@ -57,7 +60,9 @@ class TASAlertManager(alert_factory.AlertFactory):
                                             "action_msg": f"{alert_data['interlock_name']} Interlock "
                                                           f"created for device {device_data}",
                                             "action_type": "InterlockCreated"}]
-            return await cls.create_alert(alert_data)
+            camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
+                                                        alert_section="TAS")
+            return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
             print(traceback.format_exc())
@@ -100,7 +105,33 @@ class TASAlertManager(alert_factory.AlertFactory):
                                            "action_msg": f"{alert_data['interlock_name']} Interlock "
                                                          f"cleared for device {device_data}",
                                            "action_type": "InterlockCleared"}
-            return await cls.close_alert(alert_data)
             
+            query = f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and sap_id='{alert_data['sap_id']}' and alert_status='Open'"
+            data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1), resp_type='plain')
+            alert_id = ''
+            if len(data['data']):
+                alert_id = data['data'][0]['id']
+            else:
+                return await cls.close_alert(alert_data)   
+            if alert_id:
+                tas_alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+                if not isinstance(tas_alert_data, dict):
+                    tas_alert_data = tas_alert_data.__dict__
+                data = {
+                    "messageName": "interLockOk",
+                    "businessKey": tas_alert_data['unique_id'],
+                    "processVariables": {"alert_id": {"value": alert_id, "type": "String"},
+                                  "closed": {"value": True, "type": "Boolean"}}}
+                
+                url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+                url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
+                                                    alert_section="TAS")
+                url += "/engine-rest/message"
+                r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
+                if int(r.status_code / 100) != 2:
+                    print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
+                else:
+                    print("Message sent to camunda")
+                    return "Successfully sent message to camunda"
         except Exception as e:
             raise Exception(status_code=500, detail="Error closing alert.") from e

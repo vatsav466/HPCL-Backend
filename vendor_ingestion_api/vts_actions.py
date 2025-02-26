@@ -51,6 +51,7 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
 
       for entry in enriched_data:
           print("entry --> ", entry)
+          entry['auto_unblock'] = True
           await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()  
           await alert_manager.create_alert({**entry, "alert_type": "VTS"})
       
@@ -71,7 +72,25 @@ async def vts_ingest_data_blocked_trucks(data: Vts_Ingest_Data_Blocked_TrucksPar
         Returns:
         """
     try:
-        logger.info(f"Received VTS data ingestion from vendor {data.location_id}({data.location_type}) {data.dict()}")
+        logger.info(f"Received VTS data ingestion from TT Blocked {data.location_id}({data.location_type}) {data.dict()}")
+        return True, "Success"
+    except Exception as e:
+        print(traceback.format_exc())
+        logger.error(e)
+        return False, e
+
+
+# Action ingest_data_un_blocked_trucks
+@router.post('/ingest_data_un_blocked_trucks', tags=['VTS'])
+async def vts_ingest_data_un_blocked_trucks(data: Vts_Ingest_Data_Un_Blocked_TrucksParams):
+    """
+            Args:
+                data:
+            Returns:
+            """
+    try:
+        logger.info(
+            f"Received VTS data ingestion from TT UnBlocking {data.location_id}({data.location_type}) {data.dict()}")
         return True, "Success"
     except Exception as e:
         print(traceback.format_exc())

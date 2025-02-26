@@ -62,7 +62,7 @@ class vtsDataUpdatedCreate(pydantic.BaseModel):
     endlongitude: typing.Optional[str] = pydantic.Field("", **{})
 
 
-class vtsBlockedTruckCreate(pydantic.BaseModel):
+class vtsBlockedTruckOldCreate(pydantic.BaseModel):
     alert_id: str
     alert_type: str
     action_type: typing.Optional[str] = pydantic.Field("", **{})
@@ -81,6 +81,19 @@ class vtsBlockedTruckCreate(pydantic.BaseModel):
     unblocked_datetime: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class vtsBlockedTruckCreate(pydantic.BaseModel):
+    tt_no: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_name: typing.Optional[str] = pydantic.Field("", **{})
+    transporter_code: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_blocked_desc: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_blocked_start_date: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_blocked_end_date: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_blocked_instance_no: typing.Optional[str] = pydantic.Field("", **{})
+    vehicle_blocked_instance_type: typing.Optional[str] = pydantic.Field("", **{})
+    alert_type: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class Vts_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
@@ -95,8 +108,16 @@ class Vts_Ingest_Data_Blocked_TrucksParams(pydantic.BaseModel):
     data: typing.List[vtsBlockedTruckCreate]
 
 
+class Vts_Ingest_Data_Un_Blocked_TrucksParams(pydantic.BaseModel):
+    vendor_id: str
+    location_id: str
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+    data: typing.List[vtsBlockedTruckCreate]
+
+
 class vaDataCreate(pydantic.BaseModel):
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    alert_timestamp: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: str
     alert_description: typing.Optional[str] = pydantic.Field("", **{})
     device_id: str
@@ -166,9 +187,19 @@ class emlockDataCreate(pydantic.BaseModel):
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
 
 
+class emlockVendorDataCreate(pydantic.BaseModel):
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+    emlock_exception_id: str
+    terminal_code: str
+    truck_number: str
+    exception_type: str
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    created_datetime: str
+
+
 class Emlock_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
-    data: typing.Optional[typing.List[emlockDataCreate]] | None = None
+    data: typing.Optional[typing.List[emlockVendorDataCreate]] | None = None
 
 
 class Taslistener_Get_DataParams(pydantic.BaseModel):

@@ -61,12 +61,12 @@ async def sync_ims_indent_request():
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'upsert_data'
         function = await charts_actions.charts_connection_vault_routing(
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-        resp = await function(
-            schema_name="IMS_SAP",
-            table_name="INDENT_REQUEST_HISTORY",
-            records=ro_data,
-            conflict_columns=["LOCN_CODE", "INDENT_NO", "run_id"]
-        )
+        # resp = await function(
+        #     schema_name="IMS_SAP",
+        #     table_name="INDENT_REQUEST_HISTORY",
+        #     records=ro_data,
+        #     conflict_columns=["LOCN_CODE", "INDENT_NO", "run_id"]
+        # )
         return {"status": True, "message": "Data Synced Successfully", "data": []}
     except Exception as e:
         print(traceback.format_exc())

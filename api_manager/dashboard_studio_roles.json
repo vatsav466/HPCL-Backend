@@ -75,6 +75,18 @@
                 },
                 {
                     "name": "generate_embedded_url"
+                },
+                {
+                    "name": "previous_present_month_sales"
+                },
+                {
+                    "name": "sales_drop_down"
+                },
+                {
+                    "name": "previous_present_month_sales_by_product"
+                },
+                {
+                    "name": "previous_present_month_amount_litres"
                 }
             ]
         },
@@ -192,6 +204,18 @@
                 },
                 {
                     "name": "generate_embedded_url"
+                },
+                {
+                    "name": "previous_present_month_sales"
+                },
+                {
+                    "name": "sales_drop_down"
+                },
+                {
+                    "name": "previous_present_month_sales_by_product"
+                },
+                {
+                    "name": "previous_present_month_amount_litres"
                 }
             ]
         },
@@ -636,6 +660,22 @@
         {
             "name": "generate_embedded_url",
             "displayName": "generate_embedded_url"
+        },
+        {
+            "name": "previous_present_month_sales",
+            "displayName": "previous_present_month_sales"
+        },
+        {
+            "name": "sales_drop_down",
+            "displayName": "sales_drop_down"
+        },
+        {
+            "name": "previous_present_month_sales_by_product",
+            "displayName": "previous_present_month_sales_by_product"
+        },
+        {
+            "name": "previous_present_month_amount_litres",
+            "displayName": "previous_present_month_amount_litres"
         },
         {
             "name": "save_dashboards",

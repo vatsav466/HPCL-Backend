@@ -125,13 +125,13 @@ class AuthenticationManager:
         Returns:
             None
         """
-        data = hpcl_ceg_model.Users.get_aggr_data(f"select username from users where "
+        data = await hpcl_ceg_model.Users.get_aggr_data(f"select username from users where "
                                                   f"lower(username)='{username.lower()}'", skip_total=True)
         if data["data"]:
             for user in data["data"]:
                 if user["username"].lower() == username.lower():
                     return False, "user exists"
-        await hpcl_ceg_model.Users(**{"username": username.lower(), "password": password, "role": role,
+        await hpcl_ceg_model.UsersCreate(**{"username": username.lower(), "password": password, "role": role,
                                       "first_name": first_name, "last_name": last_name, "employee_id": employee_id,
                                       "status": True}).create()
         return True, "User created successfully"

@@ -62,6 +62,8 @@ def insertToDB(data, table_name, indexing_col=()):
 )
     
     print(data.schema)
+    """
+    below line are for reading the data of FY23-24 APr,May and Jun
     apr_data = pl.read_csv('/tmp/jun_updated.csv',infer_schema_length=0) 
     apr_data = apr_data.rename({"DT_ID": "DAY_ID"})
     apr_data = apr_data.with_columns(
@@ -69,7 +71,7 @@ def insertToDB(data, table_name, indexing_col=()):
         lambda row: hashlib.md5("|".join(str(v) for v in row.values()).encode()).hexdigest()
     ).alias("engine_id")
     )
-
+    """
     for col in data.columns:
         if data.schema[col] in [pl.Float32, pl.Float64] :
             data = data.with_columns(pl.col(col).alias(col))
@@ -98,7 +100,6 @@ def insertToDB(data, table_name, indexing_col=()):
     print("-" * 50)
     print(f"-- Inserting Data to {table_name} --")
     print("Length of Data :", len(data))
-    print(len(apr_data))
     
     print(len(data))
     #data = data.unique(['engine_id'])
@@ -176,6 +177,14 @@ def insertToDB(data, table_name, indexing_col=()):
     data.write_csv(f"/tmp/table_name.csv",separator='~')
     pg_conn.commit()
     try:
+        
+        cur.execute(f"""
+                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2024-2025'
+                    """)
+        
+        cur.execute(f"""
+                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2023-2024' and "month_name" not in ('Apr','May','Jun')
+                    """)
         query = f'''
         COPY "{table_name}"
         FROM STDIN
@@ -196,69 +205,7 @@ def insertToDB(data, table_name, indexing_col=()):
         print("Error :", str(e))
         raise Exception(e)
     exit()
-    temp_table = 'sample_check'
-
-    cur.execute(f"""
-    CREATE TEMP TABLE {temp_table} (LIKE  "{table_name}" INCLUDING ALL);
-""")
-    copy_query = f"""
-    COPY {temp_table}
-    FROM STDIN
-    CSV HEADER  DELIMITER '~';
-"""
-    print(copy_query)
-    data.write_csv(f"/tmp/{table_name}.csv",separator='~')
-    with open(f"/tmp/{table_name}.csv", "r") as f:
-            cur.copy_expert(copy_query, f)
-
-    print(len(data))
-    #data = data.unique(subset=['engine_id'])
-    print(len(data))
-    #exit()
-    pg_conn.commit()
-    conflict_column = "engine_id"
-    update_cols = [col for col in columns if col != conflict_column]
-    set_clause = ", ".join([f'"{col}" = EXCLUDED."{col}"' for col in update_cols])
-    columns = ['"'+col+'"' for col in columns]
-    print("columns",columns)
-    cur.execute(f'select count(*) FROM "{temp_table}"')
-    print(f'select count(*) FROM "{temp_table}"')
-
-    data = cur.fetchall()
-    print("temp table data")
-    print(data)
-    cur.execute(f"""
-        INSERT INTO "{table_name}" ({', '.join(columns)})
-        SELECT {', '.join(columns)}
-        FROM {temp_table}
-        ON CONFLICT ("engine_id")
-        DO UPDATE SET {set_clause}
-    """)
-    pg_conn.commit()
-    cur.close()
-    exit()
- 
-    try:
-        query = f'''
-        COPY "{table_name}"
-        FROM STDIN
-        CSV HEADER DELIMITER '~';
-        '''
-        for g, split_df in data.group_by(len(data) // 10000000):
-            csv_file = f'/tmp/{table_name}.csv'
-            print("*"*50)
-            print("length ",len(split_df))
-            split_df.write_csv(csv_file, separator='~')
-            with open(csv_file, 'r') as f:
-                cur.copy_expert(query, f)
-                pg_conn.commit()
-        cur.close()
-        if os.path.exists(f'/tmp/{table_name}.csv'):
-            os.remove(f'/tmp/{table_name}.csv')
-        print(f"-- Data has been inserted to {table_name} --")
-    except Exception as e:
-        print("Error :", str(e))
-        raise Exception(e)
+    
 
 
 def get_and_insert_data(cursor, query, params=None):
@@ -312,12 +259,16 @@ def get_and_insert_data(cursor, query, params=None):
     data['fiscal_year'] = data['FISCALYEAR'].apply(lambda x:x.strip('FY').strip()if 'FY' in x else x)
     print(data['fiscal_year'].unique())
     print(data['ORGSBUNAME'].unique())
-    data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None else x )
+    data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' '))>2  else x )
+
+    #data['ORGSBUNAME'] = data['ORGSBUNAME'].fillna('0').astype(str).apply(lambda x:' '.join(x.split(' ')[2:]) if x !=None and len(x.split(' ') >2)  else x )
     print(data['ORGSBUNAME'].unique())
     data = data.rename(columns = {'ORGSBUNAME':'SBU_Name','ORGZONENAME':'Zone_Name','ORGRONAME':'Region_Name',
                                   'ORGSANAME':'SalesArea_Name','MATERIALGROUPNAME':'ProductName'})
     data['ORGSBUCD'] = data['ORGSBUCD'].fillna('').astype(str).apply(lambda x:x.split('.')[0] if '.' in x else x)
-    data['SBU_Name'] = data['SBU_Name'].str.replace('Direct','I&C').str.replace('DS Lubes','Lubes').str.replace('Direct I&C','I&C')
+    data['SBU_Name'] = data['SBU_Name'].str.replace('DS I&C','I&C').str.replace('Direct','I&C').str.replace('DS Lubes','Lubes').str.replace('Direct I&C','I&C').str.replace('PETROCHEMICALS SBU','PETCHEM').str.replace('GAS HQO','GAS')
+    data['Zone_Name'] = data['Zone_Name'].str.replace('North Central LPG Zone','North Central LPG Zo').str.replace('South Central Retail Zone','South Central Retail').str.replace('South Central LPG Zone ','South Central LPG Zo').str.replace('EAST CENTRAL ZONE','East Central Zone').str.replace('North West Frontier Zone','North West Frontier').str.replace('North West Retail Zone','North West Retail Zo').str.replace('North Central Retail Zone','North Central Retail')
+
     data = pl.from_pandas(data)
     
     
@@ -863,6 +814,8 @@ E1.WEIGHT_UNIT
         WHEN ORGSBUCD = '2000'  THEN NETWEIGHT / 1000000
         WHEN ORGSBUCD = '3000'  THEN NETWEIGHT / 1000000
         WHEN ORGSBUCD = '4000'  THEN NETWEIGHT / 1000000
+        WHEN ORGSBUCD = '5500'  THEN NETWEIGHT / 1000000
+        WHEN ORGSBUCD = '5750'  THEN NETWEIGHT / 1000000
         ELSE NETWEIGHT
     END AS NETWEIGHT_TMT
 FROM (
@@ -925,7 +878,7 @@ FROM (
         LEFT OUTER JOIN PS.EDW_SALES_ORG_DIM E8 ON E2.ORG_SA_CD = E8.ORG_SA_CD
     WHERE
         E1.PS_DT_ID >= 20230401
-        AND E2.ORG_SBU_CD IN ('7000', '5000', '2000', '3000', '4000')
+        AND E2.ORG_SBU_CD IN ('7000', '5000', '2000', '3000', '4000','5500','5750')
     GROUP BY
         E2.ORG_SBU_CD,
         E8.ORG_SBU_NM,

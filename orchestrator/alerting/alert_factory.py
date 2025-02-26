@@ -8,6 +8,7 @@ import urdhva_base.redispool
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
+import orchestrator.analytics.vts_analysis as vts_analysis
 
 logger = urdhva_base.logger.Logger.getInstance('alert_factory_log')
 
@@ -78,7 +79,7 @@ class AlertFactory:
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': alert_data.get("alert_section", bu),
-                                                        'external_id': alert_data['alert_id'],
+                                                        'external_id': alert_data.get('vendor_alert_id', alert_data['alert_id']),
                                                         'interlock_name': interlock_name,
                                                         'interlock_id': '',
                                                         'vehicle_number': alert_data.get('vehicle_number',''),
@@ -91,6 +92,7 @@ class AlertFactory:
                                                         'last_escalated_to': [],
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
+                                                        'assigned_users': [], 'assigned_user_roles': [],
                                                         'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
                                                         'dealer_id': str(alert_data.get('dealer_id', '')),
                                                         'product_code': str(alert_data.get('product_code', '')),
@@ -105,12 +107,20 @@ class AlertFactory:
                                                         'servicing_plant_id': str(alert_data.get('servicing_plant_id', '')),
                                                         'servicing_plant_name': str(alert_data.get('servicing_plant_name', '')),
                                                         'progress_rate': 1,
+                                                        'transporter_name': alert_data.get("transporter_name", ""),
+                                                        'transporter_code': alert_data.get("transporter_code", ""),
+                                                        'vehicle_blocked_start_date': alert_data.get("vehicle_blocked_start_date", None),
+                                                        'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
+                                                        'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             if alert_data.get("alert_section",'') in ["VA"]:
-                await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
+                if alert_data.get("bu","") in ["TAS"]:
+                    await redis_ins.setex(alert_data['alert_id'], 15*60, alert_resp['id'])
+                else:
+                    await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
@@ -158,15 +168,27 @@ class AlertFactory:
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
-                if alert_data_dict.get("alert_section") not in ["VA"]:
-                    await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                    await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
+                # Uncomment below line to stop workflow for VA
                 # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
                 #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
-                # else:
-                #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
+
+                # Updating for VTS Alert history with alert_id
+                if alert_data_dict.get("alert_section") == "VTS":
+                    await vts_analysis.update_alert_id_to_vts_history(alert_id=str(alert_resp['id']), vts_alert_id=alert_data_dict.get("vts_alert_history_ids", []))
+                    blocked_tt_data = dict()
+                    blocked_tt_data['TT_No'] = alert_data_dict.get('vehicle_number','')
+                    blocked_tt_data['BlockStartDate'] = alert_data_dict['vehicle_blocked_start_date'].strftime("%d/%b/%Y 00:00")
+                    blocked_tt_data['BlockEndDate'] = alert_data_dict['vehicle_blocked_end_date'].strftime("%d/%b/%Y 00:00")
+                    blocked_tt_data['BlockedRemarks'] = alert_data_dict['device_name']
+                    print("blocked_tt_data: ", blocked_tt_data)
+                    # resp = await vts_analysis.post_blocked_tt(blocked_tt_data)
+                    # print("Data Pushed to VTS Vendor", resp)
+
+                if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
+                    return True, "alert created"
+                await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+                await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:
                 print(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
@@ -192,7 +214,7 @@ class AlertFactory:
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
         """
-        # print("alert_data close ---> ", alert_data)
+        print("alert_data close ---> ", alert_data)
         try:
             # il_data = None
             # al_data = None

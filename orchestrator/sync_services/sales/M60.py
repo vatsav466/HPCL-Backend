@@ -100,7 +100,7 @@ def insertToDB(data, table_name, indexing_col=()):
     )
     table_create_sql = ''
     cur = pg_conn.cursor()
-    dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),
+    dtype_dict =  {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),
                   'Float64': str('double precision'), 'Float32': str('double precision'),
                   'Object': str('text'), 'Datetime': str('timestamp'), 'Date': str('timestamp'), 'Utf8': str('text'),
                   "Datetime(time_unit='us', time_zone=None)": str('timestamp'),
@@ -122,10 +122,13 @@ def insertToDB(data, table_name, indexing_col=()):
                   "Decimal(precision=11, scale=8)": str('double precision'),
                   "Decimal(precision=13, scale=10)": str('double precision'),
                   "Decimal(precision=10, scale=2)": str('double precision'),
+                  "Decimal(precision=10, scale=4)": str('double precision'),
+                  "Decimal(precision=12, scale=8)": str('double precision'),
                   "Decimal(precision=None, scale=2)": str('double precision'),
                   "Decimal(precision=None, scale=27)": str('double precision'),
                   "Decimal(precision=None, scale=28)": str('double precision')
                   }
+
     print('Data Types :', data.dtypes)
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
@@ -165,7 +168,11 @@ def insertToDB(data, table_name, indexing_col=()):
     '''
     print(columns_formatted)
     #cur.execute(create_table_index)
-
+    #renaming the column value of month_name from full letters to first three charecters
+    data = data.with_columns(
+    pl.col("month_name").map_elements(lambda x: x[:3] if len(x) >= 3 else x).alias("month_name")
+)
+    data = data.rename({'FISCAL_YEAR':'fiscal_year'})
     sql = f"""SELECT * FROM "{table_name}" LIMIT 1"""
     cur.execute(sql)
     column_names = [desc[0] for desc in cur.description]
@@ -178,12 +185,18 @@ def insertToDB(data, table_name, indexing_col=()):
     print(data)
     pg_conn.commit()
     try:
+        cur.execute(f"""
+                    DELETE FROM "M60_LEVEL_METADATA"
+                    """)
+        
+        
         query = f'''
         COPY "{table_name}"
         FROM STDIN
         CSV HEADER DELIMITER '~';
         '''
         print(query)
+        
         for g, split_df in data.group_by(len(data)// 10000000):
             csv_file = f'/tmp/{table_name}.csv'
             split_df.write_csv(csv_file, separator='~')

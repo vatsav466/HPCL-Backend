@@ -78,6 +78,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                     # Retrieving the alert_mapping details for alert_type based on location_type and alert_type.
                     va_alert_data = va_alert_mapping.VA_Alert_Mapping[record['location_type']].get(
                         record['alert_section'], {})
+                    logger.info(f"va alert data: {va_alert_data}")
                     if not va_alert_data:
                         logger.info("interlock_details not found")
                         continue
@@ -95,6 +96,8 @@ class VAAlertManager(alert_factory.AlertFactory):
                     # This is because we store the alert_id in Redis with a 3-hour expiration time.
                     # If the same alert_type is received from the same device_id within the expiration period,
                     # it will be considered a duplicate, and processing will be skipped.
+
+                    # comment below line as alerts are not duplicated its old alert
                     if await redis_ins.exists(alert_id):
                         logger.info("Alert already exists")
                         continue
@@ -104,6 +107,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
                         record['location_type'],
                         va_alert_data["name"])
+                    logger.info(f"va interlock data: {interlock_details}")
                     
                     # preparing alert_data for VA
                     interlock_details.update({"bu": record['location_type'],
@@ -115,9 +119,13 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "severity": va_alert_data["severity"],
                                               "alert_id": alert_id,
                                               "alert_section": "VA",
-                                              "alert_history":alert_history
+                                              "alert_history":alert_history,
+                                              "vendor_alert_id": record.get("alert_id", alert_id),
+                                              "alert_timestamp": record.get("alert_timestamp", None)
                                               })
-
+                    
+                    camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=location_id,
+                                                        alert_section="VA")
                     await cls.create_alert(interlock_details, camunda_url)
                 except Exception as e:
                     print(traceback.format_exc())

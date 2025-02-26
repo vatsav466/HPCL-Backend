@@ -2,6 +2,7 @@ import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import fastapi
+import os
 import re
 import pytz
 import json
@@ -11,6 +12,7 @@ import traceback
 import utilities
 from pathlib import Path
 import utilities.helpers as helpers
+from fastapi.responses import FileResponse
 import utilities.vts_mapping as vts_mapping
 import utilities.connection_mapping as connection_mapping
 import orchestrator.alerting.alert_manager as alert_manager
@@ -58,11 +60,11 @@ async def alerts_get_performance_index(data: Alerts_Get_Performance_IndexParams)
     return resp['data']
 
 
-# Action upload_image
-@router.post('/upload_image', tags=['Alerts'])
-async def alerts_upload_image(upload_file: fastapi.UploadFile = fastapi.File(None)):
+# Action upload_document
+@router.post('/upload_document', tags=['Alerts'])
+async def alerts_upload_document(bu: str, upload_file: fastapi.UploadFile = fastapi.File(None)):
     try:
-        UPLOAD_DIR = urdhva_base.settings.uploads  # Directory to save the uploaded files
+        UPLOAD_DIR = os.path.join(urdhva_base.settings.uploads, bu)  # Directory to save the uploaded files
         os.makedirs(UPLOAD_DIR, exist_ok=True)  # Ensure the upload directory exists
 
         # Validate the uploaded file type
@@ -180,19 +182,41 @@ async def alerts_get_frequent_dryout_terminals(data: Alerts_Get_Frequent_Dryout_
 @router.post('/get_closed_alerts_details', tags=['Alerts'])
 async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_DetailsParams):
     close_alert_details = {
-        "actions": {
-            "Justify": "Justification",
-            "Accept & Close": "AcceptClose",
-            "Approve": "Approved",
-            "Reject": "Rejected"
-        },
-        "category": {
-        },
-        "rca_reason": {
-        }
+        "actions": {},
+        "category": {},
+        "rca_reason": []
     }
-    if data.alert_section in ['VA', 'VTS']:
-        del close_alert_details['actions']['Reject']
-    close_alert_details["category"] = connection_mapping.alert_action_category.get(data.alert_section, {"Others": "Others"})
-    close_alert_details["rca_reason"] = connection_mapping.alert_action_rca_reason.get(data.alert_section, ["Others"])
+    action_data = connection_mapping.alert_action.get(data.bu)[data.alert_section]
+    close_alert_details['category'] = action_data.get("category", {"Others": "Others"})
+    close_alert_details['rca_reason'] = action_data.get("rca_reason", ["Other"])
+    close_alert_details['actions'] = {key: value['name'] for key, value in action_data.get("actions", {}).items()}
     return close_alert_details
+    # close_alert_details = {
+    #     "actions": {
+    #         "Justify": "Justification",
+    #         "Accept & Close": "AcceptClose",
+    #         "Approve": "Approved",
+    #         "Reject": "Rejected"
+    #     },
+    #     "category": {
+    #     },
+    #     "rca_reason": {
+    #     }
+    # }
+    # if data.alert_section in ['VA', 'VTS']:
+    #     if data.alert_section in ["VA", "VTS"]:
+    #         close_alert_details['actions'].update({"FalseAlert": "FalseAlert", "InvalidAlert": "InvalidAlert"})
+    #     del close_alert_details['actions']['Reject']
+    # close_alert_details["category"] = connection_mapping.alert_action_category.get(data.alert_section, {"Others": "Others"})
+    # close_alert_details["rca_reason"] = connection_mapping.alert_action_rca_reason.get(data.alert_section, ["Others"])
+    # return close_alert_details
+
+
+# Action stored_document
+@router.get('/stored_document', tags=['Alerts'])
+async def alerts_stored_document(file_name: str):
+    file_path = os.path.join(urdhva_base.settings.uploads, f"{file_name}.enc")
+    file_path = f"{file_name}.enc"
+    return FileResponse(
+        file_path, filename=os.path.basename(file_name), media_type="application/octet-stream"
+    )

@@ -12,15 +12,28 @@ VA_Alert_Mapping = {
         "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock", "severity": "High"}
     },
     "TAS": {
-        "FIRE/SMOKE": {"name": "Fire/Smoke Detection", "severity": "Critical"},
-        "SMOKE": {"name": "Smoke Detection", "severity": "Critical"},
-        "Fire": {"name": "Fire Detection", "severity": "Critical"},
-        "ABSENCE_OF_WHEELCHOCK": {"name": "Absence Of Wheelchock", "severity": "High"},
-        "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {"name": "Absence Of Fire Extinguisher Tt Operations", "severity": "High"},
-        "PPE_HELMET": {"name": "Person not wearing Safety Helmet", "severity": "Medium"},
-        "LINE_OF_FIRE": {"name": "Intrusion", "severity": "Critical"},
-        "ABSENCE_OF_SAFETY_HARNESS": {"name": "Person not wearing Safety Harness/Belt", "severity": "Critical"},
-        "ABSENCE OF WHEELCHOCK": {"name": "Absence Of Wheelchock", "severity": "High"}
+        "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {"name": "Non compliance of Fire Extinguisher (TT Unloading)", "severity": "Critical"},
+        "FIRE": {"name": "Fire", "severity": "Critical"},
+        "SPILLAGE_IN_DUS": {"name": "Spillage", "severity": ""},
+        "LINE_OF_FIRE": {"name": "Perimeter Intrusion", "severity": "Critical"},
+        "LOCKIN_POSITION_DOME_COVERS": {"name": "TT Dome Covers", "severity": "Critical"},
+        "VALVE_OPEN": {"name": "valve Box in open status", "severity": ""},
+        "ABSENCE_OF_SAFETY_HARNESS": {"name": "Safety Harness non compliance (TT Unloading)", "severity": "Critical"},
+        "ABSENCE_OF_WHEELCHOCK": {"name": "Wheel choke non compliance (TT Unloading)", "severity": "Critical"},
+        "SUSPICIOUS_ACTIVITY": {"name": "Intrusion in nonworking hours (Storage Area/Wagon Gantry)", "severity": "High"},
+        "OBSTRUCTION": {"name": "Obstruction on approach road (Emergency gate)", "severity": "High"},
+        "PPE_HELMET": {"name": "PPE non compliance", "severity": "High"},
+        "UNAUTHORISED_FILLING_OF_CONTAINER": {"name": "Product filling in unauthorized container (TT Gantry)", "severity": "High"},
+        "ABSENCE_OF_TT_CREW": {"name": "TT Crew non availability (TT unloading)", "severity": "High"},
+        "PERSON_BELOW_TT": {"name": "TT Crew entering below TT", "severity": "High"},
+        "COOKING": {"name": "Unauthorized activity in parking area", "severity": "High"},
+        "CRASH_GUARD_STATUS": {"name": "Non availability of Crash Guard in TT", "severity": "Medium"},
+        "KEY_REMOVAL": {"name": "Emergency gate Key Removal", "severity": "Medium"},
+        "PARKING_DISCIPLINE": {"name": "Parking Discipline deviation", "severity": "Medium"},
+        "UNAUTH_GATE_OPENING": {"name": "Unauthorized Activity (Emergency Gate opening )", "severity": "Medium"},
+        "OVERCROWDING": {"name": "Clustering of people", "severity": "Low"},
+        "TT_BRANDING": {"name": "TT Branding non compliance", "severity": "Low"},
+        "UNAUTH_STACKING": {"name": "Unauthorized activity (Stacking of unwanted material in shed)", "severity": "Low"}
     },
     "LPG": {
         "FIRE/SMOKE": {"name": "Fire/Smoke Detection", "severity": "Critical"},
@@ -31,7 +44,6 @@ VA_Alert_Mapping = {
         "Intrusion-PersonAtPerimeter": {"name": "Intrusion Person At Perimeter", "severity": "Critical"},
         "LPGLeak-FillingGun": {"name": "Lpg Leakage Filling Gun",  "severity": "Critical"},
         "LPGLeak-Detection": {"name": "Lpg Leakage Detection",  "severity": "Critical"},
-        "PPE-Compliance": {"name": "Person not wearing Safety Harness/Belt",  "severity": "Medium"},
         "PPE_HELMET": {"name": "Person not wearing Safety Helmet", "severity": "Medium"},
         "ABSENCE OF WHEELCHOCK": {"name": "Missing Wheel Chock", "severity": "High"}
     }

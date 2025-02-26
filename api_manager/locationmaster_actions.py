@@ -180,3 +180,47 @@ async def locationmaster_upload_tags_data(upload_file: fastapi.UploadFile = fast
         logger.error(f"An error occurred while processing the JSON file: {traceback.format_exc()}")
         return {"status": False, "message": f"An error occurred: {e}"}
     
+
+
+# Action update_location_master
+@router.post('/update_location_master', tags=['LocationMaster'])
+async def locationmaster_update_location_master(request: fastapi.Request, data: Locationmaster_Update_Location_MasterParams):
+    try:
+        user_sap_id = data.sap_id  
+        query = f"sap_id='{user_sap_id}'" 
+        # Use parameterized query
+        params = urdhva_base.queryparams.QueryParams()
+        params.fields = []
+        params.q = query
+        resp = await LocationMaster.get_all(params, resp_type="plain")
+        
+        print("resp --> ", resp)
+        if resp["data"]:
+            resp = resp["data"][0]
+            if not isinstance(resp, dict):
+                resp = resp._dict_
+            if data.sap_id:
+                resp['name'] = data.name
+                resp['city'] = data.city
+                resp['region'] = data.region
+                resp['state'] = data.state
+                resp['zone'] = data.zone
+                resp['district'] = data.district
+                resp['address'] = data.address
+                resp['sales_area'] = data.sales_area
+                resp['pincode'] = data.pincode
+                res = LocationMaster(**resp)
+                resp = await res.modify()
+                return {"status": True, "message": "Successfully updated credential", "data": resp}
+
+        return {"status": False, "message": "No data found for the given sap_id", "data": []}
+
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        print("Error Traceback:", error_trace)
+        return {
+            "status": False,
+            "message": "An error occurred while updating user status.",
+            "error": str(e),
+            "traceback": error_trace
+        }

@@ -97,6 +97,9 @@ class {{input.name}}Create({%- if not input.is_internal -%}{{input.dbbase[1]}}{%
         {% if input.config.upsert_skip_keys is defined and input.config.upsert_skip_keys -%}
         upsert_skip_keys = {{input.config.upsert_skip_keys.split(',')}}
         {% endif -%}
+        {% if input.config.upsert_keys is defined and input.config.upsert_keys -%}
+        upsert_keys = {{input.config.upsert_keys.split(',')}}
+        {% endif -%}
         {% endif -%}
     {% endif %}
     {% if input.references -%}
@@ -149,6 +152,9 @@ class {{input.name}}({{input.dbbase[2]}}):
         {% endif -%}
         {% if input.config.upsert_skip_keys is defined and input.config.upsert_skip_keys -%}
         upsert_skip_keys = {{input.config.upsert_skip_keys.split(',')}}
+        {% endif -%}
+        {% if input.config.upsert_keys is defined and input.config.upsert_keys -%}
+        upsert_keys = {{input.config.upsert_keys.split(',')}}
         {% endif -%}
         {% endif -%}
     {% endif %}

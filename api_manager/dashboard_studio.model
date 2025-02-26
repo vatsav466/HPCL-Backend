@@ -17,6 +17,11 @@ Enum DashboardStatus str {
     Completed='Completed'
 }
 
+Model salesFilters internal {
+    key str
+    cond optional str
+    value optional list str
+}
 Model currencyFormatInternal internal {
     symbolPosition optional str
     symbol optional str
@@ -140,25 +145,25 @@ Model Charts {
     hashed_value optional str
 
     Action=> get_tables {
-        connection_id optional str
+        connection_id optional int max=1000000
         database str
         schema str
     }
     Action=> get_columns {
-        connection_id optional str
+        connection_id optional int max=1000000
         database str
         schema str
         table str
     }
     Action=> get_unique_values {
-        connection_id optional str
+        connection_id optional int max=1000000
         database str
         schema str
         table str
         column list str
     }
     Action=> drill_down_data {
-        connection_id optional str
+        connection_id optional int max=1000000
         database str
         schema str
         table str
@@ -173,7 +178,7 @@ Model Charts {
     }
 
     Action=> get_distinct_values {
-        connection_id optional str
+        connection_id optional int max=1000000
         schema str
         table str
         column list str
@@ -215,16 +220,16 @@ Model Charts {
     }
 
     Action=> connection_vault_routing {
-        connection_id optional str
+        connection_id optional int max=1000000
         action str
     }
 
     Action=> get_creds_details {
-        connection_id optional str
+        connection_id optional int max=1000000
     }
 
     Action=> get_schema {
-        connection_id optional str
+        connection_id optional int max=1000000
         database optional str
     }
 
@@ -233,6 +238,10 @@ Model Charts {
         action str
         drill_state optional str
         cross_filters optional list WidgetFilters
+        limit optional int
+        time_grain optional str
+        resp_format optional str regex="^([a-zA-Z0-9_. ]+|)$" // stacked for stacked data, else keep as empty
+        resp_level  optional str // this is to get the graphs at sbu level in industry_performance
     }
 
     Action=> enable_cross_filter {
@@ -241,6 +250,31 @@ Model Charts {
 
     Action=> generate_embedded_url {
         dash_id str
+    }
+
+    Action=> previous_present_month_sales {
+        cross_filters optional list salesFilters
+        limit optional int
+        time_grain optional str
+        sort_by optional str
+    }
+
+    Action=> sales_drop_down {
+        filters optional list salesFilters
+    }
+
+    Action=> previous_present_month_sales_by_product {
+        cross_filters optional list salesFilters
+        limit optional int
+        time_grain optional str
+        sort_by optional str
+    }
+
+    Action=> previous_present_month_amount_litres {
+        cross_filters optional list salesFilters
+        limit optional int
+        time_grain optional str
+        sort_by optional str
     }
 
     Config=> {
