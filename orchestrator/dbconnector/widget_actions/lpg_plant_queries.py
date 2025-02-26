@@ -977,9 +977,10 @@ LIMIT 10000;''',
     
     "lpg_operations_productivity_zone": f'''   
                         select 
-                            "zone" as "zone",
-                            "name" as "name",
-                            "filling_heads" as "heads",
+                            "zone",
+                            "name",
+                            "SiteArea" AS "plant",
+                            "filling_heads" as "carousel_type",
                             avg("productivity_normal_productivity") as "productivity"
                         from 
                             "lpg_operations_summary"
@@ -989,6 +990,7 @@ LIMIT 10000;''',
                         select 
                             "zone",
                             "name",
+                            "SiteArea" AS "plant",
                             sum("productivity_normal_production")/1000 as "Productions"
                         from 
                             "lpg_operations_summary" ''',
@@ -1013,12 +1015,16 @@ LIMIT 10000;''',
     
     'lpg_operations_daywise_productivity': f'''  
                                 SELECT 
+                                "zone",
+                                "SiteArea" AS "plant",
                                 AVG("productivity_normal_productivity") AS "avg_productivity", 
                                 DATE("process_date") AS "process_date"
                                 FROM "lpg_operations_summary" ''',
     
     'lpg_operations_daywise_production': f'''  
                                 SELECT 
+                                "zone",
+                                "SiteArea" AS "plant",
                                 SUM("productivity_normal_production") / 1000 AS "sum_productivity ", 
                                 DATE("process_date") AS "process_date"
                                 FROM "lpg_operations_summary" ''',
@@ -1131,6 +1137,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 "Financial_Year",
                                 SUM("Consumer_Count") as "consumer_count"
                             FROM
@@ -1145,6 +1152,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("Transaction_Count") as "transaction_count"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
@@ -1158,6 +1166,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("SubsidyAmount") as "SubsidyAmount"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
@@ -1171,6 +1180,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("Consumer_Count") as "consumer_count"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
@@ -1184,6 +1194,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("Transaction_Count") as "transaction_count"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
@@ -1197,6 +1208,7 @@ ORDER BY
                                 "ROName",
                                 "SAName",
                                 "DistributorName",
+                                "StateCode",
                                 SUM("SubsidyAmount") as "SubsidyAmount"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',

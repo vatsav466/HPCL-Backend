@@ -86,6 +86,7 @@ class UsersSchema(UrdhvaPostgresBase):
     last_name: Mapped[str] = mapped_column("last_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     password: Mapped[typing.Optional[urdhva_base.types.Secret]] = mapped_column("password", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    employee_number: Mapped[typing.Optional[str]] = mapped_column("employee_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     system_role: Mapped[str] = mapped_column("system_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -110,6 +111,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     last_name: str
     password: typing.Optional[urdhva_base.types.Secret] | None = None
     employee_id: str
+    employee_number: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.List[hpcl_ceg_enum.BusinessUnit]
     sap_id: typing.List[str]
     system_role: str
@@ -137,6 +139,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     last_name: typing.Optional[str] | None = None
     password: typing.Optional[urdhva_base.types.Secret] | None = None
     employee_id: typing.Optional[str] | None = None
+    employee_number: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
     sap_id: typing.Optional[typing.List[str]] | None = None
     system_role: typing.Optional[str] | None = None
@@ -748,6 +751,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     is_unblocked: typing.Optional[bool] = pydantic.Field(False, )
     is_interrupt: typing.Optional[bool] = pydantic.Field(False, )
     is_extra_days: typing.Optional[bool] = pydantic.Field(False, )
+    is_rejected: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -3962,6 +3966,7 @@ class HostSickTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostSickTtsSchema
+        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date']
 
 
@@ -3984,6 +3989,7 @@ class HostSickTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostSickTtsSchema
+        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date']
 
 
@@ -4023,6 +4029,7 @@ class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostCancelledTtsSchema
+        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date']
 
 
@@ -4042,6 +4049,7 @@ class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostCancelledTtsSchema
+        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date']
 
 
@@ -4079,6 +4087,7 @@ class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostKFactorChangesSchema
+        upsert_keys = []
         upsert_keys = ['bcu_number', 'timestamp', 'initial_setting', 'final_setting']
 
 
@@ -4097,6 +4106,7 @@ class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostKFactorChangesSchema
+        upsert_keys = []
         upsert_keys = ['bcu_number', 'timestamp', 'initial_setting', 'final_setting']
 
 
@@ -4140,6 +4150,7 @@ class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostLocalLoadedTtsSchema
+        upsert_keys = []
         upsert_keys = ['bcu_number', 'truck_number', 'card_number', 'transaction_end_time']
 
 
@@ -4161,6 +4172,7 @@ class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostLocalLoadedTtsSchema
+        upsert_keys = []
         upsert_keys = ['bcu_number', 'truck_number', 'card_number', 'transaction_end_time']
 
 
@@ -4208,6 +4220,7 @@ class HostBayReAssignmentCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostBayReAssignmentSchema
+        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'bay_reassignment_time']
 
 
@@ -4231,6 +4244,7 @@ class HostBayReAssignment(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostBayReAssignmentSchema
+        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'bay_reassignment_time']
 
 
@@ -4262,6 +4276,7 @@ class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostManualBayAssignedSchema
+        upsert_keys = []
         upsert_keys = ['user_name', 'timestamp']
 
 
@@ -4277,6 +4292,7 @@ class HostManualBayAssigned(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostManualBayAssignedSchema
+        upsert_keys = []
         upsert_keys = ['user_name', 'timestamp']
 
 
@@ -4306,6 +4322,7 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostManualFanPrintedSchema
+        upsert_keys = []
         upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count']
 
 
@@ -4320,6 +4337,7 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostManualFanPrintedSchema
+        upsert_keys = []
         upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count']
 
 
@@ -4357,6 +4375,7 @@ class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostUnauthorisedFlowSchema
+        upsert_keys = []
         upsert_keys = ['bcu_number', 'meter_number', 'timestamp']
 
 
@@ -4375,6 +4394,7 @@ class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostUnauthorisedFlowSchema
+        upsert_keys = []
         upsert_keys = ['bcu_number', 'meter_number', 'timestamp']
 
 
@@ -4412,6 +4432,7 @@ class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostOverLoadedTtsSchema
+        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name']
 
 
@@ -4430,6 +4451,7 @@ class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostOverLoadedTtsSchema
+        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name']
 
 

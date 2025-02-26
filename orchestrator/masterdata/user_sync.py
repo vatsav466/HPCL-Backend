@@ -34,18 +34,19 @@ async def sync_users(file_path):
     df['username'] = df['EMPLOYEE_NUMBER']
     df['employee_id'] = df['EMPLOYEE_NUMBER']
     df['sap_id'] = df['LOCATION']
-    df['email'] = df['EMP_EMAIL']
+    df['email'] = df['EMPLOYEE_EMAIL']
     
     if 'Zone' in df.columns:
-        df['zone'] = df['Zone']
+        df['zone'] = df['ZONE']
     if 'Region' in df.columns:
-        df['region'] = df['Region']
+        df['region'] = df['REGION']
 
     df['first_name'] = df['EMPLOYEE_NAME']
     df['last_name'] = ''
     df['system_role'] = df['ROLE_NAME']
     df['novex_role'] = df['NOVEX_ROLE']
     df['bu'] = df['BU']
+    df['employee_number'] = df['EMPLOYEE_NUMBER']
 
     # Fetch existing user records
     existing_users = await hpcl_ceg_model.Users.get_all(resp_type='plain')  # Assuming a method to fetch all users
@@ -71,8 +72,8 @@ async def sync_users(file_path):
             record['status'] = existing_users_map[emp_id]['status']
             record['is_ad_user'] = existing_users_map[emp_id]['is_ad_user']
         else:
-            record['status'] = False
-            record['is_ad_user'] = False
+            record['status'] = True
+            record['is_ad_user'] = True
 
         for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area']:
             record[key] = [rec.strip() for rec in record[key].split(",")] if record[key] else []
