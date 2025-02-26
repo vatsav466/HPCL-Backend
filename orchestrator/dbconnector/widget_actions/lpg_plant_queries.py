@@ -980,7 +980,7 @@ LIMIT 10000;''',
                             "zone",
                             "name",
                             "SiteArea" AS "plant",
-                            "filling_heads" as "heads",
+                            "filling_heads" as "carousel_type",
                             avg("productivity_normal_productivity") as "productivity"
                         from 
                             "lpg_operations_summary"
