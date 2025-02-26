@@ -3560,7 +3560,7 @@ class GlobalAnalytics:
                 productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name",  "process_date", "carousel_type", "SiteArea" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "SiteArea" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -3573,7 +3573,7 @@ class GlobalAnalytics:
                 productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "carousel_type", "SiteArea" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "SiteArea" '
             
             print("productivity_zone_query_ :", productivity_zone_query_)
             resp = await function(query=productivity_zone_query_)
