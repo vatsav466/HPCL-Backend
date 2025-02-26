@@ -20,7 +20,7 @@ class TelemetryService:
     @staticmethod
     async def load_site_data(site_id):
         """Load site data from a local JSON file."""
-        filename = f"/Users/manohar/Documents/GitHub/dnc_backend_v2/things_board/device_data/{site_id}.json"
+        filename = f"/opt/ceg/algo/things_board/device_data/{site_id}.json"
         if not os.path.exists(filename):
             print(f"Site data file not found: {filename}")
             return None
