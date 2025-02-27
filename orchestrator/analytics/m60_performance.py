@@ -14,9 +14,11 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
-Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
-#Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
-Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
+#Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
+Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"','"month_name"']
+#Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"'"ProductName"'', '"ProductName"']
+#Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
+Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"','"month_name"']
 Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'""", """ "SBU_Name" not in ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')"""]
 #Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}
@@ -159,6 +161,17 @@ def get_group_by_filter_key(cross_filters, Base_Filters,cumulative=False, drill_
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    sbuName_req = ''
+    print("filters",filters)
+    if '"SBU_Name"' in  [x['key'] for x in filters]:
+        print("insdie if")
+        for each_filter in filters:
+            print("each",each_filter)
+            if each_filter['key'] == '"SBU_Name"':
+                print(each_filter['value'])
+                sbuName_req =each_filter['value']
+                break
+    print("sbuName",sbuName_req)
     order = 'cumulative'
     if not cross_filters:
         cross_filters = []
@@ -175,6 +188,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         order = 'cumulative'
     if cumulative:
         Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
+        Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"','"month_name"']
     else:
         Base_Filters = ['"month_name"','"SBU_Name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
     # Fetching all group by filters, return should be a list always
@@ -527,6 +541,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         measure_unit = 'TMT'
         if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
+        if sbuName_req =="GAS" :
+            measure_unit = 'MT'
         print("final_resp",final_resp)
         if 'cumulative' not in final_resp and not drill_state:
                 final_resp['cumulative'] = {}
@@ -549,6 +565,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         measure_unit = 'TMT'
         if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
+            measure_unit = 'MT'
+        print("sbuName",sbuName_req)
+        if sbuName_req =="GAS" :
             measure_unit = 'MT'
         if 'cumulative' not in final_resp:
                 final_resp['cumulative'] = {}
