@@ -1637,6 +1637,13 @@ Model HostSickTts {
     remarks optional str
     sap_id optional str
 
+    Action=> download_data {
+    }
+
+    Action=> get_count{
+        date optional str
+    }
+
     Config=> {
         access_key_mapping=''
     }

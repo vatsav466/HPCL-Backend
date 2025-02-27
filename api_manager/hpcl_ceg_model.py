@@ -4059,6 +4059,14 @@ class HostSickTtsGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Hostsicktts_Download_DataParams(pydantic.BaseModel):
+    pass
+
+
+class Hostsicktts_Get_CountParams(pydantic.BaseModel):
+    date: typing.Optional[str] = pydantic.Field("", **{})
+
+
 class HostCancelledTtsSchema(UrdhvaPostgresBase):
     __tablename__ = 'host_cancelled_tts'
     

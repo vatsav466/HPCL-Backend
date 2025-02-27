@@ -3078,6 +3078,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "download_data"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3093,6 +3099,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3117,6 +3126,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "download_data"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -4033,6 +4048,14 @@
         {
             "name": "bulk_update_cp_stock_receipts",
             "displayName": "bulk_update_cp_stock_receipts"
+        },
+        {
+            "name": "download_data",
+            "displayName": "download_data"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
         },
         {
             "name": "things_board_device_data",
