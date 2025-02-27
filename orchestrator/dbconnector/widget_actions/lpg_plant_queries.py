@@ -1043,6 +1043,20 @@ LIMIT 10000;''',
                                     "lpg_cdcms_subsidy_failure_statistics"
                                     ''',
     
+    'lpg_cdcms_daywise_subsidy_exception_statistics': f'''
+                                SELECT
+                                    "ZOName",
+                                    "ROName",
+                                    "SAName",
+                                    "DistributorName",
+                                    "Delivery_Date",
+                                    "ExceptionName",
+                                    DATE("Delivery_Date") AS "Delivery_Date",
+                                    SUM("Refills") as "Refills"
+                                FROM
+                                    "lpg_cdcms_subsidy_exception_statistics"
+                                    ''',
+    
     'lpg_operations_current_month_production': f'''
                                                     SELECT
                                                         ROUND(SUM("productivity_normal_production"::numeric)/1000, 2) AS "current_month_production"
