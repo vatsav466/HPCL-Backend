@@ -2702,6 +2702,66 @@ class VtsAlertHistoryGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class EmLockAlertHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    emlock_exception_id: Mapped[str] = mapped_column("emlock_exception_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    terminal_code: Mapped[str] = mapped_column("terminal_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    truck_number: Mapped[str] = mapped_column("truck_number", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    exception_type: Mapped[str] = mapped_column("exception_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_code: Mapped[typing.Optional[str]] = mapped_column("ro_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_datetime: Mapped[str] = mapped_column("created_datetime", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class EmLockAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    emlock_exception_id: str
+    terminal_code: str
+    truck_number: str
+    exception_type: str
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    created_datetime: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = EmLockAlertHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class EmLockAlertHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    emlock_exception_id: typing.Optional[str] | None = None
+    terminal_code: typing.Optional[str] | None = None
+    truck_number: typing.Optional[str] | None = None
+    exception_type: typing.Optional[str] | None = None
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    created_datetime: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = EmLockAlertHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class EmLockAlertHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[EmLockAlertHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class VaAlertHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'va_alert_history'
     

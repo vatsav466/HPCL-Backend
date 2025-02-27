@@ -2,6 +2,7 @@ import urdhva_base
 import datetime
 import hpcl_ceg_model
 import urdhva_base.queryparams
+import utilities.interlock_mapping
 import dateutil.parser as dt_parser
 import utilities.emlock_mapping as emlock_mapping
 import utilities.interlock_mapping as interlock_mapping
@@ -14,6 +15,55 @@ logger = urdhva_base.logger.Logger.getInstance("emlock_alertmanager")
 class EMLockAlertManager(alert_factory.AlertFactory):
     @classmethod
     async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
+        """
+        Converting/Transforming EMLock raw alert data into unique alert data format
+        Args:
+            alert_data:
+            camunda_url:
+
+        Returns:
+        """
+        print("EmLock alert_data -->", alert_data)
+        status, loc_dt = await alert_helper.get_location_details(bu="TAS", sap_id=alert_data['location_id'])
+        if status:
+            alert_data['location_data'] = loc_dt
+
+        emlock_interlock_details = emlock_mapping.emlock_vehicle_mapping['TAS']
+
+        interlock_details = utilities.interlock_mapping.get_interlock_name(
+            alert_data['location_type'],
+            emlock_interlock_details[alert_data['exception_type']]['interlock_name'])
+        logger.info(f"va interlock data: {interlock_details}")
+
+        exception_msg = (f"Vehicle Number - {alert_data['truck_number']} \n Violation Type - {alert_data['exception_type']} \n"
+                         f"Terminal Code - {alert_data['terminal_code']} \n"
+                         f"Exception Date - {alert_data['created_datetime']}")
+
+        alert_history = [{
+            "action_msg": exception_msg,
+            "action_type": "Created",
+            "alert_status": "Open"
+        }]
+
+        # preparing alert_data for VA
+        interlock_details.update({"bu": alert_data['location_type'],
+                                  "location_name": loc_dt['name'],
+                                  "sap_id": alert_data['location_id'],
+                                  "severity": emlock_interlock_details[alert_data['exception_type']]['severity'],
+                                  "alert_id": alert_data['emlock_exception_id'],
+                                  "alert_section": "EMLock",
+                                  "alert_history": alert_history,
+                                  "vendor_alert_id": alert_data['emlock_exception_id'],
+                                  "alert_timestamp": datetime.datetime.strptime(alert_data['created_datetime'], "%Y-%m-%d %H:%M:%S").isoformat()
+                                  })
+
+
+        await cls.create_alert(interlock_details, camunda_url)
+
+
+
+    @classmethod
+    async def create_bu_alert_old(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
         """
         Converting/Transforming EMLock raw alert data into unique alert data format
         :param alert_data:
