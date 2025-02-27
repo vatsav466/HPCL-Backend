@@ -46,7 +46,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         }]
 
         # preparing alert_data for VA
-        interlock_details.update({"bu": alert_data['location_type'],
+        interlock_details.update({"bu": "TAS",
                                   "location_name": loc_dt['name'],
                                   "sap_id": alert_data['location_id'],
                                   "severity": emlock_interlock_details[alert_data['exception_type']]['severity'],
@@ -54,6 +54,8 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                                   "alert_section": "EMLock",
                                   "alert_history": alert_history,
                                   "vendor_alert_id": alert_data['emlock_exception_id'],
+                                  "vehicle_number": alert_data['truck_number'],
+                                  "violation_type": alert_data['exception_type'],
                                   "alert_timestamp": datetime.datetime.strptime(alert_data['created_datetime'], "%Y-%m-%d %H:%M:%S").isoformat()
                                   })
 
