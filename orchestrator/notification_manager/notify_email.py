@@ -26,7 +26,8 @@ class NotifyEMail(NotificationManager):
         creds = {"username": urdhva_base.settings.smtp_username, "password": urdhva_base.settings.smtp_password,
                  "port": urdhva_base.settings.smtp_port, "server": urdhva_base.settings.smtp_host,
                  "from": urdhva_base.settings.smtp_from_url,
-                 "connection_type": "SSL/TLS" if urdhva_base.settings.smtp_ssl_enabled else "STARTTLS"}
+                 "connection_type": "SSL/TLS" if urdhva_base.settings.smtp_ssl_enabled else "STARTTLS"
+                 if urdhva_base.settings.smtp_tls_enabled else None}
         return creds
 
     @classmethod
