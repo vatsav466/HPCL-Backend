@@ -293,4 +293,5 @@ async def get_camunda_url(bu, sap_id, alert_section):
     return default_url
 
 async def get_doc_link(file_name: str):
-    return f"https://10.90.38.161/api/alerts/stored_document?file_name={file_name}"
+    server_ip = urdhva_base.settings.server_ip
+    return f"https://{server_ip}/api/alerts/stored_document?file_name={file_name}"
