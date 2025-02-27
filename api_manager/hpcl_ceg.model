@@ -1737,7 +1737,6 @@ Model HostOverLoadedTts{
     truck_number optional unique_field str
     compartment_number optional unique_field int
     blend_name optional unique_field str
-    product_name optional unique_field str
     required_qty optional unique_field int
     loaded_qty optional unique_field int
     sap_id optional str

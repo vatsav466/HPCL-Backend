@@ -4411,12 +4411,11 @@ class HostOverLoadedTtsSchema(UrdhvaPostgresBase):
     truck_number: Mapped[typing.Optional[str]] = mapped_column("truck_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     compartment_number: Mapped[typing.Optional[int]] = mapped_column("compartment_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     blend_name: Mapped[typing.Optional[str]] = mapped_column("blend_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    product_name: Mapped[typing.Optional[str]] = mapped_column("product_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     required_qty: Mapped[typing.Optional[int]] = mapped_column("required_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     loaded_qty: Mapped[typing.Optional[int]] = mapped_column("loaded_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, blend_name, product_name, required_qty, loaded_qty, name="host_over_loaded_tts_load_number_truck_number_compartment_number_blend_name_product_name_required_qty_loaded_qty"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, blend_name, required_qty, loaded_qty, name="host_over_loaded_tts_load_number_truck_number_compartment_number_blend_name_required_qty_loaded_qty"),)
 
 
 class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4426,7 +4425,6 @@ class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
     blend_name: typing.Optional[str] = pydantic.Field("", **{})
-    product_name: typing.Optional[str] = pydantic.Field("", **{})
     required_qty: typing.Optional[int] = pydantic.Field(0, **{})
     loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -4434,7 +4432,7 @@ class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostOverLoadedTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'product_name', 'required_qty', 'loaded_qty']
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty']
 
 
 class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4444,7 +4442,6 @@ class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
     blend_name: typing.Optional[str] = pydantic.Field("", **{})
-    product_name: typing.Optional[str] = pydantic.Field("", **{})
     required_qty: typing.Optional[int] = pydantic.Field(0, **{})
     loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -4452,7 +4449,7 @@ class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostOverLoadedTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'product_name', 'required_qty', 'loaded_qty']
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty']
 
 
 class HostOverLoadedTtsGetResp(pydantic.BaseModel):
