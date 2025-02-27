@@ -2029,6 +2029,7 @@ class LPGCDCMSActions:
             resp = pl.DataFrame(query_resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
+            resp = resp.with_columns(pl.col('Refills').fill_null(0).cast(pl.Float64).alias('Refills'))
             resp = resp.group_by(["Delivery_Date", "PaymentErrorName"]).agg([
                     pl.mean("Refills").round(2).alias("Refills"),
                 ])
