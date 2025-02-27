@@ -500,7 +500,7 @@ class AlertAction:
         :param alert_data:
         :return:
         """
-        if alert_data.alert_section in ["VA", "VTS"]:
+        if alert_data.alert_section in ["VA", "VTS", "TAS", "RO"]:
             return await cls.publish_to_camunda(input_data, alert_data, "Approved")
         return await cls.publish_to_camunda(input_data, alert_data, "Reject")
 
