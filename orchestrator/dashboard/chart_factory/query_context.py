@@ -1,6 +1,7 @@
 import re
 import typing
 from enum import Enum
+TEMPORAL_RANGE_PATTERN = r'datetime\("([^"]{1,50})"\) : datetime\("([^"]{1,50})"\)'
 
 
 class FilterOperator(str, Enum):
@@ -180,7 +181,7 @@ async def where_clause(filter: typing.Dict, table: str, table_mapping: typing.Di
     table_alias = table_mapping.get(table, "a")
     where_clause_cond: str = ""
     if op == "TEMPORAL_RANGE":
-        match = re.match(r'datetime\("(.*?)"\) : datetime\("(.*?)"\)', val)
+        match = re.match(TEMPORAL_RANGE_PATTERN, val)
         if match:
             start_date, end_date = match.groups()
             where_clause_cond += f'''{table_alias}."{col}" BETWEEN '{start_date}' AND '{end_date}' '''
