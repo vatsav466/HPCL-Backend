@@ -1037,6 +1037,7 @@ LIMIT 10000;''',
                                     "DistributorName",
                                     "Delivery_Date",
                                     "PaymentErrorName",
+                                    DATE("Delivery_Date") AS "Delivery_Date",
                                     SUM("Refills") as "Refills"
                                 FROM
                                     "lpg_cdcms_subsidy_failure_statistics"
