@@ -171,7 +171,7 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP051", "interlock_name": "Unauthorized Activity (Emergency Gate opening )", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          {"sop_id": "SOP052", "interlock_name": "Clustering of people", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          {"sop_id": "SOP053", "interlock_name": "TT Branding non compliance", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
-                         {"sop_id": "SOP054", "interlock_name": "Unauthorized activity (Stacking of unwanted material in shed)", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"}
+                         {"sop_id": "SOP054", "interlock_name": "Unauthorized activity (Stacking of unwanted material in shed)", "model": "VA", "workflow_name": "UC_TAS_SOP27_33"},
                          
                          {"sop_id": "SOP055", "interlock_name": "Fan Number Not Generated", "model": "EMLock", "workflow_name": ""},
                          {"sop_id": "SOP056", "interlock_name": "Swipe In Count Exceeded", "model": "EMLock", "workflow_name": ""},
@@ -260,7 +260,7 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviati
                         {"sop_id": "SOP999", "interlock_name": "Bay Interlock"},
                         {"sop_id": "SOP291", "interlock_name": "Indent Dry Out", "workflow_name": "Indent Dry Out"},
                         {"sop_id": "SOP292", "interlock_name": "Dry Out Each Indent Wise MainFlow", "workflow_name": "Dry Out Each Indent Wise MainFlow"},
-                        {"sop_id": "SOP293", "interlock_name": "Dry Out Triggering Flow"}
+                        {"sop_id": "SOP293", "interlock_name": "Dry Out Triggering Flow"},
                         
                         {"sop_id": "SOP020", "interlock_name": "Fan Number Not Generated", "model": "EMLock", "workflow_name": ""},
                         {"sop_id": "SOP021", "interlock_name": "Swipe In Count Exceeded", "model": "EMLock", "workflow_name": ""},

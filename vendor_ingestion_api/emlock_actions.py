@@ -2,6 +2,8 @@ from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
 import traceback
+import hpcl_ceg_model
+import utilities.helpers as helpers
 import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/emlock')
@@ -25,12 +27,30 @@ async def emlock_ingest_data(data: Emlock_Ingest_DataParams):
     """
     try:
         logger.info(f"Received EMLock data ingestion from vendor {data.vendor_id} {data.dict()}")
-        await alert_manager.create_alert({**data.dict(), "alert_type": "EMLock"})
-        redis_ins = await urdhva_base.redispool.get_redis_connection()
-        vendor = "hpcl_emlock"
-        db_access_key = ""
-        if await redis_ins.hexists("vendor_auth", f"{vendor}_access_key"):
-            db_access_key = await redis_ins.hget("vendor_auth", f"{vendor}_access_key")
+
+        if isinstance(data.data, list) and len(data.data) > 0:
+            enriched_data = [
+                {
+                    **entry.dict(),
+                    'vendor_id': data.vendor_id,
+                    'location_id': entry.terminal_code
+                }
+                for entry in data.data
+            ]
+        else:
+            logger.error(f"Invalid data structure: data.data is not a list or is empty")
+            return {"status": False, "message": "Invalid data", "data": []}
+        for entry in enriched_data:
+            await hpcl_ceg_model.EmLockAlertHistoryCreate(**entry).create()
+            camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
+                                                        alert_section="EMLock")
+            await alert_manager.create_alert({**entry, "alert_type": "EMLock"}, camunda_url=camunda_url)
+
+        # redis_ins = await urdhva_base.redispool.get_redis_connection()
+        # vendor = "hpcl_emlock"
+        # db_access_key = ""
+        # if await redis_ins.hexists("vendor_auth", f"{vendor}_access_key"):
+        #     db_access_key = await redis_ins.hget("vendor_auth", f"{vendor}_access_key")
         return {"status": True, "message": "Ok"}
     
     except Exception as e:

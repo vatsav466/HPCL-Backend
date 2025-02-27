@@ -2152,6 +2152,69 @@
             ]
         },
         {
+            "name": "emlockalerthistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "EmLockAlertHistory",
+            "attributes": {},
+            "uris": [
+                "/api/emlockalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "emlockalerthistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "EmLockAlertHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/emlockalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "emlockalerthistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "EmLockAlertHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/emlockalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "vaalerthistory",
             "type": "all",
             "ownerManagedAccess": false,
@@ -3015,6 +3078,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "download_data"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3030,6 +3099,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3054,6 +3126,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "download_data"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3970,6 +4048,14 @@
         {
             "name": "bulk_update_cp_stock_receipts",
             "displayName": "bulk_update_cp_stock_receipts"
+        },
+        {
+            "name": "download_data",
+            "displayName": "download_data"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
         },
         {
             "name": "things_board_device_data",

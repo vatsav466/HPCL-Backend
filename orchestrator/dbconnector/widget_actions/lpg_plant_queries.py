@@ -1025,9 +1025,23 @@ LIMIT 10000;''',
                                 SELECT 
                                 "zone",
                                 "SiteArea" AS "plant",
-                                SUM("productivity_normal_production") / 1000 AS "sum_productivity ", 
+                                SUM("productivity_normal_production") / 1000 AS "sum_production", 
                                 DATE("process_date") AS "process_date"
                                 FROM "lpg_operations_summary" ''',
+    
+    'lpg_cdcms_daywise_subsidy_failure_statistics': f'''
+                                SELECT
+                                    "ZOName",
+                                    "ROName",
+                                    "SAName",
+                                    "DistributorName",
+                                    "Delivery_Date",
+                                    "PaymentErrorName",
+                                    DATE("Delivery_Date") AS "Delivery_Date",
+                                    SUM("Refills") as "Refills"
+                                FROM
+                                    "lpg_cdcms_subsidy_failure_statistics"
+                                    ''',
     
     'lpg_operations_current_month_production': f'''
                                                     SELECT

@@ -2702,6 +2702,66 @@ class VtsAlertHistoryGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class EmLockAlertHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    emlock_exception_id: Mapped[str] = mapped_column("emlock_exception_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    terminal_code: Mapped[str] = mapped_column("terminal_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    truck_number: Mapped[str] = mapped_column("truck_number", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    exception_type: Mapped[str] = mapped_column("exception_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_code: Mapped[typing.Optional[str]] = mapped_column("ro_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_datetime: Mapped[str] = mapped_column("created_datetime", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class EmLockAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    emlock_exception_id: str
+    terminal_code: str
+    truck_number: str
+    exception_type: str
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    created_datetime: str
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = EmLockAlertHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class EmLockAlertHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    emlock_exception_id: typing.Optional[str] | None = None
+    terminal_code: typing.Optional[str] | None = None
+    truck_number: typing.Optional[str] | None = None
+    exception_type: typing.Optional[str] | None = None
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    created_datetime: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = EmLockAlertHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class EmLockAlertHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[EmLockAlertHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class VaAlertHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'va_alert_history'
     
@@ -3946,6 +4006,8 @@ class HostSickTtsSchema(UrdhvaPostgresBase):
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, compartment_number, product_name, sick_date, name="host_sick_tts_load_number_truck_number_created_date_customer_name_compartment_number_product_name_sick_date"),)
+
 
 class HostSickTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'host_sick_tts'
@@ -3966,7 +4028,6 @@ class HostSickTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostSickTtsSchema
-        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date']
 
 
@@ -3989,7 +4050,6 @@ class HostSickTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostSickTtsSchema
-        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date']
 
 
@@ -3997,6 +4057,14 @@ class HostSickTtsGetResp(pydantic.BaseModel):
     data: typing.List[HostSickTts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Hostsicktts_Download_DataParams(pydantic.BaseModel):
+    pass
+
+
+class Hostsicktts_Get_CountParams(pydantic.BaseModel):
+    date: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class HostCancelledTtsSchema(UrdhvaPostgresBase):
@@ -4011,6 +4079,8 @@ class HostCancelledTtsSchema(UrdhvaPostgresBase):
     cancelled_by: Mapped[typing.Optional[str]] = mapped_column("cancelled_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     cancelled_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("cancelled_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, product_name, cancelled_date, name="host_cancelled_tts_load_number_truck_number_created_date_customer_name_product_name_cancelled_date"),)
 
 
 class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4029,7 +4099,6 @@ class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostCancelledTtsSchema
-        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date']
 
 
@@ -4049,7 +4118,6 @@ class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostCancelledTtsSchema
-        upsert_keys = []
         upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date']
 
 
@@ -4071,6 +4139,8 @@ class HostKFactorChangesSchema(UrdhvaPostgresBase):
     final_setting: Mapped[typing.Optional[str]] = mapped_column("final_setting", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(bcu_number, timestamp, initial_setting, final_setting, name="host_k_factor_changes_bcu_number_timestamp_initial_setting_final_setting"),)
+
 
 class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'host_k_factor_changes'
@@ -4087,7 +4157,6 @@ class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostKFactorChangesSchema
-        upsert_keys = []
         upsert_keys = ['bcu_number', 'timestamp', 'initial_setting', 'final_setting']
 
 
@@ -4106,7 +4175,6 @@ class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostKFactorChangesSchema
-        upsert_keys = []
         upsert_keys = ['bcu_number', 'timestamp', 'initial_setting', 'final_setting']
 
 
@@ -4131,6 +4199,8 @@ class HostLocalLoadedTtsSchema(UrdhvaPostgresBase):
     transaction_end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("transaction_end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(bcu_number, truck_number, card_number, transaction_end_time, name="host_local_loaded_tts_bcu_number_truck_number_card_number_transaction_end_time"),)
+
 
 class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'host_local_loaded_tts'
@@ -4150,7 +4220,6 @@ class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostLocalLoadedTtsSchema
-        upsert_keys = []
         upsert_keys = ['bcu_number', 'truck_number', 'card_number', 'transaction_end_time']
 
 
@@ -4172,7 +4241,6 @@ class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostLocalLoadedTtsSchema
-        upsert_keys = []
         upsert_keys = ['bcu_number', 'truck_number', 'card_number', 'transaction_end_time']
 
 
@@ -4199,6 +4267,8 @@ class HostBayReAssignmentSchema(UrdhvaPostgresBase):
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(created_date, load_number, truck_number, customer_name, compartment_number, product_name, required_qty, loaded_qty, bay_reassignment_time, name="host_bay_re_assignment_created_date_load_number_truck_number_customer_name_compartment_number_product_name_required_qty_loaded_qty_bay_reassignment_time"),)
+
 
 class HostBayReAssignmentCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'host_bay_re_assignment'
@@ -4220,8 +4290,7 @@ class HostBayReAssignmentCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostBayReAssignmentSchema
-        upsert_keys = []
-        upsert_keys = ['load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'bay_reassignment_time']
+        upsert_keys = ['created_date', 'load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'required_qty', 'loaded_qty', 'bay_reassignment_time']
 
 
 class HostBayReAssignment(urdhva_base.postgresmodel.PostgresModel):
@@ -4244,8 +4313,7 @@ class HostBayReAssignment(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostBayReAssignmentSchema
-        upsert_keys = []
-        upsert_keys = ['load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'bay_reassignment_time']
+        upsert_keys = ['created_date', 'load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'required_qty', 'loaded_qty', 'bay_reassignment_time']
 
 
 class HostBayReAssignmentGetResp(pydantic.BaseModel):
@@ -4263,6 +4331,8 @@ class HostManualBayAssignedSchema(UrdhvaPostgresBase):
     text: Mapped[typing.Optional[str]] = mapped_column("text", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(user_name, timestamp, name="host_manual_bay_assigned_user_name_timestamp"),)
+
 
 class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'host_manual_bay_assigned'
@@ -4276,7 +4346,6 @@ class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostManualBayAssignedSchema
-        upsert_keys = []
         upsert_keys = ['user_name', 'timestamp']
 
 
@@ -4292,7 +4361,6 @@ class HostManualBayAssigned(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostManualBayAssignedSchema
-        upsert_keys = []
         upsert_keys = ['user_name', 'timestamp']
 
 
@@ -4310,6 +4378,8 @@ class HostManualFanPrintedSchema(UrdhvaPostgresBase):
     total_count: Mapped[typing.Optional[int]] = mapped_column("total_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, name="host_manual_fan_printed_manual_fan_count_auto_fan_count_total_count"),)
+
 
 class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'host_manual_fan_printed'
@@ -4322,7 +4392,6 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = []
         upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count']
 
 
@@ -4337,7 +4406,6 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = []
         upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count']
 
 
@@ -4359,6 +4427,8 @@ class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
     net_totalizer: Mapped[typing.Optional[float]] = mapped_column("net_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, name="host_unauthorised_flow_bcu_number_meter_number_timestamp_start_totalizer_end_totalizer_net_totalizer"),)
+
 
 class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'host_unauthorised_flow'
@@ -4375,8 +4445,7 @@ class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = []
-        upsert_keys = ['bcu_number', 'meter_number', 'timestamp']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer']
 
 
 class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
@@ -4394,8 +4463,7 @@ class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = []
-        upsert_keys = ['bcu_number', 'meter_number', 'timestamp']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer']
 
 
 class HostUnauthorisedFlowGetResp(pydantic.BaseModel):
@@ -4411,10 +4479,11 @@ class HostOverLoadedTtsSchema(UrdhvaPostgresBase):
     truck_number: Mapped[typing.Optional[str]] = mapped_column("truck_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     compartment_number: Mapped[typing.Optional[int]] = mapped_column("compartment_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     blend_name: Mapped[typing.Optional[str]] = mapped_column("blend_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    product_name: Mapped[typing.Optional[str]] = mapped_column("product_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     required_qty: Mapped[typing.Optional[int]] = mapped_column("required_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     loaded_qty: Mapped[typing.Optional[int]] = mapped_column("loaded_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, blend_name, required_qty, loaded_qty, name="host_over_loaded_tts_load_number_truck_number_compartment_number_blend_name_required_qty_loaded_qty"),)
 
 
 class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4424,7 +4493,6 @@ class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
     blend_name: typing.Optional[str] = pydantic.Field("", **{})
-    product_name: typing.Optional[str] = pydantic.Field("", **{})
     required_qty: typing.Optional[int] = pydantic.Field(0, **{})
     loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -4432,8 +4500,7 @@ class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostOverLoadedTtsSchema
-        upsert_keys = []
-        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name']
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty']
 
 
 class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4443,7 +4510,6 @@ class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
     blend_name: typing.Optional[str] = pydantic.Field("", **{})
-    product_name: typing.Optional[str] = pydantic.Field("", **{})
     required_qty: typing.Optional[int] = pydantic.Field(0, **{})
     loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -4451,8 +4517,7 @@ class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostOverLoadedTtsSchema
-        upsert_keys = []
-        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name']
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty']
 
 
 class HostOverLoadedTtsGetResp(pydantic.BaseModel):

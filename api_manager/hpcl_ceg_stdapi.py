@@ -472,6 +472,16 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await VtsAlertHistory.get_all(params, skip_secrets=True)
 
 
+@router.get('/emlockalerthistory/{id}', response_model=EmLockAlertHistory, tags=['EmLockAlertHistory'])
+async def get(id: str):
+    return await EmLockAlertHistory.get(id, skip_secrets=True)
+
+
+@router.get('/emlockalerthistory', response_model=EmLockAlertHistoryGetResp, tags=['EmLockAlertHistory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await EmLockAlertHistory.get_all(params, skip_secrets=True)
+
+
 @router.get('/vaalerthistory/{id}', response_model=VaAlertHistory, tags=['VaAlertHistory'])
 async def get(id: str):
     return await VaAlertHistory.get(id, skip_secrets=True)

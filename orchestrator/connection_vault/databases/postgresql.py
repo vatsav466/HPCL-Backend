@@ -18,6 +18,7 @@ from orchestrator.dashboard.chart_factory.query_operator import (
     AggregationOperator,
     JoinOperator
 )
+TEMPORAL_RANGE_PATTERN = r'datetime\("([^"]{1,50})"\) : datetime\("([^"]{1,50})"\)'
 
 
 class BaseAction:
@@ -961,7 +962,7 @@ class QueryBuilder:
         where_clause_cond: str = ""
         select_column = await self.select_col(agg, col, table_alias)
         if op == "TEMPORAL_RANGE":
-            match = re.match(r'datetime\("(.*?)"\) : datetime\("(.*?)"\)', val)
+            match = re.match(TEMPORAL_RANGE_PATTERN, val)
             if match:
                 start_date, end_date = match.groups()
                 where_clause_cond += f'''{select_column} BETWEEN '{start_date}' AND '{end_date}' '''
