@@ -2031,7 +2031,7 @@ class LPGCDCMSActions:
             resp = pl.from_pandas(resp)
             resp = resp.with_columns(pl.col('Refills').fill_null(0).cast(pl.Float64).alias('Refills'))
             resp = resp.group_by(["Delivery_Date", "PaymentErrorName"]).agg([
-                    pl.mean("Refills").round(2).alias("Refills"),
+                    pl.sum("Refills").round(2).alias("Refills"),
                 ])
             resp = resp.with_columns(pl.col("Delivery_Date").dt.strftime("%Y-%m-%d").alias("Delivery_Date"))
             numerical_columns = ["Refills"]
