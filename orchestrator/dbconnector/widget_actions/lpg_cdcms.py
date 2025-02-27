@@ -2014,7 +2014,7 @@ class LPGCDCMSActions:
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_failure_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_failure_stats_query_, access_filters, drill_state)
             daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
-            daywise_failure_stats_query_ += ' GROUP BY DATE("Delivery_Date"), "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName" '
+            daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -2023,7 +2023,7 @@ class LPGCDCMSActions:
                 daywise_failure_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
             else:
                 daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
-            daywise_failure_stats_query_ += ' GROUP BY DATE("Delivery_Date"), "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName" '
+            daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName" '
         try:
             query_resp = await function(query=daywise_failure_stats_query_)
             resp = pl.DataFrame(query_resp)
