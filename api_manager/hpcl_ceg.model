@@ -1607,152 +1607,143 @@ Model ConsumerPumpStocksReceipts {
 }
 
 Model HostSickTts {
-    load_number optional int
-    truck_number optional str
-    created_date optional date
-    customer_name optional str
-    compartment_number optional int
-    product_name optional str
+    load_number optional unique_field int
+    truck_number optional unique_field str
+    created_date optional unique_field date
+    customer_name optional unique_field str
+    compartment_number optional unique_field int
+    product_name optional unique_field str
     required_qty optional int
     loaded_qty optional int
     sick_declared_by optional str
-    sick_date optional datetime
+    sick_date optional unique_field datetime
     remarks optional str
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='load_number,truck_number,created_date,customer_name,compartment_number,product_name,sick_date'
     }
 }
 
 Model HostCancelledTts {
-    load_number optional int
-    truck_number optional str
-    created_date optional datetime
-    customer_name optional str
-    product_name optional str
+    load_number optional unique_field int
+    truck_number optional unique_field str
+    created_date optional unique_field datetime
+    customer_name optional unique_field str
+    product_name optional unique_field str
     required_qty optional int
     cancelled_by optional str
-    cancelled_date optional datetime
+    cancelled_date optional unique_field datetime
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='load_number,truck_number,created_date,customer_name,product_name,cancelled_date'
     }
 }
 
 Model HostKFactorChanges {
     sr_number optional int
     bay_number optional str
-    bcu_number optional str
-    timestamp optional datetime
+    bcu_number optional unique_field str
+    timestamp optional unique_field datetime
     bcu_parameter optional str
-    initial_setting optional str
-    final_setting optional str
+    initial_setting optional unique_field str
+    final_setting optional unique_field str
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='bcu_number,timestamp,initial_setting,final_setting'
     }
 }
 
 Model HostLocalLoadedTts {
     sr_number optional int
     bay_number optional str
-    bcu_number optional str
+    bcu_number optional unique_field str
     recipe_name optional str
-    truck_number optional str
-    card_number optional str
+    truck_number optional unique_field str
+    card_number optional unique_field str
     start_totalizer optional float
     end_totalizer optional float
     loaded_qty optional int
-    transaction_end_time optional datetime
+    transaction_end_time optional unique_field datetime
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='bcu_number,truck_number,card_number,transaction_end_time'
     }
 }
 
 Model HostBayReAssignment {
-    created_date optional datetime
-    load_number optional int
+    created_date optional unique_field datetime
+    load_number optional unique_field int
     fan_number optional str
-    truck_number optional str
-    customer_name optional str
-    compartment_number optional int
-    product_name optional str
-    required_qty optional int
-    loaded_qty optional int
+    truck_number optional unique_field str
+    customer_name optional unique_field str
+    compartment_number optional unique_field int
+    product_name optional unique_field str
+    required_qty optional unique_field int
+    loaded_qty optional unique_field int
     reassigned_bay optional str
-    bay_reassignment_time optional datetime
+    bay_reassignment_time optional unique_field datetime
     remarks optional str
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='load_number,truck_number,customer_name,compartment_number,product_name,bay_reassignment_time'
     }
 }
 
 Model HostManualBayAssigned {
     sr_number optional int
-    user_name optional str
-    timestamp optional datetime
+    user_name optional unique_field str
+    timestamp optional unique_field datetime
     text optional str
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='user_name,timestamp'
     }
 }
 
 Model HostManualFanPrinted {
-    manual_fan_count optional int
-    auto_fan_count optional int
-    total_count optional int
+    manual_fan_count optional unique_field int
+    auto_fan_count optional unique_field int
+    total_count optional unique_field int
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='manual_fan_count,auto_fan_count,total_count'
     }
 }
 
 Model HostUnauthorisedFlow {
     bay_number optional str
-    bcu_number optional str
-    meter_number optional int
-    timestamp optional datetime
-    start_totalizer optional float
-    end_totalizer optional float
-    net_totalizer optional float
+    bcu_number optional unique_field str
+    meter_number optional unique_field int
+    timestamp optional unique_field datetime
+    start_totalizer optional unique_field float
+    end_totalizer optional unique_field float
+    net_totalizer optional unique_field float
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='bcu_number,meter_number,timestamp'
     }
 }
 
 Model HostOverLoadedTts{
-    load_number optional int
-    truck_number optional str
-    compartment_number optional int
-    blend_name optional str
-    product_name optional str
-    required_qty optional int
-    loaded_qty optional int
+    load_number optional unique_field int
+    truck_number optional unique_field str
+    compartment_number optional unique_field int
+    blend_name optional unique_field str
+    product_name optional unique_field str
+    required_qty optional unique_field int
+    loaded_qty optional unique_field int
     sap_id optional str
 
     Config=> {
         access_key_mapping=''
-        upsert_keys='load_number,truck_number,compartment_number,blend_name'
     }
 }
 
