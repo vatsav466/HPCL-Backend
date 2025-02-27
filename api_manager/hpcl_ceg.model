@@ -1234,6 +1234,23 @@ Model VtsAlertHistory {
     }
 }
 
+Model EmLockAlertHistory {
+    vendor_id optional str
+    location_id optional str
+    location_type optional str
+    emlock_exception_id str
+    terminal_code str
+    truck_number str
+    exception_type str
+    ro_code optional str
+    created_datetime str
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='location_id:sap_id'
+    }
+}
+
 Model VaAlertHistory {
     vendor_id optional str
     location_id optional str
