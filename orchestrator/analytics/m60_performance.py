@@ -162,6 +162,13 @@ def get_group_by_filter_key(cross_filters, Base_Filters,cumulative=False, drill_
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     sbuName_req = ''
+    sbuWise = False
+    if '"sbu_wise"' in [x['key'] for x in cross_filters]:
+        sbuWise = True
+        for eachfilter in cross_filters:
+            if eachfilter['key'] == '"sbu_wise"':
+                inx = cross_filters.index(eachfilter)
+                cross_filters.pop(inx)
     print("filters",filters)
     if '"SBU_Name"' in  [x['key'] for x in filters]:
         print("insdie if")
@@ -547,7 +554,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if 'cumulative' not in final_resp and not drill_state:
                 final_resp['cumulative'] = {}
         if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1 and not drill_state:
-            if '"SBU_Name"' in [x['key'] for x in filters] or 'SBU_Name' in [x['key'] for x in filters]:
+            #if '"SBU_Name"' in [x['key'] for x in filters] or 'SBU_Name' in [x['key'] for x in filters]:
+            #if '"sbu_wise"' in [x['key'] for x in cross_filters] or 'sbu_wise' in [x['key'] for x in cross_filters]:
+            #if resp_format == 'sbu_wise':
+            if sbuWise:
                 final_resp['cumulative']["0"] = sbuName_req.upper()+'_CUMMULATIVE_SALES'
             else:
                 final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
@@ -576,7 +586,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if 'cumulative' not in final_resp:
                 final_resp['cumulative'] = {}
         if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1  and not drill_state:
-            if '"SBU_Name"' in [x['key'] for x in filters] or 'SBU_Name' in [x['key'] for x in filters]:
+            #if '"sbu_wise"' in [x['key'] for x in cross_filters] or 'sbu_wise' in [x['key'] for x in cross_filters]:
+            #if resp_format == 'sbu_wise':
+            if sbuWise:
                 final_resp['cumulative']["0"] = sbuName_req.upper()+'_CUMMULATIVE_SALES'
             else:
                 final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
