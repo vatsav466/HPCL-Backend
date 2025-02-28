@@ -4024,7 +4024,7 @@ class GlobalAnalytics:
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.group_by(["process_date"]).agg([
-                    pl.mean("sum_production").round(2).alias("sum_production"),
+                    pl.sum("sum_production").round(2).alias("sum_production"),
                 ])
             numerical_columns = ["sum_production"]
             for col in numerical_columns:
