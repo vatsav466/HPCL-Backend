@@ -1992,8 +1992,12 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         daywise_failure_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_failure_statistics")
         _filters = []
+        daterange = None
         if cross_filters:
             for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
@@ -2013,16 +2017,23 @@ class LPGCDCMSActions:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_failure_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_failure_stats_query_, access_filters, drill_state)
-            daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            if not daterange:
+                daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            if daterange:
+                daywise_failure_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
             daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_failure_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_failure_stats_query_, access_filters, drill_state)
-            if not "where" in daywise_failure_stats_query_.lower():
+            if not "where" in daywise_failure_stats_query_.lower() and not daterange:
                 daywise_failure_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
-            else:
+            elif not "where" in daywise_failure_stats_query_.lower() and daterange:
+                daywise_failure_stats_query_ += f' WHERE "Delivery_Date" BETWEEN {daterange} '
+            elif not daterange:
                 daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            elif daterange:
+                daywise_failure_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
             daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName" '
         try:
             query_resp = await function(query=daywise_failure_stats_query_)
@@ -2141,8 +2152,12 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         daywise_exception_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_exception_statistics")
         _filters = []
+        daterange = None
         if cross_filters:
             for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             conditions = []
@@ -2162,16 +2177,23 @@ class LPGCDCMSActions:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
-            daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            if not daterange:
+                daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            elif daterange:
+                daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
             daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
-            if not "where" in daywise_exception_stats_query_.lower():
+            if not "where" in daywise_exception_stats_query_.lower() and not daterange:
                 daywise_exception_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
-            else:
+            elif not "where" in daywise_exception_stats_query_.lower() and not daterange:
+                daywise_exception_stats_query_ += f' WHERE "Delivery_Date" BETWEEN {daterange} '
+            elif not daterange:
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            elif daterange:
+                daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
             daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName" '
         try:
             query_resp = await function(query=daywise_exception_stats_query_)
