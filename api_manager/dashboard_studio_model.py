@@ -120,9 +120,9 @@ class filtered_keysCreate(pydantic.BaseModel):
 
 
 class WidgetFiltersCreate(pydantic.BaseModel):
-    key: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.\\-=" ]+$'})
-    cond: str = pydantic.Field(**{'pattern': '^([a-zA-Z0-9_.\\-=! ]+|)$'})
-    value: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9_.\\-=" ]+|)$'})
+    key: str
+    cond: str
+    value: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class ChartsSchema(UrdhvaPostgresBase):
@@ -172,8 +172,6 @@ class ChartsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'charts'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = ChartsSchema
         upsert_keys = []
 
@@ -202,8 +200,6 @@ class Charts(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'charts'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = ChartsSchema
         upsert_keys = []
 
@@ -219,24 +215,12 @@ class Charts_Get_TablesParams(pydantic.BaseModel):
     database: str
     schema: str
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Get_ColumnsParams(pydantic.BaseModel):
     connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: str
     schema: str
     table: str
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Get_Unique_ValuesParams(pydantic.BaseModel):
@@ -245,12 +229,6 @@ class Charts_Get_Unique_ValuesParams(pydantic.BaseModel):
     schema: str
     table: str
     column: typing.List[str]
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Drill_Down_DataParams(pydantic.BaseModel):
@@ -261,31 +239,13 @@ class Charts_Drill_Down_DataParams(pydantic.BaseModel):
     filter_mapping: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
     limit: typing.Optional[int] = pydantic.Field(0, **{})
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Dashboard_ChartsParams(pydantic.BaseModel):
     pass
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Get_Dashboard_Chart_FormParams(pydantic.BaseModel):
     unique_id: str
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
@@ -293,23 +253,11 @@ class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
     schema: str
     table: str
     column: typing.List[str]
-    where_cond: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
+    where_cond: typing.Optional[typing.List[dict]] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
 
 class Charts_Generate_Dynamic_Chart_QueryParams(pydantic.BaseModel):
     query_context: str
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Save_ChartsParams(pydantic.BaseModel):
@@ -333,63 +281,27 @@ class Charts_Save_ChartsParams(pydantic.BaseModel):
     created_user: typing.Optional[str] = pydantic.Field("", **{})
     hashed_value: typing.Optional[str] = pydantic.Field("", **{})
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Get_Time_RangeParams(pydantic.BaseModel):
     text: str
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Get_Auto_Complete_TextParams(pydantic.BaseModel):
     prompt: str
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Connection_Vault_RoutingParams(pydantic.BaseModel):
     connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     action: str
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Get_Creds_DetailsParams(pydantic.BaseModel):
     connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Get_SchemaParams(pydantic.BaseModel):
     connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
     database: typing.Optional[str] = pydantic.Field("", **{})
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
@@ -402,31 +314,13 @@ class Charts_Generate_Vis_DataParams(pydantic.BaseModel):
     resp_format: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9_. ]+|)$'})
     resp_level: typing.Optional[str] = pydantic.Field("", **{})
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Enable_Cross_FilterParams(pydantic.BaseModel):
     filters: typing.List[WidgetFiltersCreate]
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Generate_Embedded_UrlParams(pydantic.BaseModel):
     dash_id: str
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Previous_Present_Month_SalesParams(pydantic.BaseModel):
@@ -435,21 +329,9 @@ class Charts_Previous_Present_Month_SalesParams(pydantic.BaseModel):
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
     sort_by: typing.Optional[str] = pydantic.Field("", **{})
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Sales_Drop_DownParams(pydantic.BaseModel):
     filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class Charts_Previous_Present_Month_Sales_By_ProductParams(pydantic.BaseModel):
@@ -458,24 +340,12 @@ class Charts_Previous_Present_Month_Sales_By_ProductParams(pydantic.BaseModel):
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
     sort_by: typing.Optional[str] = pydantic.Field("", **{})
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Charts_Previous_Present_Month_Amount_LitresParams(pydantic.BaseModel):
     cross_filters: typing.Optional[typing.List[salesFiltersCreate]] | None = None
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     time_grain: typing.Optional[str] = pydantic.Field("", **{})
     sort_by: typing.Optional[str] = pydantic.Field("", **{})
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class DashboardOrderInternalCreate(pydantic.BaseModel):
@@ -668,8 +538,6 @@ class DashBoardsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'dashboards'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = DashBoardsSchema
         upsert_keys = []
 
@@ -695,8 +563,6 @@ class DashBoards(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'dashboards'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = DashBoardsSchema
         upsert_keys = []
 
@@ -725,44 +591,20 @@ class Dashboards_Save_DashboardsParams(pydantic.BaseModel):
     group_name: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     tags: typing.Optional[typing.List[TagsInternalCreate]] | None = None
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Dashboards_Get_Dashboard_DetailsParams(pydantic.BaseModel):
     organization_id: int
     name: typing.Optional[str] = pydantic.Field("", **{})
     value: typing.Optional[str] = pydantic.Field("", **{})
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Dashboards_Get_Dashboard_GroupsParams(pydantic.BaseModel):
     organization_id: int
     group_id: typing.Optional[int] = pydantic.Field(0, **{})
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Dashboards_Get_Dashboard_UriParams(pydantic.BaseModel):
     dashboard_name: str
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class GroupsSchema(UrdhvaPostgresBase):
@@ -786,8 +628,6 @@ class GroupsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'groups'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = GroupsSchema
         upsert_keys = []
 
@@ -803,8 +643,6 @@ class Groups(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'groups'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = GroupsSchema
         upsert_keys = []
 
@@ -850,8 +688,6 @@ class DashboardGroupsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'dashboard_groups'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = DashboardGroupsSchema
         upsert_keys = []
 
@@ -869,8 +705,6 @@ class DashboardGroups(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'dashboard_groups'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = DashboardGroupsSchema
         upsert_keys = []
 
@@ -891,21 +725,9 @@ class Dashboardgroups_Update_Dashboard_GroupsParams(pydantic.BaseModel):
     group_order: typing.Optional[int] = pydantic.Field(0, **{})
     organization_id: int
 
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
-
 
 class Dashboardgroups_Update_Dashboard_Group_OrderParams(pydantic.BaseModel):
     group_orders: typing.List[GroupOrderCreate]
-
-    class Config:
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        else:
-            ...
 
 
 class AITextsSchema(UrdhvaPostgresBase):
@@ -925,8 +747,6 @@ class AITextsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'ai_texts'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = AITextsSchema
         upsert_keys = []
 
@@ -940,8 +760,6 @@ class AITexts(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'ai_texts'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
         schema_class = AITextsSchema
         upsert_keys = []
 

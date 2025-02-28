@@ -52,58 +52,28 @@ class AuthenticationManager:
         Returns:
             bool: True if authentication is successful, False otherwise.
         """
-
         # Checking whether user exists in ceg local database or not, If not return Invalid else proceed further
         user_data = await hpcl_ceg_model.Users.get_aggr_data(f"select * from users where "
                                                              f"lower(username)='{username.lower()}'", skip_total=True)
         if not user_data["data"]:
-            await cls.update_login_failure_attempts(username)
             return False, "Invalid Login Credentials"
         user_info = user_data['data'][0]
-        # If lock enabled, then sending user locked out status. This one moved here as per VAPT
-        if await cls.verify_locked_check(f'{username.lower()}'):
-            print(f"User {username} locked out")
-            return False, "User locked out"
 
         # If ldap authentication enabled allow user to validate with LDAP, else check local login
         if user_info.get('is_ad_user'): #urdhva_base.settings.ldap_auth_enabled:
             # Validating user in with LDAP.
-            try:
-                status = await cls.validate_ldap_auth(username, password)
-            except Exception as e:
-                print(f"Exception while validating ldap auth for user {username}")
-                status = False
+            status = await cls.validate_ldap_auth(username, password)
             if not status:
-                await cls.update_login_failure_attempts(username)
                 return False, "Invalid Login Credentials"
         else:
             # If provided password not equals to db password, skip authentication
             if urdhva_base.types.Secret(user_info["password"]).get_secret() != password:
-                await cls.update_login_failure_attempts(username)
                 return False, "Invalid Login Credentials"
         role = await hpcl_ceg_model.Roles.get_aggr_data(f"select * from roles where name='{user_info['novex_role']}'")
         if role["data"]:
             user_info["allowed_roles"] = role["data"][0]["allowed_pages"]
         # Adding session data
         return True, await cls.generate_cookie(user_info)
-
-    @classmethod
-    async def verify_locked_check(cls, username):
-        redis_ins = await urdhva_base.redispool.get_redis_connection()
-        failed_count = 0
-        if await redis_ins.exists(f"login_failure_{username.lower()}"):
-            failed_count = int(await redis_ins.get(f"login_failure_{username.lower()}"))
-        if failed_count > urdhva_base.settings.max_password_retires:
-            return True
-        return False
-
-    @classmethod
-    async def update_login_failure_attempts(cls, username):
-        redis_ins = await urdhva_base.redispool.get_redis_connection()
-        failed_count = 0
-        if await redis_ins.exists(f"login_failure_{username.lower()}"):
-            failed_count = int(await redis_ins.get(f"login_failure_{username.lower()}"))
-        await redis_ins.setex(f"login_failure_{username.lower()}", urdhva_base.settings.lockout_time, failed_count+1)
 
     @classmethod
     async def generate_cookie(cls, cookie_data):

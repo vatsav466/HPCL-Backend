@@ -49,7 +49,6 @@ class Settings(pydantic_settings.BaseSettings):
     password_salt: str = "hpcl_novex_dnc"
     max_redis_connections: int = 10
     origin_check_enabled: bool = False
-    disable_api_extra_inputs: bool = False
 
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
@@ -174,10 +173,6 @@ class Settings(pydantic_settings.BaseSettings):
     things_board_url: str = "http://localhost:8080"
     things_board_username: str = "admin"
     things_board_password: str = "password"
-
-    # Max user password retries
-    max_password_retires: int = 3
-    lockout_time: int = 60
 
     # Timezone settings
     time_zone: str = "Asia/Kolkata"
