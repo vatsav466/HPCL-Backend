@@ -3156,6 +3156,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3171,6 +3174,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3195,6 +3201,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3219,6 +3228,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3234,6 +3246,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3258,6 +3273,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3282,6 +3300,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3297,6 +3318,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3321,6 +3345,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3345,6 +3372,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3360,6 +3390,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3384,6 +3417,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3408,6 +3444,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3423,6 +3462,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3447,6 +3489,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3471,6 +3516,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3486,6 +3534,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3510,6 +3561,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3534,6 +3588,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3549,6 +3606,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3573,6 +3633,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3597,6 +3660,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3612,6 +3678,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -3636,6 +3705,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "get_count"
                 }
             ]
         },
@@ -4052,6 +4124,38 @@
         {
             "name": "download_data",
             "displayName": "download_data"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
+        },
+        {
+            "name": "get_count",
+            "displayName": "get_count"
         },
         {
             "name": "get_count",

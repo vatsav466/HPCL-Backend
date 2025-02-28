@@ -3,7 +3,7 @@
 echo "Code Sync Started"
 InstallDir=`pwd`
 CodeDir='/opt/ceg/algo'
-for folder in UrdhvaBase api_manager ceg_role_master_api orchestrator utilities vendor_ingestion_api authenticator
+for folder in UrdhvaBase api_manager ceg_role_master_api orchestrator utilities vendor_ingestion_api authenticator cache_gateway
 do
   if [ ! -d $CodeDir/$folder ]; then
     mkdir -p $CodeDir/$folder

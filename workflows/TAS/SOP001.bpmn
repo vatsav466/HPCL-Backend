@@ -8,7 +8,6 @@
       <bpmn:extensionElements>
         <camunda:inputOutput>
           <camunda:inputParameter name="escalationlevel_inmail">1</camunda:inputParameter>
-          <camunda:inputParameter name="mqofrole">TAS Officer</camunda:inputParameter>
           <camunda:inputParameter name="rolemailto">TAS Officer,Location In-charge</camunda:inputParameter>
           <camunda:inputParameter name="messagetype">active</camunda:inputParameter>
           <camunda:inputParameter name="msg_subject">Interlock Activate</camunda:inputParameter>
@@ -201,10 +200,10 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0hzsdz4_di" bpmnElement="Event_0hzsdz4">
-        <dc:Bounds x="982" y="249" width="36" height="36" />
+        <dc:Bounds x="1052" y="249" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_1isiial" bpmnElement="Activity_0lwx61m">
-        <dc:Bounds x="850" y="227" width="100" height="80" />
+        <dc:Bounds x="870" y="227" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_10nrgqd_di" bpmnElement="Flow_10nrgqd">
@@ -217,7 +216,7 @@
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_13wlale_di" bpmnElement="Flow_13wlale">
         <di:waypoint x="800" y="267" />
-        <di:waypoint x="850" y="267" />
+        <di:waypoint x="870" y="267" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_02izmw9_di" bpmnElement="Flow_02izmw9">
         <di:waypoint x="820" y="130" />
@@ -253,8 +252,8 @@
         <di:waypoint x="700" y="267" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0m271o0_di" bpmnElement="Flow_0m271o0">
-        <di:waypoint x="950" y="267" />
-        <di:waypoint x="982" y="267" />
+        <di:waypoint x="970" y="267" />
+        <di:waypoint x="1052" y="267" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
