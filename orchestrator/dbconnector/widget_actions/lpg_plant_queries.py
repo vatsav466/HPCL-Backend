@@ -1181,6 +1181,7 @@ ORDER BY
                                 "SAName",
                                 "DistributorName",
                                 "StateCode",
+                                "Financial_Year",
                                 SUM("Transaction_Count") as "transaction_count"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
@@ -1195,6 +1196,7 @@ ORDER BY
                                 "SAName",
                                 "DistributorName",
                                 "StateCode",
+                                "Financial_Year",
                                 SUM("SubsidyAmount") as "SubsidyAmount"
                             FROM
                                 "lpg_cdcms_subsidy_central" ''',
@@ -1209,6 +1211,7 @@ ORDER BY
                                 "SAName",
                                 "DistributorName",
                                 "StateCode",
+                                "Financial_Year",
                                 SUM("Consumer_Count") as "consumer_count"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
@@ -1223,6 +1226,7 @@ ORDER BY
                                 "SAName",
                                 "DistributorName",
                                 "StateCode",
+                                "Financial_Year",
                                 SUM("Transaction_Count") as "transaction_count"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
@@ -1237,6 +1241,7 @@ ORDER BY
                                 "SAName",
                                 "DistributorName",
                                 "StateCode",
+                                "Financial_Year",
                                 SUM("SubsidyAmount") as "SubsidyAmount"
                             FROM
                                 "lpg_cdcms_subsidy_state" ''',
