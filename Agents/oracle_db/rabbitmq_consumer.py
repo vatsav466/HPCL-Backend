@@ -1,7 +1,9 @@
 import json
 import pika
-import traceback
 import asyncio
+import traceback
+import numpy as np
+import pandas as pd
 from postgresql import Postgresql
 
 class RabbitMQConsumer:
@@ -46,10 +48,33 @@ class RabbitMQConsumer:
                     renamed_records = [self.rename_columns(record) for record in records]
 
                     print(f"✅ Processing table: {new_table_name} with {len(records)} records")
-                    await db.create_table("public", new_table_name, renamed_records)  # Ensure await is used
+
+                    # Convert to DataFrame
+                    df = pd.DataFrame(renamed_records)
+
+                    # Convert all float to float, int to int, str to str, datetime to datetime, and handle NaN/Null values
+                    for col in df.columns:
+                        if df[col].dtype == np.float64 or df[col].dtype == np.float32:
+                            df[col] = df[col].astype(float)  # Ensure float type
+                            df[col].fillna(0.0, inplace=True)  # Replace NaN with 0.0
+                        elif df[col].dtype == np.int64 or df[col].dtype == np.int32:
+                            df[col] = df[col].astype(int)  # Ensure integer type
+                            df[col].fillna(0, inplace=True)  # Replace NaN with 0
+                        elif df[col].dtype == object:
+                            try:
+                                df[col] = pd.to_datetime(df[col])  # Convert valid strings to datetime
+                            except Exception:
+                                df[col] = df[col].astype(str)  # Ensure string type
+                            df[col].fillna("", inplace=True)  # Replace NaN/null with empty string
+
+                    # Convert back to list of dictionaries
+                    cleaned_records = df.to_dict(orient="records")
+
+                    # Ensure await is used while creating the table
+                    await db.create_table("public", new_table_name, cleaned_records)
+
                 else:
                     print(f"⚠ Warning: Invalid data format for {table_name}")
-
         except Exception as e:
             print(traceback.format_exc())
             print(e)
