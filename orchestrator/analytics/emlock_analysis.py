@@ -15,7 +15,7 @@ async def close_emlock_alert(alert_data: dict):
             "acknowledgedUser":"Employee code",
             "acknowledgedTime":"2025-02-01 17:00:00",
             "remarks":"",
-            "metaData": "{'loadNumber':'456123','fanNumber':'987456', 'loadNumber':'456123','invoiceNumber':'987456-
+            "metaData": "{'loadNumber':'456123','fanNumber':'987456', 'invoiceNumber':'987456-
 123','tripType':'single', 'roCode':'123', 'terminalCode':''}"
         }
 

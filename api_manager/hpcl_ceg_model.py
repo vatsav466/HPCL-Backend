@@ -1221,6 +1221,10 @@ class Alerts_Alert_ActionParams(pydantic.BaseModel):
     action_description: typing.Optional[str] = pydantic.Field("", **{})
     doc_link: typing.Optional[str] = pydantic.Field("", **{})
     acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
+    load_number: typing.Optional[str] = pydantic.Field("", **{})
+    fan_number: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    trip_type: typing.Optional[str] = pydantic.Field("", **{})
     event_tags: typing.Optional[tagsCreate] | None = None
 
 

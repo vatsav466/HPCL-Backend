@@ -188,7 +188,7 @@ class emlockDataCreate(pydantic.BaseModel):
 
 
 class emlockVendorDataCreate(pydantic.BaseModel):
-    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+    location_type: str
     emlock_exception_id: str
     terminal_code: str
     truck_number: str
