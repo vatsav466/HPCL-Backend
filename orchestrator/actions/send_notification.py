@@ -10,6 +10,7 @@ from typing import Dict, List
 import hpcl_ceg_model
 import hpcl_ceg_enum
 from collections import defaultdict
+import utilities.role_configuration as role_configuration 
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
     TemplateMapping
@@ -60,8 +61,8 @@ class SendNotification:
             list: A list of strings representing the required variables.
         """
         return [
-            "alert_id", "BU", "interlock_name", "interlock_id", "messagetype",
-            "msg_subject", "mqofrole", "location_type", "location_device_id",
+            "alert_id", "BU", "interlock_name", "interlock_id", "messagetype", "mailto",
+            "msg_subject", "mqofrole", "location_type", "location_device_id", "mqof",
             "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
 
@@ -138,7 +139,7 @@ class SendNotification:
         bu = self.params.get("BU")
         sap_id = self.alert_data.get("sap_id", "")
         message_type = self.params.get("messagetype")
-        roles_list = self.params.get("rolemailto", "")
+        roles_list = self.params.get("rolemailto", "") if self.params.get("rolemailto", "") else (await self._role_configuration_rolemailto() or "")
         print("bu --> ", bu)
         print("sap_id --> ", sap_id)
         print("message_type --> ", message_type)
@@ -651,16 +652,16 @@ class SendNotification:
         self.update_alert.update({
             "action_type": self.base_alert_data.get("action_type"),
             "action_msg": self.base_alert_data.get("action_msg"),
-            "assigned_user_roles": self.params.get("mqofrole", "") or "",  # Ensure it's a string
+            "assigned_user_roles": self.params.get("mqofrole", "") if self.params.get("mqofrole", "") else (await self._role_configuration_mqofrole() or ""),  # Ensure it's a string
             # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
             "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
         })
         print("self.update_alert ---> ", self.update_alert)
 
         if self.params.get("escalationlevel_inmail"):
-            self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
+            self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") else (await self._role_configuration_rolemailto() or "").split(",")
         else:
-            self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
+            self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") else (await self._role_configuration_rolemailto() or "").split(",")
 
         # Convert assigned_user_roles to a list
         self.update_alert["assigned_user_roles"] = self.update_alert["assigned_user_roles"].split(',') if self.update_alert["assigned_user_roles"] else []
@@ -736,3 +737,29 @@ class SendNotification:
         if "_sa_instance_state" in self.alert_data.keys():
             del self.alert_data["_sa_instance_state"]
         return True, {"alert_id": self.params['alert_id']}
+    
+    async def _role_configuration_rolemailto(self):
+        mailto=self.params.get("mailto","")
+        interlock_name = self.alert_data.get("interlock_name","")
+        alert_section = self.alert_data.get("alert_section","")
+        rolemapping = role_configuration.role_Mapping[alert_section].get(interlock_name, {})
+        print("rolemapping--------->",rolemapping)
+        if mailto:
+            print("mailto-------------->",rolemapping["rolemailto"].get(mailto,""))
+            return rolemapping["rolemailto"].get(mailto,"")
+        return ""
+    
+    async def _role_configuration_mqofrole(self):
+        mqof = self.params.get("mqof","")
+        interlock_name = self.alert_data.get("interlock_name","")
+        alert_section = self.alert_data.get("alert_section","")
+        rolemapping = role_configuration.role_Mapping[alert_section].get(interlock_name, {})
+        print("rolemapping--------->",rolemapping)
+        if mqof:
+            print("mqof----------->",rolemapping["mqof"].get(mqof,""))
+            return rolemapping["mqof"].get(mqof,"")
+        return ""
+        
+
+
+
