@@ -16,12 +16,3 @@ async def hostsicktts_download_data(upload_file: fastapi.UploadFile = fastapi.Fi
         return {"status": "failed", "message": "No file uploaded"}
     file_path = os.path.join(SAVE_PATH, upload_file.filename)
     return {"status": "success", "message": f"File saved at {file_path}"}
-
-
-# Action get_count
-@router.post('/get_count', tags=['HostSickTts'])
-async def hostsicktts_get_count(data: Hostsicktts_Get_CountParams):
-    query = f"SELECT * FROM host_sick_tts where created_at::DATE = '{data.date}'"
-    params = urdhva_base.queryparams.QueryParams(q=query)
-    data = HostSickTts.count(params)
-    return resp

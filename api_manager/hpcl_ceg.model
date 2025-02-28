@@ -1641,11 +1641,7 @@ Model HostSickTts {
 
     Action=> download_data {
     }
-
-    Action=> get_count{
-        date optional str
-    }
-
+    
     Config=> {
         access_key_mapping=''
     }
@@ -1664,10 +1660,6 @@ Model HostCancelledTts {
     location_name optional str
     zone optional str
 
-    Action=> get_count{
-        date optional str
-    }
-
     Config=> {
         access_key_mapping=''
     }
@@ -1684,10 +1676,6 @@ Model HostKFactorChanges {
     sap_id optional str
     location_name optional str
     zone optional str
-
-    Action=> get_count{
-        date optional str
-    }
 
     Config=> {
         access_key_mapping=''
@@ -1708,10 +1696,6 @@ Model HostLocalLoadedTts {
     sap_id optional str
     location_name optional str
     zone optional str
-
-    Action=> get_count{
-        date optional str
-    }
 
     Config=> {
         access_key_mapping=''
@@ -1735,10 +1719,6 @@ Model HostBayReAssignment {
     location_name optional str
     zone optional str
 
-    Action=> get_count{
-        date optional str
-    }
-
     Config=> {
         access_key_mapping=''
     }
@@ -1753,10 +1733,6 @@ Model HostManualBayAssigned {
     location_name optional str
     zone optional str
 
-    Action=> get_count{
-        date optional str
-    }
-
     Config=> {
         access_key_mapping=''
     }
@@ -1769,10 +1745,6 @@ Model HostManualFanPrinted {
     sap_id optional str
     location_name optional str
     zone optional str
-
-    Action=> get_count{
-        date optional str
-    }
 
     Config=> {
         access_key_mapping=''
@@ -1791,10 +1763,6 @@ Model HostUnauthorisedFlow {
     location_name optional str
     zone optional str
 
-    Action=> get_count{
-        date optional str
-    }
-
     Config=> {
         access_key_mapping=''
     }
@@ -1811,10 +1779,6 @@ Model HostOverLoadedTts{
     location_name optional str
     zone optional str
 
-    Action=> get_count{
-        date optional str
-    }
-    
     Config=> {
         access_key_mapping=''
     }

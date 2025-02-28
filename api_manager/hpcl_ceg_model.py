@@ -4069,10 +4069,6 @@ class Hostsicktts_Download_DataParams(pydantic.BaseModel):
     pass
 
 
-class Hostsicktts_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
-
-
 class HostCancelledTtsSchema(UrdhvaPostgresBase):
     __tablename__ = 'host_cancelled_tts'
     
@@ -4139,10 +4135,6 @@ class HostCancelledTtsGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
-class Hostcancelledtts_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
-
-
 class HostKFactorChangesSchema(UrdhvaPostgresBase):
     __tablename__ = 'host_k_factor_changes'
     
@@ -4204,10 +4196,6 @@ class HostKFactorChangesGetResp(pydantic.BaseModel):
     data: typing.List[HostKFactorChanges]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
-
-
-class Hostkfactorchanges_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class HostLocalLoadedTtsSchema(UrdhvaPostgresBase):
@@ -4280,10 +4268,6 @@ class HostLocalLoadedTtsGetResp(pydantic.BaseModel):
     data: typing.List[HostLocalLoadedTts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
-
-
-class Hostlocalloadedtts_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class HostBayReAssignmentSchema(UrdhvaPostgresBase):
@@ -4364,10 +4348,6 @@ class HostBayReAssignmentGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
-class Hostbayreassignment_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
-
-
 class HostManualBayAssignedSchema(UrdhvaPostgresBase):
     __tablename__ = 'host_manual_bay_assigned'
     
@@ -4422,10 +4402,6 @@ class HostManualBayAssignedGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
-class Hostmanualbayassigned_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
-
-
 class HostManualFanPrintedSchema(UrdhvaPostgresBase):
     __tablename__ = 'host_manual_fan_printed'
     
@@ -4475,10 +4451,6 @@ class HostManualFanPrintedGetResp(pydantic.BaseModel):
     data: typing.List[HostManualFanPrinted]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
-
-
-class Hostmanualfanprinted_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
@@ -4544,10 +4516,6 @@ class HostUnauthorisedFlowGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
-class Hostunauthorisedflow_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
-
-
 class HostOverLoadedTtsSchema(UrdhvaPostgresBase):
     __tablename__ = 'host_over_loaded_tts'
     
@@ -4606,10 +4574,6 @@ class HostOverLoadedTtsGetResp(pydantic.BaseModel):
     data: typing.List[HostOverLoadedTts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
-
-
-class Hostoverloadedtts_Get_CountParams(pydantic.BaseModel):
-    date: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class TagsDataSchema(UrdhvaPostgresBase):
