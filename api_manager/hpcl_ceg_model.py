@@ -4218,7 +4218,7 @@ class HostLocalLoadedTtsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, truck_number, card_number, transaction_end_time, name="host_local_loaded_tts_bcu_number_truck_number_card_number_transaction_end_time"),)
+    __table_args__ = (UniqueConstraint(sr_number, bcu_number, recipe_name, truck_number, card_number, start_totalizer, end_totalizer, loaded_qty, transaction_end_time, name="host_local_loaded_tts_sr_number_bcu_number_recipe_name_truck_number_card_number_start_totalizer_end_totalizer_loaded_qty_transaction_end_time"),)
 
 
 class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4241,7 +4241,7 @@ class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostLocalLoadedTtsSchema
-        upsert_keys = ['bcu_number', 'truck_number', 'card_number', 'transaction_end_time']
+        upsert_keys = ['sr_number', 'bcu_number', 'recipe_name', 'truck_number', 'card_number', 'start_totalizer', 'end_totalizer', 'loaded_qty', 'transaction_end_time']
 
 
 class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4264,7 +4264,7 @@ class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostLocalLoadedTtsSchema
-        upsert_keys = ['bcu_number', 'truck_number', 'card_number', 'transaction_end_time']
+        upsert_keys = ['sr_number', 'bcu_number', 'recipe_name', 'truck_number', 'card_number', 'start_totalizer', 'end_totalizer', 'loaded_qty', 'transaction_end_time']
 
 
 class HostLocalLoadedTtsGetResp(pydantic.BaseModel):

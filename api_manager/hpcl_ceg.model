@@ -1684,15 +1684,15 @@ Model HostKFactorChanges {
 }
 
 Model HostLocalLoadedTts {
-    sr_number optional int
+    sr_number optional unique_field int
     bay_number optional str
     bcu_number optional unique_field str
-    recipe_name optional str
+    recipe_name optional unique_field str
     truck_number optional unique_field str
     card_number optional unique_field str
-    start_totalizer optional float
-    end_totalizer optional float
-    loaded_qty optional int
+    start_totalizer optional unique_field float
+    end_totalizer optional unique_field float
+    loaded_qty optional unique_field int
     transaction_end_time optional unique_field datetime
     sap_id optional str
     location_name optional str
