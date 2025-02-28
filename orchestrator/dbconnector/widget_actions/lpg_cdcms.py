@@ -2188,14 +2188,14 @@ class LPGCDCMSActions:
             daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
             if not "where" in daywise_exception_stats_query_.lower() and not daterange:
                 daywise_exception_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
-            elif not "where" in daywise_exception_stats_query_.lower() and not daterange:
+            elif not "where" in daywise_exception_stats_query_.lower() and daterange:
                 daywise_exception_stats_query_ += f' WHERE "Delivery_Date" BETWEEN {daterange} '
             elif not daterange:
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
             elif daterange:
                 daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
             daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName" '
-        try:
+        try:    
             query_resp = await function(query=daywise_exception_stats_query_)
             resp = pl.DataFrame(query_resp)
             resp = await filter_data(resp.to_pandas(), _filters)
