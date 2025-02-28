@@ -1798,3 +1798,29 @@ Model TagsData {
     Action=> things_board_device_data{
     }
 }
+
+Model PerformanceIndex {
+    bu str
+    sap_id str
+    category str
+    zone str
+    region str
+    name str
+    score float
+
+    Action=> get_pi_score {
+        bu str
+        category optional str
+        region optional str
+        zone optional str
+        sap_id optional str
+        strategy str
+    }
+
+    Action=> get_pi_score_by_category {
+        bu str
+        region optional str
+        zone optional str
+        sap_id optional str
+    }
+}
