@@ -505,17 +505,13 @@ class SendNotification:
         message_type = self.params.get("messagetype")
         print("message_type --> ", message_type)
         if message_type == "active":
-            # await self._send_active_notification()
-            return True, "Success"
+            await self._send_active_notification()           
         elif message_type == "resolved":
-            # await self._send_resolved_notification()
-            return True, "Success"
+            await self._send_resolved_notification()
         elif message_type == 'Resolved':
-            # await self._send_other_notification()
-            return True, "Success"
+            await self._send_other_notification()
         else:
-            # await self._send_standard_notification()
-            return True, "Success"
+            await self._send_standard_notification()
 
     async def _send_active_notification(self):
         """
