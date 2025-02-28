@@ -24,11 +24,11 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         Returns:
         """
         print("EmLock alert_data -->", alert_data)
-        status, loc_dt = await alert_helper.get_location_details(bu="TAS", sap_id=alert_data['location_id'])
+        status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'], sap_id=alert_data['location_id'])
         if status:
             alert_data['location_data'] = loc_dt
 
-        emlock_interlock_details = emlock_mapping.emlock_vehicle_mapping['TAS']
+        emlock_interlock_details = emlock_mapping.emlock_vehicle_mapping[alert_data['location_type']]
 
         interlock_details = utilities.interlock_mapping.get_interlock_name(
             alert_data['location_type'],
@@ -45,8 +45,8 @@ class EMLockAlertManager(alert_factory.AlertFactory):
             "alert_status": "Open"
         }]
 
-        # preparing alert_data for VA
-        interlock_details.update({"bu": "TAS",
+        # preparing alert_data for EmLock
+        interlock_details.update({"bu": alert_data['location_type'],
                                   "location_name": loc_dt['name'],
                                   "sap_id": alert_data['location_id'],
                                   "severity": emlock_interlock_details[alert_data['exception_type']]['severity'],
@@ -56,6 +56,8 @@ class EMLockAlertManager(alert_factory.AlertFactory):
                                   "vendor_alert_id": alert_data['emlock_exception_id'],
                                   "vehicle_number": alert_data['truck_number'],
                                   "violation_type": alert_data['exception_type'],
+                                  "servicing_plant_id": alert_data['terminal_code'],
+                                  "dealer_id": alert_data['ro_code'],
                                   "alert_timestamp": datetime.datetime.strptime(alert_data['created_datetime'], "%Y-%m-%d %H:%M:%S").isoformat()
                                   })
 

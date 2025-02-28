@@ -175,11 +175,10 @@ tas_interlock_mapping = [
                          
                          {"sop_id": "SOP055", "interlock_name": "Fan Number Not Generated", "model": "EMLock", "workflow_name": ""},
                          {"sop_id": "SOP056", "interlock_name": "Swipe In Count Exceeded", "model": "EMLock", "workflow_name": ""},
-                         {"sop_id": "SOP057", "interlock_name": "TT outside Terminal Radius / VTS Exception", "model": "EMLock", "workflow_name": ""},
+                         {"sop_id": "SOP057", "interlock_name": "TT outside Terminal Radius", "model": "EMLock", "workflow_name": ""},
                          {"sop_id": "SOP058", "interlock_name": "Swipe Out Count Limit Exceed", "model": "EMLock", "workflow_name": ""},
                          {"sop_id": "SOP059", "interlock_name": "Invoice Not Generated", "model": "EMLock", "workflow_name": ""},
-                         {"sop_id": "SOP060", "interlock_name": "TT outside RO radius/VTS Exception", "model": "EMLock", "workflow_name": ""},
-                         {"sop_id": "SOP061", "interlock_name": "OTP Count Exceed", "model": "EMLock", "workflow_name": ""}]
+                         {"sop_id": "SOP060", "interlock_name": "Shipment Number Not Generated", "model": "EMLock", "workflow_name": ""}]
 
 # Interlock name and sop mapping for RO Alerts
 ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_90days"},
@@ -262,13 +261,9 @@ ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviati
                         {"sop_id": "SOP292", "interlock_name": "Dry Out Each Indent Wise MainFlow", "workflow_name": "Dry Out Each Indent Wise MainFlow"},
                         {"sop_id": "SOP293", "interlock_name": "Dry Out Triggering Flow"},
                         
-                        {"sop_id": "SOP020", "interlock_name": "Fan Number Not Generated", "model": "EMLock", "workflow_name": ""},
-                        {"sop_id": "SOP021", "interlock_name": "Swipe In Count Exceeded", "model": "EMLock", "workflow_name": ""},
-                        {"sop_id": "SOP022", "interlock_name": "TT outside Terminal Radius / VTS Exception", "model": "EMLock", "workflow_name": ""},
-                        {"sop_id": "SOP023", "interlock_name": "Swipe Out Count Limit Exceed", "model": "EMLock", "workflow_name": ""},
-                        {"sop_id": "SOP024", "interlock_name": "Invoice Not Generated", "model": "EMLock", "workflow_name": ""},
-                        {"sop_id": "SOP025", "interlock_name": "TT outside RO radius/VTS Exception", "model": "EMLock", "workflow_name": ""},
-                        {"sop_id": "SOP026", "interlock_name": "OTP Count Exceed", "model": "EMLock", "workflow_name": ""}]
+                        {"sop_id": "SOP020", "interlock_name": "TT outside RO radius", "model": "EMLock", "workflow_name": ""},
+                        {"sop_id": "SOP021", "interlock_name": "Pre Decantation Request Exceed", "model": "EMLock", "workflow_name": ""},
+                        {"sop_id": "SOP022", "interlock_name": "Post Decantation Request Exceed", "model": "EMLock", "workflow_name": ""}]
 
 # Interlock name and sop mapping for LPG Alerts
 lpg_interlock_mapping = [

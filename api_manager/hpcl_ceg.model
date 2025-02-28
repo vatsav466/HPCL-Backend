@@ -645,6 +645,10 @@ Model Alerts {
         action_description optional str
         doc_link optional str
         acknowledged_by optional str
+        load_number optional str
+        fan_number optional str
+        invoice_number optional str
+        trip_type optional str
         event_tags optional tags
     }
     Action=> intitiate_vts_exception {
