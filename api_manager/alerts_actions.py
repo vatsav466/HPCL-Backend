@@ -186,7 +186,7 @@ async def alerts_get_closed_alerts_details(data: Alerts_Get_Closed_Alerts_Detail
     else:
         rpt = {}
 
-    alert_data = await Alerts.get(int(data.alert_iifd))
+    alert_data = await Alerts.get(int(data.alert_id))
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
 
