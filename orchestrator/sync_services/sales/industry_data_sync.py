@@ -54,15 +54,7 @@ def insert_industry_data(res):
                 password=creds['password'],
                 port=creds['port']
             )
-    '''
-    pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )
-    '''
+    
     table_create_sql = ''
     cur = pg_conn.cursor()
     dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),

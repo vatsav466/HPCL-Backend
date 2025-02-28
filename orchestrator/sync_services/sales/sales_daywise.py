@@ -113,15 +113,7 @@ def insertToDB(data, table_name, indexing_col=()):
                 password=creds['password'],
                 port=creds['port']
             )
-    '''
-    pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )  
-    '''
+    
     table_create_sql = ''
     cur = pg_conn.cursor()
     print(data['NETWEIGHT_KG'].unique())
@@ -299,18 +291,7 @@ if __name__ == "__main__":
             "connection_type":"mssql"
                 
             }
-    '''
-    params = {
-        "host": '10.90.144.96',
-        "database": 'CONN_ENT',
-        "username": 'USER_ADMIN_CE',
-        "password": "Pwd#_aDMINCE@2023",
-        "port": 3306,
-        "table_name": "MOM_DAY_LEVEL_DATA",
-        "connection_type": "mssql"
-       # "indexing_col": ["Plantcd", "Itemcode", "DaysCover"]
-    }
-    '''
+    
 
     query = """SELECT ZS.Plant AS Plantcd,
              ZS.UNRESTRICTED_STOCK_VALUE AS Stock_value,

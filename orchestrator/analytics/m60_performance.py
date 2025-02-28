@@ -547,7 +547,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if 'cumulative' not in final_resp and not drill_state:
                 final_resp['cumulative'] = {}
         if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1 and not drill_state:
-            final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
+            if '"SBU_Name"' in [x['key'] for x in filters] or 'SBU_Name' in [x['key'] for x in filters]:
+                final_resp['cumulative']["0"] = sbuName_req.upper()+'_CUMMULATIVE_SALES'
+            else:
+                final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
+        
         else:
             if isinstance(final_resp,dict):
                 for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
@@ -572,7 +576,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if 'cumulative' not in final_resp:
                 final_resp['cumulative'] = {}
         if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1  and not drill_state:
-            final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
+            if '"SBU_Name"' in [x['key'] for x in filters] or 'SBU_Name' in [x['key'] for x in filters]:
+                final_resp['cumulative']["0"] = sbuName_req.upper()+'_CUMMULATIVE_SALES'
+            else:
+                final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
         else:
             if isinstance(final_resp,dict):
                 for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
