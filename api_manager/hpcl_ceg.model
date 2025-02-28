@@ -1636,6 +1636,8 @@ Model HostSickTts {
     sick_date optional unique_field datetime
     remarks optional str
     sap_id optional str
+    location_name optional str
+    zone optional str
 
     Action=> download_data {
     }
@@ -1659,6 +1661,12 @@ Model HostCancelledTts {
     cancelled_by optional str
     cancelled_date optional unique_field datetime
     sap_id optional str
+    location_name optional str
+    zone optional str
+
+    Action=> get_count{
+        date optional str
+    }
 
     Config=> {
         access_key_mapping=''
@@ -1674,6 +1682,12 @@ Model HostKFactorChanges {
     initial_setting optional unique_field str
     final_setting optional unique_field str
     sap_id optional str
+    location_name optional str
+    zone optional str
+
+    Action=> get_count{
+        date optional str
+    }
 
     Config=> {
         access_key_mapping=''
@@ -1692,6 +1706,12 @@ Model HostLocalLoadedTts {
     loaded_qty optional int
     transaction_end_time optional unique_field datetime
     sap_id optional str
+    location_name optional str
+    zone optional str
+
+    Action=> get_count{
+        date optional str
+    }
 
     Config=> {
         access_key_mapping=''
@@ -1712,6 +1732,12 @@ Model HostBayReAssignment {
     bay_reassignment_time optional unique_field datetime
     remarks optional str
     sap_id optional str
+    location_name optional str
+    zone optional str
+
+    Action=> get_count{
+        date optional str
+    }
 
     Config=> {
         access_key_mapping=''
@@ -1724,6 +1750,12 @@ Model HostManualBayAssigned {
     timestamp optional unique_field datetime
     text optional str
     sap_id optional str
+    location_name optional str
+    zone optional str
+
+    Action=> get_count{
+        date optional str
+    }
 
     Config=> {
         access_key_mapping=''
@@ -1735,6 +1767,12 @@ Model HostManualFanPrinted {
     auto_fan_count optional unique_field int
     total_count optional unique_field int
     sap_id optional str
+    location_name optional str
+    zone optional str
+
+    Action=> get_count{
+        date optional str
+    }
 
     Config=> {
         access_key_mapping=''
@@ -1750,6 +1788,12 @@ Model HostUnauthorisedFlow {
     end_totalizer optional unique_field float
     net_totalizer optional unique_field float
     sap_id optional str
+    location_name optional str
+    zone optional str
+
+    Action=> get_count{
+        date optional str
+    }
 
     Config=> {
         access_key_mapping=''
@@ -1764,7 +1808,13 @@ Model HostOverLoadedTts{
     required_qty optional unique_field int
     loaded_qty optional unique_field int
     sap_id optional str
+    location_name optional str
+    zone optional str
 
+    Action=> get_count{
+        date optional str
+    }
+    
     Config=> {
         access_key_mapping=''
     }

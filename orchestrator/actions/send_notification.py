@@ -506,13 +506,17 @@ class SendNotification:
         message_type = self.params.get("messagetype")
         print("message_type --> ", message_type)
         if message_type == "active":
-            await self._send_active_notification()
+            # await self._send_active_notification()
+            return True, "Success"
         elif message_type == "resolved":
-            await self._send_resolved_notification()
+            # await self._send_resolved_notification()
+            return True, "Success"
         elif message_type == 'Resolved':
-            await self._send_other_notification()
+            # await self._send_other_notification()
+            return True, "Success"
         else:
-            await self._send_standard_notification()
+            # await self._send_standard_notification()
+            return True, "Success"
 
     async def _send_active_notification(self):
         """
@@ -533,7 +537,7 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['moufikali@algofusiontech.com', 'santoshkumar.s@algofusiontech.com', 'keerthesrep@algofusiontech.com']
+            self.mail_recipients = ['default@example.com']
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -554,7 +558,7 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['moufikali@algofusiontech.com', 'santoshkumar.s@algofusiontech.com', 'keerthesrep@algofusiontech.com']
+            self.mail_recipients = ['default@example.com']
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -575,7 +579,7 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['moufikali@algofusiontech.com', 'santoshkumar.s@algofusiontech.com', 'keerthesrep@algofusiontech.com']
+            self.mail_recipients = ['default@example.com']
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -596,7 +600,7 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['moufikali@algofusiontech.com', 'santoshkumar.s@algofusiontech.com', 'keerthesrep@algofusiontech.com']
+            self.mail_recipients = ['default@example.com']
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 

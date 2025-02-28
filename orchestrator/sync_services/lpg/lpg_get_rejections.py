@@ -1,4 +1,5 @@
 import os
+import sys
 import uuid
 import pyodbc
 import psycopg2
@@ -8,6 +9,8 @@ import socket
 import pandas as pd
 import polars as pl
 from dateutil.relativedelta import relativedelta
+sys.path.append("/opt/ceg/algo")
+import orchestrator.dbconnector.credential_loader as credential_loader
 
 
 def insertToDB(data, table_name, indexing_col=[]):
@@ -20,12 +23,13 @@ def insertToDB(data, table_name, indexing_col=[]):
                 data = data.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).alias(col))
         except Exception as e:
             continue
+    creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
-                host="10.90.38.162",
-                database="hpcl_ceg",
-                user="ceg_user",
-                password="TTNqetkiJLPM50jC",
-                port=5432
+                host=creds['host'],
+                database=creds['database'],
+                user=creds['user'],
+                password=creds['password'],
+                port=creds['port']
             )
     table_create_sql = ''
     cur = pg_conn.cursor()
@@ -96,13 +100,14 @@ def fetch_data(query, getData=False, params=None, internal=False):
     if params:
         try:
             if internal:
+                creds = credential_loader.get_credentials('APP_DB')
                 pg_conn = psycopg2.connect(
-                        host="10.90.38.162",
-                        database="hpcl_ceg",
-                        user="ceg_user",
-                        password="TTNqetkiJLPM50jC",
-                        port=5432
-                    )
+                            host=creds['host'],
+                            database=creds['database'],
+                            user=creds['user'],
+                            password=creds['password'],
+                            port=creds['port']
+                        )
             else:
                 pg_conn = psycopg2.connect(
                         host=params["host"],

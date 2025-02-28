@@ -236,7 +236,7 @@ async def vts_alert_closer(alert_data, input_data):
     notify_email = NotifyEMail()
     notify_email.publish_message(
         **{
-            'to_emails': ['venu@algofusiontech.com', 'santoshkumar.s@algofusiontech.com'],
+            'to_emails': ['venu@algofusiontech.com',],
             'subject': f"VTS Alert Closed FOR {close_alert_data['bu']} BU And {alert_data['sap_id']} SAP ID",
             'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/interlock_alert_closure.html", data=data),
             'html_content': True

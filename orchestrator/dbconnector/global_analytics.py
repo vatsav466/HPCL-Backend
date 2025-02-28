@@ -3965,15 +3965,13 @@ class GlobalAnalytics:
             resp = resp.group_by(["process_date"]).agg([
                     pl.mean("avg_productivity").round(2).alias("avg_productivity"),
                 ])
-            resp = resp.with_columns(pl.col("process_date").dt.strftime("%Y-%m-%d").alias("process_date"))
+                        
             numerical_columns = ["productivity_normal_productivity"]
-            string_columns = ["process_date"]
             for col in numerical_columns:
                 if col in resp.columns:
                     resp = resp.with_columns(pl.col(col).fill_null(0.0))
-            for col in string_columns:
-                if col in resp.columns:
-                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            resp = resp.sort("process_date")
+            resp = resp.with_columns(pl.col("process_date").dt.strftime("%Y-%m-%d").alias("process_date"))
             return {"status": True, "message": "success", "data": resp.to_dicts()}
         except Exception as e:
             print(traceback.format_exc())
@@ -4028,15 +4026,12 @@ class GlobalAnalytics:
             resp = resp.group_by(["process_date"]).agg([
                     pl.mean("sum_production").round(2).alias("sum_production"),
                 ])
-            resp = resp.with_columns(pl.col("process_date").dt.strftime("%Y-%m-%d").alias("process_date"))
             numerical_columns = ["sum_production"]
-            string_columns = ["process_date"]
             for col in numerical_columns:
                 if col in resp.columns:
                     resp = resp.with_columns(pl.col(col).fill_null(0.0))
-            for col in string_columns:
-                if col in resp.columns:
-                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            resp = resp.sort("process_date")
+            resp = resp.with_columns(pl.col("process_date").dt.strftime("%Y-%m-%d").alias("process_date"))
             return {"status": True, "message": "success", "data": resp.to_dicts()}
         except Exception as e:
             print(traceback.format_exc())
