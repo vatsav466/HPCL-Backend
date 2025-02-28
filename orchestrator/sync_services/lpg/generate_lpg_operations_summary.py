@@ -1,4 +1,5 @@
 import os
+import sys
 import psycopg2
 import traceback
 import subprocess
@@ -7,7 +8,8 @@ import polars as pl
 import numpy as np
 from sqlalchemy import create_engine
 from datetime import datetime, timedelta
-
+sys.path.append("/opt/ceg/algo")
+import orchestrator.dbconnector.credential_loader as credential_loader
 
 class LPG_CONSOLIDATED():
     def __init__(self, host, database, user, password, port, plantShortName):
@@ -54,13 +56,14 @@ class LPG_CONSOLIDATED():
             return resp
 
     def getAllPlantsConfig(self):
-        params = {
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            }
+        creds = credential_loader.get_credentials('APP_DB')
+        params={
+                "host": creds["host"],
+                "database": creds["database"],
+                "user": creds["user"],
+                "password": creds["password"],
+                "port": creds["port"]
+                }    
 
         queryString = """
         SELECT
@@ -96,13 +99,14 @@ class LPG_CONSOLIDATED():
                         GROUP BY plants.short_name, plants.plant_name, plants.zone
                         ORDER BY plants.short_name;
                         """
-        params = {
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            }
+        creds = credential_loader.get_credentials('APP_DB')
+        params={
+                "host": creds["host"],
+                "database": creds["database"],
+                "user": creds["user"],
+                "password": creds["password"],
+                "port": creds["port"]
+                }        
 
         result = self.get_data(queryString, records=True, params=params)
         if result and len(result) == 1:
@@ -111,13 +115,14 @@ class LPG_CONSOLIDATED():
 
     def getPlantIdByShortName(self, plantShortName):
         query = f""" select * from plants where "short_name"='{plantShortName}' limit 1;"""
-        params = {
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            }
+        creds = credential_loader.get_credentials('APP_DB')
+        params={
+                "host": creds["host"],
+                "database": creds["database"],
+                "user": creds["user"],
+                "password": creds["password"],
+                "port": creds["port"]
+                }
         data = self.get_data(query, records=True, params=params)
         if data:
             return data[0]['id']
@@ -126,13 +131,14 @@ class LPG_CONSOLIDATED():
 
     def getBreaks(self, plantId, carousalId):
         query = f""" select * from breaks where "plant_id"='{plantId}' and "carousal_id"='{carousalId}' """
-        params = {
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            }
+        creds = credential_loader.get_credentials('APP_DB')
+        params={
+                "host": creds["host"],
+                "database": creds["database"],
+                "user": creds["user"],
+                "password": creds["password"],
+                "port": creds["port"]
+                }
         result = self.get_data(query, records=True, params=params)
         if not result:
             return False
@@ -151,13 +157,14 @@ class LPG_CONSOLIDATED():
         if not plantId:
             return False
         query = f""" select * from carousals where "plant_id"='{plantId}' """
-        params = {
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            }
+        creds = credential_loader.get_credentials('APP_DB')
+        params={
+                "host": creds["host"],
+                "database": creds["database"],
+                "user": creds["user"],
+                "password": creds["password"],
+                "port": creds["port"]
+                }
         result = self.get_data(query, records=True, params=params)
         if not result:
             return False
@@ -979,12 +986,13 @@ class LPG_CONSOLIDATED():
 
 def insertToDB(data, table_name):
     data = pl.from_pandas(data)
+    creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
-                host="10.90.38.162",
-                database="hpcl_ceg",
-                user="ceg_user",
-                password="TTNqetkiJLPM50jC",
-                port=5432
+                host=creds["host"],
+                database=creds["database"],
+                user=creds["user"],
+                password=creds["password"],
+                port=creds["port"]
             )
     table_create_sql = ''
     cur = pg_conn.cursor()
@@ -1031,18 +1039,14 @@ def insertToDB(data, table_name):
         raise Exception(e)
     
 def generate_summary():
-    host =  "10.90.38.162"
-    database = "hpcl_ceg"
-    user = "ceg_user"
-    password = "TTNqetkiJLPM50jC"
-    port = 5432
+    creds = credential_loader.get_credentials('APP_DB')
     # Create database connection for fetching max date
     conn = psycopg2.connect(
-        host=host,
-        database=database,
-        user=user,
-        password=password,
-        port=port
+        host=creds["host"],
+        database=creds["database"],
+        user=creds["user"],
+        password=creds["password"],
+        port=creds["port"]
     )
     cursor = conn.cursor()
     df = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
@@ -1082,7 +1086,7 @@ def generate_summary():
                 fromDate = current_date.strftime("%Y-%m-%d")
                 toDate = current_date.strftime("%Y-%m-%d")            
                 print("location -->", location)
-                ins = LPG_CONSOLIDATED(host, database, user, password, port, location)
+                ins = LPG_CONSOLIDATED(creds["host"], creds["database"], creds["user"], creds["password"], creds["port"], location)
                 data = ins.getPerformanceData(fromDate, toDate, location)
                 print("*-"*25)
                 print(f"Summary of {location}  :")

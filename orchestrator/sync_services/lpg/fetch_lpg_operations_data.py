@@ -1,4 +1,5 @@
 import os
+import sys
 import psycopg2
 import pandas as pd
 import polars as pl
@@ -6,16 +7,19 @@ import socket
 import datetime
 import concurrent.futures
 import generate_lpg_operations_summary
+sys.path.append("/opt/ceg/algo")
+import orchestrator.dbconnector.credential_loader as credential_loader
 
 def insertToDB(data, table_name):
     print("Length of Data : ", len(data))
+    creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
-                host="10.90.38.162",
-                database="hpcl_ceg",
-                user="ceg_user",
-                password="TTNqetkiJLPM50jC",
-                port=5432
-            )
+                host=creds['host'],
+                database=creds['database'],
+                user=creds['user'],
+                password=creds['password'],
+                port=creds['port']
+            )    
     table_create_sql = ''
     cur = pg_conn.cursor()
     dtype_dict = {'String':str('text'),'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'), 'Float64': str('double precision'),'Float32': str('double precision'),
@@ -115,24 +119,20 @@ def get_data(params):
     
     first_insertion = False
     query = """ SELECT DISTINCT("short_name") FROM "LPG_OPERATIONS_SUMMARY_DATA";"""
-    plant_check = fetch_data(query, getData=True, params={
-        "host": "10.90.38.162",
-        "database": "hpcl_ceg",
-        "user": "ceg_user",
-        "password": "TTNqetkiJLPM50jC",
-        "port": 5432
-    })
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
+    plant_check = fetch_data(query, getData=True, params=params)
     if params['PlantName'].lower() not in plant_check["short_name"]:
         first_insertion = True
     
     query = f""" SELECT MAX(process_date) FROM "LPG_OPERATIONS_SUMMARY_DATA" WHERE "short_name"='{params['PlantName'].lower()}'; """    
-    max_date = fetch_data(query, getData=False, params={
-        "host": "10.90.38.162",
-        "database": "hpcl_ceg",
-        "user": "ceg_user",
-        "password": "TTNqetkiJLPM50jC",
-        "port": 5432
-    })
+    max_date = fetch_data(query, getData=False, params=params)
     
     query = f""" SELECT * FROM production_log WHERE "process_date" > '{max_date}' """
     if first_insertion:
