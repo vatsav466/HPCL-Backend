@@ -532,7 +532,7 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['moufikali@algofusiontech.com', 'keerthesrep@algofusiontech.com']
+            self.mail_recipients = ['default@example.com']
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -553,7 +553,7 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['moufikali@algofusiontech.com', 'keerthesrep@algofusiontech.com']
+            self.mail_recipients = ['default@example.com']
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -574,7 +574,7 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['moufikali@algofusiontech.com', 'keerthesrep@algofusiontech.com']
+            self.mail_recipients = ['default@example.com']
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
@@ -595,7 +595,7 @@ class SendNotification:
         else:
             notification_module = await notification_factory.get_notification_module(module_type="email")
             print("self.mail_recipients: ", self.mail_recipients)
-            self.mail_recipients = ['moufikali@algofusiontech.com', 'keerthesrep@algofusiontech.com']
+            self.mail_recipients = ['default@example.com']
             res = await notification_module.publish_message(recipients=self.mail_recipients, subject=self.subject, body=self.body, html_content=True)
         return res
 
