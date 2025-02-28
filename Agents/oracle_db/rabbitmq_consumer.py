@@ -1,10 +1,13 @@
+import urdhva_base
 import json
 import pika
 import asyncio
 import traceback
 import numpy as np
 import pandas as pd
+import hpcl_ceg_model
 from postgresql import Postgresql
+import utilities.helpers as helpers
 
 class RabbitMQConsumer:
     def __init__(self):
@@ -29,7 +32,12 @@ class RabbitMQConsumer:
     def rename_columns(self, record):
         """Rename columns based on config mapping."""
         return {self.column_rename_map.get(k, k): v for k, v in record.items()}
-
+    
+    async def get_loc_details(self, sap_id):
+        """Fetch location details asynchronously."""
+        bu = 'TAS'
+        return await helpers.get_location_details(bu, sap_id)
+        
     async def process_message(self, body):
         """Process received RabbitMQ messages and store them in PostgreSQL asynchronously."""
         try:
@@ -55,20 +63,25 @@ class RabbitMQConsumer:
                     # Convert all float to float, int to int, str to str, datetime to datetime, and handle NaN/Null values
                     for col in df.columns:
                         if df[col].dtype == np.float64 or df[col].dtype == np.float32:
-                            df[col] = df[col].astype(float)  # Ensure float type
-                            df[col].fillna(0.0, inplace=True)  # Replace NaN with 0.0
+                            df[col] = df[col].astype(float).fillna(0.0)  # Replace NaN with 0.0
                         elif df[col].dtype == np.int64 or df[col].dtype == np.int32:
-                            df[col] = df[col].astype(int)  # Ensure integer type
-                            df[col].fillna(0, inplace=True)  # Replace NaN with 0
+                            df[col] = df[col].astype(int).fillna(0)  # Replace NaN with 0
                         elif df[col].dtype == object:
                             try:
                                 df[col] = pd.to_datetime(df[col])  # Convert valid strings to datetime
                             except Exception:
-                                df[col] = df[col].astype(str)  # Ensure string type
-                            df[col].fillna("", inplace=True)  # Replace NaN/null with empty string
+                                df[col] = df[col].astype(str).fillna("")  # Ensure string type
 
+                    # Fetch location details in bulk and update DataFrame
+                    if "sap_id" in df.columns:
+                        unique_sap_ids = df["sap_id"].dropna().unique()
+                        location_mapping = {sap_id: await self.get_loc_details(sap_id) for sap_id in unique_sap_ids}
+
+                        df["location_name"] = df["sap_id"].map(lambda sap_id: location_mapping.get(sap_id, [None, {}])[1].get("name", ""))
+                        df["zone"] = df["sap_id"].map(lambda sap_id: location_mapping.get(sap_id, [None, {}])[1].get("zone", ""))
                     # Convert back to list of dictionaries
                     cleaned_records = df.to_dict(orient="records")
+                    print("cleaned_records --> ", cleaned_records)
 
                     # Ensure await is used while creating the table
                     await db.create_table("public", new_table_name, cleaned_records)
