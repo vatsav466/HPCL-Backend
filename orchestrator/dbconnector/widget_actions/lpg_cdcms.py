@@ -2229,7 +2229,7 @@ class LPGCDCMSActions:
         _fy = False
         if cross_filters:
             for filter in cross_filters:
-                if filter.key == "Financial_Year":
+                if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_central_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_consumers")
@@ -2331,8 +2331,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_central_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_transaction")
         if filters:
@@ -2350,12 +2353,13 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_central_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_transaction_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            if not _fy:
+                lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
-            if "where" not in lpg_cdcms_subsidy_central_transaction_query_.lower():
+            if "where" not in lpg_cdcms_subsidy_central_transaction_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_central_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            elif not _fy:
                 lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_transaction_query_)
@@ -2432,8 +2436,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_central_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_amount")
         if filters:
@@ -2451,12 +2458,13 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_central_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_amount_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            if not _fy:
+                lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
-            if "where" not in lpg_cdcms_subsidy_central_amount_query_.lower():
+            if "where" not in lpg_cdcms_subsidy_central_amount_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_central_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            elif not _fy:
                 lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_amount_query_)
@@ -2533,8 +2541,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_state_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_consumers")
         if filters:
@@ -2552,12 +2563,13 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_state_consumers_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_consumers_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            if not _fy:
+                lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
-            if "where" not in lpg_cdcms_subsidy_state_consumers_query_.lower():
+            if "where" not in lpg_cdcms_subsidy_state_consumers_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            elif not _fy:
                 lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_consumers_query_)
@@ -2634,8 +2646,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_state_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_transaction")
         if filters:
@@ -2653,12 +2668,13 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_state_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_transaction_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            if not _fy:
+                lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
-            if "where" not in lpg_cdcms_subsidy_state_transaction_query_.lower():
+            if "where" not in lpg_cdcms_subsidy_state_transaction_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            elif not _fy:
                 lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_transaction_query_)
@@ -2735,8 +2751,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_state_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_amount")
         if filters:
@@ -2754,12 +2773,13 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_state_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_amount_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            if not _fy:
+                lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
-            if "where" not in lpg_cdcms_subsidy_state_amount_query_.lower():
+            if "where" not in lpg_cdcms_subsidy_state_amount_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            elif not _fy:
                 lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_amount_query_)
