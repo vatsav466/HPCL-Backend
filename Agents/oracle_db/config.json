@@ -78,6 +78,7 @@
         "TOTAL_COUNT": "total_count",
         "METER_NUMBER": "meter_number",
         "NET_TOTALIZER": "net_totalizer",
-        "BLEND_NAME": "blend_name"
+        "BLEND_NAME": "blend_name",
+        "PRESET_NUMBER": "preset_number"
     }
 }

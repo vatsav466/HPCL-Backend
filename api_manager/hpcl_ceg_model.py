@@ -4141,6 +4141,7 @@ class HostKFactorChangesSchema(UrdhvaPostgresBase):
     sr_number: Mapped[typing.Optional[int]] = mapped_column("sr_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    preset_number: Mapped[typing.Optional[str]] = mapped_column("preset_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     bcu_parameter: Mapped[typing.Optional[str]] = mapped_column("bcu_parameter", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     initial_setting: Mapped[typing.Optional[str]] = mapped_column("initial_setting", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -4149,7 +4150,7 @@ class HostKFactorChangesSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, timestamp, initial_setting, final_setting, name="host_k_factor_changes_bcu_number_timestamp_initial_setting_final_setting"),)
+    __table_args__ = (UniqueConstraint(bcu_number, preset_number, timestamp, initial_setting, final_setting, name="host_k_factor_changes_bcu_number_preset_number_timestamp_initial_setting_final_setting"),)
 
 
 class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4158,6 +4159,7 @@ class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sr_number: typing.Optional[int] = pydantic.Field(0, **{})
     bay_number: typing.Optional[str] = pydantic.Field("", **{})
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    preset_number: typing.Optional[str] = pydantic.Field("", **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
     bcu_parameter: typing.Optional[str] = pydantic.Field("", **{})
     initial_setting: typing.Optional[str] = pydantic.Field("", **{})
@@ -4169,7 +4171,7 @@ class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostKFactorChangesSchema
-        upsert_keys = ['bcu_number', 'timestamp', 'initial_setting', 'final_setting']
+        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting']
 
 
 class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
@@ -4178,6 +4180,7 @@ class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
     sr_number: typing.Optional[int] = pydantic.Field(0, **{})
     bay_number: typing.Optional[str] = pydantic.Field("", **{})
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    preset_number: typing.Optional[str] = pydantic.Field("", **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
     bcu_parameter: typing.Optional[str] = pydantic.Field("", **{})
     initial_setting: typing.Optional[str] = pydantic.Field("", **{})
@@ -4189,7 +4192,7 @@ class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
     class Config:
         collection_name = 'data_flow'
         schema_class = HostKFactorChangesSchema
-        upsert_keys = ['bcu_number', 'timestamp', 'initial_setting', 'final_setting']
+        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting']
 
 
 class HostKFactorChangesGetResp(pydantic.BaseModel):

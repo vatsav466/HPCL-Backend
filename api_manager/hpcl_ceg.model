@@ -1641,7 +1641,7 @@ Model HostSickTts {
 
     Action=> download_data {
     }
-    
+
     Config=> {
         access_key_mapping=''
     }
@@ -1669,6 +1669,7 @@ Model HostKFactorChanges {
     sr_number optional int
     bay_number optional str
     bcu_number optional unique_field str
+    preset_number optional unique_field str
     timestamp optional unique_field datetime
     bcu_parameter optional str
     initial_setting optional unique_field str
