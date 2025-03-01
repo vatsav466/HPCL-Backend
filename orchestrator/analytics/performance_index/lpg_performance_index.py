@@ -66,35 +66,43 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
 
         # Step 4: Count total unique devices per category
         total_devices = alerts_df['interlock_name'].nunique()
-        
+        print("total_devices --> ", total_devices)
         if total_devices == 0:
             return {"oi_score": 0, "details": "No valid devices found"}
 
         alert_counts = alerts_df.groupby('DeviceCategory')['interlock_name'].nunique()
+        print("alert_counts --> ", alert_counts)
 
         # Step 5: Compute OI Score
         oi_scores = {}
         total_oi_score = 0
 
         for _, rule in lpg_rules.iterrows():
+            print("rule --> ", rule)
             category = rule['DeviceCategory']
+            print("rule category --> ", category)
             weightage = rule['Weightage']
+            print("rule weightage --> ", weightage)
 
             if category not in alert_counts:
                 continue  # Skip if no alerts exist for this category
 
             open_alert_devices = alert_counts[category]
+            print("rule open_alert_devices --> ", open_alert_devices)
             rejection_percentage = (open_alert_devices / total_devices) * 100
+            print("rule rejection_percentage --> ", rejection_percentage)
 
             # Fetch rejection thresholds dynamically
             thresholds = self.extract_thresholds(rule['Rejections'])
+            print("rule thresholds --> ", thresholds)
 
             # Determine score based on rejection percentage
             score = self.calculate_score(rejection_percentage, thresholds)
+            print("rule score --> ", score)
 
             # Apply weightage
             weighted_score = (score / 100) * weightage
-            oi_scores[category] = weighted_score
+            print("rule weighted_score --> ", weighted_score)
             oi_scores[category] = {"oi_score": weighted_score, "weightage": weightage}
             total_oi_score += weighted_score
 
