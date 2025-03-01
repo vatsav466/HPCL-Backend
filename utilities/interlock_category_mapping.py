@@ -1,44 +1,97 @@
 interlock_to_category = {
     "Process": [
-        "ESD Command To Process PLC",
-        "Plant ESD Closure of Effect",
-        "HCD Fault Alarm",
-        "Meter overrun Alarm",
-        "Unauthorized Flow Alarm",
-        "K - Factor Changed"
+        "Earthing Failure Alarm"  
+        "UPS fail alarm"  
+        "PLC fault alarm"  
+        "LRC Master Switchover required in 30 days"  
+        "Tank leakage alarm"  
+        "Primary RG High Level alarm"  
+        "TAS User access report"  
+        "Local order/Standalone Order Entry"
     ],
     "Safety": [
-        "Fire pump fail to start",
-        "FIRE PUMP FAIL TO START",
-        "Fire protection asset undergoing maintenance",
-        "Firefighting system parameter",
-        "Siren Activated",
-        "Radar is Under Maintenance"
+        "Tank Overfill Protection"  
+        "Tank overfill prevention close inlet ROSOV"  
+        "Tank overfill prevention close inlet MOV"  
+        "Plant ESD Closure of Effect"  
+        "All Tanks in Dormant Mode"  
+        "All DBBVs Closed"  
+        "All TLF Product Pumps Stopped"  
+        "ESD Command To Process PLC"  
+        "All Tanks in Dormant Mode"  
+        "TLF Gantry Permissive Power Off"  
+        "Barrier Gate opened"  
+        "Hooter cum strobe for ESD activated in control room"  
+        "Siren Activated"  
+        "Tanks in TTL Dispatch in Dormant Mode"  
+        "Power ESD Activation in Main PMCC Panel after 120 Sec"  
+        "All ROSOVs closed"  
+        "Tank Overfill Proof test Failed"  
+        "Tank Overfill Proof test Updated"  
+        "Tank Rim Seal fault Detection System"  
+        "HCDS Audio Alarm in Control Room, Audio Alarm in Field"  
+        "ESD is Under Maintenance"  
+        "RimSeal is Under Maintenance"  
+        "Tank is Under Maintenance"  
+        "ROSOV is Under Maintenance"  
+        "VFT is Under Maintenance"  
+        "Radar is Under Maintenance"  
+        "Fire protection asset undergoing maintenance"  
+        "HCD is Under Maintenance"  
+        "Dyke Valve Audio Alarm in Control Room, Audio Alarm in Field"  
+        "HCD Fault Alarm"  
+        "Air Compressor Fault"  
+        "OL ROSOV failed to close"  
+        "REC ROSOV failed to close"  
+        "Tank overfill prevention close inlet1 ROSOV"  
+        "Tank overfill prevention close inlet2 MOV"  
+        "Tank overfill prevention close inlet1 MOV"  
+        "IL1 ROSOV failed to close"  
+        "IL2 ROSOV failed to close"  
+        "Tank overfill prevention close inlet2 ROSOV"  
+        "Fire engine fail to start"  
+        "Jockey pump fail to start"  
+        "Firefighting system parameter"  
+        "TLF Gantry Permissive Power Off"  
+        "All TLF Product Pumps Stopped"  
+        "TLF Header Line MOV Close"
+    ],
+    "Gantry": [
+        "BCU Totalizer Mismatch with last day Totalizer"  
+        "BCU Local Loading"  
+        "BCU Totalizer Mismatch with MFM Totalizer"  
+        "K - Factor Changed"  
+        "Blend Underdose Alarm"  
+        "No Flow"  
+        "Additive Overdose Alarm"  
+        "Meter overrun Alarm"  
+        "Additive Underdose Alarm"  
+        "Unauthorized Flow Alarm"  
+        "High Flow Alarm"  
+        "Blend overdose Alarm"  
+        "Low Flow"  
+        "BCU Loading Status"  
+        "Manual - bay assignment of more 5% of total TT loaded, Manual FAN printed more 5% of total TT loaded"  
+        "Min 5% Manual Cross-check records"  
+        "Sick TT_ truck"  
+        "Cancel TT_ truck"  
+        "Gantry Permissive override"  
+        "Unauthorized flow"  
+        "Bay reasignment"  
+        "TT Overloaded"  
+        "Day End Report"
     ],
     "FE&Jockey": [
-        "Jockey pump fail to start",
-        "Jocky pump fail to start",
-        "Blend Underdose Alarm",
-        "BCU Totalizer Mismatch with last day Totalizer",
-        "BCU Totalizer Mismatch with MFM Totalizer"
+        "Fire engine in local",
     ],
     "WaterLevl": [
-        "Primary RG High Level alarm",
-        "Tank Overfill Protection",
-        "Tank overfill prevention close inlet MOV",
-        "Tank overfill prevention close inlet1 MOV",
-        "Tank overfill prevention close inlet2 MOV"
+        "Water volume is below threshold",
     ],
     "FoamQty": [
-        "Dyke Valve Audio Alarm in Control Room, Audio Alarm in Field",
-        "Dyke Valve Audio Visual Alarm in Control Room, Audio Alarm in Field"
+        "Foam volume is below threshold",
     ],
     "PT": [
-        "UPS fail alarm",
-        "PLC fault alarm",
-        "Pulse Security",
-        "Tank is Under Maintenance",
-        "Tank leakage alarm"
+        "Hydrant Line PT is below 7 Kg",
     ],
     "Check Scale alerts": [
         "Check Scale Rejection"
@@ -49,5 +102,4 @@ interlock_to_category = {
     "Valve leak alerts": [
         "O-Ring Leakage Rejection"
     ]
-
 }
