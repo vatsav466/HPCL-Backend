@@ -77,12 +77,19 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
         total_oi_score = 0
 
         for category, open_alert_devices in alert_counts.items():
+            print("category --> ", category)
             weightage = self.rules_df.loc[self.rules_df['DeviceCategory'] == category, 'Weightage'].values
+            print("weightage --> ", weightage)
             weightage = weightage[0] if len(weightage) > 0 else 0  
+            print("weightage len --> ", weightage)
+            print("open_alert_devices --> ", open_alert_devices)
 
             oi_score = round(((total_devices - open_alert_devices) / total_devices) * weightage, 2) if total_devices > 0 else 0
+            print("oi score --> ", oi_score)
             oi_scores[category] = oi_score
+            print("oi_scores --> ", oi_scores)
             total_oi_score += oi_score
+            print("total_oi_score --> ", total_oi_score)
 
         return {"oi_score": round(total_oi_score, 2), "category_scores": oi_scores}
 
