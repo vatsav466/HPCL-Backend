@@ -52,46 +52,65 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
         # 0 else 0
         # Example self.rules_df[self.rules_df['DeviceCategory'] == 'Process']['Weightage'][0]
         # Todo:- need to check Enabled key in future
-        # Step 1: Fetch all open alerts
         open_alerts = await self.get_all_alerts(location_id)
 
         if not open_alerts:
+            print("No open alerts found!")
             return {"oi_score": 0, "details": "No open alerts found"}
 
         alerts_df = pd.DataFrame(open_alerts)
+        print("Alerts DataFrame:\n", alerts_df)
 
         if 'interlock_name' not in alerts_df.columns:
+            print("Invalid alert data format. Columns:", alerts_df.columns)
             return {"oi_score": 0, "details": "Invalid alert data format"}
 
-        # Map interlock_name to DeviceCategory using interlock_category_mapping
+        # Map interlock_name to DeviceCategory
         alerts_df['DeviceCategory'] = alerts_df['interlock_name'].map(map_device_category)
+        print("Mapped Categories:\n", alerts_df[['interlock_name', 'DeviceCategory']])
 
         # Count total unique devices per category
         total_devices = alerts_df['interlock_name'].nunique()
-        print("total_devices --> ", total_devices)
+        print("Total unique devices:", total_devices)
 
         alert_counts = alerts_df.groupby('DeviceCategory')['interlock_name'].nunique()
+        print("Alert counts per category:", alert_counts)
+
+        # Check if self.rules_df is loaded
+        if self.rules_df is None:
+            print("Error: self.rules_df is not initialized!")
+            return {"oi_score": 0, "details": "Performance index rules not loaded"}
+
+        print("Rules DataFrame:\n", self.rules_df)
 
         # Compute OI Score
         oi_scores = {}
         total_oi_score = 0
 
         for category, open_alert_devices in alert_counts.items():
-            print("category --> ", category)
+            print("Processing category:", category)
+            
+            # Debug: Check if category exists in rules_df
             weightage = self.rules_df.loc[self.rules_df['DeviceCategory'] == category, 'Weightage'].values
-            print("weightage --> ", weightage)
-            weightage = weightage[0] if len(weightage) > 0 else 0  
-            print("weightage len --> ", weightage)
-            print("open_alert_devices --> ", open_alert_devices)
+            print(f"Weightage for {category}: {weightage}")
+
+            if len(weightage) == 0:
+                print(f"Warning: No weightage found for category '{category}', setting to 0")
+                weightage = 0
+            else:
+                weightage = weightage[0]
 
             oi_score = round(((total_devices - open_alert_devices) / total_devices) * weightage, 2) if total_devices > 0 else 0
-            print("oi score --> ", oi_score)
+            print(f"OI Score for {category}: {oi_score}")
+
             oi_scores[category] = {"oi_score": oi_score, "weightage": weightage}
-            print("oi_scores --> ", oi_scores)
             total_oi_score += oi_score
-            print("total_oi_score --> ", total_oi_score)
+
+        print("Final OI Scores:", oi_scores)
+        print("Total OI Score:", total_oi_score)
 
         return {"tas_oi_score": round(total_oi_score, 2), "tas_category_scores": oi_scores}
+
 
     async def generate_performance_index_emlock(self, location_id):
         ...
