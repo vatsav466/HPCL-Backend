@@ -86,12 +86,12 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
 
             oi_score = round(((total_devices - open_alert_devices) / total_devices) * weightage, 2) if total_devices > 0 else 0
             print("oi score --> ", oi_score)
-            oi_scores[category] = oi_score
+            oi_scores[category] = {"oi_score": oi_score, "weightage": weightage}
             print("oi_scores --> ", oi_scores)
             total_oi_score += oi_score
             print("total_oi_score --> ", total_oi_score)
 
-        return {"oi_score": round(total_oi_score, 2), "category_scores": oi_scores}
+        return {"tas_oi_score": round(total_oi_score, 2), "tas_category_scores": oi_scores}
 
     async def generate_performance_index_emlock(self, location_id):
         ...

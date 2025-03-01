@@ -39,5 +39,15 @@ interlock_to_category = {
         "Pulse Security",
         "Tank is Under Maintenance",
         "Tank leakage alarm"
+    ],
+    "Check Scale alerts": [
+        "Check Scale Rejection"
+    ],
+    "Valve leak alerts": [
+        "Valve Leakage Rejection"
+    ],
+    "Valve leak alerts": [
+        "O-Ring Leakage Rejection"
     ]
+
 }
