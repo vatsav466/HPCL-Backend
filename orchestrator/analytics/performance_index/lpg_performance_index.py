@@ -56,15 +56,7 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         if lpg_rules.empty:
             return {"oi_score": 0, "details": "No LPG rules found"}
 
-        # Step 3: Map interlock_name to DeviceCategory
-        alerts_df = alerts_df.merge(lpg_rules[['AlertSection', 'DeviceCategory']], 
-                                    left_on='interlock_name', 
-                                    right_on='AlertSection', 
-                                    how='left')
-
-        alerts_df.drop(columns=['AlertSection'], inplace=True)
-
-        # Step 4: Count total unique devices per category
+        alerts_df['DeviceCategory'] = alerts_df['interlock_name'].map(map_device_category)
         total_devices = alerts_df['interlock_name'].nunique()
         print("total_devices --> ", total_devices)
         if total_devices == 0:
