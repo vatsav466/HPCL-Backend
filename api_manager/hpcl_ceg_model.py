@@ -4628,4 +4628,73 @@ class TagsDataGetResp(pydantic.BaseModel):
 
 class Tagsdata_Things_Board_Device_DataParams(pydantic.BaseModel):
     pass
+
+
+class PerformanceIndexSchema(UrdhvaPostgresBase):
+    __tablename__ = 'performance_index'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category: Mapped[str] = mapped_column("category", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class PerformanceIndexCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'performance_index'
+    
+    bu: str
+    sap_id: str
+    category: str
+    zone: str
+    region: str
+    name: str
+    score: float
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = PerformanceIndexSchema
+        upsert_keys = []
+
+
+class PerformanceIndex(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'performance_index'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    category: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
+    score: typing.Optional[float] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        schema_class = PerformanceIndexSchema
+        upsert_keys = []
+
+
+class PerformanceIndexGetResp(pydantic.BaseModel):
+    data: typing.List[PerformanceIndex]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Performanceindex_Get_Pi_ScoreParams(pydantic.BaseModel):
+    bu: str
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    strategy: str
+
+
+class Performanceindex_Get_Pi_Score_By_CategoryParams(pydantic.BaseModel):
+    bu: str
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    
     

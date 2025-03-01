@@ -1025,3 +1025,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/tagsdata/{id}', tags=['TagsData'])
 async def delete(id: str):
     return await TagsData.delete(id)
+
+
+@router.post('/performanceindex', response_model=PerformanceIndex, tags=['PerformanceIndex'])
+async def create(inputObj: PerformanceIndexCreate):
+    return await inputObj.create()
+
+
+@router.put('/performanceindex', response_model=PerformanceIndex, tags=['PerformanceIndex'])
+async def update(inputObj: PerformanceIndex):
+    return await inputObj.modify()
+
+
+@router.get('/performanceindex/{id}', response_model=PerformanceIndex, tags=['PerformanceIndex'])
+async def get(id: str):
+    return await PerformanceIndex.get(id, skip_secrets=True)
+
+
+@router.get('/performanceindex', response_model=PerformanceIndexGetResp, tags=['PerformanceIndex'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PerformanceIndex.get_all(params, skip_secrets=True)
+
+
+@router.delete('/performanceindex/{id}', tags=['PerformanceIndex'])
+async def delete(id: str):
+    return await PerformanceIndex.delete(id)
