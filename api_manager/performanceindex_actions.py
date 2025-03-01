@@ -10,22 +10,17 @@ router = fastapi.APIRouter(prefix='/performanceindex')
 # Action get_pi_score
 @router.post('/get_pi_score', tags=['PerformanceIndex'])
 async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParams):
-    # Create TASPerformanceIndex instance and initialize it
-    tas_pi = tas_performance_index.TASPerformanceIndex()
-    await tas_pi.initialize()  # Load rules_df asynchronously
+    if data.bu == "TAS":
+        tas_pi = tas_performance_index.TASPerformanceIndex()
+        await tas_pi.initialize()  # Load rules_df asynchronously
+        tas_resp = await tas_pi.generate_performance_index_tas(data.sap_id)
+        return {"tas_performance": tas_resp}
 
-    # Generate TAS performance index
-    tas_resp = await tas_pi.generate_performance_index_tas(data.sap_id)
-
-    # Create LPGPerformanceIndex instance and initialize it
-    lpg_pi = lpg_performance_index.LPGPerformanceIndex()
-    await lpg_pi.initialize()  # Load rules_df asynchronously
-
-    # Generate LPG performance index
-    lpg_resp = await lpg_pi.generate_performance_index_lpg(data.sap_id)
-
-    # Return the response (assuming you want to return both results)
-    return {"tas_performance": tas_resp, "lpg_performance": lpg_resp}
+    elif data.bu == "LPG":
+        lpg_pi = lpg_performance_index.LPGPerformanceIndex()
+        await lpg_pi.initialize()  # Load rules_df asynchronously
+        lpg_resp = await lpg_pi.generate_performance_index_lpg(data.sap_id)
+        return {"lpg_performance": lpg_resp}
 
 
 

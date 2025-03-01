@@ -95,7 +95,7 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
             # Apply weightage
             weighted_score = (score / 100) * weightage
             print("rule weighted_score --> ", weighted_score)
-            oi_scores[category] = {"oi_score": weighted_score, "weightage": weightage}
+            oi_scores[category] = {"oi_score": float(weighted_score), "weightage": int(weightage)}
             total_oi_score += weighted_score
 
         return {"lpg_oi_score": round(total_oi_score, 2), "lpg_category_scores": oi_scores}

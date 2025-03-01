@@ -103,7 +103,7 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
             oi_score = round(((total_devices - open_alert_devices) / total_devices) * weightage, 2) if total_devices > 0 else 0
             print(f"OI Score for {category}: {oi_score}")
 
-            oi_scores[category] = {"oi_score": oi_score, "weightage": weightage}
+            oi_scores[category] = {"oi_score": float(oi_score), "weightage": int(weightage)}
             total_oi_score += oi_score
 
         print("Final OI Scores:", oi_scores)
