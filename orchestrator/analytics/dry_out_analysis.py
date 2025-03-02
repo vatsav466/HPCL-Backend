@@ -128,8 +128,12 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
         bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
                       if helpers.normalize_string(key).startswith(f"RO_")]
         bu_data_ro = pd.DataFrame(bu_data_ro)
-        bu_data_ro['name'] = bu_data_ro['name'].fillna("")
-        bu_data_ro['category'] = bu_data_ro['category'].fillna("")
+        for key in ["name", "category"]:
+            if key not in bu_data_ro:
+                bu_data_ro[key] = ""
+            bu_data_ro[key] = bu_data_ro[key].fillna("")
+        # bu_data_ro['name'] = bu_data_ro['name'].fillna("")
+        # bu_data_ro['category'] = bu_data_ro['category'].fillna("")
         if plant:
             key_mapping["terminal_plant_id"] = plant
         for rec in bu_data_ro.to_dict(orient='records'):
