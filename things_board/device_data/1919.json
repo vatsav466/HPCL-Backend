@@ -2,9 +2,9 @@
     "data": [
         {
             "device_name": "51-TT-CR-003D_BS VI HSD@Secunderabad",
-            "device_id": "2563e820-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f358da0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "dYs2RFkVc0gIe8HdDjB6",
+            "device_key": "9P9iqFIHAVDJzhnXeyxc",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -131,9 +131,9 @@
         },
         {
             "device_name": "51-TT-CR-005A_ETHANOL@Secunderabad",
-            "device_id": "256ee4a0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f3a96b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "1r4VvZwoCWCqiVL2Kz7h",
+            "device_key": "dcRnVguNBe4Pd46UBPZb",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -260,9 +260,9 @@
         },
         {
             "device_name": "51-TT-CR-005B_INTERFACE@Secunderabad",
-            "device_id": "257f1140-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f40d840-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "U1RxyVzA5bhqC9Jaablt",
+            "device_key": "zQAPEoJ3yNdNMfmjsFLk",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -389,9 +389,9 @@
         },
         {
             "device_name": "51-TT-CR-006A_WATER@Secunderabad",
-            "device_id": "258db740-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f508fb0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "vI2NKp06eqLFjCr29jK8",
+            "device_key": "xlcclG3fpYLaG7orQDPk",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -518,9 +518,9 @@
         },
         {
             "device_name": "51-TT-CR-006B_WATER@Secunderabad",
-            "device_id": "259cab60-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f5f83d0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "cUSTdvjxoKPgAzbPYgvU",
+            "device_key": "CDlgypwPyDSnMh7PYIuY",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -647,9 +647,9 @@
         },
         {
             "device_name": "51-TT-CR-006C_WATER@Secunderabad",
-            "device_id": "25ac62d0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f6ec610-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "mmr6Qt9agTFAHaFtUhBS",
+            "device_key": "iInj3RzrK1y5qTSvWxlZ",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -776,9 +776,9 @@
         },
         {
             "device_name": "51-TT-CR-006D_WATER@Secunderabad",
-            "device_id": "25bb08d0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f7e2f60-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "qSc1FALjSyuvasx87nWY",
+            "device_key": "ctZPeSePetPEZr76RvR0",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -905,9 +905,9 @@
         },
         {
             "device_name": "51-TT-FR-001A_BS VI MS@Secunderabad",
-            "device_id": "25ca7220-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f8d71a0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "2U8uKQ6VRKlZ8A0ZwxG6",
+            "device_key": "YRyyWggTiT3OFMkk2Q5s",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -1034,9 +1034,9 @@
         },
         {
             "device_name": "51-TT-FR-001B_BS VI MS@Secunderabad",
-            "device_id": "25d98d50-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0f9d5020-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "r1IPPr5iRe3yM3a5bSPI",
+            "device_key": "oGCLVKuG0hYH1MOB4LnM",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -1163,9 +1163,9 @@
         },
         {
             "device_name": "51-TT-FR-001C_GASOHOL@Secunderabad",
-            "device_id": "25e944c0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0fac4440-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "YVEaNId7sZFNdQyZSTqJ",
+            "device_key": "ME3ZeAHfXYqAfFZNevvJ",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -1292,9 +1292,9 @@
         },
         {
             "device_name": "51-TT-FR-001D_INTERFACE@Secunderabad",
-            "device_id": "25fc3080-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0fbbad90-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "sOdwrFiEgNXTbYr6tgYy",
+            "device_key": "9nTtBl2pKJOvQ7haDITG",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -1421,9 +1421,9 @@
         },
         {
             "device_name": "51-TT-FR-002A_SKO@Secunderabad",
-            "device_id": "26075410-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0fcac8c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "f0RDuJ5GnNopcNAqGXg9",
+            "device_key": "PCOcT0xZrHOcc50kq2R8",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -1550,9 +1550,9 @@
         },
         {
             "device_name": "51-TT-FR-002B_BS VI HSD@Secunderabad",
-            "device_id": "2617ced0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0fda5920-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "XhAe8MnQajCQaMG0htrH",
+            "device_key": "ywbrxHxInCR9tNINMrHw",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -1679,9 +1679,9 @@
         },
         {
             "device_name": "51-TT-FR-003A_BS VI HSD@Secunderabad",
-            "device_id": "2625ffa0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0fe92630-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "7RWItWA7YJTRAaLlzxK6",
+            "device_key": "TGkjZ6FwOCnPFh1M6nP4",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -1808,9 +1808,9 @@
         },
         {
             "device_name": "51-TT-FR-003B_BS VI HSD@Secunderabad",
-            "device_id": "26360530-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "0ff88f80-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "6TNVz6YRaM0YUERIWjqw",
+            "device_key": "x0HwDNqLEVXFd5w9PiPE",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -1937,9 +1937,9 @@
         },
         {
             "device_name": "51-TT-FR-003C_ETHANOL@Secunderabad",
-            "device_id": "2644ab30-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1007d1c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "aA0vcvUhK9QHjgT5FR1K",
+            "device_key": "gDqyxMWZy0byBza5ACmd",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -2066,9 +2066,9 @@
         },
         {
             "device_name": "51-TT-FR-003E_BS VI HSD@Secunderabad",
-            "device_id": "2653c660-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10173b10-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "QzpPMcphX1LfNhnxRyrR",
+            "device_key": "abJBluLh9JO6bFSC7SQZ",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -2195,9 +2195,9 @@
         },
         {
             "device_name": "51-TT-FR-004A_ATF@Secunderabad",
-            "device_id": "266308a0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10265640-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "fuDaNw8BzhLPTlrnfkcH",
+            "device_key": "Inv4l0sx92kHwcBAON9u",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -2324,9 +2324,9 @@
         },
         {
             "device_name": "51-TT-FR-004B_ATF@Secunderabad",
-            "device_id": "26730e30-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1035bf90-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "VaatnU7BlTjlkJb091I6",
+            "device_key": "Z7F0IvnvzA46IKNfvmVP",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -2453,9 +2453,9 @@
         },
         {
             "device_name": "51-TT-FR-004C_BS VI MS@Secunderabad",
-            "device_id": "2681b430-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1044b3b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "TxKMNKiPEDMshxTR8XhN",
+            "device_key": "hR0ZbahmjaLsuKHGYRgH",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -2582,9 +2582,9 @@
         },
         {
             "device_name": "51-TT-FR-005C_ETHANOL@Secunderabad",
-            "device_id": "2690f670-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1053f5f0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "vyBG9Bf0MCXlDs6ZNZTq",
+            "device_key": "sRjparD4gT9F4zRxX8Wx",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -2711,9 +2711,9 @@
         },
         {
             "device_name": "51-TT-UG-0001_BS VI MS@Secunderabad",
-            "device_id": "26a011a0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10633830-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "wzUEsYLv0wCqqKArHkOl",
+            "device_key": "yzt1cs1HqKHnNEw8ma6h",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -2840,9 +2840,9 @@
         },
         {
             "device_name": "51-TT-UG-0002_SKO@Secunderabad",
-            "device_id": "26af7af0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1072a180-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "6jZrQzJgj46PHIKfqCW0",
+            "device_key": "ZTwhaeBRd8s0wbbuhi6C",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -2969,9 +2969,9 @@
         },
         {
             "device_name": "51-TT-UG-0003_BS VI HSD@Secunderabad",
-            "device_id": "26bf3260-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "108195a0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "mikMCqC0BbsEX2e2h8j5",
+            "device_key": "Ouvhk1JMjZZQpLeNoRgz",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -3098,9 +3098,9 @@
         },
         {
             "device_name": "51-TT-UG-0010_ETHANOL@Secunderabad",
-            "device_id": "26cf10e0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1090fef0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "Shw416pm6K2t27iQhfna",
+            "device_key": "GfLwCjZvG09R9RCoRDDM",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -3227,9 +3227,9 @@
         },
         {
             "device_name": "51-TT-UG-0013_ETHANOL@Secunderabad",
-            "device_id": "26dd8fd0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10a04130-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "zFeVuYZNCZvqFHIrohtc",
+            "device_key": "0JJt3EErz8WCNzGXOshm",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -3356,9 +3356,9 @@
         },
         {
             "device_name": "51-TT-UG-0014_BIO HSD@Secunderabad",
-            "device_id": "26ecab00-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10af5c60-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "1CXoxdg9psonPW9QwQE7",
+            "device_key": "BaywSRN9kVPmfsoQjxPi",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -3485,9 +3485,9 @@
         },
         {
             "device_name": "51-TT-UG-0015_BIO HSD@Secunderabad",
-            "device_id": "26fbed40-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10bec5b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "LuB6pg1NM0e9FIr0Qrsf",
+            "device_key": "Jdd13fJelwrKFiJXsDZm",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -3614,9 +3614,9 @@
         },
         {
             "device_name": "51-TT-UG-SLOP_SLOP@Secunderabad",
-            "device_id": "270b2f80-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10ce2f00-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "zXQw7FL1QpavDBpe8B9h",
+            "device_key": "ec7ezp7tojl1NN3HLQWs",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -3743,9 +3743,9 @@
         },
         {
             "device_name": "DBBV_BS VI MS@Secunderabad",
-            "device_id": "271b0e00-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10dd2320-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "gjkJBab0Aj8rtaVVa9RG",
+            "device_key": "DF6Ol2XEksxhTBCYGekg",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -3872,9 +3872,9 @@
         },
         {
             "device_name": "DBBV_SKO@Secunderabad",
-            "device_id": "27298cf0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "10ec8c70-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "sKHRaaTKzuHRSp08odKr",
+            "device_key": "l4SoQAnoX3bU0atzNdME",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -4000,10 +4000,10 @@
             ]
         },
         {
-            "device_name": "DBBV_BS VI HSD@Secunderabad",
-            "device_id": "2738cf30-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "DBBV1_BS VI HSD@Secunderabad",
+            "device_id": "5d680660-f808-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "k7kVrVm8eP0zAMoJWpPB",
+            "device_key": "zfOI1sNLTWKZDM4pxlVq",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -4129,10 +4129,10 @@
             ]
         },
         {
-            "device_name": "DBBV_BS VI HSD@Secunderabad",
-            "device_id": "2738cf30-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "DBBV2_BS VI HSD@Secunderabad",
+            "device_id": "5d785a10-f808-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "k7kVrVm8eP0zAMoJWpPB",
+            "device_key": "zJSGXiApVu0jcfbuTdoZ",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -4259,9 +4259,9 @@
         },
         {
             "device_name": "MOV_BS VI MS@Secunderabad",
-            "device_id": "2756de80-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1119de00-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "awq4t5gBFeOyrZO70QsN",
+            "device_key": "DRRGVmqC0eSySsNWTqAT",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -4388,9 +4388,9 @@
         },
         {
             "device_name": "MOV_SKO@Secunderabad",
-            "device_id": "276695f0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1129bc80-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "SG4yTtlvXm52oiQQuiPE",
+            "device_key": "5CMSBoCDVaBNfEnSXKHz",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -4517,9 +4517,9 @@
         },
         {
             "device_name": "MOV_BS VI HSD@Secunderabad",
-            "device_id": "27762650-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1138d7b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "XOh8RV593HHbtrzfYDCO",
+            "device_key": "RSjVSbHhrf2kg6uTFZ7Y",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -4646,9 +4646,9 @@
         },
         {
             "device_name": "MOV_BIO HSD@Secunderabad",
-            "device_id": "27856890-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "11484100-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "PV8ANbFkR725TIj7Q9Jd",
+            "device_key": "7RJxaAtGsq5i8lnoXLSc",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -4775,9 +4775,9 @@
         },
         {
             "device_name": "MOV_ATF@Secunderabad",
-            "device_id": "27952000-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "11575c30-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank",
-            "device_key": "17Q8k2WogUxqod4ayMrn",
+            "device_key": "yadhnuXQoCOYbaq0elVP",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -4903,15 +4903,15 @@
             ]
         },
         {
-            "device_name": "51-TT-CR-003D_BS VI HSD@Secunderabad",
-            "device_id": "2563e820-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-CR-003D_BS VI HSD@Secunderabad",
+            "device_id": "1166c580-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "dYs2RFkVc0gIe8HdDjB6",
+            "device_key": "jds8TsZHOq5Jn2OQCV6t",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-CR-003D.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-CR-003D.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -4972,15 +4972,15 @@
             ]
         },
         {
-            "device_name": "51-TT-CR-005A_ETHANOL@Secunderabad",
-            "device_id": "256ee4a0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-CR-005A_ETHANOL@Secunderabad",
+            "device_id": "117607c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "1r4VvZwoCWCqiVL2Kz7h",
+            "device_key": "PKU8kfq2N13UXyUihsvZ",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-CR-005A.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-CR-005A.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5041,15 +5041,15 @@
             ]
         },
         {
-            "device_name": "51-TT-CR-005B_INTERFACE@Secunderabad",
-            "device_id": "257f1140-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-CR-005B_INTERFACE@Secunderabad",
+            "device_id": "11854a00-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "U1RxyVzA5bhqC9Jaablt",
+            "device_key": "ib3CRTmH0qA6EZ11w090",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-CR-005B.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-CR-005B.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5110,10 +5110,10 @@
             ]
         },
         {
-            "device_name": "51-TT-CR-006A_WATER@Secunderabad",
-            "device_id": "258db740-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-CR-006A_WATER@Secunderabad",
+            "device_id": "11946530-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "vI2NKp06eqLFjCr29jK8",
+            "device_key": "vKeJn1FMknRaq0PoSYWm",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -5179,10 +5179,10 @@
             ]
         },
         {
-            "device_name": "51-TT-CR-006B_WATER@Secunderabad",
-            "device_id": "259cab60-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-CR-006B_WATER@Secunderabad",
+            "device_id": "11a3ce80-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "cUSTdvjxoKPgAzbPYgvU",
+            "device_key": "Cz4KeBg4F9FS5NnXOcrm",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -5248,10 +5248,10 @@
             ]
         },
         {
-            "device_name": "51-TT-CR-006C_WATER@Secunderabad",
-            "device_id": "25ac62d0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-CR-006C_WATER@Secunderabad",
+            "device_id": "11b2e9b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "mmr6Qt9agTFAHaFtUhBS",
+            "device_key": "SN6ZfZkbcPsDolpJJfmW",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -5317,10 +5317,10 @@
             ]
         },
         {
-            "device_name": "51-TT-CR-006D_WATER@Secunderabad",
-            "device_id": "25bb08d0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-CR-006D_WATER@Secunderabad",
+            "device_id": "11c25300-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "qSc1FALjSyuvasx87nWY",
+            "device_key": "KaFPqKpN9NCtrOoWCx7F",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -5386,15 +5386,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-001A_BS VI MS@Secunderabad",
-            "device_id": "25ca7220-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-001A_BS VI MS@Secunderabad",
+            "device_id": "11d19540-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "2U8uKQ6VRKlZ8A0ZwxG6",
+            "device_key": "JejDfAgcDLATMTR6KWUL",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-001A.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-001A.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5455,15 +5455,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-001B_BS VI MS@Secunderabad",
-            "device_id": "25d98d50-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-001B_BS VI MS@Secunderabad",
+            "device_id": "11e14cb0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "r1IPPr5iRe3yM3a5bSPI",
+            "device_key": "IZ3mING7ZUjhnFM4H3LA",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-001B.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-001B.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5524,15 +5524,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-001C_GASOHOL@Secunderabad",
-            "device_id": "25e944c0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-001C_GASOHOL@Secunderabad",
+            "device_id": "11eff2b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "YVEaNId7sZFNdQyZSTqJ",
+            "device_key": "u3ji7o6vXynK32PisY8a",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-001C.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-001C.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5593,15 +5593,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-001D_INTERFACE@Secunderabad",
-            "device_id": "25fc3080-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-001D_INTERFACE@Secunderabad",
+            "device_id": "11ff8310-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "sOdwrFiEgNXTbYr6tgYy",
+            "device_key": "ACOXRsVgE8zaa4zUEZrd",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-001D.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-001D.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5662,15 +5662,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-002A_SKO@Secunderabad",
-            "device_id": "26075410-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-002A_SKO@Secunderabad",
+            "device_id": "120ec550-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "f0RDuJ5GnNopcNAqGXg9",
+            "device_key": "xMLcx1FJ2wcWTo2gKCvG",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-002A.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-002A.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5731,15 +5731,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-002B_BS VI HSD@Secunderabad",
-            "device_id": "2617ced0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-002B_BS VI HSD@Secunderabad",
+            "device_id": "121e0790-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "XhAe8MnQajCQaMG0htrH",
+            "device_key": "Ae66qm1MaOmLVsQxC4H2",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-002B.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-002B.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5800,15 +5800,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-003A_BS VI HSD@Secunderabad",
-            "device_id": "2625ffa0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-003A_BS VI HSD@Secunderabad",
+            "device_id": "122d22c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "7RWItWA7YJTRAaLlzxK6",
+            "device_key": "eoNTWcptuJOFwl4w8STe",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-003A.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-003A.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5869,15 +5869,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-003B_BS VI HSD@Secunderabad",
-            "device_id": "26360530-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-003B_BS VI HSD@Secunderabad",
+            "device_id": "123c6500-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "6TNVz6YRaM0YUERIWjqw",
+            "device_key": "ZtTTMjj8B764t4e3GUXu",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-003B.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-003B.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -5938,15 +5938,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-003C_ETHANOL@Secunderabad",
-            "device_id": "2644ab30-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-003C_ETHANOL@Secunderabad",
+            "device_id": "124b8030-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "aA0vcvUhK9QHjgT5FR1K",
+            "device_key": "4GLsT5Xc9CsyI36UuePp",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-003C.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-003C.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6007,15 +6007,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-003E_BS VI HSD@Secunderabad",
-            "device_id": "2653c660-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-003E_BS VI HSD@Secunderabad",
+            "device_id": "125b37a0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "QzpPMcphX1LfNhnxRyrR",
+            "device_key": "QwggosQd0kmxh6Ozb1zI",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-003E.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-003E.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6076,15 +6076,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-004A_ATF@Secunderabad",
-            "device_id": "266308a0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-004A_ATF@Secunderabad",
+            "device_id": "126aa0f0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "fuDaNw8BzhLPTlrnfkcH",
+            "device_key": "HYQgoBsGME1OzbW1UVAo",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-004A.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-004A.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6145,15 +6145,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-004B_ATF@Secunderabad",
-            "device_id": "26730e30-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-004B_ATF@Secunderabad",
+            "device_id": "12791fe0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "VaatnU7BlTjlkJb091I6",
+            "device_key": "BxfZQbjLKkaTpj9e13M2",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-004B.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-004B.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6214,15 +6214,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-004C_BS VI MS@Secunderabad",
-            "device_id": "2681b430-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-004C_BS VI MS@Secunderabad",
+            "device_id": "1288b040-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "TxKMNKiPEDMshxTR8XhN",
+            "device_key": "UritkT7EHKYSXN3teJKC",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-004C.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-004C.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -6283,15 +6283,15 @@
             ]
         },
         {
-            "device_name": "51-TT-FR-005C_ETHANOL@Secunderabad",
-            "device_id": "2690f670-f5cd-11ef-a29d-95c64d391b7c",
+            "device_name": "Maintenance-FR-005C_ETHANOL@Secunderabad",
+            "device_id": "129840a0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
-            "device_key": "vyBG9Bf0MCXlDs6ZNZTq",
+            "device_key": "k6m0YdhDvavHEYi1dKxA",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
                     "sensor_name": "TANK MAINTENANCE",
-                    "sensor_tag": "TANK.51-TT-FR-005C.MAINTENANCE_STATUS",
+                    "sensor_tag": "TANK.Maintenance-FR-005C.MAINTENANCE_STATUS",
                     "normal_value": "0"
                 },
                 {
@@ -10244,9 +10244,9 @@
         },
         {
             "device_name": "LP 01_BC-01A_BS VI MS@Secunderabad",
-            "device_id": "31d49190-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1b898750-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "oERrO7U6EyPR97ykkEpy",
+            "device_key": "jF8nXtkuCx86VJBi2FYR",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10303,14 +10303,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Single.BC-01A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-01A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-01A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-01A.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 02_BC-01B_BS VI HSD@Secunderabad",
-            "device_id": "31e35ea0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1b98f0a0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "io2bMZmmQivXLriU58cQ",
+            "device_key": "Tw6rDa30xLP5pgI0Vofs",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10367,14 +10382,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Single.BC-01B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-01B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-01B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-01B.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 03_BC-02A_BS VI MS@Secunderabad",
-            "device_id": "31f2a0e0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1ba832e0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "ylNYIk4Xou1iVAtbmfT4",
+            "device_key": "MLYv5AMoCdHvhROS6BEG",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10431,14 +10461,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-02A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-02A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-02A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-02A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 04_BC-02B_BS VI HSD@Secunderabad",
-            "device_id": "3201e320-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1bb74e10-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "QxpX0NC5I1MkybwlZ1ln",
+            "device_key": "G3BwaxfMWutBeq6stxuE",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10495,14 +10540,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-02B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-02B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-02B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-02B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 05_BC-03A_BS VI MS@Secunderabad",
-            "device_id": "321236d0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1bc69050-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "3H8S7dZIsI0aEOSQWAKX",
+            "device_key": "xQRmuMnPackythIj21Qb",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10559,14 +10619,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-03A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-03A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-03A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-03A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 06_BC-03B_BS VI HSD@Secunderabad",
-            "device_id": "32208eb0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1bd5d290-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "pirxMeeNaVTgnpMFITQV",
+            "device_key": "CIbaIJGGowA89DjtefOx",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10623,14 +10698,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-03B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-03B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-03B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-03B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 07_BC-04A_BS VI MS@Secunderabad",
-            "device_id": "322ff800-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1be53be0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "TwFHmk0wow9SIcwQJ3gO",
+            "device_key": "CI6zBtcg9KiYzbGval0h",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10687,14 +10777,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-04A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-04A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-04A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-04A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 08_BC-04B_BS VI HSD@Secunderabad",
-            "device_id": "32404bb0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1bf47e20-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "BdjXDcS0aeLC9I70PkHL",
+            "device_key": "305OYMZN9GH6kvPmPksW",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10751,14 +10856,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-04B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-04B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-04B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-04B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 09_BC-05A_BS VI MS@Secunderabad",
-            "device_id": "324ea390-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c03e770-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "wzOg6JyafBOuF7eAZawz",
+            "device_key": "reoBJN21sfAdKYPN79OD",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10815,14 +10935,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-05A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-05A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-05A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-05A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 10_BC-05B_BS VI HSD@Secunderabad",
-            "device_id": "325dbec0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c1329b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "6gYkScOYGxHfg8bDQpGR",
+            "device_key": "3CxzzIm3PvX5wrh9H6XR",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10879,14 +11014,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-05B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-05B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-05B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-05B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 11_BC-06A_BS VI MS@Secunderabad",
-            "device_id": "326d4f20-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c2244e0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "6uzdPOXjlLosOaxD5GDR",
+            "device_key": "wyOtedj1b0aOAmIT6StR",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -10943,14 +11093,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-06A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-06A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-06A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-06A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 12_BC-06B_BS VI HSD@Secunderabad",
-            "device_id": "327c4340-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c31d540-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "7ITfzIiK8jGLKsSSWORx",
+            "device_key": "0KLHYNfSlBSF56fMc2E1",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11007,14 +11172,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-06B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-06B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-06B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-06B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 13_BC-07A_BS VI MS@Secunderabad",
-            "device_id": "328bd3a0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c411780-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "pxdAdkjJ19uMvdFstQRB",
+            "device_key": "Vf9klPqd9gU19xZ0qaG8",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11071,14 +11251,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-07A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-07A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-07A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-07A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 14_BC-07B_BS VI HSD@Secunderabad",
-            "device_id": "329b3cf0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c5059c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "UnB1QfDY2yY6wP345Irt",
+            "device_key": "ZvlvhR2XZyRADJKfKWG5",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11135,14 +11330,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-07B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-07B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-07B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-07B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 15_BC-09A-LP1_BS VI MS@Secunderabad",
-            "device_id": "32aa7f30-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c5fea20-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "aU6OmSpJdbSjrUqYRlEq",
+            "device_key": "2twnatGiWt7e7FSujRVF",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11199,14 +11409,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-09A-LP1.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 16_BC-09A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "32b9c170-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c6f5370-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "w7llbemll9PtmXl7UB5D",
+            "device_key": "6eetlyVPfeViNGVYhtdl",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11263,14 +11488,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-09A-LP2.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 17_BC-09B-LP2_SKO@Secunderabad",
-            "device_id": "32c86770-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c7e2080-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "BzGIb0twCCh5xN5dlmmg",
+            "device_key": "r19G8bvNDphE2nLNvFvp",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11327,14 +11567,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-09B-LP2.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-09B-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-09B-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-09B-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 18_BC-0A-LP1_BS VI HSD@Secunderabad",
-            "device_id": "32d90940-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c8db0e0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "r2XMEESIobv4776olECc",
+            "device_key": "9GnaR67IDZxjEJO8WeJN",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11391,14 +11646,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-0A-LP1.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 19_BC-0A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "32e71300-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1c9cf320-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "ekrwb8Rx1EBNiDmuKbZB",
+            "device_key": "L5qCLjQbYc3uEha5sWl3",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11455,14 +11725,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-0A-LP2.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 20_BC-0B-LP1_HEXANE@Secunderabad",
-            "device_id": "32f6a360-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1cac0e50-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "KGFSZglyrUnhPmoqVgDA",
+            "device_key": "H70qwUs6OnqVuzqKNUnu",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11519,14 +11804,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-0B-LP1.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 21_BC-0B-LP2_MTO@Secunderabad",
-            "device_id": "3305be90-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1cbb9eb0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "a8ccLX2k19ihB6JQwUUZ",
+            "device_key": "csTkuJ4KyMCsM6aZ6iAN",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11583,14 +11883,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-0B-LP2.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 22_BC-10A_BS VI MS@Secunderabad",
-            "device_id": "331527e0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1ccab9e0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "i7c9VgUVNFcXQFv3mqVM",
+            "device_key": "6v9kPGeNordJMQXGx4xK",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11647,14 +11962,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-10A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-10A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-10A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-10A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 23_BC-10B_BS VI HSD@Secunderabad",
-            "device_id": "33249130-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1cd9d510-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "EsYvsxdyNXfwLqXwo579",
+            "device_key": "icmMDd5k5BasF4Ew8ioC",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11711,14 +12041,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-10B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-10B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-10B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-10B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 24_BC-11A_ATF@Secunderabad",
-            "device_id": "3333ac60-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1ce9b390-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "q6w2FSOyb9EW6BnzsKIC",
+            "device_key": "4ySuv1YcRsWliSMwv7an",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11775,14 +12120,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-11A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-11A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-11A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-11A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 25_BC-11B_ATF@Secunderabad",
-            "device_id": "3342eea0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1cf85990-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "pq2GTls1uBzOnQumwjEB",
+            "device_key": "lxmuu8s8i711rk4EevSL",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11839,14 +12199,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-11B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-11B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-11B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-11B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 26_BC-12A_ATF@Secunderabad",
-            "device_id": "3352f430-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d0774c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "J98BzzHht8pQwt8QTzI1",
+            "device_key": "YCfv0tjiyWw3NYyDGwcY",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11903,14 +12278,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-12A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-12A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-12A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-12A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 27_BC-12B_ATF@Secunderabad",
-            "device_id": "3361e850-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d16de10-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "byR6V336martzkAD7Ip6",
+            "device_key": "JY47clDyEGnEt8G7RiT8",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -11967,14 +12357,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-12B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-12B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-12B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-12B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 28_BC-13A_BS VI MS@Secunderabad",
-            "device_id": "3370dc70-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d266e70-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "SttjD77cXFIzYoTct9NX",
+            "device_key": "FcC0mKiSpch9rFx0Hizd",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12031,14 +12436,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-13A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-13A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-13A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-13A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 29_BC-13B_BS VI HSD@Secunderabad",
-            "device_id": "33801eb0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d35fed0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "EjWrRs077kLF85u7QX42",
+            "device_key": "hGw756zI4P5hj8kkK5BV",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12095,14 +12515,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-13B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-13B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-13B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-13B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 30_BC-14A_BS VI MS@Secunderabad",
-            "device_id": "338f60f0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d44cbe0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "BIabR0mPDyBY9ckBAnGA",
+            "device_key": "dgUSqLgqjKO3TT4YeAyv",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12159,14 +12594,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-14A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-14A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-14A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-14A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 31_BC-14B_BS VI HSD@Secunderabad",
-            "device_id": "339f6680-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d53e710-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "EAZus870kMxRo2LlzRGY",
+            "device_key": "loAR0T3pchPlXb7x8GKB",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12223,14 +12673,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-14B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-14B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-14B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-14B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 32_BC-15A_BS VI MS@Secunderabad",
-            "device_id": "33aef6e0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d630240-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "MIS9JK4TGlOOJxVNVrX1",
+            "device_key": "UwHiMm7dp65r62zeutCr",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12287,14 +12752,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-15A.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-15A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-15A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-15A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 33_BC-15B_BS VI HSD@Secunderabad",
-            "device_id": "33be3920-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d724480-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "luUNJ1uU6WmMTih6XTbk",
+            "device_key": "TnWhD6aehLwXE1bLDQsH",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12351,14 +12831,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-15B.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-15B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-15B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-15B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 34_BC-8A-LP1_BS VI HSD@Secunderabad",
-            "device_id": "33cc9100-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d8186c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "zNWaGU2uYkovZUYFfKnb",
+            "device_key": "1AoZtenxeHh3Uy6HLGzW",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12415,14 +12910,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-8A-LP1.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 35_BC-8A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "33dc4870-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1d90c900-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "gZ6whuqHDnlzmv2cjmKq",
+            "device_key": "kd3ONjYuXcIaDbMZwkNh",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12479,14 +12989,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-8A-LP2.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 36_BC-8B-LP1_SKO@Secunderabad",
-            "device_id": "33ebffe0-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1da00b40-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "whnh6OmtpDsYWDF7KeAy",
+            "device_key": "U9LdWnJ7iXeJoy9vgNtI",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12543,14 +13068,29 @@
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-8B-LP1.BATCH_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
                 }
             ]
         },
         {
             "device_name": "LP 37_BC-8B-LP2_SKO@Secunderabad",
-            "device_id": "33fb6930-f5cd-11ef-a29d-95c64d391b7c",
+            "device_id": "1daf4d80-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "ETboBF1Yl9oC1m876Rl4",
+            "device_key": "34gBVGou77VBRZnQjjWA",
             "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
             "sensors": [
                 {
@@ -12606,6 +13146,21 @@
                 {
                     "sensor_name": "BCU LOADING STATUS",
                     "sensor_tag": "SmartLoad-Dual.BC-8B-LP2.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
                     "normal_value": "0"
                 }
             ]
@@ -12835,1227 +13390,6 @@
                 {
                     "sensor_name": "TLF Header Line MOV Close",
                     "sensor_tag": "PLC.SFTPLC.EFFECT_ALL_HEADER_MOV_CLOSED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 01_BC-01A_BS VI MS@Secunderabad",
-            "device_id": "31d49190-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "oERrO7U6EyPR97ykkEpy",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-01A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-01A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 02_BC-01B_BS VI HSD@Secunderabad",
-            "device_id": "31e35ea0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "io2bMZmmQivXLriU58cQ",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-01B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-01B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 03_BC-02A_BS VI MS@Secunderabad",
-            "device_id": "31f2a0e0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "ylNYIk4Xou1iVAtbmfT4",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-02A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-02A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 04_BC-02B_BS VI HSD@Secunderabad",
-            "device_id": "3201e320-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "QxpX0NC5I1MkybwlZ1ln",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-02B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-02B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 05_BC-03A_BS VI MS@Secunderabad",
-            "device_id": "321236d0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "3H8S7dZIsI0aEOSQWAKX",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-03A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-03A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 06_BC-03B_BS VI HSD@Secunderabad",
-            "device_id": "32208eb0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "pirxMeeNaVTgnpMFITQV",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-03B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-03B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 07_BC-04A_BS VI MS@Secunderabad",
-            "device_id": "322ff800-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "TwFHmk0wow9SIcwQJ3gO",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-04A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-04A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 08_BC-04B_BS VI HSD@Secunderabad",
-            "device_id": "32404bb0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "BdjXDcS0aeLC9I70PkHL",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-04B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-04B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 09_BC-05A_BS VI MS@Secunderabad",
-            "device_id": "324ea390-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "wzOg6JyafBOuF7eAZawz",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-05A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-05A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 10_BC-05B_BS VI HSD@Secunderabad",
-            "device_id": "325dbec0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "6gYkScOYGxHfg8bDQpGR",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-05B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-05B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 11_BC-06A_BS VI MS@Secunderabad",
-            "device_id": "326d4f20-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "6uzdPOXjlLosOaxD5GDR",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-06A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-06A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 12_BC-06B_BS VI HSD@Secunderabad",
-            "device_id": "327c4340-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "7ITfzIiK8jGLKsSSWORx",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-06B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-06B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 13_BC-07A_BS VI MS@Secunderabad",
-            "device_id": "328bd3a0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "pxdAdkjJ19uMvdFstQRB",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-07A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-07A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 14_BC-07B_BS VI HSD@Secunderabad",
-            "device_id": "329b3cf0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "UnB1QfDY2yY6wP345Irt",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-07B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-07B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 15_BC-09A-LP1_BS VI MS@Secunderabad",
-            "device_id": "32aa7f30-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "aU6OmSpJdbSjrUqYRlEq",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 16_BC-09A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "32b9c170-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "w7llbemll9PtmXl7UB5D",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 17_BC-09B-LP2_SKO@Secunderabad",
-            "device_id": "32c86770-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "BzGIb0twCCh5xN5dlmmg",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-09B-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-09B-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 18_BC-0A-LP1_BS VI HSD@Secunderabad",
-            "device_id": "32d90940-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "r2XMEESIobv4776olECc",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 19_BC-0A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "32e71300-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "ekrwb8Rx1EBNiDmuKbZB",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 20_BC-0B-LP1_HEXANE@Secunderabad",
-            "device_id": "32f6a360-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "KGFSZglyrUnhPmoqVgDA",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 21_BC-0B-LP2_MTO@Secunderabad",
-            "device_id": "3305be90-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "a8ccLX2k19ihB6JQwUUZ",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 22_BC-10A_BS VI MS@Secunderabad",
-            "device_id": "331527e0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "i7c9VgUVNFcXQFv3mqVM",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-10A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-10A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 23_BC-10B_BS VI HSD@Secunderabad",
-            "device_id": "33249130-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "EsYvsxdyNXfwLqXwo579",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-10B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-10B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 24_BC-11A_ATF@Secunderabad",
-            "device_id": "3333ac60-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "q6w2FSOyb9EW6BnzsKIC",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-11A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-11A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 25_BC-11B_ATF@Secunderabad",
-            "device_id": "3342eea0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "pq2GTls1uBzOnQumwjEB",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-11B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-11B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 26_BC-12A_ATF@Secunderabad",
-            "device_id": "3352f430-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "J98BzzHht8pQwt8QTzI1",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-12A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-12A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 27_BC-12B_ATF@Secunderabad",
-            "device_id": "3361e850-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "byR6V336martzkAD7Ip6",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-12B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-12B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 28_BC-13A_BS VI MS@Secunderabad",
-            "device_id": "3370dc70-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "SttjD77cXFIzYoTct9NX",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-13A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-13A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 29_BC-13B_BS VI HSD@Secunderabad",
-            "device_id": "33801eb0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "EjWrRs077kLF85u7QX42",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-13B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-13B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 30_BC-14A_BS VI MS@Secunderabad",
-            "device_id": "338f60f0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "BIabR0mPDyBY9ckBAnGA",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-14A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-14A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 31_BC-14B_BS VI HSD@Secunderabad",
-            "device_id": "339f6680-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "EAZus870kMxRo2LlzRGY",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-14B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-14B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 32_BC-15A_BS VI MS@Secunderabad",
-            "device_id": "33aef6e0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "MIS9JK4TGlOOJxVNVrX1",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-15A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-15A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 33_BC-15B_BS VI HSD@Secunderabad",
-            "device_id": "33be3920-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "luUNJ1uU6WmMTih6XTbk",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-15B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-15B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 34_BC-8A-LP1_BS VI HSD@Secunderabad",
-            "device_id": "33cc9100-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "zNWaGU2uYkovZUYFfKnb",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 35_BC-8A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "33dc4870-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "gZ6whuqHDnlzmv2cjmKq",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 36_BC-8B-LP1_SKO@Secunderabad",
-            "device_id": "33ebffe0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "whnh6OmtpDsYWDF7KeAy",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP1.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP1.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 37_BC-8B-LP2_SKO@Secunderabad",
-            "device_id": "33fb6930-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "BCU Totaliser",
-            "device_key": "ETboBF1Yl9oC1m876Rl4",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP2.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP2.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 01_BC-01A_BS VI MS@Secunderabad",
-            "device_id": "31d49190-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "oERrO7U6EyPR97ykkEpy",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Single.BC-01A.NOMINAL_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 02_BC-01B_BS VI HSD@Secunderabad",
-            "device_id": "31e35ea0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "io2bMZmmQivXLriU58cQ",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Single.BC-01B.NOMINAL_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 03_BC-02A_BS VI MS@Secunderabad",
-            "device_id": "31f2a0e0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "ylNYIk4Xou1iVAtbmfT4",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-02A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 04_BC-02B_BS VI HSD@Secunderabad",
-            "device_id": "3201e320-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "QxpX0NC5I1MkybwlZ1ln",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-02B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 05_BC-03A_BS VI MS@Secunderabad",
-            "device_id": "321236d0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "3H8S7dZIsI0aEOSQWAKX",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-03A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 06_BC-03B_BS VI HSD@Secunderabad",
-            "device_id": "32208eb0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "pirxMeeNaVTgnpMFITQV",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-03B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 07_BC-04A_BS VI MS@Secunderabad",
-            "device_id": "322ff800-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "TwFHmk0wow9SIcwQJ3gO",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-04A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 08_BC-04B_BS VI HSD@Secunderabad",
-            "device_id": "32404bb0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "BdjXDcS0aeLC9I70PkHL",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-04B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 09_BC-05A_BS VI MS@Secunderabad",
-            "device_id": "324ea390-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "wzOg6JyafBOuF7eAZawz",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-05A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 10_BC-05B_BS VI HSD@Secunderabad",
-            "device_id": "325dbec0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "6gYkScOYGxHfg8bDQpGR",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-05B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 11_BC-06A_BS VI MS@Secunderabad",
-            "device_id": "326d4f20-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "6uzdPOXjlLosOaxD5GDR",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-06A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 12_BC-06B_BS VI HSD@Secunderabad",
-            "device_id": "327c4340-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "7ITfzIiK8jGLKsSSWORx",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-06B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 13_BC-07A_BS VI MS@Secunderabad",
-            "device_id": "328bd3a0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "pxdAdkjJ19uMvdFstQRB",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-07A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 14_BC-07B_BS VI HSD@Secunderabad",
-            "device_id": "329b3cf0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "UnB1QfDY2yY6wP345Irt",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-07B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 15_BC-09A-LP1_BS VI MS@Secunderabad",
-            "device_id": "32aa7f30-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "aU6OmSpJdbSjrUqYRlEq",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 16_BC-09A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "32b9c170-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "w7llbemll9PtmXl7UB5D",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-09A-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 17_BC-09B-LP2_SKO@Secunderabad",
-            "device_id": "32c86770-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "BzGIb0twCCh5xN5dlmmg",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-09B-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 18_BC-0A-LP1_BS VI HSD@Secunderabad",
-            "device_id": "32d90940-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "r2XMEESIobv4776olECc",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 19_BC-0A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "32e71300-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "ekrwb8Rx1EBNiDmuKbZB",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-0A-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 20_BC-0B-LP1_HEXANE@Secunderabad",
-            "device_id": "32f6a360-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "KGFSZglyrUnhPmoqVgDA",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 21_BC-0B-LP2_MTO@Secunderabad",
-            "device_id": "3305be90-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "a8ccLX2k19ihB6JQwUUZ",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-0B-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 22_BC-10A_BS VI MS@Secunderabad",
-            "device_id": "331527e0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "i7c9VgUVNFcXQFv3mqVM",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-10A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 23_BC-10B_BS VI HSD@Secunderabad",
-            "device_id": "33249130-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "EsYvsxdyNXfwLqXwo579",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-10B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 24_BC-11A_ATF@Secunderabad",
-            "device_id": "3333ac60-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "q6w2FSOyb9EW6BnzsKIC",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-11A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 25_BC-11B_ATF@Secunderabad",
-            "device_id": "3342eea0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "pq2GTls1uBzOnQumwjEB",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-11B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 26_BC-12A_ATF@Secunderabad",
-            "device_id": "3352f430-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "J98BzzHht8pQwt8QTzI1",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-12A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 27_BC-12B_ATF@Secunderabad",
-            "device_id": "3361e850-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "byR6V336martzkAD7Ip6",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-12B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 28_BC-13A_BS VI MS@Secunderabad",
-            "device_id": "3370dc70-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "SttjD77cXFIzYoTct9NX",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-13A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 29_BC-13B_BS VI HSD@Secunderabad",
-            "device_id": "33801eb0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "EjWrRs077kLF85u7QX42",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-13B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 30_BC-14A_BS VI MS@Secunderabad",
-            "device_id": "338f60f0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "BIabR0mPDyBY9ckBAnGA",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-14A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 31_BC-14B_BS VI HSD@Secunderabad",
-            "device_id": "339f6680-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "EAZus870kMxRo2LlzRGY",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-14B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 32_BC-15A_BS VI MS@Secunderabad",
-            "device_id": "33aef6e0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "MIS9JK4TGlOOJxVNVrX1",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-15A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 33_BC-15B_BS VI HSD@Secunderabad",
-            "device_id": "33be3920-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "luUNJ1uU6WmMTih6XTbk",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-15B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 34_BC-8A-LP1_BS VI HSD@Secunderabad",
-            "device_id": "33cc9100-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "zNWaGU2uYkovZUYFfKnb",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 35_BC-8A-LP2_BS VI HSD@Secunderabad",
-            "device_id": "33dc4870-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "gZ6whuqHDnlzmv2cjmKq",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-8A-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 36_BC-8B-LP1_SKO@Secunderabad",
-            "device_id": "33ebffe0-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "whnh6OmtpDsYWDF7KeAy",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP1.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "LP 37_BC-8B-LP2_SKO@Secunderabad",
-            "device_id": "33fb6930-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "K-Factor",
-            "device_key": "ETboBF1Yl9oC1m876Rl4",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-8B-LP2.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
                     "normal_value": "0"
                 }
             ]
