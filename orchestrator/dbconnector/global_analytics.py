@@ -3586,7 +3586,7 @@ class GlobalAnalytics:
                     })
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                    resp[each_float_col] = resp[each_float_col].fillna(0).astype(int)
             # Fill missing values for string columns
             for each_str_col in ["zone", "name", "carousel_type"]:
                 if each_str_col in resp.columns:
@@ -3599,7 +3599,7 @@ class GlobalAnalytics:
             resp = await filter_data(resp, _filters)
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0).astype(int)
             for each_str_col in ["zone","name","carousel_type"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -3879,8 +3879,8 @@ class GlobalAnalytics:
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.group_by(["zone"]).agg([
-                        pl.sum("break_production").alias("break_production"),
-                        pl.sum("overtime_production").alias("overtime_prouction"),
+                        pl.sum("break_production").round(1).alias("break_production"),
+                        pl.sum("overtime_production").round(1).alias("overtime_prouction"),
                     ])
             return {"status": True, "message": "success", "data": resp.to_dicts()}
         try:
@@ -3905,8 +3905,8 @@ class GlobalAnalytics:
 
                 if "zone" in filter_keys and "plant" not in filter_keys:
                     grouped_resp = resp.group_by(["zone", "plant"]).agg([
-                        pl.sum("break_production").alias("break_production"),
-                        pl.sum("overtime_production").alias("overtime_prouction"),
+                        pl.sum("break_production").round(1).alias("break_production"),
+                        pl.sum("overtime_production").round(1).alias("overtime_prouction"),
                     ])                
                 if grouped_resp is not None:
                     return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
