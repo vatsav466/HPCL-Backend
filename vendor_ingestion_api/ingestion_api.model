@@ -90,6 +90,7 @@ Model vtsBlockedTruck internal {
     vehicle_blocked_instance_no optional str
     vehicle_blocked_instance_type optional str
     alert_type optional str
+    invoice_number optional str
 }
 
 Model VTS crud_disable {
