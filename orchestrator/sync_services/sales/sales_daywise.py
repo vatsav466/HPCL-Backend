@@ -233,23 +233,7 @@ def get_and_insert_data(cursor, query, params=None):
     
     data.to_csv('/tmp/actual_sales_data.csv',index = False)
     print(len(data))
-    '''
-    pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )
-    cur = pg_conn.cursor()
-    cur.execute(f"""
-    select * FROM "MOM_LEVEL_SALES" 
-    """)
-    rows = cur.fetchall()
-    columns = [column[0] for column in cur.description]
-    data = pd.DataFrame.from_records(rows, columns=columns)
-    data.to_csv('/tmp/mom.csv',index = False)
-    '''
+    
     print(len(data))
     print(len(data.drop_duplicates()))
     data = data.drop_duplicates()
