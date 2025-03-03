@@ -10,6 +10,8 @@ import mysql.connector
 from dateutil.relativedelta import relativedelta
 import hashlib
 import urdhva_base
+import sys
+sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 def get_db_connection(params):
     """
