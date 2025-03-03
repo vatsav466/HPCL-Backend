@@ -92,6 +92,7 @@ class vtsBlockedTruckCreate(pydantic.BaseModel):
     vehicle_blocked_instance_no: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_blocked_instance_type: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class Vts_Ingest_DataParams(pydantic.BaseModel):
