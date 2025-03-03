@@ -121,7 +121,7 @@ Model filtered_keys internal {
 Model WidgetFilters internal {
     key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
     cond str regex="^([a-zA-Z0-9_.\-=! ]+|)$"
-    value optional str regex="^([a-zA-Z0-9,_.\-=\" ]+|)$"
+    value optional str regex="^([a-zA-Z0-9,\[\]&#_.\-=\" ]+|)$"
 }
 
 Model Charts {
