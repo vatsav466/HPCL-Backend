@@ -18,7 +18,7 @@ def insertToDB(data, table_name):
                 database=creds['database'],
                 user=creds['user'],
                 password=creds['password'],
-                port=creds['port']
+                port=int(creds['port'])
             )    
     table_create_sql = ''
     cur = pg_conn.cursor()
@@ -120,24 +120,24 @@ def get_data(params):
     first_insertion = False
     query = """ SELECT DISTINCT("short_name") FROM "LPG_OPERATIONS_SUMMARY_DATA";"""
     creds = credential_loader.get_credentials('APP_DB')
-    params={
+    app_db_params={
             "host": creds["host"],
             "database": creds["database"],
             "user": creds["user"],
             "password": creds["password"],
-            "port": creds["port"]
+            "port": int(creds["port"])
             }
-    plant_check = fetch_data(query, getData=True, params=params)
+    plant_check = fetch_data(query, getData=True, params=app_db_params)
     if params['PlantName'].lower() not in plant_check["short_name"]:
         first_insertion = True
     
     query = f""" SELECT MAX(process_date) FROM "LPG_OPERATIONS_SUMMARY_DATA" WHERE "short_name"='{params['PlantName'].lower()}'; """    
-    max_date = fetch_data(query, getData=False, params=params)
+    max_date = fetch_data(query, getData=False, params=app_db_params)
     
     query = f""" SELECT * FROM production_log WHERE "process_date" > '{max_date}' """
     if first_insertion:
         max_date = datetime.datetime.now().strftime("%Y-%m-%d")
-        query = f""" SELECT * FROM production_log WHERE "process_date" > '{max_date}' """
+        query = f""" SELECT * FROM production_log WHERE "process_date" >= '{max_date}' """
     
     data = fetch_data(query, getData=True, params=params)
     if data.is_empty():
