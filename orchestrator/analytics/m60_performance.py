@@ -548,12 +548,12 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 for column in list(MandateKeys.values()):
                     if column in merged_df.columns.tolist():
                         merged_df[column] = merged_df[column].fillna(0).astype(int)*1000
-            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
+            final_resp = generate_stacked_data(drill_state,merged_df, resp_format, month_column='month_name')
         else:
             if not resp_format:
                 final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
             else:
-                final_resp = generate_stacked_data(merged_df, resp_format)
+                final_resp = generate_stacked_data(drill_state,merged_df, resp_format)
         measure_unit = 'TMT'
         if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
@@ -583,7 +583,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
     else:
         if resp_format:
-            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
+            final_resp = generate_stacked_data(drill_state,merged_df, resp_format, month_column='month_name')
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         measure_unit = 'TMT'
@@ -610,7 +610,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {},'sales_unit':measure_unit}}
 
 
-def generate_stacked_data(df, resp_format='', month_column=''):
+def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
+    print("in the stacked data")
+    print(df.to_dict(orient='records'))
     columns = df.columns.to_list()
     numeric_cols = [col for col in columns if col in list(MandateKeys.values())]
     if month_column:
@@ -671,7 +673,7 @@ def generate_stacked_data(df, resp_format='', month_column=''):
             if months.index(present_month) > 3:
                 cumulative_months = months[0:months.index(present_month) - 2]
             # Summing data for cumulative data
-            df['Zone_Name'] = df['Zone_Name'].astype(str)
+            #df['Zone_Name'] = df['Zone_Name'].astype(str)
             print(df.columns)
             sum_cols = []
             for col in df.columns.tolist():
@@ -681,8 +683,13 @@ def generate_stacked_data(df, resp_format='', month_column=''):
                     sum_cols.append(col)
             print(df.dtypes)
             print("sum_cols",sum_cols)
-            cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[sum_cols].sum()
-            #cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)sum_cols.sum()
+            #cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby(drill_state.strip('"'), as_index=False)[sum_cols].sum()
+            if drill_state.strip('"') == 'SBU_Name':
+               cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[sum_cols].sum()
+            if drill_state.strip('"') == 'Zone_Name':
+               cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Region_Name', as_index=False)[sum_cols].sum()
+            if drill_state.strip('"') == 'Region_Name':
+               cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('SalesArea_Name', as_index=False)[sum_cols].sum()
             cumulative_data['month_name'] = 'Cum'
             non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
             df = pd.concat([cumulative_data, non_cumulative_data])
@@ -703,7 +710,7 @@ def generate_stacked_data(df, resp_format='', month_column=''):
             print(df_pivot.columns)
             # Flatten MultiIndex Columns and rename them
             #df_pivot.columns = [f"{month}{metric.split('')[0]}" for metric, month in df_pivot.columns]
-            df_pivot.columns = [f"{month}{metric.split(',')[0]}" for metric, month in df_pivot.columns]
+            df_pivot.columns = [f"{month}_{metric.split(',')[0]}" for metric, month in df_pivot.columns]
 
             # Reset Index to include 'Zone_Name'
             df_pivot.reset_index(inplace=True)
