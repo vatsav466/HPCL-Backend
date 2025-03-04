@@ -29,6 +29,7 @@ class vtsDataCreate(pydantic.BaseModel):
     device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class vtsDataUpdatedCreate(pydantic.BaseModel):
@@ -92,7 +93,6 @@ class vtsBlockedTruckCreate(pydantic.BaseModel):
     vehicle_blocked_instance_no: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_blocked_instance_type: typing.Optional[str] = pydantic.Field("", **{})
     alert_type: typing.Optional[str] = pydantic.Field("", **{})
-    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class Vts_Ingest_DataParams(pydantic.BaseModel):
@@ -205,5 +205,5 @@ class Emlock_Ingest_DataParams(pydantic.BaseModel):
 
 class Taslistener_Get_DataParams(pydantic.BaseModel):
     input_data: dict
-    
-    
+
+

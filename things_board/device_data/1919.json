@@ -13166,6 +13166,80 @@
             ]
         },
         {
+            "device_name": "Operability Index@Secunderabad",
+            "device_id": "38ff2200-f5cd-11ef-a29d-95c64d391b7c",
+            "device_type": "OI",
+            "device_key": "zQYOLKF88sctJBWsjm6L",
+            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
+            "sensors": [
+                {
+                    "sensor_name": "Fire Engine1",
+                    "sensor_tag": "PUMP.FWP-01.REMOTE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Fire Engine2",
+                    "sensor_tag": "PUMP.FWP-02.REMOTE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Fire Engine3",
+                    "sensor_tag": "PUMP.FWP-03.REMOTE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Fire Engine4",
+                    "sensor_tag": "PUMP.FWP-04.REMOTE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Fire Engine5",
+                    "sensor_tag": "PUMP.FWP-05.REMOTE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Fire Engine6",
+                    "sensor_tag": "PUMP.FWP-06.REMOTE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Fire Engine7",
+                    "sensor_tag": "PUMP.FWP-07.REMOTE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Fire Engine8",
+                    "sensor_tag": "PUMP.FWP-08.REMOTE_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Jockey Pump Run1",
+                    "sensor_tag": "PUMP.JCY-01.ON",
+                    "normal_value": "1"
+                },
+                {
+                    "sensor_name": "Jockey Pump Run2",
+                    "sensor_tag": "PUMP.JCY-02.ON",
+                    "normal_value": "1"
+                },
+                {
+                    "sensor_name": "Farthest Point Pt",
+                    "sensor_tag": "PressureTransmitter.PT-01.PRESSURE",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Nearest Point PT",
+                    "sensor_tag": "PressureTransmitter.PT-02.PRESSURE",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Water Volume",
+                    "sensor_tag": "PLC.GEPLC.TOV_ON_SCREEN",
+                    "normal_value": "0"
+                }
+            ]
+        },
+        {
             "device_name": "Gantry Permissive override condition@Secunderabad",
             "device_id": "340972f0-f5cd-11ef-a29d-95c64d391b7c",
             "device_type": "Gantry override",
@@ -13194,6 +13268,11 @@
                 {
                     "sensor_name": "All ROSOVs closed",
                     "sensor_tag": "PLC.SFTPLC.EFFECT_ALL_ROSOV_CLOSED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Barrier Gate opened",
+                    "sensor_tag": "PLC.SFTPLC.EFFECT_GATE_BARRIER_OPENED",
                     "normal_value": "0"
                 },
                 {
@@ -13258,6 +13337,11 @@
                 {
                     "sensor_name": "All ROSOVs closed",
                     "sensor_tag": "PLC.SFTPLC.EFFECT_ALL_ROSOV_CLOSED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Barrier Gate opened",
+                    "sensor_tag": "PLC.SFTPLC.EFFECT_GATE_BARRIER_OPENED",
                     "normal_value": "0"
                 },
                 {
@@ -13404,80 +13488,6 @@
                 {
                     "sensor_name": "LRC SWITCHOVER 30 DAYS STATUS",
                     "sensor_tag": "CLIENT.LRCA.HSB_COMMS_FAIL",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "Operability Index@Secunderabad",
-            "device_id": "38ff2200-f5cd-11ef-a29d-95c64d391b7c",
-            "device_type": "OI",
-            "device_key": "zQYOLKF88sctJBWsjm6L",
-            "entity_id": "255f5440-f5cd-11ef-a29d-95c64d391b7c",
-            "sensors": [
-                {
-                    "sensor_name": "Fire Engine1",
-                    "sensor_tag": "PUMP.FWP-01.REMOTE_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Fire Engine2",
-                    "sensor_tag": "PUMP.FWP-02.REMOTE_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Fire Engine3",
-                    "sensor_tag": "PUMP.FWP-03.REMOTE_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Fire Engine4",
-                    "sensor_tag": "PUMP.FWP-04.REMOTE_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Fire Engine5",
-                    "sensor_tag": "PUMP.FWP-05.REMOTE_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Fire Engine6",
-                    "sensor_tag": "PUMP.FWP-06.REMOTE_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Fire Engine7",
-                    "sensor_tag": "PUMP.FWP-07.REMOTE_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Fire Engine8",
-                    "sensor_tag": "PUMP.FWP-08.REMOTE_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Jockey Pump Run1",
-                    "sensor_tag": "PUMP.JCY-01.ON",
-                    "normal_value": "1"
-                },
-                {
-                    "sensor_name": "Jockey Pump Run2",
-                    "sensor_tag": "PUMP.JCY-02.ON",
-                    "normal_value": "1"
-                },
-                {
-                    "sensor_name": "Farthest Point Pt",
-                    "sensor_tag": "PressureTransmitter.PT-01.PRESSURE",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Nearest Point PT",
-                    "sensor_tag": "PressureTransmitter.PT-02.PRESSURE",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "Water Volume",
-                    "sensor_tag": "PLC.GEPLC.TOV_ON_SCREEN",
                     "normal_value": "0"
                 }
             ]

@@ -27,6 +27,7 @@ Model vtsData internal {
     device_offline_count optional int
     device_tamper_count optional int
     approved_by optional str
+    invoice_number optional str
 }
 
 Model vtsDataUpdated internal {
@@ -90,7 +91,6 @@ Model vtsBlockedTruck internal {
     vehicle_blocked_instance_no optional str
     vehicle_blocked_instance_type optional str
     alert_type optional str
-    invoice_number optional str
 }
 
 Model VTS crud_disable {
