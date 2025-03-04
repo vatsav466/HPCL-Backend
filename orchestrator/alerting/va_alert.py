@@ -3,6 +3,7 @@ import re
 import json
 import datetime
 import traceback
+import hpcl_ceg_model
 import urdhva_base.redispool
 import utilities.interlock_mapping
 import utilities.helpers as helpers
@@ -60,20 +61,6 @@ class VAAlertManager(alert_factory.AlertFactory):
                 return
             for record in alert_records:
                 try:
-                    exception_msg = " ".join([
-                        f"New Alert created at {recv_time} for",
-                        f"alert_type - {record['alert_section']},",
-                        f"alert_description - {record['alert_description']},",
-                        f"device_id - {record['device_id']},",
-                        f"video_url - {record['video_url']}"
-                        ])
-
-                    alert_history = [{
-                        "action_msg": exception_msg,
-                        "action_type": "Created",
-                        "alert_status": "Open"
-                        }]
-                    
                     # here record['alert_section'] will be alert_type of VA
                     # Retrieving the alert_mapping details for alert_type based on location_type and alert_type.
                     va_alert_data = va_alert_mapping.VA_Alert_Mapping[record['location_type']].get(
@@ -90,6 +77,21 @@ class VAAlertManager(alert_factory.AlertFactory):
                     
                     # Generate a unique alert_id using the keys
                     alert_id = helpers.generate_hash(keys)
+
+                    exception_msg = " ".join([
+                        f"Event came for alert_type - {record['alert_section']},",
+                        f"alert_description - {va_alert_data['name']},",
+                        f"device_id - {record['device_id']},",
+                        f"alert_id - {record.get("alert_id",alert_id)},",
+                        f"image_url - {record['video_url']},",
+                        f"event created at - {recv_time}"
+                        ])
+
+                    alert_history = [{
+                        "action_msg": exception_msg,
+                        "action_type": "Created",
+                        "alert_status": "Open"
+                        }]
                     redis_ins = await urdhva_base.redispool.get_redis_connection()
 
                     # Checking if the alert_id for the given alert_type already exists in Redis.
@@ -99,6 +101,25 @@ class VAAlertManager(alert_factory.AlertFactory):
 
                     # comment below line as alerts are not duplicated its old alert
                     if await redis_ins.exists(alert_id):
+                        print("Alert already exists")
+                        va_alert_id = await redis_ins.get(alert_id)
+                        print("va_alert_id----->",va_alert_id)
+                        va_data = await hpcl_ceg_model.Alerts.get(va_alert_id)
+                        print("va_data------->",va_data)
+                        if not isinstance(va_data, dict):
+                            va_data = va_data.__dict__
+
+                        image_urls = va_data["image_urls"] if va_data["image_urls"] else []
+                        vts_alert_history = va_data["alert_history"] if va_data["alert_history"] else []
+                        new_entry = {
+                            "alert_id": record.get("alert_id", alert_id),
+                            "image_url": record["video_url"]
+                        }
+                        vts_alert_history.append(alert_history)
+                        image_urls.append(new_entry)
+                        va_data["image_urls"] = image_urls
+                        va_data["alert_history"] = vts_alert_history
+                        await hpcl_ceg_model.Alerts(**va_data).modify()
                         logger.info("Alert already exists")
                         continue
 
@@ -121,7 +142,8 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "alert_section": "VA",
                                               "alert_history":alert_history,
                                               "vendor_alert_id": record.get("alert_id", alert_id),
-                                              "alert_timestamp": record.get("alert_timestamp", None)
+                                              "alert_timestamp": record.get("alert_timestamp", None),
+                                              "image_urls": [{"alert_id": record.get("alert_id", alert_id),"image_url": record["video_url"]}]
                                               })
                     
                     camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=location_id,

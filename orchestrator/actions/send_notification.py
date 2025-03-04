@@ -10,7 +10,7 @@ from typing import Dict, List
 import hpcl_ceg_model
 import hpcl_ceg_enum
 from collections import defaultdict
-import utilities.role_configuration as role_configuration 
+import utilities.role_configuration as role_configuration
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
     TemplateMapping
@@ -21,6 +21,7 @@ from camunda.external_task.external_task import (
 )
 import cache_gateway.cache_api_actions as cache_api_actions
 import orchestrator.notification_manager.notification_factory as notification_factory
+import orchestrator.actions.va_alert_count as va_alert_mapping
 
 logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
 
@@ -742,6 +743,8 @@ class SendNotification:
         mailto=self.params.get("mailto","")
         interlock_name = self.alert_data.get("interlock_name","")
         alert_section = self.alert_data.get("alert_section","")
+        if self.alert_data.get("alert_section") in ["VA"]:
+            interlock_name = await va_alert_mapping.VAAlertMapping().vaalertmapping(self.params)
         rolemapping = role_configuration.role_Mapping[alert_section].get(interlock_name, {})
         print("rolemapping--------->",rolemapping)
         if mailto:
@@ -753,6 +756,8 @@ class SendNotification:
         mqof = self.params.get("mqof","")
         interlock_name = self.alert_data.get("interlock_name","")
         alert_section = self.alert_data.get("alert_section","")
+        if self.alert_data.get("alert_section") in ["VA"]:
+            interlock_name = await va_alert_mapping.VAAlertMapping().vaalertmapping(self.params)
         rolemapping = role_configuration.role_Mapping[alert_section].get(interlock_name, {})
         print("rolemapping--------->",rolemapping)
         if mqof:

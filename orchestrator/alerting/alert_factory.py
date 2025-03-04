@@ -5,6 +5,7 @@ import traceback
 import hpcl_ceg_enum
 import hpcl_ceg_model
 import urdhva_base.redispool
+import utilities.helpers as helpers
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
@@ -113,7 +114,8 @@ class AlertFactory:
                                                         'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
-                                                        'raw_data': {}}).create()
+                                                        'raw_data': {},
+                                                        'image_urls': alert_data.get('image_urls', [])}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             if alert_data.get("alert_section",'') in ["VA"]:
@@ -297,6 +299,11 @@ class AlertFactory:
                 al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                 al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                 redis_ins = await urdhva_base.redispool.get_redis_connection()
+                if al_data["alert_section"] in ["VA"]:
+                    keys = [al_data["sap_id"], al_data['bu'], "VA", al_data['device_id'],
+                            al_data['interlock_name']]
+                    va_alert_id = helpers.generate_hash(keys)
+                    await redis_ins.delete(va_alert_id)
                 if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
                     await redis_ins.hdel("alert_mapping", al_data['external_id'])
                 data_obj = hpcl_ceg_model.Alerts(**al_data)

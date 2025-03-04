@@ -101,6 +101,15 @@ role_Mapping = {
                                         "mqof":{"0": "HQO Operations Team","1": "HQO Operations Team"},"block_time":"P730D"},
         "NoHalt Zone SixthTime":{"rolemailto":{"0": "HQO Operations Team","1": "HQO Operations Team","2": "HQO Operations Team"},
                                         "mqof":{"0": "HQO Operations Team","1": "HQO Operations Team"},"block_time":"P730D"}
-}
+},
+
+    "VA":{
+        "0":{"rolemailto":{"0": "Safety officer","1": "Location In-charge","2": "Safety officer,Location In-charge"},
+                                    "mqof":{"0": "Safety officer","1": "Location In-charge"},"block_time":"PT60M"},
+        "1":{"rolemailto":{"0": "Zonal HSSE","1": "Zonal Operations Head","2": "Zonal HSSE,Zonal Operations Head"},
+                                    "mqof":{"0": "Zonal HSSE","1": "Zonal Operations Head"},"block_time":"PT60M"},
+        "2":{"rolemailto":{"0": "HQO HSSE Team","1": "HQO Operations Team","2": "HQO HSSE Team,HQO Operations Team"},
+                                    "mqof":{"0": "HQO HSSE Team","1": "HQO Operations Team"},"block_time":"PT60M"}
+    }
 }
 
