@@ -3586,7 +3586,7 @@ class GlobalAnalytics:
                     })
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0).astype(np.float64).astype(int)
+                    resp[each_float_col] = resp[each_float_col].fillna(0).round()
             # Fill missing values for string columns
             for each_str_col in ["zone", "name", "carousel_type"]:
                 if each_str_col in resp.columns:
@@ -3599,7 +3599,7 @@ class GlobalAnalytics:
             resp = await filter_data(resp, _filters)
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0).astype(np.float64).astype(int)
+                    resp[each_float_col] = resp[each_float_col].fillna(0).round()
             for each_str_col in ["zone","name","carousel_type"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
