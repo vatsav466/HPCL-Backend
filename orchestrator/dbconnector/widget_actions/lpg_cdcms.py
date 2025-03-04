@@ -2233,7 +2233,6 @@ class LPGCDCMSActions:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_central_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_consumers")
-        cdcms_master = """ SELECT "StateCode", "StateName" FROM cdcms_masters; """
         if filters:
             conditions = []
             for rec in filters:
@@ -2259,10 +2258,7 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_consumers_query_)
-        cdcms_master = await function(query=cdcms_master)
-        cdcms_master = pl.DataFrame(cdcms_master)
         resp = pl.DataFrame(resp)
-        resp = resp.join(cdcms_master, on="StateCode", how="left")
         resp = await filter_data(resp.to_pandas(), _filters)
         resp = pl.from_pandas(resp)
         numerical_columns = ["month_number", "consumer_count"]
