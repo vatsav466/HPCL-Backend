@@ -1,4 +1,5 @@
 import urdhva_base
+import datetime
 import json
 import pandas as pd
 from calendar import monthrange
@@ -59,6 +60,10 @@ async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_res
         filter_dates.append([helpers.get_time_stamp_by_delta(start_dt, months=1, ascending=True,
                                                              date_time_format=None).strftime(resp_format),
                              dt.strftime(resp_format)])
+    print("filter_dates",filter_dates)
+    print("day_filter_dates",day_filter_dates)
+    #print("filters",filters)
+    #filters = [condition for condition in filters if condition['key'].strip('"') not in ['resp_format']]
     return filter_dates, day_filter_dates
 
 
@@ -331,7 +336,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     if '"FYC"' not in [x['key'] for x in filters]:
                         cross_filters.append(condition)
                 else:
-                    cross_filters.append(condition)
+                    if condition['key'].strip('"') =='resp_format':
+                        if condition['value'] != 'heat_map':
+                            cross_filters.append(condition)
+                    else:
+                        cross_filters.append(condition)
                 print("cross filters in else in else",cross_filters)
 
     def get_group_by_columns(group_by_filter):
@@ -417,7 +426,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         filter_dates = []
         day_filter_dates = []
         if start_date and end_date:
-            filter_dates, day_filter_dates = await get_date_filters(start_date_history, end_date_history, "%Y%m")
+            filter_dates, day_filter_dates= await get_date_filters(start_date_history, end_date_history, "%Y%m")
         else:
             if DefaultTable == "Day":
                 day_filter_dates.append([start_date_history, end_date_history])
@@ -539,12 +548,12 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 for column in list(MandateKeys.values()):
                     if column in merged_df.columns.tolist():
                         merged_df[column] = merged_df[column].fillna(0).astype(int)*1000
-            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
+            final_resp = generate_stacked_data(drill_state,merged_df, resp_format, month_column='month_name')
         else:
             if not resp_format:
                 final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
             else:
-                final_resp = generate_stacked_data(merged_df, resp_format)
+                final_resp = generate_stacked_data(drill_state,merged_df, resp_format)
         measure_unit = 'TMT'
         if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
@@ -574,7 +583,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
     else:
         if resp_format:
-            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
+            final_resp = generate_stacked_data(drill_state,merged_df, resp_format, month_column='month_name')
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         measure_unit = 'TMT'
@@ -601,7 +610,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {},'sales_unit':measure_unit}}
 
 
-def generate_stacked_data(df, resp_format='', month_column=''):
+def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
+    print("in the stacked data")
+    print(df.to_dict(orient='records'))
     columns = df.columns.to_list()
     numeric_cols = [col for col in columns if col in list(MandateKeys.values())]
     if month_column:
@@ -653,6 +664,62 @@ def generate_stacked_data(df, resp_format='', month_column=''):
                                         "data": [zone_data.loc[m, column] if m in zone_data.index else 0
                                                  for m in unique_months]})
             return {"months": unique_months, "series": series_data}
+        elif resp_format == 'heat_map' and month_column:
+            # making Cumulative sum of data for n-3
+            present_month = datetime.datetime.now().strftime('%b')
+
+            # Filtering cumulative_months
+            cumulative_months = []
+            if months.index(present_month) > 3:
+                cumulative_months = months[0:months.index(present_month) - 2]
+            # Summing data for cumulative data
+            #df['Zone_Name'] = df['Zone_Name'].astype(str)
+            print(df.columns)
+            sum_cols = []
+            for col in df.columns.tolist():
+                #if df[col].dtype in ['float','np.float64','float64','int','int64','np.int64']:
+                if 'SALES' in col:
+                    df[col] = df[col].fillna(0).astype(float)
+                    sum_cols.append(col)
+            print(df.dtypes)
+            print("sum_cols",sum_cols)
+            #cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby(drill_state.strip('"'), as_index=False)[sum_cols].sum()
+            if drill_state.strip('"') == 'SBU_Name':
+               cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[sum_cols].sum()
+            if drill_state.strip('"') == 'Zone_Name':
+               cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Region_Name', as_index=False)[sum_cols].sum()
+            if drill_state.strip('"') == 'Region_Name':
+               cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('SalesArea_Name', as_index=False)[sum_cols].sum()
+            cumulative_data['month_name'] = 'Cum'
+            non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
+            df = pd.concat([cumulative_data, non_cumulative_data])
+
+            # Renaming columns to lower case
+            df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
+
+            # Actual numeric columns
+            numeric_cols = [key for key, value in MandateKeys.items() if value in numeric_cols]
+
+            # Pivot Data - Creating separate columns for Actual, History, and Target
+            df_pivot = df.pivot(index=other_columns[0], columns=month_column, values=numeric_cols)
+            print("pivot cols",df_pivot.columns)
+            for metric,month in  df_pivot.columns:
+                print("metric",metric)
+                print("month",month)
+            print(df_pivot)
+            print(df_pivot.columns)
+            # Flatten MultiIndex Columns and rename them
+            #df_pivot.columns = [f"{month}{metric.split('')[0]}" for metric, month in df_pivot.columns]
+            df_pivot.columns = [f"{month}_{metric.split(',')[0]}" for metric, month in df_pivot.columns]
+
+            # Reset Index to include 'Zone_Name'
+            df_pivot.reset_index(inplace=True)
+
+            # Keeping all nan's as zero's
+            df_pivot.fillna(0, inplace=True)
+
+            # Convert to Dictionary Format
+            return df_pivot.to_dict(orient="records")
         elif resp_format == 'cummulative' and month_column:
             df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
             return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
