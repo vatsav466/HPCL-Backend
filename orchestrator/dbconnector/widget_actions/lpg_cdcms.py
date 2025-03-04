@@ -93,10 +93,10 @@ class LPGCDCMSActions:
         df = df.filter(pl.col("ZOName").fill_null("") != "NULL")
         df = df.filter(pl.col("DistributorName").fill_null("") != "NULL")
         data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
-                "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
-                "DistributorName": df["DistributorName"].unique().to_list(), 
-                "StateCode": df["StateCode"].unique().to_list(), "CylType": ['C142','C5'], 
-                "ConsumerType": ['PMUY', 'NPMUY'], "Financial_Year": ["2023-2024", "2024-2025"]}
+                "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(),
+                "DistributorName": df["DistributorName"].unique().to_list(),
+                "StateCode": df["StateCode"].unique().to_list(), "StateName": df["StateName"].unique().to_list(),
+                "CylType": ['C142','C5'], "ConsumerType": ['PMUY', 'NPMUY'], "Financial_Year": ["2023-2024", "2024-2025"]}
         return data
     
     
@@ -2233,6 +2233,7 @@ class LPGCDCMSActions:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_central_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_consumers")
+        cdcms_master = """ SELECT "StateCode", "StateName" FROM cdcms_masters; """
         if filters:
             conditions = []
             for rec in filters:
@@ -2258,7 +2259,10 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_consumers_query_)
+        cdcms_master = await function(query=cdcms_master)
+        cdcms_master = pl.DataFrame(cdcms_master)
         resp = pl.DataFrame(resp)
+        resp = resp.join(cdcms_master, on="StateCode", how="left")
         resp = await filter_data(resp.to_pandas(), _filters)
         resp = pl.from_pandas(resp)
         numerical_columns = ["month_number", "consumer_count"]
