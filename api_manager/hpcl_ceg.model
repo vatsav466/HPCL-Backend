@@ -1639,7 +1639,7 @@ Model HostSickTts {
     sick_declared_by optional str
     sick_date optional unique_field datetime
     remarks optional str
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 
@@ -1660,7 +1660,7 @@ Model HostCancelledTts {
     required_qty optional int
     cancelled_by optional str
     cancelled_date optional unique_field datetime
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 
@@ -1678,7 +1678,7 @@ Model HostKFactorChanges {
     bcu_parameter optional str
     initial_setting optional unique_field str
     final_setting optional unique_field str
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 
@@ -1698,7 +1698,7 @@ Model HostLocalLoadedTts {
     end_totalizer optional unique_field float
     loaded_qty optional unique_field int
     transaction_end_time optional unique_field datetime
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 
@@ -1720,7 +1720,7 @@ Model HostBayReAssignment {
     reassigned_bay optional str
     bay_reassignment_time optional unique_field datetime
     remarks optional str
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 
@@ -1734,7 +1734,7 @@ Model HostManualBayAssigned {
     user_name optional unique_field str
     timestamp optional unique_field datetime
     text optional str
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 
@@ -1747,7 +1747,7 @@ Model HostManualFanPrinted {
     manual_fan_count optional unique_field int
     auto_fan_count optional unique_field int
     total_count optional unique_field int
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 
@@ -1764,7 +1764,7 @@ Model HostUnauthorisedFlow {
     start_totalizer optional unique_field float
     end_totalizer optional unique_field float
     net_totalizer optional unique_field float
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 
@@ -1780,7 +1780,7 @@ Model HostOverLoadedTts{
     blend_name optional unique_field str
     required_qty optional unique_field int
     loaded_qty optional unique_field int
-    sap_id optional str
+    sap_id optional unique_field str
     location_name optional str
     zone optional str
 

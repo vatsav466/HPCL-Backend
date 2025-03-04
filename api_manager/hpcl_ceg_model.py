@@ -4440,7 +4440,7 @@ class HostSickTtsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, compartment_number, product_name, sick_date, name="host_sick_tts_load_number_truck_number_created_date_customer_name_compartment_number_product_name_sick_date"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, compartment_number, product_name, sick_date, sap_id, name="host_sick_tts_load_number_truck_number_created_date_customer_name_compartment_number_product_name_sick_date_sap_id"),)
 
 
 class HostSickTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4466,7 +4466,7 @@ class HostSickTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostSickTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date']
+        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date', 'sap_id']
 
 
 class HostSickTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4492,7 +4492,7 @@ class HostSickTts(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostSickTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date']
+        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date', 'sap_id']
 
 
 class HostSickTtsGetResp(pydantic.BaseModel):
@@ -4524,7 +4524,7 @@ class HostCancelledTtsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, product_name, cancelled_date, name="host_cancelled_tts_load_number_truck_number_created_date_customer_name_product_name_cancelled_date"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, product_name, cancelled_date, sap_id, name="host_cancelled_tts_load_number_truck_number_created_date_customer_name_product_name_cancelled_date_sap_id"),)
 
 
 class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4547,7 +4547,7 @@ class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostCancelledTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date']
+        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date', 'sap_id']
 
 
 class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4570,7 +4570,7 @@ class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostCancelledTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date']
+        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date', 'sap_id']
 
 
 class HostCancelledTtsGetResp(pydantic.BaseModel):
@@ -4594,7 +4594,7 @@ class HostKFactorChangesSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, preset_number, timestamp, initial_setting, final_setting, name="host_k_factor_changes_bcu_number_preset_number_timestamp_initial_setting_final_setting"),)
+    __table_args__ = (UniqueConstraint(bcu_number, preset_number, timestamp, initial_setting, final_setting, sap_id, name="host_k_factor_changes_bcu_number_preset_number_timestamp_initial_setting_final_setting_sap_id"),)
 
 
 class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4617,7 +4617,7 @@ class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostKFactorChangesSchema
-        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting']
+        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting', 'sap_id']
 
 
 class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
@@ -4640,7 +4640,7 @@ class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostKFactorChangesSchema
-        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting']
+        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting', 'sap_id']
 
 
 class HostKFactorChangesGetResp(pydantic.BaseModel):
@@ -4666,7 +4666,7 @@ class HostLocalLoadedTtsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(sr_number, bcu_number, recipe_name, truck_number, card_number, start_totalizer, end_totalizer, loaded_qty, transaction_end_time, name="host_local_loaded_tts_sr_number_bcu_number_recipe_name_truck_number_card_number_start_totalizer_end_totalizer_loaded_qty_transaction_end_time"),)
+    __table_args__ = (UniqueConstraint(sr_number, bcu_number, recipe_name, truck_number, card_number, start_totalizer, end_totalizer, loaded_qty, transaction_end_time, sap_id, name="host_local_loaded_tts_sr_number_bcu_number_recipe_name_truck_number_card_number_start_totalizer_end_totalizer_loaded_qty_transaction_end_time_sap_id"),)
 
 
 class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4691,7 +4691,7 @@ class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostLocalLoadedTtsSchema
-        upsert_keys = ['sr_number', 'bcu_number', 'recipe_name', 'truck_number', 'card_number', 'start_totalizer', 'end_totalizer', 'loaded_qty', 'transaction_end_time']
+        upsert_keys = ['sr_number', 'bcu_number', 'recipe_name', 'truck_number', 'card_number', 'start_totalizer', 'end_totalizer', 'loaded_qty', 'transaction_end_time', 'sap_id']
 
 
 class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4716,7 +4716,7 @@ class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostLocalLoadedTtsSchema
-        upsert_keys = ['sr_number', 'bcu_number', 'recipe_name', 'truck_number', 'card_number', 'start_totalizer', 'end_totalizer', 'loaded_qty', 'transaction_end_time']
+        upsert_keys = ['sr_number', 'bcu_number', 'recipe_name', 'truck_number', 'card_number', 'start_totalizer', 'end_totalizer', 'loaded_qty', 'transaction_end_time', 'sap_id']
 
 
 class HostLocalLoadedTtsGetResp(pydantic.BaseModel):
@@ -4744,7 +4744,7 @@ class HostBayReAssignmentSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(created_date, load_number, truck_number, customer_name, compartment_number, product_name, required_qty, loaded_qty, bay_reassignment_time, name="host_bay_re_assignment_created_date_load_number_truck_number_customer_name_compartment_number_product_name_required_qty_loaded_qty_bay_reassignment_time"),)
+    __table_args__ = (UniqueConstraint(created_date, load_number, truck_number, customer_name, compartment_number, product_name, required_qty, loaded_qty, bay_reassignment_time, sap_id, name="host_bay_re_assignment_created_date_load_number_truck_number_customer_name_compartment_number_product_name_required_qty_loaded_qty_bay_reassignment_time_sap_id"),)
 
 
 class HostBayReAssignmentCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4771,7 +4771,7 @@ class HostBayReAssignmentCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostBayReAssignmentSchema
-        upsert_keys = ['created_date', 'load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'required_qty', 'loaded_qty', 'bay_reassignment_time']
+        upsert_keys = ['created_date', 'load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'required_qty', 'loaded_qty', 'bay_reassignment_time', 'sap_id']
 
 
 class HostBayReAssignment(urdhva_base.postgresmodel.PostgresModel):
@@ -4798,7 +4798,7 @@ class HostBayReAssignment(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostBayReAssignmentSchema
-        upsert_keys = ['created_date', 'load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'required_qty', 'loaded_qty', 'bay_reassignment_time']
+        upsert_keys = ['created_date', 'load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'required_qty', 'loaded_qty', 'bay_reassignment_time', 'sap_id']
 
 
 class HostBayReAssignmentGetResp(pydantic.BaseModel):
@@ -4818,7 +4818,7 @@ class HostManualBayAssignedSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(user_name, timestamp, name="host_manual_bay_assigned_user_name_timestamp"),)
+    __table_args__ = (UniqueConstraint(user_name, timestamp, sap_id, name="host_manual_bay_assigned_user_name_timestamp_sap_id"),)
 
 
 class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4837,7 +4837,7 @@ class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualBayAssignedSchema
-        upsert_keys = ['user_name', 'timestamp']
+        upsert_keys = ['user_name', 'timestamp', 'sap_id']
 
 
 class HostManualBayAssigned(urdhva_base.postgresmodel.PostgresModel):
@@ -4856,7 +4856,7 @@ class HostManualBayAssigned(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualBayAssignedSchema
-        upsert_keys = ['user_name', 'timestamp']
+        upsert_keys = ['user_name', 'timestamp', 'sap_id']
 
 
 class HostManualBayAssignedGetResp(pydantic.BaseModel):
@@ -4875,7 +4875,7 @@ class HostManualFanPrintedSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, name="host_manual_fan_printed_manual_fan_count_auto_fan_count_total_count"),)
+    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, sap_id, name="host_manual_fan_printed_manual_fan_count_auto_fan_count_total_count_sap_id"),)
 
 
 class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4893,7 +4893,7 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count']
+        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'sap_id']
 
 
 class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
@@ -4911,7 +4911,7 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count']
+        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'sap_id']
 
 
 class HostManualFanPrintedGetResp(pydantic.BaseModel):
@@ -4934,7 +4934,7 @@ class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, name="host_unauthorised_flow_bcu_number_meter_number_timestamp_start_totalizer_end_totalizer_net_totalizer"),)
+    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, name="host_unauthorised_flow_bcu_number_meter_number_timestamp_start_totalizer_end_totalizer_net_totalizer_sap_id"),)
 
 
 class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4956,7 +4956,7 @@ class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id']
 
 
 class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
@@ -4978,7 +4978,7 @@ class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id']
 
 
 class HostUnauthorisedFlowGetResp(pydantic.BaseModel):
@@ -5000,7 +5000,7 @@ class HostOverLoadedTtsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, blend_name, required_qty, loaded_qty, name="host_over_loaded_tts_load_number_truck_number_compartment_number_blend_name_required_qty_loaded_qty"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, blend_name, required_qty, loaded_qty, sap_id, name="host_over_loaded_tts_load_number_truck_number_compartment_number_blend_name_required_qty_loaded_qty_sap_id"),)
 
 
 class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5021,7 +5021,7 @@ class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostOverLoadedTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty']
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty', 'sap_id']
 
 
 class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
@@ -5042,7 +5042,7 @@ class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostOverLoadedTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty']
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty', 'sap_id']
 
 
 class HostOverLoadedTtsGetResp(pydantic.BaseModel):
