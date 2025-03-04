@@ -36,26 +36,42 @@ async def sync_user_roles():
                                                        {"menu_name": "Supply Chain",
                                                         "allowed_sub_menus": ["Supply Chain Home"]}], "name": "SOD",
                                      "status": True},
-                    "Plant Incharge LPG": {"allowed_pages": [{"menu_name": "LPG",
+                    "Location In-charge LPG": {"allowed_pages": [{"menu_name": "LPG",
                                                               "allowed_sub_menus": ["LPG Operations", "LPG Home",
                                                                                     "LPG Plant",
                                                                                     "Video Analytics"]}],
                                            "name": "SOD", "status": True},
+
+                    "Planning Officer LPG": {"allowed_pages": [{"menu_name": "LPG",
+                                                              "allowed_sub_menus": ["LPG Operations", "LPG Home",
+                                                                                    "LPG Plant",
+                                                                                    "Video Analytics"]}],
+                                           "name": "SOD", "status": True},
+                    
+                    "Maintenanace Officer LPG": {"allowed_pages": [{"menu_name": "LPG",
+                                                              "allowed_sub_menus": ["LPG Operations", "LPG Home",
+                                                                                    "LPG Plant",
+                                                                                    "Video Analytics"]}],
+                                           "name": "SOD", "status": True},
+
                     "HQO LPG": {"allowed_pages": [{"menu_name": "LPG",
                                                    "allowed_sub_menus": ["LPG Operations", "LPG Home",
                                                                          "LPG Plant",
                                                                          "Video Analytics"]}], "name": "SOD",
                                 "status": True},
-                    "Zonal LPG SOD": {"allowed_pages": [{"menu_name": "LPG",
+                                
+                    "Zonal Operations Head LPG": {"allowed_pages": [{"menu_name": "LPG",
                                                          "allowed_sub_menus": ["LPG Operations", "LPG Home",
                                                                                "LPG Plant",
                                                                                "Video Analytics"]}], "name": "LPG",
                                       "status": True},
+
                     "Sales Performance": {"allowed_pages": [{"menu_name": "Sales Performance",
                                                             "allowed_sub_menus": ["Sales Performance",
                                                                                   "Industry Performance",
                                                                                   "Performance Insights"]}],
                                           "name": "Sales", "status": True},
+
                     "Admin": {"allowed_pages": [], "status": True}
                     }
     await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"]}
