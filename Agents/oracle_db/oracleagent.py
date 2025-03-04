@@ -10,6 +10,8 @@ import polars as pl
 from rabbitmq_producer import RabbitMQProducer
 from sshtunnel import SSHTunnelForwarder
 
+# Set stdout encoding to UTF-8 to handle non-ASCII characters
+sys.stdout.reconfigure(encoding='utf-8')
 
 dtype_map = {
             'String': 'VARCHAR2(255)',
@@ -24,7 +26,7 @@ dtype_map = {
             "Datetime(time_unit='us', time_zone=None)": 'DATE'
         }
 
-with open("config.json", "r") as config_file:
+with open("config.json", "r", encoding="utf-8") as config_file:
     config = json.load(config_file)
 
 # Extract Oracle credentials and table names
@@ -52,10 +54,14 @@ class Oracle(BaseAction):
             self.params['dns'] += f"/{self.params['service_name']}"
         elif self.params.get('database_name', ''):
             self.params['dns'] += f"/{self.params['database_name']}"
+        
+        # Set client character set to AL32UTF8 to support all Unicode characters
         connection = cx_Oracle.connect(
             self.params["user_name"],
             self.params["password"],
-            self.params["dns"]
+            self.params["dns"],
+            encoding="UTF-8",
+            nencoding="UTF-8"
         )
         return connection
 
@@ -70,8 +76,7 @@ class Oracle(BaseAction):
 
     async def test_connection(self):
         try:
-            connection = self.get_connection()
-            # connection.close()
+            connection = await self.get_connection()
             await self.close_connection(connection)
             return {
                 "status": True, "message": "Connected to Oracle",
@@ -98,7 +103,6 @@ class Oracle(BaseAction):
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
             df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
-            # connection.close()
             await self.close_connection(connection)
             print(df['USERNAME'].unique().tolist())
             df.to_csv("schema-list.csv", index=False)
@@ -126,7 +130,6 @@ class Oracle(BaseAction):
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
             df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
-            # connection.close()
             await self.close_connection(connection)
             print(df['TABLE_NAME'].unique().tolist())
             df.to_csv("tables_list.csv", index=False)
@@ -156,7 +159,6 @@ class Oracle(BaseAction):
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
             df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
-            # connection.close()
             await self.close_connection(connection)
             return {
                 "status": True, "message": "Success",
@@ -182,7 +184,6 @@ class Oracle(BaseAction):
             row = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
             df = pd.DataFrame({column: [row[i] for row in row] for i, column in enumerate(column_names)})
-            # connection.close()
             await self.close_connection(connection)
             return {
                 "status": True, "message": "Success",
@@ -216,7 +217,6 @@ class Oracle(BaseAction):
             if table_name not in list_table.get("data", []):
                 cursor.execute(table_create_sql)
                 connection.commit()
-            # cursor.close()
             await self.close_connection(connection)
         except cx_Oracle.Error as err:
             print(err)
@@ -259,7 +259,6 @@ class Oracle(BaseAction):
             """
             cursor.execute(sql)
             connection.commit()
-            # cursor.close()
             await self.close_connection(connection)
         except cx_Oracle.Error as err:
             print(err)
@@ -283,7 +282,6 @@ class Oracle(BaseAction):
             query = f"INSERT INTO {schema_name}.{table_name} ({', '.join(records.columns)}) VALUES ({', '.join([':' + col for col in records.columns])})"
             cursor.executemany(query, records.to_dicts())
             connection.commit()
-            # cursor.close()
             await self.close_connection(connection)
         except cx_Oracle.Error as err:
             print(err)
@@ -328,15 +326,21 @@ class Oracle(BaseAction):
                 column_names = [desc[0] for desc in cursor.description]
                 df = pd.DataFrame({column: [row[i] for row in rows] for i, column in enumerate(column_names)})
                 final_df = pd.concat([final_df, df])
-            # cursor.close()
             await self.close_connection(connection)
             if debug:
                 return {
                     "status": True, "message": "Success", "data": final_df.to_dict(orient='records')
                 }
-            print("final_df ", final_df)
-            final_df.to_csv(f"{table_name}.csv", mode='a', index=False, header=False)
-            print("files are genarated")
+            
+            # Carefully handle encoding when writing to file
+            try:
+                print("Saving data for table:", table_name)
+                final_df.to_csv(f"{table_name}.csv", mode='a', index=False, header=False, encoding='utf-8')
+                print(f"Data saved to {table_name}.csv")
+            except UnicodeEncodeError:
+                print(f"Warning: Encoding issue when saving {table_name}.csv - trying alternate encoding")
+                final_df.to_csv(f"{table_name}.csv", mode='a', index=False, header=False, encoding='utf-8-sig')
+                
             return pl.from_pandas(final_df)
         except cx_Oracle.Error as err:
             print(err)
@@ -395,7 +399,6 @@ class Oracle(BaseAction):
         try:
             connection = await self.get_connection()
             cursor = connection.cursor()
-            # print("execute query: ", query)
             cursor.execute(query)
             records = cursor.fetchall()
             column_names = [desc[0] for desc in cursor.description]
@@ -414,22 +417,27 @@ class DataMonitor:
         self.oracle = oracle
         self.table_names = table_names
         self.sleep_duration = sleep_duration
-        self.previous_data = []
+        self.previous_data = {}  # Initialize as an empty dictionary, not a list
 
     async def compare_and_send(self, current_data):
         """
         Compare current data with previous data and send only changed records to RabbitMQ.
         """
         try:
+            # Check if current_data is None or empty
+            if not current_data:
+                print("Warning: No data received to compare. Skipping comparison.")
+                return
+                
             changed_data = {}  # To store only changed records per table
 
             for table_name, records in current_data.items():
                 if not isinstance(records, list):  # Ensure records are lists
-                    print(f"⚠ Warning: Expected list for table {table_name}, but got {type(records)}")
+                    print(f"Warning: Expected list for table {table_name}, but got {type(records)}")
                     continue
                 
                 # Get previous records (if any) for the same table
-                previous_records = self.previous_data.get(table_name, []) if self.previous_data else []
+                previous_records = self.previous_data.get(table_name, [])
 
                 # Find new records (in current_data but not in previous_data)
                 new_records = [record for record in records if record not in previous_records]
@@ -439,16 +447,17 @@ class DataMonitor:
 
             # Send only changed records
             if changed_data:
-                RabbitMQProducer().send_to_rabbitmq(changed_data)  # Ensure async call
-                print("✅ Sent changed data to RabbitMQ:", changed_data)
+                await RabbitMQProducer().send_to_rabbitmq(changed_data)  # Added await
+                print(f"Sent changed data to RabbitMQ for tables: {list(changed_data.keys())}")
+            else:
+                print("No changes detected. Nothing to send.")
             
             # Update previous_data with the current data
             self.previous_data = current_data.copy()
 
         except Exception as e:
             print(traceback.format_exc())
-            print(f"❌ Error in compare_and_send: {e}")
-
+            print(f"Error in compare_and_send: {e}")
 
     async def fetch_data(self):
         """
@@ -458,44 +467,67 @@ class DataMonitor:
             tasks = [self.oracle.get_data(table_name=table) for table in self.table_names]
             results = await asyncio.gather(*tasks)
 
-            print("results ---> ", results)  # Debugging output
+            # Safe printing with error handling
+            try:
+                print("Number of results:", len(results))  # Just print the count, not the actual data
+            except UnicodeEncodeError:
+                print("Note: Unable to print results due to encoding issues")
 
             processed_results = {}
 
             for table, item in zip(self.table_names, results):
                 if isinstance(item, dict):  # Handle error messages
-                    print(f"Error in {table}:", item)
+                    print(f"Error in {table}:", item.get("message", "Unknown error"))
                     continue  # Skip errors
                 
                 if isinstance(item, pl.DataFrame) and item.shape[0] > 0:  # Skip empty DataFrames
-                    records = item.to_dicts()
-                    
-                    # Add sap_id to each record
-                    for record in records:
-                        record["sap_id"] = sap_id  
-                    
-                    processed_results[table] = records  # Store data under table name
+                    try:
+                        records = item.to_dicts()
+                        
+                        # Add sap_id to each record
+                        for record in records:
+                            record["sap_id"] = sap_id  
+                        
+                        processed_results[table] = records  # Store data under table name
+                    except Exception as e:
+                        print(f"Error processing data for table {table}: {e}")
             
-            print("processed_results --> ", processed_results)
+            # Safe printing for processed results
+            try:
+                print(f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}")
+            except UnicodeEncodeError:
+                print(f"Processed data for {len(processed_results)} tables (names not printable due to encoding)")
+                
             return processed_results  # Return as a dictionary
         except Exception as e:
             print(traceback.format_exc())
-            print(e)
+            print(f"Error in fetch_data: {e}")
+            return {}  # Return empty dict on error, not None
 
     async def run(self):
         """
         Periodically check Oracle DB for data changes
         """
         try:
+            print("Starting data monitoring...")
             while True:
-                print("after 30 seconds")
+                print(f"Fetching data (checking every {self.sleep_duration} seconds)")
                 current_data = await self.fetch_data()
-                await self.compare_and_send(current_data)
+                
+                # Only compare if we have data
+                if current_data:
+                    await self.compare_and_send(current_data)
+                else:
+                    print("No data fetched, skipping comparison")
+                    
                 await asyncio.sleep(self.sleep_duration)
-                print("check every 30 seconds")
         except Exception as e:
             print(traceback.format_exc())
-            print(e)
+            print(f"Error in run: {e}")
+            # Restart the monitoring after a delay
+            print("Restarting monitoring in 30 seconds...")
+            await asyncio.sleep(30)
+            await self.run()
 
 async def main():
     oracle = Oracle(oracle_config)  # Initialize Oracle connection

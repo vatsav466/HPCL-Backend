@@ -53,7 +53,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                         if sensor['sensor_name'] in alert_data:
                             device_keys.append(f"{sensor['sensor_name']}: {alert_data[sensor['sensor_name']]}")
                     break
-            device_data = f"{alert_data['device_name']}({", ".join(device_keys)})"
+            device_data = f"{alert_data['device_name']}"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
             alert_data["alert_history"] = [{"processed_time": processed_time.isoformat(),
                                            "allocated_time": processed_time.isoformat(),

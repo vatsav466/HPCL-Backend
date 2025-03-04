@@ -3586,7 +3586,7 @@ class GlobalAnalytics:
                     })
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0).astype(int)
+                    resp[each_float_col] = resp[each_float_col].fillna(0).round()
             # Fill missing values for string columns
             for each_str_col in ["zone", "name", "carousel_type"]:
                 if each_str_col in resp.columns:
@@ -3599,7 +3599,7 @@ class GlobalAnalytics:
             resp = await filter_data(resp, _filters)
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0).astype(int)
+                    resp[each_float_col] = resp[each_float_col].fillna(0).round()
             for each_str_col in ["zone","name","carousel_type"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -4494,9 +4494,7 @@ class GlobalAnalytics:
                             GROUP BY created_date, 
                                     interlock_status
                             ORDER BY alert_count DESC; """
-            
-            
-
+                    
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
