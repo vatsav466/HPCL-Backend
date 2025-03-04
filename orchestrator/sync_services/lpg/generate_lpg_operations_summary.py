@@ -62,7 +62,7 @@ class LPG_CONSOLIDATED():
                 "database": creds["database"],
                 "user": creds["user"],
                 "password": creds["password"],
-                "port": creds["port"]
+                "port": int(creds["port"])
                 }    
 
         queryString = """
@@ -105,7 +105,7 @@ class LPG_CONSOLIDATED():
                 "database": creds["database"],
                 "user": creds["user"],
                 "password": creds["password"],
-                "port": creds["port"]
+                "port": int(creds["port"])
                 }        
 
         result = self.get_data(queryString, records=True, params=params)
@@ -121,7 +121,7 @@ class LPG_CONSOLIDATED():
                 "database": creds["database"],
                 "user": creds["user"],
                 "password": creds["password"],
-                "port": creds["port"]
+                "port": int(creds["port"])
                 }
         data = self.get_data(query, records=True, params=params)
         if data:
@@ -137,7 +137,7 @@ class LPG_CONSOLIDATED():
                 "database": creds["database"],
                 "user": creds["user"],
                 "password": creds["password"],
-                "port": creds["port"]
+                "port": int(creds["port"])
                 }
         result = self.get_data(query, records=True, params=params)
         if not result:
@@ -163,7 +163,7 @@ class LPG_CONSOLIDATED():
                 "database": creds["database"],
                 "user": creds["user"],
                 "password": creds["password"],
-                "port": creds["port"]
+                "port": int(creds["port"])
                 }
         result = self.get_data(query, records=True, params=params)
         if not result:
@@ -992,7 +992,7 @@ def insertToDB(data, table_name):
                 database=creds["database"],
                 user=creds["user"],
                 password=creds["password"],
-                port=creds["port"]
+                port=int(creds["port"])
             )
     table_create_sql = ''
     cur = pg_conn.cursor()
@@ -1046,7 +1046,7 @@ def generate_summary():
         database=creds["database"],
         user=creds["user"],
         password=creds["password"],
-        port=creds["port"]
+        port=int(creds["port"])
     )
     cursor = conn.cursor()
     df = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")

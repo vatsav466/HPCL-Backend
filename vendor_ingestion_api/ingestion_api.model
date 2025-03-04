@@ -196,7 +196,7 @@ Model emlockData internal {
 }
 
 Model emlockVendorData internal {
-    location_type optional BusinessUnit
+    location_type str
     emlock_exception_id str
     terminal_code str
     truck_number str

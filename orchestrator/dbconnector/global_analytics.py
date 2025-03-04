@@ -3586,7 +3586,7 @@ class GlobalAnalytics:
                     })
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                    resp[each_float_col] = resp[each_float_col].fillna(0).astype(int)
             # Fill missing values for string columns
             for each_str_col in ["zone", "name", "carousel_type"]:
                 if each_str_col in resp.columns:
@@ -3599,7 +3599,7 @@ class GlobalAnalytics:
             resp = await filter_data(resp, _filters)
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0).astype(int)
             for each_str_col in ["zone","name","carousel_type"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -3879,8 +3879,8 @@ class GlobalAnalytics:
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.group_by(["zone"]).agg([
-                        pl.sum("break_production").alias("break_production"),
-                        pl.sum("overtime_production").alias("overtime_prouction"),
+                        pl.sum("break_production").round(1).alias("break_production"),
+                        pl.sum("overtime_production").round(1).alias("overtime_prouction"),
                     ])
             return {"status": True, "message": "success", "data": resp.to_dicts()}
         try:
@@ -3905,8 +3905,8 @@ class GlobalAnalytics:
 
                 if "zone" in filter_keys and "plant" not in filter_keys:
                     grouped_resp = resp.group_by(["zone", "plant"]).agg([
-                        pl.sum("break_production").alias("break_production"),
-                        pl.sum("overtime_production").alias("overtime_prouction"),
+                        pl.sum("break_production").round(1).alias("break_production"),
+                        pl.sum("overtime_production").round(1).alias("overtime_prouction"),
                     ])                
                 if grouped_resp is not None:
                     return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
@@ -4024,7 +4024,7 @@ class GlobalAnalytics:
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.group_by(["process_date"]).agg([
-                    pl.mean("sum_production").round(2).alias("sum_production"),
+                    pl.sum("sum_production").round(2).alias("sum_production"),
                 ])
             numerical_columns = ["sum_production"]
             for col in numerical_columns:
@@ -4448,6 +4448,77 @@ class GlobalAnalytics:
                 res.setdefault(p_, 0)
 
         return {"status": True, "message": "success", "data": final_result}
+
+    
+    @staticmethod
+    async def maintenance_fault(filters, cross_filters, drill_state):
+        """
+        This method is used to fetch the alert ageing data for the given filters and drill state
+        :param filters: The filter parameters
+        :param drill_state: The drill down state
+        :return: A dictionary containing the status, message and the alert ageing data
+        """
+        alert_status = drill_state
+        _filters = []
+        _filters = []
+        daterange = None
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                _filters.append({f"{filter.key}": f"{filter.value}"})         
+        
+        if daterange:
+            query  = f""" SELECT 
+                            DATE(created_at) AS created_date,
+                            COUNT(*) AS alert_count,
+                            CASE 
+                                WHEN interlock_name LIKE '%Under Maintenance%' THEN 'Maintenance'
+                                ELSE 'Fault'
+                            END AS interlock_status
+                            FROM alerts
+                            WHERE alert_section = 'TAS' and created_at BETWEEN {daterange} and alert_status='{alert_status}'
+                            GROUP BY created_date, 
+                                    interlock_status
+                            ORDER BY alert_count DESC; """
+        else:
+            query  = f""" SELECT 
+                            DATE(created_at) AS created_date,
+                            COUNT(*) AS alert_count,
+                            CASE 
+                                WHEN interlock_name LIKE '%Under Maintenance%' THEN 'Maintenance'
+                                ELSE 'Fault'
+                            END AS interlock_status
+                            FROM alerts
+                            WHERE alert_section = 'TAS' and created_at::DATE>=CURRENT_DATE - INTERVAL '7 days' and alert_status='{alert_status}'
+                            GROUP BY created_date, 
+                                    interlock_status
+                            ORDER BY alert_count DESC; """
+            
+            
+
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+
+        resp = await function(query=query)
+        print("resp :", resp)
+        resp = pl.DataFrame(resp)
+        if resp.is_empty():
+            return []
+        result = []
+        for created_date in resp["created_date"].unique().to_list():
+            filtered_resp = resp.filter(pl.col("created_date") == created_date)            
+            result.append(
+                {
+                    created_date: {
+                        "maintenance": filtered_resp.filter(pl.col("interlock_status") == "Maintenance")["alert_count"].sum(),
+                        "fault": filtered_resp.filter(pl.col("interlock_status") == "Fault")["alert_count"].sum()
+                    }
+                }
+            )         
+        return result
+    
 
     @staticmethod
     async def indent_dryout_counts(filters, cross_filters, drill_state):

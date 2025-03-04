@@ -74,6 +74,7 @@ class NotifyEMail(NotificationManager):
         args = {'to_emails': ['user@email.com'], 'subject': 'test email', 'body': '<HTML Body>', 'html_content': True}
         ---------------------------------------------------------------------------------------------------------
         """
+        return True, "Success"
         creds = self.load_credentials()
         print("creds --> ", creds)
         print("kwargs --> ", kwargs)

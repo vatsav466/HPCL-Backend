@@ -3081,9 +3081,6 @@
                 },
                 {
                     "name": "download_data"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3099,9 +3096,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3129,9 +3123,6 @@
                 },
                 {
                     "name": "download_data"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3156,9 +3147,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3174,9 +3162,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3201,9 +3186,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3228,9 +3210,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3246,9 +3225,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3273,9 +3249,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3300,9 +3273,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3318,9 +3288,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3345,9 +3312,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3372,9 +3336,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3390,9 +3351,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3417,9 +3375,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3444,9 +3399,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3462,9 +3414,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3489,9 +3438,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3516,9 +3462,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3534,9 +3477,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3561,9 +3501,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3588,9 +3525,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3606,9 +3540,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3633,9 +3564,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3660,9 +3588,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3678,9 +3603,6 @@
             "scopes": [
                 {
                     "name": "read"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3705,9 +3627,6 @@
                 },
                 {
                     "name": "delete"
-                },
-                {
-                    "name": "get_count"
                 }
             ]
         },
@@ -3777,6 +3696,87 @@
                 },
                 {
                     "name": "things_board_device_data"
+                }
+            ]
+        },
+        {
+            "name": "performanceindex",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceIndex",
+            "attributes": {},
+            "uris": [
+                "/api/performanceindex/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_pi_score"
+                },
+                {
+                    "name": "get_pi_score_by_category"
+                }
+            ]
+        },
+        {
+            "name": "performanceindex_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceIndex_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/performanceindex/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_pi_score"
+                },
+                {
+                    "name": "get_pi_score_by_category"
+                }
+            ]
+        },
+        {
+            "name": "performanceindex_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceIndex_admin",
+            "attributes": {},
+            "uris": [
+                "/api/performanceindex/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_pi_score"
+                },
+                {
+                    "name": "get_pi_score_by_category"
                 }
             ]
         }
@@ -4126,44 +4126,16 @@
             "displayName": "download_data"
         },
         {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
-            "name": "get_count",
-            "displayName": "get_count"
-        },
-        {
             "name": "things_board_device_data",
             "displayName": "things_board_device_data"
+        },
+        {
+            "name": "get_pi_score",
+            "displayName": "get_pi_score"
+        },
+        {
+            "name": "get_pi_score_by_category",
+            "displayName": "get_pi_score_by_category"
         }
     ]
 }

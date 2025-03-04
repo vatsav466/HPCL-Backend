@@ -14,6 +14,7 @@ try:
 except ImportError:
     from random import choice
 from dateutil.relativedelta import relativedelta
+from utilities import interlock_category_mapping
 
 
 def month_short_to_number(short_name):
@@ -295,3 +296,9 @@ async def get_camunda_url(bu, sap_id, alert_section):
 async def get_doc_link(file_name: str):
     server_ip = urdhva_base.settings.server_ip
     return f"https://{server_ip}/api/alerts/stored_document?file_name={file_name}"
+
+def map_device_category(interlock_name):
+    for category, interlocks in interlock_category_mapping.interlock_to_category.items():
+        if interlock_name in interlocks:
+            return category
+    return "Unknown"

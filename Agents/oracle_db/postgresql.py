@@ -52,6 +52,7 @@ class Postgresql:
 
     async def create_table(self, schema_name, table_name, sample_records, primary_key=[], unique_key=[]):
         """Create a table and upsert sample records."""
+        print("sample_records --> ", sample_records)
         if not isinstance(sample_records, pl.DataFrame):
             sample_records = pl.DataFrame(sample_records)
 

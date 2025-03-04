@@ -361,6 +361,28 @@ alert_action = {
                 "Location/Outlet Near by",
                 "Other"
             ]
+        },
+        "EMLock": {
+            "alert_section": "EMLock",
+            "close_alert_func": "emlock_alert_closer",
+            "actions": {
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge"]
+                }
+            },
+            "category": {
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Other"
+            ]
         }
     },
     "LPG": {
@@ -492,6 +514,28 @@ alert_action = {
                 "Location/Outlet Near by",
                 "Other"
             ]
+        },
+        "EMLock": {
+            "alert_section": "EMLock",
+            "close_alert_func": "emlock_alert_closer",
+            "actions": {
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge"]
+                }
+            },
+            "category": {
+                "Other": "Other"
+            },
+            "rca_reason": [
+                "Other"
+            ]
         }
     },
     "RO": {
@@ -619,6 +663,28 @@ alert_action = {
                 "Person Issue",
                 "Equipment issue",
                 "Location/Outlet Near by",
+                "Other"
+            ]
+        },
+        "EMLock": {
+            "alert_section": "EMLock",
+            "close_alert_func": "emlock_alert_closer",
+            "actions": {
+                "Approve": {
+                    "name": "Approved",
+                    "close_alert": True,
+                    "roles": ["Admin", "Location In-charge"]
+                },
+                "Reject": {
+                    "name": "Rejected",
+                    "close_alert": False,
+                    "roles": ["Admin", "Location In-charge"]
+                }
+            },
+            "category": {
+                "Other": "Other"
+            },
+            "rca_reason": [
                 "Other"
             ]
         }

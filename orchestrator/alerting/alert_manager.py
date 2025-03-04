@@ -16,6 +16,7 @@ import utilities.connection_mapping as connection_mapping
 import orchestrator.alerting.emlock_alert as emlock_alert
 import orchestrator.analytics.vts_analysis as vts_analysis
 from orchestrator.notification_manager.notify_email import *
+import orchestrator.analytics.emlock_analysis as emlock_analysis
 
 
 async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url):
@@ -142,6 +143,48 @@ async def close_vts_alert(alert_data, input_data):
     return True, "Success"
     # return await vts_analysis.post_unblocked_tt(params)
 
+
+async def close_emlock_alert(alert_data, input_data):
+    """
+
+    Args:
+        alert_data:
+        input_data:
+
+    Returns:
+
+    """
+    if urdhva_base.context.context.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
+
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    meta_data = {}
+    if alert_data['violation_type'] == 'FanNotGenerated':
+        meta_data['loadNumber'] = input_data.get("load_number")
+        meta_data['fanNumber'] = input_data.get("fan_number")
+    if alert_data['violation_type'] == 'InvoiceNotGenerated':
+        meta_data['loadNumber'] = input_data.get("load_number")
+        meta_data['invoiceNumber'] = input_data.get("invoice_number")
+        meta_data['tripType'] = input_data.get("trip_type")
+        meta_data['ro_code'] = alert_data['dealer_id']
+        meta_data['terminal_code'] = alert_data['servicing_plant_id']
+
+    params = {
+        "emlockExceptionId": alert_data['external_id'],
+        "terminalCode": alert_data['sap_id'],
+        "truckNumber": alert_data['vehicle_number'],
+        "exceptionType": alert_data['violation_type'],
+        "status": "1" if input_data['action_type'] == 'Approved' else "2",
+        "acknowledgedUser": rpt.get("employee_id", ""),
+        "acknowledgedTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "remarks": input_data['action_msg'],
+        "metaData": json.dumps(meta_data)
+    }
+
+
 async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):
     if get_approved_time:
         for alert_history in alert_data.get("alert_history", []):
@@ -245,6 +288,17 @@ async def vts_alert_closer(alert_data, input_data):
     print(f"VTS Alert Closed")
     resp = await close_vts_alert(alert_data, input_data)
     print("Alert Closed in VTS Portal: ", resp)
+
+async def emlock_alert_closer(alert_data, input_data):
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    close_alert_data = {}
+    close_alert_data['alert_type'] = alert_data['alert_section']
+    close_alert_data['bu'] = alert_data['bu']
+    close_alert_data['alert_id'] = alert_data['id']
+    close_alert_data['interlock_id'] = alert_data['interlock_id']
+    await close_alert(close_alert_data)
+    resp = await close_emlock_alert(alert_data, input_data)
 
 async def _is_close_alert(input_data):
     """

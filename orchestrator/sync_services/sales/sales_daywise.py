@@ -9,7 +9,10 @@ import polars as pl
 import mysql.connector
 from dateutil.relativedelta import relativedelta
 import hashlib
-
+import urdhva_base
+import sys
+sys.path.append("/opt/ceg/algo")
+import orchestrator.dbconnector.credential_loader as credential_loader
 def get_db_connection(params):
     """
     Establish a database connection
@@ -20,7 +23,7 @@ def get_db_connection(params):
     """
     server = params['host']
     database = params['database']
-    username = params['username']
+    username = params['user']
     password = params["password"]
     port = params["port"]
     if "connection_type" in params:
@@ -104,13 +107,15 @@ def insertToDB(data, table_name, indexing_col=()):
     print(len(data))
     #data = data.unique(['engine_id'])
     print(len(data))
+    creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )   
+                host=creds['host'],
+                database=creds['database'],
+                user=creds['user'],
+                password=creds['password'],
+                port=creds['port']
+            )
+    
     table_create_sql = ''
     cur = pg_conn.cursor()
     print(data['NETWEIGHT_KG'].unique())
@@ -230,23 +235,7 @@ def get_and_insert_data(cursor, query, params=None):
     
     data.to_csv('/tmp/actual_sales_data.csv',index = False)
     print(len(data))
-    '''
-    pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )
-    cur = pg_conn.cursor()
-    cur.execute(f"""
-    select * FROM "MOM_LEVEL_SALES" 
-    """)
-    rows = cur.fetchall()
-    columns = [column[0] for column in cur.description]
-    data = pd.DataFrame.from_records(rows, columns=columns)
-    data.to_csv('/tmp/mom.csv',index = False)
-    '''
+    
     print(len(data))
     print(len(data.drop_duplicates()))
     data = data.drop_duplicates()
@@ -276,16 +265,19 @@ def get_and_insert_data(cursor, query, params=None):
 
 
 if __name__ == "__main__":
+    creds = credential_loader.get_credentials('TIBCO') 
+    print("creds",creds)
     params = {
-        "host": '10.90.144.96',
-        "database": 'CONN_ENT',
-        "username": 'USER_ADMIN_CE',
-        "password": "Pwd#_aDMINCE@2023",
-        "port": 3306,
-        "table_name": "MOM_DAY_LEVEL_DATA",
-        "connection_type": "mssql"
-       # "indexing_col": ["Plantcd", "Itemcode", "DaysCover"]
-    }
+            "host":creds['host'],
+            "database":creds['database'],
+            "user":creds['user'],
+            "password":creds['password'],
+            "port":creds['port'],
+            "table_name":"MOM_DAY_LEVEL_DATA",
+            "connection_type":"mssql"
+                
+            }
+    
 
     query = """SELECT ZS.Plant AS Plantcd,
              ZS.UNRESTRICTED_STOCK_VALUE AS Stock_value,

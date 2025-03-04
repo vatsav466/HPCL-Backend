@@ -24,6 +24,7 @@ holidays==0.61
 marshmallow==3.23.1
 geopy==2.4.1
 aiofiles==24.1.0
+slowapi==0.1.9
 ###############################
 ##    Base Framework End     ##
 ###############################
