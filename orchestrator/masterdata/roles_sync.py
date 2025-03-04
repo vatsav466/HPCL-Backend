@@ -36,13 +36,14 @@ async def sync_user_roles():
                                                        {"menu_name": "Supply Chain",
                                                         "allowed_sub_menus": ["Supply Chain Home"]}], "name": "SOD",
                                      "status": True},
-                    "Location In-charge LPG": {"allowed_pages": [{"menu_name": "LPG",
+
+                    "Safety Officer LPG": {"allowed_pages": [{"menu_name": "LPG",
                                                               "allowed_sub_menus": ["LPG Operations", "LPG Home",
                                                                                     "LPG Plant",
                                                                                     "Video Analytics"]}],
                                            "name": "SOD", "status": True},
 
-                    "Planning Officer LPG": {"allowed_pages": [{"menu_name": "LPG",
+                    "Location In-Charge LPG": {"allowed_pages": [{"menu_name": "LPG",
                                                               "allowed_sub_menus": ["LPG Operations", "LPG Home",
                                                                                     "LPG Plant",
                                                                                     "Video Analytics"]}],
@@ -54,17 +55,35 @@ async def sync_user_roles():
                                                                                     "Video Analytics"]}],
                                            "name": "SOD", "status": True},
 
-                    "HQO LPG": {"allowed_pages": [{"menu_name": "LPG",
-                                                   "allowed_sub_menus": ["LPG Operations", "LPG Home",
-                                                                         "LPG Plant",
-                                                                         "Video Analytics"]}], "name": "SOD",
-                                "status": True},
-                                
+                    "Zonal HSE LPG": {"allowed_pages": [{"menu_name": "LPG",
+                                                         "allowed_sub_menus": ["LPG Operations", "LPG Home",
+                                                                               "LPG Plant",
+                                                                               "Video Analytics"]}], "name": "LPG",
+                                      "status": True},
+
                     "Zonal Operations Head LPG": {"allowed_pages": [{"menu_name": "LPG",
                                                          "allowed_sub_menus": ["LPG Operations", "LPG Home",
                                                                                "LPG Plant",
                                                                                "Video Analytics"]}], "name": "LPG",
                                       "status": True},
+                    
+                    "HQO LPG": {"allowed_pages": [{"menu_name": "LPG",
+                                                   "allowed_sub_menus": ["LPG Operations", "LPG Home",
+                                                                         "LPG Plant",
+                                                                         "Video Analytics"]}], "name": "SOD",
+                                "status": True},
+                    
+                    "HQO HSE LPG": {"allowed_pages": [{"menu_name": "LPG",
+                                                   "allowed_sub_menus": ["LPG Operations", "LPG Home",
+                                                                         "LPG Plant",
+                                                                         "Video Analytics"]}], "name": "SOD",
+                                "status": True},
+
+                    "HQO Operations LPG": {"allowed_pages": [{"menu_name": "LPG",
+                                                   "allowed_sub_menus": ["LPG Operations", "LPG Home",
+                                                                         "LPG Plant",
+                                                                         "Video Analytics"]}], "name": "SOD",
+                                "status": True},
 
                     "Sales Performance": {"allowed_pages": [{"menu_name": "Sales Performance",
                                                             "allowed_sub_menus": ["Sales Performance",
