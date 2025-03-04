@@ -121,8 +121,9 @@ def get_date_filters(filters, resp_type="months"):
                                                                with_month_end_day=True)
         elif condition['key'] == '"fiscal_year"':
             fiscal_year_pre = condition['value']
-        elif condition["key"] == "month_name":
+        elif condition["key"] == "month_name" or condition["key"] == '"month_name"':
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
+            #filters.append({"key": "month_name", "cond": "one-off", "value": condition["value"].split(",")})   
     filters = [condition for condition in filters if condition['key'].strip('"') not in ['YTM', 'DATE', 'month_name',
                                                                                     'ind_sbu_cumulative','ind_analytics','table_graph','fiscal_year','company_name', 'table','table_month','inc','OMC', 'A', 'H', 'C']]
     if not months:
@@ -193,9 +194,13 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         cumulative_months = months_list[:req_index+1] 
         req_df = summary[summary['month_name'] == req_month.strip('"')]
         cum_df = summary[summary['month_name'].isin(cumulative_months)]
-        com_name = [x['value'] for x in filters if x['key'] =='"company_name"'][0]
-        req_df = req_df[[x for x in req_df.columns if com_name.lower() in x]+['sbu_name']]
-        cum_df = cum_df[[x for x in cum_df.columns if com_name.lower() in x]+['month_name','sbu_name']]
+        
+        for each_filter in filters:
+            if each_filter['key'] == '"company_name"' or each_filter['key'] == 'company_name':
+                #com_name = [x['value'] for x in filters if x['key'] =='"company_name"'][0]
+                com_name = each_filter['value'].split(",")
+                req_df = req_df[[col for col in req_df.columns if any(name.lower() in col.lower() for name in com_name)]+['sbu_name']]
+                cum_df = cum_df[[col for col in cum_df.columns if any(name.lower() in col.lower() for name in com_name)]+['month_name','sbu_name']]
         data = req_df.to_dict(orient='records')
         cumulative_data = {'cumulative':[]}
         cumulative_data['month_name'] = df['month_name'].unique().tolist()
@@ -204,11 +209,14 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                 df_sbu = cum_df[cum_df['sbu_name'] ==each_sbu]
                 sample = {}
                 for index, row in df_sbu.iterrows():
-                     column_name = com_name.lower() + '_share'  # Correct column name
-                     print('col_name',column_name)
-                     print('df sbu cols',df_sbu.columns)
-                     if column_name in df_sbu.columns:  # Ensure column exists
-                           sample[row['month_name'] + '_cum'] = row[column_name]
+                    for company in com_name:
+                        column_name = company.lower() + '_share'
+                        if column_name in df_sbu.columns:
+                            sample[row['month_name'] + f'_{company.lower()}_cum'] = row[column_name]
+
+                    #column_name = com_name.lower() + '_share'  # Correct column name
+                    # if column_name in df_sbu.columns:  # Ensure column exists
+                    #       sample[row['month_name'] + '_cum'] = row[column_name]
                 sample['sbu_name'] = each_sbu
                 cumulative_data['cumulative'].append(sample)
         if data and cumulative_data:
@@ -704,8 +712,15 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
         cond['key'] = cond['key'].strip('"')
     if not month_filter and months:
         filters.append({"key": "month_name", "cond": "one-off", "value": months})
-    filters.append({"key": "coname", "cond": "one-off", "value": omc_compare})
-
+    print("orgfilters",org_filters)
+    print([x['key'] for x in org_filters])
+    if "company_name" not in [x['key'].strip('"') for x in org_filters] :
+        filters.append({"key": "coname", "cond": "one-off", "value": omc_compare})
+    else:
+        for each_filter in org_filters:
+            if each_filter['key'].strip('"') == 'company_name':
+                filters.append({"key": "coname", "cond": "one-off", "value": [x.upper()for x in each_filter['value'].split(",")]})
+    print("afterfilters",filters) 
     for cond in filters:
         cond['key'] = cond['key'].strip('"')
         if isinstance(cond['value'],str):
