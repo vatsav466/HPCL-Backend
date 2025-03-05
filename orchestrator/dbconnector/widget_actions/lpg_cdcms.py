@@ -2186,7 +2186,7 @@ class LPGCDCMSActions:
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
             elif daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
-            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year", '
+            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -2199,7 +2199,7 @@ class LPGCDCMSActions:
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
             elif daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
-            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year", '
+            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
         try:    
             query_resp = await function(query=daywise_exception_stats_query_)
             resp = pl.DataFrame(query_resp)
