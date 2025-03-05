@@ -2186,7 +2186,10 @@ class LPGCDCMSActions:
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
             elif daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
-            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
+            if not drill_state == "financial_year":
+                daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
+            else:
+                daywise_exception_stats_query_ += ' GROUP BY "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -2199,7 +2202,10 @@ class LPGCDCMSActions:
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
             elif daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
-            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
+            if not drill_state == "financial_year":
+                daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
+            else:
+                daywise_exception_stats_query_ += ' GROUP BY "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
         try:    
             query_resp = await function(query=daywise_exception_stats_query_)
             resp = pl.DataFrame(query_resp)
@@ -2207,7 +2213,7 @@ class LPGCDCMSActions:
             resp = pl.from_pandas(resp)
             resp = resp.with_columns(pl.col('Refills').fill_null(0).cast(pl.Float64).alias('Refills'))
             if drill_state == "financial_year":
-                resp = resp.group_by(["Delivery_Date", "Financial_Year"]).agg([
+                resp = resp.group_by(["Month", "Financial_Year"]).agg([
                         pl.sum("Refills").round(2).alias("Refills"),
                     ])
             else:
