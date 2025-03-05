@@ -1037,6 +1037,7 @@ LIMIT 10000;''',
                                     "DistributorName",
                                     "Delivery_Date",
                                     "PaymentErrorName",
+                                    "Financial_Year",
                                     DATE("Delivery_Date") AS "Delivery_Date",
                                     SUM("Refills") as "Refills"
                                 FROM
