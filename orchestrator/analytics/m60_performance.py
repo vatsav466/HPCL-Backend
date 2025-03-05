@@ -29,6 +29,7 @@ sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'GAS']
 
 DefaultTable = 'Day'
 MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
+#,"YTD":"YTD_TMT_SALES"}
 
 
 async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_resp_format="%Y%m%d"):
@@ -583,7 +584,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     print("final_resp",final_resp)
                     final_resp['cumulative'][each_key] = ''
         if resp_format =='heat_map':
-            return {"status": True, "message": "Success", "data": {'data': final_resp, 'growth_details':growth_details,'level': sorted_level,
+            
+            xAxis = []
+            xAxis.extend([x['title'].split()[0][:3] for x in growth_details])
+            xAxis.extend(['YTD'])
+            return {"status": True, "message": "Success", "data": {'data': final_resp, 'growth_details':growth_details,'x-axis':xAxis,'level': sorted_level,
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
             
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
@@ -703,7 +708,8 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
             df.to_csv('/tmp/dfcum.csv',index = False)
             #making zonal summary above the exisiting heatmap
             if "month_name" in df.columns.tolist():
-                
+                #df['YTD_TMT_SALES'] =  df['ACTUAL_TMT_SALES'] +df['ACTUAL_HISTORY_TMT_SALES']
+                #numeric_cols.append('YTD_TMT_SALES')
                 for i in df['month_name'].unique().tolist():
                     df_cum =  df[df['month_name'] == 'Cum']
                     df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
@@ -733,8 +739,8 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
                         if idx == 1:
                             growth_details.append({"title": f"{df['month_name'].unique().tolist()[1]} Growth","value": cum_growth})
                         if idx == 2:
-                            growth_details.append({"title": f"{df['month_name'].unique().tolist()[-1]} Growth","value": cum_growth})
-                print("growth_details",growth_details)      
+                            growth_details.append({"title": f"{df['month_name'].unique().tolist()[-1]} Growth","value": cum_growth})  
+                print("growth_details",growth_details)                   
             # Renaming columns to lower case
             df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
             # Actual numeric columns
@@ -758,7 +764,10 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
 
             # Keeping all nan's as zero's
             df_pivot.fillna(0, inplace=True)
-
+            print("df_pivot",df_pivot)
+            print(df_pivot.columns)
+            df_pivot["YTD"] = df_pivot.select_dtypes(include="number").sum(axis=1)
+            print(df_pivot.columns)
             # Convert to Dictionary Format
             return df_pivot.to_dict(orient="records"),growth_details
         elif resp_format == 'cummulative' and month_column:

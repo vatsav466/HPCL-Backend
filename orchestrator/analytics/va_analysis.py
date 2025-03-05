@@ -158,3 +158,21 @@ async def get_va_alerts_count(bu: str, violation_type: str):
         resp = resp[0]
         return resp.get("count", 0)
     return 0
+
+async def get_va_levels(bu: str, violation_type: str):
+    va_mapping = va_alert_mapping.VA_Alert_Mapping
+    va_mapping = va_mapping[bu][violation_type]
+    va_alert_count = await get_va_alerts_count(bu=bu, violation_type=violation_type)
+    previous_count = ""
+    for key, value in va_mapping['escalations'].items():
+        if value['condition'] == "<":
+            if int(va_alert_count) < int(value['value']):
+                previous_count = value['value']
+                return "level - 1"
+        if value['condition'] == "<>":
+            if int(previous_count) < va_alert_count < int(value['value']):
+                return "level - 2"
+        if value['condition'] == ">":
+            if int(value['value']) > va_alert_count:
+                return "level - 3"
+    return ""
