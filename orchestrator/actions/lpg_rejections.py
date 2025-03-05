@@ -59,7 +59,7 @@ class LpgRejections:
                             FROM
                                 "alerts"
                             WHERE
-                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='cs_rejections' """
+                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='Check Scale Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         # if not check_alerts.is_empty():
@@ -77,8 +77,9 @@ class LpgRejections:
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
             self.params["device_type"] = "Check Scale Rejection"
-            self.params["interlock_name"] = "cs_rejections"
+            self.params["interlock_name"] = "Check Scale Rejection"
             self.params["sop_id"] = "SOP077"
+            self.params["device_msg"] = f"Check Scale rejection is going above 8%. The current rejection rate is {str(data['rejection'])}"
             await create_alert(self.params)
 
 
@@ -107,7 +108,7 @@ class LpgRejections:
                             FROM
                                 "alerts"
                             WHERE
-                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='gd_rejections' """
+                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='Valve Leak Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         # if not check_alerts.is_empty():
@@ -124,9 +125,13 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
-            self.params["device_type"] = "Valve Leakage Rejection"
-            self.params["interlock_name"] = "gd_rejections"
+            self.params["device_type"] = "Valve Leak Rejection"
+            self.params["interlock_name"] = "Valve Leak Rejection"
             self.params["sop_id"] = "SOP078"
+            if float(data['rejection']) < 1:
+                self.params["device_msg"] = f"Valve Leak rejection is going below 1%. The current rejection rate is {str(data['rejection'])}"
+            else:
+                self.params["device_msg"] = f"Valve Leak rejection is going above 6%. The current rejection rate is {str(data['rejection'])}"
             await create_alert(self.params)
 
 
@@ -155,7 +160,7 @@ class LpgRejections:
                             FROM
                                 "alerts"
                             WHERE
-                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='pt_rejections' """
+                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='O-Ring Leak Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         # if not check_alerts.is_empty():
@@ -172,9 +177,13 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
-            self.params["device_type"] = "O-Ring Leakage Rejection"
-            self.params["interlock_name"] = "pt_rejections"
+            self.params["device_type"] = "O-Ring Leak Rejection"
+            self.params["interlock_name"] = "O-Ring Leak Rejection"
             self.params["sop_id"] = "SOP079"
+            if float(data['rejection']) < 1:
+                self.params["device_msg"] = f"O-Ring Leak rejection is going below 1%. The current rejection rate is {str(data['rejection'])}"
+            else:
+                self.params["device_msg"] = f"O-Ring Leak rejection is going above 12%. The current rejection rate is {str(data['rejection'])}"
             await create_alert(self.params)
 
 
