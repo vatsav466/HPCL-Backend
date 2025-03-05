@@ -558,6 +558,7 @@ Model Alerts {
     sop_id optional index_field str
     location_name optional str
     severity index_field Severity
+    alert_category optional str
     alert_status index_field AlertStatus
     alert_state AlertState                  // Notification or Escalation
     unique_id str                           // System Generated ID Based on <BU>_<INC Number>_<SOP>
