@@ -548,17 +548,18 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 for column in list(MandateKeys.values()):
                     if column in merged_df.columns.tolist():
                         merged_df[column] = merged_df[column].fillna(0).astype(int)*1000
-            final_resp = generate_stacked_data(drill_state,merged_df, resp_format, month_column='month_name')
+            final_resp,growth_details = generate_stacked_data(drill_state,merged_df, resp_format, month_column='month_name')
         else:
             if not resp_format:
                 final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
             else:
-                final_resp = generate_stacked_data(drill_state,merged_df, resp_format)
+                final_resp,growth_details = generate_stacked_data(drill_state,merged_df, resp_format)
         measure_unit = 'TMT'
-        if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
+        """'if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
         if sbuName_req =="GAS" :
-            measure_unit = 'MT'
+            measure_unit = 'MT'"""
+            
         print("final_resp",final_resp)
         if 'cumulative' not in final_resp and not drill_state:
                 final_resp['cumulative'] = {}
@@ -581,19 +582,23 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         final_resp['cumulative'] = {}
                     print("final_resp",final_resp)
                     final_resp['cumulative'][each_key] = ''
+        if resp_format =='heat_map':
+            return {"status": True, "message": "Success", "data": {'data': final_resp, 'growth_details':growth_details,'level': sorted_level,
+                                                               'month_name': month_keys,'sales_unit':measure_unit}}
+            
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
     else:
         if resp_format:
-            final_resp = generate_stacked_data(drill_state,merged_df, resp_format, month_column='month_name')
+            final_resp,growth_details = generate_stacked_data(drill_state,merged_df, resp_format, month_column='month_name')
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         measure_unit = 'TMT'
-        if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
-            measure_unit = 'MT'
+        #if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
+        #    measure_unit = 'MT'
         print("sbuName",sbuName_req)
-        if sbuName_req =="GAS" :
-            measure_unit = 'MT'
+        #if sbuName_req =="GAS" :
+        #    measure_unit = 'MT'
         if 'cumulative' not in final_resp:
                 final_resp['cumulative'] = {}
         if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1  and not drill_state:
@@ -613,6 +618,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
 
 
 def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
+    growth_details = []
     print("in the stacked data")
     print(df.to_dict(orient='records'))
     columns = df.columns.to_list()
@@ -646,7 +652,7 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
             df_pivot.fillna(0, inplace=True)
 
             # Convert to Dictionary Format
-            return df_pivot.to_dict(orient="records")
+            return df_pivot.to_dict(orient="records"),growth_details
         elif resp_format == 'stacked' and month_column:
             # For sending data in stacked format
             # Renaming columns to lower case
@@ -665,11 +671,10 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
                     series_data.append({"name": f"{zone} {column.title()}", "stack": column.title(),
                                         "data": [zone_data.loc[m, column] if m in zone_data.index else 0
                                                  for m in unique_months]})
-            return {"months": unique_months, "series": series_data}
+            return {"months": unique_months, "series": series_data},growth_details
         elif resp_format == 'heat_map' and month_column:
             # making Cumulative sum of data for n-3
             present_month = datetime.datetime.now().strftime('%b')
-
             # Filtering cumulative_months
             cumulative_months = []
             if months.index(present_month) > 2:
@@ -695,21 +700,55 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
             cumulative_data['month_name'] = 'Cum'
             non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
             df = pd.concat([cumulative_data, non_cumulative_data])
-
+            df.to_csv('/tmp/dfcum.csv',index = False)
+            #making zonal summary above the exisiting heatmap
+            if "month_name" in df.columns.tolist():
+                
+                for i in df['month_name'].unique().tolist():
+                    df_cum =  df[df['month_name'] == 'Cum']
+                    df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                    df_pres = df[df['month_name'] ==df['month_name'].unique().tolist()[-1]]
+                if  not df_cum.empty and not df_prev.empty and not df_pres.empty:
+                    df_list = [df_cum,df_prev,df_pres]
+                print("df_list",len(df_list))
+                for idx,df_month in enumerate(df_list):
+                    print(df.columns.tolist())
+                #if df_cum:
+                    if 'ACTUAL_TMT_SALES' in df_month.columns.tolist():
+                        df_month['ACTUAL_TMT_SALES'] =df_month['ACTUAL_TMT_SALES'].fillna(0).astype(float)
+                        curr_value = df_month['ACTUAL_TMT_SALES'].sum()
+                        print("curr_value",curr_value)
+                        
+                    if 'ACTUAL_HISTORY_TMT_SALES' in df_month.columns.tolist():
+                        df_month['ACTUAL_HISTORY_TMT_SALES'] =df_month['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(float)
+                        prev_value = df_month['ACTUAL_HISTORY_TMT_SALES'].sum()
+                        print("prev_value",prev_value)
+                    if curr_value or prev_value:
+                        if prev_value!= 0:
+                            cum_growth = ((curr_value-prev_value)/prev_value)*100
+                        if prev_value == 0:
+                            cum_growth = 100
+                        if idx == 0:
+                            growth_details.append({"title": "Cumulative Growth","value": cum_growth})
+                        if idx == 1:
+                            growth_details.append({"title": f"{df['month_name'].unique().tolist()[1]} Growth","value": cum_growth})
+                        if idx == 2:
+                            growth_details.append({"title": f"{df['month_name'].unique().tolist()[-1]} Growth","value": cum_growth})
+                print("growth_details",growth_details)      
             # Renaming columns to lower case
             df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
-
             # Actual numeric columns
             numeric_cols = [key for key, value in MandateKeys.items() if value in numeric_cols]
-
             # Pivot Data - Creating separate columns for Actual, History, and Target
             df_pivot = df.pivot(index=other_columns[0], columns=month_column, values=numeric_cols)
+            '''
             print("pivot cols",df_pivot.columns)
             for metric,month in  df_pivot.columns:
                 print("metric",metric)
                 print("month",month)
             print(df_pivot)
             print(df_pivot.columns)
+            '''
             # Flatten MultiIndex Columns and rename them
             #df_pivot.columns = [f"{month}{metric.split('')[0]}" for metric, month in df_pivot.columns]
             df_pivot.columns = [f"{month}_{metric.split(',')[0]}" for metric, month in df_pivot.columns]
@@ -721,19 +760,19 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
             df_pivot.fillna(0, inplace=True)
 
             # Convert to Dictionary Format
-            return df_pivot.to_dict(orient="records")
+            return df_pivot.to_dict(orient="records"),growth_details
         elif resp_format == 'cummulative' and month_column:
             df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
-            return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+            return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()},growth_details
         elif resp_format == 'grouped':
             # For Grouped data
             # Converting data to month wise report
             return [{"month_name": month,  **{key: group[key].tolist() for key in numeric_cols+other_columns}}
-                    for month, group in df.groupby("month_name")]
+                    for month, group in df.groupby("month_name")],growth_details
     else:
         if resp_format == 'cummulative' and month_column:
             df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
             
         # For regular drill down widgets
-        return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+        return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()},growth_details
 
