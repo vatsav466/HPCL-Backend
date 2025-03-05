@@ -61,7 +61,7 @@ class SendNotification:
         """
         return [
             "alert_id", "BU", "interlock_name", "interlock_id", "messagetype",
-            "msg_subject", "mqofrole", "location_type", "location_device_id",
+            "msg_subject", "mqofrole", "location_type", "location_device_id", "va_level",
             "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
 
