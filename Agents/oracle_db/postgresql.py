@@ -4,6 +4,8 @@ import psycopg2
 import polars as pl
 import hpcl_ceg_model
 import asyncio  # For handling async calls
+import orchestrator.alerting.alert_factory as alert_factory
+
 
 # Path to the JSON file
 json_file = "config.json"
@@ -66,3 +68,48 @@ class Postgresql:
         # Upsert the data - Ensure `await` is used
         result = await model.bulk_update(data, upsert=True)  # Use upsert=True if needed
         print(result)
+        
+         # Process each record to create and close alerts
+        if result:
+          for record in data:
+            try:
+              # Fetch config based on table name
+              interlock_name = config['interlock_name'].get(table_name)
+              severity = config['severity'].get(table_name, "Medium")
+              sop_id = config['sop_id'].get(table_name)
+
+              # Extract necessary fields from the record
+              alert_data = {
+                'bu': 'TAS',
+                'sop_id': sop_id,
+                'sap_id': record.get('sap_id'),
+                'interlock_name': interlock_name,
+                'severity': severity,
+                'unique_id': record.get('id')
+              }
+
+              # Create Alert
+              success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+              if not success:
+                  print(f"Failed to create alert: {msg}")
+                  continue
+
+              # Close Alert
+              close_data = {
+                'bu': 'TAS',
+                'sop_id': sop_id,
+                'sap_id': alert_data['sap_id'],
+                'interlock_name': interlock_name,
+                  
+              }
+              close_success, close_msg = await alert_factory.AlertFactory.close_alert(close_data)
+              if not close_success:
+                  print(f"Failed to close alert: {close_msg}")
+
+            except Exception as e:
+             print(f"Error : {str(e)}")
+             continue
+
+          return {"status": "Table created and alerts processed"}
+        else:
+            print("Bulk not posted")
