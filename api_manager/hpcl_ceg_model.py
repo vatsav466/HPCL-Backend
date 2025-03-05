@@ -115,7 +115,7 @@ class UsersSchema(UrdhvaPostgresBase):
     is_ad_user: Mapped[bool] = mapped_column("is_ad_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(username, employee_id, bu, sap_id, name="users_username_employee_id_bu_sap_id"),)
+    __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
 
 
 class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -145,7 +145,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
-        upsert_keys = ['username', 'employee_id', 'bu', 'sap_id']
+        upsert_keys = ['username', 'employee_id']
 
 
 class Users(urdhva_base.postgresmodel.PostgresModel):
@@ -175,7 +175,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
-        upsert_keys = ['username', 'employee_id', 'bu', 'sap_id']
+        upsert_keys = ['username', 'employee_id']
 
 
 class UsersGetResp(pydantic.BaseModel):
