@@ -664,7 +664,9 @@ class SendNotification:
             self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") not in ["0", "1", "2"] else (await self._role_configuration_rolemailto() or "").split(",")
 
         # Convert assigned_user_roles to a list
-        self.update_alert["assigned_user_roles"] = self.update_alert["assigned_user_roles"].split(',') if self.update_alert["assigned_user_roles"] else []
+        self.update_alert["assigned_user_roles"] = (
+            self.update_alert["assigned_user_roles"].split(',') if self.update_alert["assigned_user_roles"] else []
+        )
 
         # Fetch alert data from DB and ensure it's a dictionary
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
@@ -673,13 +675,21 @@ class SendNotification:
         # Ensure alert_history is a list and append the new update
         alert_data.setdefault("alert_history", []).append(self.update_alert)
 
+        # Only append to assigned_user_roles if message_type is "escalation"
+        if self.params.get("messagetype", "") == "escalation":
+            alert_data.setdefault("assigned_user_roles", []).extend(self.update_alert["assigned_user_roles"])
+            alert_data["assigned_user_roles"] = list(set(alert_data["assigned_user_roles"]))  # Remove duplicates
+        else:
+            alert_data["assigned_user_roles"] = self.update_alert["assigned_user_roles"]
+
         # Update alert_data with required fields
         alert_data.update({
             "last_escalated_to": self.update_alert.get("last_escalated_to", []),
-            "assigned_user_roles": self.update_alert["assigned_user_roles"],
             "last_mailed_to": self.update_alert["last_mailed_to"]
         })
-        print(" before updating alert_data ---> ", alert_data)
+
+        print("before updating alert_data ---> ", alert_data)
+
         # Update the database
         await hpcl_ceg_model.Alerts(**alert_data).modify()
 

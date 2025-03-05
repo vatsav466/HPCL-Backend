@@ -2021,7 +2021,7 @@ class LPGCDCMSActions:
                 daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
             if daterange:
                 daywise_failure_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
-            daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName" '
+            daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName", "Financial_Year" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -2034,16 +2034,21 @@ class LPGCDCMSActions:
                 daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
             elif daterange:
                 daywise_failure_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
-            daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName" '
+            daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName", "Financial_Year" '
         try:
             query_resp = await function(query=daywise_failure_stats_query_)
             resp = pl.DataFrame(query_resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.with_columns(pl.col('Refills').fill_null(0).cast(pl.Float64).alias('Refills'))
-            resp = resp.group_by(["Delivery_Date", "PaymentErrorName"]).agg([
-                    pl.sum("Refills").round(2).alias("Refills"),
-                ])
+            if drill_state == "financial_year":
+                resp = resp.group_by(["Delivery_Date", "Financial_Year"]).agg([
+                        pl.sum("Refills").round(2).alias("Refills"),
+                    ])
+            else:
+                resp = resp.group_by(["Delivery_Date", "PaymentErrorName"]).agg([
+                        pl.sum("Refills").round(2).alias("Refills"),
+                    ])
             resp = resp.with_columns(pl.col("Delivery_Date").dt.strftime("%Y-%m-%d").alias("Delivery_Date"))
             numerical_columns = ["Refills"]
             string_columns = ["Delivery_Date"]
@@ -2177,33 +2182,38 @@ class LPGCDCMSActions:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
-            if not daterange:
+            if not daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
-            elif daterange:
+            elif daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
-            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName" '
+            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year", '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
-            if not "where" in daywise_exception_stats_query_.lower() and not daterange:
+            if not "where" in daywise_exception_stats_query_.lower() and not daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
-            elif not "where" in daywise_exception_stats_query_.lower() and daterange:
+            elif not "where" in daywise_exception_stats_query_.lower() and daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += f' WHERE "Delivery_Date" BETWEEN {daterange} '
-            elif not daterange:
+            elif not daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
-            elif daterange:
+            elif daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
-            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName" '
+            daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year", '
         try:    
             query_resp = await function(query=daywise_exception_stats_query_)
             resp = pl.DataFrame(query_resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
             resp = resp.with_columns(pl.col('Refills').fill_null(0).cast(pl.Float64).alias('Refills'))
-            resp = resp.group_by(["Delivery_Date", "ExceptionName"]).agg([
-                    pl.sum("Refills").round(2).alias("Refills"),
-                ])
+            if drill_state == "financial_year":
+                resp = resp.group_by(["Delivery_Date", "Financial_Year"]).agg([
+                        pl.sum("Refills").round(2).alias("Refills"),
+                    ])
+            else:
+                resp = resp.group_by(["Delivery_Date", "ExceptionName"]).agg([
+                        pl.sum("Refills").round(2).alias("Refills"),
+                    ])
             resp = resp.with_columns(pl.col("Delivery_Date").dt.strftime("%Y-%m-%d").alias("Delivery_Date"))
             numerical_columns = ["Refills"]
             string_columns = ["Delivery_Date"]

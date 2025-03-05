@@ -77,6 +77,7 @@ class AlertFactory:
             # Generate alert alert_data
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
+                                                        'alert_category': alert_data.get('alert_category'),
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': alert_data.get("alert_section", bu),

@@ -115,7 +115,7 @@ class UsersSchema(UrdhvaPostgresBase):
     is_ad_user: Mapped[bool] = mapped_column("is_ad_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(username, employee_id, bu, sap_id, name="users_username_employee_id_bu_sap_id"),)
+    __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
 
 
 class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -145,7 +145,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
-        upsert_keys = ['username', 'employee_id', 'bu', 'sap_id']
+        upsert_keys = ['username', 'employee_id']
 
 
 class Users(urdhva_base.postgresmodel.PostgresModel):
@@ -175,7 +175,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
-        upsert_keys = ['username', 'employee_id', 'bu', 'sap_id']
+        upsert_keys = ['username', 'employee_id']
 
 
 class UsersGetResp(pydantic.BaseModel):
@@ -1138,6 +1138,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     severity: Mapped[typing.Any] = mapped_column("severity", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    alert_category: Mapped[typing.Optional[str]] = mapped_column("alert_category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_status: Mapped[typing.Any] = mapped_column("alert_status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     alert_state: Mapped[typing.Any] = mapped_column("alert_state", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     unique_id: Mapped[str] = mapped_column("unique_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -1208,6 +1209,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     severity: hpcl_ceg_enum.Severity
+    alert_category: typing.Optional[str] = pydantic.Field("", **{})
     alert_status: hpcl_ceg_enum.AlertStatus
     alert_state: hpcl_ceg_enum.AlertState
     unique_id: str
@@ -1287,6 +1289,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     severity: typing.Optional[hpcl_ceg_enum.Severity] | None = None
+    alert_category: typing.Optional[str] = pydantic.Field("", **{})
     alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
     alert_state: typing.Optional[hpcl_ceg_enum.AlertState] | None = None
     unique_id: typing.Optional[str] | None = None

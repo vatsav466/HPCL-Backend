@@ -90,6 +90,12 @@ async def sync_user_roles():
                                                                                "Video Analytics"]}], "name": "LPG",
                                       "status": True},
 
+                    "Zonal Distributions Head LPG": {"allowed_pages": [{"menu_name": "LPG",
+                                                         "allowed_sub_menus": ["LPG Operations", "LPG Home",
+                                                                               "LPG Plant",
+                                                                               "Video Analytics"]}], "name": "LPG",
+                                      "status": True},
+
                     "Zonal Operations Head LPG": {"allowed_pages": [{"menu_name": "LPG",
                                                          "allowed_sub_menus": ["LPG Operations", "LPG Home",
                                                                                "LPG Plant",

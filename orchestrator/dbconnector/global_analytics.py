@@ -4459,62 +4459,78 @@ class GlobalAnalytics:
         :return: A dictionary containing the status, message and the alert ageing data
         """
         alert_status = drill_state
-        _filters = []
-        _filters = []
         daterange = None
+
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
-                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
-                _filters.append({f"{filter.key}": f"{filter.value}"})         
+                    daterange = f" '{filter.value.split(',')[0]}' AND '{filter.value.split(',')[-1]}' "
         
         if daterange:
-            query  = f""" SELECT 
-                            DATE(created_at) AS created_date,
-                            COUNT(*) AS alert_count,
-                            CASE 
-                                WHEN interlock_name LIKE '%Under Maintenance%' THEN 'Maintenance'
-                                ELSE 'Fault'
-                            END AS interlock_status
-                            FROM alerts
-                            WHERE alert_section = 'TAS' and created_at BETWEEN {daterange} and alert_status='{alert_status}'
-                            GROUP BY created_date, 
-                                    interlock_status
-                            ORDER BY alert_count DESC; """
+            query = f""" 
+                SELECT 
+                    DATE(created_at) AS created_date,
+                    alert_category,
+                    COUNT(*) AS alert_count,
+                    CASE 
+                        WHEN interlock_name LIKE '%Under Maintenance%' THEN 'maintenance'
+                        ELSE 'fault'
+                    END AS interlock_status
+                FROM alerts
+                WHERE alert_section = 'TAS' 
+                    AND created_at BETWEEN {daterange} 
+                    AND alert_status = '{alert_status}'
+                    AND alert_category IS NOT NULL
+                GROUP BY created_date, alert_category, interlock_status
+                ORDER BY created_date DESC, alert_count DESC;
+            """
         else:
-            query  = f""" SELECT 
-                            DATE(created_at) AS created_date,
-                            COUNT(*) AS alert_count,
-                            CASE 
-                                WHEN interlock_name LIKE '%Under Maintenance%' THEN 'Maintenance'
-                                ELSE 'Fault'
-                            END AS interlock_status
-                            FROM alerts
-                            WHERE alert_section = 'TAS' and created_at::DATE>=CURRENT_DATE - INTERVAL '7 days' and alert_status='{alert_status}'
-                            GROUP BY created_date, 
-                                    interlock_status
-                            ORDER BY alert_count DESC; """
-                    
+            query = f""" 
+                SELECT 
+                    DATE(created_at) AS created_date,
+                    alert_category,
+                    COUNT(*) AS alert_count,
+                    CASE 
+                        WHEN interlock_name LIKE '%Under Maintenance%' THEN 'maintenance'
+                        ELSE 'fault'
+                    END AS interlock_status
+                FROM alerts
+                WHERE alert_section = 'TAS' 
+                    AND created_at::DATE >= CURRENT_DATE - INTERVAL '7 days' 
+                    AND alert_status = '{alert_status}'
+                    AND alert_category IS NOT NULL
+                GROUP BY created_date, alert_category, interlock_status
+                ORDER BY created_date DESC, alert_count DESC;
+            """
+
+        # Execute query
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-
+        
         resp = await function(query=query)
         print("resp :", resp)
         resp = pl.DataFrame(resp)
+        
         if resp.is_empty():
             return []
-        result = []
+
+        result = {}
+
+        # Process data and create category-specific keys
         for created_date in resp["created_date"].unique().to_list():
-            filtered_resp = resp.filter(pl.col("created_date") == created_date)            
-            result.append(
-                {
-                    created_date: {
-                        "maintenance": filtered_resp.filter(pl.col("interlock_status") == "Maintenance")["alert_count"].sum(),
-                        "fault": filtered_resp.filter(pl.col("interlock_status") == "Fault")["alert_count"].sum()
-                    }
-                }
-            )         
+            filtered_resp = resp.filter(pl.col("created_date") == created_date)
+            date_result = {}
+
+            for category in filtered_resp["alert_category"].unique().to_list():
+                category_resp = filtered_resp.filter(pl.col("alert_category") == category)
+                
+                for status in ["maintenance", "fault"]:
+                    key = f"{category.lower()}_{status}"
+                    date_result[key] = category_resp.filter(pl.col("interlock_status") == status)["alert_count"].sum()
+
+            result[created_date] = date_result
+
         return result
     
 

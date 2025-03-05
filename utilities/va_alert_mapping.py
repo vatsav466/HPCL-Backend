@@ -1,6 +1,27 @@
 VA_Alert_Mapping = {
     "RO": {
-        "FIRE/SMOKE": {"name": "Fire/Smoke Detection", "severity": "Critical"},
+        "FIRE/SMOKE": {
+            "name": "Fire/Smoke Detection",
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25
+                }
+            }
+        },
         "SMOKE": {"name": "Smoke Detection", "severity": "Critical"},
         "Fire": {"name": "Fire Detection", "severity": "Critical"},
         "ABSENCE_OF_EARTHING": {"name": "Absence Of Earthing", "severity": "Critical"},
@@ -14,7 +35,28 @@ VA_Alert_Mapping = {
     "TAS": {
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {"name": "Non compliance of Fire Extinguisher (TT Unloading)", "severity": "Critical"},
         "FIRE": {"name": "Fire", "severity": "Critical"},
-        "SPILLAGE_IN_DUS": {"name": "Spillage", "severity": ""},
+        "SPILLAGE_IN_DUS": {
+            "name": "Spillage",
+            "severity": "",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25
+                }
+            }
+        },
         "LINE_OF_FIRE": {"name": "Perimeter Intrusion", "severity": "Critical"},
         "LOCKIN_POSITION_DOME_COVERS": {"name": "TT Dome Covers", "severity": "Critical"},
         "VALVE_OPEN": {"name": "valve Box in open status", "severity": ""},
