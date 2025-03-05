@@ -135,7 +135,9 @@ async def get_period_datetime(period: str):
         today = datetime.datetime.now()
         start_of_week = today - datetime.timedelta(days=today.weekday())
         end_of_week = start_of_week + datetime.timedelta(days=6)
-        return start_of_week, end_of_week
+        start_datetime = datetime.datetime.combine(start_of_week, datetime.datetime.min.time())
+        end_datetime = datetime.datetime.combine(end_of_week, datetime.datetime.max.time())
+        return start_datetime, end_datetime
 
 async def get_va_alerts_count(bu: str, violation_type: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
@@ -150,6 +152,7 @@ async def get_va_alerts_count(bu: str, violation_type: str):
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
+    print("Query: ", query)
     print(resp)
     if resp:
         resp = resp[0]
