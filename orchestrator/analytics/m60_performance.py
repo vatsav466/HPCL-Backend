@@ -577,6 +577,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     #if 'cumulative' not in final_resp and not drill_state:
                     if 'cumulative' not in final_resp and not drill_state:
                         final_resp['cumulative'] = {}
+                    if 'cumulative' not in final_resp and time_grain == 'Yearly':
+                        final_resp['cumulative'] = {}
                     print("final_resp",final_resp)
                     final_resp['cumulative'][each_key] = ''
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
@@ -670,8 +672,8 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
 
             # Filtering cumulative_months
             cumulative_months = []
-            if months.index(present_month) > 3:
-                cumulative_months = months[0:months.index(present_month) - 2]
+            if months.index(present_month) > 2:
+                cumulative_months = months[0:months.index(present_month) - 1]
             # Summing data for cumulative data
             #df['Zone_Name'] = df['Zone_Name'].astype(str)
             print(df.columns)

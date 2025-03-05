@@ -121,7 +121,8 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "alert_section": "VA",
                                               "alert_history":alert_history,
                                               "vendor_alert_id": record.get("alert_id", alert_id),
-                                              "alert_timestamp": record.get("alert_timestamp", None)
+                                              "alert_timestamp": record.get("alert_timestamp", None),
+                                              "violation_type": record['alert_section']
                                               })
                     
                     camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=location_id,
