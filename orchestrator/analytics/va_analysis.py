@@ -4,6 +4,9 @@ import math
 import requests
 import datetime
 import polars as pl
+import charts_actions
+import dashboard_studio_model
+import utilities.va_alert_mapping as va_alert_mapping
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 
@@ -126,3 +129,29 @@ async def assign_values_to_dataframe(df, values):
             assigned_values = (values * repeats)[:n]
         df = df.with_columns(pl.Series("camunda_listener", assigned_values))
         return df
+
+async def get_period_datetime(period: str):
+    if period == "weekly":
+        today = datetime.datetime.now()
+        start_of_week = today - datetime.timedelta(days=today.weekday())
+        end_of_week = start_of_week + datetime.timedelta(days=6)
+        return start_of_week, end_of_week
+
+async def get_va_alerts_count(bu: str, violation_type: str):
+    va_mapping = va_alert_mapping.VA_Alert_Mapping
+    va_mapping = va_mapping[bu][violation_type]
+    start_date, end_date = await get_period_datetime(va_mapping['period'])
+    query = (f"""select count(*) as "count" from alerts """
+             f"where bu = '{bu}' and "
+             f"alert_section = 'VA' and "
+             f"violation_type = '{violation_type}' and "
+             f"created_at BETWEEN TO_DATE('{start_date}', 'YYYY-MM-DD') AND TO_DATE('{end_date}', 'YYYY-MM-DD')")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = "1"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    print(resp)
+    if resp:
+        resp = resp[0]
+        return resp.get("count", 0)
+    return 0
