@@ -28,8 +28,7 @@ months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'GAS']
 
 DefaultTable = 'Day'
-MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
-#,"YTD":"YTD_TMT_SALES"}
+MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES","YTD":"YTD_TMT_SALES"}
 
 
 async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_resp_format="%Y%m%d"):
@@ -587,7 +586,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             
             xAxis = []
             xAxis.extend([x['title'].split()[0][:3] for x in growth_details])
-            xAxis.extend(['YTD'])
+            #xAxis.extend(['YTD'])
             return {"status": True, "message": "Success", "data": {'data': final_resp, 'growth_details':growth_details,'x-axis':xAxis,'level': sorted_level,
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
             
@@ -724,7 +723,6 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
                         df_month['ACTUAL_TMT_SALES'] =df_month['ACTUAL_TMT_SALES'].fillna(0).astype(float)
                         curr_value = df_month['ACTUAL_TMT_SALES'].sum()
                         print("curr_value",curr_value)
-                        
                     if 'ACTUAL_HISTORY_TMT_SALES' in df_month.columns.tolist():
                         df_month['ACTUAL_HISTORY_TMT_SALES'] =df_month['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(float)
                         prev_value = df_month['ACTUAL_HISTORY_TMT_SALES'].sum()
@@ -740,7 +738,6 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
                             growth_details.append({"title": f"{df['month_name'].unique().tolist()[1]} Growth","value": cum_growth})
                         if idx == 2:
                             growth_details.append({"title": f"{df['month_name'].unique().tolist()[-1]} Growth","value": cum_growth})  
-                print("growth_details",growth_details)                   
             # Renaming columns to lower case
             df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
             # Actual numeric columns
@@ -758,16 +755,27 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
             # Flatten MultiIndex Columns and rename them
             #df_pivot.columns = [f"{month}{metric.split('')[0]}" for metric, month in df_pivot.columns]
             df_pivot.columns = [f"{month}_{metric.split(',')[0]}" for metric, month in df_pivot.columns]
-
             # Reset Index to include 'Zone_Name'
             df_pivot.reset_index(inplace=True)
-
             # Keeping all nan's as zero's
             df_pivot.fillna(0, inplace=True)
+            df_pivot.to_csv('/tmp/df_pivot.csv',index = False)
+            df_pivot["YTD_actual"] = df_pivot.filter(like="_actual").sum(axis=1)
+            df_pivot["YTD_history"] = df_pivot.filter(like="_history").sum(axis=1)
+            df_pivot.to_csv('/tmp/df_pivot.csv',index = False)
             print("df_pivot",df_pivot)
             print(df_pivot.columns)
-            df_pivot["YTD"] = df_pivot.select_dtypes(include="number").sum(axis=1)
+            #df_pivot["YTD"] = df_pivot.select_dtypes(include="number").sum(axis=1)
             print(df_pivot.columns)
+            if 'YTD_actual' in df_pivot.columns.tolist() or 'YTD_history' in df_pivot.columns.tolist():
+                if  df_pivot['YTD_history'].sum() != 0:
+                    ytd_growth = ((df_pivot['YTD_actual'].sum()-df_pivot['YTD_history'].sum())/df_pivot['YTD_history'].sum())*100
+                elif df_pivot['YTD_history'].sum() == 0:
+                    ytd_growth = 100
+                elif df_pivot['YTD_actual'].sum() == 0:
+                    ytd_growth = -100
+                
+                growth_details.append({"title": "YTD Growth","value": ytd_growth})  
             # Convert to Dictionary Format
             return df_pivot.to_dict(orient="records"),growth_details
         elif resp_format == 'cummulative' and month_column:
