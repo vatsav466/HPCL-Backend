@@ -15,7 +15,7 @@ class CheckForUnblock:
         Returns:
             list: A list of strings representing the required variables.
         """
-        return ["alert_id"]
+        return ["alert_id","escalate_time_block"]
     
     async def checkForVehicleUnblock(self, params):
         """
@@ -39,7 +39,9 @@ class CheckForUnblock:
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
 
-            totalWaitTime = role_configuration.role_Mapping[alert_data["alert_section"]][alert_data["interlock_name"]]["block_time"]
+            if alert_data.get("alert_section","") in ["VTS"]:
+                escalation_time = params.get("escalate_time_block","")
+                totalWaitTime = role_configuration.role_Mapping[alert_data["alert_section"]][alert_data.get("bu","")][alert_data["interlock_name"]]["block_time"][escalation_time]
             print("totalWaittime---------->",totalWaitTime)
             return True, {"waitTime": totalWaitTime}
 

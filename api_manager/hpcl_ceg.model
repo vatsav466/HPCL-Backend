@@ -639,7 +639,6 @@ Model Alerts {
 
     //VA
     image_urls optional list urlsdict
-    va_rolemap optional str
 
     Action=> alert_action {
         bu optional str

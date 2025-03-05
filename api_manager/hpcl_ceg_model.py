@@ -1198,7 +1198,6 @@ class AlertsSchema(UrdhvaPostgresBase):
     vehicle_blocked_end_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vehicle_blocked_end_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     mark_as_false: Mapped[typing.Optional[bool]] = mapped_column("mark_as_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     image_urls: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("image_urls", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    va_rolemap: Mapped[typing.Optional[str]] = mapped_column("va_rolemap", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -1269,7 +1268,6 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     vehicle_blocked_end_date: typing.Optional[datetime.datetime] | None = None
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     image_urls: typing.Optional[typing.List[urlsdictCreate]] | None = None
-    va_rolemap: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -1349,7 +1347,6 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     vehicle_blocked_end_date: typing.Optional[datetime.datetime] | None = None
     mark_as_false: typing.Optional[bool] = pydantic.Field(False, )
     image_urls: typing.Optional[typing.List[urlsdictCreate]] | None = None
-    va_rolemap: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

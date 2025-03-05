@@ -21,7 +21,6 @@ from camunda.external_task.external_task import (
 )
 import cache_gateway.cache_api_actions as cache_api_actions
 import orchestrator.notification_manager.notification_factory as notification_factory
-import orchestrator.actions.va_alert_count as va_alert_mapping
 
 logger = urdhva_base.logger.Logger.getInstance("workflow_process-log")
 
@@ -62,8 +61,8 @@ class SendNotification:
             list: A list of strings representing the required variables.
         """
         return [
-            "alert_id", "BU", "interlock_name", "interlock_id", "messagetype", "mailto",
-            "msg_subject", "mqofrole", "location_type", "location_device_id", "mqof",
+            "alert_id", "BU", "interlock_name", "interlock_id", "messagetype",
+            "msg_subject", "mqofrole", "location_type", "location_device_id",
             "rolemailto", "alert_id", "escalationlevel_inmail", "sap_id", "escalationtime_inmail"
         ]
 
@@ -140,7 +139,7 @@ class SendNotification:
         bu = self.params.get("BU")
         sap_id = self.alert_data.get("sap_id", "")
         message_type = self.params.get("messagetype")
-        roles_list = self.params.get("rolemailto", "") if self.params.get("rolemailto", "") else (await self._role_configuration_rolemailto() or "")
+        roles_list = self.params.get("rolemailto", "") if self.params.get("rolemailto", "") not in ["0", "1", "2"] else (await self._role_configuration_rolemailto() or "")
         print("bu --> ", bu)
         print("sap_id --> ", sap_id)
         print("message_type --> ", message_type)
@@ -653,16 +652,16 @@ class SendNotification:
         self.update_alert.update({
             "action_type": self.base_alert_data.get("action_type"),
             "action_msg": self.base_alert_data.get("action_msg"),
-            "assigned_user_roles": self.params.get("mqofrole", "") if self.params.get("mqofrole", "") else (await self._role_configuration_mqofrole() or ""),  # Ensure it's a string
+            "assigned_user_roles": self.params.get("mqofrole", "") if self.params.get("mqofrole", "") not in ["0", "1", "2"] else (await self._role_configuration_mqofrole() or ""),  # Ensure it's a string
             # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
             "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
         })
         print("self.update_alert ---> ", self.update_alert)
 
         if self.params.get("escalationlevel_inmail"):
-            self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") else (await self._role_configuration_rolemailto() or "").split(",")
+            self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") not in ["0", "1", "2"] else (await self._role_configuration_rolemailto() or "").split(",")
         else:
-            self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") else (await self._role_configuration_rolemailto() or "").split(",")
+            self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") not in ["0", "1", "2"] else (await self._role_configuration_rolemailto() or "").split(",")
 
         # Convert assigned_user_roles to a list
         self.update_alert["assigned_user_roles"] = self.update_alert["assigned_user_roles"].split(',') if self.update_alert["assigned_user_roles"] else []
@@ -740,12 +739,10 @@ class SendNotification:
         return True, {"alert_id": self.params['alert_id']}
     
     async def _role_configuration_rolemailto(self):
-        mailto=self.params.get("mailto","")
+        mailto=self.params.get("rolemailto","")
         interlock_name = self.alert_data.get("interlock_name","")
         alert_section = self.alert_data.get("alert_section","")
-        if self.alert_data.get("alert_section") in ["VA"]:
-            interlock_name = await va_alert_mapping.VAAlertMapping().vaalertmapping(self.params)
-        rolemapping = role_configuration.role_Mapping[alert_section].get(interlock_name, {})
+        rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
         print("rolemapping--------->",rolemapping)
         if mailto:
             print("mailto-------------->",rolemapping["rolemailto"].get(mailto,""))
@@ -753,18 +750,12 @@ class SendNotification:
         return ""
     
     async def _role_configuration_mqofrole(self):
-        mqof = self.params.get("mqof","")
+        mqof = self.params.get("mqofrole","")
         interlock_name = self.alert_data.get("interlock_name","")
         alert_section = self.alert_data.get("alert_section","")
-        if self.alert_data.get("alert_section") in ["VA"]:
-            interlock_name = await va_alert_mapping.VAAlertMapping().vaalertmapping(self.params)
-        rolemapping = role_configuration.role_Mapping[alert_section].get(interlock_name, {})
+        rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
         print("rolemapping--------->",rolemapping)
         if mqof:
             print("mqof----------->",rolemapping["mqof"].get(mqof,""))
             return rolemapping["mqof"].get(mqof,"")
         return ""
-        
-
-
-
