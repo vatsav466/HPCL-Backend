@@ -141,38 +141,40 @@ async def get_period_datetime(period: str):
 
 async def get_va_alerts_count(bu: str, violation_type: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
-    va_mapping = va_mapping[bu][violation_type]
-    start_date, end_date = await get_period_datetime(va_mapping['period'])
-    query = (f"""select count(*) as "count" from alerts """
-             f"where bu = '{bu}' and "
-             f"alert_section = 'VA' and "
-             f"violation_type = '{violation_type}' and "
-             f"created_at BETWEEN TO_DATE('{start_date}', 'YYYY-MM-DD') AND TO_DATE('{end_date}', 'YYYY-MM-DD')")
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = "1"
-    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    resp = await function(query=query)
-    print("Query: ", query)
-    print(resp)
-    if resp:
-        resp = resp[0]
-        return resp.get("count", 0)
+    if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
+        va_mapping = va_mapping[bu][violation_type]
+        start_date, end_date = await get_period_datetime(va_mapping['period'])
+        query = (f"""select count(*) as "count" from alerts """
+                 f"where bu = '{bu}' and "
+                 f"alert_section = 'VA' and "
+                 f"violation_type = '{violation_type}' and "
+                 f"created_at BETWEEN TO_DATE('{start_date}', 'YYYY-MM-DD') AND TO_DATE('{end_date}', 'YYYY-MM-DD')")
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = "1"
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+        print("Query: ", query)
+        print(resp)
+        if resp:
+            resp = resp[0]
+            return resp.get("count", 0)
     return 0
 
 async def get_va_levels(bu: str, violation_type: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
-    va_mapping = va_mapping[bu][violation_type]
-    va_alert_count = await get_va_alerts_count(bu=bu, violation_type=violation_type)
-    previous_count = ""
-    for key, value in va_mapping['escalations'].items():
-        if value['condition'] == "<":
-            if int(va_alert_count) < int(value['value']):
-                previous_count = value['value']
-                return "level - 1"
-        if value['condition'] == "<>":
-            if int(previous_count) < va_alert_count < int(value['value']):
-                return "level - 2"
-        if value['condition'] == ">":
-            if int(value['value']) > va_alert_count:
-                return "level - 3"
+    if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
+        va_mapping = va_mapping[bu][violation_type]
+        va_alert_count = await get_va_alerts_count(bu=bu, violation_type=violation_type)
+        previous_count = 0
+        for key, value in va_mapping['escalations'].items():
+            if value['condition'] == "<":
+                if int(va_alert_count) < int(value['value']):
+                    return "level - 1"
+            if value['condition'] == "<>":
+                if int(previous_count) < va_alert_count < int(value['value']):
+                    return "level - 2"
+            if value['condition'] == ">":
+                if va_alert_count > int(value['value']):
+                    return "level - 3"
+            previous_count = value['value']
     return ""
