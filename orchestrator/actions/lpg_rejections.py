@@ -190,11 +190,9 @@ class LpgRejections:
             await create_alert(self.params)
 
 
-    async def check_rejections(self, params):        
+    async def check_rejections(self, params):
         if not self.params:
             self.params = params
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
-        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         rejection_type = params["interlock_name"]
         table = f"lpg_{rejection_type}"
         print(f"- Checking Rejection of {table} -")
@@ -206,17 +204,16 @@ class LpgRejections:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_rejection = f""" SELECT AVG(sortoutpercentage)*100 AS rejection, plant, sap_id FROM "{table}" WHERE process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY plant, sap_id"""
-        current_rejection = await function(query=current_rejection)
-        current_rejection = pl.DataFrame(current_rejection)
-        print("check_alerts", check_alerts)
-        if not check_alerts.is_empty():
-            check_alerts = current_rejection.join(check_alerts, on="sap_id", how="inner")
-            check_alerts = check_alerts.with_columns(pl.when(pl.col("rejection") < 8).then(pl.lit("decreased")).otherwise(pl.lit("increased")).alias("rejection_status")).select(["rejection_status"])
-        else:
-            return False, {}
-        print("check_alerts :", check_alerts.to_dicts()[-1])
-        return True, check_alerts.to_dicts()[-1]
+        
+        previous_rejection = f""" SELECT * FROM alerts WHERE created_at>='{(datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")}' and interlock_name='{params["interlock_name"]}' """
+        previous_rejection = await function(query=previous_rejection)
+        previous_rejection = pl.DataFrame(previous_rejection)
+        
+        if check_alerts['location_name'][-1] in previous_rejection["location_name"].unique().to_list():
+            return True, {"rejection_status": "increased"}
+        elif check_alerts['location_name'][-1] not in previous_rejection["location_name"].unique().to_list():
+            return True, {"rejection_status": "decreased"}
+                
         
 if __name__ == "__main__":
     lpg = LpgRejections()
