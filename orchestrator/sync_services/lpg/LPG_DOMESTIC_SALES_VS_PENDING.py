@@ -423,7 +423,7 @@ def get_pending_vs_delivered_data():
     data = data.drop("System_Idx")
     print("Length of data After Drop :", len(data))
     print("-"*25)
-    insertToDB(data, "LPG_SALES_SUMMARY_DATA", indexing_col=("JDEDistributorCode", "ConsumerType", "IsPrepaid", "CylType"))
+    # insertToDB(data, "LPG_SALES_SUMMARY_DATA", indexing_col=("JDEDistributorCode", "ConsumerType", "IsPrepaid", "CylType"))
     
     data = data.with_columns(
         pl.when(

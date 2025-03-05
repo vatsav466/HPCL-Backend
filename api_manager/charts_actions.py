@@ -229,7 +229,8 @@ async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
     Charts_Connection_Vault_RoutingParams.action = 'get_distinct_values'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     return await function(
-        schema_name=data.schema, table_name=data.table, column_name=data.column, where_clause=data.where_cond
+        schema_name=data.schema, table_name=data.table, column_name=data.column,
+        where_clause=[cond.dict() for cond in data.where_cond]
     )
 
 
@@ -408,12 +409,6 @@ async def charts_dashboard_charts(data: Charts_Dashboard_ChartsParams):
 # Action get_dashboard_chart_form
 @router.post('/get_dashboard_chart_form', tags=['Charts'])
 async def charts_get_dashboard_chart_form(data: Charts_Get_Dashboard_Chart_FormParams):
-    ...
-
-
-# Action get_distinct_values
-@router.post('/get_distinct_values', tags=['Charts'])
-async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
     ...
 
 
