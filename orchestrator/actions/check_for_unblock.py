@@ -14,7 +14,7 @@ class CheckForUnblock:
         Returns:
             list: A list of strings representing the required variables.
         """
-        return ["alert_id", "days"]
+        return ["alert_id", "va_level"]
     
     async def checkForVehicleUnblock(self, params):
         """
