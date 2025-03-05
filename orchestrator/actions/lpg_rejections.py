@@ -80,7 +80,7 @@ class LpgRejections:
             self.params["interlock_name"] = "Check Scale Rejection"
             self.params["sop_id"] = "SOP077"
             self.params["message"] = f"Check Scale rejection is going above 8%. The current rejection rate is {str(data['rejection'])}"
-            self.params["alert_history"] = [{"action_msg": self.params["message"]}]
+            self.params["alert_history"] = [{"action_msg": self.params["message"],  "action_type": "Created"}]
             await create_alert(self.params)
 
 
@@ -133,7 +133,7 @@ class LpgRejections:
                 self.params["message"] = f"Valve Leak rejection is going below 1%. The current rejection rate is {str(data['rejection'])}"
             else:
                 self.params["message"] = f"Valve Leak rejection is going above 6%. The current rejection rate is {str(data['rejection'])}"
-            self.params["alert_history"] = [{"action_msg": self.params["message"]}]
+            self.params["alert_history"] = [{"action_msg": self.params["message"], "action_type": "Created"}]
             await create_alert(self.params)
 
 
@@ -186,7 +186,7 @@ class LpgRejections:
                 self.params["message"] = f"O-Ring Leak rejection is going below 1%. The current rejection rate is {str(data['rejection'])}"
             else:
                 self.params["message"] = f"O-Ring Leak rejection is going above 12%. The current rejection rate is {str(data['rejection'])}"
-            self.params["alert_history"] = [{"action_msg": self.params["message"]}]
+            self.params["alert_history"] = [{"action_msg": self.params["message"], "action_type": "Created"}]
             await create_alert(self.params)
 
 
