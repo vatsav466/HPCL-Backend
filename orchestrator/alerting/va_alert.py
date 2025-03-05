@@ -143,6 +143,7 @@ class VAAlertManager(alert_factory.AlertFactory):
                                               "alert_history":alert_history,
                                               "vendor_alert_id": record.get("alert_id", alert_id),
                                               "alert_timestamp": record.get("alert_timestamp", None),
+                                              "violation_type": record.get("alert_section",""),
                                               "image_urls": [{"alert_id": record.get("alert_id", alert_id),"image_url": record["video_url"]}]
                                               })
                     
