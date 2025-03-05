@@ -42,6 +42,33 @@
         "HOST_MANUALBAYASSIGNED": "HostManualBayAssigned",
         "HOST_SICKTTS": "HostSickTts"
     },
+
+    "interlock_name": {
+      "HostUnauthorisedFlow":"Unauthorized flow",
+      "HostCancelledTts":"Cancel TT_ truck",
+      "HostManualFanPrinted":"Manual FAN printed more 5% of total TT loaded",
+      "HostOverLoadedTts":"TT Overloaded",
+      "HostKFactorChanges":"K - Factor Data Changed",
+      "HostLocalLoadedTts":"BCU Local Loading",
+      "HostBayReAssignment":"Bay reasignment",
+      "HostManualBayAssigned":"Manual - bay assignment of more then 5% of total TT loaded",
+      "HostSickTts":"Sick TT_ truck"
+
+    } ,
+
+    "severity": {
+        "HostUnauthorisedFlow":"Medium",
+        "HostCancelledTts":"Medium",
+        "HostManualFanPrinted":"Medium",
+        "HostOverLoadedTts":"Medium",
+        "HostKFactorChanges":"Critical",
+        "HostLocalLoadedTts":"Medium",
+        "HostBayReAssignment":"Medium",
+        "HostManualBayAssigned":"Medium",
+        "HostSickTts":"Medium"
+
+    },
+
     "column_rename": {
         "LOAD_NUMBER": "load_number",
         "TRUCK_NUMBER": "truck_number",
