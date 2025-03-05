@@ -584,11 +584,27 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     final_resp['cumulative'][each_key] = ''
         if resp_format =='heat_map':
             
-            xAxis = []
-            xAxis.extend([x['title'].split()[0][:3] for x in growth_details])
+            hist_xaxis = []
+            tgt_xaxis = []
+            print("growth_details",growth_details)
+            #xAxis.extend([x['title'].split('_')[0]+'_'+x['title'].split('_')[1] for x in growth_details if '_' in x else x.split()[0]])
+            #hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
+            #hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower()  
+            #                   else x for x in growth_details if isinstance(x, dict) and 'title' in x])
+            hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) for x in growth_details if 'hist' in x['title'].lower()])
+            if '"T"' in [x['key'] for x in filters]:
+                tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) for x in growth_details if 'tgt' in x['title'].lower()])
+                #tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower()  
+                #               else x for x in growth_details if isinstance(x, dict) and 'title' in x])
+                #tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
             #xAxis.extend(['YTD'])
-            return {"status": True, "message": "Success", "data": {'data': final_resp, 'growth_details':growth_details,'x-axis':xAxis,'level': sorted_level,
+            if len(tgt_xaxis)>0:
+                return {"status": True, "message": "Success", "data": {'data': final_resp, 'growth_details':growth_details,'hist_xaxis':hist_xaxis,'tgt_xaxis':tgt_xaxis,'level': sorted_level,
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
+            else:
+                return {"status": True, "message": "Success", "data": {'data': final_resp, 'growth_details':growth_details,'hist_xaxis':hist_xaxis,'level': sorted_level,
+                                                               'month_name': month_keys,'sales_unit':measure_unit}}
+
             
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys,'sales_unit':measure_unit}}
@@ -727,17 +743,41 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
                         df_month['ACTUAL_HISTORY_TMT_SALES'] =df_month['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(float)
                         prev_value = df_month['ACTUAL_HISTORY_TMT_SALES'].sum()
                         print("prev_value",prev_value)
+                    if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                        df_month['TARGET_TMT_SALES'] =df_month['TARGET_TMT_SALES'].fillna(0).astype(float)
+                        tgt_value = df_month['TARGET_TMT_SALES'].sum()
+                        
+                        print("tgt_value",tgt_value)
+                       
                     if curr_value or prev_value:
                         if prev_value!= 0:
                             cum_growth = ((curr_value-prev_value)/prev_value)*100
                         if prev_value == 0:
                             cum_growth = 100
+                        if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                            if tgt_value !=0:
+                                tgt_growth = ((curr_value-tgt_value)/tgt_value)*100
+                            else:
+                                tgt_growth = 100
+                            
+                            
+                            
                         if idx == 0:
-                            growth_details.append({"title": "Cumulative Growth","value": cum_growth})
+                            growth_details.append({"title": "Cum_Hist_Growth","value": cum_growth})
+                            if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                                growth_details.append({"title": "Cum_Tgt_Growth","value": tgt_growth})
                         if idx == 1:
-                            growth_details.append({"title": f"{df['month_name'].unique().tolist()[1]} Growth","value": cum_growth})
+                            growth_details.append({"title": f"{df['month_name'].unique().tolist()[1]}_Hist_Growth","value": cum_growth})
+                            if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                                growth_details.append({"title": f"{df['month_name'].unique().tolist()[1]}_Tgt_Growth","value": tgt_growth})
                         if idx == 2:
-                            growth_details.append({"title": f"{df['month_name'].unique().tolist()[-1]} Growth","value": cum_growth})  
+                            growth_details.append({"title": f"{df['month_name'].unique().tolist()[-1]}_Hist_Growth","value": cum_growth}) 
+                            if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                                growth_details.append({"title": f"{df['month_name'].unique().tolist()[-1]}_Tgt_Growth","value": tgt_growth})
+                        
+                            
+                        
+                         
             # Renaming columns to lower case
             df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
             # Actual numeric columns
@@ -762,6 +802,7 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
             df_pivot.to_csv('/tmp/df_pivot.csv',index = False)
             df_pivot["YTD_actual"] = df_pivot.filter(like="_actual").sum(axis=1)
             df_pivot["YTD_history"] = df_pivot.filter(like="_history").sum(axis=1)
+            df_pivot["YTD_target"] = df_pivot.filter(like="_target").sum(axis=1)
             df_pivot.to_csv('/tmp/df_pivot.csv',index = False)
             print("df_pivot",df_pivot)
             print(df_pivot.columns)
@@ -769,13 +810,24 @@ def generate_stacked_data(drill_state,df, resp_format='', month_column=''):
             print(df_pivot.columns)
             if 'YTD_actual' in df_pivot.columns.tolist() or 'YTD_history' in df_pivot.columns.tolist():
                 if  df_pivot['YTD_history'].sum() != 0:
-                    ytd_growth = ((df_pivot['YTD_actual'].sum()-df_pivot['YTD_history'].sum())/df_pivot['YTD_history'].sum())*100
+                    ytd_hist_growth = ((df_pivot['YTD_actual'].sum()-df_pivot['YTD_history'].sum())/df_pivot['YTD_history'].sum())*100
                 elif df_pivot['YTD_history'].sum() == 0:
-                    ytd_growth = 100
+                    ytd_hist_growth = 100
                 elif df_pivot['YTD_actual'].sum() == 0:
-                    ytd_growth = -100
+                    ytd_hist_growth = -100
+                if 'YTD_target' in df_pivot.columns.tolist():
+                    if  df_pivot['YTD_target'].sum() != 0:
+                        ytd_tgt_growth = ((df_pivot['YTD_actual'].sum()-df_pivot['YTD_target'].sum())/df_pivot['YTD_target'].sum())*100
+                    elif df_pivot['YTD_target'].sum() == 0:
+                        ytd_tgt_growth = 100
+                    elif df_pivot['YTD_actual'].sum() == 0:
+                        ytd_tgt_growth = -100
+                    
                 
-                growth_details.append({"title": "YTD Growth","value": ytd_growth})  
+                growth_details.append({"title": "YTD_Hist_Growth","value": ytd_hist_growth}) 
+                if  'YTD_target' in df_pivot.columns.tolist():
+                    growth_details.append({"title": "YTD_Tgt_Growth","value": ytd_tgt_growth}) 
+                    
             # Convert to Dictionary Format
             return df_pivot.to_dict(orient="records"),growth_details
         elif resp_format == 'cummulative' and month_column:
