@@ -4480,6 +4480,7 @@ class GlobalAnalytics:
                 WHERE alert_section = 'TAS' 
                     AND created_at BETWEEN {daterange} 
                     AND alert_status = '{alert_status}'
+                    AND alert_category IS NOT NULL
                 GROUP BY created_date, alert_category, interlock_status
                 ORDER BY created_date DESC, alert_count DESC;
             """
@@ -4497,6 +4498,7 @@ class GlobalAnalytics:
                 WHERE alert_section = 'TAS' 
                     AND created_at::DATE >= CURRENT_DATE - INTERVAL '7 days' 
                     AND alert_status = '{alert_status}'
+                    AND alert_category IS NOT NULL
                 GROUP BY created_date, alert_category, interlock_status
                 ORDER BY created_date DESC, alert_count DESC;
             """
