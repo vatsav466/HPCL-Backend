@@ -2155,7 +2155,10 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        daywise_exception_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_exception_statistics")
+        if not drill_state=='financial_year':            
+            daywise_exception_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_exception_statistics")
+        else:
+            daywise_exception_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_exception_statistics_m")
         _filters = []
         daterange = None
         if cross_filters:
