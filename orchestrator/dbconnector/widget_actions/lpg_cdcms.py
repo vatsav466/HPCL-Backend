@@ -2223,7 +2223,7 @@ class LPGCDCMSActions:
                 resp = resp.group_by(["Delivery_Date", "ExceptionName"]).agg([
                         pl.sum("Refills").round(2).alias("Refills"),
                     ])
-            resp = resp.with_columns(pl.col("Delivery_Date").dt.strftime("%Y-%m-%d").alias("Delivery_Date"))
+                resp = resp.with_columns(pl.col("Delivery_Date").dt.strftime("%Y-%m-%d").alias("Delivery_Date"))
             numerical_columns = ["Refills"]
             string_columns = ["Delivery_Date"]
             for col in numerical_columns:
