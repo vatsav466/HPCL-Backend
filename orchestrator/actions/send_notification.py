@@ -677,7 +677,7 @@ class SendNotification:
         alert_data.setdefault("alert_history", []).append(self.update_alert)
 
         # Only append to assigned_user_roles if message_type is "escalation"
-        if self.base_alert_data.get("message_type", "") == "escalation":
+        if self.params.get("messagetype", "") == "escalation":
             alert_data.setdefault("assigned_user_roles", []).extend(self.update_alert["assigned_user_roles"])
             alert_data["assigned_user_roles"] = list(set(alert_data["assigned_user_roles"]))  # Remove duplicates
         else:
