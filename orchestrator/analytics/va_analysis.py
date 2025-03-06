@@ -171,7 +171,7 @@ async def get_va_levels(bu: str, violation_type: str):
                 if int(va_alert_count) < int(value['value']):
                     return "level - 1"
             if value['condition'] == "<>":
-                if int(previous_count) < va_alert_count < int(value['value']):
+                if int(previous_count) < va_alert_count <= int(value['value']):
                     return "level - 2"
             if value['condition'] == ">":
                 if va_alert_count > int(value['value']):
