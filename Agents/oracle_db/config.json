@@ -44,15 +44,15 @@
     },
 
     "interlock_name": {
-      "HostUnauthorisedFlow":"Unauthorized flow",
-      "HostCancelledTts":"Cancel TT_ truck",
+      "HostUnauthorisedFlow":"Unauthorized flow_BCU",
+      "HostCancelledTts":"Cancel TT Reported",
       "HostManualFanPrinted":"Manual FAN printed more 5% of total TT loaded",
       "HostOverLoadedTts":"TT Overloaded",
       "HostKFactorChanges":"K - Factor Data Changed",
       "HostLocalLoadedTts":"BCU Local Loading",
       "HostBayReAssignment":"Bay reasignment",
       "HostManualBayAssigned":"Manual - bay assignment of more then 5% of total TT loaded",
-      "HostSickTts":"Sick TT_ truck"
+      "HostSickTts":"SickTT Reported"
 
     } ,
 
@@ -67,6 +67,17 @@
         "HostManualBayAssigned":"Medium",
         "HostSickTts":"Medium"
 
+    },
+    "sop_id":{
+        "HostUnauthorisedFlow":"SOP036",
+        "HostCancelledTts":"SOP034",
+        "HostManualFanPrinted":"SOP030",
+        "HostOverLoadedTts":"SOP038",
+        "HostKFactorChanges":"SOP044",
+        "HostLocalLoadedTts":"SOP025",
+        "HostBayReAssignment":"SOP037",
+        "HostManualBayAssigned":"SOP043",
+        "HostSickTts":"SOP033" 
     },
 
     "column_rename": {

@@ -169,7 +169,8 @@ class AlertFactory:
 
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
-                workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
+                # workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
+                workflowid = interlock_name["workflow_name"] if "workflow_name" in interlock_name.keys() else interlock_name["interlock_name"]
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 # Uncomment below line to stop workflow for VA
                 # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
@@ -244,7 +245,7 @@ class AlertFactory:
                 params = urdhva_base.queryparams.QueryParams()
                 params.limit = 1
                 params.q = query
-                alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
+                alert_resp = await hpcl_ceg_model.Alerts.get_all(params )
                 alert_data_list = []
                 if alert_resp and hasattr(alert_resp, '__dict__') and alert_resp.__dict__.get('body'):
                     # Decode and parse Alert response
