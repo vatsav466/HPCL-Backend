@@ -83,6 +83,7 @@ class SendNotification:
             message. If an error occurs, returns False and an error message.
         """
         self.params = params
+        print("parms: ", self.params)
         try:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()
@@ -139,7 +140,12 @@ class SendNotification:
         bu = self.params.get("BU")
         sap_id = self.alert_data.get("sap_id", "")
         message_type = self.params.get("messagetype")
-        roles_list = self.params.get("rolemailto", "") if self.params.get("rolemailto", "") not in ["0", "1", "2"] else (await self._role_configuration_rolemailto() or "")
+        roles_list = ""
+        if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
+            roles_list = await self._role_configuration_rolemailto()
+        
+        else:
+            roles_list = self.params.get("rolemailto", "")
         print("bu --> ", bu)
         print("sap_id --> ", sap_id)
         print("message_type --> ", message_type)
@@ -648,20 +654,32 @@ class SendNotification:
         # Ensure self.update_alert is initialized as a dictionary
         self.update_alert = getattr(self, "update_alert", {}) or {}
 
+        assigning_roles = ""
+        if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("mqofrole", "") in ["0","1","2"]:
+            assigning_roles = (await self._role_configuration_mqofrole() or "")
+        else:
+            assigning_roles = self.params.get("mqofrole", "")
+
         # Common fields to update
         self.update_alert.update({
             "action_type": self.base_alert_data.get("action_type"),
             "action_msg": self.base_alert_data.get("action_msg"),
-            "assigned_user_roles": self.params.get("mqofrole", "") if self.params.get("mqofrole", "") not in ["0", "1", "2"] else (await self._role_configuration_mqofrole() or ""),  # Ensure it's a string
+            "assigned_user_roles": assigning_roles,  # Ensure it's a string
             # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
             "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
         })
         print("self.update_alert ---> ", self.update_alert)
 
         if self.params.get("escalationlevel_inmail"):
-            self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") not in ["0", "1", "2"] else (await self._role_configuration_rolemailto() or "").split(",")
+            if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
+                self.update_alert["last_escalated_to"] = (await self._role_configuration_rolemailto()).split(",")
+            else:
+                self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
         else:
-            self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",") if self.params.get("rolemailto", "") not in ["0", "1", "2"] else (await self._role_configuration_rolemailto() or "").split(",")
+            if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
+                self.update_alert["last_notified_to"] = (await self._role_configuration_rolemailto()).split(",")
+            else:
+                self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
 
         # Convert assigned_user_roles to a list
         self.update_alert["assigned_user_roles"] = (
