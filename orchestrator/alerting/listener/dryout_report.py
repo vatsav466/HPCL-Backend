@@ -34,7 +34,8 @@ async def generate_dryout_report():
             'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/dryout_report.html",
                                   data=data),
             'attachments': attachments,
-            'html_content': True
+            'html_content': True,
+            'force_send': True
         }
     )
     print("Email Resp: ", resp)
