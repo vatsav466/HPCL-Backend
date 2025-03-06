@@ -528,12 +528,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 sorted_level['month_name'] = sorted_level['month_name'][0]
             month_keys = sorted_level['month_name'] = sorted(sorted_level['month_name'], key=months.index)
         if len(group_by_filter) > 1:
-            '''
             if 'SalesArea_Name' in merged_df.columns.tolist() or 'Region_Name' in merged_df.columns.tolist():
                 for column in list(MandateKeys.values()):
                     if column in merged_df.columns.tolist():
                         merged_df[column] = merged_df[column].fillna(0).astype(int) * 1000
-            '''
             final_resp, hist_growth_details, tgt_growth_details = generate_stacked_data(drill_state, merged_df,
                                                                                         resp_format,
                                                                                         month_column='month_name')
