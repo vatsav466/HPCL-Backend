@@ -4913,3 +4913,88 @@ class GlobalAnalytics:
         data = {"zone": df["zone"].unique().to_list(), "plant": df["SiteArea"].unique().to_list(),
                 "carousel_type": ["12H", "24H", "48H", "72H"]}
         return data
+
+
+    @staticmethod
+    async def interlock_name_count(filters, cross_filters, drill_state):
+        """
+        This method is used to fetch the alert ageing data for the given filters and drill state
+        :param filters: The filter parameters
+        :param drill_state: The drill down state
+        :return: A dictionary containing the status, message and the alert ageing data
+        """
+        alert_status = drill_state
+        daterange = None
+
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    date_values = filter.value.split(',')
+
+                    if len(date_values) == 1:
+                        # Single date case
+                        daterange = f"= '{date_values[0]}'"
+                    else:
+                        # Date range case
+                        daterange = f"BETWEEN '{date_values[0]}' AND '{date_values[-1]}'"
+        
+        if daterange:
+            query = f""" 
+                SELECT 
+                    DATE(created_at) AS created_date,
+                    alert_category, 
+                    interlock_name,
+                    COUNT(*) AS alert_count
+                FROM alerts
+                WHERE 
+                    alert_section = 'TAS' 
+                    AND created_at::DATE {daterange} 
+                    AND alert_status = '{alert_status}'
+                    AND alert_category IS NOT NULL 
+                    AND alert_category = 'Gantry'
+                GROUP BY created_date, alert_category, interlock_name
+                ORDER BY created_date DESC, alert_count DESC;
+            """
+        else:
+            query = f""" 
+                SELECT 
+                    DATE(created_at) AS created_date,
+                    alert_category, 
+                    interlock_name,
+                    COUNT(*) AS alert_count
+                FROM alerts
+                WHERE 
+                    alert_section = 'TAS' 
+                    AND created_at::DATE >=  CURRENT_DATE - INTERVAL '7 days'
+                    AND alert_status = '{alert_status}'
+                    AND alert_category IS NOT NULL 
+                    AND alert_category = 'Gantry'
+                GROUP BY created_date, alert_category, interlock_name
+                ORDER BY created_date DESC, alert_count DESC;
+            """
+
+        # Execute query
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        
+        resp = await function(query=query)
+        print("resp :", resp)
+        resp = pl.DataFrame(resp)
+        
+        if resp.is_empty():
+            return []
+
+        # Convert the result into a dictionary with interlock-wise counts per day
+        result = {}
+        for row in resp.iter_rows(named=True):
+            date = row["created_date"]
+            interlock = row["interlock_name"]
+            count = row["alert_count"]
+
+            if date not in result:
+                result[date] = {}
+
+            result[date][interlock] = count
+
+        return result
