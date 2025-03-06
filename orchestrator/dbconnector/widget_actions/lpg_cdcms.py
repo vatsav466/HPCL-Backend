@@ -1763,6 +1763,81 @@ class LPGCDCMSActions:
     
     
     @staticmethod
+    async def lpg_cdcms_daywise_overall_ctc_statistics(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        daywise_overall_ctc_statistics_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_overall_ctc_statistics")
+        _filters = []
+        daterange = None
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                    continue
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                daywise_overall_ctc_statistics_query_ += ' WHERE '
+                daywise_overall_ctc_statistics_query_ += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            daywise_overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_overall_ctc_statistics_query_, access_filters, drill_state)
+            if not daterange:
+                daywise_overall_ctc_statistics_query_ += ' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Execution_Date" <= NOW() '
+            if daterange:
+                daywise_overall_ctc_statistics_query_ += f' AND "Execution_Date" BETWEEN {daterange} '
+            daywise_overall_ctc_statistics_query_ += ' GROUP BY TO_CHAR("Execution_Datetime", \'Month\'), "ZoneNames", "ROName", "SAName", "SubCategory" '
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            daywise_overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_overall_ctc_statistics_query_, access_filters, drill_state)
+            if not "where" in daywise_overall_ctc_statistics_query_.lower() and not daterange:
+                daywise_overall_ctc_statistics_query_ += ' WHERE "Execution_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Execution_Date" <= NOW() '
+            elif not "where" in daywise_overall_ctc_statistics_query_.lower() and daterange:
+                daywise_overall_ctc_statistics_query_ += f' WHERE "Execution_Date" BETWEEN {daterange} '
+            elif not daterange:
+                daywise_overall_ctc_statistics_query_ += ' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Execution_Date" <= NOW() '
+            elif daterange:
+                daywise_overall_ctc_statistics_query_ += f' AND "Execution_Date" BETWEEN {daterange} '
+            daywise_overall_ctc_statistics_query_ += ' GROUP BY TO_CHAR("Execution_Datetime", \'Month\'), "ZoneNames", "ROName", "SAName", "SubCategory" '
+        try:
+            query_resp = await function(query=daywise_overall_ctc_statistics_query_)
+            resp = pl.DataFrame(query_resp)
+            resp = await filter_data(resp.to_pandas(), _filters)
+            resp = pl.from_pandas(resp)
+            resp = resp.with_columns(pl.col('consumer_count').fill_null(0).cast(pl.Float64).alias('consumer_count'))
+            
+            resp = resp.group_by(["Execution_Date", "ConsumerType"]).agg([
+                    pl.sum("consumer_count").round(2).alias("consumer_count"),
+                ])
+            resp = resp.with_columns(pl.col("Execution_Date").dt.strftime("%Y-%m-%d").alias("Execution_Date"))
+            numerical_columns = ["consumer_count"]
+            string_columns = ["Execution_Date", "ConsumerType"]
+            for col in numerical_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
+            for col in string_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
+        except Exception as e:
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
+    
+    
+    @staticmethod
     async def lpg_cdcms_safety_check_pending(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
