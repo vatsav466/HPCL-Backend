@@ -1,7 +1,7 @@
 import urdhva_base
 import json
-import uuid
 import psycopg2
+import uuid
 import polars as pl
 import hpcl_ceg_model
 import asyncio  # For handling async calls
@@ -14,7 +14,7 @@ json_file = "config.json"
 try:
     with open(json_file, "r", encoding="utf-8") as file:
         config = json.load(file)
-    print("JSON loaded successfully!")
+    print("✅ JSON loaded successfully!")
 
     # Optional: Print some sample data to verify it's loaded correctly
     print(f"Oracle Host: {config['oracle']['host']}")
@@ -22,13 +22,13 @@ try:
     print(f"First Oracle Table: {config['oracle_tables'][0]}")
 
 except json.JSONDecodeError as e:
-    print(f"JSON parsing error: {e}")
+    print(f"❌ JSON parsing error: {e}")
     config = None  # Prevent using an invalid config
 except FileNotFoundError:
-    print(f"JSON file not found: {json_file}")
+    print(f"❌ JSON file not found: {json_file}")
     config = None
 except Exception as e:
-    print(f"Unexpected error: {e}")
+    print(f"❌ Unexpected error: {e}")
     config = None
 
 
@@ -36,7 +36,7 @@ class Postgresql:
     def __init__(self):
         """Initialize PostgreSQL connection details."""
         if config is None:
-            raise ValueError("Configuration not loaded. Cannot proceed.")
+            raise ValueError("❌ Configuration not loaded. Cannot proceed.")
         self.params = config['postgresql']
 
     def get_connection(self):
@@ -86,43 +86,43 @@ class Postgresql:
                 'sap_id': record.get('sap_id'),
                 'interlock_name': interlock_name,
                 'severity': severity,
-                'uniqueid': str(uuid.uuid1()),
+                'alert_id': str(uuid.uuid1()),
                 'device_name': record.get('bcu_number'),
                 'device_type': 'Gantry'
               }
 
               # Create Alert
               success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-              
+              print("msg :", msg)
               if not success:
                   print(f"Failed to create alert: {msg}")
                   continue
               # Extract alert_id from response (assuming response contains alert_id)
-              query = (f"uniqueid='{alert_data['uniqueid']}'")
+              query = (f"external_id='{alert_data['alert_id']}'")
               params = urdhva_base.queryparams.QueryParams()
               params.limit = 1
               params.q = query
               alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
-              if alert_resp['data']:
-                  alert_id = alert_resp['data'][0]['id']
+              
+              body =  alert_resp.body
+              data = json.loads(body.decode('utf-8'))
+              if 'data' in data and data['data']:
+                  alert_id = data['data'][0]['external_id']
               else:
-                  print(f'Alert not found for {alert_data['uniqueid']}')
+                  print(f'Alert not found for {alert_data['alert_id']}')
                   continue
-            #   data = alert_resp.__dict__['body'].decode('utf-8')
-            #   alert_id = json.loads(data).get("data")[-1]["id"]
-
-              # alert_id = msg.get("alert_id") if isinstance(msg, dict) else None
+               # alert_id = msg.get("alert_id") if isinstance(msg, dict) else None
               # Close Alert
-
               close_data = {
                 'bu': 'TAS',
                 'sop_id': sop_id,
                 'sap_id': alert_data['sap_id'],
                 'interlock_name': interlock_name,
-                'alert_id': alert_id    
+                'alert_id' : alert_id
+                  
               }
-
               close_success, close_msg = await alert_factory.AlertFactory.close_alert(close_data)
+              print("close_msg :", close_msg)
               if not close_success:
                   print(f"Failed to close alert: {close_msg}")
 
