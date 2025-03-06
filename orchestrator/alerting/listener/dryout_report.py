@@ -27,16 +27,18 @@ async def generate_dryout_report():
     attachments = [f"/tmp/dry_out_report_{report_time}.xlsx", f"/tmp/intra_day_dry_out_report_{report_time}.xlsx"]
     notify_email = NotifyEMail()
     data = {"report_time": report_time, "portal_link": "https://ceg.hpcl.co.in"}
-    notify_email.publish_message(
+    resp = await notify_email.publish_message(
         **{
-            'to_emails': to_email,
+            'recipients': to_email,
             'subject': f"Dry Out Report as on {report_time}",
             'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/dryout_report.html",
                                   data=data),
             'attachments': attachments,
-            'html_content': True
+            'html_content': True,
+            'force_send': True
         }
     )
+    print("Email Resp: ", resp)
 
 
 if __name__ == "__main__":
