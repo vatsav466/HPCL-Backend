@@ -115,8 +115,7 @@ class AlertFactory:
                                                         'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
-                                                        'raw_data': {},
-                                                        'image_urls': alert_data.get('image_urls', [])}).create()
+                                                        'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
             if alert_data.get("alert_section",'') in ["VA"]:

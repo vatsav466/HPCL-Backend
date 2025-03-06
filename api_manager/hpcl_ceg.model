@@ -552,11 +552,6 @@ Model VTS {
     }
 }
 
-Model urlsdict internal {
-    alert_id optional str
-    image_url optional str
-}
-
 Model Alerts {
     bu optional index_field BusinessUnit
     sap_id index_field str
@@ -637,9 +632,6 @@ Model Alerts {
     vehicle_blocked_start_date optional datetime
     vehicle_blocked_end_date optional datetime
     mark_as_false optional bool
-
-    //VA
-    image_urls optional list urlsdict
 
     Action=> alert_action {
         bu optional str
