@@ -1795,9 +1795,6 @@ Model TagsData {
     name optional str
     device_type optional str
     device_count optional str
-    zone optional str
-    system optional str
-    equipment_name optional str
 
     Action=> things_board_device_data{
     }

@@ -5061,9 +5061,6 @@ class TagsDataSchema(UrdhvaPostgresBase):
     name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_count: Mapped[typing.Optional[str]] = mapped_column("device_count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5073,9 +5070,6 @@ class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
     name: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
     device_count: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[str] = pydantic.Field("", **{})
-    system: typing.Optional[str] = pydantic.Field("", **{})
-    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -5092,9 +5086,6 @@ class TagsData(urdhva_base.postgresmodel.PostgresModel):
     name: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
     device_count: typing.Optional[str] = pydantic.Field("", **{})
-    zone: typing.Optional[str] = pydantic.Field("", **{})
-    system: typing.Optional[str] = pydantic.Field("", **{})
-    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
