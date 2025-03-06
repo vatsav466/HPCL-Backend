@@ -149,7 +149,7 @@ async def get_va_alerts_count(bu: str, violation_type: str):
                  f"alert_section = 'VA' and "
                  f"violation_type = '{violation_type}' and "
                  f"created_at BETWEEN TO_DATE('{start_date}', 'YYYY-MM-DD') AND TO_DATE('{end_date}', 'YYYY-MM-DD')")
-        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = "1"
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)

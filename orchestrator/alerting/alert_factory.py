@@ -122,7 +122,7 @@ class AlertFactory:
             alert_level = "level - 1"
             if alert_data.get("alert_section",'') in ["VA"]:
                 if alert_data.get("alert_section",'') == "VA":
-                    alert_level = va_analysis.get_va_levels(bu=base_data['bu'], violation_type=alert_data.get('violation_type',''))
+                    alert_level = await va_analysis.get_va_levels(bu=base_data['bu'], violation_type=alert_data.get('violation_type',''))
                 if alert_data.get("bu","") in ["TAS"]:
                     await redis_ins.setex(alert_data['alert_id'], 15*60, alert_resp['id'])
                 else:
