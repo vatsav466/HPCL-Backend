@@ -5043,47 +5043,8 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
 
-        # Mock data generation for testing (if resp is empty)
+        # Check if response is empty
         if not resp:
-            # # Generate mock data for testing
-            # mock_data = []
-            # current_date = datetime.now()
-            
-            # # Generate dates for the past year
-            # for days_back in range(0, 365, 5):  # Every 5 days for a year
-            #     date = current_date - timedelta(days=days_back)
-                
-            #     # Add maintenance alerts
-            #     for item in maintenance_mapping:
-            #         if random.random() > 0.7:  # 30% chance to include this alert
-            #             mock_data.append({
-            #                 "created_date": date.strftime('%Y-%m-%d'),
-            #                 "sop_id": item["sop_id"],
-            #                 "interlock_name": item["interlock_name"],
-            #                 "alert_count": random.randint(1, 5)
-            #             })
-                
-            #     # Add fault alerts
-            #     for item in fault_mapping:
-            #         if random.random() > 0.8:  # 20% chance to include this alert
-            #             mock_data.append({
-            #                 "created_date": date.strftime('%Y-%m-%d'),
-            #                 "sop_id": item["sop_id"],
-            #                 "interlock_name": item["interlock_name"],
-            #                 "alert_count": random.randint(1, 3)
-            #             })
-                
-            #     # Add normal alerts
-            #     for item in normal_mapping:
-            #         if random.random() > 0.6:  # 40% chance to include this alert
-            #             mock_data.append({
-            #                 "created_date": date.strftime('%Y-%m-%d'),
-            #                 "sop_id": item["sop_id"],
-            #                 "interlock_name": item["interlock_name"],
-            #                 "alert_count": random.randint(1, 8)
-            #             })
-            
-            # resp = mock_data
             return {"status": False, "message": "Data Not found in the resposne", "data": []}
 
         # Convert to polars DataFrame
@@ -5101,11 +5062,11 @@ class GlobalAnalytics:
             elif interlock_name in normal_interlocks:
                 return "normal", normal_interlocks[interlock_name]
             else:
-                return []
+                return "unknown", "unknown"  # Default values instead of empty list
         
-        # Convert created_date to date type
+        # First parse the date string to ensure consistent format before conversion
         resp_df = resp_df.with_columns(
-            pl.col("created_date").str.to_date('%Y-%m-%d')
+            pl.col("created_date").cast(pl.Date)  # Direct cast to Date type
         )
         
         # Add alert_type and alert_category columns based on interlock_name
@@ -5136,8 +5097,10 @@ class GlobalAnalytics:
 
         # Calculate counts for each time period
         for period, cutoff in time_periods.items():
-            # Filter data for the time period
-            period_df = resp_df.filter(pl.col("created_date") >= pl.lit(cutoff.date()))
+            cutoff_date = cutoff.date()
+            
+            # Filter data for the time period - using compatible date types
+            period_df = resp_df.filter(pl.col("created_date") >= cutoff_date)
             
             # Skip if no data for this period
             if period_df.is_empty():
