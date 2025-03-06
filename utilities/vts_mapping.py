@@ -304,37 +304,37 @@ vts_interlock_mapping = {
         "alerting_rules": {
             "0": {
                 "interlock_name": "VTS PowerDisconnect FirstTime",
-                "block_duration": 365,
+                "block_duration": 730,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
             "1": {
                 "interlock_name": "VTS PowerDisconnect SecondTime",
-                "block_duration": 365,
+                "block_duration": 730,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
             "2": {
                 "interlock_name": "VTS PowerDisconnect ThirdTime",
-                "block_duration": 365,
+                "block_duration": 730,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
             "3": {
                 "interlock_name": "VTS PowerDisconnect FourthTime",
-                "block_duration": 365,
+                "block_duration": 730,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
             "4": {
                 "interlock_name": "VTS PowerDisconnect FifthTime",
-                "block_duration": 365,
+                "block_duration": 730,
                 "block_msg": "Permanent",
                 "clear_count": True
             },
             "5": {
                 "interlock_name": "VTS PowerDisconnect SixthTime",
-                "block_duration": 365,
+                "block_duration": 730,
                 "block_msg": "Permanent",
                 "clear_count": True
             }
