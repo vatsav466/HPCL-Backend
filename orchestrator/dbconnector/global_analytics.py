@@ -5088,7 +5088,7 @@ class GlobalAnalytics:
                     category = "process"
 
                 # Initialize structure if missing
-                result.setdefault(category, {}).setdefault(month_year, {}).setdefault(alert_type, 0)
+                result.setdefault(category, {}).setdefault(last_year_range, {}).setdefault(alert_type, 0)
 
                 # Add count (ensures merging of "gantry" into "process")
                 result[category][month_year][alert_type] += count
