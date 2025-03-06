@@ -102,19 +102,26 @@ class Postgresql:
               params = urdhva_base.queryparams.QueryParams()
               params.limit = 1
               params.q = query
-              alert_resp = asyncio.run(hpcl_ceg_model.Alerts.get_all(params))
-              data = alert_resp.__dict__['body'].decode('utf-8')
-              alert_id = json.loads(data).get("data")[-1]["id"]
+              alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
+              if alert_resp['data']:
+                  alert_id = alert_resp['data'][0]['id']
+              else:
+                  print(f'Alert not found for {alert_data['uniqueid']}')
+                  continue
+            #   data = alert_resp.__dict__['body'].decode('utf-8')
+            #   alert_id = json.loads(data).get("data")[-1]["id"]
+
               # alert_id = msg.get("alert_id") if isinstance(msg, dict) else None
               # Close Alert
+
               close_data = {
                 'bu': 'TAS',
                 'sop_id': sop_id,
                 'sap_id': alert_data['sap_id'],
                 'interlock_name': interlock_name,
-                'alert_id': alert_id
-                  
+                'alert_id': alert_id    
               }
+
               close_success, close_msg = await alert_factory.AlertFactory.close_alert(close_data)
               if not close_success:
                   print(f"Failed to close alert: {close_msg}")
