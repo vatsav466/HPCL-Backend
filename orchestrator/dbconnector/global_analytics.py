@@ -5137,7 +5137,7 @@ class GlobalAnalytics:
         
         resp_mont_df = resp_df.filter(
             (pl.col("created_date").dt.year().is_in(valid_years)) & 
-            (pl.col("created_date").dt.month().is_in(valid_months_numeric))
+            (pl.col("created_date").dt.month().is_in(valid_months))
         )
         if is_yearly_data and is_monthly_data and is_daily_data and not resp_mont_df.is_empty():
             resp_mont_df = resp_mont_df.with_columns(pl.col("created_date").dt.strftime("%d-%b-%Y").alias("day"))
