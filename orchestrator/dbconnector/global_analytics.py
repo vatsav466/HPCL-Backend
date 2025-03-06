@@ -4994,37 +4994,31 @@ class GlobalAnalytics:
     
     @staticmethod
     async def test_maintenance_fault(filters, cross_filters, drill_state):
-        """
-        Fetches alert aging data with yearly, monthly, weekly, and daily counts based on predefined mappings.
-        Uses static mappings for Maintenance, Fault, and Normal categories instead of query data.
-        Provides detailed time period information in the results.
-
-        :param filters: The filter parameters
-        :param cross_filters: Additional filters
-        :param drill_state: The drill-down state
-        :return: A dictionary containing yearly, monthly, weekly, and daily counts categorized properly with time labels.
-        """
         alert_status = drill_state
-        daterange = None
 
-        # Create lookup dictionaries for efficient interlock name matching
+        # Lookup dictionaries for interlock categories
         maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
         fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
         normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
 
-        # If cross filters contain a date filter, extract date range
-        start_date = datetime.now() - timedelta(days=365)  # Default to 1 year
+        # Set date range to last 1 year
         end_date = datetime.now()
-        
+        start_date = end_date - timedelta(days=365)
+
+        # Flag for yearly data calculation
+        is_yearly_data = False
+
+        # Handle cross_filters for DATE range and Yearly condition
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
                     date_parts = filter.value.split(',')
                     start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
                     end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-                    daterange = f" '{filter.value.split(',')[0]}' AND '{filter.value.split(',')[-1]}' "
+                if filter.key == "Y" and filter.value.lower() == "true":
+                    is_yearly_data = True
 
-        # Construct SQL Query
+        # SQL Query to fetch alert data
         query = f""" 
             SELECT 
                 DATE(created_at) AS created_date,
@@ -5033,7 +5027,7 @@ class GlobalAnalytics:
                 COUNT(*) AS alert_count
             FROM alerts
             WHERE bu = 'TAS' AND alert_section = 'TAS' 
-                {'AND created_at BETWEEN ' + daterange if daterange else "AND created_at::DATE >= CURRENT_DATE - INTERVAL '1 year'"}
+                AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'
             GROUP BY created_date, sop_id, interlock_name
             ORDER BY created_date DESC, alert_count DESC;
         """
@@ -5044,160 +5038,94 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
 
-        # Check if response is empty
         if not resp:
-            return {"status": False, "message": "Data Not found in the response", "data": []}
+            return {"status": False, "message": "Data Not found in the response", "data": {}}
 
-        # Convert to polars DataFrame
+        # Convert response to Polars DataFrame
         resp_df = pl.DataFrame(resp)
-        
         if resp_df.is_empty():
-            return {}
+            return {"status": True, "data": {}}
 
-        # Add columns for alert_type and alert_category based on mappings
-        def determine_alert_type_and_category(interlock_name):
-            if interlock_name in maintenance_interlocks:
-                return "maintenance", maintenance_interlocks[interlock_name]
-            elif interlock_name in fault_interlocks:
-                return "fault", fault_interlocks[interlock_name]
-            elif interlock_name in normal_interlocks:
-                return "normal", normal_interlocks[interlock_name]
-            else:
-                return []
-        
-        # First parse the date string to ensure consistent format before conversion
+        # Ensure correct column types
         resp_df = resp_df.with_columns(
-            pl.col("created_date").cast(pl.Date)  # Direct cast to Date type
+            pl.col("created_date").cast(pl.Date)
         )
-        
-        # Add alert_type and alert_category columns based on interlock_name
-        alert_types_and_categories = [determine_alert_type_and_category(name) for name in resp_df["interlock_name"]]
-        alert_types = [t[0] for t in alert_types_and_categories]
-        alert_categories = [t[1] for t in alert_types_and_categories]
-        
+
+        # Function to determine alert type and category
+        def determine_alert_type_and_category(interlock_name):
+            return (
+                ("maintenance", maintenance_interlocks.get(interlock_name, "unknown"))
+                if interlock_name in maintenance_interlocks else
+                ("fault", fault_interlocks.get(interlock_name, "unknown"))
+                if interlock_name in fault_interlocks else
+                ("normal", normal_interlocks.get(interlock_name, "unknown"))
+            )
+
+        # Add alert_type and alert_category columns
         resp_df = resp_df.with_columns([
-            pl.Series("alert_type", alert_types),
-            pl.Series("alert_category", alert_categories)
+            pl.col("interlock_name").map_elements(lambda name: determine_alert_type_and_category(name)[0]).alias("alert_type"),
+            pl.col("interlock_name").map_elements(lambda name: determine_alert_type_and_category(name)[1]).alias("alert_category")
         ])
 
-        # Initialize result structure with time period details
-        result = {
-            "yearly": {"time_labels": {}, "data": {}},
-            "monthly": {"time_labels": {}, "data": {}},
-            "weekly": {"time_labels": {}, "data": {}},
-            "daily": {"time_labels": {}, "data": {}}
-        }
+        resp_df.write_csv("/tmp/analog_data.csv")  # Save the raw data
 
-        # Define time periods for filtering
-        today = datetime.now()
-        time_periods = {
-            "yearly": today - timedelta(days=365),
-            "monthly": today - timedelta(days=30),
-            "weekly": today - timedelta(days=7),
-            "daily": today - timedelta(days=1)
-        }
-
-        # Generate time labels for each period
-        # For yearly: show year numbers
-        current_year = today.year
-        result["yearly"]["time_labels"] = {str(current_year): f"{current_year}"}
-        
-        # For monthly: show month names for the last 12 months
-        month_names = ["January", "February", "March", "April", "May", "June", 
-                    "July", "August", "September", "October", "November", "December"]
-        for i in range(12):
-            month_date = today - timedelta(days=30 * i)
-            month_key = f"{month_date.year}-{month_date.month:02d}"
-            result["monthly"]["time_labels"][month_key] = f"{month_names[month_date.month - 1]} {month_date.year}"
-        
-        # For weekly: show week numbers/dates
-        for i in range(4):  # Last 4 weeks
-            week_start = today - timedelta(days=(today.weekday() + 7*i))
-            week_end = week_start + timedelta(days=6)
-            week_key = f"week_{i+1}"
-            result["weekly"]["time_labels"][week_key] = f"{week_start.strftime('%d %b')} - {week_end.strftime('%d %b')}"
-        
-        # For daily: show dates for the last 7 days
-        for i in range(7):
-            day_date = today - timedelta(days=i)
-            day_key = day_date.strftime("%Y-%m-%d")
-            result["daily"]["time_labels"][day_key] = day_date.strftime("%d %b %Y")
-
-        # Calculate counts for each time period
-        for period, cutoff in time_periods.items():
-            cutoff_date = cutoff.date()
-            
-            # Filter data for the time period - using compatible date types
-            period_df = resp_df.filter(pl.col("created_date") >= cutoff_date)
-            
-            # Skip if no data for this period
-            if period_df.is_empty():
-                continue
-            
-            # Add time period columns based on the period type
-            if period == "yearly":
-                period_df = period_df.with_columns(
-                    pl.col("created_date").dt.year().alias("time_key")
-                )
-            elif period == "monthly":
-                period_df = period_df.with_columns(
-                    (pl.col("created_date").dt.year().cast(pl.Utf8) + "-" + 
-                    pl.col("created_date").dt.month().map_elements(lambda m: f"{m:02d}")).alias("time_key")
-                )
-            elif period == "weekly":
-                # Calculate week number relative to current date
-                today_date = today.date()
-                def get_week_key(date):
-                    days_diff = (today_date - date).days
-                    week_num = (days_diff // 7) + 1
-                    return f"week_{week_num}"
-                
-                period_df = period_df.with_columns(
-                    pl.col("created_date").map_elements(get_week_key).alias("time_key")
-                )
-            else:  # daily
-                period_df = period_df.with_columns(
-                    pl.col("created_date").cast(pl.Utf8).alias("time_key")
-                )
-            
-            # Group by time_key, alert_category and alert_type, sum the counts
-            grouped = period_df.group_by(["time_key", "alert_category", "alert_type"]).agg(
+        if is_yearly_data:
+            # Aggregate data for last 1 year
+            grouped = resp_df.group_by(["alert_category", "alert_type"]).agg(
                 pl.sum("alert_count").alias("total")
             )
-            
-            # Convert to more manageable format
-            for row in grouped.iter_rows(named=True):
-                time_key = row["time_key"]
-                category = row["alert_category"].lower()
-                alert_type = row["alert_type"]
-                count = row["total"]
-                
-                # Create category key if it doesn't exist
-                if category not in result[period]["data"]:
-                    result[period]["data"][category] = {}
-                
-                # Create time_key if it doesn't exist
-                if time_key not in result[period]["data"][category]:
-                    result[period]["data"][category][time_key] = {}
-                
-                # Add count for this alert type
-                result[period]["data"][category][time_key][alert_type] = count
-        
-        # Ensure all periods, time_keys, categories have all alert types with at least 0 count
-        categories = ["safety", "process", "gantry"]
-        alert_types = ["maintenance", "fault", "normal"]
-        
-        for period in result:
-            for category in categories:
-                if category not in result[period]["data"]:
-                    result[period]["data"][category] = {}
-                
-                for time_key in result[period]["time_labels"]:
-                    if time_key not in result[period]["data"][category]:
-                        result[period]["data"][category][time_key] = {}
-                    
-                    for alert_type in alert_types:
-                        if alert_type not in result[period]["data"][category][time_key]:
-                            result[period]["data"][category][time_key][alert_type] = 0
 
-        return result
+            # Format response for yearly data
+            result = {}
+            last_year_range = f"{start_date.year} - {end_date.year}"
+
+            for row in grouped.iter_rows(named=True):
+                category, alert_type, count = row["alert_category"].lower(), row["alert_type"], row["total"]
+
+                # Merge gantry into process
+                if category == "gantry":
+                    category = "process"
+
+                result.setdefault(category, {})[last_year_range] = result.setdefault(category, {}).get(last_year_range, {})
+                result[category][last_year_range][alert_type] = result[category][last_year_range].get(alert_type, 0) + count  # Sum values
+
+            # Ensure all alert types exist in each category
+            categories = ["safety", "process"]  # Removed "gantry" since it is merged into "process"
+            alert_types = ["maintenance", "fault", "normal"]
+
+            for category in categories:
+                result.setdefault(category, {})
+                result[category].setdefault(last_year_range, {})
+                result[category][last_year_range] = {at: result[category][last_year_range].get(at, 0) for at in alert_types}
+
+            # **Write Yearly Data to CSV**
+            csv_data = []
+            for category, years in result.items():
+                for year_range, alert_types in years.items():
+                    row = {"category": category, "year_range": year_range, **alert_types}
+                    csv_data.append(row)
+
+            csv_file_path = "/tmp/yearly_analog_alert_data.csv"
+
+            with open(csv_file_path, mode="w", newline="") as file:
+                writer = csv.DictWriter(file, fieldnames=["category", "year_range", "maintenance", "fault", "normal"])
+                writer.writeheader()
+                writer.writerows(csv_data)
+
+            print(f"Yearly data saved to {csv_file_path}")
+
+            return {"status": True, "message": "success", "yearly_data": result}
+
+        # If not yearly, return regular data format
+        grouped = resp_df.group_by(["created_date", "alert_category", "alert_type"]).agg(
+            pl.sum("alert_count").alias("total")
+        )
+
+        # Format response for default case
+        result = {}
+
+        for row in grouped.iter_rows(named=True):
+            date, category, alert_type, count = row["created_date"].strftime("%Y-%m-%d"), row["alert_category"].lower(), row["alert_type"], row["total"]
+            result.setdefault(date, {}).setdefault(category, {})[alert_type] = count
+
+        return {"status": True, "message": "success", "data": result}
