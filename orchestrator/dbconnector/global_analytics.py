@@ -4985,16 +4985,7 @@ class GlobalAnalytics:
         if resp.is_empty():
             return []
 
-        # Convert the result into a dictionary with interlock-wise counts per day
-        result = {}
-        for row in resp.iter_rows(named=True):
-            date = row["created_date"]
-            interlock = row["interlock_name"]
-            count = row["alert_count"]
-
-            if date not in result:
-                result[date] = {}
-
-            result[date][interlock] = count
+        # Convert the result into a dictionary {interlock_name: cumulative_count}
+        result = {row["interlock_name"]: row["alert_count"] for row in resp.iter_rows(named=True)}
 
         return result
