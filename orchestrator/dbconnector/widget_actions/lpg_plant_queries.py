@@ -859,6 +859,17 @@ LIMIT 10000;''',
                                         sum("NCTCCount") as "NCTC"
                                     from
                                         "LPG_CONSUMERS_SUMMARY"''',
+    
+    'lpg_cdcms_daywise_overall_ctc_statistics': f''' 
+                                        select 
+                                            "ZoneNames" AS "ZOName",
+                                            "ROName",
+                                            "SAName",
+                                            "SubCategory" AS "ConsumerType",
+                                            TO_CHAR("Execution_Datetime", 'Month') AS "Month"
+                                        from
+                                            "LPG_CONSUMERS_OVERALL_SUMMARY"
+                                                ''',
 
     "lpg_cdcms_safety_check_pending": f'''select
                                             "SubCategory",
