@@ -23,6 +23,7 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
+import utilities.analog_data_mapping as category_mapping
 
 async def filter_data(df, _filters):
     try:
@@ -4987,5 +4988,190 @@ class GlobalAnalytics:
 
         # Convert the result into a dictionary {interlock_name: cumulative_count}
         result = {row["interlock_name"]: row["alert_count"] for row in resp.iter_rows(named=True)}
+
+        return result
+    
+    
+    @staticmethod
+    async def test_maintenance_fault(filters, cross_filters, drill_state):
+        """
+        Fetches alert aging data with yearly, monthly, weekly, and daily counts based on predefined mappings.
+        Uses static mappings for Maintenance, Fault, and Normal categories instead of query data.
+
+        :param filters: The filter parameters
+        :param cross_filters: Additional filters
+        :param drill_state: The drill-down state
+        :return: A dictionary containing yearly, monthly, weekly, and daily counts categorized properly.
+        """
+        alert_status = drill_state
+        daterange = None
+
+        # Create lookup dictionaries for efficient interlock name matching
+        maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
+        fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
+        normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
+
+        # If cross filters contain a date filter, extract date range
+        start_date = datetime.now() - timedelta(days=365)  # Default to 1 year
+        end_date = datetime.now()
+        
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    date_parts = filter.value.split(',')
+                    start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                    end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                    daterange = f" '{filter.value.split(',')[0]}' AND '{filter.value.split(',')[-1]}' "
+
+        # Construct SQL Query
+        query = f""" 
+            SELECT 
+                DATE(created_at) AS created_date,
+                sop_id,
+                interlock_name,
+                COUNT(*) AS alert_count
+            FROM alerts
+            WHERE alert_section = 'TAS' 
+                {'AND created_at BETWEEN ' + daterange if daterange else "AND created_at::DATE >= CURRENT_DATE - INTERVAL '1 year'"}
+            GROUP BY created_date, sop_id, interlock_name
+            ORDER BY created_date DESC, alert_count DESC;
+        """
+
+        # Execute query
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+
+        # Mock data generation for testing (if resp is empty)
+        if not resp:
+            # # Generate mock data for testing
+            # mock_data = []
+            # current_date = datetime.now()
+            
+            # # Generate dates for the past year
+            # for days_back in range(0, 365, 5):  # Every 5 days for a year
+            #     date = current_date - timedelta(days=days_back)
+                
+            #     # Add maintenance alerts
+            #     for item in maintenance_mapping:
+            #         if random.random() > 0.7:  # 30% chance to include this alert
+            #             mock_data.append({
+            #                 "created_date": date.strftime('%Y-%m-%d'),
+            #                 "sop_id": item["sop_id"],
+            #                 "interlock_name": item["interlock_name"],
+            #                 "alert_count": random.randint(1, 5)
+            #             })
+                
+            #     # Add fault alerts
+            #     for item in fault_mapping:
+            #         if random.random() > 0.8:  # 20% chance to include this alert
+            #             mock_data.append({
+            #                 "created_date": date.strftime('%Y-%m-%d'),
+            #                 "sop_id": item["sop_id"],
+            #                 "interlock_name": item["interlock_name"],
+            #                 "alert_count": random.randint(1, 3)
+            #             })
+                
+            #     # Add normal alerts
+            #     for item in normal_mapping:
+            #         if random.random() > 0.6:  # 40% chance to include this alert
+            #             mock_data.append({
+            #                 "created_date": date.strftime('%Y-%m-%d'),
+            #                 "sop_id": item["sop_id"],
+            #                 "interlock_name": item["interlock_name"],
+            #                 "alert_count": random.randint(1, 8)
+            #             })
+            
+            # resp = mock_data
+            return {"status": False, "message": "Data Not found in the resposne", "data": []}
+
+        # Convert to polars DataFrame
+        resp_df = pl.DataFrame(resp)
+        
+        if resp_df.is_empty():
+            return {}
+
+        # Add columns for alert_type and alert_category based on mappings
+        def determine_alert_type_and_category(interlock_name):
+            if interlock_name in maintenance_interlocks:
+                return "maintenance", maintenance_interlocks[interlock_name]
+            elif interlock_name in fault_interlocks:
+                return "fault", fault_interlocks[interlock_name]
+            elif interlock_name in normal_interlocks:
+                return "normal", normal_interlocks[interlock_name]
+            else:
+                return []
+        
+        # Convert created_date to date type
+        resp_df = resp_df.with_columns(
+            pl.col("created_date").str.to_date('%Y-%m-%d')
+        )
+        
+        # Add alert_type and alert_category columns based on interlock_name
+        alert_types_and_categories = [determine_alert_type_and_category(name) for name in resp_df["interlock_name"]]
+        alert_types = [t[0] for t in alert_types_and_categories]
+        alert_categories = [t[1] for t in alert_types_and_categories]
+        
+        resp_df = resp_df.with_columns([
+            pl.Series("alert_type", alert_types),
+            pl.Series("alert_category", alert_categories)
+        ])
+
+        # Initialize result structure
+        result = {
+            "yearly": {},
+            "monthly": {},
+            "weekly": {},
+            "daily": {}
+        }
+
+        # Define time periods for filtering
+        time_periods = {
+            "yearly": datetime.now() - timedelta(days=365),
+            "monthly": datetime.now() - timedelta(days=30),
+            "weekly": datetime.now() - timedelta(days=7),
+            "daily": datetime.now() - timedelta(days=1)
+        }
+
+        # Calculate counts for each time period
+        for period, cutoff in time_periods.items():
+            # Filter data for the time period
+            period_df = resp_df.filter(pl.col("created_date") >= pl.lit(cutoff.date()))
+            
+            # Skip if no data for this period
+            if period_df.is_empty():
+                continue
+            
+            # Group by alert_category and alert_type, sum the counts
+            grouped = period_df.groupby(["alert_category", "alert_type"]).agg(
+                pl.sum("alert_count").alias("total")
+            )
+            
+            # Convert to more manageable format
+            for row in grouped.iter_rows(named=True):
+                category = row["alert_category"].lower()
+                alert_type = row["alert_type"]
+                count = row["total"]
+                
+                # Create category key if it doesn't exist
+                if category not in result[period]:
+                    result[period][category] = {}
+                
+                # Add count for this alert type
+                result[period][category][alert_type] = count
+        
+        # Ensure all periods and categories have all alert types with at least 0 count
+        categories = ["safety", "process", "gantry"]
+        alert_types = ["maintenance", "fault", "normal"]
+        
+        for period in result:
+            for category in categories:
+                if category not in result[period]:
+                    result[period][category] = {}
+                
+                for alert_type in alert_types:
+                    if alert_type not in result[period][category]:
+                        result[period][category][alert_type] = 0
 
         return result
