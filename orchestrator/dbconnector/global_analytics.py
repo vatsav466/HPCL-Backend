@@ -23,6 +23,7 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
+import utilities.analog_data_mapping as category_mapping
 
 async def filter_data(df, _filters):
     try:
@@ -4989,3 +4990,142 @@ class GlobalAnalytics:
         result = {row["interlock_name"]: row["alert_count"] for row in resp.iter_rows(named=True)}
 
         return result
+    
+    
+    @staticmethod
+    async def test_maintenance_fault(filters, cross_filters, drill_state):
+        alert_status = drill_state
+
+        # Lookup dictionaries for interlock categories
+        maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
+        fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
+        normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
+
+        # Set date range to last 1 year
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=365)
+
+        # Flag for yearly data calculation
+        is_yearly_data = False
+
+        # Handle cross_filters for DATE range and Yearly condition
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    date_parts = filter.value.split(',')
+                    start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                    end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                if filter.key == "Y" and filter.value.lower() == "true":
+                    is_yearly_data = True
+
+        # SQL Query to fetch alert data
+        query = f""" 
+            SELECT 
+                DATE(created_at) AS created_date,
+                sop_id,
+                interlock_name,
+                COUNT(*) AS alert_count
+            FROM alerts
+            WHERE bu = 'TAS' AND alert_section = 'TAS' 
+                AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'
+            GROUP BY created_date, sop_id, interlock_name
+            ORDER BY created_date DESC, alert_count DESC;
+        """
+
+        # Execute query
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        resp = await function(query=query)
+
+        if not resp:
+            return {"status": False, "message": "Data Not found in the response", "data": {}}
+
+        # Convert response to Polars DataFrame
+        resp_df = pl.DataFrame(resp)
+        if resp_df.is_empty():
+            return {"status": True, "data": {}}
+
+        # Ensure correct column types
+        resp_df = resp_df.with_columns(
+            pl.col("created_date").cast(pl.Date)
+        )
+
+        # Function to determine alert type and category
+        def determine_alert_type_and_category(interlock_name):
+            return (
+                ("maintenance", maintenance_interlocks.get(interlock_name, "unknown"))
+                if interlock_name in maintenance_interlocks else
+                ("fault", fault_interlocks.get(interlock_name, "unknown"))
+                if interlock_name in fault_interlocks else
+                ("normal", normal_interlocks.get(interlock_name, "unknown"))
+            )
+
+        # Add alert_type and alert_category columns
+        resp_df = resp_df.with_columns([
+            pl.col("interlock_name").map_elements(lambda name: determine_alert_type_and_category(name)[0]).alias("alert_type"),
+            pl.col("interlock_name").map_elements(lambda name: determine_alert_type_and_category(name)[1]).alias("alert_category")
+        ])
+
+        resp_df.write_csv("/tmp/analog_data.csv")  # Save the raw data
+
+        if is_yearly_data:
+            # Aggregate data for last 1 year
+            grouped = resp_df.group_by(["alert_category", "alert_type"]).agg(
+                pl.sum("alert_count").alias("total")
+            )
+
+            # Format response for yearly data
+            result = {}
+            last_year_range = f"{start_date.year} - {end_date.year}"
+
+            for row in grouped.iter_rows(named=True):
+                category, alert_type, count = row["alert_category"].lower(), row["alert_type"], row["total"]
+
+                # Merge gantry into process
+                if category == "gantry":
+                    category = "process"
+
+                result.setdefault(category, {})[last_year_range] = result.setdefault(category, {}).get(last_year_range, {})
+                result[category][last_year_range][alert_type] = result[category][last_year_range].get(alert_type, 0) + count  # Sum values
+
+            # Ensure all alert types exist in each category
+            categories = ["safety", "process"]  # Removed "gantry" since it is merged into "process"
+            alert_types = ["maintenance", "fault", "normal"]
+
+            for category in categories:
+                result.setdefault(category, {})
+                result[category].setdefault(last_year_range, {})
+                result[category][last_year_range] = {at: result[category][last_year_range].get(at, 0) for at in alert_types}
+
+            # **Write Yearly Data to CSV**
+            csv_data = []
+            for category, years in result.items():
+                for year_range, alert_types in years.items():
+                    row = {"category": category, "year_range": year_range, **alert_types}
+                    csv_data.append(row)
+
+            csv_file_path = "/tmp/yearly_analog_alert_data.csv"
+
+            with open(csv_file_path, mode="w", newline="") as file:
+                writer = csv.DictWriter(file, fieldnames=["category", "year_range", "maintenance", "fault", "normal"])
+                writer.writeheader()
+                writer.writerows(csv_data)
+
+            print(f"Yearly data saved to {csv_file_path}")
+
+            return {"status": True, "message": "success", "yearly_data": result}
+
+        # If not yearly, return regular data format
+        grouped = resp_df.group_by(["created_date", "alert_category", "alert_type"]).agg(
+            pl.sum("alert_count").alias("total")
+        )
+
+        # Format response for default case
+        result = {}
+
+        for row in grouped.iter_rows(named=True):
+            date, category, alert_type, count = row["created_date"].strftime("%Y-%m-%d"), row["alert_category"].lower(), row["alert_type"], row["total"]
+            result.setdefault(date, {}).setdefault(category, {})[alert_type] = count
+
+        return {"status": True, "message": "success", "data": result}

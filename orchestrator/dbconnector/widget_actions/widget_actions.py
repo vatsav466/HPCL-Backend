@@ -97,7 +97,8 @@ lpg_dashboard_actions = [
     'cdcms_current_date_bookings_count',
     'cdcms_current_date_sales_count',
     'maintenance_fault',
-    'interlock_name_count'
+    'interlock_name_count',
+    'test_maintenance_fault'
 ]
 
 # Todo:- import all widget action modules here
@@ -197,7 +198,8 @@ widget_mapping = {
     'cdcms_current_date_bookings_count': {},
     'cdcms_current_date_sales_count': {},
     'maintenance_fault': {},
-    'interlock_name_count': {}
+    'interlock_name_count': {},
+    'test_maintenance_fault': {}
 }
 
 
