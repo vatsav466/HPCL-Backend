@@ -4997,11 +4997,12 @@ class GlobalAnalytics:
         """
         Fetches alert aging data with yearly, monthly, weekly, and daily counts based on predefined mappings.
         Uses static mappings for Maintenance, Fault, and Normal categories instead of query data.
+        Provides detailed time period information in the results.
 
         :param filters: The filter parameters
         :param cross_filters: Additional filters
         :param drill_state: The drill-down state
-        :return: A dictionary containing yearly, monthly, weekly, and daily counts categorized properly.
+        :return: A dictionary containing yearly, monthly, weekly, and daily counts categorized properly with time labels.
         """
         alert_status = drill_state
         daterange = None
@@ -5031,7 +5032,7 @@ class GlobalAnalytics:
                 interlock_name,
                 COUNT(*) AS alert_count
             FROM alerts
-            WHERE alert_section = 'TAS' 
+            WHERE bu = 'TAS' AND alert_section = 'TAS' 
                 {'AND created_at BETWEEN ' + daterange if daterange else "AND created_at::DATE >= CURRENT_DATE - INTERVAL '1 year'"}
             GROUP BY created_date, sop_id, interlock_name
             ORDER BY created_date DESC, alert_count DESC;
@@ -5045,7 +5046,7 @@ class GlobalAnalytics:
 
         # Check if response is empty
         if not resp:
-            return {"status": False, "message": "Data Not found in the resposne", "data": []}
+            return {"status": False, "message": "Data Not found in the response", "data": []}
 
         # Convert to polars DataFrame
         resp_df = pl.DataFrame(resp)
@@ -5062,7 +5063,7 @@ class GlobalAnalytics:
             elif interlock_name in normal_interlocks:
                 return "normal", normal_interlocks[interlock_name]
             else:
-                return "unknown", "unknown"  # Default values instead of empty list
+                return []
         
         # First parse the date string to ensure consistent format before conversion
         resp_df = resp_df.with_columns(
@@ -5079,21 +5080,48 @@ class GlobalAnalytics:
             pl.Series("alert_category", alert_categories)
         ])
 
-        # Initialize result structure
+        # Initialize result structure with time period details
         result = {
-            "yearly": {},
-            "monthly": {},
-            "weekly": {},
-            "daily": {}
+            "yearly": {"time_labels": {}, "data": {}},
+            "monthly": {"time_labels": {}, "data": {}},
+            "weekly": {"time_labels": {}, "data": {}},
+            "daily": {"time_labels": {}, "data": {}}
         }
 
         # Define time periods for filtering
+        today = datetime.now()
         time_periods = {
-            "yearly": datetime.now() - timedelta(days=365),
-            "monthly": datetime.now() - timedelta(days=30),
-            "weekly": datetime.now() - timedelta(days=7),
-            "daily": datetime.now() - timedelta(days=1)
+            "yearly": today - timedelta(days=365),
+            "monthly": today - timedelta(days=30),
+            "weekly": today - timedelta(days=7),
+            "daily": today - timedelta(days=1)
         }
+
+        # Generate time labels for each period
+        # For yearly: show year numbers
+        current_year = today.year
+        result["yearly"]["time_labels"] = {str(current_year): f"{current_year}"}
+        
+        # For monthly: show month names for the last 12 months
+        month_names = ["January", "February", "March", "April", "May", "June", 
+                    "July", "August", "September", "October", "November", "December"]
+        for i in range(12):
+            month_date = today - timedelta(days=30 * i)
+            month_key = f"{month_date.year}-{month_date.month:02d}"
+            result["monthly"]["time_labels"][month_key] = f"{month_names[month_date.month - 1]} {month_date.year}"
+        
+        # For weekly: show week numbers/dates
+        for i in range(4):  # Last 4 weeks
+            week_start = today - timedelta(days=(today.weekday() + 7*i))
+            week_end = week_start + timedelta(days=6)
+            week_key = f"week_{i+1}"
+            result["weekly"]["time_labels"][week_key] = f"{week_start.strftime('%d %b')} - {week_end.strftime('%d %b')}"
+        
+        # For daily: show dates for the last 7 days
+        for i in range(7):
+            day_date = today - timedelta(days=i)
+            day_key = day_date.strftime("%Y-%m-%d")
+            result["daily"]["time_labels"][day_key] = day_date.strftime("%d %b %Y")
 
         # Calculate counts for each time period
         for period, cutoff in time_periods.items():
@@ -5106,35 +5134,70 @@ class GlobalAnalytics:
             if period_df.is_empty():
                 continue
             
-            # Group by alert_category and alert_type, sum the counts
-            grouped = period_df.groupby(["alert_category", "alert_type"]).agg(
+            # Add time period columns based on the period type
+            if period == "yearly":
+                period_df = period_df.with_columns(
+                    pl.col("created_date").dt.year().alias("time_key")
+                )
+            elif period == "monthly":
+                period_df = period_df.with_columns(
+                    (pl.col("created_date").dt.year().cast(pl.Utf8) + "-" + 
+                    pl.col("created_date").dt.month().map_elements(lambda m: f"{m:02d}")).alias("time_key")
+                )
+            elif period == "weekly":
+                # Calculate week number relative to current date
+                today_date = today.date()
+                def get_week_key(date):
+                    days_diff = (today_date - date).days
+                    week_num = (days_diff // 7) + 1
+                    return f"week_{week_num}"
+                
+                period_df = period_df.with_columns(
+                    pl.col("created_date").map_elements(get_week_key).alias("time_key")
+                )
+            else:  # daily
+                period_df = period_df.with_columns(
+                    pl.col("created_date").cast(pl.Utf8).alias("time_key")
+                )
+            
+            # Group by time_key, alert_category and alert_type, sum the counts
+            grouped = period_df.group_by(["time_key", "alert_category", "alert_type"]).agg(
                 pl.sum("alert_count").alias("total")
             )
             
             # Convert to more manageable format
             for row in grouped.iter_rows(named=True):
+                time_key = row["time_key"]
                 category = row["alert_category"].lower()
                 alert_type = row["alert_type"]
                 count = row["total"]
                 
                 # Create category key if it doesn't exist
-                if category not in result[period]:
-                    result[period][category] = {}
+                if category not in result[period]["data"]:
+                    result[period]["data"][category] = {}
+                
+                # Create time_key if it doesn't exist
+                if time_key not in result[period]["data"][category]:
+                    result[period]["data"][category][time_key] = {}
                 
                 # Add count for this alert type
-                result[period][category][alert_type] = count
+                result[period]["data"][category][time_key][alert_type] = count
         
-        # Ensure all periods and categories have all alert types with at least 0 count
+        # Ensure all periods, time_keys, categories have all alert types with at least 0 count
         categories = ["safety", "process", "gantry"]
         alert_types = ["maintenance", "fault", "normal"]
         
         for period in result:
             for category in categories:
-                if category not in result[period]:
-                    result[period][category] = {}
+                if category not in result[period]["data"]:
+                    result[period]["data"][category] = {}
                 
-                for alert_type in alert_types:
-                    if alert_type not in result[period][category]:
-                        result[period][category][alert_type] = 0
+                for time_key in result[period]["time_labels"]:
+                    if time_key not in result[period]["data"][category]:
+                        result[period]["data"][category][time_key] = {}
+                    
+                    for alert_type in alert_types:
+                        if alert_type not in result[period]["data"][category][time_key]:
+                            result[period]["data"][category][time_key][alert_type] = 0
 
         return result
