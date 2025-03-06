@@ -803,6 +803,6 @@ class SendNotification:
             self.params.get("va_level", "level - 1")]
         if mailto == "0":
             return va_mapping['assign_role']
-        if mailto == "0":
+        if mailto == "1":
             return va_mapping['escalation_role']
         return ""

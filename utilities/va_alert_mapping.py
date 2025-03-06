@@ -578,14 +578,14 @@ VA_Alert_Mapping = {
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 3,
+                    "value": 20,
                     "assign_role": "Zonal Operation SOD",
                     "escalation_role": "Zonal HSE SOD",
                     "escalation_time": "PT3M"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 5,
+                    "value": 20,
                     "assign_role": "HQO Operation SOD",
                     "escalation_role": "HQO HSE SOD",
                     "escalation_time": "PT3M"
