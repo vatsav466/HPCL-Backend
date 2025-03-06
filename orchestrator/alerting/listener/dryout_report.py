@@ -1,0 +1,36 @@
+import urdhva_base
+import asyncio
+import datetime
+import pandas as pd
+from orchestrator.notification_manager.notify_email import *
+import orchestrator.analytics.dry_out_analysis as dry_out_analysis
+
+async def generate_dryout_report():
+    report_time = urdhva_base.utilities.get_present_time()
+    report_time = report_time.strftime("%Y-%B-%d_%H_%M_%S")
+    data = asyncio.run(dry_out_analysis._get_dry_out_ims_report("1"))
+    df = pd.DataFrame(data)
+    df.to_excel(f"/tmp/dry_out_report_{report_time}.xlsx", index=False)
+    data_1 = asyncio.run(dry_out_analysis._get_dry_out_ims_report("2"))
+    df_1 = pd.DataFrame(data_1)
+    df_1.to_excel(f"/tmp/intra_day_dry_out_report_{report_time}.xlsx", index=False)
+    to_email = ['gauravyadav1@hpcl.in', 'vijayendravsingh@hpcl.in', 'santoshkumar.s@algofusiontech.com']
+    to_email = ['santoshkumar.s@algofusiontech.com']
+    attachments = [f"/tmp/dry_out_report_{report_time}.xlsx", f"/tmp/intra_day_dry_out_report_{report_time}.xlsx"]
+    notify_email = NotifyEMail()
+    data = {"report_time": report_time, "portal_link": "https://ceg.hpcl.co.in"}
+    notify_email.publish_message(
+        **{
+            'to_emails': to_email,
+            'subject': f"Dry Out Report as on {report_time}",
+            'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/dryout_report.html",
+                                  data=data),
+            'attachments': attachments,
+            'html_content': True
+        }
+    )
+
+
+if __name__ == "__main__":
+    print(f"Executing dry-out alert creation at {datetime.datetime.now(datetime.timezone.utc)}")
+    asyncio.run(generate_dryout_report())
