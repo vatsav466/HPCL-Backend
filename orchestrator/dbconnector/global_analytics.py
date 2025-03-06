@@ -5091,7 +5091,7 @@ class GlobalAnalytics:
                 result.setdefault(category, {}).setdefault(last_year_range, {}).setdefault(alert_type, 0)
 
                 # Add count (ensures merging of "gantry" into "process")
-                result[category][month_year][alert_type] += count
+                result[category][last_year_range][alert_type] += count
             
             csv_data = [{"category": cat, "year_range": yr, **data} for cat, years in result.items() for yr, data in years.items()]
             csv_file_path = "/tmp/yearly_analog_alert_data.csv"
