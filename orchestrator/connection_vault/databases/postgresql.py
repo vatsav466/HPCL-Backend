@@ -491,6 +491,10 @@ class Postgresql(BaseAction):
                                 key = condition.get("key")
                                 cond = condition.get("cond")  # Default to '=' if not provided
                                 value = condition.get("value")
+
+                                # This was to remove empty or * values from the query
+                                if cond in ['=', 'equals'] and value in ['*', '_empty']:
+                                    continue
                                 
                                 if key is not None and value is not None:  # Ensure required fields are present
                                     where_query += f'''"{key}" {cond} '{value}' AND '''
