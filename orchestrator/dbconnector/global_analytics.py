@@ -5002,14 +5002,20 @@ class GlobalAnalytics:
         fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
         normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
 
-        # Set date range to last 1 year
+        # Set default date range to last 1 year
         end_date = datetime.now()
         start_date = end_date - timedelta(days=365)
 
-        # Flag for yearly data calculation
+        # Flags for data type
         is_yearly_data = False
+        is_monthly_data = False
+        is_daily_data = False
+        valid_years = set()
+        valid_months = set()
 
-        # Handle cross_filters for DATE range and Yearly condition
+        filter_keys = [rec.key.strip('') for rec in cross_filters]
+
+        # Handle cross_filters for date range and yearly condition
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
@@ -5018,9 +5024,22 @@ class GlobalAnalytics:
                     end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                 if filter.key == "Y" and filter.value.lower() == "true":
                     is_yearly_data = True
+                if filter.key.lower() == "m" and filter.value.lower() == "true":
+                    is_monthly_data = True
+                if filter.key.lower() == "d" and filter.value.lower() == "true":
+                    is_daily_data = True
+                if filter.key == "year":
+                    start_year, end_year = map(int, filter.value.split("-"))
+                    valid_years = {year for year in range(start_year, end_year + 1)}
+                if filter.key == "month":
+                    month_mapping = {
+                        "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+                        "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+                    }
+                    valid_months = {month_mapping.get(filter.value)} if filter.value in month_mapping else set()
 
         # SQL Query to fetch alert data
-        query = f""" 
+        query = f"""
             SELECT 
                 DATE(created_at) AS created_date,
                 sop_id,
@@ -5047,79 +5066,99 @@ class GlobalAnalytics:
         if resp_df.is_empty():
             return {"status": True, "data": {}}
 
-        # Ensure correct column types
-        resp_df = resp_df.with_columns(
-            pl.col("created_date").cast(pl.Date)
-        )
+        resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
 
-        # Function to determine alert type and category
-        def determine_alert_type_and_category(interlock_name):
-            for interlocks, alert_type in [
-                (maintenance_interlocks, "maintenance"),
-                (fault_interlocks, "fault"),
-                (normal_interlocks, "normal"),
-            ]:
-                if interlock_name in interlocks:
-                    return alert_type, interlocks[interlock_name]
-            return None, None  # Return None to filter them out later
-
-        # Add alert_type and alert_category columns while filtering out "unknown"
+        # Add alert_type and alert_category columns
         resp_df = resp_df.with_columns([
-            pl.col("interlock_name").map_elements(lambda name: determine_alert_type_and_category(name)[0]).alias("alert_type"),
-            pl.col("interlock_name").map_elements(lambda name: determine_alert_type_and_category(name)[1]).alias("alert_category")
+            pl.col("interlock_name").map_elements(lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, normal_interlocks.get(name, None)))).alias("alert_category"),
+            pl.col("interlock_name").map_elements(lambda name: "maintenance" if name in maintenance_interlocks else "fault" if name in fault_interlocks else "normal").alias("alert_type")
         ])
 
-        # Remove rows where alert_category is None (i.e., "unknown")
         resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
+        resp_df.write_csv("/tmp/analog_data.csv")
 
-        resp_df.write_csv("/tmp/analog_data.csv")  # Save the raw data
-
-        if is_yearly_data:
-            # Aggregate data for last 1 year
-            grouped = resp_df.group_by(["alert_category", "alert_type"]).agg(
-                pl.sum("alert_count").alias("total")
-            )
-
-            # Format response for yearly data
+        if is_yearly_data and not is_monthly_data:
+            grouped = resp_df.group_by(["alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
             result = {}
             last_year_range = f"{start_date.year} - {end_date.year}"
-
+            
             for row in grouped.iter_rows(named=True):
                 category, alert_type, count = row["alert_category"].lower(), row["alert_type"], row["total"]
-
-                # Merge gantry into process
                 if category == "gantry":
                     category = "process"
 
-                result.setdefault(category, {})[last_year_range] = result.setdefault(category, {}).get(last_year_range, {})
-                result[category][last_year_range][alert_type] = result[category][last_year_range].get(alert_type, 0) + count  # Sum values
+                # Initialize structure if missing
+                result.setdefault(category, {}).setdefault(month_year, {}).setdefault(alert_type, 0)
 
-            # Ensure all alert types exist in each category
-            categories = ["safety", "process"]  # Removed "gantry" since it is merged into "process"
-            alert_types = ["maintenance", "fault", "normal"]
-
-            for category in categories:
-                result.setdefault(category, {})
-                result[category].setdefault(last_year_range, {})
-                result[category][last_year_range] = {at: result[category][last_year_range].get(at, 0) for at in alert_types}
-
-            # **Write Yearly Data to CSV**
-            csv_data = []
-            for category, years in result.items():
-                for year_range, alert_types in years.items():
-                    row = {"category": category, "year_range": year_range, **alert_types}
-                    csv_data.append(row)
-
+                # Add count (ensures merging of "gantry" into "process")
+                result[category][month_year][alert_type] += count
+            
+            csv_data = [{"category": cat, "year_range": yr, **data} for cat, years in result.items() for yr, data in years.items()]
             csv_file_path = "/tmp/yearly_analog_alert_data.csv"
-
-            with open(csv_file_path, mode="w", newline="") as file:
+            with open(csv_file_path, "w", newline="") as file:
                 writer = csv.DictWriter(file, fieldnames=["category", "year_range", "maintenance", "fault", "normal"])
                 writer.writeheader()
                 writer.writerows(csv_data)
-
             print(f"Yearly data saved to {csv_file_path}")
-
             return {"status": True, "message": "success", "yearly_data": result}
+
+        resp_df = resp_df.filter(pl.col("created_date").dt.year().is_in(valid_years))
+        if is_yearly_data and is_monthly_data and not is_daily_data and not resp_df.is_empty():
+            resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
+            grouped = resp_df.group_by(["month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            print("grouped --> ", grouped)
+            result = {}
+            for row in grouped.iter_rows(named=True):
+                month_year, category, alert_type, count = (
+                    row["month_year"], 
+                    row["alert_category"].lower(), 
+                    row["alert_type"], 
+                    row["total"]
+                )
+
+                # Convert "gantry" to "process"
+                if category == "gantry":
+                    category = "process"
+
+                # Initialize structure if missing
+                result.setdefault(category, {}).setdefault(month_year, {}).setdefault(alert_type, 0)
+
+                # Add count (ensures merging of "gantry" into "process")
+                result[category][month_year][alert_type] += count
+            print("result -> ", result)
+            csv_data = [{"category": cat, "month_year": mnth, **data} for cat, months in result.items() for mnth, data in months.items()]
+            csv_file_path = "/tmp/monthly_analog_alert_data.csv"
+            with open(csv_file_path, "w", newline="") as file:
+                writer = csv.DictWriter(file, fieldnames=["category", "month_year", "maintenance", "fault", "normal"])
+                writer.writeheader()
+                writer.writerows(csv_data)
+            print(f"Monthly data saved to {csv_file_path}")
+            return {"status": True, "message": "success", "monthly_data": result}
+        
+        resp_mont_df = resp_df.filter(
+            (pl.col("created_date").dt.year().is_in(valid_years)) & 
+            (pl.col("created_date").dt.month().is_in(valid_months_numeric))
+        )
+        if is_yearly_data and is_monthly_data and is_daily_data and not resp_mont_df.is_empty():
+            resp_mont_df = resp_mont_df.with_columns(pl.col("created_date").dt.strftime("%d-%b-%Y").alias("day"))
+            grouped = resp_mont_df.group_by(["day", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            result = {}
+            
+            for row in grouped.iter_rows(named=True):
+                day, category, alert_type, count = row["day"], row["alert_category"].lower(), row["alert_type"], row["total"]
+                if category == "gantry":
+                    category = "process"
+                result.setdefault(category, {}).setdefault(day, {}).setdefault(alert_type, 0)
+                result[category][day][alert_type] += count
+            
+            csv_data = [{"category": cat, "day": d, **data} for cat, days in result.items() for d, data in days.items()]
+            csv_file_path = "/tmp/daily_analog_alert_data.csv"
+            with open(csv_file_path, "w", newline="") as file:
+                writer = csv.DictWriter(file, fieldnames=["category", "day", "maintenance", "fault", "normal"])
+                writer.writeheader()
+                writer.writerows(csv_data)
+            print(f"Daily data saved to {csv_file_path}")
+            return {"status": True, "message": "success", "daily_data": result}
 
         # If not yearly, return regular data format
         grouped = resp_df.group_by(["created_date", "alert_category", "alert_type"]).agg(
