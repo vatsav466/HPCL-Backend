@@ -1,4 +1,5 @@
 import urdhva_base
+import csv
 import json
 import calendar
 import psycopg2
@@ -5053,19 +5054,23 @@ class GlobalAnalytics:
 
         # Function to determine alert type and category
         def determine_alert_type_and_category(interlock_name):
-            return (
-                ("maintenance", maintenance_interlocks.get(interlock_name, "unknown"))
-                if interlock_name in maintenance_interlocks else
-                ("fault", fault_interlocks.get(interlock_name, "unknown"))
-                if interlock_name in fault_interlocks else
-                ("normal", normal_interlocks.get(interlock_name, "unknown"))
-            )
+            for interlocks, alert_type in [
+                (maintenance_interlocks, "maintenance"),
+                (fault_interlocks, "fault"),
+                (normal_interlocks, "normal"),
+            ]:
+                if interlock_name in interlocks:
+                    return alert_type, interlocks[interlock_name]
+            return None, None  # Return None to filter them out later
 
-        # Add alert_type and alert_category columns
+        # Add alert_type and alert_category columns while filtering out "unknown"
         resp_df = resp_df.with_columns([
             pl.col("interlock_name").map_elements(lambda name: determine_alert_type_and_category(name)[0]).alias("alert_type"),
             pl.col("interlock_name").map_elements(lambda name: determine_alert_type_and_category(name)[1]).alias("alert_category")
         ])
+
+        # Remove rows where alert_category is None (i.e., "unknown")
+        resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
 
         resp_df.write_csv("/tmp/analog_data.csv")  # Save the raw data
 
