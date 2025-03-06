@@ -10,6 +10,7 @@ from typing import Dict, List
 import hpcl_ceg_model
 import hpcl_ceg_enum
 from collections import defaultdict
+import utilities.va_alert_mapping as va_alert_mapping
 import utilities.role_configuration as role_configuration
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
@@ -143,7 +144,8 @@ class SendNotification:
         roles_list = ""
         if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
             roles_list = await self._role_configuration_rolemailto()
-        
+        elif self.alert_data.get("alert_section","") == "VA":
+            roles_list = await self._get_va_roles_list()
         else:
             roles_list = self.params.get("rolemailto", "")
         print("bu --> ", bu)
@@ -657,6 +659,8 @@ class SendNotification:
         assigning_roles = ""
         if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("mqofrole", "") in ["0","1","2"]:
             assigning_roles = (await self._role_configuration_mqofrole() or "")
+        elif self.alert_data.get("alert_section", "") == "VA":
+            assigning_roles = (await self._get_va_roles_list()).split(",")
         else:
             assigning_roles = self.params.get("mqofrole", "")
 
@@ -673,11 +677,15 @@ class SendNotification:
         if self.params.get("escalationlevel_inmail"):
             if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
                 self.update_alert["last_escalated_to"] = (await self._role_configuration_rolemailto()).split(",")
+            elif self.alert_data.get("alert_section", "") == "VA":
+                self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
         else:
             if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
                 self.update_alert["last_notified_to"] = (await self._role_configuration_rolemailto()).split(",")
+            elif self.alert_data.get("alert_section", "") == "VA":
+                self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
 
@@ -786,4 +794,15 @@ class SendNotification:
         if mqof:
             print("mqof----------->",rolemapping["mqof"].get(mqof,""))
             return rolemapping["mqof"].get(mqof,"")
+        return ""
+
+    async def _get_va_roles_list(self):
+        mailto = self.params.get("rolemailto", "")
+        va_mapping = \
+        va_alert_mapping.VA_Alert_Mapping[self.alert_data.get("bu", "")][self.alert_data['violation_type']]['escalations'][
+            self.params.get("va_level", "level - 1")]
+        if mailto == "0":
+            return va_mapping['assign_role']
+        if mailto == "0":
+            return va_mapping['escalation_role']
         return ""
