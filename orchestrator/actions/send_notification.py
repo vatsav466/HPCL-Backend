@@ -660,7 +660,7 @@ class SendNotification:
         if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("mqofrole", "") in ["0","1","2"]:
             assigning_roles = (await self._role_configuration_mqofrole() or "")
         elif self.alert_data.get("alert_section", "") == "VA":
-            assigning_roles = (await self._get_va_roles_list()).split(",")
+            assigning_roles = await self._get_va_roles_list()
         else:
             assigning_roles = self.params.get("mqofrole", "")
 
