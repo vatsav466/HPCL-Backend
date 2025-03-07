@@ -491,6 +491,10 @@ class Postgresql(BaseAction):
                                 key = condition.get("key")
                                 cond = condition.get("cond")  # Default to '=' if not provided
                                 value = condition.get("value")
+
+                                # This was to remove empty or * values from the query
+                                if cond in ['=', 'equals'] and value and value.lower() in ['*', '_empty', 'all']:
+                                    continue
                                 
                                 if key is not None and value is not None:  # Ensure required fields are present
                                     where_query += f'''"{key}" {cond} '{value}' AND '''
@@ -516,7 +520,7 @@ class Postgresql(BaseAction):
                 data = await stmt.fetch()
                 
                 # Collect data
-                columns_mapping[column] = [record[column] for record in data]
+                columns_mapping[column] = [record[column] for record in data if record.get(column)]
 
             # Close the connection
             await self.close_connection(connection)

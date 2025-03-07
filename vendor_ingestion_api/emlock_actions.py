@@ -33,7 +33,7 @@ async def emlock_ingest_data(data: Emlock_Ingest_DataParams):
                 {
                     **entry.dict(),
                     'vendor_id': data.vendor_id,
-                    'location_id': entry.ro_code if entry.location_type == 'RO' and entry.ro_code else entry.terminal_code
+                    'location_id': str(entry.ro_code)[:8] if entry.location_type == 'RO' and entry.ro_code else entry.terminal_code
                 }
                 for entry in data.data
             ]

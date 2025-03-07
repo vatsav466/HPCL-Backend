@@ -5,6 +5,7 @@ import pandas as pd
 import polars as pl
 import socket
 import datetime
+import traceback
 import concurrent.futures
 import generate_lpg_operations_summary
 sys.path.append("/opt/ceg/algo")
@@ -118,7 +119,7 @@ def get_data(params):
     table_name = "lpg_operations_data"
     
     first_insertion = False
-    query = """ SELECT DISTINCT("short_name") FROM "LPG_OPERATIONS_SUMMARY_DATA";"""
+    query = """ SELECT DISTINCT("short_name") FROM "lpg_operations_summary";"""
     creds = credential_loader.get_credentials('APP_DB')
     app_db_params={
             "host": creds["host"],
@@ -131,7 +132,7 @@ def get_data(params):
     if params['PlantName'].lower() not in plant_check["short_name"]:
         first_insertion = True
     
-    query = f""" SELECT MAX(process_date) FROM "LPG_OPERATIONS_SUMMARY_DATA" WHERE "short_name"='{params['PlantName'].lower()}'; """    
+    query = f""" SELECT MAX(process_date) FROM "lpg_operations_summary" WHERE "short_name"='{params['PlantName'].lower()}'; """    
     max_date = fetch_data(query, getData=False, params=app_db_params)
     
     query = f""" SELECT * FROM production_log WHERE "process_date" > '{max_date}' """
@@ -150,23 +151,42 @@ def get_data(params):
     insertToDB(data, table_name)
     
 if __name__=="__main__":
-    plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")    
-    for plant in plants.iter_rows(named=True):
-        if plant["PlantName"].lower() == 'indore':
-            continue
-        print("plant :", plant["PlantName"])
-        print("-"*50)
-        print(f"Fetching for {plant['PlantName']}")
-        params={
-        "PlantName": plant["PlantName"],
-        "host": plant["host_ip"],
-        "database": plant["db_database"],
-        "user": plant["db_user"],
-        "password": plant["db_password"],
-        "port": 5432
-        }
-        get_data(params)
-    print("*"*50)
-    print("-- Data Insertion to lpg_operations_data completed --")
-    print("*"*50)
-    generate_lpg_operations_summary.generate_summary()
+    try:
+        plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")        
+        for plant in plants.iter_rows(named=True):
+            if plant["PlantName"].lower() == 'indore':
+                continue
+            print("plant :", plant["PlantName"])
+            print("-"*50)
+            print(f"Fetching for {plant['PlantName']}")
+            params={
+            "PlantName": plant["PlantName"],
+            "host": plant["host_ip"],
+            "database": plant["db_database"],
+            "user": plant["db_user"],
+            "password": plant["db_password"],
+            "port": 5432
+            }
+            get_data(params)
+        print("*"*50)
+        print("-- Data Insertion to lpg_operations_data completed --")
+        print("*"*50)
+        generate_lpg_operations_summary.generate_summary()
+    except Exception as e:
+        print("*-"*25)
+        print("-- Exception in fetching the operations data -- ")
+        print("Traceback :", traceback.format_exc())
+        creds = credential_loader.get_credentials('APP_DB')
+        pg_conn = psycopg2.connect(
+                    host=creds["host"],
+                    database=creds["database"],
+                    user=creds["user"],
+                    password=creds["password"],
+                    port=int(creds["port"])
+                )
+        cursor = pg_conn.cursor()
+        query = f""" TRUNCATE lpg_operations_data; """
+        cursor.execute(query)
+        pg_conn.commit()
+        cursor.close()
+        pg_conn.close()
