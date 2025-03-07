@@ -4994,7 +4994,7 @@ class GlobalAnalytics:
     
     
     @staticmethod
-    async def test_maintenance_fault(filters, cross_filters, drill_state):
+    async def tas_maintenance_fault(filters, cross_filters, drill_state):
         alert_status = drill_state
 
         # Lookup dictionaries for interlock categories
@@ -5064,6 +5064,23 @@ class GlobalAnalytics:
         date_filter_applied = False  # Flag to track if DATE filter is present
 
         filter_keys = [rec.key.strip('') for rec in cross_filters]
+        
+        # Extract filter values if present
+        zone_filter = next((f.value for f in filters if f.key.lower() == "zone"), None)
+        plant_filter = next((f.value for f in filters if f.key.lower() == "plant"), None)
+
+        # Construct additional filter conditions dynamically
+        additional_conditions = []
+        if zone_filter:
+            additional_conditions.append(f"zone = '{zone_filter}'")
+        if plant_filter:
+            additional_conditions.append(f"location_name = '{plant_filter}'")
+
+        # Combine all conditions for SQL query
+        filter_condition = " AND ".join(additional_conditions)
+        if filter_condition:
+            filter_condition = " AND " + filter_condition  # Prefix with 'AND' only if there are conditions
+
 
         # Handle cross_filters for date range and yearly condition
         if cross_filters:
@@ -5090,10 +5107,27 @@ class GlobalAnalytics:
                     }
                     valid_months = {month_mapping.get(filter.value)} if filter.value in month_mapping else set()
 
-        # Apply date range filter in SQL query only if DATE filter is given
+        # # Apply date range filter in SQL query only if DATE filter is given
+        # date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
+
+        # # SQL Query to fetch alert data
+        # query = f"""
+        #     SELECT 
+        #         DATE(created_at) AS created_date,
+        #         sop_id,
+        #         interlock_name,
+        #         COUNT(*) AS alert_count
+        #     FROM alerts
+        #     WHERE bu = 'TAS' AND alert_section = 'TAS' 
+        #         {date_condition}
+        #     GROUP BY created_date, sop_id, interlock_name
+        #     ORDER BY created_date DESC, alert_count DESC;
+        # """
+
+        # Apply date range filter only if DATE is provided
         date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
 
-        # SQL Query to fetch alert data
+        # Construct SQL Query with filters
         query = f"""
             SELECT 
                 DATE(created_at) AS created_date,
@@ -5103,6 +5137,7 @@ class GlobalAnalytics:
             FROM alerts
             WHERE bu = 'TAS' AND alert_section = 'TAS' 
                 {date_condition}
+                {filter_condition}
             GROUP BY created_date, sop_id, interlock_name
             ORDER BY created_date DESC, alert_count DESC;
         """
@@ -5228,3 +5263,26 @@ class GlobalAnalytics:
             result.setdefault(date, {}).setdefault(category, {})[alert_type] = count
 
         return {"status": True, "message": "success", "data": result}
+    
+    @staticmethod
+    async def tas_maintenance_fault_dropdown(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _query = ''' select * from location_master where bu = 'TAS' '''
+        resp = await function(query=_query)
+        df = pl.from_pandas(pd.DataFrame(resp))
+        _filters = []
+        if filters:
+            for filter in filters:
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _filters:
+            filter_expr = pl.lit(True)
+            for _filter in _filters:
+                for key, value in _filter.items():
+                    key = key.replace('"','')
+                    filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
+            df = df.filter(filter_expr)
+        months = [month for month in calendar.month_name if month]
+        data = {"zone": df["zone"].unique().to_list(), "plant": df["name"].unique().to_list()}
+        return data
