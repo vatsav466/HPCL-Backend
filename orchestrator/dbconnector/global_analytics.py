@@ -5075,8 +5075,8 @@ class GlobalAnalytics:
 
         # Add alert_type and alert_category columns
         resp_df = resp_df.with_columns([
-            pl.col("interlock_name").map_elements(lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, normal_interlocks.get(name, None)))).alias("alert_category"),
-            pl.col("interlock_name").map_elements(lambda name: "maintenance" if name in maintenance_interlocks else "fault" if name in fault_interlocks else "normal").alias("alert_type")
+            pl.col("interlock_name").apply(lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, normal_interlocks.get(name, None)))).alias("alert_category"),
+            pl.col("interlock_name").apply(lambda name: "maintenance" if name in maintenance_interlocks else "fault" if name in fault_interlocks else "normal").alias("alert_type")
         ])
 
         resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
