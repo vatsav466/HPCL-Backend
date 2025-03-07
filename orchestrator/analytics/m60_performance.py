@@ -13,7 +13,6 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
-
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 # Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
@@ -345,7 +344,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             return [rec.replace('"', '').strip() for rec in group_by_filter]
         else:
             return ""
-
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
@@ -735,8 +733,12 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 df_list = []
                 for i in df['month_name'].unique().tolist():
                     df_cum = df[df['month_name'] == 'Cum']
-                    df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
-                    df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
+                    if len(df['month_name'].unique().tolist()) >1:
+                        df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                    if len(df["month_name"].unique().tolist()) >=3:
+                        df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
+                    #df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                    #df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
                 if not df_cum.empty and not df_prev.empty and not df_pres.empty:
                     df_list = [df_cum, df_prev, df_pres]
                 for idx, df_month in enumerate(df_list):
