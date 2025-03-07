@@ -5126,7 +5126,7 @@ class GlobalAnalytics:
             last_year_range = f"{start_date.year} - {end_date.year}"
             
             for row in grouped.iter_rows(named=True):
-                interlock_name, sop_id, category, alert_type, count = (
+                sap_id, location_name, interlock_name, sop_id, category, alert_type, count = (
                     row["sap_id"],
                     row["location_name"], 
                     row["sop_id"],
@@ -5172,7 +5172,7 @@ class GlobalAnalytics:
             print("grouped --> ", grouped)
             result = {}
             for row in grouped.iter_rows(named=True):
-                interlock_name, sop_id, month_year, category, alert_type, count = (
+                sap_id, location_name, interlock_name, sop_id, month_year, category, alert_type, count = (
                     row["sap_id"],
                     row["location_name"], 
                     row["sop_id"],
@@ -5224,7 +5224,7 @@ class GlobalAnalytics:
             result = {}
             
             for row in grouped.iter_rows(named=True):
-                interlock_name, sop_id, day, category, alert_type, count = (
+                sap_id, location_name, interlock_name, sop_id, day, category, alert_type, count = (
                     row["sap_id"],
                     row["location_name"], 
                     row["sop_id"],
@@ -5271,7 +5271,7 @@ class GlobalAnalytics:
         result = {}
 
         for row in grouped.iter_rows(named=True):
-            interlock_name, sop_id, date, category, alert_type, count = (
+            sap_id, location_name, interlock_name, sop_id, date, category, alert_type, count = (
                 row["sap_id"],
                 row["location_name"], 
                 row["sop_id"],
