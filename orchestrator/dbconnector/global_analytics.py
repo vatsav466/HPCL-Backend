@@ -5044,8 +5044,8 @@ class GlobalAnalytics:
                 
                 if filter.key == "y" and filter.value.lower() == "true":
                     is_yearly_data = True
-                if filter.key.lower() == "m" and filter.value.lower() == "true":
-                    is_monthly_data = True
+                # if filter.key.lower() == "m" and filter.value.lower() == "true":
+                #     is_monthly_data = True
                 
                 #commented out for drill down purpose
                 """ 
@@ -5108,54 +5108,7 @@ class GlobalAnalytics:
         resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
         resp_df.write_csv("/tmp/analog_data.csv")
 
-        if is_yearly_data and not is_monthly_data:
-            grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
-            result = {}
-            last_year_range = f"{start_date.year} - {end_date.year}"
-            
-            for row in grouped.iter_rows(named=True):
-                sap_id, location_name, sop_id, interlock_name, category, alert_type, count = (
-                    row["sap_id"],
-                    row["location_name"], 
-                    row["sop_id"],
-                    row["interlock_name"], 
-                    row["alert_category"].lower(), 
-                    row["alert_type"], 
-                    row["total"]
-                )
-                if category == "gantry":
-                    category = "process"
-
-                # Initialize structure if missing
-                result.setdefault(category, {}).setdefault(last_year_range, {}).setdefault(alert_type, {
-                    "total": 0,
-                    "details": []
-                })
-                
-                # Add count to total
-                result[category][last_year_range][alert_type]["total"] += count
-                
-                # Add interlock details
-                result[category][last_year_range][alert_type]["details"].append({
-                    "sap_id": sap_id,
-                    "location_name": location_name,
-                    "sop_id": sop_id,
-                    "interlock_name": interlock_name,
-                    "count": count
-                })
-            
-            csv_data = [{"category": cat, "year_range": yr, **data} for cat, years in result.items() for yr, data in years.items()]
-            csv_file_path = "/tmp/yearly_analog_alert_data.csv"
-            with open(csv_file_path, "w", newline="") as file:
-                writer = csv.DictWriter(file, fieldnames=["category", "year_range", "maintenance", "fault", "normal"])
-                writer.writeheader()
-                writer.writerows(csv_data)
-            print(f"Yearly data saved to {csv_file_path}")
-            return {"status": True, "message": "success", "yearly_data": result}
-
-        # resp_df = resp_df.filter(pl.col("created_date").dt.year().is_in(valid_years))
-        
-        if is_monthly_data and not is_yearly_data and not resp_df.is_empty():
+        if is_yearly_data:
             resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
             grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
             print("grouped --> ", grouped)
@@ -5202,11 +5155,104 @@ class GlobalAnalytics:
                 writer.writerows(csv_data)
             print(f"Monthly data saved to {csv_file_path}")
             return {"status": True, "message": "success", "monthly_data": result}
+            # grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            # result = {}
+            # last_year_range = f"{start_date.year} - {end_date.year}"
+            
+            # for row in grouped.iter_rows(named=True):
+            #     sap_id, location_name, sop_id, interlock_name, category, alert_type, count = (
+            #         row["sap_id"],
+            #         row["location_name"], 
+            #         row["sop_id"],
+            #         row["interlock_name"], 
+            #         row["alert_category"].lower(), 
+            #         row["alert_type"], 
+            #         row["total"]
+            #     )
+            #     if category == "gantry":
+            #         category = "process"
+
+            #     # Initialize structure if missing
+            #     result.setdefault(category, {}).setdefault(last_year_range, {}).setdefault(alert_type, {
+            #         "total": 0,
+            #         "details": []
+            #     })
+                
+            #     # Add count to total
+            #     result[category][last_year_range][alert_type]["total"] += count
+                
+            #     # Add interlock details
+            #     result[category][last_year_range][alert_type]["details"].append({
+            #         "sap_id": sap_id,
+            #         "location_name": location_name,
+            #         "sop_id": sop_id,
+            #         "interlock_name": interlock_name,
+            #         "count": count
+            #     })
+            
+            # csv_data = [{"category": cat, "year_range": yr, **data} for cat, years in result.items() for yr, data in years.items()]
+            # csv_file_path = "/tmp/yearly_analog_alert_data.csv"
+            # with open(csv_file_path, "w", newline="") as file:
+            #     writer = csv.DictWriter(file, fieldnames=["category", "year_range", "maintenance", "fault", "normal"])
+            #     writer.writeheader()
+            #     writer.writerows(csv_data)
+            # print(f"Yearly data saved to {csv_file_path}")
+            # return {"status": True, "message": "success", "yearly_data": result}
+
+        # resp_df = resp_df.filter(pl.col("created_date").dt.year().is_in(valid_years))
         
-        resp_mont_df = resp_df.filter(
-            (pl.col("created_date").dt.year().is_in(valid_years)) & 
-            (pl.col("created_date").dt.month().is_in(valid_months))
-        )
+        # if is_monthly_data and not is_yearly_data and not resp_df.is_empty():
+        #     resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
+        #     grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+        #     print("grouped --> ", grouped)
+        #     result = {}
+        #     for row in grouped.iter_rows(named=True):
+        #         sap_id, location_name, sop_id, interlock_name, month_year, category, alert_type, count = (
+        #             row["sap_id"],
+        #             row["location_name"], 
+        #             row["sop_id"],
+        #             row["interlock_name"],
+        #             row["month_year"], 
+        #             row["alert_category"].lower(), 
+        #             row["alert_type"], 
+        #             row["total"]
+        #         )
+
+        #         # Convert "gantry" to "process"
+        #         if category == "gantry":
+        #             category = "process"
+
+        #         # Initialize structure if missing
+        #         result.setdefault(category, {}).setdefault(month_year, {}).setdefault(alert_type, {
+        #             "total": 0,
+        #             "details": []
+        #         })
+
+        #         # Add count to total
+        #         result[category][month_year][alert_type]["total"] += count
+                
+        #         # Add interlock details
+        #         result[category][month_year][alert_type]["details"].append({
+        #             "sap_id": sap_id,
+        #             "location_name": location_name,
+        #             "sop_id": sop_id,
+        #             "interlock_name": interlock_name,
+        #             "count": count
+        #         })
+        #     print("result -> ", result)
+        #     csv_data = [{"category": cat, "month_year": mnth, **data} for cat, months in result.items() for mnth, data in months.items()]
+        #     csv_file_path = "/tmp/monthly_analog_alert_data.csv"
+        #     with open(csv_file_path, "w", newline="") as file:
+        #         writer = csv.DictWriter(file, fieldnames=["category", "month_year", "maintenance", "fault", "normal"])
+        #         writer.writeheader()
+        #         writer.writerows(csv_data)
+        #     print(f"Monthly data saved to {csv_file_path}")
+        #     return {"status": True, "message": "success", "monthly_data": result}
+        
+        # resp_mont_df = resp_df.filter(
+        #     (pl.col("created_date").dt.year().is_in(valid_years)) & 
+        #     (pl.col("created_date").dt.month().is_in(valid_months))
+        # )
         # if is_yearly_data and is_monthly_data and is_daily_data and not resp_mont_df.is_empty():
         #     resp_mont_df = resp_mont_df.with_columns(pl.col("created_date").dt.strftime("%d-%b-%Y").alias("day"))
         #     grouped = resp_mont_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "day", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))

@@ -5083,6 +5083,7 @@ class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = TagsDataSchema
         upsert_keys = []
+        search_fields = ['sap_id', 'name', 'device_type', 'zone', 'system']
 
 
 class TagsData(urdhva_base.postgresmodel.PostgresModel):
@@ -5102,6 +5103,7 @@ class TagsData(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = TagsDataSchema
         upsert_keys = []
+        search_fields = ['sap_id', 'name', 'device_type', 'zone', 'system']
 
 
 class TagsDataGetResp(pydantic.BaseModel):
