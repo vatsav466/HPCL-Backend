@@ -812,4 +812,6 @@ class SendNotification:
             return va_mapping['assign_role']
         if mailto == "1":
             return va_mapping['escalation_role']
+        if mailto == "2":
+            return f"{va_mapping['assign_role']},{va_mapping['escalation_role']}"
         return mailto
