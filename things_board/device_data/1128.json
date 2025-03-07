@@ -18,11 +18,6 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "Primary Gauge HIGH HIGH",
                     "sensor_tag": "TANK.TK-01.HIGH_HIGH_LEVEL",
                     "normal_value": "0"
@@ -133,8 +128,8 @@
                     "normal_value": "0"
                 },
 		        {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-01.TANK_ALERT",
+                    "sensor_name": "TANK LEAKAGE STATUS",
+                    "sensor_tag": "TANK.TK-01.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -160,11 +155,6 @@
                     "sensor_name": "Primary Gauge Level",
                     "sensor_tag": "TANK.TK-02.LEVEL",
                     "normal_value": ""
-                },
-                {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
                 },
                 {
                     "sensor_name": "Primary Gauge HIGH HIGH",
@@ -277,8 +267,8 @@
                     "normal_value": "0"
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-02.TANK_ALERT",
+                    "sensor_name": "TANK LEAKAGE STATUS",
+                    "sensor_tag": "TANK.TK-02.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -304,11 +294,6 @@
                     "sensor_name": "Primary Gauge Level",
                     "sensor_tag": "TANK.TK-03.LEVEL",
                     "normal_value": ""
-                },
-                {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
                 },
                 {
                     "sensor_name": "Primary Gauge HIGH HIGH",
@@ -421,8 +406,8 @@
                     "normal_value": "0"
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-03.TANK_ALERT",
+                    "sensor_name": "TANK LEAKAGE STATUS",
+                    "sensor_tag": "TANK.TK-03.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -448,11 +433,6 @@
                     "sensor_name": "Primary Gauge Level",
                     "sensor_tag": "TANK.TK-04.LEVEL",
                     "normal_value": ""
-                },
-                {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
                 },
                 {
                     "sensor_name": "Primary Gauge HIGH HIGH",
@@ -565,8 +545,8 @@
                     "normal_value": "0"
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-04.TANK_ALERT",
+                    "sensor_name": "TANK LEAKAGE STATUS",
+                    "sensor_tag": "TANK.TK-04.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -592,11 +572,6 @@
                     "sensor_name": "Primary Gauge Level",
                     "sensor_tag": "TANK.TK-05.LEVEL",
                     "normal_value": ""
-                },
-                {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
                 },
                 {
                     "sensor_name": "Primary Gauge HIGH HIGH",
@@ -709,8 +684,8 @@
                     "normal_value": "0"
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-05.TANK_ALERT",
+                    "sensor_name": "TANK LEAKAGE STATUS",
+                    "sensor_tag": "TANK.TK-05.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -738,13 +713,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-06.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-06.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -882,11 +852,6 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "Primary Gauge HIGH HIGH",
                     "sensor_tag": "TANK.TK-07.HIGH_HIGH_LEVEL",
                     "normal_value": "0"
@@ -997,8 +962,8 @@
                     "normal_value": "0"
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-07.TANK_ALERT",
+                    "sensor_name": "TANK LEAKAGE STATUS",
+                    "sensor_tag": "TANK.TK-07.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1024,11 +989,6 @@
                     "sensor_name": "Primary Gauge Level",
                     "sensor_tag": "TANK.TK-08.LEVEL",
                     "normal_value": ""
-                },
-                {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
                 },
                 {
                     "sensor_name": "Primary Gauge HIGH HIGH",
@@ -1141,8 +1101,8 @@
                     "normal_value": "0"
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-08.TANK_ALERT",
+                    "sensor_name": "TANK LEAKAGE STATUS",
+                    "sensor_tag": "TANK.TK-08.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1168,11 +1128,6 @@
                     "sensor_name": "Primary Gauge Level",
                     "sensor_tag": "TANK.TK-09.LEVEL",
                     "normal_value": ""
-                },
-                {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
                 },
                 {
                     "sensor_name": "Primary Gauge HIGH HIGH",
@@ -1225,8 +1180,8 @@
                     "normal_value": "0"
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-09.TANK_ALERT",
+                    "sensor_name": "TANK LEAKAGE STATUS",
+                    "sensor_tag": "TANK.TK-09.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1314,13 +1269,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-10.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-10.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1458,11 +1408,6 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "Primary Gauge HIGH HIGH",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -1597,13 +1542,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-14.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-14.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1741,13 +1681,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-15.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-15.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1885,13 +1820,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-16.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-16.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2029,13 +1959,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-17.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-17.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2173,13 +2098,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-19.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-19.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2317,13 +2237,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-20.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-20.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2461,13 +2376,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-21.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-21.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2605,13 +2515,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-22.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-22.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2749,13 +2654,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-23.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-23.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2893,13 +2793,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-24.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-24.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -3037,13 +2932,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-25.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-25.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -3181,13 +3071,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-26.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-26.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -3325,11 +3210,6 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "Primary Gauge HIGH HIGH",
                     "sensor_tag": "",
                     "normal_value": "0"
@@ -3464,13 +3344,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-30.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-30.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -3609,13 +3484,8 @@
                     "normal_value": ""
                 },
                 {
-                    "sensor_name": "TANK LEAKAGE STATUS ",
-                    "sensor_tag": "TANK.TK-26.TANK_ALERT",
-                    "normal_value": "0"
-                },
-                {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "",
+                    "sensor_tag": "TANK.TK-26.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -8625,10 +8495,10 @@
             ]
         },
         {
-            "device_name": "LP 01@Mathura",
-            "device_id": "155d4620-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 01_BC-501A_BS VI MS@Mathura",
+            "device_id": "a9727b60-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "qOuqNtoO4QWTHtLYizv3",
+            "device_key": "5ZKRViSFpvYsbEmyclhC",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -8680,14 +8550,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-501A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-501A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-501A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-501A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-501A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 02@Mathura",
-            "device_id": "156c8860-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 02_BC-501B_BS VI HSD@Mathura",
+            "device_id": "a9de0e70-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "8mNQHZXOhu7G5w1HS9gW",
+            "device_key": "E68EWloXF4IJ9CLXTS2M",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -8739,14 +8629,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-501B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-501B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-501B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-501B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-501B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 03@Mathura",
-            "device_id": "157bcaa0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 03_BC-502A_BS VI MS@Mathura",
+            "device_id": "aa44e690-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "JuCLSgi0BDceSb0clUrh",
+            "device_key": "5eDen35XfUekEt3HHo7T",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -8798,14 +8708,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-502A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-502A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-502A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-502A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-502A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 04@Mathura",
-            "device_id": "158b33f0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 04_BC-502B_BS VI HSD@Mathura",
+            "device_id": "aaae7dd0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "0gfYtQvMEu1SsFkBdRKv",
+            "device_key": "0RoIRziVCfsdZ1SLv2nY",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -8857,14 +8787,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-502B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-502B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-502B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-502B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-502B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 05@Mathura",
-            "device_id": "159a7630-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 05_BC-503A_BS VI MS@Mathura",
+            "device_id": "ab1d6c40-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "ZXdlo9RS5sfuZC0ePr4O",
+            "device_key": "b5snNicB6q4qoEUbwaiH",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -8916,14 +8866,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-503A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-503A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-503A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-503A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-503A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 06@Mathura",
-            "device_id": "15a9df80-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 06_BC-503B_BS VI HSD@Mathura",
+            "device_id": "ab8a10c0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "GKAJDUwXOkZk3Iwb8ybe",
+            "device_key": "oxj9aLWHxEkF6X52SGmH",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -8975,14 +8945,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-503B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-503B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-503B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-503B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-503B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 07@Mathura",
-            "device_id": "15b8ac90-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 07_BC-504A_BS VI MS@Mathura",
+            "device_id": "abf49260-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "Y2LGnDVfVO6fKAoRFBSd",
+            "device_key": "DlV4HE8elLwva2jUmL9L",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9034,14 +9024,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-504A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-504A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-504A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-504A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-504A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 08@Mathura",
-            "device_id": "15c83cf0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 08_BC-504B_BS VI HSD@Mathura",
+            "device_id": "ac6b7010-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "Usi2fJkuevQG68YX11vJ",
+            "device_key": "8DPLQFElzsMdyw1TJi43",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9093,14 +9103,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-504B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-504B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-504B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-504B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-504B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 09@Mathura",
-            "device_id": "15d7a640-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 09_BC-505A_BS VI MS@Mathura",
+            "device_id": "acf07e90-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "77KZC9uyxE7dJwzj0jsC",
+            "device_key": "cCl1cmrRfqApq7A2r1bE",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9152,14 +9182,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-505A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-505A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-505A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-505A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-505A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 10@Mathura",
-            "device_id": "15e70f90-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 10_BC-505B_BS VI HSD@Mathura",
+            "device_id": "ad814ce0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "Id1tFJPLyVFDuNo9tS0V",
+            "device_key": "5Xbuz18FNIo5v8uLinan",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9211,14 +9261,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-505B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-505B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-505B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-505B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-505B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 11@Mathura",
-            "device_id": "15f5dca0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 11_BC-506A_BS VI MS@Mathura",
+            "device_id": "ae0ee6e0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "JyxE61bx6dvhtGYVIznF",
+            "device_key": "dpEqSAmOFohsX30iPoCP",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9270,14 +9340,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-506A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-506A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-506A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-506A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-506A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 12@Mathura",
-            "device_id": "1604f7d0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 12_BC-506B_BS VI HSD@Mathura",
+            "device_id": "ae783000-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "5HiHfqWuy7KcLOfYWmhA",
+            "device_key": "9w0OTKcq5RWbJk0sjAlm",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9329,14 +9419,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-506B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-506B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-506B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-506B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-506B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 13@Mathura",
-            "device_id": "161599a0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 13_BC-507A_BS VI MS@Mathura",
+            "device_id": "aee0dce0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "BW99OUhKPg00GqAhTg6n",
+            "device_key": "qdPu54B3LCOngrwqQtQt",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9388,14 +9498,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-507A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-507A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-507A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-507A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-507A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 14@Mathura",
-            "device_id": "1623ca70-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 14_BC-507B_BS VI HSD@Mathura",
+            "device_id": "af4766e0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "fEw07dp9dniTQV26DN1w",
+            "device_key": "cyrEc5QbWtKGGEeDpEWS",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9447,14 +9577,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-507B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-507B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-507B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-507B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-507B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 15@Mathura",
-            "device_id": "16330cb0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 15_BC-508A_BS VI MS@Mathura",
+            "device_id": "afb2d2e0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "RCqezsbTG5eVs4vWdv64",
+            "device_key": "qmArmboHsMV9zsDpohdi",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9506,14 +9656,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-508A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-508A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-508A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-508A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-508A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 16@Mathura",
-            "device_id": "16429d10-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 16_BC-508B_BS VI HSD@Mathura",
+            "device_id": "b01b0a90-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "zt7qpMCcRozYPqLicImi",
+            "device_key": "r8IT18l7nJKOElno7XXz",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9565,14 +9735,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-508B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-508B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-508B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-508B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-508B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 17@Mathura",
-            "device_id": "16519130-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 17_BC-509A_BS VI MS@Mathura",
+            "device_id": "b087af10-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "lbDe9tAPN0m70G25kWHw",
+            "device_key": "NBvnizM4h2Iz5Q9ExqoY",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9624,14 +9814,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-509A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-509A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-509A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-509A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-509A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 18@Mathura",
-            "device_id": "1660ac60-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 18_BC-509B_BS VI HSD@Mathura",
+            "device_id": "b0f2a5e0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "WzDk2GxR3xXFHmQHI5cc",
+            "device_key": "NFseKKJ7GQGMgz3unCxF",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9683,14 +9893,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-509B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-509B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-509B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-509B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-509B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 19@Mathura",
-            "device_id": "166feea0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 19_BC-510A_BS VI MS@Mathura",
+            "device_id": "b15c1610-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "FsLeZOd1xpem8RrF2bJ9",
+            "device_key": "div8OkOoXY9ApRGQN0B2",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9742,14 +9972,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-510A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-510A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-510A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-510A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-510A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 20@Mathura",
-            "device_id": "167f30e0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 20_BC-510B_BS VI HSD@Mathura",
+            "device_id": "b1c70ce0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "HGDv5A05Xfol5Emi2XYp",
+            "device_key": "4zFon1QbJnrQQATAPmdX",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9801,14 +10051,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-510B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-510B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-510B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-510B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-510B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 21@Mathura",
-            "device_id": "168e4c10-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 21_BC-511A_BS VI HSD@Mathura",
+            "device_id": "b2375ae0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "lznv8xlVnEO3GViK4pzy",
+            "device_key": "eqXN8583pDyZVM6Q4Y0Y",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9860,14 +10130,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-511A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-511A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-511A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-511A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-511A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 22@Mathura",
-            "device_id": "169ddc70-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 22_BC-511B_BS VI HSD@Mathura",
+            "device_id": "b2a18e60-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "E8gIgCriGzHMcYzKuztQ",
+            "device_key": "cGTnZZKK83D9oHKoFI00",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9919,14 +10209,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Dual.BC-511B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-511B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Dual.BC-511B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-511B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Dual.BC-511B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 23@Mathura",
-            "device_id": "16ad1eb0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 23_BC-512A_LSHSP@Mathura",
+            "device_id": "b30e0bd0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "N6skaDZOYifzR2MydYao",
+            "device_key": "A1b9tf7XDMARrDsIJTI5",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -9978,14 +10288,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Single.BC-512A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-512A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-512A.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-512A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-512A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 24@Mathura",
-            "device_id": "16bc12d0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 24_BC-512B_SKO@Mathura",
+            "device_id": "b37691a0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "JMOMVW5NhB4R6nJcVY6g",
+            "device_key": "vJ4DoTo97gkXnEGCHOlo",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -10037,14 +10367,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Single.BC-512B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-512B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-512B.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-512B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-512B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 25@Mathura",
-            "device_id": "16cb7c20-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 25_BC-513A_LSHSP@Mathura",
+            "device_id": "b3df8ca0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "VnIABTR79jGrHPe7gscy",
+            "device_key": "Po2525Si9Fk9lqKAsGee",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -10096,14 +10446,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Single.BC-513A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-513A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-513A.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-513A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-513A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 26@Mathura",
-            "device_id": "16dabe60-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 26_BC-513B_LDO@Mathura",
+            "device_id": "b4494af0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "pp6dag86rQCVTZky1d9G",
+            "device_key": "C3upXedqJg48ErRIH9yo",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -10155,14 +10525,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Single.BC-513B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-513B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-513B.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-513B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-513B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 27@Mathura",
-            "device_id": "16e9d990-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 27_BC-514A_LSHSP@Mathura",
+            "device_id": "b4b1a9b0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "63oauwyy5LdJz2t8ZOH2",
+            "device_key": "xQzvrAp0Jixsoj3hJbaX",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -10214,14 +10604,34 @@
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Single.BC-514A.ADDITIVE_UNDERDOSE_ALARM_STATUS",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-514A.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-514A.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-514A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-514A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
+                    "normal_value": "0"
                 }
             ]
         },
         {
-            "device_name": "LP 28@Mathura",
-            "device_id": "16f942e0-e929-11ef-bdaf-63952eabadd3",
+            "device_name": "LP 28_BC-514B_LDO@Mathura",
+            "device_id": "b5185ac0-fa4e-11ef-a29d-95c64d391b7c",
             "device_type": "Loading Point",
-            "device_key": "iEW6eqLgihOPZFPYISbP",
+            "device_key": "SATrnnTfUsG2tK9Toqql",
             "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
             "sensors": [
                 {
@@ -10272,6 +10682,26 @@
                 {
                     "sensor_name": "ADD UNDERDOSE STATUS OF MAIN",
                     "sensor_tag": "SmartLoad-Single.BC-514B.ADDITIVE_UNDERDOSE_ALARM_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU LOADING STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-514B.BATCH_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "K-FACTOR CHANGE STATUS",
+                    "sensor_tag": "SmartLoad-Single.BC-514B.NOMINAL_COMP1_KFACTOR_CHANGED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-514B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "DAY START TOTALIZER MISMATCH",
+                    "sensor_tag": "SmartLoad-Single.BC-514B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10501,930 +10931,6 @@
                 {
                     "sensor_name": "TLF Header Line MOV Close",
                     "sensor_tag": "",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 01@Mathura",
-            "device_id": "1764aee0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "J3fBeLtWQ7Xvx24xy4FK",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-501A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-501A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 02@Mathura",
-            "device_id": "177354e0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "QbiJt2KBvTX9c7gvsOkY",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-501B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-501B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 03@Mathura",
-            "device_id": "1782be30-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "h65Q5HF9ydgOcw1ZUzJB",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-502A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-502A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 04@Mathura",
-            "device_id": "1791b250-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "jelKO0xfRcLWcNNn1h4n",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-502B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-502B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 05@Mathura",
-            "device_id": "17a11ba0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "PGoqIrwEBYacElLzgBLF",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-503A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-503A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 06@Mathura",
-            "device_id": "17b084f0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "2aNcy3cQxINuWfag7XsB",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-503B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-503B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 07@Mathura",
-            "device_id": "17c0b190-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "ZWU8cadIMseq6NC9OMNd",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-504A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-504A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 08@Mathura",
-            "device_id": "17cfccc0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "JwvtQFZIr4eXXa2Me1z5",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-504B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-504B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 09@Mathura",
-            "device_id": "17de72c0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "OHid3v3unqDw4rHYExW0",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-505A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-505A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 10@Mathura",
-            "device_id": "17ee5140-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "LI9mSI73kBqc4s1mebRH",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-505B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-505B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 11@Mathura",
-            "device_id": "17fd4560-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "fbyPQVjqPOvF176ZvzjY",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-506A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-506A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 12@Mathura",
-            "device_id": "180c6090-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "gUIm68CBvEjZpkG99Zhp",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-506B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-506B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 13@Mathura",
-            "device_id": "181b7bc0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "n9OE5OO2JKauab477ZpL",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-507A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-507A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 14@Mathura",
-            "device_id": "182ae510-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "8RBu0pqAK8ntn3JAb3jQ",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-507B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-507B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 15@Mathura",
-            "device_id": "183a2750-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "DSohdxyy0H7KzmMUE78i",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-508A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-508A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 16@Mathura",
-            "device_id": "1849b7b0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "NSC2hw2bqIUverGOCuIP",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-508B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-508B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {	
-            "device_name": "BCU TOT LP 17@Mathura",
-            "device_id": "1858d2e0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "7XWAGZ7yrVvQZZ23nLhm",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-509A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-509A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 18@Mathura",
-            "device_id": "1867c700-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "P7Q3GymqwBRmdKi5bnV9",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-509B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-509B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 19@Mathura",
-            "device_id": "18770940-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "vQlOIVdq1YrKSNRm981O",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-510A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-510A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 20@Mathura",
-            "device_id": "18864b80-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "qYrNLU9LrgWMFMfuu8vI",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-510B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-510B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 21@Mathura",
-            "device_id": "18965110-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "A5FFSgqXIpzzOKm7mPfx",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-511A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-511A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 22@Mathura",
-            "device_id": "18a51e20-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "jO00ZQHTanaMCY4MHEYB",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-511B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-511B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 23@Mathura",
-            "device_id": "18b41240-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "CwbuDJeP6F4iV7w8pFgg",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-512A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-512A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 24@Mathura",
-            "device_id": "18c35480-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "TU7gaRXLxUOJ1Pd2FGTQ",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-512B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-512B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 25@Mathura",
-            "device_id": "18d296c0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "3AYVWLgnQY0Rl40nDpIe",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-513A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-513A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 26@Mathura",
-            "device_id": "18e20010-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "f6aQqOM1cbknK0qQ7IBA",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-513B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-513B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 27@Mathura",
-            "device_id": "18f14250-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "16a9bra5jsqOmnXIMGOE",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-514A.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-514A.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "BCU TOT LP 28@Mathura",
-            "device_id": "19005d80-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "BCU Totaliser",
-            "device_key": "J2HDRb0yWyyhv91DsRd3",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "BCU VS MFM TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-514B.MFM_BCU_QTY_BEYOND_TOLERANCE_LIMIT_STATUS",
-                    "normal_value": "0"
-                },
-                {
-                    "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Single.BC-514B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 01@Mathura",
-            "device_id": "190fc6d0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "w9WOzp7EJxxlzgb4hG7F",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-501A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 02@Mathura",
-            "device_id": "191f0910-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "SqXY5oWlJKxwNBngBBrl",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-501B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 03@Mathura",
-            "device_id": "192e2440-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "B8H7nmO1X8xzyNZLyaAG",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-502A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 04@Mathura",
-            "device_id": "193db4a0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "bxUtp93ompwmIcgrB67u",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-502B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 05@Mathura",
-            "device_id": "194ccfd0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "BaVdrYVpklsdx9m0kaZP",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-503A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 06@Mathura",
-            "device_id": "195c3920-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "tSBGVCYtmN45Oc4Ho42X",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-503B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 07@Mathura",
-            "device_id": "196b7b60-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "jf2Ydb8SqJDGxO1SekkY",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-504A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 08@Mathura",
-            "device_id": "197ae4b0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "eNK2bA6HHyWWpTymbxzK",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-504B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 09@Mathura",
-            "device_id": "198a26f0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "Q57AV0shINQi9lgAM1k4",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-505A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 10@Mathura",
-            "device_id": "19996930-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "XuHU8zzCNq7zkyu1WDUH",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-505B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 11@Mathura",
-            "device_id": "19a8d280-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "SCMWr1otknDlTdhJLOSJ",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-506A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 12@Mathura",
-            "device_id": "19bb7020-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "JF0aZBxSiscW5onTV3eK",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-506B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 13@Mathura",
-            "device_id": "19c7cc30-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "8qJ6uHDE7YyE6pCI7GUX",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-507A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 14@Mathura",
-            "device_id": "19d67230-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "zANRsfc5dlzrKQFDMknH",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-507B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 15@Mathura",
-            "device_id": "19e5db80-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "QNo7yVNnxMtONYRCDEuc",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-508A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 16@Mathura",
-            "device_id": "19f592f0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "kH85g81QZFX5p7IP7Qjk",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-508B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 17@Mathura",
-            "device_id": "1a046000-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "X2yqoCeENWqDOoNmF6EI",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-509A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 18@Mathura",
-            "device_id": "1a13a240-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "aL2yejaaBn0Ypa0TfiU5",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-509B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 19@Mathura",
-            "device_id": "1a23f5f0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "Ogk0fzOfGX50ZoeaJmTg",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-510A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 20@Mathura",
-            "device_id": "1a333830-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "NOyue1an5GcfiP2CRt27",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-510B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 21@Mathura",
-            "device_id": "1a427a70-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "Mg8lXmUaUTGkx9JJW4Jf",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-511A.NOMINAL_ARM1_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 22@Mathura",
-            "device_id": "1a536a60-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "cigJc7N95t5qFFnQHjW1",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Dual.BC-511B.NOMINAL_ARM2_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 23@Mathura",
-            "device_id": "1a603ba0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "2Mu4l11km0ftR3cxM5M5",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Single.BC-512A.NOMINAL_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 24@Mathura",
-            "device_id": "1a6f7de0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "gpVcogmwjlWg98DSJST2",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Single.BC-512B.NOMINAL_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 25@Mathura",
-            "device_id": "1a7f3550-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "kXtkfltfFwU5Hv585eiX",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Single.BC-513A.NOMINAL_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 26@Mathura",
-            "device_id": "1a8e0260-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "FBH33XNidIJSUoWIpTtn",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Single.BC-513B.NOMINAL_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 27@Mathura",
-            "device_id": "1a9e07f0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "mQqD2dQeWPqf0Wr9OpZx",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Single.BC-514A.NOMINAL_COMP1_KFACTOR_CHANGED",
-                    "normal_value": "0"
-                }
-            ]
-        },
-        {
-            "device_name": "K-Factor LP 28@Mathura",
-            "device_id": "1aacadf0-e929-11ef-bdaf-63952eabadd3",
-            "device_type": "K-Factor",
-            "device_key": "rMTYvuJv7LJrBCtZZLsx",
-            "entity_id": "f7828ab0-d3df-11ef-89d8-8bef67f22d63",
-            "sensors": [
-                {
-                    "sensor_name": "K-FACTOR CHANGE STATUS",
-                    "sensor_tag": "SmartLoad-Single.BC-514B.NOMINAL_COMP1_KFACTOR_CHANGED",
                     "normal_value": "0"
                 }
             ]

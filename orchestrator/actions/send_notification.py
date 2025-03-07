@@ -10,6 +10,7 @@ from typing import Dict, List
 import hpcl_ceg_model
 import hpcl_ceg_enum
 from collections import defaultdict
+import utilities.va_alert_mapping as va_alert_mapping
 import utilities.role_configuration as role_configuration
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
@@ -143,7 +144,8 @@ class SendNotification:
         roles_list = ""
         if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
             roles_list = await self._role_configuration_rolemailto()
-        
+        elif self.alert_data.get("alert_section","") == "VA":
+            roles_list = await self._get_va_roles_list()
         else:
             roles_list = self.params.get("rolemailto", "")
         print("bu --> ", bu)
@@ -651,12 +653,15 @@ class SendNotification:
         """
         alert_id = self.params.get("alert_id")
         print("self.params ---> ", self.params)
+
         # Ensure self.update_alert is initialized as a dictionary
         self.update_alert = getattr(self, "update_alert", {}) or {}
 
         assigning_roles = ""
         if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("mqofrole", "") in ["0","1","2"]:
             assigning_roles = (await self._role_configuration_mqofrole() or "")
+        elif self.alert_data.get("alert_section", "") == "VA":
+            assigning_roles = await self._get_va_roles_list()
         else:
             assigning_roles = self.params.get("mqofrole", "")
 
@@ -664,7 +669,7 @@ class SendNotification:
         self.update_alert.update({
             "action_type": self.base_alert_data.get("action_type"),
             "action_msg": self.base_alert_data.get("action_msg"),
-            "assigned_user_roles": assigning_roles,  # Ensure it's a string
+            "assigned_user_roles": assigning_roles,
             # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
             "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
         })
@@ -673,11 +678,15 @@ class SendNotification:
         if self.params.get("escalationlevel_inmail"):
             if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
                 self.update_alert["last_escalated_to"] = (await self._role_configuration_rolemailto()).split(",")
+            elif self.alert_data.get("alert_section", "") == "VA":
+                self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
         else:
             if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("rolemailto", "") in ["0","1","2"]:
                 self.update_alert["last_notified_to"] = (await self._role_configuration_rolemailto()).split(",")
+            elif self.alert_data.get("alert_section", "") == "VA":
+                self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
 
@@ -693,10 +702,16 @@ class SendNotification:
         # Ensure alert_history is a list and append the new update
         alert_data.setdefault("alert_history", []).append(self.update_alert)
 
-        # Only append to assigned_user_roles if message_type is "escalation"
+        # Append to assigned_user_roles only if message_type is "escalation"
         if self.params.get("messagetype", "") == "escalation":
-            alert_data.setdefault("assigned_user_roles", []).extend(self.update_alert["assigned_user_roles"])
-            alert_data["assigned_user_roles"] = list(set(alert_data["assigned_user_roles"]))  # Remove duplicates
+            # Ensure existing roles are a list
+            existing_roles = alert_data.get("assigned_user_roles", [])
+            if not isinstance(existing_roles, list):
+                existing_roles = [existing_roles]  # Convert to list if it's not already
+
+            # Append new roles, remove duplicates, and ensure it's a list
+            updated_roles = existing_roles + self.update_alert["assigned_user_roles"]
+            alert_data["assigned_user_roles"] = list(set(updated_roles))
         else:
             alert_data["assigned_user_roles"] = self.update_alert["assigned_user_roles"]
 
@@ -787,3 +802,19 @@ class SendNotification:
             print("mqof----------->",rolemapping["mqof"].get(mqof,""))
             return rolemapping["mqof"].get(mqof,"")
         return ""
+
+    async def _get_va_roles_list(self):
+        mailto = self.params.get("rolemailto", "")
+        if self.params.get("va_level", "level - 1") in ['', None]:
+            self.params["va_level"] = "level - 1"
+
+        va_mapping = va_alert_mapping.VA_Alert_Mapping[self.alert_data.get("bu", "")]
+        if self.alert_data['violation_type'] in va_mapping.keys():
+            va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
+            if mailto == "0":
+                return va_mapping['assign_role']
+            if mailto == "1":
+                return va_mapping['escalation_role']
+            if mailto == "2":
+                return f"{va_mapping['assign_role']},{va_mapping['escalation_role']}"
+        return mailto

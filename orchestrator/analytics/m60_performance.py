@@ -164,6 +164,16 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    # Removing extra keys like all/_empty/* to mak sure all results appear in api response
+    # Filtering cross filters
+    cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
+                     and cross_filter.get("value") and cross_filter["value"].lower() in ['*', '_empty', 'all'])]
+
+    # Filtering filters
+    filters = [filter_cond for filter_cond in filters
+               if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
+                       filter_cond["value"].lower() in ['*', '_empty', 'all'])]
+
     sbuName_req = ''
     sbuWise = False
     if '"sbu_wise"' in [x['key'] for x in cross_filters]:
@@ -723,8 +733,12 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 df_list = []
                 for i in df['month_name'].unique().tolist():
                     df_cum = df[df['month_name'] == 'Cum']
-                    df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
-                    df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
+                    if len(df['month_name'].unique().tolist()) >1:
+                        df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                    if len(df["month_name"].unique().tolist()) >=3:
+                        df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
+                    #df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                    #df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
                 if not df_cum.empty and not df_prev.empty and not df_pres.empty:
                     df_list = [df_cum, df_prev, df_pres]
                 for idx, df_month in enumerate(df_list):

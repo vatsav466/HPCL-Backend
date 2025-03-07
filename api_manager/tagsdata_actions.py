@@ -29,7 +29,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         df = await function(query=lpg_query)
         df = pl.DataFrame(df)
         
-        base_path = "/Users/manohar/Documents/GitHub/dnc_backend_v2/things_board/device_data"  # Update with actual path
+        base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
         
         async def process_device_data(sap_id, zone, name):
             file_path = os.path.join(base_path, f"{sap_id}.json")
@@ -143,5 +143,5 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
             pl.col("sap_id").first(),  # Keep first sap_id (change to list() if needed)
             # pl.col("name").first()  # Keep first location_name
         ])
-        print(res)
+
         return {"status": True, "message": "Success", "data": res.to_dicts()}

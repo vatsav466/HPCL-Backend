@@ -14,49 +14,271 @@ VA_Alert_Mapping = {
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
                 }
             }
         },
         "SMOKE": {
             "name": "Smoke Detection",
-            "severity": "Critical"
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "Fire": {
             "name": "Fire Detection",
-            "severity": "Critical"
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE_OF_EARTHING": {
             "name": "Absence Of Earthing",
-            "severity": "Critical"
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE_OF_WHEELCHOCK": {
             "name": "Absence Of Wheelchock",
-            "severity": "High"
+            "severity": "High",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {
             "name": "Absence Of Fire Extinguisher Decantation",
-            "severity": "High"
+            "severity": "High",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "UNAUTHORISED_FILLING_OF_CONTAINER": {
             "name": "Unauthorised Filling Of Container",
-            "severity": "Medium"
+            "severity": "Medium",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ALIGHT_FROM_TWO_WHEELER": {
             "name": "Alight From Two Wheeler",
-            "severity": "Medium"
+            "severity": "Medium",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE OF EARTHING": {
             "name": "Absence Of Earthing",
-            "severity": "Critical"
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE OF WHEELCHOCK": {
             "name": "Absence Of Wheelchock",
-            "severity": "High"
+            "severity": "High",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         }
     },
     "TAS": {
@@ -571,24 +793,24 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 35,
+                    "value": 2,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT6H"
+                    "escalation_time": "PT2M"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 60,
+                    "value": 20,
                     "assign_role": "Zonal Operation SOD",
                     "escalation_role": "Zonal HSE SOD",
-                    "escalation_time": "PT6H"
+                    "escalation_time": "PT3M"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 60,
+                    "value": 20,
                     "assign_role": "HQO Operation SOD",
                     "escalation_role": "HQO HSE SOD",
-                    "escalation_time": "PT6H"
+                    "escalation_time": "PT3M"
                 }
             }
         },
@@ -696,6 +918,13 @@ VA_Alert_Mapping = {
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT6H"
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 60,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal HSE LPG",
+                    "escalation_time": "PT6H"
                 }
             }
         },
@@ -730,6 +959,7 @@ VA_Alert_Mapping = {
         "Fire-Detection": {
             "name": "Fire",
             "severity": "Critical",
+            "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
@@ -757,6 +987,7 @@ VA_Alert_Mapping = {
         "Fire-Extinguisher": {
             "name": "Fire Extinguisher Non Compliance (TT)",
             "severity": "High",
+            "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
@@ -939,6 +1170,13 @@ VA_Alert_Mapping = {
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT6H"
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 60,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal HSE LPG",
+                    "escalation_time": "PT6H"
                 }
             }
         },
@@ -984,6 +1222,13 @@ VA_Alert_Mapping = {
                 },
                 "level - 2": {
                     "condition": "<>",
+                    "value": 100,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal HSE LPG",
+                    "escalation_time": "PT6H"
+                },
+                "level - 3": {
+                    "condition": ">",
                     "value": 100,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
