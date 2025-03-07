@@ -4996,7 +4996,8 @@ class GlobalAnalytics:
     @staticmethod
     async def tas_maintenance_fault(filters, cross_filters, drill_state):
         try:
-            date = any("date" in string.lower() for string in drill_state)
+            alert_status = drill_state.split(',')[0]
+            date = any("date" in string.lower() for string in drill_state.split(","))
 
             # Lookup dictionaries for interlock categories
             maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
@@ -5006,7 +5007,7 @@ class GlobalAnalytics:
             # Default date range: last 1 year
             end_date = datetime.now()
             start_date = end_date - timedelta(days=365)
-            date_filter_applied = False  # Flag for cross_filter date presence
+            date_filter_applied = False  # Ensure this is initialized
 
             # Extract filter values
             zone_filter = next((f.value for f in (filters or []) if f.key.lower() == "zone"), None)
@@ -5028,10 +5029,8 @@ class GlobalAnalytics:
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
 
-            # Apply date range filter only if both conditions are met
-            date_condition = ""
-            if date and date_filter_applied:
-                date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'"
+            # Apply date range filter
+            date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
 
             # Combine filter conditions
             filter_condition = " AND ".join(additional_conditions)
