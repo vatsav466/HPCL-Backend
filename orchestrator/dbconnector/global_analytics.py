@@ -5066,8 +5066,9 @@ class GlobalAnalytics:
         filter_keys = [rec.key.strip('') for rec in cross_filters]
         
         # Extract filter values if present
-        zone_filter = next((f.value for f in filters if f.key.lower() == "zone"), None)
-        plant_filter = next((f.value for f in filters if f.key.lower() == "plant"), None)
+        zone_filter = next((f.value for f in (filters or []) if f.key.lower() == "zone"), None)
+        plant_filter = next((f.value for f in (filters or []) if f.key.lower() == "plant"), None)
+
 
         # Construct additional filter conditions dynamically
         additional_conditions = []
