@@ -125,9 +125,12 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         ).with_columns(
             pl.col("split_name").list.get(0).alias("equipment_name")
         ).drop("split_name")  # Drop intermediate column
+        # Convert count to integer
         res = res.with_columns(pl.col("count").cast(pl.Int64, strict=False))
-        # Aggregate count based on device_type and system
-        res = res.group_by(["device_type", "system"]).agg(
-            pl.col("count").sum().alias("total_count")
-        )
+        # Aggregate count based on device_type and system, keeping sap_id and location_name
+        res = res.group_by(["device_type", "system"]).agg([
+            pl.col("count").sum().alias("total_count"),
+            pl.col("sap_id").first(),  # Keep first sap_id (change to list() if needed)
+            pl.col("location_name").first()  # Keep first location_name
+        ])
         return {"status": True, "message": "Success", "data": res.to_dicts()}
