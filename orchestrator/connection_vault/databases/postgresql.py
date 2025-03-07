@@ -497,7 +497,11 @@ class Postgresql(BaseAction):
                                     continue
                                 
                                 if key is not None and value is not None:  # Ensure required fields are present
-                                    where_query += f'''"{key}" {cond} '{value}' AND '''
+                                    if cond in [' ', 'one-off', 'in']:
+                                        value = "', '".join(map(str, value))
+                                        where_query += f'''"{key}" {cond} ('{value}') AND '''
+                                    else:
+                                        where_query += f'''"{key}" {cond} '{value}' AND '''
                             elif isinstance(condition, str):  # Handle shorthand single condition (string format)
                                 for key, value in condition.items():
                                     where_query += f'''"{key}" = '{value}' AND '''
