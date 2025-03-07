@@ -1,5 +1,6 @@
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
+import json
 import fastapi
 import json
 import traceback
@@ -28,7 +29,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         df = await function(query=lpg_query)
         df = pl.DataFrame(df)
         
-        base_path = "/opt/ceg/algo/dnc_backend_v2/things_board/device_data"  # Update with actual path
+        base_path = "/Users/manohar/Documents/GitHub/dnc_backend_v2/things_board/device_data"  # Update with actual path
         
         async def process_device_data(sap_id, zone, name):
             file_path = os.path.join(base_path, f"{sap_id}.json")
@@ -115,20 +116,32 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
 # Action get_tags_data
 @router.post('/get_tags_data', tags=['TagsData'])
 async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
-    resp = await TagsData.get_all(resp_type='plain')
-    print(resp)
-    res = resp.get("data", [])
+    limit = 10000
+    res = []
+    skip = 0
+    while True:
+        resp = await TagsData.get_all(urdhva_base.queryparams.QueryParams(limit=limit, skip=skip, 
+                                                                          sort=json.dumps({'created_at': 'DESC'})),
+                                    resp_type='plain')
+        res.extend(resp['data'])
+        if not resp['data'] or len(resp['data']) < limit:
+            break
+        skip += 1
     if res:
         res = pl.DataFrame(res)
+        # Split equipment_name and extract name
         res = res.with_columns(
             pl.col("equipment_name").str.split('@').alias("split_name")
-        )
-        print("res --> ", res)
-        # Extract name and location from the split result
-        res = res.with_columns(
+        ).with_columns(
             pl.col("split_name").list.get(0).alias("equipment_name")
-        ).drop("split_name")  # Drop the intermediate split column
-        print("res ---> ", res)
-        res = res.select(['sap_id', 'name', 'zone', 'device_type', 'equipment_name', 'count', 'system'])
-        print(res)  
-    return res.to_dicts()
+        ).drop("split_name")  # Drop intermediate column
+        # Convert count to integer
+        res = res.with_columns(pl.col("count").cast(pl.Int64, strict=False))
+        # Aggregate count based on device_type and system, keeping sap_id and location_name
+        res = res.group_by(["device_type", "system","name"]).agg([
+            pl.col("count").sum().alias("total_count"),
+            pl.col("sap_id").first(),  # Keep first sap_id (change to list() if needed)
+            # pl.col("name").first()  # Keep first location_name
+        ])
+        print(res)
+        return {"status": True, "message": "Success", "data": res.to_dicts()}
