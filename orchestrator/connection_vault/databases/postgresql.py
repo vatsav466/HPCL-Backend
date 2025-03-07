@@ -493,7 +493,7 @@ class Postgresql(BaseAction):
                                 value = condition.get("value")
 
                                 # This was to remove empty or * values from the query
-                                if cond in ['=', 'equals'] and value and value.lower() in ['*', '_empty', 'all']:
+                                if cond in ['=', 'equals'] and value and value.lower() in ['*', '_empty', 'all', '']:
                                     continue
                                 
                                 if key is not None and value is not None:  # Ensure required fields are present
