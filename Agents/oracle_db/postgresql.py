@@ -14,7 +14,7 @@ json_file = "config.json"
 try:
     with open(json_file, "r", encoding="utf-8") as file:
         config = json.load(file)
-    print("✅ JSON loaded successfully!")
+    print("JSON loaded successfully!")
 
     # Optional: Print some sample data to verify it's loaded correctly
     print(f"Oracle Host: {config['oracle']['host']}")
@@ -22,13 +22,13 @@ try:
     print(f"First Oracle Table: {config['oracle_tables'][0]}")
 
 except json.JSONDecodeError as e:
-    print(f"❌ JSON parsing error: {e}")
+    print(f"JSON parsing error: {e}")
     config = None  # Prevent using an invalid config
 except FileNotFoundError:
-    print(f"❌ JSON file not found: {json_file}")
+    print(f"JSON file not found: {json_file}")
     config = None
 except Exception as e:
-    print(f"❌ Unexpected error: {e}")
+    print(f"Unexpected error: {e}")
     config = None
 
 
@@ -36,7 +36,7 @@ class Postgresql:
     def __init__(self):
         """Initialize PostgreSQL connection details."""
         if config is None:
-            raise ValueError("❌ Configuration not loaded. Cannot proceed.")
+            raise ValueError("Configuration not loaded. Cannot proceed.")
         self.params = config['postgresql']
 
     def get_connection(self):
