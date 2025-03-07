@@ -160,5 +160,5 @@ async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
         if attempt < MAX_RETRIES - 1:
             time.sleep(RETRY_DELAY * (2 ** attempt))
         else:
-            return False, {}
-    return False, {}
+            return ""
+    return ""
