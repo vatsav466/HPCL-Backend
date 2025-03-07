@@ -131,6 +131,6 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         res = res.group_by(["device_type", "system"]).agg([
             pl.col("count").sum().alias("total_count"),
             pl.col("sap_id").first(),  # Keep first sap_id (change to list() if needed)
-            pl.col("location_name").first()  # Keep first location_name
+            pl.col("name").first()  # Keep first location_name
         ])
         return {"status": True, "message": "Success", "data": res.to_dicts()}
