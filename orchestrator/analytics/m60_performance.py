@@ -333,6 +333,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     if '"FYC"' not in [x['key'] for x in filters]:
                         cross_filters.append(condition)
                 else:
+                    if ',' in condition['value']:
+                        condition['cond'] = 'in'
+                        condition['value'] = condition['value'].split(',')
                     if condition['key'].strip('"') == 'resp_format':
                         if condition['value'] != 'heat_map':
                             cross_filters.append(condition)
@@ -345,20 +348,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         else:
             return ""
     where_conditions = []
-    for filter in filters:
-        if ',' in filter['value']:
-            filter['cond'] = 'in'
-            filter['value'] = filter['value'].split(',')
-    # Modifying month name filter for cumulative
-    for filter in cross_filters:
-        if filter['key'].strip('"') == 'month_name' and ',' in filter['value']:
-            filter['cond'] = 'in'
-            filter['value'] = filter['value'].split(',')
-        if 'cumulative' in [x['key'] for x in cross_filters] and len(cross_filters) == 1:
-            cross_filters = []
-        else:
-            print('more filters are present')
-    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
         where_conditions = [clause]
     # For history table
@@ -366,7 +356,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         rec['key'] = rec['key'].strip('"')
 
     where_conditions_history = []
-    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
         where_conditions_history = [clause]
     # Data Retrival for target data
@@ -525,7 +515,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         Charts_Get_Distinct_ValuesParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Get_Distinct_ValuesParams.action = 'get_distinct_values'
         Charts_Get_Distinct_ValuesParams.column = previous_keys
-        sorted_cross_filters[-1]['cond'] = '='
+        
+        if sorted_cross_filters[-1].get('cond') not in [' ', 'in', 'one-off']:
+            sorted_cross_filters[-1]['cond'] = '='
         Charts_Get_Distinct_ValuesParams.where_cond = [sorted_cross_filters[-1]]
         function = await charts_connection_vault_routing(Charts_Get_Distinct_ValuesParams)
         resp = await function(schema_name='public', table_name="MOM_DAY_LEVEL_DATA",
@@ -865,3 +857,4 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
         # For regular drill down widgets
         return {key: value.to_dict() for key, value in
                 df.to_dict(orient='series').items()}, hist_growth_details, tgt_growth_details
+
