@@ -3654,6 +3654,9 @@
                 },
                 {
                     "name": "things_board_device_data"
+                },
+                {
+                    "name": "get_tags_data"
                 }
             ]
         },
@@ -3669,6 +3672,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_tags_data"
                 }
             ]
         },
@@ -3696,6 +3702,9 @@
                 },
                 {
                     "name": "things_board_device_data"
+                },
+                {
+                    "name": "get_tags_data"
                 }
             ]
         },
@@ -4128,6 +4137,10 @@
         {
             "name": "things_board_device_data",
             "displayName": "things_board_device_data"
+        },
+        {
+            "name": "get_tags_data",
+            "displayName": "get_tags_data"
         },
         {
             "name": "get_pi_score",

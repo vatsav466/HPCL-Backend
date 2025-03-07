@@ -5060,7 +5060,10 @@ class TagsDataSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    device_count: Mapped[typing.Optional[str]] = mapped_column("device_count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    count: Mapped[typing.Optional[str]] = mapped_column("count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5069,7 +5072,10 @@ class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     name: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
-    device_count: typing.Optional[str] = pydantic.Field("", **{})
+    count: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    system: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -5085,7 +5091,10 @@ class TagsData(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     name: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
-    device_count: typing.Optional[str] = pydantic.Field("", **{})
+    count: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    system: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -5102,6 +5111,14 @@ class TagsDataGetResp(pydantic.BaseModel):
 
 
 class Tagsdata_Things_Board_Device_DataParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tagsdata_Get_Tags_DataParams(pydantic.BaseModel):
     pass
 
     class Config:
