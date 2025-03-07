@@ -4996,8 +4996,7 @@ class GlobalAnalytics:
     @staticmethod
     async def tas_maintenance_fault(filters, cross_filters, drill_state):
         try:
-            alert_status = drill_state.split(',')[0]
-            date = any("date" in string.lower() for string in drill_state.split(","))
+            date = any("date" in string.lower() for string in drill_state)
 
             # Lookup dictionaries for interlock categories
             maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
