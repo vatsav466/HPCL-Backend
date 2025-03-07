@@ -164,7 +164,9 @@ async def get_va_levels(bu: str, violation_type: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
     if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
         va_mapping = va_mapping[bu][violation_type]
+        print("va_mapping: ", va_mapping)
         va_alert_count = await get_va_alerts_count(bu=bu, violation_type=violation_type)
+        print("va_alert_count: ", va_alert_count)
         previous_count = 0
         for key, value in va_mapping['escalations'].items():
             if value['condition'] == "<":
