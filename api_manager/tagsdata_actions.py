@@ -4,65 +4,131 @@ import fastapi
 import json
 import traceback
 import polars as pl
-import pandas as pd
+import os
+from collections import defaultdict
 import utilities.connection_mapping as connection_mapping
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
-
+from utilities.device_data_mapping import device_mapping
 
 router = fastapi.APIRouter(prefix='/tagsdata')
+# Create a dictionary for quick lookup
+device_mapping_dict = {device["device_type"]: device["sensor_name"] for device in device_mapping}
 
-
-# Action things_board_device_data
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
     try:
+        # Setup connection parameters
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         
-        lpg_query = "SELECT bu, sap_id, name FROM location_master WHERE bu = 'TAS' "
-        try:
-            df = await function(query=lpg_query)
-            df = pl.DataFrame(df)
-            print("df", df.columns)
-            print("df", df)
-            base_path = "/opt/ceg/algo/things_board/device_data/"  # Update with actual path
+        # Query location_master to get bu, sap_id, zone, and name
+        lpg_query = "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
+        df = await function(query=lpg_query)
+        df = pl.DataFrame(df)
+        
+        base_path = "/opt/ceg/algo/dnc_backend_v2/things_board/device_data"  # Update with actual path
+        
+        async def process_device_data(sap_id, zone, name):
+            file_path = os.path.join(base_path, f"{sap_id}.json")
+            if not os.path.exists(file_path):
+                return pl.DataFrame()
             
-            async def process_json(sap_id):
-                file_path = os.path.join(base_path, f"{sap_id}.json")
-                if os.path.exists(file_path):
-                    try:
-                        with open(file_path, 'r') as file:
-                            data = json.load(file)
-                            # Extract the 'data' key if it exists
-                            if isinstance(data, dict) and "data" in data:
-                                data = data["data"]
-                            # Ensure data is a list
-                            if isinstance(data, list) and data:
-                                df_json = pl.DataFrame(data)
-                                if "device_type" in df_json.columns:
-                                    grouped_df = df_json.group_by("device_type").len().rename({"len": "count"})
-                                    return grouped_df.with_columns(pl.col("count").cast(pl.Int64))  # Ensure type consistency                    
-                    except Exception as e:
-                        print(f"Error reading {file_path}: {e}")
-                # Return an empty DataFrame if no data is found
-                return pl.DataFrame({"device_type": [], "count": []}, schema={"device_type": pl.Utf8, "count": pl.Int64})
+            try:
+                with open(file_path, 'r') as file:
+                    json_data = json.load(file)
+                    devices = json_data.get('data', [])
+            except Exception as e:
+                print(f"Error reading {file_path}: {e}")
+                return pl.DataFrame()
             
-            result_frames = []
-            for sap_id in df["sap_id"].to_list():
-                counts_df = await process_json(sap_id)
-                counts_df = counts_df.with_columns(pl.lit(sap_id).alias("sap_id"))
-                result_frames.append(counts_df)
+            rows = []
+            for device in devices:
+                device_type = device.get('device_type', '')
+                equipment_name = device.get('device_name', '')
+                sensors = device.get('sensors', [])
+                
+                system_counts = defaultdict(int)
+                for sensor in sensors:
+                    sensor_name = sensor.get('sensor_name', '').strip()
+                    system = device_mapping_dict.get(device_type, {}).get(sensor_name)
+                    if system:
+                        system_counts[system] += 1
+                
+                for system, count in system_counts.items():
+                    rows.append({
+                        'sap_id': sap_id,
+                        'zone': zone,
+                        'name': name,
+                        'equipment_name': equipment_name,
+                        'device_type': device_type,
+                        'system': system,
+                        'count': str(count)  # Convert count to string
+                    })
             
-            final_df = pl.concat(result_frames, how="vertical") if result_frames else pl.DataFrame({"sap_id": [], "device_type": [], "count": []}, schema={"sap_id": pl.Utf8, "device_type": pl.Utf8, "count": pl.Int64})
-            final_df = final_df.join(df.select(["sap_id", "name"]), on="sap_id", how="left")
-            final_df = final_df.select(["sap_id", "name", "device_type", "count"]).to_dicts()
-            await TagsData.bulk_update(final_df, upsert=False)
-            return final_df
-        except Exception as e:
-            print(traceback.format_exc())
-            return {"status": False, "message": f"Error: {e}"}
+            return pl.DataFrame(rows) if rows else pl.DataFrame()
+        
+        result_frames = []
+        for row in df.iter_rows(named=True):
+            sap_id = row['sap_id']
+            zone = row['zone']
+            name = row['name']
+            device_df = await process_device_data(sap_id, zone, name)
+            if not device_df.is_empty():
+                result_frames.append(device_df)
+        
+        if result_frames:
+            final_df = pl.concat(result_frames)
+        else:
+            final_df = pl.DataFrame(schema={
+                'sap_id': pl.Utf8,
+                'zone': pl.Utf8,
+                'name': pl.Utf8,
+                'equipment_name': pl.Utf8,
+                'device_type': pl.Utf8,
+                'system': pl.Utf8,
+                'count': pl.Utf8  # Ensure count is a string
+            })
+        
+        # Convert all records before inserting
+        final_records = final_df.to_dicts()
+        
+        # Ensure count is stored as string
+        final_records = [{**record, 'count': str(record['count'])} for record in final_records]
+
+        # Ensure data is not empty before inserting
+        if not final_records:
+            return {"status": False, "message": "No data to insert"}
+
+        print("Final Records:", final_records)  # Debugging step
+
+        # Insert/update records
+        await TagsData.bulk_update(final_records, upsert=False)
+
+        return {"status": True, "message": "Data inserted successfully", "data": final_records}
+
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": f"Error: {e}"}
+
+# Action get_tags_data
+@router.post('/get_tags_data', tags=['TagsData'])
+async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
+    resp = await TagsData.get_all(resp_type='plain')
+    print(resp)
+    res = resp.get("data", [])
+    if res:
+        res = pl.DataFrame(res)
+        res = res.with_columns(
+            pl.col("equipment_name").str.split('@').alias("split_name")
+        )
+        print("res --> ", res)
+        # Extract name and location from the split result
+        res = res.with_columns(
+            pl.col("split_name").list.get(0).alias("equipment_name")
+        ).drop("split_name")  # Drop the intermediate split column
+        print("res ---> ", res)
+        res = res.select(['sap_id', 'name', 'zone', 'device_type', 'equipment_name', 'count', 'system'])
+        print(res)  
+    return res.to_dicts()
