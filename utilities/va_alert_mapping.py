@@ -737,6 +737,7 @@ VA_Alert_Mapping = {
         "Fire-Detection": {
             "name": "Fire",
             "severity": "Critical",
+            "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
@@ -764,6 +765,7 @@ VA_Alert_Mapping = {
         "Fire-Extinguisher": {
             "name": "Fire Extinguisher Non Compliance (TT)",
             "severity": "High",
+            "period": "weekly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
