@@ -116,23 +116,18 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
 @router.post('/get_tags_data', tags=['TagsData'])
 async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
     resp = await TagsData.get_all(resp_type='plain')
-    print(resp)
     res = resp.get("data", [])
-
     if res:
         res = pl.DataFrame(res)
-        
         # Split equipment_name and extract name
         res = res.with_columns(
             pl.col("equipment_name").str.split('@').alias("split_name")
         ).with_columns(
             pl.col("split_name").list.get(0).alias("equipment_name")
         ).drop("split_name")  # Drop intermediate column
-
+        res = res.with_columns(pl.col("count").cast(pl.Int64, strict=False))
         # Aggregate count based on device_type and system
         res = res.group_by(["device_type", "system"]).agg(
             pl.col("count").sum().alias("total_count")
         )
-
-        print("Aggregated Data --->", res)
         return {"status": True, "message": "Success", "data": res.to_dicts()}
