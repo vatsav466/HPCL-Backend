@@ -14,49 +14,271 @@ VA_Alert_Mapping = {
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
                 }
             }
         },
         "SMOKE": {
             "name": "Smoke Detection",
-            "severity": "Critical"
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "Fire": {
             "name": "Fire Detection",
-            "severity": "Critical"
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE_OF_EARTHING": {
             "name": "Absence Of Earthing",
-            "severity": "Critical"
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE_OF_WHEELCHOCK": {
             "name": "Absence Of Wheelchock",
-            "severity": "High"
+            "severity": "High",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE_OF_FIRE_EXTINGUISHER_DECANTATION": {
             "name": "Absence Of Fire Extinguisher Decantation",
-            "severity": "High"
+            "severity": "High",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "UNAUTHORISED_FILLING_OF_CONTAINER": {
             "name": "Unauthorised Filling Of Container",
-            "severity": "Medium"
+            "severity": "Medium",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ALIGHT_FROM_TWO_WHEELER": {
             "name": "Alight From Two Wheeler",
-            "severity": "Medium"
+            "severity": "Medium",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE OF EARTHING": {
             "name": "Absence Of Earthing",
-            "severity": "Critical"
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         },
         "ABSENCE OF WHEELCHOCK": {
             "name": "Absence Of Wheelchock",
-            "severity": "High"
+            "severity": "High",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 10,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 25,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": ""
+                }
+            }
         }
     },
     "TAS": {
