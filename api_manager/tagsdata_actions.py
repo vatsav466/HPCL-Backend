@@ -28,7 +28,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         df = await function(query=lpg_query)
         df = pl.DataFrame(df)
         
-        base_path = "/opt/ceg/algo/dnc_backend_v2/things_board/device_data"  # Update with actual path
+        base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
         
         async def process_device_data(sap_id, zone, name):
             file_path = os.path.join(base_path, f"{sap_id}.json")
