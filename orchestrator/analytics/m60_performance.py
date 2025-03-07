@@ -345,6 +345,19 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         else:
             return ""
     where_conditions = []
+    for filter in filters:
+        if ',' in filter['value']:
+            filter['cond'] = 'in'
+            filter['value'] = filter['value'].split(',')
+    # Modifying month name filter for cumulative
+    for filter in cross_filters:
+        if filter['key'].strip('"') == 'month_name' and ',' in filter['value']:
+            filter['cond'] = 'in'
+            filter['value'] = filter['value'].split(',')
+        if 'cumulative' in [x['key'] for x in cross_filters] and len(cross_filters) == 1:
+            cross_filters = []
+        else:
+            print('more filters are present')
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:
         where_conditions = [clause]
@@ -580,7 +593,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         final_resp['cumulative'] = {}
                     final_resp['cumulative'][each_key] = ''
         if resp_format == 'heat_map':
-
             hist_xaxis = []
             tgt_xaxis = []
             # xAxis.extend([x['title'].split('_')[0]+'_'+x['title'].split('_')[1] for x in growth_details if '_' in x else x.split()[0]])
@@ -589,9 +601,21 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             #                   else x for x in growth_details if isinstance(x, dict) and 'title' in x])
             hist_xaxis.extend(
                 ['_'.join(x['title'].split('_')[:2]) for x in hist_growth_details if 'hist' in x['title'].lower()])
+            if len(hist_xaxis)>0:
+                di = final_resp[0]
+                li = merged_df['month_name'].unique().tolist()
+                req_index = li.index(hist_xaxis[1].split('_')[0])
+                li_req = li[:req_index]
+                req_str = '('+li_req[0]+'-'+li_req[-1]+')'
+                hist_xaxis[0] = hist_xaxis[0]+req_str
+                
             if '"T"' in [x['key'] for x in filters]:
                 tgt_xaxis.extend(
                     ['_'.join(x['title'].split('_')[:2]) for x in tgt_growth_details if 'tgt' in x['title'].lower()])
+                req_index = li.index(tgt_xaxis[1].split('_')[0])
+                li = li[:req_index]
+                req_str = '('+li[0]+'-'+li[-1]+')'
+                tgt_xaxis[0] = tgt_xaxis[0]+req_str
                 # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower()
                 #               else x for x in growth_details if isinstance(x, dict) and 'title' in x])
                 # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
