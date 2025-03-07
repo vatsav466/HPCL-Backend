@@ -691,6 +691,13 @@ VA_Alert_Mapping = {
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
+                    "condition": "<>",
+                    "value": 60,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal HSE LPG",
+                    "escalation_time": "PT6H"
+                },
+                "level - 3": {
                     "condition": ">",
                     "value": 60,
                     "assign_role": "Zonal Operations Head LPG",
@@ -934,6 +941,13 @@ VA_Alert_Mapping = {
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
+                    "condition": "<>",
+                    "value": 60,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal HSE LPG",
+                    "escalation_time": "PT6H"
+                },
+                "level - 3": {
                     "condition": ">",
                     "value": 60,
                     "assign_role": "Zonal Operations Head LPG",
@@ -983,6 +997,13 @@ VA_Alert_Mapping = {
                     "escalation_time": "PT6H"
                 },
                 "level - 2": {
+                    "condition": "<>",
+                    "value": 100,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal HSE LPG",
+                    "escalation_time": "PT6H"
+                },
+                "level - 3": {
                     "condition": ">",
                     "value": 100,
                     "assign_role": "Zonal Operations Head LPG",
