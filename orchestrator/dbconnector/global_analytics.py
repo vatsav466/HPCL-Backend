@@ -5024,14 +5024,14 @@ class GlobalAnalytics:
                     end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                 if filter.key == "Y" and filter.value.lower() == "true":
                     is_yearly_data = True
-                if filter.key.lower() == "m" and filter.value.lower() == "true":
+                if filter.key.lower() == "M" and filter.value.lower() == "true":
                     is_monthly_data = True
-                if filter.key.lower() == "d" and filter.value.lower() == "true":
+                if filter.key.lower() == "D" and filter.value.lower() == "true":
                     is_daily_data = True
-                if filter.key == "year":
+                if filter.key == "YEAR":
                     start_year, end_year = map(int, filter.value.split("-"))
                     valid_years = {year for year in range(start_year, end_year + 1)}
-                if filter.key == "month":
+                if filter.key == "MONTH":
                     month_mapping = {
                         "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
                         "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
