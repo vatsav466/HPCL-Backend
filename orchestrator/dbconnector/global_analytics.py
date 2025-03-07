@@ -5002,7 +5002,56 @@ class GlobalAnalytics:
         fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
         normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
 
-        # Set default date range to last 1 year
+        # # Set default date range to last 1 year
+        # end_date = datetime.now()
+        # start_date = end_date - timedelta(days=365)
+
+        # # Flags for data type
+        # is_yearly_data = False
+        # is_monthly_data = False
+        # is_daily_data = False
+        # valid_years = set()
+        # valid_months = set()
+
+        # filter_keys = [rec.key.strip('') for rec in cross_filters]
+
+        # # Handle cross_filters for date range and yearly condition
+        # if cross_filters:
+        #     for filter in cross_filters:
+        #         if "DATE" in filter.key:
+        #             date_parts = filter.value.split(',')
+        #             start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+        #             end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+        #         if filter.key == "Y" and filter.value.lower() == "true":
+        #             is_yearly_data = True
+        #         if filter.key.lower() == "M" and filter.value.lower() == "true":
+        #             is_monthly_data = True
+        #         if filter.key.lower() == "D" and filter.value.lower() == "true":
+        #             is_daily_data = True
+        #         if filter.key == "YEAR":
+        #             start_year, end_year = map(int, filter.value.split("-"))
+        #             valid_years = {year for year in range(start_year, end_year + 1)}
+        #         if filter.key == "MONTH":
+        #             month_mapping = {
+        #                 "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+        #                 "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+        #             }
+        #             valid_months = {month_mapping.get(filter.value)} if filter.value in month_mapping else set()
+
+        # # SQL Query to fetch alert data
+        # query = f"""
+        #     SELECT 
+        #         DATE(created_at) AS created_date,
+        #         sop_id,
+        #         interlock_name,
+        #         COUNT(*) AS alert_count
+        #     FROM alerts
+        #     WHERE bu = 'TAS' AND alert_section = 'TAS' 
+        #         AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'
+        #     GROUP BY created_date, sop_id, interlock_name
+        #     ORDER BY created_date DESC, alert_count DESC;
+        # """
+        # Default date range: last 1 year
         end_date = datetime.now()
         start_date = end_date - timedelta(days=365)
 
@@ -5012,6 +5061,7 @@ class GlobalAnalytics:
         is_daily_data = False
         valid_years = set()
         valid_months = set()
+        date_filter_applied = False  # Flag to track if DATE filter is present
 
         filter_keys = [rec.key.strip('') for rec in cross_filters]
 
@@ -5022,21 +5072,26 @@ class GlobalAnalytics:
                     date_parts = filter.value.split(',')
                     start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
                     end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                    date_filter_applied = True  # Mark that a DATE filter was applied
+                
                 if filter.key == "Y" and filter.value.lower() == "true":
                     is_yearly_data = True
-                if filter.key.lower() == "M" and filter.value.lower() == "true":
+                if filter.key.lower() == "m" and filter.value.lower() == "true":
                     is_monthly_data = True
-                if filter.key.lower() == "D" and filter.value.lower() == "true":
+                if filter.key.lower() == "d" and filter.value.lower() == "true":
                     is_daily_data = True
-                if filter.key == "YEAR":
+                if filter.key == "year":
                     start_year, end_year = map(int, filter.value.split("-"))
                     valid_years = {year for year in range(start_year, end_year + 1)}
-                if filter.key == "MONTH":
+                if filter.key == "month":
                     month_mapping = {
                         "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
                         "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
                     }
                     valid_months = {month_mapping.get(filter.value)} if filter.value in month_mapping else set()
+
+        # Apply date range filter in SQL query only if DATE filter is given
+        date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
 
         # SQL Query to fetch alert data
         query = f"""
@@ -5047,7 +5102,7 @@ class GlobalAnalytics:
                 COUNT(*) AS alert_count
             FROM alerts
             WHERE bu = 'TAS' AND alert_section = 'TAS' 
-                AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'
+                {date_condition}
             GROUP BY created_date, sop_id, interlock_name
             ORDER BY created_date DESC, alert_count DESC;
         """
