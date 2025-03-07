@@ -5001,56 +5001,6 @@ class GlobalAnalytics:
         maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
         fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
         normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
-
-        # # Set default date range to last 1 year
-        # end_date = datetime.now()
-        # start_date = end_date - timedelta(days=365)
-
-        # # Flags for data type
-        # is_yearly_data = False
-        # is_monthly_data = False
-        # is_daily_data = False
-        # valid_years = set()
-        # valid_months = set()
-
-        # filter_keys = [rec.key.strip('') for rec in cross_filters]
-
-        # # Handle cross_filters for date range and yearly condition
-        # if cross_filters:
-        #     for filter in cross_filters:
-        #         if "DATE" in filter.key:
-        #             date_parts = filter.value.split(',')
-        #             start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-        #             end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-        #         if filter.key == "Y" and filter.value.lower() == "true":
-        #             is_yearly_data = True
-        #         if filter.key.lower() == "M" and filter.value.lower() == "true":
-        #             is_monthly_data = True
-        #         if filter.key.lower() == "D" and filter.value.lower() == "true":
-        #             is_daily_data = True
-        #         if filter.key == "YEAR":
-        #             start_year, end_year = map(int, filter.value.split("-"))
-        #             valid_years = {year for year in range(start_year, end_year + 1)}
-        #         if filter.key == "MONTH":
-        #             month_mapping = {
-        #                 "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-        #                 "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
-        #             }
-        #             valid_months = {month_mapping.get(filter.value)} if filter.value in month_mapping else set()
-
-        # # SQL Query to fetch alert data
-        # query = f"""
-        #     SELECT 
-        #         DATE(created_at) AS created_date,
-        #         sop_id,
-        #         interlock_name,
-        #         COUNT(*) AS alert_count
-        #     FROM alerts
-        #     WHERE bu = 'TAS' AND alert_section = 'TAS' 
-        #         AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'
-        #     GROUP BY created_date, sop_id, interlock_name
-        #     ORDER BY created_date DESC, alert_count DESC;
-        # """
         # Default date range: last 1 year
         end_date = datetime.now()
         start_date = end_date - timedelta(days=365)
@@ -5179,10 +5129,20 @@ class GlobalAnalytics:
                     category = "process"
 
                 # Initialize structure if missing
-                result.setdefault(category, {}).setdefault(last_year_range, {}).setdefault(alert_type, 0)
-
-                # Add count (ensures merging of "gantry" into "process")
-                result[category][last_year_range][alert_type] += count
+                result.setdefault(category, {}).setdefault(last_year_range, {}).setdefault(alert_type, {
+                    "total": 0,
+                    "details": []
+                })
+                
+                # Add count to total
+                result[category][last_year_range][alert_type]["total"] += count
+                
+                # Add interlock details
+                result[category][last_year_range][alert_type]["details"].append({
+                    "interlock_name": interlock_name,
+                    "sop_id": sop_id,
+                    "count": count
+                })
             
             csv_data = [{"category": cat, "year_range": yr, **data} for cat, years in result.items() for yr, data in years.items()]
             csv_file_path = "/tmp/yearly_analog_alert_data.csv"
@@ -5212,10 +5172,20 @@ class GlobalAnalytics:
                     category = "process"
 
                 # Initialize structure if missing
-                result.setdefault(category, {}).setdefault(month_year, {}).setdefault(alert_type, 0)
+                result.setdefault(category, {}).setdefault(month_year, {}).setdefault(alert_type, {
+                    "total": 0,
+                    "details": []
+                })
 
-                # Add count (ensures merging of "gantry" into "process")
-                result[category][month_year][alert_type] += count
+                # Add count to total
+                result[category][month_year][alert_type]["total"] += count
+                
+                # Add interlock details
+                result[category][month_year][alert_type]["details"].append({
+                    "interlock_name": interlock_name,
+                    "sop_id": sop_id,
+                    "count": count
+                })
             print("result -> ", result)
             csv_data = [{"category": cat, "month_year": mnth, **data} for cat, months in result.items() for mnth, data in months.items()]
             csv_file_path = "/tmp/monthly_analog_alert_data.csv"
@@ -5239,8 +5209,20 @@ class GlobalAnalytics:
                 day, category, alert_type, count = row["day"], row["alert_category"].lower(), row["alert_type"], row["total"]
                 if category == "gantry":
                     category = "process"
-                result.setdefault(category, {}).setdefault(day, {}).setdefault(alert_type, 0)
-                result[category][day][alert_type] += count
+                result.setdefault(category, {}).setdefault(day, {}).setdefault(alert_type, {
+                    "total": 0,
+                    "details": []
+                })
+                
+                # Add count to total
+                result[category][day][alert_type]["total"] += count
+                
+                # Add interlock details
+                result[category][day][alert_type]["details"].append({
+                    "interlock_name": interlock_name,
+                    "sop_id": sop_id,
+                    "count": count
+                })
             
             csv_data = [{"category": cat, "day": d, **data} for cat, days in result.items() for d, data in days.items()]
             csv_file_path = "/tmp/daily_analog_alert_data.csv"
