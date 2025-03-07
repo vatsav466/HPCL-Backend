@@ -13,6 +13,7 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
+
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 # Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
@@ -164,6 +165,16 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    # Removing extra keys like all/_empty/* to mak sure all results appear in api response
+    # Filtering cross filters
+    cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
+                     and cross_filter.get("value") and cross_filter["value"].lower() in ['*', '_empty', 'all'])]
+
+    # Filtering filters
+    filters = [filter_cond for filter_cond in filters
+               if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
+                       filter_cond["value"].lower() in ['*', '_empty', 'all'])]
+
     sbuName_req = ''
     sbuWise = False
     if '"sbu_wise"' in [x['key'] for x in cross_filters]:
@@ -334,6 +345,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             return [rec.replace('"', '').strip() for rec in group_by_filter]
         else:
             return ""
+
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     if clause:

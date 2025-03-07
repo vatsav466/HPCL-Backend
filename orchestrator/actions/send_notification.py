@@ -653,6 +653,7 @@ class SendNotification:
         """
         alert_id = self.params.get("alert_id")
         print("self.params ---> ", self.params)
+
         # Ensure self.update_alert is initialized as a dictionary
         self.update_alert = getattr(self, "update_alert", {}) or {}
 
@@ -668,7 +669,7 @@ class SendNotification:
         self.update_alert.update({
             "action_type": self.base_alert_data.get("action_type"),
             "action_msg": self.base_alert_data.get("action_msg"),
-            "assigned_user_roles": assigning_roles,  # Ensure it's a string
+            "assigned_user_roles": assigning_roles,
             # "last_mailed_to": [self.base_alert_data.get("email")] if isinstance(self.base_alert_data.get("email"), str) else self.base_alert_data.get("email", [])
             "last_mailed_to": list(self.roles_mapper.get("rolemailto", {}).keys())
         })
@@ -701,10 +702,16 @@ class SendNotification:
         # Ensure alert_history is a list and append the new update
         alert_data.setdefault("alert_history", []).append(self.update_alert)
 
-        # Only append to assigned_user_roles if message_type is "escalation"
+        # Append to assigned_user_roles only if message_type is "escalation"
         if self.params.get("messagetype", "") == "escalation":
-            alert_data.setdefault("assigned_user_roles", []).extend(self.update_alert["assigned_user_roles"])
-            alert_data["assigned_user_roles"] = list(set(alert_data["assigned_user_roles"]))  # Remove duplicates
+            # Ensure existing roles are a list
+            existing_roles = alert_data.get("assigned_user_roles", [])
+            if not isinstance(existing_roles, list):
+                existing_roles = [existing_roles]  # Convert to list if it's not already
+
+            # Append new roles, remove duplicates, and ensure it's a list
+            updated_roles = existing_roles + self.update_alert["assigned_user_roles"]
+            alert_data["assigned_user_roles"] = list(set(updated_roles))
         else:
             alert_data["assigned_user_roles"] = self.update_alert["assigned_user_roles"]
 
