@@ -5119,12 +5119,18 @@ class GlobalAnalytics:
         resp_df.write_csv("/tmp/analog_data.csv")
 
         if is_yearly_data and not is_monthly_data:
-            grouped = resp_df.group_by(["alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            grouped = resp_df.group_by(["interlock_name", "sop_id", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
             result = {}
             last_year_range = f"{start_date.year} - {end_date.year}"
             
             for row in grouped.iter_rows(named=True):
-                category, alert_type, count = row["alert_category"].lower(), row["alert_type"], row["total"]
+                interlock_name, sop_id, category, alert_type, count = (
+                    row["interlock_name"], 
+                    row["sop_id"], 
+                    row["alert_category"].lower(), 
+                    row["alert_type"], 
+                    row["total"]
+                )
                 if category == "gantry":
                     category = "process"
 
@@ -5156,11 +5162,13 @@ class GlobalAnalytics:
         resp_df = resp_df.filter(pl.col("created_date").dt.year().is_in(valid_years))
         if is_yearly_data and is_monthly_data and not is_daily_data and not resp_df.is_empty():
             resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
-            grouped = resp_df.group_by(["month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            grouped = resp_df.group_by(["interlock_name", "sop_id", "month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
             print("grouped --> ", grouped)
             result = {}
             for row in grouped.iter_rows(named=True):
-                month_year, category, alert_type, count = (
+                interlock_name, sop_id, month_year, category, alert_type, count = (
+                    row["interlock_name"],
+                    row["sop_id"],
                     row["month_year"], 
                     row["alert_category"].lower(), 
                     row["alert_type"], 
@@ -5202,11 +5210,18 @@ class GlobalAnalytics:
         )
         if is_yearly_data and is_monthly_data and is_daily_data and not resp_mont_df.is_empty():
             resp_mont_df = resp_mont_df.with_columns(pl.col("created_date").dt.strftime("%d-%b-%Y").alias("day"))
-            grouped = resp_mont_df.group_by(["day", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            grouped = resp_mont_df.group_by(["interlock_name", "sop_id", "day", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
             result = {}
             
             for row in grouped.iter_rows(named=True):
-                day, category, alert_type, count = row["day"], row["alert_category"].lower(), row["alert_type"], row["total"]
+                interlock_name, sop_id, day, category, alert_type, count = (
+                    row["interlock_name"],
+                    row["sop_id"],
+                    row["day"], 
+                    row["alert_category"].lower(), 
+                    row["alert_type"], 
+                    row["total"]
+                )
                 if category == "gantry":
                     category = "process"
                 result.setdefault(category, {}).setdefault(day, {}).setdefault(alert_type, {
@@ -5234,7 +5249,7 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "daily_data": result}
 
         # If not yearly, return regular data format
-        grouped = resp_df.group_by(["created_date", "alert_category", "alert_type"]).agg(
+        grouped = resp_df.group_by(["interlock_name", "sop_id", "created_date", "alert_category", "alert_type"]).agg(
             pl.sum("alert_count").alias("total")
         )
 
@@ -5242,8 +5257,30 @@ class GlobalAnalytics:
         result = {}
 
         for row in grouped.iter_rows(named=True):
-            date, category, alert_type, count = row["created_date"].strftime("%Y-%m-%d"), row["alert_category"].lower(), row["alert_type"], row["total"]
-            result.setdefault(date, {}).setdefault(category, {})[alert_type] = count
+            interlock_name, sop_id, date, category, alert_type, count = (
+                row["interlock_name"],
+                row["sop_id"],
+                row["created_date"].strftime("%Y-%m-%d"), 
+                row["alert_category"].lower(), 
+                row["alert_type"], 
+                row["total"]
+            )
+            
+            # Initialize structure if missing
+            result.setdefault(date, {}).setdefault(category, {}).setdefault(alert_type, {
+                "total": 0,
+                "details": []
+            })
+            
+            # Add count to total
+            result[date][category][alert_type]["total"] += count
+            
+            # Add interlock details
+            result[date][category][alert_type]["details"].append({
+                "interlock_name": interlock_name,
+                "sop_id": sop_id,
+                "count": count
+            })
 
         return {"status": True, "message": "success", "data": result}
     
