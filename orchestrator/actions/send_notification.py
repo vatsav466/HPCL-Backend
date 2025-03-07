@@ -805,13 +805,16 @@ class SendNotification:
 
     async def _get_va_roles_list(self):
         mailto = self.params.get("rolemailto", "")
-        va_mapping = \
-        va_alert_mapping.VA_Alert_Mapping[self.alert_data.get("bu", "")][self.alert_data['violation_type']]['escalations'][
-            self.params.get("va_level", "level - 1")]
-        if mailto == "0":
-            return va_mapping['assign_role']
-        if mailto == "1":
-            return va_mapping['escalation_role']
-        if mailto == "2":
-            return f"{va_mapping['assign_role']},{va_mapping['escalation_role']}"
+        if self.params.get("va_level", "level - 1") in ['', None]:
+            self.params["va_level"] = "level - 1"
+
+        va_mapping = va_alert_mapping.VA_Alert_Mapping[self.alert_data.get("bu", "")]
+        if self.alert_data['violation_type'] in va_mapping.keys():
+            va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
+            if mailto == "0":
+                return va_mapping['assign_role']
+            if mailto == "1":
+                return va_mapping['escalation_role']
+            if mailto == "2":
+                return f"{va_mapping['assign_role']},{va_mapping['escalation_role']}"
         return mailto
