@@ -7,6 +7,7 @@ import hpcl_ceg_model
 import urdhva_base.redispool
 import utilities.helpers as helpers
 import utilities.interlock_mapping as interlock_mapping
+import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.vts_analysis as vts_analysis
@@ -118,7 +119,10 @@ class AlertFactory:
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
+            alert_level = "level - 1"
             if alert_data.get("alert_section",'') in ["VA"]:
+                if alert_data.get("alert_section",'') == "VA":
+                    alert_level = await va_analysis.get_va_levels(bu=base_data['bu'], violation_type=alert_data.get('violation_type',''))
                 if alert_data.get("bu","") in ["TAS"]:
                     await redis_ins.setex(alert_data['alert_id'], 15*60, alert_resp['id'])
                 else:
@@ -143,6 +147,7 @@ class AlertFactory:
                                      "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
                                      "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
                                      "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
+                                     "va_level": {"value": alert_level, "type": "String"},
                                     "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}}
 
             # Create Interlock

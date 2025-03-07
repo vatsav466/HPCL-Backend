@@ -571,24 +571,24 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 35,
+                    "value": 2,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT6H"
+                    "escalation_time": "PT2M"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 60,
+                    "value": 20,
                     "assign_role": "Zonal Operation SOD",
                     "escalation_role": "Zonal HSE SOD",
-                    "escalation_time": "PT6H"
+                    "escalation_time": "PT3M"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 60,
+                    "value": 20,
                     "assign_role": "HQO Operation SOD",
                     "escalation_role": "HQO HSE SOD",
-                    "escalation_time": "PT6H"
+                    "escalation_time": "PT3M"
                 }
             }
         },
