@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import time
 import httpx
 import asyncio
 import hpcl_ceg_model
@@ -142,10 +143,22 @@ async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
     Returns:
     str: Unique ID.
     """
-    redis_ins = await urdhva_base.redispool.get_redis_connection()
-    redis_key = [f"{bu.upper()}", f"{sap_id.upper()}", f"{sop_id.upper()}"]
-    if device_id:
-        redis_key.append(f"_{str(device_id).upper()}")
-    number = await redis_ins.incr("_".join(redis_key))
-    redis_key.append(f"{pad_digits(number, 8)}")
-    return "_".join(redis_key)
+    MAX_RETRIES = 5
+    RETRY_DELAY = 2
+    for attempt in range(MAX_RETRIES):
+        try:
+            redis_ins = await urdhva_base.redispool.get_redis_connection()
+            redis_key = [f"{bu.upper()}", f"{sap_id.upper()}", f"{sop_id.upper()}"]
+            if device_id:
+                redis_key.append(f"_{str(device_id).upper()}")
+            number = await redis_ins.incr("_".join(redis_key))
+            redis_key.append(f"{pad_digits(number, 8)}")
+            return "_".join(redis_key)
+        except Exception as e:
+            redis_ins.close()
+            print("Error In getting location details: ", e)
+        if attempt < MAX_RETRIES - 1:
+            time.sleep(RETRY_DELAY * (2 ** attempt))
+        else:
+            return False, {}
+    return False, {}
