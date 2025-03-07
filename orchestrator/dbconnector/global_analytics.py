@@ -5042,7 +5042,7 @@ class GlobalAnalytics:
                     end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                     date_filter_applied = True  # Mark that a DATE filter was applied
                 
-                if filter.key == "Y" and filter.value.lower() == "true":
+                if filter.key == "y" and filter.value.lower() == "true":
                     is_yearly_data = True
                 if filter.key.lower() == "m" and filter.value.lower() == "true":
                     is_monthly_data = True
