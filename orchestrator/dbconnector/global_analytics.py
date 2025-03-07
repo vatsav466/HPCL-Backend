@@ -5082,8 +5082,10 @@ class GlobalAnalytics:
         query = f"""
             SELECT 
                 DATE(created_at) AS created_date,
+                sap_id,
                 sop_id,
                 interlock_name,
+                location_name,
                 COUNT(*) AS alert_count
             FROM alerts
             WHERE bu = 'TAS' AND alert_section = 'TAS' 
@@ -5119,14 +5121,16 @@ class GlobalAnalytics:
         resp_df.write_csv("/tmp/analog_data.csv")
 
         if is_yearly_data and not is_monthly_data:
-            grouped = resp_df.group_by(["interlock_name", "sop_id", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
             result = {}
             last_year_range = f"{start_date.year} - {end_date.year}"
             
             for row in grouped.iter_rows(named=True):
                 interlock_name, sop_id, category, alert_type, count = (
+                    row["sap_id"],
+                    row["location_name"], 
+                    row["sop_id"],
                     row["interlock_name"], 
-                    row["sop_id"], 
                     row["alert_category"].lower(), 
                     row["alert_type"], 
                     row["total"]
@@ -5145,8 +5149,10 @@ class GlobalAnalytics:
                 
                 # Add interlock details
                 result[category][last_year_range][alert_type]["details"].append({
-                    "interlock_name": interlock_name,
+                    "sap_id": sap_id,
+                    "location_name": location_name,
                     "sop_id": sop_id,
+                    "interlock_name": interlock_name,
                     "count": count
                 })
             
@@ -5162,13 +5168,15 @@ class GlobalAnalytics:
         resp_df = resp_df.filter(pl.col("created_date").dt.year().is_in(valid_years))
         if is_yearly_data and is_monthly_data and not is_daily_data and not resp_df.is_empty():
             resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
-            grouped = resp_df.group_by(["interlock_name", "sop_id", "month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
             print("grouped --> ", grouped)
             result = {}
             for row in grouped.iter_rows(named=True):
                 interlock_name, sop_id, month_year, category, alert_type, count = (
-                    row["interlock_name"],
+                    row["sap_id"],
+                    row["location_name"], 
                     row["sop_id"],
+                    row["interlock_name"],
                     row["month_year"], 
                     row["alert_category"].lower(), 
                     row["alert_type"], 
@@ -5190,8 +5198,10 @@ class GlobalAnalytics:
                 
                 # Add interlock details
                 result[category][month_year][alert_type]["details"].append({
-                    "interlock_name": interlock_name,
+                    "sap_id": sap_id,
+                    "location_name": location_name,
                     "sop_id": sop_id,
+                    "interlock_name": interlock_name,
                     "count": count
                 })
             print("result -> ", result)
@@ -5210,13 +5220,15 @@ class GlobalAnalytics:
         )
         if is_yearly_data and is_monthly_data and is_daily_data and not resp_mont_df.is_empty():
             resp_mont_df = resp_mont_df.with_columns(pl.col("created_date").dt.strftime("%d-%b-%Y").alias("day"))
-            grouped = resp_mont_df.group_by(["interlock_name", "sop_id", "day", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            grouped = resp_mont_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "day", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
             result = {}
             
             for row in grouped.iter_rows(named=True):
                 interlock_name, sop_id, day, category, alert_type, count = (
-                    row["interlock_name"],
+                    row["sap_id"],
+                    row["location_name"], 
                     row["sop_id"],
+                    row["interlock_name"],
                     row["day"], 
                     row["alert_category"].lower(), 
                     row["alert_type"], 
@@ -5234,8 +5246,10 @@ class GlobalAnalytics:
                 
                 # Add interlock details
                 result[category][day][alert_type]["details"].append({
-                    "interlock_name": interlock_name,
+                    "sap_id": sap_id,
+                    "location_name": location_name,
                     "sop_id": sop_id,
+                    "interlock_name": interlock_name,
                     "count": count
                 })
             
@@ -5249,7 +5263,7 @@ class GlobalAnalytics:
             return {"status": True, "message": "success", "daily_data": result}
 
         # If not yearly, return regular data format
-        grouped = resp_df.group_by(["interlock_name", "sop_id", "created_date", "alert_category", "alert_type"]).agg(
+        grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "created_date", "alert_category", "alert_type"]).agg(
             pl.sum("alert_count").alias("total")
         )
 
@@ -5258,8 +5272,10 @@ class GlobalAnalytics:
 
         for row in grouped.iter_rows(named=True):
             interlock_name, sop_id, date, category, alert_type, count = (
-                row["interlock_name"],
+                row["sap_id"],
+                row["location_name"], 
                 row["sop_id"],
+                row["interlock_name"],
                 row["created_date"].strftime("%Y-%m-%d"), 
                 row["alert_category"].lower(), 
                 row["alert_type"], 
@@ -5277,8 +5293,10 @@ class GlobalAnalytics:
             
             # Add interlock details
             result[date][category][alert_type]["details"].append({
-                "interlock_name": interlock_name,
+                "sap_id": sap_id,
+                "location_name": location_name,
                 "sop_id": sop_id,
+                "interlock_name": interlock_name,
                 "count": count
             })
 
