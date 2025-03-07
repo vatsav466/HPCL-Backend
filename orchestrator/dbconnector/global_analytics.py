@@ -5323,4 +5323,4 @@ class GlobalAnalytics:
             df = df.filter(filter_expr)
         months = [month for month in calendar.month_name if month]
         data = {"zone": df["zone"].unique().to_list(), "plant": df["name"].unique().to_list()}
-        return data
+        return {"status": True, "message": "Success","data": data}

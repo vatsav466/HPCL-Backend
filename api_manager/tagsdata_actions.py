@@ -118,17 +118,32 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
     resp = await TagsData.get_all(resp_type='plain')
     print(resp)
     res = resp.get("data", [])
+
     if res:
         res = pl.DataFrame(res)
+
+        # Split "equipment_name" on '@' and extract only the name part
         res = res.with_columns(
             pl.col("equipment_name").str.split('@').alias("split_name")
-        )
-        print("res --> ", res)
-        # Extract name and location from the split result
-        res = res.with_columns(
+        ).with_columns(
             pl.col("split_name").list.get(0).alias("equipment_name")
-        ).drop("split_name")  # Drop the intermediate split column
-        print("res ---> ", res)
-        res = res.select(['sap_id', 'name', 'zone', 'device_type', 'equipment_name', 'count', 'system'])
-        print(res)  
-    return res.to_dicts()
+        ).drop("split_name")  # Drop intermediate split column
+
+        # Compute count grouped by system and device_type
+        grouped_counts = res.group_by(["system", "device_type"]).agg(
+            pl.sum("count").alias("total_count")  # Sum count for each group
+        )
+
+        print("Grouped Counts --> ", grouped_counts)
+
+        # Merge the grouped counts back with original data
+        res = res.join(grouped_counts, on=["system", "device_type"], how="left")
+
+        # Select relevant columns
+        res = res.select([
+            'sap_id', 'name', 'zone', 'device_type','system', 'total_count'
+        ])
+
+        print(res)
+
+    return {"status": True, "message": "Success", "data": res.to_dicts()}
