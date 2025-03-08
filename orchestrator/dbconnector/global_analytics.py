@@ -5042,6 +5042,7 @@ class GlobalAnalytics:
                     COUNT(*) AS alert_count
                 FROM alerts
                 WHERE bu = 'TAS' AND alert_section = 'TAS'
+                {date_condition}
             """
 
             # Add zone filter if present
