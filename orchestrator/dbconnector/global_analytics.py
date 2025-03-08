@@ -5223,6 +5223,10 @@ class GlobalAnalytics:
         resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
         print("resp_df", resp_df)
         resp_df = resp_df.filter(pl.col("interlock_name").is_in(list(normal_interlocks.keys())))
+        resp_df = resp_df.with_columns([
+            pl.col("interlock_name").map_elements(lambda name: normal_interlocks.get(name)).alias("alert_category"),
+            pl.lit("normal").alias("alert_type")  # Since we're only keeping "normal" interlocks
+        ])
         resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
         resp_df.write_csv("/tmp/normal_alerts_data.csv")
 
