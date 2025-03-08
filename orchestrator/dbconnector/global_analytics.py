@@ -5169,6 +5169,9 @@ class GlobalAnalytics:
                         
                         if "sop_id" in row:
                             detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "interlock_name" in row:
+                            detail_item["zone"] = row["interlock_name"]
                     else:
                         # For interlock level, only include the interlock name
                         detail_item["interlock_name"] = row["interlock_name"]
@@ -5254,6 +5257,9 @@ class GlobalAnalytics:
                         
                         if "sop_id" in row:
                             detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "interlock_name" in row:
+                            detail_item["zone"] = row["interlock_name"]
                     else:
                         # For interlock level, only include the interlock name
                         detail_item["interlock_name"] = row["interlock_name"]
@@ -5470,6 +5476,9 @@ class GlobalAnalytics:
                         
                         if "sop_id" in row:
                             detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "interlock_name" in row:
+                            detail_item["zone"] = row["interlock_name"]
                     else:
                         # For interlock level, only include the interlock name
                         detail_item["interlock_name"] = row["interlock_name"]
@@ -5531,6 +5540,9 @@ class GlobalAnalytics:
                         
                         if "sop_id" in row:
                             detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "interlock_name" in row:
+                            detail_item["zone"] = row["interlock_name"]
                     else:
                         # For interlock level, only include the interlock name
                         detail_item["interlock_name"] = row["interlock_name"]
