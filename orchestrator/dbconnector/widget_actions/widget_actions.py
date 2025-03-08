@@ -202,7 +202,7 @@ widget_mapping = {
     'maintenance_fault': {},
     'interlock_name_count': {},
     'tas_maintenance_fault': {},
-    'tas_maintenance_fault_dropdown': {}
+    'tas_maintenance_fault_dropdown': {},
     'tas_normal_count': {}
 }
 
