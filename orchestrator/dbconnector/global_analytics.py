@@ -5233,15 +5233,15 @@ class GlobalAnalytics:
             
             # Add zone filter if present
             if zone_filter:
-                query += f" AND zone IN ({zone_filter})"
+                query += f" AND zone IN ('{zone_filter}')"
             
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND location_name IN ({plant_filter})"
+                query += f" AND location_name IN ('{plant_filter}')"
             
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(created_at) BETWEEN '({start_date.strftime('%Y-%m-%d')})' AND '({end_date.strftime('%Y-%m-%d')})'"
+                query += f" AND DATE(created_at) BETWEEN ('{start_date.strftime('%Y-%m-%d')}') AND ('{end_date.strftime('%Y-%m-%d')}')"
             
             # Complete the query
             query += """
