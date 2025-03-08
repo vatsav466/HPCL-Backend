@@ -5122,6 +5122,7 @@ class GlobalAnalytics:
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
             if not date:
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
