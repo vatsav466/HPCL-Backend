@@ -317,21 +317,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 1,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "Zonal Operation SOD",
                     "escalation_role": "Zonal HSE SOD",
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "HQO Operation SOD",
                     "escalation_role": "HQO HSE SOD",
                     "escalation_time": "PT30S"
@@ -935,21 +935,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 1,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "HQO Operations LPG",
                     "escalation_role": "HQO HSE LPG",
                     "escalation_time": "PT30S"
@@ -963,21 +963,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 1,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "HQO Operations LPG",
                     "escalation_role": "HQO HSE LPG",
                     "escalation_time": "PT30S"
@@ -1075,14 +1075,14 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 5,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 5,
+                    "value": 15,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT1H"
@@ -1103,14 +1103,14 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 5,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 5,
+                    "value": 15,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT1H"
