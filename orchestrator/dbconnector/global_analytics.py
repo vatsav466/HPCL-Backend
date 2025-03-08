@@ -5185,25 +5185,33 @@ class GlobalAnalytics:
     
     @staticmethod
     async def tas_normal_count(filters, cross_filters, drill_state):
-        date = True if any("date" in string for string in drill_state) else False
-        normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
+        # Initialize date flag
+        date = False
         
         # Check if zone or plant filters are present
         zone_filter = next((filter_item for filter_item in filters if "zone" in filter_item), None)
         plant_filter = next((filter_item for filter_item in filters if "location_name" in filter_item), None)
         
-        # Extract date filter from cross_filters
-        date_filter = next((filter_item for filter_item in cross_filters if "date" in filter_item), None)
+        # Initialize date filter variables
         date_filter_applied = False
         start_date = None
         end_date = None
         
-        if date_filter:
-            date_filter_applied = True
-            date_values = date_filter.get("values", [])
-            if len(date_values) >= 2:
-                start_date = datetime.strptime(date_values[0], "%Y-%m-%d")
-                end_date = datetime.strptime(date_values[1], "%Y-%m-%d")
+        # Process cross filters for date
+        if cross_filters:
+            for filter_item in cross_filters:
+                if isinstance(filter_item, dict) and filter_item.get("key") and "DATE" in filter_item["key"]:
+                    date_parts = filter_item["value"].split(',')
+                    start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                    end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                    date_filter_applied = True
+                    date = True  # Set date flag to True when date filter is found
+        
+        # Also check drill_state for date reference
+        if any("date" in string for string in drill_state):
+            date = True
+        
+        normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
         
         # Construct base SQL Query
         query = f"""
@@ -5272,7 +5280,7 @@ class GlobalAnalytics:
 
         # Apply date filtering at DataFrame level if not already applied in SQL
         if date and not date_filter_applied:
-            # If 'date' is in drill_state but no date filter applied, filter last 30 days
+            # If 'date' is true but no date filter applied, filter last 30 days
             last_30_days = datetime.now() - timedelta(days=30)
             resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
         
