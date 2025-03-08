@@ -5187,6 +5187,9 @@ class GlobalAnalytics:
     async def tas_normal_count(filters, cross_filters, drill_state):
         # Initialize date flag
         date = False
+        if "date" in drill_state:
+            date = True
+        print("date --> ", date)
         
         # Check if zone or plant filters are present
         zone_filter = next((filter_item for filter_item in filters if "zone" in filter_item), None)
@@ -5199,17 +5202,12 @@ class GlobalAnalytics:
         
         # Process cross filters for date
         if cross_filters:
-            for filter_item in cross_filters:
-                if isinstance(filter_item, dict) and filter_item.get("key") and "DATE" in filter_item["key"]:
-                    date_parts = filter_item["value"].split(',')
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    date_parts = filter.value.split(',')
                     start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
                     end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                     date_filter_applied = True
-                    date = True  # Set date flag to True when date filter is found
-        
-        # Also check drill_state for date reference
-        if any("date" in string for string in drill_state):
-            date = True
         
         normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
         
@@ -5243,7 +5241,7 @@ class GlobalAnalytics:
         
         # Add date filter directly to SQL if applied
         if date_filter_applied and start_date and end_date:
-            query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+            query += f" AND DATE(created_at) BETWEEN '({start_date.strftime('%Y-%m-%d')})' AND '({end_date.strftime('%Y-%m-%d')})'"
         
         # Complete the query
         query += """
@@ -5316,7 +5314,6 @@ class GlobalAnalytics:
                     category = "process"
 
                 result.setdefault(category, {}).setdefault(str(row["created_date"]), {}).setdefault(row["alert_type"], {
-                    "total": 0,
                     "details": []
                 })
 
@@ -5379,7 +5376,6 @@ class GlobalAnalytics:
                     category = "process"
 
                 result.setdefault(category, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {
-                    "total": 0,
                     "details": []
                 })
 
