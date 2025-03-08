@@ -5185,7 +5185,8 @@ class GlobalAnalytics:
     
     @staticmethod
     async def tas_normal_count(filters, cross_filters, drill_state):
-        date = any("date" in string.lower() for string in drill_state)
+        date = False
+        date = True if any("date" in string for string in drill_state) else False
         normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
 
         # Construct SQL Query
@@ -5257,7 +5258,7 @@ class GlobalAnalytics:
                     "details": []
                 })
 
-                result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
+                # result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
                 result[category][str(row["created_date"])][row["alert_type"]]["details"].append({
                     "sap_id": row["sap_id"],
                     "location_name": row["location_name"],
@@ -5286,7 +5287,7 @@ class GlobalAnalytics:
                     "details": []
                 })
 
-                result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
+                # result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
                 result[category][row["month_year"]][row["alert_type"]]["details"].append({
                     "sap_id": row["sap_id"],
                     "location_name": row["location_name"],
