@@ -5036,6 +5036,7 @@ class GlobalAnalytics:
                 SELECT
                     DATE(created_at) AS created_date,
                     sap_id,
+                    zone,
                     sop_id,
                     interlock_name,
                     location_name,
@@ -5123,7 +5124,7 @@ class GlobalAnalytics:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["month_year", "alert_category", "alert_type"]
+                    group_cols = ["interlock_name", "month_year", "alert_category", "alert_type"]
                     
                     if zone_filter:
                         group_cols.append("zone")
@@ -5207,7 +5208,7 @@ class GlobalAnalytics:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["created_date", "alert_category", "alert_type"]
+                    group_cols = ["interlock_name", "created_date", "alert_category", "alert_type"]
                     
                     if zone_filter:
                         group_cols.append("zone")
@@ -5424,7 +5425,7 @@ class GlobalAnalytics:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["created_date", "alert_category", "alert_type"]
+                    group_cols = ["interlock_name", "created_date", "alert_category", "alert_type"]
                     
                     if zone_filter:
                         group_cols.append("zone")
@@ -5485,7 +5486,7 @@ class GlobalAnalytics:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["month_year", "alert_category", "alert_type"]
+                    group_cols = ["interlock_name", "month_year", "alert_category", "alert_type"]
                     
                     if zone_filter:
                         group_cols.append("zone")
