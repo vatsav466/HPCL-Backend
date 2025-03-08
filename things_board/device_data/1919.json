@@ -14,7 +14,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-CR-003D.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-CR-003D.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -143,7 +143,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-CR-005A.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-CR-005A.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -272,7 +272,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-CR-005B.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-CR-005B.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -401,7 +401,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-CR-006A.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-CR-006A.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -530,7 +530,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-CR-006B.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-CR-006B.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -659,7 +659,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-CR-006C.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-CR-006C.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -788,7 +788,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-CR-006D.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-CR-006D.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -917,7 +917,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-001A.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-001A.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1046,7 +1046,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-001B.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-001B.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1175,7 +1175,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-001C.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-001C.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1304,7 +1304,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-001D.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-001D.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1433,7 +1433,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-002A.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-002A.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1562,7 +1562,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-002B.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-002B.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1691,7 +1691,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-003A.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-003A.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1820,7 +1820,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-003B.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-003B.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -1949,7 +1949,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-003C.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-003C.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2078,7 +2078,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-003E.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-003E.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2207,7 +2207,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-004A.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-004A.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2336,7 +2336,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-004B.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-004B.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2465,7 +2465,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-004C.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-004C.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2594,7 +2594,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-FR-005C.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-FR-005C.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2723,7 +2723,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-UG-0001.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-UG-0001.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2852,7 +2852,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-UG-0002.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-UG-0002.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -2981,7 +2981,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-UG-0003.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-UG-0003.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -3110,7 +3110,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-UG-0010.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-UG-0010.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -3239,7 +3239,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-UG-0013.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-UG-0013.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -3368,7 +3368,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-UG-0014.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-UG-0014.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
@@ -3497,7 +3497,7 @@
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.51-TT-UG-0015.TANK_ALERT",
+                    "sensor_tag": "TANK.51-TT-UG-0015.TANK_ALERT_ALARM",
                     "normal_value": "0"
                 },
                 {
