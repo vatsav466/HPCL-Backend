@@ -5192,9 +5192,14 @@ class GlobalAnalytics:
         print("date --> ", date)
         
         # Check if zone or plant filters are present
-        zone_filter = next((filter_item for filter_item in filters if "zone" in filter_item), None)
-        plant_filter = next((filter_item for filter_item in filters if "location_name" in filter_item), None)
-        
+        zone_filter = ''
+        plant_filter = ''
+        if filters:
+            for filter in filters:
+                if "zone" in filter.key:
+                    zone_filter = filter.value
+                if "plant" in filter.key:
+                    plant_filter = filter.value
         # Initialize date filter variables
         date_filter_applied = False
         start_date = None
@@ -5227,17 +5232,11 @@ class GlobalAnalytics:
         
         # Add zone filter if present
         if zone_filter:
-            zone_values = zone_filter.get("values", [])
-            if zone_values:
-                zone_values_str = ", ".join([f"'{zone}'" for zone in zone_values])
-                query += f" AND zone IN ({zone_values_str})"
+            query += f" AND zone IN ({zone_filter})"
         
         # Add plant/location filter if present
         if plant_filter:
-            location_values = plant_filter.get("values", [])
-            if location_values:
-                location_values_str = ", ".join([f"'{loc}'" for loc in location_values])
-                query += f" AND location_name IN ({location_values_str})"
+            query += f" AND location_name IN ({plant_filter})"
         
         # Add date filter directly to SQL if applied
         if date_filter_applied and start_date and end_date:
