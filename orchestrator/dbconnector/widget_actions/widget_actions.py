@@ -99,7 +99,8 @@ lpg_dashboard_actions = [
     'maintenance_fault',
     'interlock_name_count',
     'tas_maintenance_fault',
-    'tas_maintenance_fault_dropdown'
+    'tas_maintenance_fault_dropdown',
+    'tas_normal_count'
 ]
 
 # Todo:- import all widget action modules here
@@ -202,6 +203,7 @@ widget_mapping = {
     'interlock_name_count': {},
     'tas_maintenance_fault': {},
     'tas_maintenance_fault_dropdown': {}
+    'tas_normal_count': {}
 }
 
 
