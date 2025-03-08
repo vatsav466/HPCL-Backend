@@ -5048,15 +5048,11 @@ class GlobalAnalytics:
             # Add zone filter if present
             if zone_filter:
                 query += f" AND zone IN ('{zone_filter}')"
-            
+
             # Add plant/location filter if present
             if plant_filter:
                 query += f" AND location_name IN ('{plant_filter}')"
-            
-            # Add date filter directly to SQL if applied
-            if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(created_at) BETWEEN ('{start_date.strftime('%Y-%m-%d')}') AND ('{end_date.strftime('%Y-%m-%d')}')"
-            
+
             # Complete the query
             query += """
                 GROUP BY created_date, sop_id, zone, interlock_name, sap_id, location_name
@@ -5091,7 +5087,6 @@ class GlobalAnalytics:
             )
 
             resp_df = resp_df.filter(matches)
-
             # resp_df = resp_df.with_columns([
             #         pl.col("interlock_name").map_elements(lambda name: 
             #         maintenance_interlocks.get(name, fault_interlocks.get(name, normal_interlocks.get(name)))
@@ -5122,6 +5117,7 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            result = {}
             if not date:
                 resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
                 # Determine grouping level based on filters
@@ -5147,7 +5143,6 @@ class GlobalAnalytics:
                         pl.sum("alert_count").alias("total")
                     )
 
-                result = {}
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()
                     if category == "gantry":
@@ -5180,7 +5175,8 @@ class GlobalAnalytics:
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
-                    return {"status": True, "message": "success", "monthly_data": result}
+
+                return {"status": True, "message": "success", "monthly_data": result}
                 # # Aggregate by month-year
                 # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
                 # grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
