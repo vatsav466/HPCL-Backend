@@ -5185,6 +5185,7 @@ class GlobalAnalytics:
     
     @staticmethod
     async def tas_normal_count(filters, cross_filters, drill_state):
+        date = any("date" in string.lower() for string in drill_state)
         normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
 
         # Construct SQL Query
