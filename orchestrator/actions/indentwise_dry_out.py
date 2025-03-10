@@ -337,7 +337,7 @@ class IndentDryOut:
                 if await self._is_indent_delivered():
                     if await self._close_camunda_workflow():
                         print("Indent as been delivered but still alert is in Intial stage")
-                        print("Params: ", self.params)
+                        # print("Params: ", self.params)
                         input_data = {
                             "action_msg": "",
                             "event_tags": {
@@ -364,7 +364,7 @@ class IndentDryOut:
                 elif await self._is_indent_delivered_ims():
                     if await self._close_camunda_workflow():
                         print("Indent as been delivered but still alert is in Intial stage")
-                        print("Params: ", self.params)
+                        # print("Params: ", self.params)
                         input_data = {
                             "action_msg": "",
                             "event_tags": {
@@ -391,7 +391,7 @@ class IndentDryOut:
                 elif await self._is_indent_delivered():
                     if await self._close_camunda_workflow():
                         print("Indent as been delivered but still alert is in Intial stage")
-                        print("Params: ", self.params)
+                        # print("Params: ", self.params)
                         input_data = {
                             "action_msg": "",
                             "event_tags": {
@@ -442,7 +442,7 @@ class IndentDryOut:
                     # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                                         :-3] + "Z"
-                    logger.info(f"Updateding to existing workflow: {self.params}")
+                    # logger.info(f"Updateding to existing workflow: {self.params}")
                     await self.update_indent_no(
                         str(self.params['indent_no']),
                         str(each_indent.get("LOCN_CODE")),
@@ -490,7 +490,7 @@ class IndentDryOut:
                     # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                                         :-3] + "Z"
-                    logger.info(f"Multiple Indents: {self.params}")
+                    # logger.info(f"Multiple Indents: {self.params}")
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""))
@@ -1365,7 +1365,7 @@ class IndentDryOut:
         resp = resp[0]
         truck_regno = resp.get("TRUCK_REGNO")
         data = await vts_analysis.get_tt_current_location(truck_regno)
-        print("VTS Data: ", data)
+        # print("VTS Data: ", data)
         if data and float(data.get("start_lat")) > 0:
             input_data["action_msg"] = "VTS Enabled"
             input_data["action_type"] = "VTS"
@@ -1543,7 +1543,7 @@ class IndentDryOut:
                         break
                     else:
                         print("url: ", url)
-                        print("payload: ", payload)
+                        # print("payload: ", payload)
                         print(
                             f"Error updating {var_name} (attempt {attempt + 1}): {response.status_code} - {response.text}")
                         logger.info(
