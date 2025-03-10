@@ -100,9 +100,10 @@ async def sync_users(file_path):
         # Convert list fields to comma-separated strings
         for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area', 'escalation_level']:
             if isinstance(record[key], list):  
-                record[key] = ",".join(map(str, record[key]))  # Convert list elements to string and join with commas
+                record[key] = list(map(str, record[key])) if record[key] else None  # Convert empty lists to None
             elif not isinstance(record[key], str):  
-                record[key] = ""  # Ensure empty values are stored as an empty string
+                record[key] = None  # Ensure `None` instead of empty lists
+
 
     await hpcl_ceg_model.Users.bulk_update(data, upsert=True)
 
