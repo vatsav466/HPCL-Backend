@@ -3577,7 +3577,6 @@ class GlobalAnalytics:
                 productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "SiteArea" '
             
-            print("productivity_zone_query_ :", productivity_zone_query_)
             resp = await function(query=productivity_zone_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
@@ -3594,7 +3593,6 @@ class GlobalAnalytics:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
-        print("productivity_zone_query_ :", productivity_zone_query_)
         resp = await function(query=productivity_zone_query_)
         if resp:
             resp = pd.DataFrame(resp)
