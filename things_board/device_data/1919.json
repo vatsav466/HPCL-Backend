@@ -4903,7 +4903,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-CR-003D_BS VI HSD@Secunderabad",
+            "device_name": "51-TT-CR-003D_BS VI HSD@Secunderabad_M",
             "device_id": "1166c580-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "jds8TsZHOq5Jn2OQCV6t",
@@ -4972,7 +4972,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-CR-005A_ETHANOL@Secunderabad",
+            "device_name": "51-TT-CR-005A_ETHANOL@Secunderabad_M",
             "device_id": "117607c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "PKU8kfq2N13UXyUihsvZ",
@@ -5041,7 +5041,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-CR-005B_INTERFACE@Secunderabad",
+            "device_name": "51-TT-CR-005B_INTERFACE@Secunderabad_M",
             "device_id": "11854a00-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "ib3CRTmH0qA6EZ11w090",
@@ -5110,7 +5110,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-CR-006A_WATER@Secunderabad",
+            "device_name": "51-TT-CR-006A_WATER@Secunderabad_M",
             "device_id": "11946530-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "vKeJn1FMknRaq0PoSYWm",
@@ -5179,7 +5179,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-CR-006B_WATER@Secunderabad",
+            "device_name": "51-TT-CR-006B_WATER@Secunderabad_M",
             "device_id": "11a3ce80-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "Cz4KeBg4F9FS5NnXOcrm",
@@ -5248,7 +5248,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-CR-006C_WATER@Secunderabad",
+            "device_name": "51-TT-CR-006C_WATER@Secunderabad_M",
             "device_id": "11b2e9b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "SN6ZfZkbcPsDolpJJfmW",
@@ -5317,7 +5317,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-CR-006D_WATER@Secunderabad",
+            "device_name": "51-TT-CR-006D_WATER@Secunderabad_M",
             "device_id": "11c25300-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "KaFPqKpN9NCtrOoWCx7F",
@@ -5386,7 +5386,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-001A_BS VI MS@Secunderabad",
+            "device_name": "51-TT-FR-001A_BS VI MS@Secunderabad_M",
             "device_id": "11d19540-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "JejDfAgcDLATMTR6KWUL",
@@ -5455,7 +5455,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-001B_BS VI MS@Secunderabad",
+            "device_name": "51-TT-FR-001B_BS VI MS@Secunderabad_M",
             "device_id": "11e14cb0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "IZ3mING7ZUjhnFM4H3LA",
@@ -5524,7 +5524,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-001C_GASOHOL@Secunderabad",
+            "device_name": "51-TT-FR-001C_GASOHOL@Secunderabad_M",
             "device_id": "11eff2b0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "u3ji7o6vXynK32PisY8a",
@@ -5593,7 +5593,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-001D_INTERFACE@Secunderabad",
+            "device_name": "51-TT-FR-001D_INTERFACE@Secunderabad_M",
             "device_id": "11ff8310-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "ACOXRsVgE8zaa4zUEZrd",
@@ -5662,7 +5662,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-002A_SKO@Secunderabad",
+            "device_name": "51-TT-FR-002A_SKO@Secunderabad_M",
             "device_id": "120ec550-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "xMLcx1FJ2wcWTo2gKCvG",
@@ -5731,7 +5731,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-002B_BS VI HSD@Secunderabad",
+            "device_name": "51-TT-FR-002B_BS VI HSD@Secunderabad_M",
             "device_id": "121e0790-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "Ae66qm1MaOmLVsQxC4H2",
@@ -5800,7 +5800,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-003A_BS VI HSD@Secunderabad",
+            "device_name": "51-TT-FR-003A_BS VI HSD@Secunderabad_M",
             "device_id": "122d22c0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "eoNTWcptuJOFwl4w8STe",
@@ -5869,7 +5869,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-003B_BS VI HSD@Secunderabad",
+            "device_name": "51-TT-FR-003B_BS VI HSD@Secunderabad_M",
             "device_id": "123c6500-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "ZtTTMjj8B764t4e3GUXu",
@@ -5938,7 +5938,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-003C_ETHANOL@Secunderabad",
+            "device_name": "51-TT-FR-003C_ETHANOL@Secunderabad_M",
             "device_id": "124b8030-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "4GLsT5Xc9CsyI36UuePp",
@@ -6007,7 +6007,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-003E_BS VI HSD@Secunderabad",
+            "device_name": "51-TT-FR-003E_BS VI HSD@Secunderabad_M",
             "device_id": "125b37a0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "QwggosQd0kmxh6Ozb1zI",
@@ -6076,7 +6076,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-004A_ATF@Secunderabad",
+            "device_name": "51-TT-FR-004A_ATF@Secunderabad_M",
             "device_id": "126aa0f0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "HYQgoBsGME1OzbW1UVAo",
@@ -6145,7 +6145,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-004B_ATF@Secunderabad",
+            "device_name": "51-TT-FR-004B_ATF@Secunderabad_M",
             "device_id": "12791fe0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "BxfZQbjLKkaTpj9e13M2",
@@ -6214,7 +6214,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-004C_BS VI MS@Secunderabad",
+            "device_name": "51-TT-FR-004C_BS VI MS@Secunderabad_M",
             "device_id": "1288b040-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "UritkT7EHKYSXN3teJKC",
@@ -6283,7 +6283,7 @@
             ]
         },
         {
-            "device_name": "Maintenance-FR-005C_ETHANOL@Secunderabad",
+            "device_name": "TANK LEAKAGE STATUS@Secunderabad_M",
             "device_id": "129840a0-f7f9-11ef-a29d-95c64d391b7c",
             "device_type": "Tank Maintenance",
             "device_key": "k6m0YdhDvavHEYi1dKxA",
