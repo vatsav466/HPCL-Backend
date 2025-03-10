@@ -93,6 +93,7 @@ def fetch_data(query, getData=False, params=None):
                     password=params["password"],
                     port=params["port"]
                 )
+            pg_conn.set_session(statement_timeout=300000)
             cursor = pg_conn.cursor()
         except Exception as e:
             print("Exception :", str(e))
@@ -154,20 +155,23 @@ if __name__=="__main__":
     try:
         plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")        
         for plant in plants.iter_rows(named=True):
-            if plant["PlantName"].lower() == 'indore':
-                continue
-            print("plant :", plant["PlantName"])
-            print("-"*50)
-            print(f"Fetching for {plant['PlantName']}")
-            params={
-            "PlantName": plant["PlantName"],
-            "host": plant["host_ip"],
-            "database": plant["db_database"],
-            "user": plant["db_user"],
-            "password": plant["db_password"],
-            "port": 5432
-            }
-            get_data(params)
+            try:
+                # if plant["PlantName"].lower() == 'indore':
+                #     continue
+                print("plant :", plant["PlantName"])
+                print("-"*50)
+                print(f"Fetching for {plant['PlantName']}")
+                params={
+                "PlantName": plant["PlantName"],
+                "host": plant["host_ip"],
+                "database": plant["db_database"],
+                "user": plant["db_user"],
+                "password": plant["db_password"],
+                "port": 5432
+                }
+                get_data(params)
+            except psycopg2.errors.QueryCanceled:
+                print("Query timed out !!! ")
         print("*"*50)
         print("-- Data Insertion to lpg_operations_data completed --")
         print("*"*50)

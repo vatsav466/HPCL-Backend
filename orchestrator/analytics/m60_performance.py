@@ -333,6 +333,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     if '"FYC"' not in [x['key'] for x in filters]:
                         cross_filters.append(condition)
                 else:
+                    if ',' in condition['value']:
+                        condition['cond'] = 'in'
+                        condition['value'] = condition['value'].split(',')
                     if condition['key'].strip('"') == 'resp_format':
                         if condition['value'] != 'heat_map':
                             cross_filters.append(condition)
@@ -345,7 +348,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         else:
             return ""
     where_conditions = []
-    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
         where_conditions = [clause]
     # For history table
@@ -353,7 +356,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         rec['key'] = rec['key'].strip('"')
 
     where_conditions_history = []
-    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
         where_conditions_history = [clause]
     # Data Retrival for target data
@@ -512,7 +515,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         Charts_Get_Distinct_ValuesParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Get_Distinct_ValuesParams.action = 'get_distinct_values'
         Charts_Get_Distinct_ValuesParams.column = previous_keys
-        sorted_cross_filters[-1]['cond'] = '='
+        
+        if sorted_cross_filters[-1].get('cond') not in [' ', 'in', 'one-off']:
+            sorted_cross_filters[-1]['cond'] = '='
         Charts_Get_Distinct_ValuesParams.where_cond = [sorted_cross_filters[-1]]
         function = await charts_connection_vault_routing(Charts_Get_Distinct_ValuesParams)
         resp = await function(schema_name='public', table_name="MOM_DAY_LEVEL_DATA",
@@ -580,7 +585,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         final_resp['cumulative'] = {}
                     final_resp['cumulative'][each_key] = ''
         if resp_format == 'heat_map':
-
             hist_xaxis = []
             tgt_xaxis = []
             # xAxis.extend([x['title'].split('_')[0]+'_'+x['title'].split('_')[1] for x in growth_details if '_' in x else x.split()[0]])
@@ -589,9 +593,21 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             #                   else x for x in growth_details if isinstance(x, dict) and 'title' in x])
             hist_xaxis.extend(
                 ['_'.join(x['title'].split('_')[:2]) for x in hist_growth_details if 'hist' in x['title'].lower()])
+            if len(hist_xaxis)>0:
+                di = final_resp[0]
+                li = merged_df['month_name'].unique().tolist()
+                req_index = li.index(hist_xaxis[1].split('_')[0])
+                li_req = li[:req_index]
+                req_str = '('+li_req[0]+'-'+li_req[-1]+')'
+                hist_xaxis[0] = hist_xaxis[0]+req_str
+                
             if '"T"' in [x['key'] for x in filters]:
                 tgt_xaxis.extend(
                     ['_'.join(x['title'].split('_')[:2]) for x in tgt_growth_details if 'tgt' in x['title'].lower()])
+                req_index = li.index(tgt_xaxis[1].split('_')[0])
+                li = li[:req_index]
+                req_str = '('+li[0]+'-'+li[-1]+')'
+                tgt_xaxis[0] = tgt_xaxis[0]+req_str
                 # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower()
                 #               else x for x in growth_details if isinstance(x, dict) and 'title' in x])
                 # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
@@ -841,3 +857,4 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
         # For regular drill down widgets
         return {key: value.to_dict() for key, value in
                 df.to_dict(orient='series').items()}, hist_growth_details, tgt_growth_details
+

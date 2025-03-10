@@ -3577,7 +3577,6 @@ class GlobalAnalytics:
                 productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "SiteArea" '
             
-            print("productivity_zone_query_ :", productivity_zone_query_)
             resp = await function(query=productivity_zone_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
@@ -3594,7 +3593,6 @@ class GlobalAnalytics:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
-        print("productivity_zone_query_ :", productivity_zone_query_)
         resp = await function(query=productivity_zone_query_)
         if resp:
             resp = pd.DataFrame(resp)
@@ -4995,163 +4993,266 @@ class GlobalAnalytics:
     
     @staticmethod
     async def tas_maintenance_fault(filters, cross_filters, drill_state):
-        alert_status = drill_state.split(',')[0]
-        date = any("date" in string.lower() for string in drill_state.split(","))
-
-        # Lookup dictionaries for interlock categories
-        maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
-        fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
-        normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
-
-        # Default date range: last 1 year
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=365)
-        date_filter_applied = False  # Ensure this is initialized
-
-        # Extract filter values
-        zone_filter = next((f.value for f in (filters or []) if f.key.lower() == "zone"), None)
-        plant_filter = next((f.value for f in (filters or []) if f.key.lower() == "plant"), None)
-
-        # Construct additional filter conditions
-        additional_conditions = []
-        if zone_filter:
-            additional_conditions.append(f"zone = '{zone_filter}'")
-        if plant_filter:
-            additional_conditions.append(f"location_name = '{plant_filter}'")
-
-        # Handle cross_filters for date range
-        if cross_filters:
-            for filter in cross_filters:
-                if "DATE" in filter.key:
-                    date_parts = filter.value.split(',')
-                    start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-                    end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-                    date_filter_applied = True
-
-        # Apply date range filter
-        date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
-
-        # Combine filter conditions
-        filter_condition = " AND ".join(additional_conditions)
-        if filter_condition:
-            filter_condition = " AND " + filter_condition  
-
-        # Construct SQL Query
-        query = f"""
-            SELECT 
-                DATE(created_at) AS created_date,
-                sap_id,
-                sop_id,
-                interlock_name,
-                location_name,
-                COUNT(*) AS alert_count
-            FROM alerts
-            WHERE bu = 'TAS' AND alert_section = 'TAS' 
-                {date_condition}
-                {filter_condition}
-            GROUP BY created_date, sop_id, interlock_name, sap_id, location_name
-            ORDER BY created_date DESC, alert_count DESC;
-        """
-
-        # Execute query
-        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        
         try:
-            function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-            resp = await function(query=query)
-        except Exception as e:
-            return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
+            date = False
+            if "date" in drill_state:
+                date = True
+            print("date --> ", date)
 
-        if not resp:
-            return {"status": False, "message": "Data Not found", "data": {}}
+            # Lookup dictionaries for interlock categories
+            maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
+            fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
+            # normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
 
-        # Convert response to Polars DataFrame
-        resp_df = pl.DataFrame(resp)
-        if resp_df.is_empty():
-            return {"status": True, "data": {}}
+            # Default date range: last 1 year
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=365)
+            date_filter_applied = False  # Ensure this is initialized
 
-        resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
+            zone_filter = ''
+            plant_filter = ''
+            if filters:
+                for filter in filters:
+                    if "zone" in filter.key:
+                        zone_filter = filter.value
+                    if "plant" in filter.key:
+                        plant_filter = filter.value
 
-        # Add alert_type and alert_category columns
-        resp_df = resp_df.with_columns([
-            pl.col("interlock_name").apply(lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, normal_interlocks.get(name, None)))).alias("alert_category"),
-            pl.col("interlock_name").apply(lambda name: "maintenance" if name in maintenance_interlocks else "fault" if name in fault_interlocks else "normal").alias("alert_type")
-        ])
+            # Handle cross_filters for date range
+            if cross_filters:
+                for filter in cross_filters:
+                    if "DATE" in filter.key:
+                        date_parts = filter.value.split(',')
+                        start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                        end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                        date_filter_applied = True
 
-        resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
-        resp_df.write_csv("/tmp/analog_data.csv")
+            # Apply date range filter
+            date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
+            # Construct SQL Query
+            query = f"""
+                SELECT
+                    DATE(created_at) AS created_date,
+                    sap_id,
+                    zone,
+                    sop_id,
+                    interlock_name,
+                    location_name,
+                    COUNT(*) AS alert_count
+                FROM alerts
+                WHERE bu = 'TAS' AND alert_section = 'TAS'
+                {date_condition}
+            """
 
-        if not date:
-            # Aggregate by month-year
-            resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
-            grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
+            # Add zone filter if present
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
 
-            result = {}
-            for row in grouped.iter_rows(named=True):
-                category = row["alert_category"].lower()
-                if category == "gantry":
-                    category = "process"
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND location_name IN ('{plant_filter}')"
 
-                result.setdefault(category, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {
-                    "total": 0,
-                    "details": []
-                })
+            # Complete the query
+            query += """
+                GROUP BY created_date, sop_id, zone, interlock_name, sap_id, location_name
+                ORDER BY created_date DESC, alert_count DESC;
+            """
 
-                result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
-                result[category][row["month_year"]][row["alert_type"]]["details"].append({
-                    "sap_id": row["sap_id"],
-                    "location_name": row["location_name"],
-                    "sop_id": row["sop_id"],
-                    "interlock_name": row["interlock_name"],
-                    "count": row["total"]
-                })
+            # Execute query
+            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
-            csv_file_path = "/tmp/monthly_analog_alert_data.csv"
-            with open(csv_file_path, "w", newline="") as file:
-                writer = csv.DictWriter(file, fieldnames=["category", "month_year", "maintenance", "fault", "normal"])
-                writer.writeheader()
-                writer.writerows(result)
+            try:
+                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+                resp = await function(query=query)
+            except Exception as e:
+                return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
-            return {"status": True, "message": "success", "monthly_data": result}
-        
-        else:
-            # Filter last 30 days
-            last_30_days = datetime.now() - timedelta(days=30)
-            resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
+            if not resp:
+                return {"status": False, "message": "Data Not found", "data": {}}
 
-            # Group by daily level
-            grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "created_date", "alert_category", "alert_type"]).agg(
-                pl.sum("alert_count").alias("total")
+            # Convert response to Polars DataFrame
+            resp_df = pl.DataFrame(resp)
+            if resp_df.is_empty():
+                return {"status": True, "data": {}}
+
+            resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
+            print("resp_df", resp_df)
+            # Add alert_type and alert_category columns
+            matches = pl.col("interlock_name").is_in(
+                    list(maintenance_interlocks.keys()) + 
+                    list(fault_interlocks.keys()) 
+                    #+ list(normal_interlocks.keys())
             )
 
+            resp_df = resp_df.filter(matches)
+            resp_df = resp_df.with_columns([
+                pl.col("interlock_name").map_elements(
+                    lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name))
+                ).alias("alert_category"),
+                
+                pl.col("interlock_name").map_elements(
+                    lambda name: "Maintenance" if name in maintenance_interlocks else "Fault"
+                ).alias("alert_type")
+            ])
+            resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
+            resp_df.write_csv("/tmp/analog_data.csv")
+
+            # Apply date filtering at DataFrame level if not already applied in SQL
+            if date and not date_filter_applied:
+                # If 'date' is true but no date filter applied, filter last 30 days
+                last_30_days = datetime.now() - timedelta(days=30)
+                resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
+
             result = {}
-            for row in grouped.iter_rows(named=True):
-                category = row["alert_category"].lower()
-                if category == "gantry":
-                    category = "process"
+            if not date:
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
+                # Determine grouping level based on filters
+                if zone_filter or plant_filter:
+                    # Group by zone/plant level if those filters are present
+                    group_cols = ["interlock_name", "month_year", "alert_category", "alert_type"]
+                    
+                    if zone_filter:
+                        group_cols.append("zone")
+                    
+                    if plant_filter:
+                        group_cols.append("location_name")
+                    
+                    if zone_filter or plant_filter:
+                        group_cols.extend(["sap_id", "sop_id"])
+                        
+                    grouped = resp_df.group_by(group_cols).agg(
+                        pl.sum("alert_count").alias("total")
+                    )
+                else:
+                    # Group by interlock level (default) without sap_id and location_name
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(
+                        pl.sum("alert_count").alias("total")
+                    )
 
-                result.setdefault(category, {}).setdefault(str(row["created_date"]), {}).setdefault(row["alert_type"], {
-                    "total": 0,
-                    "details": []
-                })
+                for row in grouped.iter_rows(named=True):
+                    category = row["alert_category"].lower()
+                    # if category == "gantry":
+                    #     category = "process"
 
-                result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
-                result[category][str(row["created_date"])][row["alert_type"]]["details"].append({
-                    "sap_id": row["sap_id"],
-                    "location_name": row["location_name"],
-                    "sop_id": row["sop_id"],
-                    "interlock_name": row["interlock_name"],
-                    "count": row["total"]
-                })
+                    result.setdefault(category, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {
+                        "total": 0,
+                        "details": []
+                    })
 
-            csv_file_path = "/tmp/daily_analog_alert_data.csv"
-            with open(csv_file_path, "w", newline="") as file:
-                writer = csv.DictWriter(file, fieldnames=["category", "created_date", "maintenance", "fault", "normal"])
-                writer.writeheader()
-                writer.writerows(result)
+                    detail_item = {}
+                    
+                    if zone_filter or plant_filter:
+                        # For zone or plant filters, include sap_id and other details
+                        if "zone" in row:
+                            detail_item["zone"] = row["zone"]
+                        
+                        if "location_name" in row:
+                            detail_item["location_name"] = row["location_name"]
+                        
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "interlock_name" in row:
+                            detail_item["interlock_name"] = row["interlock_name"]
+                    else:
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
+                        # For interlock level, only include the interlock name
+                        detail_item["interlock_name"] = row["interlock_name"]
+                    
+                    detail_item["count"] = row["total"]
+                    result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
+                    result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
+                sorted_monthly_data = {
+                    month: result[category][month] for category in result for month in sorted(
+                        result[category].keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
+                    )
+                }
+                return {"status": True, "message": "success", "monthly_data": sorted_monthly_data}
+            else:
+                # Determine grouping level based on filters
+                if zone_filter or plant_filter:
+                    # Group by zone/plant level if those filters are present
+                    group_cols = ["interlock_name", "created_date", "alert_category", "alert_type"]
+                    
+                    if zone_filter:
+                        group_cols.append("zone")
+                    
+                    if plant_filter:
+                        group_cols.append("location_name")
+                    
+                    if zone_filter or plant_filter:
+                        group_cols.extend(["sap_id", "sop_id"])
+                        
+                    grouped = resp_df.group_by(group_cols).agg(
+                        pl.sum("alert_count").alias("total")
+                    )
+                else:
+                    # Group by interlock level (default) without sap_id and location_name
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "interlock_name", "created_date", "alert_category", "alert_type"]).agg(
+                        pl.sum("alert_count").alias("total")
+                    )
 
-            return {"status": True, "message": "success", "daily_data": result}
+                result = {}
+                for row in grouped.iter_rows(named=True):
+                    category = row["alert_category"].lower()
+                    # if category == "gantry":
+                    #     category = "process"
+
+                    result.setdefault(category, {}).setdefault(str(row["created_date"]), {}).setdefault(row["alert_type"], {
+                        "total": 0,
+                        "details": []
+                    })
+
+                    detail_item = {}
+                    
+                    if zone_filter or plant_filter:
+                        # For zone or plant filters, include sap_id and other details
+                        if "zone" in row:
+                            detail_item["zone"] = row["zone"]
+                        
+                        if "location_name" in row:
+                            detail_item["location_name"] = row["location_name"]
+                        
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "interlock_name" in row:
+                            detail_item["interlock_name"] = row["interlock_name"]
+                    else:
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
+                        # For interlock level, only include the interlock name
+                        detail_item["interlock_name"] = row["interlock_name"]
+                        
+                    detail_item["count"] = row["total"]
+                    result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
+                    result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
+                
+                sorted_daily_data = {
+                    category: {
+                        date: result[category][date] for date in sorted(
+                            result[category].keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
+                        )
+                    } for category in result
+                }
+
+                return {"status": True, "message": "success", "daily_data": sorted_daily_data}
+        except Exception as e:
+            print(traceback.format_exc())
     
     @staticmethod
     async def tas_maintenance_fault_dropdown(filters, cross_filters, drill_state):
@@ -5175,3 +5276,407 @@ class GlobalAnalytics:
         months = [month for month in calendar.month_name if month]
         data = {"zone": df["zone"].unique().to_list(), "plant": df["name"].unique().to_list()}
         return {"status": True, "message": "Success","data": data}
+    
+    @staticmethod
+    async def tas_normal_count(filters, cross_filters, drill_state):
+        try:
+            # Initialize date flag
+            date = False
+            if "date" in drill_state:
+                date = True
+            print("date --> ", date)
+            
+            # Check if zone or plant filters are present
+            zone_filter = ''
+            plant_filter = ''
+            if filters:
+                for filter in filters:
+                    if "zone" in filter.key:
+                        zone_filter = filter.value
+                    if "plant" in filter.key:
+                        plant_filter = filter.value
+            # Initialize date filter variables
+            date_filter_applied = False
+            start_date = None
+            end_date = None
+            
+            # Process cross filters for date
+            if cross_filters:
+                for filter in cross_filters:
+                    if "DATE" in filter.key:
+                        date_parts = filter.value.split(',')
+                        start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                        end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                        date_filter_applied = True
+            
+            normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
+            
+            # Construct base SQL Query
+            query = f"""
+                SELECT
+                    DATE(created_at) AS created_date,
+                    sap_id,
+                    zone,
+                    sop_id,
+                    interlock_name,
+                    location_name,
+                    COUNT(*) AS alert_count
+                FROM alerts
+                WHERE bu = 'TAS' AND alert_section = 'TAS'
+            """
+            
+            # Add zone filter if present
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
+            
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND location_name IN ('{plant_filter}')"
+            
+            # Add date filter directly to SQL if applied
+            if date_filter_applied and start_date and end_date:
+                query += f" AND DATE(created_at) BETWEEN ('{start_date.strftime('%Y-%m-%d')}') AND ('{end_date.strftime('%Y-%m-%d')}')"
+            
+            # Complete the query
+            query += """
+                GROUP BY created_date, sop_id, zone, interlock_name, sap_id, location_name
+                ORDER BY created_date DESC, alert_count DESC;
+            """
+
+            # Execute query
+            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+            try:
+                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+                resp = await function(query=query)
+            except Exception as e:
+                return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
+
+            if not resp:
+                return {"status": False, "message": "Data Not found", "data": {}}
+
+            # Convert response to Polars DataFrame
+            resp_df = pl.DataFrame(resp)
+            if resp_df.is_empty():
+                return {"status": True, "data": {}}
+            
+            resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
+            resp_df = resp_df.filter(pl.col("interlock_name").is_in(list(normal_interlocks.keys())))
+            resp_df = resp_df.with_columns([
+                pl.col("interlock_name").map_elements(lambda name: normal_interlocks.get(name)).alias("alert_category"),
+                pl.lit("Normal").alias("alert_type")  # Since we're only keeping "normal" interlocks
+            ])
+            resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
+            resp_df.write_csv("/tmp/normal_alerts_data.csv")
+
+            # Apply date filtering at DataFrame level if not already applied in SQL
+            if date and not date_filter_applied:
+                # If 'date' is true but no date filter applied, filter last 30 days
+                last_30_days = datetime.now() - timedelta(days=30)
+                resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
+            
+            # Handle daily data
+            if date:
+                # Determine grouping level based on filters
+                if zone_filter or plant_filter:
+                    # Group by zone/plant level if those filters are present
+                    group_cols = ["interlock_name", "created_date", "alert_category", "alert_type"]
+                    
+                    if zone_filter:
+                        group_cols.append("zone")
+                    
+                    if plant_filter:
+                        group_cols.append("location_name")
+                    
+                    if zone_filter or plant_filter:
+                        group_cols.extend(["sap_id", "sop_id"])
+                        
+                    grouped = resp_df.group_by(group_cols).agg(
+                        pl.sum("alert_count").alias("total")
+                    )
+                else:
+                    # Group by interlock level (default) without sap_id and location_name
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "interlock_name", "created_date", "alert_category", "alert_type"]).agg(
+                        pl.sum("alert_count").alias("total")
+                    )
+
+                result = {}
+                for row in grouped.iter_rows(named=True):
+                    category = row["alert_category"].lower()
+                    # if category == "gantry":
+                    #     category = "process"
+
+                    result.setdefault(category, {}).setdefault(str(row["created_date"]), {}).setdefault(row["alert_type"], {
+                        "details": []
+                    })
+
+                    detail_item = {}
+                    
+                    if zone_filter or plant_filter:
+                        # For zone or plant filters, include sap_id and other details
+                        if "zone" in row:
+                            detail_item["zone"] = row["zone"]
+                        
+                        if "location_name" in row:
+                            detail_item["location_name"] = row["location_name"]
+                        
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "interlock_name" in row:
+                            detail_item["interlock_name"] = row["interlock_name"]
+                    else:
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
+                        # For interlock level, only include the interlock name
+                        detail_item["interlock_name"] = row["interlock_name"]
+                        
+                    detail_item["count"] = row["total"]
+                    result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
+                # Sort daily_data by date (latest first)
+                sorted_daily_data = {
+                    category: {
+                        date: result[category][date] for date in sorted(
+                            result[category].keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
+                        )
+                    } for category in result
+                }
+                return {"status": True, "message": "success", "daily_data": sorted_daily_data}
+
+            else:
+                # Monthly aggregation
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
+                
+                # Determine grouping level based on filters
+                if zone_filter or plant_filter:
+                    # Group by zone/plant level if those filters are present
+                    group_cols = ["interlock_name", "month_year", "alert_category", "alert_type"]
+                    
+                    if zone_filter:
+                        group_cols.append("zone")
+                    
+                    if plant_filter:
+                        group_cols.append("location_name")
+                    
+                    if zone_filter or plant_filter:
+                        group_cols.extend(["sap_id", "sop_id"])
+                        
+                    grouped = resp_df.group_by(group_cols).agg(
+                        pl.sum("alert_count").alias("total")
+                    )
+                else:
+                    # Group by interlock level (default) without sap_id and location_name
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(
+                        pl.sum("alert_count").alias("total")
+                    )
+
+                result = {}
+                for row in grouped.iter_rows(named=True):
+                    category = row["alert_category"].lower()
+                    # if category == "gantry":
+                    #     category = "process"
+
+                    result.setdefault(category, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {
+                        "details": []
+                    })
+
+                    detail_item = {}
+                    
+                    if zone_filter or plant_filter:
+                        # For zone or plant filters, include sap_id and other details
+                        if "zone" in row:
+                            detail_item["zone"] = row["zone"]
+                        
+                        if "location_name" in row:
+                            detail_item["location_name"] = row["location_name"]
+                        
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "interlock_name" in row:
+                            detail_item["interlock_name"] = row["interlock_name"]
+                    else:
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
+                        # For interlock level, only include the interlock name
+                        detail_item["interlock_name"] = row["interlock_name"]
+                        
+                    detail_item["count"] = row["total"]
+                    result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
+                sorted_monthly_data = {
+                    month: result[category][month] for category in result for month in sorted(
+                        result[category].keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
+                    )
+                }
+                return {"status": True, "message": "success", "monthly_data": sorted_monthly_data}
+        
+        except Exception as e:
+            print(traceback.format_exc())
+            print(e)
+
+
+    @staticmethod
+    async def tas_analog_count(filters, cross_filters, drill_state):
+        try:
+            date = "date" in drill_state  # Check if date filtering is required
+            print("date --> ", date)
+
+            # Extract filters dynamically
+            zone_filter, plant_filter, interlock_filter = '', '', ''
+            for filter in (filters or []):
+                if filter.key == "zone":
+                    zone_filter = filter.value
+                elif filter.key == "plant":
+                    plant_filter = filter.value
+
+            # Extract date and interlock filters
+            date_filter_applied = False
+            start_date, end_date = None, None
+            for filter in (cross_filters or []):
+                if filter.key == "DATE":
+                    date_parts = filter.value.split(',')
+                    start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                    end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                    date_filter_applied = True
+                elif filter.key == "interlock_name":
+                    interlock_filter = filter.value  # Assuming single or multiple values comma-separated
+
+            # Base Query
+            query = """
+                SELECT DATE(created_at) AS created_date, interlock_name, sap_id, sop_id, COUNT(*) AS alert_count
+            """
+
+            # Conditionally include `zone` and `plant`
+            if zone_filter:
+                query += ", zone"
+            if plant_filter:
+                query += ", location_name AS plant"
+
+            query += " FROM alerts WHERE bu = 'TAS' AND alert_section = 'TAS'"
+
+            # Apply filters
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
+            if plant_filter:
+                query += f" AND location_name IN ('{plant_filter}')"
+            if interlock_filter:
+                interlock_values = "','".join(interlock_filter.split(','))  # Handling multiple values
+                query += f" AND interlock_name IN ('{interlock_values}')"
+            if date_filter_applied:
+                query += f" AND DATE(created_at) BETWEEN ('{start_date.strftime('%Y-%m-%d')}') AND ('{end_date.strftime('%Y-%m-%d')}')"
+
+            # Group By clause
+            query += " GROUP BY created_date, interlock_name, sap_id, sop_id"
+            if zone_filter:
+                query += ", zone"
+            if plant_filter:
+                query += ", location_name"
+
+            query += " ORDER BY created_date DESC, alert_count DESC;"
+
+            # Execute Query
+            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+            try:
+                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+                resp = await function(query=query)
+            except Exception as e:
+                return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
+
+            if not resp:
+                return {"status": False, "message": "Data Not found", "data": {}}
+
+            # Convert response to Polars DataFrame
+            resp_df = pl.DataFrame(resp)
+            if resp_df.is_empty():
+                return {"status": True, "data": {}}
+
+            resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
+
+            # Date filtering if not applied in SQL
+            if date and not date_filter_applied:
+                last_30_days = datetime.now() - timedelta(days=30)
+                resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
+
+            # Columns for grouping
+            group_cols = ["created_date", "interlock_name", "sap_id", "sop_id"]
+            if zone_filter:
+                group_cols.append("zone")
+            if plant_filter:
+                group_cols.append("plant")
+
+            if date:
+                # **Daily Data Aggregation**
+                grouped = resp_df.group_by(group_cols).agg(pl.sum("alert_count").alias("total"))
+
+                result = {}
+                for row in grouped.iter_rows(named=True):
+                    created_date = str(row["created_date"])
+                    entry = {
+                        "interlock_name": row["interlock_name"],
+                        "sap_id": row["sap_id"],
+                        "sop_id": row["sop_id"],
+                        "total_alerts": row["total"]
+                    }
+                    if zone_filter:
+                        entry["zone"] = row["zone"]
+                    if plant_filter:
+                        entry["plant"] = row["plant"]
+
+                    result.setdefault(created_date, []).append(entry)
+
+                # Sort results
+                sorted_daily_data = {
+                    date: result[date] for date in sorted(
+                        result.keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
+                    )
+                }
+                return {"status": True, "message": "success", "daily_data": sorted_daily_data}
+
+            else:
+                # **Monthly Data Aggregation**
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
+
+                grouped = resp_df.group_by(["month_year"] + group_cols[1:]).agg(pl.sum("alert_count").alias("total"))
+
+                result = {}
+                for row in grouped.iter_rows(named=True):
+                    month = row["month_year"]
+                    entry = {
+                        "interlock_name": row["interlock_name"],
+                        "sap_id": row["sap_id"],
+                        "sop_id": row["sop_id"],
+                        "total_alerts": row["total"]
+                    }
+                    if zone_filter:
+                        entry["zone"] = row["zone"]
+                    if plant_filter:
+                        entry["plant"] = row["plant"]
+
+                    result.setdefault(month, []).append(entry)
+
+                # Sort results
+                sorted_monthly_data = {
+                    month: result[month] for month in sorted(
+                        result.keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
+                    )
+                }
+                return {"status": True, "message": "success", "monthly_data": sorted_monthly_data}
+
+        except Exception as e:
+            print(traceback.format_exc())
+            return {"status": False, "message": f"Error: {str(e)}", "data": {}}
