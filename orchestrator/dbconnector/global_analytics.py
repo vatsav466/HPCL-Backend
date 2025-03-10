@@ -5086,25 +5086,13 @@ class GlobalAnalytics:
             )
 
             resp_df = resp_df.filter(matches)
-            # resp_df = resp_df.with_columns([
-            #         pl.col("interlock_name").map_elements(lambda name: 
-            #         maintenance_interlocks.get(name, fault_interlocks.get(name, normal_interlocks.get(name)))
-            #     ).alias("alert_category"),
-    
-            #         pl.col("interlock_name").map_elements(lambda name:
-            #         "maintenance" if name in maintenance_interlocks else
-            #         "fault" if name in fault_interlocks else
-            #         "normal"
-            # ).alias("alert_type")
-            # ])
-
             resp_df = resp_df.with_columns([
                 pl.col("interlock_name").map_elements(
                     lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name))
                 ).alias("alert_category"),
                 
                 pl.col("interlock_name").map_elements(
-                    lambda name: "maintenance" if name in maintenance_interlocks else "fault"
+                    lambda name: "Maintenance" if name in maintenance_interlocks else "Fault"
                 ).alias("alert_type")
             ])
             resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
@@ -5138,14 +5126,14 @@ class GlobalAnalytics:
                     )
                 else:
                     # Group by interlock level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["interlock_name", "month_year", "alert_category", "alert_type"]).agg(
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(
                         pl.sum("alert_count").alias("total")
                     )
 
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()
-                    if category == "gantry":
-                        category = "process"
+                    # if category == "gantry":
+                    #     category = "process"
 
                     result.setdefault(category, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {
                         "total": 0,
@@ -5171,40 +5159,23 @@ class GlobalAnalytics:
                         if "interlock_name" in row:
                             detail_item["zone"] = row["interlock_name"]
                     else:
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
                         # For interlock level, only include the interlock name
                         detail_item["interlock_name"] = row["interlock_name"]
                     
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
-
-                return {"status": True, "message": "success", "monthly_data": result}
-                # # Aggregate by month-year
-                # resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
-                # grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(pl.sum("alert_count").alias("total"))
-
-                # result = {}
-                # for row in grouped.iter_rows(named=True):
-                #     category = row["alert_category"].lower()
-                #     if category == "gantry":
-                #         category = "process"
-
-                #     result.setdefault(category, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {
-                #         "total": 0,
-                #         "details": []
-                #     })
-
-                #     result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
-                #     result[category][row["month_year"]][row["alert_type"]]["details"].append({
-                #         "sap_id": row["sap_id"],
-                #         "location_name": row["location_name"],
-                #         "sop_id": row["sop_id"],
-                #         "interlock_name": row["interlock_name"],
-                #         "count": row["total"]
-                #     })
-
-                # return {"status": True, "message": "success", "monthly_data": result}
-
+                sorted_monthly_data = {
+                    month: result[category][month] for category in result for month in sorted(
+                        result[category].keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
+                    )
+                }
+                return {"status": True, "message": "success", "monthly_data": sorted_monthly_data}
             else:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
@@ -5225,15 +5196,15 @@ class GlobalAnalytics:
                     )
                 else:
                     # Group by interlock level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["interlock_name", "created_date", "alert_category", "alert_type"]).agg(
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "interlock_name", "created_date", "alert_category", "alert_type"]).agg(
                         pl.sum("alert_count").alias("total")
                     )
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()
-                    if category == "gantry":
-                        category = "process"
+                    # if category == "gantry":
+                    #     category = "process"
 
                     result.setdefault(category, {}).setdefault(str(row["created_date"]), {}).setdefault(row["alert_type"], {
                         "total": 0,
@@ -5259,46 +5230,27 @@ class GlobalAnalytics:
                         if "interlock_name" in row:
                             detail_item["zone"] = row["interlock_name"]
                     else:
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
                         # For interlock level, only include the interlock name
                         detail_item["interlock_name"] = row["interlock_name"]
                         
                     detail_item["count"] = row["total"]
                     result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
                     result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
+                
+                sorted_daily_data = {
+                    category: {
+                        date: result[category][date] for date in sorted(
+                            result[category].keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
+                        )
+                    } for category in result
+                }
 
-                return {"status": True, "message": "success", "daily_data": result}
-                # Filter last 30 days
-                # last_30_days = datetime.now() - timedelta(days=30)
-                # resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
-
-                # # Group by daily level
-                # grouped = resp_df.group_by(["sap_id", "location_name", "sop_id", "interlock_name", "created_date", "alert_category", "alert_type"]).agg(
-                #     pl.sum("alert_count").alias("total")
-                # )
-
-                # result = {}
-                # for row in grouped.iter_rows(named=True):
-                #     category = row["alert_category"].lower()
-                #     if category == "gantry":
-                #         category = "process"
-
-                #     result.setdefault(category, {}).setdefault(str(row["created_date"]), {}).setdefault(row["alert_type"], {
-                #         "total": 0,
-                #         "details": []
-                #     })
-
-                #     result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
-                #     result[category][str(row["created_date"])][row["alert_type"]]["details"].append({
-                #         "sap_id": row["sap_id"],
-                #         "location_name": row["location_name"],
-                #         "sop_id": row["sop_id"],
-                #         "interlock_name": row["interlock_name"],
-                #         "count": row["total"]
-                #     })
-
-
-                # return {"status": True, "message": "success", "daily_data": result}
-
+                return {"status": True, "message": "success", "daily_data": sorted_daily_data}
         except Exception as e:
             print(traceback.format_exc())
     
@@ -5413,7 +5365,7 @@ class GlobalAnalytics:
             resp_df = resp_df.filter(pl.col("interlock_name").is_in(list(normal_interlocks.keys())))
             resp_df = resp_df.with_columns([
                 pl.col("interlock_name").map_elements(lambda name: normal_interlocks.get(name)).alias("alert_category"),
-                pl.lit("normal").alias("alert_type")  # Since we're only keeping "normal" interlocks
+                pl.lit("Normal").alias("alert_type")  # Since we're only keeping "normal" interlocks
             ])
             resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
             resp_df.write_csv("/tmp/normal_alerts_data.csv")
@@ -5445,15 +5397,15 @@ class GlobalAnalytics:
                     )
                 else:
                     # Group by interlock level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["interlock_name", "created_date", "alert_category", "alert_type"]).agg(
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "interlock_name", "created_date", "alert_category", "alert_type"]).agg(
                         pl.sum("alert_count").alias("total")
                     )
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()
-                    if category == "gantry":
-                        category = "process"
+                    # if category == "gantry":
+                    #     category = "process"
 
                     result.setdefault(category, {}).setdefault(str(row["created_date"]), {}).setdefault(row["alert_type"], {
                         "details": []
@@ -5478,13 +5430,25 @@ class GlobalAnalytics:
                         if "interlock_name" in row:
                             detail_item["zone"] = row["interlock_name"]
                     else:
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
                         # For interlock level, only include the interlock name
                         detail_item["interlock_name"] = row["interlock_name"]
                         
                     detail_item["count"] = row["total"]
                     result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
-
-                return {"status": True, "message": "success", "daily_data": result}
+                # Sort daily_data by date (latest first)
+                sorted_daily_data = {
+                    category: {
+                        date: result[category][date] for date in sorted(
+                            result[category].keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
+                        )
+                    } for category in result
+                }
+                return {"status": True, "message": "success", "daily_data": sorted_daily_data}
 
             else:
                 # Monthly aggregation
@@ -5509,15 +5473,15 @@ class GlobalAnalytics:
                     )
                 else:
                     # Group by interlock level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["interlock_name", "month_year", "alert_category", "alert_type"]).agg(
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(
                         pl.sum("alert_count").alias("total")
                     )
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()
-                    if category == "gantry":
-                        category = "process"
+                    # if category == "gantry":
+                    #     category = "process"
 
                     result.setdefault(category, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {
                         "details": []
@@ -5542,13 +5506,22 @@ class GlobalAnalytics:
                         if "interlock_name" in row:
                             detail_item["zone"] = row["interlock_name"]
                     else:
+                        if "sap_id" in row:
+                            detail_item["sap_id"] = row["sap_id"]
+                        
+                        if "sop_id" in row:
+                            detail_item["sop_id"] = row["sop_id"]
                         # For interlock level, only include the interlock name
                         detail_item["interlock_name"] = row["interlock_name"]
                         
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
-
-                return {"status": True, "message": "success", "monthly_data": result}
+                sorted_monthly_data = {
+                    month: result[category][month] for category in result for month in sorted(
+                        result[category].keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
+                    )
+                }
+                return {"status": True, "message": "success", "monthly_data": sorted_monthly_data}
         
         except Exception as e:
             print(traceback.format_exc())
