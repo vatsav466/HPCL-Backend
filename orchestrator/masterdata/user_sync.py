@@ -53,7 +53,7 @@ async def sync_users(file_path):
     print("existing_users --> ", existing_users)
     existing_users_map = {user['employee_id']: user for user in existing_users["data"]}
 
-    df = df.drop_duplicates(subset=['employee_id', 'system_role', 'sap_id'])
+    # df = df.drop_duplicates(subset=['employee_id', 'system_role', 'sap_id'])
     # Ensure required columns exist
     for key in ['region', 'state', 'zone', 'sales_area', 'escalation_level']:
         if key not in df.columns:
@@ -87,6 +87,7 @@ async def sync_users(file_path):
     # data = df.to_dict(orient='records')
 
     # Retain `status` and `is_ad_user` for existing users, set `False` for new ones
+    # Convert list fields to comma-separated strings
     for record in data:
         emp_id = record['employee_id']
         if emp_id in existing_users_map:
@@ -96,11 +97,12 @@ async def sync_users(file_path):
             record['status'] = True
             record['is_ad_user'] = True
 
-        for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area']:
-            if isinstance(record[key], str):  # Ensure it's a string before splitting
-                record[key] = [rec.strip() for rec in record[key].split(",")]
-            elif not isinstance(record[key], list):  # Handle unexpected types
-                record[key] = []
+        for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area', 'escalation_level']:
+            if isinstance(record[key], list):  # Convert list to comma-separated string
+                record[key] = ",".join(record[key])
+            elif not isinstance(record[key], str):  # Ensure it's a string
+                record[key] = ""
+
 
     await hpcl_ceg_model.Users.bulk_update(data, upsert=True)
 
