@@ -328,7 +328,7 @@ class SendNotification:
         Returns:
             dict: A dictionary containing the base alert data.
         """
-        logger.info(f"self.alert_data: {self.alert_data}")
+        # logger.info(f"self.alert_data: {self.alert_data}")
         self.base_alert_data = {
             "alert_id": self.params.get("alert_id"),
             "interlock_name": await self._get_interlock_name(),

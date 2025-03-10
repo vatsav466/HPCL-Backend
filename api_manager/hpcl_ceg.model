@@ -158,8 +158,8 @@ Model Users {
     bu index_field list BusinessUnit
     // ALL for all
     sap_id index_field list str
-    system_role index_field str
-    novex_role index_field str
+    system_role index_field list str
+    novex_role index_field list str
     region optional list str
     state index_field list str
     zone index_field list str

@@ -1046,7 +1046,6 @@ LIMIT 10000;''',
                                     "ROName",
                                     "SAName",
                                     "DistributorName",
-                                    "Delivery_Date",
                                     "PaymentErrorName",
                                     "Financial_Year",
                                     DATE("Delivery_Date") AS "Delivery_Date",
@@ -1054,6 +1053,21 @@ LIMIT 10000;''',
                                 FROM
                                     "lpg_cdcms_subsidy_failure_statistics"
                                     ''',
+    
+    'lpg_cdcms_daywise_subsidy_failure_statistics_m': f'''
+                                SELECT
+                                    "ZOName",
+                                    "ROName",
+                                    "SAName",
+                                    "DistributorName",
+                                    "PaymentErrorName",
+                                    "Financial_Year",
+                                    "Month",
+                                    SUM("Refills") as "Refills"
+                                FROM
+                                    "lpg_cdcms_subsidy_failure_statistics"
+                                    ''',
+    
     
     'lpg_cdcms_daywise_subsidy_exception_statistics': f'''
                                 SELECT
