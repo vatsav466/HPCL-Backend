@@ -53,7 +53,7 @@ async def sync_users(file_path):
     print("existing_users --> ", existing_users)
     existing_users_map = {user['employee_id']: user for user in existing_users["data"]}
 
-    df = df.drop_duplicates(subset=['employee_id'], keep=False)
+    df = df.drop_duplicates(subset=['employee_id', 'system_role', 'sap_id'])
     # Ensure required columns exist
     for key in ['region', 'state', 'zone', 'sales_area', 'escalation_level']:
         if key not in df.columns:
