@@ -172,8 +172,8 @@ class SendNotification:
 
     async def _prepare_base_alert_data(self):
         """Prepare basic alert data for notification"""
-        print("self.alert_data: ", self.alert_data)
-        logger.info(f"self.alert_data: {self.alert_data}")
+        # print("self.alert_data: ", self.alert_data)
+        # logger.info(f"self.alert_data: {self.alert_data}")
         curr_time = datetime.datetime.now(self.IST).strftime('%d-%m-%Y %H:%M:%S')
         # opened_time = datetime.datetime.fromtimestamp(
         #     self.alert_data['created_at'], self.IST).strftime('%d-%m-%Y %H:%M:%S')
