@@ -7,21 +7,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 10,
+                    "value": 1,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
@@ -35,21 +35,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 10,
+                    "value": 1,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
@@ -63,21 +63,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 10,
+                    "value": 1,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""

@@ -658,10 +658,8 @@ class SendNotification:
         self.update_alert = getattr(self, "update_alert", {}) or {}
 
         assigning_roles = ""
-        if self.alert_data.get("alert_section","") in ["VTS"] and self.params.get("mqofrole", "") in ["0","1","2"]:
+        if self.alert_data.get("alert_section","") in ["VTS","VA"] and self.params.get("mqofrole", "") in ["0","1","2"]:
             assigning_roles = (await self._role_configuration_mqofrole() or "")
-        elif self.alert_data.get("alert_section", "") == "VA":
-            assigning_roles = await self._get_va_roles_list()
         else:
             assigning_roles = self.params.get("mqofrole", "")
 
@@ -794,13 +792,27 @@ class SendNotification:
     
     async def _role_configuration_mqofrole(self):
         mqof = self.params.get("mqofrole","")
-        interlock_name = self.alert_data.get("interlock_name","")
-        alert_section = self.alert_data.get("alert_section","")
-        rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
-        print("rolemapping--------->",rolemapping)
-        if mqof:
-            print("mqof----------->",rolemapping["mqof"].get(mqof,""))
-            return rolemapping["mqof"].get(mqof,"")
+        if self.alert_data.get("alert_section","") in ["VTS"]:
+            interlock_name = self.alert_data.get("interlock_name","")
+            alert_section = self.alert_data.get("alert_section","")
+            rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
+            print("rolemapping--------->",rolemapping)
+            if mqof:
+                print("mqof----------->",rolemapping["mqof"].get(mqof,""))
+                return rolemapping["mqof"].get(mqof,"")
+            
+        elif self.alert_data.get("alert_section","") in ["VA"]:
+            if self.params.get("va_level", "level - 1") in ['', None]:
+                self.params["va_level"] = "level - 1"
+
+            va_mapping = va_alert_mapping.VA_Alert_Mapping[self.alert_data.get("bu", "")]
+            if self.alert_data['violation_type'] in va_mapping.keys():
+                if mqof:
+                    va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
+                    if mqof == "0":
+                        return va_mapping['assign_role']
+                    if mqof == "1":
+                        return va_mapping['escalation_role']
         return ""
 
     async def _get_va_roles_list(self):
