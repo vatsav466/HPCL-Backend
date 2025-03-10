@@ -93,8 +93,8 @@ def fetch_data(query, getData=False, params=None):
                     password=params["password"],
                     port=params["port"]
                 )
+            pg_conn.set_session(statement_timeout=300000)
             cursor = pg_conn.cursor()
-            cursor.execute("SET statement_timeout = 600000;")
         except Exception as e:
             print("Exception :", str(e))
             return pl.DataFrame()

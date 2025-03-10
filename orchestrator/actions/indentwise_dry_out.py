@@ -337,7 +337,7 @@ class IndentDryOut:
                 if await self._is_indent_delivered():
                     if await self._close_camunda_workflow():
                         print("Indent as been delivered but still alert is in Intial stage")
-                        print("Params: ", self.params)
+                        # print("Params: ", self.params)
                         input_data = {
                             "action_msg": "",
                             "event_tags": {
@@ -364,7 +364,34 @@ class IndentDryOut:
                 elif await self._is_indent_delivered_ims():
                     if await self._close_camunda_workflow():
                         print("Indent as been delivered but still alert is in Intial stage")
-                        print("Params: ", self.params)
+                        # print("Params: ", self.params)
+                        input_data = {
+                            "action_msg": "",
+                            "event_tags": {
+                                "is_delivered": False
+                            }
+                        }
+                        input_data["action_msg"] = "Indent Delivered"
+                        input_data["action_type"] = "Created"
+                        input_data["event_tags"]["is_delivered"] = True
+                        await self.update_alert_status(
+                            indent_status=IndentStatus.Completed,
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            input_data=input_data,
+                            progress_rate="11"
+                        )
+                        await self.close_supply_chain_alert(
+                            alert_id=self.params.get("alert_id"),
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            indent_status=IndentStatus.Completed
+                        )
+                    return await self.send_alert_action(is_raised=False)
+                elif await self._is_indent_delivered():
+                    if await self._close_camunda_workflow():
+                        print("Indent as been delivered but still alert is in Intial stage")
+                        # print("Params: ", self.params)
                         input_data = {
                             "action_msg": "",
                             "event_tags": {
@@ -415,7 +442,7 @@ class IndentDryOut:
                     # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                                         :-3] + "Z"
-                    logger.info(f"Updateding to existing workflow: {self.params}")
+                    # logger.info(f"Updateding to existing workflow: {self.params}")
                     await self.update_indent_no(
                         str(self.params['indent_no']),
                         str(each_indent.get("LOCN_CODE")),
@@ -463,7 +490,7 @@ class IndentDryOut:
                     # Todo:- Add LOCN_CODE terminal_plant_name instead of parent plant
                     self.params['indent_raised_date'] = each_indent.get('INDENT_DATE').strftime('%Y-%m-%dT%H:%M:%S.%f')[
                                                         :-3] + "Z"
-                    logger.info(f"Multiple Indents: {self.params}")
+                    # logger.info(f"Multiple Indents: {self.params}")
                     await create_alert(self.params, camunda_url)
                     await self.generate_dry_out_history(self.params.get("dealer_id"), prod_code,
                                                         connection_mapping.item_name_mapping.get(prod_code, ""))
@@ -880,6 +907,17 @@ class IndentDryOut:
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
                                                progress_rate="7")
                 return await self.send_alert_action(is_r2_swipe=True)
+            elif await self._is_indent_delivered():
+                logger.info("R2, R3 Not Swiped But Indent Delivered")
+                logger.info(f"alert_id: {self.params.get('alert_id')}")
+                # logger.info(f"params: {self.params}")
+                input_data["remarks"] = "R2, R3 Not Swiped But Indent Delivered"
+                input_data["action_msg"] = "R2 Swiped"
+                input_data["action_type"] = "R2Swipe"
+                input_data["event_tags"]["is_r2_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
+                                               progress_rate="7")
+                return await self.send_alert_action(is_r2_swipe=True)
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
         ims_datetime = resp.get("LOADED_ON").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z" if resp.get(
@@ -948,6 +986,17 @@ class IndentDryOut:
         }
         if not resp:
             if await self._is_indent_delivered_ims():
+                logger.info("R3 Not Swiped But Indent Delivered")
+                logger.info(f"alert_id: {self.params.get('alert_id')}")
+                # logger.info(f"params: {self.params}")
+                input_data["remarks"] = "R3 Not Swiped But Indent Delivered"
+                input_data["action_msg"] = "R3 Swiped"
+                input_data["action_type"] = "R3Swipe"
+                input_data["event_tags"]["is_r3_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data,
+                                               progress_rate="9")
+                return await self.send_alert_action(is_r3_swipe=True)
+            if await self._is_indent_delivered():
                 logger.info("R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
@@ -1316,7 +1365,7 @@ class IndentDryOut:
         resp = resp[0]
         truck_regno = resp.get("TRUCK_REGNO")
         data = await vts_analysis.get_tt_current_location(truck_regno)
-        print("VTS Data: ", data)
+        # print("VTS Data: ", data)
         if data and float(data.get("start_lat")) > 0:
             input_data["action_msg"] = "VTS Enabled"
             input_data["action_type"] = "VTS"
@@ -1494,7 +1543,7 @@ class IndentDryOut:
                         break
                     else:
                         print("url: ", url)
-                        print("payload: ", payload)
+                        # print("payload: ", payload)
                         print(
                             f"Error updating {var_name} (attempt {attempt + 1}): {response.status_code} - {response.text}")
                         logger.info(
