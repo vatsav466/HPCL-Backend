@@ -36,9 +36,9 @@ async def sync_users(file_path):
     df['sap_id'] = df['LOCATION']
     df['email'] = df['EMPLOYEE_EMAIL']
     
-    if 'Zone' in df.columns:
+    if 'ZONE' in df.columns:
         df['zone'] = df['ZONE']
-    if 'Region' in df.columns:
+    if 'REGION' in df.columns:
         df['region'] = df['REGION']
 
     df['first_name'] = df['EMPLOYEE_NAME']
@@ -49,11 +49,10 @@ async def sync_users(file_path):
     df['employee_number'] = df['EMPLOYEE_NUMBER']
 
     # Fetch existing user records
-    existing_users = await hpcl_ceg_model.Users.get_all(resp_type='plain')  # Assuming a method to fetch all users
+    existing_users = await hpcl_ceg_model.Users.get_all(resp_type='plain')
     print("existing_users --> ", existing_users)
     existing_users_map = {user['employee_id']: user for user in existing_users["data"]}
 
-    # df = df.drop_duplicates(subset=['employee_id', 'system_role', 'sap_id'])
     # Ensure required columns exist
     for key in ['region', 'state', 'zone', 'sales_area', 'escalation_level']:
         if key not in df.columns:
@@ -63,7 +62,7 @@ async def sync_users(file_path):
              'first_name', 'last_name', 'system_role', 'novex_role', 'bu']]
 
     df = df[df['employee_id'] != '']
-    # **Aggregate roles, zones, regions, etc. for duplicate employee IDs**
+    # Aggregate roles, zones, regions, etc. for duplicate employee IDs
     aggregated_df = (
         df.groupby("employee_id", as_index=False)
         .agg({
@@ -84,12 +83,11 @@ async def sync_users(file_path):
     )
 
     data = aggregated_df.to_dict(orient="records")
-    # data = df.to_dict(orient='records')
 
-    # Retain `status` and `is_ad_user` for existing users, set `False` for new ones
-    # Convert list fields to comma-separated strings before inserting into DB
+    # Process data for database insertion - fix the array/string mismatch
     for record in data:
         emp_id = record['employee_id']
+        # Retain existing user data or set defaults for new users
         if emp_id in existing_users_map:
             record['status'] = existing_users_map[emp_id]['status']
             record['is_ad_user'] = existing_users_map[emp_id]['is_ad_user']
@@ -97,13 +95,22 @@ async def sync_users(file_path):
             record['status'] = True
             record['is_ad_user'] = True
 
-        # Convert list fields to comma-separated strings
-        for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area', 'escalation_level']:
-            if isinstance(record[key], list):  
-                record[key] = list(map(str, record[key])) if record[key] else None  # Convert empty lists to None
-            elif not isinstance(record[key], str):  
-                record[key] = None  # Ensure `None` instead of empty lists
+        # Convert list fields to proper database-compatible format
+        # For fields that should be arrays in PostgreSQL
+        for key in ['sap_id', 'bu', 'system_role', 'novex_role', 'region', 'state', 'zone', 'sales_area']:
+            if isinstance(record[key], list):
+                # Filter out empty strings and convert all elements to strings
+                record[key] = [str(item) for item in record[key] if item]
+                # If list is empty after filtering, set to None or empty list based on your DB requirements
+                if not record[key]:
+                    record[key] = []  # PostgreSQL empty array
+            elif record[key] is not None and not isinstance(record[key], str):
+                record[key] = str(record[key])
 
+        # Handle escalation_level specifically as a string, not an array
+        if isinstance(record['escalation_level'], list):
+            # Join the list elements into a comma-separated string
+            record['escalation_level'] = ','.join(str(item) for item in record['escalation_level'] if item) if record['escalation_level'] else None
 
     await hpcl_ceg_model.Users.bulk_update(data, upsert=True)
 
