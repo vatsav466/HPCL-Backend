@@ -2126,7 +2126,7 @@ class LPGCDCMSActions:
             resp = pl.from_pandas(resp)
             resp = resp.with_columns(pl.col('Refills').fill_null(0).cast(pl.Float64).alias('Refills'))
             if drill_state == "financial_year":
-                resp = resp.group_by(["Delivery_Date", "Financial_Year"]).agg([
+                resp = resp.group_by(["Month", "Financial_Year"]).agg([
                         pl.sum("Refills").round(2).alias("Refills"),
                     ])
             else:
