@@ -388,6 +388,33 @@ class IndentDryOut:
                             indent_status=IndentStatus.Completed
                         )
                     return await self.send_alert_action(is_raised=False)
+                elif await self._is_indent_delivered():
+                    if await self._close_camunda_workflow():
+                        print("Indent as been delivered but still alert is in Intial stage")
+                        print("Params: ", self.params)
+                        input_data = {
+                            "action_msg": "",
+                            "event_tags": {
+                                "is_delivered": False
+                            }
+                        }
+                        input_data["action_msg"] = "Indent Delivered"
+                        input_data["action_type"] = "Created"
+                        input_data["event_tags"]["is_delivered"] = True
+                        await self.update_alert_status(
+                            indent_status=IndentStatus.Completed,
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            input_data=input_data,
+                            progress_rate="11"
+                        )
+                        await self.close_supply_chain_alert(
+                            alert_id=self.params.get("alert_id"),
+                            alert_status=AlertStatus.Close,
+                            alert_state=AlertState.Resolved,
+                            indent_status=IndentStatus.Completed
+                        )
+                    return await self.send_alert_action(is_raised=False)
 
             query = f"""SELECT a."INDENT_NO" AS "INDENT_NO" , b."PROD" AS "PROD", a."LOCN_CODE" AS "LOCN_CODE", a."INDENT_DATE" AS "INDENT_DATE", a."PROD_REQD_DT" AS "PROD_REQD_DT" """ \
                     f"""FROM "IMS_SAP"."INDENT_REQUEST" a, "IMS_SAP"."INDENT_PRODUCTS" b WHERE SUBSTR(a."DEALER_CODE",1,10) = '{dealer_code}' """ \
@@ -880,6 +907,17 @@ class IndentDryOut:
                 await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
                                                progress_rate="7")
                 return await self.send_alert_action(is_r2_swipe=True)
+            elif await self._is_indent_delivered():
+                logger.info("R2, R3 Not Swiped But Indent Delivered")
+                logger.info(f"alert_id: {self.params.get('alert_id')}")
+                # logger.info(f"params: {self.params}")
+                input_data["remarks"] = "R2, R3 Not Swiped But Indent Delivered"
+                input_data["action_msg"] = "R2 Swiped"
+                input_data["action_type"] = "R2Swipe"
+                input_data["event_tags"]["is_r2_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R2Swipe, input_data=input_data,
+                                               progress_rate="7")
+                return await self.send_alert_action(is_r2_swipe=True)
             return await self.send_alert_action(is_r2_swipe=False)
         resp = resp[0]
         ims_datetime = resp.get("LOADED_ON").strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z" if resp.get(
@@ -948,6 +986,17 @@ class IndentDryOut:
         }
         if not resp:
             if await self._is_indent_delivered_ims():
+                logger.info("R3 Not Swiped But Indent Delivered")
+                logger.info(f"alert_id: {self.params.get('alert_id')}")
+                # logger.info(f"params: {self.params}")
+                input_data["remarks"] = "R3 Not Swiped But Indent Delivered"
+                input_data["action_msg"] = "R3 Swiped"
+                input_data["action_type"] = "R3Swipe"
+                input_data["event_tags"]["is_r3_swipe"] = True
+                await self.update_alert_status(indent_status=IndentStatus.R3Swipe, input_data=input_data,
+                                               progress_rate="9")
+                return await self.send_alert_action(is_r3_swipe=True)
+            if await self._is_indent_delivered():
                 logger.info("R3 Not Swiped But Indent Delivered")
                 logger.info(f"alert_id: {self.params.get('alert_id')}")
                 # logger.info(f"params: {self.params}")
