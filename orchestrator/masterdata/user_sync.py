@@ -63,7 +63,28 @@ async def sync_users(file_path):
              'first_name', 'last_name', 'system_role', 'novex_role', 'bu']]
 
     df = df[df['employee_id'] != '']
-    data = df.to_dict(orient='records')
+    # **Aggregate roles, zones, regions, etc. for duplicate employee IDs**
+    aggregated_df = (
+        df.groupby("employee_id", as_index=False)
+        .agg({
+            "username": "first",
+            "sap_id": lambda x: list(set(x.dropna())),
+            "email": "first",
+            "first_name": "first",
+            "last_name": "first",
+            "system_role": lambda x: list(set(x.dropna())),
+            "novex_role": lambda x: list(set(x.dropna())),
+            "bu": lambda x: list(set(x.dropna())),
+            "region": lambda x: list(set(x.dropna())),
+            "state": lambda x: list(set(x.dropna())),
+            "zone": lambda x: list(set(x.dropna())),
+            "sales_area": lambda x: list(set(x.dropna())),
+            "escalation_level": lambda x: list(set(x.dropna()))
+        })
+    )
+
+    data = aggregated_df.to_dict(orient="records")
+    # data = df.to_dict(orient='records')
 
     # Retain `status` and `is_ad_user` for existing users, set `False` for new ones
     for record in data:
