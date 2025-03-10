@@ -87,7 +87,7 @@ async def sync_users(file_path):
     # data = df.to_dict(orient='records')
 
     # Retain `status` and `is_ad_user` for existing users, set `False` for new ones
-    # Convert list fields to comma-separated strings
+    # Convert list fields to comma-separated strings before inserting into DB
     for record in data:
         emp_id = record['employee_id']
         if emp_id in existing_users_map:
@@ -97,12 +97,12 @@ async def sync_users(file_path):
             record['status'] = True
             record['is_ad_user'] = True
 
+        # Convert list fields to comma-separated strings
         for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area', 'escalation_level']:
-            if isinstance(record[key], list):  # Convert list to comma-separated string
-                record[key] = ",".join(record[key])
-            elif not isinstance(record[key], str):  # Ensure it's a string
-                record[key] = ""
-
+            if isinstance(record[key], list):  
+                record[key] = ",".join(map(str, record[key]))  # Convert list elements to string and join with commas
+            elif not isinstance(record[key], str):  
+                record[key] = ""  # Ensure empty values are stored as an empty string
 
     await hpcl_ceg_model.Users.bulk_update(data, upsert=True)
 
