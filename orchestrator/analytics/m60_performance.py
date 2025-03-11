@@ -173,7 +173,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     filters = [filter_cond for filter_cond in filters
                if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
                        filter_cond["value"].lower() in ['*', '_empty', 'all'])]
-
     sbuName_req = ''
     sbuWise = False
     if '"sbu_wise"' in [x['key'] for x in cross_filters]:
@@ -249,7 +248,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
         elif condition['key'].strip('"') == "T":
             target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES" """
-        elif condition['key'].strip('"') == "C":
+            
+        elif condition['key'].strip('"') == "C" and '"T"' not in [x['key'] for x in filters]:
             continue
         elif condition['key'].strip('"') == "YTD":
             # Calculating start and end dates for YTD for both actual and history
@@ -307,6 +307,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             # Not considering now
             ...
         else:
+           if condition['key']  != '"C"':
+            print("condiution in else",condition)
             # Clearing if value was an empty string
             if not condition["value"]:
                 continue
@@ -372,7 +374,15 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         if target_data:
-            if '"C"' not in [x['key'] for x in filters]:
+            print("target_data",target_data)
+            if '"YTD"'  in [x['key'] for x in filters]:
+                
+                print("start_date",start_date)
+                print("end_date",end_date)
+                if end_date:
+                    end_month = fiscal_year.get_month_abbr(end_date)
+                    print("end_mionth is ",end_month)
+                    target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
                 target_data = pd.DataFrame(target_data)
@@ -463,7 +473,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     if not group_by_filter:
         result_df = pd.DataFrame()
         for col in merged_df.columns:
-            result_df[col] = [merged_df[col].sum()]
+            print("merged_columns",merged_df.columns)
+            print("col",col)
+            if col not in "month_name":
+                result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
     # Ordering Data for Month and SBU names
     if not merged_df.empty and ('"month_name"' in group_by_filter or '"SBU_Name"' in group_by_filter):
