@@ -7,12 +7,12 @@ device_mapping = [
                                   "Primary Gauge HIGH": "Process",
                                   "TANK LEAKAGE STATUS": "Process",
                                   "Primary Gauge HIGH HIGH": "Process",
-                                  "LEVEL SWITCH": "Safety",
+                                  "VFT": "Safety",
                                   "LEVEL SWITCH PROOF OK": "Safety",
                                   "LEVEL SWITCH PROOF FAILED": "Safety",
                                   "RADAR PROOF TEST OK": "Safety",
                                   "RADAR PROOF TEST NOT OK": "Safety",
-                                  "RADAR HHH": "Safety",
+                                  "Seconary Radar": "Safety",
                                   "RADAR PROOF OK": "Safety",
                                   "RADAR PROOF FAILED": "Safety",
                                   "ROSOV OPEN STATUS IL1": "Safety",
@@ -28,11 +28,11 @@ device_mapping = [
                                   "MOV STATUS OL": "Safety",
                                   "MOV STATUS RCL": "Safety",
                                   "RIMSEAL FIRE ALARM": "Safety",
-                                  "RIMSEAL FAULT ALARM": "Safety"
+                                  "RimSeal": "Safety"
                                 }
                     },
                     {
-                       "device_type": "Tank Maintenance", 
+                       "device_type": "Tank Maintenance",
                        "sensor_name":
                                 {
                                   "TANK MAINTENANCE": "Safety",
@@ -82,8 +82,8 @@ device_mapping = [
                         "device_type": "PLC",
                         "sensor_name":
                                 {
-                                  "PLC A IS MASTER": "Process",
-                                  "PLC B IS MASTER": "Process",
+                                  "PLC A is Master": "Process",
+                                  "PLC B is Master": "Process",
                                   "PLC A FAIL SAFE": "Process",
                                   "PLC B FAIL SAFE": "Process",
                                   "PLC A COMMUNICATION": "Process",
@@ -173,6 +173,40 @@ device_mapping = [
                                  {
                                       "LRC SWITCHOVER 30 DAYS STATUS": "Process"
                                  }
+                    },
+                    {
+                        "device_type": "Fire Engine",
+                        "sensor_name":
+                                 {
+                                      "Fire Engine": "Safety"
+                                 }
+                    },
+                    {
+                        "device_type": "Jockey Pump",
+                        "sensor_name":
+                                 {
+                                      "Jockey Pump": "Safety"
+                                 }
+                    },
+                    {
+                        "device_type": "PT Hydrant",
+                        "sensor_name":
+                                 {
+                                      "PT Hydrant": "Safety"
+                                 }
+                    },
+                    {
+                        "device_type": "Air Compressor",
+                        "sensor_name":
+                                 {
+                                      "Air Compressor": "Safety"
+                                 }
+                    },
+                    {
+                        "device_type": "BCU",
+                        "sensor_name":
+                                 {
+                                      "BCU": "Safety"
+                                 }
                     }
-
                   ]
