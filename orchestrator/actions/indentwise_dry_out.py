@@ -133,6 +133,7 @@ class IndentDryOut:
         self.params['alert_type'] = 'RO'
         self.params['bu'] = 'RO'
         self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
+        self.params['mark_as_false'] = True
         camunda_host = connection_mapping.camunda_listener_mapping.get("camunda_dryout_01")
         camunda_url = f"http://{camunda_host['host']}:{camunda_host['port']}"
         if self.params['camunda_host']:
