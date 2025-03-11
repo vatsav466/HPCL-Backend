@@ -1798,6 +1798,7 @@ Model TagsData {
     zone optional str
     system optional str
     equipment_name optional str
+    mf_count optional str
 
 
     Action=> things_board_device_data{

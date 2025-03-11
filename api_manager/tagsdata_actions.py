@@ -10,6 +10,7 @@ import utilities.connection_mapping as connection_mapping
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.device_data_mapping import device_mapping
+from utilities.analog_data_mapping import Maintenanace, Fault
 
 router = fastapi.APIRouter(prefix='/tagsdata')
 # Create a dictionary for quick lookup
@@ -28,8 +29,11 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         df = await function(query=lpg_query)
         df = pl.DataFrame(df)
         
-        base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
-        
+        base_path = "/opt/ceg/algo/dnc_backend_v2/things_board/device_data"  # Update with actual path
+        mapping_base_path = '/opt/ceg/algo/dnc_backend_v2/utilities/'
+        mapping_df = pl.read_csv(os.path.join(mapping_base_path, 'DashboardAssetMapping.csv'))
+        mapping_df = mapping_df.with_columns(mapping_df["Device Type"].fill_null(strategy="forward"))
+
         async def process_device_data(sap_id, zone, name):
             file_path = os.path.join(base_path, f"{sap_id}.json")
             if not os.path.exists(file_path):
@@ -48,15 +52,50 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 device_type = device.get('device_type', '')
                 equipment_name = device.get('device_name', '')
                 sensors = device.get('sensors', [])
-                
+                # getting the equipment names according to the device type
+                equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)[
+                    "Equipments(sensor_type)"].to_list()
                 system_counts = defaultdict(int)
+                system_total_count = defaultdict(int)  # for total count
+                system_m_f_count = defaultdict(int)  # for maintainance_fault count
+
                 for sensor in sensors:
                     sensor_name = sensor.get('sensor_name', '').strip()
-                    system = device_mapping_dict.get(device_type, {}).get(sensor_name)
-                    if system:
-                        system_counts[system] += 1
-                
-                for system, count in system_counts.items():
+                    # looping every equipment to check whether it is present in sensor name
+                    for equipment in equipment_names:
+                        if equipment and equipment.strip().lower() in sensor_name.lower():
+                            system = device_mapping_dict.get(device_type, {}).get(equipment)
+                            if system:
+                                # system_counts[system] += 1
+                                system_total_count[system] += 1
+                                for maintanence in Maintenanace:
+                                    if maintanence.get('equipment_name') and maintanence['equipment_name'] == equipment:
+                                        interlockName = maintanence['interlock_name']
+                                        print("interlockName: ", interlockName)
+                                        params = urdhva_base.queryparams.QueryParams(limit=10000,
+                                                                                     q=f"interlock_name='{interlockName}'")
+                                        total = await Alerts.count(params)
+                                        print("total: ", total)
+                                        system_m_f_count[system] += total
+                                for fault in Fault:
+                                    if fault.get('equipment_name') and fault['equipment_name'] == equipment:
+                                        interlockName = fault['interlock_name']
+                                        print("interlockName: ", interlockName)
+                                        params = urdhva_base.queryparams.QueryParams(limit=10000,
+                                                                                     q=f"interlock_name='{interlockName}'")
+                                        total = await Alerts.count(params)
+                                        print("total: ", total)
+                                        system_m_f_count[system] += total
+                # taking keys to merge the above declared two dicts
+                all_keys = set(system_total_count.keys()).union(system_m_f_count.keys())
+                # declaring varibale to store the merged dict
+                merged_dict = {}
+                # merging the two dict, and adding the value in the list
+                for key in all_keys:
+                    merged_dict[key] = [
+                        value for value in (system_total_count.get(key, 0), system_m_f_count.get(key, 0))
+                    ]
+                for system, count in merged_dict.items():
                     rows.append({
                         'sap_id': sap_id,
                         'zone': zone,
@@ -64,9 +103,10 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                         'equipment_name': equipment_name,
                         'device_type': device_type,
                         'system': system,
-                        'count': str(count)  # Convert count to string
+                        'count': str(count[0]),  # Convert count to string, first value for total count
+                        'mf_count': str(count[1])  # second value for mf count
                     })
-            
+
             return pl.DataFrame(rows) if rows else pl.DataFrame()
         
         result_frames = []
@@ -88,7 +128,8 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 'equipment_name': pl.Utf8,
                 'device_type': pl.Utf8,
                 'system': pl.Utf8,
-                'count': pl.Utf8  # Ensure count is a string
+                'count': pl.Utf8,  # Ensure count is a string
+                'mf_count': pl.Utf8
             })
         
         # Convert all records before inserting
@@ -130,6 +171,7 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         # Aggregate count based on device_type and system, keeping sap_id and location_name
         res = res.group_by(["device_type", "system"]).agg([
             pl.col("count").sum().alias("total_count"),
+            pl.col("mf_count").sum().alias("mf_count"),
             pl.col("sap_id").first(),  # Keep first sap_id (change to list() if needed)
             pl.col("name").first()  # Keep first location_name
         ])
