@@ -655,7 +655,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
             "serial": 14, "condition": "=", "group": "pending"
         }, {
-            "section": "EMLock",
+            "section": "EMUnLock",
             "value": 0, "serial": 18, "condition": "=", "group": "wip"
         }])
     # {
@@ -729,7 +729,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
 @router.post('/get_dried_out_ro_data', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro_DataParams):
     top_x_axis_updated = connection_mapping.dry_out_top_x_axis
-    top_x_axis = [x for x in top_x_axis_updated if x.get("name") not in ['ATG Ack', 'EMLock Unlock', 'VTS Return']]
+    top_x_axis = [x for x in top_x_axis_updated if x.get("name") not in ['ATG Ack', 'EMLock', 'EMUnLock', 'Trip Completed', 'VTS Return']]
     bottom_x_axis = connection_mapping.dry_out_bottom_x_axis
 
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
