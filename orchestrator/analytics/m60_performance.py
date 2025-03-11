@@ -177,6 +177,7 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     # Removing extra keys like all/_empty/* to mak sure all results appear in api response
     # Filtering cross filters
+    org_cross_filters = cross_filters.copy()
     cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
                      and cross_filter.get("value") and cross_filter["value"].lower() in ['*', '_empty', 'all'])]
 
@@ -381,20 +382,37 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if '"C"' not in [x['key'] for x in filters]:
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
+        elif '"C"'  in [x['key'] for x in filters] and '"YTD"'  in [x['key'] for x in filters] and '"T"'  in [x['key'] for x in filters] and len(org_cross_filters) == 0:
+            print("cross_filters",cross_filters)
+            group_keys.append('month_name')
+            target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
+                                             where_conditions + Default_Filters, start_date, end_date, group_keys)
         else:
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         if target_data:
             print("target_data",target_data)
-            if '"YTD"'  in [x['key'] for x in filters]:
+            
+            if '"C"'   in [x['key'] for x in filters] and '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and len(org_cross_filters) == 0:
                 
                 print("start_date",start_date)
                 print("end_date",end_date)
+                '''
                 if end_date:
                     end_month = fiscal_year.get_month_abbr(end_date)
                     print("end_mionth is ",end_month)
                     target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
+                '''
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+                print("target_data after conversion",target_data)
+                if "month_name" in target_data.columns.tolist():
+                    del target_data['month_name']
+                if "TARGET_TMT_SALES" in target_data.columns.tolist():
+                    sample_data = pd.DataFrame(columns = ['TARGET_TMT_SALES'])
+                    sample_data['TARGET_TMT_SALES'] = target_data['TARGET_TMT_SALES'].sum()
+                if not sample_data.empty:
+                    target_data = sample_data
+                print("target_data after conversion",target_data)
             else:
                 target_data = pd.DataFrame(target_data)
             if group_by_filter and not cumulative:
