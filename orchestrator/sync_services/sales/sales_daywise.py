@@ -9,7 +9,10 @@ import polars as pl
 import mysql.connector
 from dateutil.relativedelta import relativedelta
 import hashlib
-
+import urdhva_base
+import sys
+sys.path.append("/opt/ceg/algo")
+import orchestrator.dbconnector.credential_loader as credential_loader
 def get_db_connection(params):
     """
     Establish a database connection
@@ -20,7 +23,7 @@ def get_db_connection(params):
     """
     server = params['host']
     database = params['database']
-    username = params['username']
+    username = params['user']
     password = params["password"]
     port = params["port"]
     if "connection_type" in params:
@@ -104,13 +107,15 @@ def insertToDB(data, table_name, indexing_col=()):
     print(len(data))
     #data = data.unique(['engine_id'])
     print(len(data))
+    creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )   
+                host=creds['host'],
+                database=creds['database'],
+                user=creds['user'],
+                password=creds['password'],
+                port=creds['port']
+            )
+    
     table_create_sql = ''
     cur = pg_conn.cursor()
     print(data['NETWEIGHT_KG'].unique())
@@ -230,23 +235,7 @@ def get_and_insert_data(cursor, query, params=None):
     
     data.to_csv('/tmp/actual_sales_data.csv',index = False)
     print(len(data))
-    '''
-    pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )
-    cur = pg_conn.cursor()
-    cur.execute(f"""
-    select * FROM "MOM_LEVEL_SALES" 
-    """)
-    rows = cur.fetchall()
-    columns = [column[0] for column in cur.description]
-    data = pd.DataFrame.from_records(rows, columns=columns)
-    data.to_csv('/tmp/mom.csv',index = False)
-    '''
+    
     print(len(data))
     print(len(data.drop_duplicates()))
     data = data.drop_duplicates()
@@ -268,7 +257,7 @@ def get_and_insert_data(cursor, query, params=None):
     data['ORGSBUCD'] = data['ORGSBUCD'].fillna('').astype(str).apply(lambda x:x.split('.')[0] if '.' in x else x)
     data['SBU_Name'] = data['SBU_Name'].str.replace('DS I&C','I&C').str.replace('Direct','I&C').str.replace('DS Lubes','Lubes').str.replace('Direct I&C','I&C').str.replace('PETROCHEMICALS SBU','PETCHEM').str.replace('GAS HQO','GAS')
     data['Zone_Name'] = data['Zone_Name'].str.replace('North Central LPG Zone','North Central LPG Zo').str.replace('South Central Retail Zone','South Central Retail').str.replace('South Central LPG Zone ','South Central LPG Zo').str.replace('EAST CENTRAL ZONE','East Central Zone').str.replace('North West Frontier Zone','North West Frontier').str.replace('North West Retail Zone','North West Retail Zo').str.replace('North Central Retail Zone','North Central Retail')
-
+    data['Zone_Name'] = data['Zone_Name'].str.replace('East Zone','East').str.replace('West Zone','West').str.replace('North Zone','North').str.replace('South Zone','South')
     data = pl.from_pandas(data)
     
     
@@ -276,16 +265,19 @@ def get_and_insert_data(cursor, query, params=None):
 
 
 if __name__ == "__main__":
+    creds = credential_loader.get_credentials('TIBCO') 
+    print("creds",creds)
     params = {
-        "host": '10.90.144.96',
-        "database": 'CONN_ENT',
-        "username": 'USER_ADMIN_CE',
-        "password": "Pwd#_aDMINCE@2023",
-        "port": 3306,
-        "table_name": "MOM_DAY_LEVEL_DATA",
-        "connection_type": "mssql"
-       # "indexing_col": ["Plantcd", "Itemcode", "DaysCover"]
-    }
+            "host":creds['host'],
+            "database":creds['database'],
+            "user":creds['user'],
+            "password":creds['password'],
+            "port":creds['port'],
+            "table_name":"MOM_DAY_LEVEL_DATA",
+            "connection_type":"mssql"
+                
+            }
+    
 
     query = """SELECT ZS.Plant AS Plantcd,
              ZS.UNRESTRICTED_STOCK_VALUE AS Stock_value,

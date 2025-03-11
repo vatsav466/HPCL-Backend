@@ -10,6 +10,7 @@ import pandas as pd
 import polars as pl
 import mysql.connector
 from dateutil.relativedelta import relativedelta
+import orchestrator.dbconnector.credential_loader as credential_loader
 import hashlib
 import io
 import numpy as np
@@ -18,8 +19,8 @@ def get_industry_data():
     Getting industry fiscal year level daya from industry_performance.py 
     Once we get the industry data we are inserting that to postgres table industry_performance
     """
-    res = ind.fetch_industry_raw_data(actual=False,history=True)
-    #res = ind.fetch_industry_raw_data(actual=True,history=False)
+    #res = ind.fetch_industry_raw_data(actual=False,history=True)
+    res = ind.fetch_industry_raw_data(actual=True,history=False)
     print(res.columns.tolist())
     print(res['VALUE'].sum())
     print(type(res))
@@ -43,15 +44,17 @@ def get_industry_data():
     if len(res)>0:
         insert_industry_data(res)
 def insert_industry_data(res):
+    creds = credential_loader.get_credentials('APP_DB')
     table_name = "industry_performance"
     print(len(res))
     pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )
+                host=creds['host'],
+                database=creds['database'],
+                user=creds['user'],
+                password=creds['password'],
+                port=creds['port']
+            )
+    
     table_create_sql = ''
     cur = pg_conn.cursor()
     dtype_dict = {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),

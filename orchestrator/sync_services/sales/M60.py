@@ -11,6 +11,11 @@ from dateutil.relativedelta import relativedelta
 import hashlib
 import io
 import numpy as np
+import sys
+import urdhva_base
+sys.path.append("/opt/ceg/algo")
+import orchestrator.dbconnector.credential_loader as credential_loader
+
 def get_db_connection(params):
     """
     Establish a database connection
@@ -91,13 +96,15 @@ def insertToDB(data, table_name, indexing_col=()):
     print("-" * 50)
     print(f"-- Inserting Data to {table_name} --")
     print("Length of Data :", len(data))
+    
+    creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
-        host="10.90.38.162",
-        database="hpcl_ceg",
-        user="ceg_user",
-        password="TTNqetkiJLPM50jC",
-        port=5432
-    )
+                host=creds['host'],
+                database=creds['database'],
+                user=creds['user'],
+                password=creds['password'],
+                port=creds['port']
+            )
     table_create_sql = ''
     cur = pg_conn.cursor()
     dtype_dict =  {'String': str('text'), 'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'),
@@ -342,14 +349,11 @@ def get_and_insert_data(cursor, query, params=None):
     print(data.columns.tolist())
     print(data['SBU_Name'].unique().tolist())
     data['SBU_Name'] = data['SBU_Name'].fillna('0').astype(str).apply(lambda x:x.split()[-1] if len(x.split()) >=3 else x)
-    print(data['SBU_Name'].unique().tolist())
-    print(data.dtypes)
-
+    
     data['TARGET_QTY_TMT'] = data['TARGET_QTY_TMT'].fillna('0').astype(np.float64)
     data['NETWEIGHT_TMT'] = data['NETWEIGHT_TMT'].fillna('0').astype(np.float64)
     
-    print( data['TARGET_QTY_TMT'].head() )
-    print( data['NETWEIGHT_TMT'].head() )
+    data['SBU_Name'] = data['SBU_Name'].str.replace('PETROCHEMICALS SBU','PETCHEM').str.replace('GAS HQO','GAS')
     data.to_csv('/tmp/tibco_data.csv',index = False)
     data = pl.from_pandas(data)
     print("*" * 50)
@@ -428,16 +432,19 @@ def get_and_insert_data(cursor, query, params=None):
 
 
 if __name__ == "__main__":
+    
+    creds = credential_loader.get_credentials('TIBCO') 
+    print("creds",creds)
     params = {
-        "host": '10.90.144.96',
-        "database": 'CONN_ENT',
-        "username": 'USER_ADMIN_CE',
-        "password": "Pwd#_aDMINCE@2023",
-        "port": 3306,
-        "table_name": "M60_LEVEL_METADATA",
-        "connection_type": "mssql"
-       # "indexing_col": ["Plantcd", "Itemcode", "DaysCover"]
-    }
+            "host":creds['host'],
+            "database":creds['database'],
+            "user":creds['user'],
+            "password":creds['password'],
+            "port":creds['port'],
+            "table_name":"MOM_DAY_LEVEL_DATA",
+            "connection_type":"mssql"
+                
+            }
 
     query = """SELECT ZS.Plant AS Plantcd,
              ZS.UNRESTRICTED_STOCK_VALUE AS Stock_value,

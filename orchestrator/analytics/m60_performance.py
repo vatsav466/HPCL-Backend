@@ -1,4 +1,5 @@
 import urdhva_base
+import datetime
 import json
 import pandas as pd
 from calendar import monthrange
@@ -14,18 +15,25 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
-Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
-#Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
-Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
-Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'""", """ "SBU_Name" not in ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')"""]
-#Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
+# Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
+Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"',
+                '"month_name"']
+APG_Filters = ['"cumulative_level"', '"ProductName"',
+                '"month_name"']
+# Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"'"ProductName"'', '"ProductName"']
+# Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
+Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
+Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'""",
+                   """ "SBU_Name" not in ('Common','Mumbai Ref','Renewable Energy','Visakh Ref')"""]
+# Default_Filters = [""""SBU_Name" != '0'""", """"Zone_Name" != '-'"""]
 DBNames = {"m60_ta": "M60_LEVEL_METADATA", "m60_h": "MOM_LEVEL_FINAL_DATA"}
 months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
 
 sbu_order = ['Retail', 'LPG', 'I&C', 'Lubes', 'Aviation', 'PETCHEM', 'GAS']
 
 DefaultTable = 'Day'
-MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES"}
+MandateKeys = {"actual": "ACTUAL_TMT_SALES", "history": "ACTUAL_HISTORY_TMT_SALES", "target": "TARGET_TMT_SALES",
+               "YTD": "YTD_TMT_SALES"}
 
 
 async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_resp_format="%Y%m%d"):
@@ -57,6 +65,8 @@ async def get_date_filters(start_date, end_date, resp_format='%Y-%m-%d', day_res
         filter_dates.append([helpers.get_time_stamp_by_delta(start_dt, months=1, ascending=True,
                                                              date_time_format=None).strftime(resp_format),
                              dt.strftime(resp_format)])
+    # print("filters",filters)
+    # filters = [condition for condition in filters if condition['key'].strip('"') not in ['resp_format']]
     return filter_dates, day_filter_dates
 
 
@@ -112,14 +122,11 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    print("-" * 30)
-    print(query)
-    print("-" * 30)
     resp = await function(query=query)
     return resp
 
 
-def get_group_by_filter_key(cross_filters, Base_Filters,cumulative=False, drill_state='', time_grain=''):
+def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill_state='', time_grain=''):
     """
     Getting group by filter key based on cross filters
     :param time_grain:
@@ -134,8 +141,8 @@ def get_group_by_filter_key(cross_filters, Base_Filters,cumulative=False, drill_
     else:
         group_by_filter = ['"month_name"'] if not cumulative else []
 
-    #group_by_filter = ['"month_name"'] if not cumulative else []
-    #group_by_filter = ['"SBU_Name"'] if cumulative else []
+    # group_by_filter = ['"month_name"'] if not cumulative else []
+    # group_by_filter = ['"SBU_Name"'] if cumulative else []
     if cross_filters:
         index = 0
         if len([rec['value'] for rec in cross_filters if 'lubes' in rec['value'].lower()
@@ -144,6 +151,15 @@ def get_group_by_filter_key(cross_filters, Base_Filters,cumulative=False, drill_
                 if key in Lubes_Filters and Lubes_Filters.index(key) > index:
                     index = Lubes_Filters.index(key)
             group_by_filter = [Lubes_Filters[index + 1]]
+        
+        
+        if ('Aviation' in [x['value'].strip('"') for x in cross_filters] or 'PETCHEM' in [x['value'].strip('"') for x in cross_filters] or 'GAS' in [x['value'].strip('"') for x in cross_filters]):
+            for key in [rec['key'] for rec in cross_filters]:          
+                if key in APG_Filters and APG_Filters.index(key) > index:
+                    index = APG_Filters.index(key)
+            group_by_filter = [APG_Filters[index + 1]]
+        
+        
         else:
             for key in [rec['key'] for rec in cross_filters]:
                 if key in Base_Filters and Base_Filters.index(key) > index:
@@ -159,6 +175,28 @@ def get_group_by_filter_key(cross_filters, Base_Filters,cumulative=False, drill_
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    # Removing extra keys like all/_empty/* to mak sure all results appear in api response
+    # Filtering cross filters
+    cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
+                     and cross_filter.get("value") and cross_filter["value"].lower() in ['*', '_empty', 'all'])]
+
+    # Filtering filters
+    filters = [filter_cond for filter_cond in filters
+               if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
+                       filter_cond["value"].lower() in ['*', '_empty', 'all'])]
+    sbuName_req = ''
+    sbuWise = False
+    if '"sbu_wise"' in [x['key'] for x in cross_filters]:
+        sbuWise = True
+        for eachfilter in cross_filters:
+            if eachfilter['key'] == '"sbu_wise"':
+                inx = cross_filters.index(eachfilter)
+                cross_filters.pop(inx)
+    if '"SBU_Name"' in [x['key'] for x in filters]:
+        for each_filter in filters:
+            if each_filter['key'] == '"SBU_Name"':
+                sbuName_req = each_filter['value']
+                break
     order = 'cumulative'
     if not cross_filters:
         cross_filters = []
@@ -168,17 +206,19 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if condition['key'].strip('"') == "C":
             cumulative = True
             break
-    print('#'*100)
-    print("filters",cross_filters)
     if not cross_filters and cumulative:
         cumulative = True
         order = 'cumulative'
     if cumulative:
-        Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
+        Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+                        '"month_name"', '"ProductName"']
+        Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+                        '"ProductName"', '"month_name"']
     else:
-        Base_Filters = ['"month_name"','"SBU_Name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
+        Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+                        '"ProductName"']
     # Fetching all group by filters, return should be a list always
-    group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters,cumulative, drill_state, time_grain)
+    group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters, cumulative, drill_state, time_grain)
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
 
@@ -198,9 +238,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if filter['key'].strip('"') == 'month_name' and ',' in filter['value']:
             filter['cond'] = 'in'
             filter['value'] = filter['value'].split(',')
-        print([x['key']for x in cross_filters])
-        if 'cumulative' in [x['key']for x in cross_filters] and len(cross_filters) ==1:
-            print("only cummulative present")
+        if 'cumulative' in [x['key'] for x in cross_filters] and len(cross_filters) == 1:
             cross_filters = []
         else:
             print('more filters are present')
@@ -221,7 +259,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
         elif condition['key'].strip('"') == "T":
             target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES" """
-        elif condition['key'].strip('"') == "C":
+            
+        elif condition['key'].strip('"') == "C" and '"T"' not in [x['key'] for x in filters]:
             continue
         elif condition['key'].strip('"') == "YTD":
             # Calculating start and end dates for YTD for both actual and history
@@ -237,24 +276,24 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             end_date_history = end_date_history.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
         elif condition['key'].strip('"') == "FYC":
-            print("condition",condition)
-            condition =[x for x in filters if x['key'] =='"DATE"']
-            print("condition",condition)
+            condition = [x for x in filters if x['key'] == '"DATE"']
+            print("condition", condition)
             # Calculating start and end dates for YTD for both actual and history
             start_date, end_date = condition[0]['value'].split(",")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
-            #end_date = dt_parser.parse(end_date)
+            # end_date = dt_parser.parse(end_date)
             start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
-            end_date_history =fiscal_year.FiscalYear.current().prev_fiscal_year.end.strftime("%Y%m%d" if DefaultTable == "Day" else "%Y%m") 
-            
-            print("start_date",start_date)
+            end_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.end.strftime(
+                "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+
+            print("start_date", start_date)
         elif condition['key'].strip('"') == "YTDPM":
 
             # Calculating start and end dates for YTD for both actual and history
             end_date_ = fiscal_year.FiscalDate.today()
-            end_date = helpers.get_time_stamp_by_delta(end_date_,years=0, days=1, with_month_start_day=True,
-                                                               date_time_format="%Y-%m-%d")
+            end_date = helpers.get_time_stamp_by_delta(end_date_, years=0, days=1, with_month_start_day=True,
+                                                       date_time_format="%Y-%m-%d")
             print("came into YTDPM")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
             # For History
@@ -263,13 +302,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=True,
                                                                date_time_format=None)
 
-
             end_date_history = end_date_history.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
-           
-
-        
-        
         elif condition['key'].strip('"') == "DATE" and '"FYC"' not in [x['key'] for x in filters]:
             # Calculating start and end dates
             start_date, end_date = condition['value'].split(",")
@@ -284,6 +318,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             # Not considering now
             ...
         else:
+           if condition['key']  != '"C"':
+            print("condiution in else",condition)
             # Clearing if value was an empty string
             if not condition["value"]:
                 continue
@@ -310,8 +346,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     if '"FYC"' not in [x['key'] for x in filters]:
                         cross_filters.append(condition)
                 else:
-                    cross_filters.append(condition)
-                print("cross filters in else in else",cross_filters)
+                    if ',' in condition['value']:
+                        condition['cond'] = 'in'
+                        condition['value'] = condition['value'].split(',')
+                    if condition['key'].strip('"') == 'resp_format':
+                        if condition['value'] != 'heat_map':
+                            cross_filters.append(condition)
+                    else:
+                        cross_filters.append(condition)
 
     def get_group_by_columns(group_by_filter):
         if group_by_filter:
@@ -319,7 +361,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         else:
             return ""
     where_conditions = []
-    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
         where_conditions = [clause]
     # For history table
@@ -327,23 +369,31 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         rec['key'] = rec['key'].strip('"')
 
     where_conditions_history = []
-    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
         where_conditions_history = [clause]
     # Data Retrival for target data
     if target:
         group_keys = [key for key in group_by_filter]
-        
+
         if '"month_name"' not in group_by_filter and '"C"' not in [x['key'] for x in filters]:
             group_keys.append("month_name")
-        if '"C"' not in [x['key'] for x in filters]:   
+        if '"C"' not in [x['key'] for x in filters]:
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
-                                                   where_conditions + Default_Filters, start_date, end_date, group_keys)
+                                             where_conditions + Default_Filters, start_date, end_date, group_keys)
         else:
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
-                                                   where_conditions + Default_Filters, start_date, end_date, group_keys)
+                                             where_conditions + Default_Filters, start_date, end_date, group_keys)
         if target_data:
-            if '"C"' not in [x['key'] for x in filters]:
+            print("target_data",target_data)
+            if '"YTD"'  in [x['key'] for x in filters]:
+                
+                print("start_date",start_date)
+                print("end_date",end_date)
+                if end_date:
+                    end_month = fiscal_year.get_month_abbr(end_date)
+                    print("end_mionth is ",end_month)
+                    target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
                 target_data = pd.DataFrame(target_data)
@@ -434,7 +484,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     if not group_by_filter:
         result_df = pd.DataFrame()
         for col in merged_df.columns:
-            result_df[col] = [merged_df[col].sum()]
+            print("merged_columns",merged_df.columns)
+            print("col",col)
+            if col not in "month_name":
+                result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
     # Ordering Data for Month and SBU names
     if not merged_df.empty and ('"month_name"' in group_by_filter or '"SBU_Name"' in group_by_filter):
@@ -460,22 +513,23 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 merged_df[key] = ""
     merged_df.fillna(0, inplace=True)
 
-
     # This below if condition is to show the multi month selected cummulative values in the bar graph when multiple months is selected in drop-down
     # if len(where_conditions) ==1 and "month_name" in where_conditions[0] and 'IN' in where_conditions[0] and "month_df" in merged_df.columns:
     if (len(group_by_filter) <= 1 and len(where_conditions) == 1 and "month_name" in where_conditions[0] and
-            'IN' in where_conditions[0] and 'month_name'  in merged_df.columns):
+            'IN' in where_conditions[0] and 'month_name' in merged_df.columns):
         amount_columns = merged_df.columns.difference(['month_name'])
         # Concatenate month names
         result_df = pd.DataFrame({
             'month_name': [','.join(merged_df['month_name'])],
-                                 })
+        })
         for col in amount_columns:
             result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
     if len(cross_filters) > 0:
         filter_order = [key.strip('"') for key in Base_Filters]
-        sorted_cross_filters = sorted(cross_filters, key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float('inf'))
+        sorted_cross_filters = sorted(cross_filters,
+                                      key=lambda x: filter_order.index(x['key']) if x['key'] in filter_order else float(
+                                          'inf'))
         req_key = sorted_cross_filters[-1]['key']
         req_key = f'"{req_key}"'
         previous_keys = Base_Filters[:Base_Filters.index(req_key)]
@@ -485,19 +539,18 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         Charts_Get_Distinct_ValuesParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Get_Distinct_ValuesParams.action = 'get_distinct_values'
         Charts_Get_Distinct_ValuesParams.column = previous_keys
-        sorted_cross_filters[-1]['cond'] = '='
+        
+        if sorted_cross_filters[-1].get('cond') not in [' ', 'in', 'one-off']:
+            sorted_cross_filters[-1]['cond'] = '='
         Charts_Get_Distinct_ValuesParams.where_cond = [sorted_cross_filters[-1]]
         function = await charts_connection_vault_routing(Charts_Get_Distinct_ValuesParams)
         resp = await function(schema_name='public', table_name="MOM_DAY_LEVEL_DATA",
                               column_name=Charts_Get_Distinct_ValuesParams.column,
                               where_clause=Charts_Get_Distinct_ValuesParams.where_cond)
-        print(resp)
         sorted_level = resp['data']
         if not sorted_level:
             sorted_level = {}
-        
-        print("sorted_level_resp",sorted_level)
-        print("sorted_cross_filters",sorted_cross_filters)
+
         for each_filter in sorted_cross_filters:
             if each_filter['key'] in sorted_level:
                 if len(sorted_level[each_filter['key']]) == each_filter['value']:
@@ -508,69 +561,136 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 sorted_level[sorted_cross_filters[-1]['key']] = []
                 sorted_level[sorted_cross_filters[-1]['key']].append(sorted_cross_filters[-1]['value'])
         month_keys = []
-        
-        if sorted_level and sorted_level.get("month_name") and not cumulative :
+
+        if sorted_level and sorted_level.get("month_name") and not cumulative:
             if isinstance(sorted_level['month_name'][0], list):
                 sorted_level['month_name'] = sorted_level['month_name'][0]
             month_keys = sorted_level['month_name'] = sorted(sorted_level['month_name'], key=months.index)
         if len(group_by_filter) > 1:
+            '''
             if 'SalesArea_Name' in merged_df.columns.tolist() or 'Region_Name' in merged_df.columns.tolist():
                 for column in list(MandateKeys.values()):
                     if column in merged_df.columns.tolist():
-                        merged_df[column] = merged_df[column].fillna(0).astype(int)*1000
-            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
+                        merged_df[column] = merged_df[column].fillna(0).astype(int) * 1000
+            '''
+            final_resp, hist_growth_details, tgt_growth_details = generate_stacked_data(drill_state, merged_df,
+                                                                                        resp_format,
+                                                                                        month_column='month_name')
         else:
             if not resp_format:
                 final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
             else:
-                final_resp = generate_stacked_data(merged_df, resp_format)
+                final_resp, hist_growth_details, tgt_growth_details = generate_stacked_data(drill_state, merged_df,
+                                                                                            resp_format)
         measure_unit = 'TMT'
-        if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
+        """'if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
-        print("final_resp",final_resp)
+        if sbuName_req =="GAS" :
+            measure_unit = 'MT'"""
+
         if 'cumulative' not in final_resp and not drill_state:
-                final_resp['cumulative'] = {}
-        if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1 and not drill_state:
-            final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
+            final_resp['cumulative'] = {}
+        if isinstance(final_resp, dict) and len(final_resp.get('ACTUAL_TMT_SALES', [])) == 1 and not drill_state:
+            # if '"SBU_Name"' in [x['key'] for x in filters] or 'SBU_Name' in [x['key'] for x in filters]:
+            # if '"sbu_wise"' in [x['key'] for x in cross_filters] or 'sbu_wise' in [x['key'] for x in cross_filters]:
+            # if resp_format == 'sbu_wise':
+            if sbuWise:
+                final_resp['cumulative']["0"] = sbuName_req.upper() + '_CUMMULATIVE_SALES'
+            else:
+                final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
+
         else:
-            if isinstance(final_resp,dict):
-                for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
-                    #if 'cumulative' not in final_resp and not drill_state:
+            if isinstance(final_resp, dict):
+                for each_key in final_resp.get('ACTUAL_TMT_SALES', []):
+                    # if 'cumulative' not in final_resp and not drill_state:
                     if 'cumulative' not in final_resp and not drill_state:
                         final_resp['cumulative'] = {}
-                    print("final_resp",final_resp)
+                    if 'cumulative' not in final_resp and time_grain == 'Yearly':
+                        final_resp['cumulative'] = {}
                     final_resp['cumulative'][each_key] = ''
+        if resp_format == 'heat_map':
+            hist_xaxis = []
+            tgt_xaxis = []
+            # xAxis.extend([x['title'].split('_')[0]+'_'+x['title'].split('_')[1] for x in growth_details if '_' in x else x.split()[0]])
+            # hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
+            # hist_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'hist' in x['title'].lower()  else x['title'].split()[0] if 'hist' in x['title'].lower()
+            #                   else x for x in growth_details if isinstance(x, dict) and 'title' in x])
+            hist_xaxis.extend(
+                ['_'.join(x['title'].split('_')[:2]) for x in hist_growth_details if 'hist' in x['title'].lower()])
+            if len(hist_xaxis)>0:
+                di = final_resp[0]
+                li = merged_df['month_name'].unique().tolist()
+                req_index = li.index(hist_xaxis[1].split('_')[0])
+                li_req = li[:req_index]
+                req_str = '('+li_req[0]+'-'+li_req[-1]+')'
+                hist_xaxis[0] = hist_xaxis[0]+req_str
+                
+            if '"T"' in [x['key'] for x in filters]:
+                tgt_xaxis.extend(
+                    ['_'.join(x['title'].split('_')[:2]) for x in tgt_growth_details if 'tgt' in x['title'].lower()])
+                req_index = li.index(tgt_xaxis[1].split('_')[0])
+                li = li[:req_index]
+                req_str = '('+li[0]+'-'+li[-1]+')'
+                tgt_xaxis[0] = tgt_xaxis[0]+req_str
+                # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower()
+                #               else x for x in growth_details if isinstance(x, dict) and 'title' in x])
+                # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
+            # xAxis.extend(['YTD'])
+            if len(tgt_xaxis) > 0:
+                return {"status": True, "message": "Success",
+                        "data": {'data': final_resp, 'hist_growth_details': hist_growth_details,
+                                 'tgt_growth_details': tgt_growth_details, 'hist_xaxis': hist_xaxis,
+                                 'tgt_xaxis': tgt_xaxis, 'level': sorted_level,
+                                 'month_name': month_keys, 'sales_unit': measure_unit}}
+            else:
+                return {"status": True, "message": "Success",
+                        "data": {'data': final_resp, 'hist_growth_details': hist_growth_details,
+                                 'hist_xaxis': hist_xaxis, 'level': sorted_level,
+                                 'month_name': month_keys, 'sales_unit': measure_unit}}
+
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
-                                                               'month_name': month_keys,'sales_unit':measure_unit}}
+                                                               'month_name': month_keys, 'sales_unit': measure_unit}}
     else:
         if resp_format:
-            final_resp = generate_stacked_data(merged_df, resp_format, month_column='month_name')
+            final_resp, hist_growth_details, tgt_growth_details = generate_stacked_data(drill_state, merged_df,
+                                                                                        resp_format,
+                                                                                        month_column='month_name')
         else:
             final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
         measure_unit = 'TMT'
-        if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
-            measure_unit = 'MT'
+        # if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
+        #    measure_unit = 'MT'
+        # if sbuName_req =="GAS" :
+        #    measure_unit = 'MT'
         if 'cumulative' not in final_resp:
-                final_resp['cumulative'] = {}
-        if isinstance(final_resp,dict) and len(final_resp.get('ACTUAL_TMT_SALES',[])) ==1  and not drill_state:
-            final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
+            final_resp['cumulative'] = {}
+        if isinstance(final_resp, dict) and len(final_resp.get('ACTUAL_TMT_SALES', [])) == 1 and not drill_state:
+            # if '"sbu_wise"' in [x['key'] for x in cross_filters] or 'sbu_wise' in [x['key'] for x in cross_filters]:
+            # if resp_format == 'sbu_wise':
+            if sbuWise:
+                final_resp['cumulative']["0"] = sbuName_req.upper() + '_CUMMULATIVE_SALES'
+            else:
+                final_resp['cumulative']["0"] = 'CUMMULATIVE_SALES'
         else:
-            if isinstance(final_resp,dict):
-                for each_key in final_resp.get('ACTUAL_TMT_SALES',[]):
-                    if 'cumulative' not in final_resp :
+            if isinstance(final_resp, dict):
+                for each_key in final_resp.get('ACTUAL_TMT_SALES', []):
+                    if 'cumulative' not in final_resp:
                         final_resp['cumulative'] = {}
                     final_resp['cumulative'][each_key] = ''
-        return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': {},'sales_unit':measure_unit}}
+        return {"status": True, "message": "Success",
+                "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
 
 
-def generate_stacked_data(df, resp_format='', month_column=''):
+def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
+    hist_growth_details = []
+    tgt_growth_details = []
     columns = df.columns.to_list()
     numeric_cols = [col for col in columns if col in list(MandateKeys.values())]
     if month_column:
         df[month_column] = pd.Categorical(df[month_column], categories=months, ordered=True)
         for column in numeric_cols:
             df[column].fillna(0, inplace=True)
-        other_columns = list(set(columns) - set(numeric_cols+[month_column]))
+        other_columns = list(set(columns) - set(numeric_cols + [month_column]))
     else:
         other_columns = list(set(columns) - set(numeric_cols))
     if other_columns:
@@ -595,7 +715,7 @@ def generate_stacked_data(df, resp_format='', month_column=''):
             df_pivot.fillna(0, inplace=True)
 
             # Convert to Dictionary Format
-            return df_pivot.to_dict(orient="records")
+            return df_pivot.to_dict(orient="records"), hist_growth_details, tgt_growth_details
         elif resp_format == 'stacked' and month_column:
             # For sending data in stacked format
             # Renaming columns to lower case
@@ -614,19 +734,151 @@ def generate_stacked_data(df, resp_format='', month_column=''):
                     series_data.append({"name": f"{zone} {column.title()}", "stack": column.title(),
                                         "data": [zone_data.loc[m, column] if m in zone_data.index else 0
                                                  for m in unique_months]})
-            return {"months": unique_months, "series": series_data}
+            return {"months": unique_months, "series": series_data}, hist_growth_details, tgt_growth_details
+        elif resp_format == 'heat_map' and month_column:
+            # making Cumulative sum of data for n-3
+            present_month = datetime.datetime.now().strftime('%b')
+            # Filtering cumulative_months
+            cumulative_months = []
+            if months.index(present_month) > 2:
+                cumulative_months = months[0:months.index(present_month) - 1]
+            # Summing data for cumulative data
+            sum_cols = []
+            for col in df.columns.tolist():
+                # if df[col].dtype in ['float','np.float64','float64','int','int64','np.int64']:
+                if 'SALES' in col:
+                    df[col] = df[col].fillna(0).astype(float)
+                    sum_cols.append(col)
+
+            cumulative_data = {}
+            if drill_state.strip('"') == 'SBU_Name':
+                cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[
+                    sum_cols].sum()
+            if drill_state.strip('"') == 'Zone_Name':
+                cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Region_Name', as_index=False)[
+                    sum_cols].sum()
+            if drill_state.strip('"') == 'Region_Name':
+                cumulative_data = \
+                df[df['month_name'].isin(cumulative_months)].groupby('SalesArea_Name', as_index=False)[sum_cols].sum()
+            cumulative_data['month_name'] = 'Cum'
+            non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
+            df = pd.concat([cumulative_data, non_cumulative_data])
+            # df.to_csv('/tmp/dfcum.csv', index=False)
+            # making zonal summary above the exisiting heatmap
+            if "month_name" in df.columns.tolist():
+                # df['YTD_TMT_SALES'] =  df['ACTUAL_TMT_SALES'] +df['ACTUAL_HISTORY_TMT_SALES']
+                # numeric_cols.append('YTD_TMT_SALES')
+                df_cum = df_prev = df_pres = pd.DataFrame()
+                curr_value = prev_value = tgt_value = cum_growth = tgt_growth = 0
+                df_list = []
+                for i in df['month_name'].unique().tolist():
+                    df_cum = df[df['month_name'] == 'Cum']
+                    if len(df['month_name'].unique().tolist()) >1:
+                        df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                    if len(df["month_name"].unique().tolist()) >=3:
+                        df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
+                    #df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
+                    #df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
+                if not df_cum.empty and not df_prev.empty and not df_pres.empty:
+                    df_list = [df_cum, df_prev, df_pres]
+                for idx, df_month in enumerate(df_list):
+                    if 'ACTUAL_TMT_SALES' in df_month.columns.tolist():
+                        df_month['ACTUAL_TMT_SALES'] = df_month['ACTUAL_TMT_SALES'].fillna(0).astype(float)
+                        curr_value = df_month['ACTUAL_TMT_SALES'].sum()
+                    if 'ACTUAL_HISTORY_TMT_SALES' in df_month.columns.tolist():
+                        df_month['ACTUAL_HISTORY_TMT_SALES'] = df_month['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(
+                            float)
+                        prev_value = df_month['ACTUAL_HISTORY_TMT_SALES'].sum()
+                    if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                        df_month['TARGET_TMT_SALES'] = df_month['TARGET_TMT_SALES'].fillna(0).astype(float)
+                        tgt_value = df_month['TARGET_TMT_SALES'].sum()
+
+                    if curr_value or prev_value:
+                        if prev_value != 0:
+                            cum_growth = ((curr_value - prev_value) / prev_value) * 100
+                        if prev_value == 0:
+                            cum_growth = 100
+                        if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                            if tgt_value != 0:
+                                tgt_growth = ((curr_value - tgt_value) / tgt_value) * 100
+                            else:
+                                tgt_growth = 100
+
+                        if idx == 0:
+                            hist_growth_details.append({"title": "Cum_Hist_Growth", "value": cum_growth})
+                            if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                                tgt_growth_details.append({"title": "Cum_Tgt_Growth", "value": tgt_growth})
+                        if idx == 1:
+                            hist_growth_details.append(
+                                {"title": f"{df['month_name'].unique().tolist()[1]}_Hist_Growth", "value": cum_growth})
+                            if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                                tgt_growth_details.append(
+                                    {"title": f"{df['month_name'].unique().tolist()[1]}_Tgt_Growth",
+                                     "value": tgt_growth})
+                        if idx == 2:
+                            hist_growth_details.append(
+                                {"title": f"{df['month_name'].unique().tolist()[-1]}_Hist_Growth", "value": cum_growth})
+                            if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                                tgt_growth_details.append(
+                                    {"title": f"{df['month_name'].unique().tolist()[-1]}_Tgt_Growth",
+                                     "value": tgt_growth})
+
+            # Renaming columns to lower case
+            df.rename(columns={value: key for key, value in MandateKeys.items() if value in numeric_cols}, inplace=True)
+            # Actual numeric columns
+            numeric_cols = [key for key, value in MandateKeys.items() if value in numeric_cols]
+            # Pivot Data - Creating separate columns for Actual, History, and Target
+            df_pivot = df.pivot(index=other_columns[0], columns=month_column, values=numeric_cols)
+            # Flatten MultiIndex Columns and rename them
+            # df_pivot.columns = [f"{month}{metric.split('')[0]}" for metric, month in df_pivot.columns]
+            df_pivot.columns = [f"{month}_{metric.split(',')[0]}" for metric, month in df_pivot.columns]
+            # Reset Index to include 'Zone_Name'
+            df_pivot.reset_index(inplace=True)
+            # Keeping all nan's as zero's
+            df_pivot.fillna(0, inplace=True)
+            df_pivot.to_csv('/tmp/df_pivot.csv', index=False)
+            df_pivot["YTD_actual"] = df_pivot.filter(like="_actual").sum(axis=1)
+            df_pivot["YTD_history"] = df_pivot.filter(like="_history").sum(axis=1)
+            df_pivot["YTD_target"] = df_pivot.filter(like="_target").sum(axis=1)
+            df_pivot.to_csv('/tmp/df_pivot.csv', index=False)
+            # df_pivot["YTD"] = df_pivot.select_dtypes(include="number").sum(axis=1)
+            if 'YTD_actual' in df_pivot.columns.tolist() or 'YTD_history' in df_pivot.columns.tolist():
+                if df_pivot['YTD_history'].sum() != 0:
+                    ytd_hist_growth = ((df_pivot['YTD_actual'].sum() - df_pivot['YTD_history'].sum()) / df_pivot[
+                        'YTD_history'].sum()) * 100
+                elif df_pivot['YTD_history'].sum() == 0:
+                    ytd_hist_growth = 100
+                elif df_pivot['YTD_actual'].sum() == 0:
+                    ytd_hist_growth = -100
+                if 'YTD_target' in df_pivot.columns.tolist():
+                    if df_pivot['YTD_target'].sum() != 0:
+                        ytd_tgt_growth = ((df_pivot['YTD_actual'].sum() - df_pivot['YTD_target'].sum()) / df_pivot[
+                            'YTD_target'].sum()) * 100
+                    elif df_pivot['YTD_target'].sum() == 0:
+                        ytd_tgt_growth = 100
+                    elif df_pivot['YTD_actual'].sum() == 0:
+                        ytd_tgt_growth = -100
+
+                hist_growth_details.append({"title": "YTD_Hist_Growth", "value": ytd_hist_growth})
+                if 'YTD_target' in df_pivot.columns.tolist():
+                    tgt_growth_details.append({"title": "YTD_Tgt_Growth", "value": ytd_tgt_growth})
+
+                    # Convert to Dictionary Format
+            return df_pivot.to_dict(orient="records"), hist_growth_details, tgt_growth_details
         elif resp_format == 'cummulative' and month_column:
             df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
-            return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+            return {key: value.to_dict() for key, value in
+                    df.to_dict(orient='series').items()}, hist_growth_details, tgt_growth_details
         elif resp_format == 'grouped':
             # For Grouped data
             # Converting data to month wise report
-            return [{"month_name": month,  **{key: group[key].tolist() for key in numeric_cols+other_columns}}
-                    for month, group in df.groupby("month_name")]
+            return [{"month_name": month, **{key: group[key].tolist() for key in numeric_cols + other_columns}}
+                    for month, group in df.groupby("month_name")], hist_growth_details, tgt_growth_details
     else:
         if resp_format == 'cummulative' and month_column:
             df.iloc[:, 1:] = df.iloc[:, 1:].cumsum()
-            
+
         # For regular drill down widgets
-        return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
+        return {key: value.to_dict() for key, value in
+                df.to_dict(orient='series').items()}, hist_growth_details, tgt_growth_details
 

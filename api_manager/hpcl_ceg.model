@@ -152,13 +152,14 @@ Model Users {
     last_name str
     password optional secret
     employee_id index_field unique_field str
+    employee_number optional str
     // Allocated Role
     // ALL for all
     bu index_field list BusinessUnit
     // ALL for all
     sap_id index_field list str
-    system_role index_field str
-    novex_role index_field str
+    system_role index_field list str
+    novex_role index_field list str
     region optional list str
     state index_field list str
     zone index_field list str
@@ -464,6 +465,7 @@ Model Alert_History internal {
     is_unblocked optional bool
     is_interrupt optional bool
     is_extra_days optional bool
+    is_rejected optional bool
 }
 
 Model tags internal {
@@ -556,6 +558,7 @@ Model Alerts {
     sop_id optional index_field str
     location_name optional str
     severity index_field Severity
+    alert_category optional str
     alert_status index_field AlertStatus
     alert_state AlertState                  // Notification or Escalation
     unique_id str                           // System Generated ID Based on <BU>_<INC Number>_<SOP>
@@ -643,6 +646,10 @@ Model Alerts {
         action_description optional str
         doc_link optional str
         acknowledged_by optional str
+        load_number optional str
+        fan_number optional str
+        invoice_number optional str
+        trip_type optional str
         event_tags optional tags
     }
     Action=> intitiate_vts_exception {
@@ -797,9 +804,9 @@ Model productsDetails internal {
 }
 
 Model IndentDryOutDataFilters internal {
-    key str
-    cond str
-    value list str
+    key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
+    cond str regex="^([a-zA-Z0-9_.\-=! ]+|)$"
+    value list str 
 }
 
 // Model for dry-out analysis, Per product one will get created
@@ -1232,6 +1239,23 @@ Model VtsAlertHistory {
     }
 }
 
+Model EmLockAlertHistory {
+    vendor_id optional str
+    location_id optional str
+    location_type optional str
+    emlock_exception_id str
+    terminal_code str
+    truck_number str
+    exception_type str
+    ro_code optional str
+    created_datetime str
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='location_id:sap_id'
+    }
+}
+
 Model VaAlertHistory {
     vendor_id optional str
     location_id optional str
@@ -1605,17 +1629,23 @@ Model ConsumerPumpStocksReceipts {
 }
 
 Model HostSickTts {
-    load_number optional int
-    truck_number optional str
-    created_date optional date
-    customer_name optional str
-    compartment_number optional int
-    product_name optional str
+    load_number optional unique_field int
+    truck_number optional unique_field str
+    created_date optional unique_field date
+    customer_name optional unique_field str
+    compartment_number optional unique_field int
+    product_name optional unique_field str
     required_qty optional int
     loaded_qty optional int
     sick_declared_by optional str
-    sick_date optional datetime
+    sick_date optional unique_field datetime
     remarks optional str
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+
+    Action=> download_data {
+    }
 
     Config=> {
         access_key_mapping=''
@@ -1623,14 +1653,17 @@ Model HostSickTts {
 }
 
 Model HostCancelledTts {
-    load_number optional int
-    truck_number optional str
-    created_date optional datetime
-    customer_name optional str
-    product_name optional str
+    load_number optional unique_field int
+    truck_number optional unique_field str
+    created_date optional unique_field datetime
+    customer_name optional unique_field str
+    product_name optional unique_field str
     required_qty optional int
     cancelled_by optional str
-    cancelled_date optional datetime
+    cancelled_date optional unique_field datetime
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
 
     Config=> {
         access_key_mapping=''
@@ -1640,11 +1673,15 @@ Model HostCancelledTts {
 Model HostKFactorChanges {
     sr_number optional int
     bay_number optional str
-    bcu_number optional str
-    timestamp optional datetime
+    bcu_number optional unique_field str
+    preset_number optional unique_field str
+    timestamp optional unique_field datetime
     bcu_parameter optional str
-    initial_setting optional str
-    final_setting optional str
+    initial_setting optional unique_field str
+    final_setting optional unique_field str
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
 
     Config=> {
         access_key_mapping=''
@@ -1652,16 +1689,19 @@ Model HostKFactorChanges {
 }
 
 Model HostLocalLoadedTts {
-    sr_number optional int
+    sr_number optional unique_field int
     bay_number optional str
-    bcu_number optional str
-    recipe_number optional str
-    truck_number optional str
-    card_number optional str
-    start_totalizer optional int
-    end_totalizer optional int
-    loaded_qty optional int
-    transaction_end_time optional datetime
+    bcu_number optional unique_field str
+    recipe_name optional unique_field str
+    truck_number optional unique_field str
+    card_number optional unique_field str
+    start_totalizer optional unique_field float
+    end_totalizer optional unique_field float
+    loaded_qty optional unique_field int
+    transaction_end_time optional unique_field datetime
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
 
     Config=> {
         access_key_mapping=''
@@ -1669,18 +1709,21 @@ Model HostLocalLoadedTts {
 }
 
 Model HostBayReAssignment {
-    created_date optional datetime
-    load_number optional int
+    created_date optional unique_field datetime
+    load_number optional unique_field int
     fan_number optional str
-    truck_number optional str
-    customer_name optional str
-    compartment_number optional int
-    product_name optional str
-    required_qty optional int
-    loaded_qty optional int
+    truck_number optional unique_field str
+    customer_name optional unique_field str
+    compartment_number optional unique_field int
+    product_name optional unique_field str
+    required_qty optional unique_field int
+    loaded_qty optional unique_field int
     reassigned_bay optional str
-    bay_reassignment_time optional datetime
+    bay_reassignment_time optional unique_field datetime
     remarks optional str
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
 
     Config=> {
         access_key_mapping=''
@@ -1689,9 +1732,12 @@ Model HostBayReAssignment {
 
 Model HostManualBayAssigned {
     sr_number optional int
-    user_name optional str
-    timestamp optional datetime
+    user_name optional unique_field str
+    timestamp optional unique_field datetime
     text optional str
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
 
     Config=> {
         access_key_mapping=''
@@ -1699,9 +1745,12 @@ Model HostManualBayAssigned {
 }
 
 Model HostManualFanPrinted {
-    manual_fan_count optional int
-    auto_fan_count optional int
-    total_count optional int
+    manual_fan_count optional unique_field int
+    auto_fan_count optional unique_field int
+    total_count optional unique_field int
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
 
     Config=> {
         access_key_mapping=''
@@ -1710,12 +1759,15 @@ Model HostManualFanPrinted {
 
 Model HostUnauthorisedFlow {
     bay_number optional str
-    bcu_number optional str
-    meter_number optional int
-    timestamp optional datetime
-    start_totalizer optional int
-    end_totalizer optional int
-    net_totalizer optional int
+    bcu_number optional unique_field str
+    meter_number optional unique_field int
+    timestamp optional unique_field datetime
+    start_totalizer optional unique_field float
+    end_totalizer optional unique_field float
+    net_totalizer optional unique_field float
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
 
     Config=> {
         access_key_mapping=''
@@ -1723,14 +1775,65 @@ Model HostUnauthorisedFlow {
 }
 
 Model HostOverLoadedTts{
-    load_number optional int
-    truck_number optional str
-    compartment_number optional int
-    product_name optional str
-    required_qty optional int
-    loaded_qty optional int
+    load_number optional unique_field int
+    truck_number optional unique_field str
+    compartment_number optional unique_field int
+    blend_name optional unique_field str
+    required_qty optional unique_field int
+    loaded_qty optional unique_field int
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
 
     Config=> {
         access_key_mapping=''
+    }
+}
+
+Model TagsData {
+    sap_id optional str
+    name optional str
+    device_type optional str
+    count optional str
+    zone optional str
+    system optional str
+    equipment_name optional str
+
+
+    Action=> things_board_device_data{
+    }
+
+    Action=> get_tags_data {
+    }
+
+    Config=> {
+        access_key_mapping=''
+        search_fields='sap_id,name,device_type,zone,system'
+    }
+}
+
+Model PerformanceIndex {
+    bu str
+    sap_id str
+    category str
+    zone str
+    region str
+    name str
+    score float
+
+    Action=> get_pi_score {
+        bu str
+        category optional str
+        region optional str
+        zone optional str
+        sap_id optional str
+        strategy str
+    }
+
+    Action=> get_pi_score_by_category {
+        bu str
+        region optional str
+        zone optional str
+        sap_id optional str
     }
 }

@@ -1,13 +1,14 @@
 import os
+import sys
 import uuid
-import glob
 import pyodbc
 import psycopg2
-import traceback
 import datetime
 import pandas as pd
 import polars as pl
 from dateutil.relativedelta import relativedelta
+sys.path.append("/opt/ceg/algo")
+import orchestrator.dbconnector.credential_loader as credential_loader
 
 
 def get_db_connection():
@@ -18,57 +19,16 @@ def get_db_connection():
     Returns:
         pyodbc connection
     """
-    server = 'CDCMSPRODDB5.JADE.HPCL.IN'
-    database = 'HPGASDB'
-    username = 'Algofusion_Read_Digital'
-    password = 'DiGi#25_11_tal_NErve24'
-    port = 16193
-        
+    creds = credential_loader.get_credentials('CD_CMS')
     connection = pyodbc.connect(
             'DRIVER={ODBC Driver 18 for SQL Server};'
-            f'Server={server},{port};'
-            f'Database={database};'
-            f'UID={username};'
-            f'PWD={password};'
+            f'Server={creds['host']},{creds['port']};'
+            f'Database={creds['database']};'
+            f'UID={creds['user']};'
+            f'PWD={creds['password']};'
             'TrustServerCertificate=yes;MARS_Connection=yes;',
         )
     return connection
-
-
-def _get_data(cursor, query):
-    try:
-        cursor.execute(query)
-        batch_size = 100000
-        count = 0
-        output_path = "/opt/ceg/algo/INPUT"
-        print(datetime.datetime.now())
-        while count < 51:            
-            rows = cursor.fetchmany(batch_size)
-            if not rows:
-                break
-            column_names = [desc[0] for desc in cursor.description]
-            df = pd.DataFrame({column: [row[i] for row in rows] for i, column in enumerate(column_names)})
-            # Convert the 'EMAIL_BODY' column to utf-16 encoding
-            # Write the DataFrame to a CSV file
-            outfile_path = os.path.join(output_path, f"outfile{count}.csv")
-            if not os.path.exists(output_path):
-                os.makedirs(output_path)
-            df.to_csv(outfile_path, index=False)            
-            print("Total Records Feteched :", batch_size*count)
-            count += 1
-
-        df = pl.DataFrame()
-        for each_file in glob.glob(
-                output_path + '/' + "outfile*.csv"
-        ):
-            df = pl.concat([df, pl.read_csv(each_file, truncate_ragged_lines=True, infer_schema_length=0)])
-
-        if df.is_empty():
-            df = pl.DataFrame()       
-        return df
-    except Exception as err:
-        print(err)
-        print(traceback.print_exc())
 
 
 def fetch_data(cursor, query, getData=False, params=None):
@@ -121,12 +81,13 @@ def insertToDB(data, table_name, indexing_col=()):
     print("-"*50)
     print(f"-- Inserting Data to {table_name} --")
     print("Length of Data :", len(data))
+    creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
-                host="10.90.38.162",
-                database="hpcl_ceg",
-                user="ceg_user",
-                password="TTNqetkiJLPM50jC",
-                port=5432
+                host=creds['host'],
+                database=creds['database'],
+                user=creds['user'],
+                password=creds['password'],
+                port=creds['port']
             )
     table_create_sql = ''
     cur = pg_conn.cursor()
@@ -225,6 +186,14 @@ def calculate_ageing(df):
 
 
 def get_pending_vs_delivered_data():
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
     connection = get_db_connection()
     cursor = connection.cursor()
     query = """ IF OBJECT_ID('TEMPDB..#Group', 'U') is not null DROP table #Group """
@@ -454,7 +423,7 @@ def get_pending_vs_delivered_data():
     data = data.drop("System_Idx")
     print("Length of data After Drop :", len(data))
     print("-"*25)
-    insertToDB(data, "LPG_SALES_SUMMARY_DATA", indexing_col=("JDEDistributorCode", "ConsumerType", "IsPrepaid", "CylType"))
+    # insertToDB(data, "LPG_SALES_SUMMARY_DATA", indexing_col=("JDEDistributorCode", "ConsumerType", "IsPrepaid", "CylType"))
     
     data = data.with_columns(
         pl.when(
@@ -513,13 +482,7 @@ def get_pending_vs_delivered_data():
     
     # Inserting fresh data to today's table
     trunc_query = """ TRUNCATE lpg_todays_cdcms_sales_summary; """
-    fetch_data(cursor, trunc_query, getData=False, params={
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            })
+    fetch_data(cursor, trunc_query, getData=False, params=params)
     insertToDB(data, "lpg_todays_cdcms_sales_summary", indexing_col=["ZOName"])
     
     # Updating monthly summary to monthly table
@@ -534,20 +497,8 @@ def get_pending_vs_delivered_data():
                         "DistributorName", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "Month", "Execution_Year", "Month_Number", "Financial_Year"
                     """
     trunc_query = """ TRUNCATE lpg_monthly_cdcms_sales_summary; """
-    fetch_data(cursor, trunc_query, getData=False, params={
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            })
-    monthly_data = fetch_data(cursor, monthly_query, getData=True, params={
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            })
+    fetch_data(cursor, trunc_query, getData=False, params=params)
+    monthly_data = fetch_data(cursor, monthly_query, getData=True, params=params)
     
     month_to_quarter = {
                     'April': 'Quarter-1', 'May': 'Quarter-1', 'June': 'Quarter-1',
@@ -562,6 +513,14 @@ def get_pending_vs_delivered_data():
         
 
 def process_subsidy_data(data, cursor, code=""):
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
     query = """ SELECT * FROM CLDP_PFMS.tblRefillResponseBatchHeader """
     tblRefillResponseBatchHeader = fetch_data(cursor, query, getData=True)
         
@@ -577,13 +536,7 @@ def process_subsidy_data(data, cursor, code=""):
     
     if code == "payment":               
         query = """ SELECT * FROM "Subsidy_PaymentErrorMaster" """
-        PaymentErrorCodeMaster = fetch_data(cursor, query, getData=True, params={
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            })
+        PaymentErrorCodeMaster = fetch_data(cursor, query, getData=True, params=params)
         # Getting PaymentError Description
         data = _merge_data(
             left_df=data, 
@@ -598,13 +551,7 @@ def process_subsidy_data(data, cursor, code=""):
     if code == "exception":
         # INNER JOIN CLDP_PFMS.tblCLDPErrorMaster E With(nolock) ON E.EXCEPTION_CODE = D.Exception_Code;
         query = """ SELECT * FROM "Subsidy_ExceptionMaster" """
-        ExceptionMaster = fetch_data(cursor, query, getData=True, params={
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            })    
+        ExceptionMaster = fetch_data(cursor, query, getData=True, params=params)    
         
         # Getting Exception Name and Description
         data = _merge_data(
@@ -762,6 +709,14 @@ def get_subsidy_failure_statistics():
 
 
 def get_subsidy_central_stats():
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
     connection = get_db_connection()
     cursor = connection.cursor()
     query = """ SELECT
@@ -889,13 +844,7 @@ def get_subsidy_central_stats():
             data = data.drop(col)
     
     trunc_query = """ TRUNCATE lpg_cdcms_subsidy_central; """
-    fetch_data(cursor, trunc_query, getData=False, params={
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            })
+    fetch_data(cursor, trunc_query, getData=False, params=params)
     insertToDB(data, "lpg_cdcms_subsidy_central", indexing_col=("ZOName", "Financial_Year", "Month"))
     print(data)
 
@@ -929,6 +878,14 @@ def calculate_financial_year(df):
     ])
 
 def get_subsidy_state_stats():
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
     connection = get_db_connection()
     cursor = connection.cursor()
     query = """ SELECT 
@@ -1059,18 +1016,187 @@ def get_subsidy_state_stats():
         if col.endswith("_y"):
             data = data.drop(col)
     trunc_query = """ TRUNCATE lpg_cdcms_subsidy_state; """
-    fetch_data(cursor, trunc_query, getData=False, params={
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            })
+    fetch_data(cursor, trunc_query, getData=False, params=params)
 
     insertToDB(data, "lpg_cdcms_subsidy_state", indexing_col=("ZOName", "Financial_Year", "Month"))
 
 
+def process_subsidy_data(data, cursor, table_name, code="payment"):
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
+    data = data.with_columns(System_Idx=pl.lit(""))
+    data = data.with_columns(pl.col('System_Idx').map_elements(lambda x: str(uuid.uuid4().hex)))
+    if code == "payment":
+        query = """ SELECT * FROM "Subsidy_PaymentErrorMaster" """
+        PaymentErrorCodeMaster = fetch_data(cursor, query, getData=True, params=params)
+        # Getting PaymentError Description
+        data = _merge_data(
+            left_df=data,
+            right_df=PaymentErrorCodeMaster,
+            left_on=["PaymentErrorCode"],
+            right_on=["Code"],
+            how="left",
+            suffixes="_y",
+            indicator=False
+        )
+    if code == "exception":
+        # INNER JOIN CLDP_PFMS.tblCLDPErrorMaster E With(nolock) ON E.EXCEPTION_CODE = D.Exception_Code;
+        query = """ SELECT * FROM "Subsidy_ExceptionMaster" """
+        ExceptionMaster = fetch_data(cursor, query, getData=True, params=params)
+
+        # Getting Exception Name and Description
+        data = _merge_data(
+            left_df=data,
+            right_df=ExceptionMaster,
+            left_on=["Exception_Code"],
+            right_on=["EXCEPTION_CODE"],
+            how="left",
+            suffixes="_y",
+            indicator=False
+        )
+
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblDistributorMaster = """ SELECT * FROM DCMs.tblDistributorMaster; """
+    tblDistributorMaster = fetch_data(cursor, tblDistributorMaster, getData=True)
+
+    tblDistributorMaster = tblDistributorMaster.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
+    data = data.with_columns(pl.col("Distributor_Code").fill_null(0).cast(pl.Int64).alias("Distributor_Code"))
+    # Getting SACode
+    data = _merge_data(
+        left_df=data,
+        right_df=tblDistributorMaster.select(["JDEDistributorCode", "DistributorName", "SACode", "StateCode"]),
+        left_on=["Distributor_Code"],
+        right_on=["JDEDistributorCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblSAMaster = """ SELECT * FROM DCMs.tblSAMaster; """
+    tblSAMaster = fetch_data(cursor, tblSAMaster, getData=True)
+
+    # Getting SAName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblSAMaster.select(["SACode", "ROCode", "SAName"]),
+        left_on=["SACode"],
+        right_on=["SACode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblROMaster =  """ SELECT * FROM DCMs.tblROMaster; """
+    tblROMaster = fetch_data(cursor, tblROMaster, getData=True)
+
+    # Getting ROName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblROMaster.select(["ROCode", "ZOCode", "ROName"]),
+        left_on=["ROCode"],
+        right_on=["ROCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblZOMaster =  """ SELECT * FROM DCMs.tblZOMaster; """
+    tblZOMaster = fetch_data(cursor, tblZOMaster, getData=True)
+
+    # Getting ZOName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblZOMaster.select(["ZOCode", "ZOName"]),
+        left_on=["ZOCode"],
+        right_on=["ZOCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+    data = data.unique("System_Idx")
+    data = data.drop("System_Idx")
+    
+    if code == "payment":    
+        data = data.filter(pl.col('PaymentErrorName').fill_null('') != "")
+        indexing_columns = ["PaymentErrorName", "DistributorName"]
+    elif code == "exception":
+        data = data.filter(pl.col('ExceptionName').fill_null('') != "")
+        indexing_columns = ["ExceptionName", "DistributorName"]
+    zoneMap = {
+            "LPG - NORTH WEST ZONE": "NWZ",
+            "LPG - NORTH ZONE": "NZ",
+            "LPG - WEST ZONE": "WZ",
+            "LPG - SOUTH CENTRAL ZONE": "SCZ",
+            "LPG - SOUTH ZONE": "SZ",
+            "LPG - NORTH CENTRAL ZONE": "NCZ",
+            "LPG - EAST ZONE": "EZ"
+            }
+    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))    
+    
+    trunc_query = f""" TRUNCATE "{table_name}"; """
+    fetch_data(cursor, trunc_query, getData=False, params=params)
+    
+    insertToDB(data, table_name, indexing_col=indexing_columns)
+
+
+def get_subsidy_exception_failure_data():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    failure = """ SELECT 
+                        PaymentErrorCode, Distributor_Code, 
+                        COUNT(1) AS Refills, COUNT(DISTINCT LPG_ID) AS Consumers 
+                    FROM 
+                        CLDP_PFMS.tblDailyRefillBatchDetails D WITH (NOLOCK) 
+                    WHERE 
+                        Delivery_Date_Time >= '2022-04-01' AND Payout_Status = 'FL' 
+                    GROUP BY 
+                        PaymentErrorCode, Distributor_Code """
+    exception = """ SELECT 
+                        Exception_Code, Distributor_Code, 
+                        COUNT(1) AS Refills, COUNT(distinct LPG_ID) AS Consumers
+                    FROM 
+                        CLDP_PFMS.tblDailyRefillBatchDetails D WITH(NOLOCK) 
+                    WHERE 
+                        Delivery_Date_Time >= '2022-04-01' AND Exception_Code IS NOT NULL 
+                    GROUP BY 
+                        Exception_Code, Distributor_Code """
+                        
+    failure = fetch_data(cursor, failure, getData=True)
+    exception = fetch_data(cursor, exception, getData=True)
+    process_subsidy_data(failure, cursor, "subsidy_failure_statistics", code="payment")
+    process_subsidy_data(exception, cursor, "subsidy_exception_statistics", code="exception")
+
+
 def get_new_connection_data():
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
     connection = get_db_connection()
     cursor = connection.cursor()
     query = """ SELECT dm.JDEDistributorCode,
@@ -1183,18 +1309,20 @@ def get_new_connection_data():
             data = data.drop(col)
 
     trunc_query = """ TRUNCATE lpg_cdcms_nc_data; """
-    fetch_data(cursor, trunc_query, getData=False, params={
-            "host": "10.90.38.162",
-            "database": "hpcl_ceg",
-            "user": "ceg_user",
-            "password": "TTNqetkiJLPM50jC",
-            "port": 5432
-            })
+    fetch_data(cursor, trunc_query, getData=False, params=params)
     insertToDB(data, "lpg_cdcms_nc_data", indexing_col=("ZOName", "MonthYear"))
     print(data)
     
 
 def get_consumer_statistics():
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
     connection = get_db_connection()
     cursor = connection.cursor()
     
@@ -1333,11 +1461,11 @@ def get_consumer_statistics():
     
     trunc_query = ''' TRUNCATE TABLE "LPG_CONSUMERS_SUMMARY";  '''
     pg_conn = psycopg2.connect(
-                host="10.90.38.162",
-                database="hpcl_ceg",
-                user="ceg_user",
-                password="TTNqetkiJLPM50jC",
-                port=5432
+                host=creds["host"],
+                database=creds["database"],
+                user=creds["user"],
+                password=creds["password"],
+                port=creds["port"]
             )
     cur = pg_conn.cursor()
     cur.execute(trunc_query)
@@ -1364,3 +1492,4 @@ if __name__=="__main__":
     get_new_connection_data()    
     get_subsidy_state_stats()
     get_subsidy_central_stats()
+    get_subsidy_exception_failure_data()

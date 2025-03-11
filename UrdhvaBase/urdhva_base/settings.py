@@ -49,6 +49,7 @@ class Settings(pydantic_settings.BaseSettings):
     password_salt: str = "hpcl_novex_dnc"
     max_redis_connections: int = 10
     origin_check_enabled: bool = False
+    disable_api_extra_inputs: bool = False
 
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
@@ -62,6 +63,7 @@ class Settings(pydantic_settings.BaseSettings):
     keycloak_db_password: str = 'admin'
     fernet_key: str = 'NjY5N2IwOWM5ZjE0MjMzN2M3YzA5Y2Y4ZDE4NTA2Mjk='
     default_realm: str = 'hpcl'
+    server_ip: str = ""
 
     # For RBAC
     roles_directories: typing.List[str] = []
@@ -172,6 +174,10 @@ class Settings(pydantic_settings.BaseSettings):
     things_board_url: str = "http://localhost:8080"
     things_board_username: str = "admin"
     things_board_password: str = "password"
+
+    # Max user password retries
+    max_password_retires: int = 3
+    lockout_time: int = 60
 
     # Timezone settings
     time_zone: str = "Asia/Kolkata"

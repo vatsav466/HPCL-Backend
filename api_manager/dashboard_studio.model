@@ -119,9 +119,9 @@ Model filtered_keys internal {
 }
 
 Model WidgetFilters internal {
-    key str
+    key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
     cond str
-    value optional str
+    value optional str regex="^([a-zA-Z0-9,\[\]\{\}\(\)&><#_.\-=\" ]+|)$"
 }
 
 Model Charts {
@@ -145,25 +145,25 @@ Model Charts {
     hashed_value optional str
 
     Action=> get_tables {
-        connection_id optional int max=1000000
+        connection_id optional int min=0 max=1000000
         database str
         schema str
     }
     Action=> get_columns {
-        connection_id optional int max=1000000
+        connection_id optional int min=0 max=1000000
         database str
         schema str
         table str
     }
     Action=> get_unique_values {
-        connection_id optional int max=1000000
+        connection_id optional int min=0 max=1000000
         database str
         schema str
         table str
         column list str
     }
     Action=> drill_down_data {
-        connection_id optional int max=1000000
+        connection_id optional int min=0 max=1000000
         database str
         schema str
         table str
@@ -178,11 +178,11 @@ Model Charts {
     }
 
     Action=> get_distinct_values {
-        connection_id optional int max=1000000
+        connection_id optional int min=0 max=1000000
         schema str
         table str
         column list str
-        where_cond optional list dict
+        where_cond optional list WidgetFilters
     }
 
     Action=> generate_dynamic_chart_query {
@@ -220,16 +220,16 @@ Model Charts {
     }
 
     Action=> connection_vault_routing {
-        connection_id optional int max=1000000
+        connection_id optional int min=0 max=1000000
         action str
     }
 
     Action=> get_creds_details {
-        connection_id optional int max=1000000
+        connection_id optional int min=0 max=1000000
     }
 
     Action=> get_schema {
-        connection_id optional int max=1000000
+        connection_id optional int min=0 max=1000000
         database optional str
     }
 

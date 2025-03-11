@@ -9,10 +9,10 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.audio import MIMEAudio
 from email.mime.multipart import MIMEMultipart
-import orchestrator.notification_manager.notification_manager as notification_manager
+from orchestrator.notification_manager.notification_manager import NotificationManager
 
 
-class NotifyEMail(notification_manager.NotificationManager):
+class NotifyEMail(NotificationManager):
     def __init__(self):
         super().__init__()
         self.notification_type = "Email"
@@ -55,7 +55,7 @@ class NotifyEMail(notification_manager.NotificationManager):
             attachment.add_header('Content-Disposition', 'attachment', filename=os.path.basename(filename))
             return attachment
 
-    def publish_message(self, **kwargs):
+    async def publish_message(self, **kwargs):
         """
         Handles the actual email sending process
         :param kwargs:
@@ -74,14 +74,18 @@ class NotifyEMail(notification_manager.NotificationManager):
         args = {'to_emails': ['user@email.com'], 'subject': 'test email', 'body': '<HTML Body>', 'html_content': True}
         ---------------------------------------------------------------------------------------------------------
         """
+        if not kwargs.get("force_send", False):
+            return True, "Success"
         creds = self.load_credentials()
-
-        recipients = [kwargs['to_emails']] if isinstance(kwargs['to_emails'], str) else kwargs['to_emails'] or []
+        print("creds --> ", creds)
+        print("kwargs --> ", kwargs)
+        recipients = [kwargs['recipients']] if isinstance(kwargs['recipients'], str) else kwargs['recipients'] or []
 
         mail_content = MIMEMultipart('alternative' if creds.get("html_content") else 'mixed')
         mail_content['Subject'] = kwargs['subject']
-        mail_content['To'] = ",".join(kwargs['to_emails'])
+        mail_content['To'] = ",".join(kwargs['recipients'])
         mail_content['From'] = kwargs.get("from", creds['from'])
+        print("mail_content", mail_content)
         # Reply to email
         if creds.get("reply_to"):
             mail_content['Reply-To'] = creds['reply_to']
@@ -100,19 +104,31 @@ class NotifyEMail(notification_manager.NotificationManager):
                     server.starttls(context=context)
                     server.ehlo()
             if creds.get('username') and creds.get("password"):
-                server.login(creds['username'], creds['password'])
+                try:
+                    server.login(creds['username'], creds['password'])
+                except smtplib.SMTPAuthenticationError as e:
+                    print(f"SMTP Authentication Error: {e}")
+                except Exception as e:
+                    print(f"Unexpected Error during login: {e}")
             server.sendmail(kwargs.get("from", creds['from']), recipients, mail_content.as_string())
+            print("Email before quit")
             server.quit()
+            print({"status": "success", "message": "Email sent successfully."})
             return {"status": "success", "message": "Email sent successfully."}
 
         except smtplib.SMTPAuthenticationError:
+            print({"status": "failed", "message": "Authentication Error: Invalid Username or Password."})
             return {"status": "failed", "message": "Authentication Error: Invalid Username or Password."}
         except smtplib.SMTPException as e:
+            print({"status": "failed", "message": f"SMTP Error: {e}"})
             return {"status": "failed", "message": f"SMTP Error: {e}"}
         except ssl.SSLError as e:
+            print({"status": "failed", "data": f"SSL Error {e}"})
             return {"status": "failed", "data": f"SSL Error {e}"}
         except OSError as e:
+            print({"status": "failed", "data": str(e)})
             return {"status": "failed", "data": str(e)}
         except Exception as e:
+            print({"status": "failed", "message": f"Unexpected Error: {e}"})
             return {"status": "failed", "message": f"Unexpected Error: {e}"}
 

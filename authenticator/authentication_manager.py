@@ -171,15 +171,17 @@ class AuthenticationManager:
         @description: Configuring SMTP connection for realm
         @return:
         """
+        smtp_user = ''
+        smtp_password = ''
         resp = self.admin_conn.get_realm(self.realm_name)
         resp.update({"rememberMe": True, "resetPasswordAllowed": True,
-                     "smtpServer": {'password': 'BOpOAIbZ8z+MK20/P8mfmKuAEoYfgf2t7ieXbIiDPzNb',
+                     "smtpServer": {'password': smtp_password,
                                     'replyToDisplayName': 'support@algofusiontech.com',
                                     'starttls': True, 'auth': 'true',
                                     'port': 587,
                                     'host': 'email-smtp.ap-south-1.amazonaws.com',
                                     'from': 'venu@algofusiontech.com',
-                                    'ssl': False, 'user': 'AKIAROZIC2VWORJGCPF7',
+                                    'ssl': False, 'user': smtp_user,
                                     'displayName': 'AlgoFusion Technologies SMTP Settings'}})
         self.admin_conn.update_realm(self.realm_name, resp)
 

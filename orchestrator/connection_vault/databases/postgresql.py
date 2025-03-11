@@ -18,6 +18,7 @@ from orchestrator.dashboard.chart_factory.query_operator import (
     AggregationOperator,
     JoinOperator
 )
+TEMPORAL_RANGE_PATTERN = r'datetime\("([^"]{1,50})"\) : datetime\("([^"]{1,50})"\)'
 
 
 class BaseAction:
@@ -490,9 +491,16 @@ class Postgresql(BaseAction):
                                 key = condition.get("key")
                                 cond = condition.get("cond")  # Default to '=' if not provided
                                 value = condition.get("value")
+                                # This was to remove empty or * values from the query
+                                if cond in ['=', 'equals'] and value is not None and value.lower() in ['*', '_empty', 'all', '']:
+                                    continue
                                 
                                 if key is not None and value is not None:  # Ensure required fields are present
-                                    where_query += f'''"{key}" {cond} '{value}' AND '''
+                                    if cond in [' ', 'one-off', 'in']:
+                                        value = "', '".join(map(str, value))
+                                        where_query += f'''"{key}" {cond} ('{value}') AND '''
+                                    else:
+                                        where_query += f'''"{key}" {cond} '{value}' AND '''
                             elif isinstance(condition, str):  # Handle shorthand single condition (string format)
                                 for key, value in condition.items():
                                     where_query += f'''"{key}" = '{value}' AND '''
@@ -515,7 +523,7 @@ class Postgresql(BaseAction):
                 data = await stmt.fetch()
                 
                 # Collect data
-                columns_mapping[column] = [record[column] for record in data]
+                columns_mapping[column] = [record[column] for record in data if record.get(column)]
 
             # Close the connection
             await self.close_connection(connection)
@@ -961,7 +969,7 @@ class QueryBuilder:
         where_clause_cond: str = ""
         select_column = await self.select_col(agg, col, table_alias)
         if op == "TEMPORAL_RANGE":
-            match = re.match(r'datetime\("(.*?)"\) : datetime\("(.*?)"\)', val)
+            match = re.match(TEMPORAL_RANGE_PATTERN, val)
             if match:
                 start_date, end_date = match.groups()
                 where_clause_cond += f'''{select_column} BETWEEN '{start_date}' AND '{end_date}' '''

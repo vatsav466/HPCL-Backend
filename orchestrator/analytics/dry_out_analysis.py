@@ -128,8 +128,12 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
         bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
                       if helpers.normalize_string(key).startswith(f"RO_")]
         bu_data_ro = pd.DataFrame(bu_data_ro)
-        bu_data_ro['name'] = bu_data_ro['name'].fillna("")
-        bu_data_ro['category'] = bu_data_ro['category'].fillna("")
+        for key in ["name", "category"]:
+            if key not in bu_data_ro:
+                bu_data_ro[key] = ""
+            bu_data_ro[key] = bu_data_ro[key].fillna("")
+        # bu_data_ro['name'] = bu_data_ro['name'].fillna("")
+        # bu_data_ro['category'] = bu_data_ro['category'].fillna("")
         if plant:
             key_mapping["terminal_plant_id"] = plant
         for rec in bu_data_ro.to_dict(orient='records'):
@@ -991,3 +995,32 @@ async def current_month_frequent_drout_terminals(data):
         query=dry_out_query
     )
     return dryout_resp
+
+async def get_atg_ack(dry_out_in_days='1'):
+    to_day = datetime.datetime.now().strftime("%Y-%m-%d")
+    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume  >  0 and Recptentrydate::DATE = '{to_day}'"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dryout_resp = await function(
+        query=query
+    )
+    atg_ack_df = pd.DataFrame(dryout_resp)
+
+    query = f"""select distinct sap_id from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status = 'Open' and dry_out_in_days = '{dry_out_in_days}'"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    alert_df = pd.DataFrame(resp)
+
+    df = pd.merge(
+        atg_ack_df.drop_duplicates(subset="sap_ro_code"), alert_df,
+        left_on=["sap_ro_code"], right_on=["sap_id"], how="inner")
+    return len(df)

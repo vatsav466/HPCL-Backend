@@ -27,6 +27,7 @@ Model vtsData internal {
     device_offline_count optional int
     device_tamper_count optional int
     approved_by optional str
+    invoice_number optional str
 }
 
 Model vtsDataUpdated internal {
@@ -196,19 +197,19 @@ Model emlockData internal {
 }
 
 Model emlockVendorData internal {
-    location_type optional BusinessUnit
+    location_type str
     emlock_exception_id str
     terminal_code str
     truck_number str
     exception_type str
-    ro_code str
+    ro_code optional str
     created_datetime str
 }
 
 Model EMLock crud_disable {
     Action=> ingest_data {
         vendor_id str
-        data optional list emlockData
+        data optional list emlockVendorData
     }
 }
 

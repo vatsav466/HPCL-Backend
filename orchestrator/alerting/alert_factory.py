@@ -5,7 +5,9 @@ import traceback
 import hpcl_ceg_enum
 import hpcl_ceg_model
 import urdhva_base.redispool
+import utilities.helpers as helpers
 import utilities.interlock_mapping as interlock_mapping
+import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.vts_analysis as vts_analysis
@@ -76,6 +78,7 @@ class AlertFactory:
             # Generate alert alert_data
             alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
+                                                        'alert_category': alert_data.get('alert_category'),
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
                                                         'alert_state': hpcl_ceg_enum.AlertState.InProgress,
                                                         'unique_id': unique_id, 'alert_section': alert_data.get("alert_section", bu),
@@ -116,7 +119,12 @@ class AlertFactory:
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
+            alert_level = "level - 1"
             if alert_data.get("alert_section",'') in ["VA"]:
+                if alert_data.get("alert_section",'') == "VA":
+                    alert_level = await va_analysis.get_va_levels(
+                        bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
+                    )
                 if alert_data.get("bu","") in ["TAS"]:
                     await redis_ins.setex(alert_data['alert_id'], 15*60, alert_resp['id'])
                 else:
@@ -141,6 +149,7 @@ class AlertFactory:
                                      "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
                                      "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
                                      "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
+                                     "va_level": {"value": alert_level, "type": "String"},
                                     "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}}
 
             # Create Interlock
@@ -166,12 +175,13 @@ class AlertFactory:
 
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
-                workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
+                # workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
+                workflowid = interlock_name["workflow_name"] if "workflow_name" in interlock_name.keys() else interlock_name["interlock_name"]
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 # Uncomment below line to stop workflow for VA
-                if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
-                    await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                    await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
+                # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
+                #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+                #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
 
                 # Updating for VTS Alert history with alert_id
                 if alert_data_dict.get("alert_section") == "VTS":
@@ -185,12 +195,10 @@ class AlertFactory:
                     # resp = await vts_analysis.post_blocked_tt(blocked_tt_data)
                     # print("Data Pushed to VTS Vendor", resp)
 
-                # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
-                #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
-                # else:
-                #     await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
-                #     await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
+                if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
+                    return True, "alert created"
+                await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+                await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:
                 print(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
                 logger.info(f"Unable to find Camunda workflow for interlock: {interlock_name}, BU: {bu}")
@@ -243,7 +251,7 @@ class AlertFactory:
                 params = urdhva_base.queryparams.QueryParams()
                 params.limit = 1
                 params.q = query
-                alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
+                alert_resp = await hpcl_ceg_model.Alerts.get_all(params )
                 alert_data_list = []
                 if alert_resp and hasattr(alert_resp, '__dict__') and alert_resp.__dict__.get('body'):
                     # Decode and parse Alert response
@@ -299,6 +307,11 @@ class AlertFactory:
                 al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                 al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                 redis_ins = await urdhva_base.redispool.get_redis_connection()
+                if al_data["alert_section"] in ["VA"]:
+                    keys = [al_data["sap_id"], al_data['bu'], "VA", al_data['device_id'],
+                            al_data['interlock_name']]
+                    va_alert_id = helpers.generate_hash(keys)
+                    await redis_ins.delete(va_alert_id)
                 if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
                     await redis_ins.hdel("alert_mapping", al_data['external_id'])
                 data_obj = hpcl_ceg_model.Alerts(**al_data)

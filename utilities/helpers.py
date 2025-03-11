@@ -14,6 +14,7 @@ try:
 except ImportError:
     from random import choice
 from dateutil.relativedelta import relativedelta
+from utilities import interlock_category_mapping
 
 
 def month_short_to_number(short_name):
@@ -228,10 +229,10 @@ def validate_camunda_settings_rule(camunda_settings, location_id, bu):
         return True
     try:
         if camunda_settings['rule'] == "even":
-            if int(location_id) // 2 == 0:
+            if int(location_id) % 2 == 0:
                 return True
         elif camunda_settings['rule'] == "odd":
-            if int(location_id) // 2 != 0:
+            if int(location_id) % 2 != 0:
                 return True
     except Exception as e:
         print(f"Exception while handling rule {e}, Traceback {traceback.format_exc()}")
@@ -293,4 +294,11 @@ async def get_camunda_url(bu, sap_id, alert_section):
     return default_url
 
 async def get_doc_link(file_name: str):
-    return f"https://10.90.38.161/api/alerts/stored_document?file_name={file_name}"
+    server_ip = urdhva_base.settings.server_ip
+    return f"https://{server_ip}/api/alerts/stored_document?file_name={file_name}"
+
+def map_device_category(interlock_name):
+    for category, interlocks in interlock_category_mapping.interlock_to_category.items():
+        if interlock_name in interlocks:
+            return category
+    return "Unknown"

@@ -69,7 +69,7 @@ class AuthenticationManager:
             # If provided password not equals to db password, skip authentication
             if urdhva_base.types.Secret(user_info["password"]).get_secret() != password:
                 return False, "Invalid Login Credentials"
-        role = await hpcl_ceg_model.Roles.get_aggr_data(f"select * from roles where name='{user_info['novex_role']}'")
+        role = await hpcl_ceg_model.Roles.get_aggr_data(f"select * from roles where name='{user_info['novex_role'][0]}'")
         if role["data"]:
             user_info["allowed_roles"] = role["data"][0]["allowed_pages"]
         # Adding session data

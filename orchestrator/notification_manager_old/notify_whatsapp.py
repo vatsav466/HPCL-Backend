@@ -1,8 +1,8 @@
 import urdhva_base
-from orchestrator.notification_manager.notification_manager import NotificationManager
+import orchestrator.notification_manager.notification_manager as notification_manager
 
 
-class NotifyWhatsApp(NotificationManager):
+class NotifyWhatsApp(notification_manager.NotificationManager):
     def __init__(self):
         super().__init__()
         self.notification_type = "WhatsApp"

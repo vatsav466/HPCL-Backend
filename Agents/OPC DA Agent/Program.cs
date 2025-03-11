@@ -31,7 +31,7 @@ namespace OpcdaSimulator
         public string conn_user { get; set; } // RabbitMQ UserName
         public string conn_vhost { get; set; } // RabbitMQ Virtual host
         public string conn_secret { get; set; } // RabbitMQ password 
-        
+
         // Operational Parameters 
         public bool full_dump { get; set; } // Force full data dump flag
         public bool log_debug { get; set; } // Enable debug logging in Console
@@ -62,17 +62,17 @@ namespace OpcdaSimulator
     }
 
     internal class Program
-    {   
+    {
         // Logging and state management
-        private static readonly string logFilePath = $"log_{DateTime.Now:yyyyMMdd_HHmmss_fff}.txt";        
+        private static readonly string logFilePath = $"log_{DateTime.Now:yyyyMMdd_HHmmss_fff}.txt";
         private static readonly Dictionary<string, string> lastKnownTagValues = new Dictionary<string, string>();
         private static DateTime nextFullDumpTime = DateTime.MinValue; // Track next scheduled full dump
-        private static  bool Debug ;
+        private static bool Debug;
 
         // RabbitMQ Connections 
         private static IConnection rabbitConnection = null;
         private static IModel channel = null;
-         
+
         // Thread Synchroization
         private static readonly object LogLock = new object();
         static readonly object fileLock = new object();  // Define a lock object
@@ -85,7 +85,7 @@ namespace OpcdaSimulator
         {
             string logMessage = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}";
 
-            
+
             lock (fileLock)  // Lock to prevent simultaneous writes
             {
                 try
@@ -153,7 +153,7 @@ namespace OpcdaSimulator
         /// </summary>
         /// <param name="config">Application Configuartion</param>
         /// <returns>Task with connection success status</returns>
-        static  Task<bool> TryConnectToRabbitMqAsync(ConnectionConfig config)
+        static Task<bool> TryConnectToRabbitMqAsync(ConnectionConfig config)
         {
             try
             {
@@ -279,6 +279,7 @@ namespace OpcdaSimulator
                         else
                         {
                             tagsData[sensor.sensor_tag] = "-99";
+                            lastKnownTagValues[sensor.sensor_tag] = "-99";
                         }
                     }
 
@@ -315,11 +316,13 @@ namespace OpcdaSimulator
                                 {
                                     LogToFile($"Error converting value for {item.ItemId}: {ex.Message}");
                                     tagsData[item.ItemId] = "-99";
+                                    lastKnownTagValues[item.ItemId] = "-99";
                                 }
                             }
                             else
                             {
                                 tagsData[item.ItemId] = "-99";
+                                lastKnownTagValues[item.ItemId] = "-99";
                             }
                         }
                     }
@@ -333,6 +336,7 @@ namespace OpcdaSimulator
                     foreach (var sensor in device.sensors.Where(s => !string.IsNullOrEmpty(s.sensor_tag)))
                     {
                         tagsData[sensor.sensor_tag] = "-99";
+                        lastKnownTagValues[sensor.sensor_tag] = "-99";
                     }
                 }
             }
@@ -359,7 +363,7 @@ namespace OpcdaSimulator
                     foreach (var tag in tagsElement.EnumerateObject())
                     {
                         string newValue = tag.Value.GetString() ?? "-99";
-                        
+
                         // Only include tags that have changed since last reading
                         if (!lastKnownTagValues.TryGetValue(tag.Name, out var previousValue) ||
                             previousValue != newValue)
@@ -707,7 +711,7 @@ namespace OpcdaSimulator
                 var config = LoadConfig("config.json");
                 Debug = config.log_debug;
                 nextFullDumpTime = GetNextHalfHour(DateTime.Now, config);
-
+                bool isFirstRun = true;
                 StartRabbitMqListener(config);
                 bool isRabbitMqConnected = await TryConnectToRabbitMqAsync(config);
 
@@ -716,7 +720,7 @@ namespace OpcdaSimulator
                     try
                     {
                         var currentTime = DateTime.Now;
-                        bool sendFullDump = config.full_dump || currentTime >= nextFullDumpTime;
+                        bool sendFullDump = isFirstRun || config.full_dump || currentTime >= nextFullDumpTime;
 
                         var devices = LoadDevices($"{config.location_id}.json");
                         var changedTagsData = new Dictionary<string, string>();
@@ -747,8 +751,9 @@ namespace OpcdaSimulator
 
                         var dataToSend = sendFullDump
                             ? new Dictionary<string, string>(lastKnownTagValues)
-                            : changedTagsData;
-
+                            : changedTagsData
+                                 .Where(kv => kv.Value != "-99") // Filter out "-99" during normal intervals
+                                 .ToDictionary(kv => kv.Key, kv => kv.Value);
                         if (sendFullDump)
                         {
                             LogToFile($"Scheduled full dump at {currentTime:HH:mm:ss}");
@@ -768,8 +773,11 @@ namespace OpcdaSimulator
                         File.WriteAllText(outputPath, JsonSerializer.Serialize(new
                         {
                             location_id = config.location_id,
-                            tags_data = dataToSend
+                            tags_data = sendFullDump ? lastKnownTagValues : changedTagsData,
                         }));
+
+                        // Turn off first run flag after completing first cycle
+                        isFirstRun = false;
                     }
                     catch (Exception ex)
                     {

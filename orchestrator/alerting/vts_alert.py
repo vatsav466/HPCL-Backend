@@ -151,7 +151,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                 altcount = max_limit
                             alert_message = (
                                 f"Vehicle Number: {record['tl_number']} "
-                                F"Violation Type: {key} "
+                                f"Violation Type: {key} "
+                                f"Reported at: {record['report_duration']}"
                                 f"Violation Count: {data['count']} "
                                 f"Violation_instance_count: {finarResp}"
                             )
@@ -194,6 +195,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             vts_alert_data['alert_history'] = alert_history
                             vts_alert_data['clear_count'] = details['alerting_rules'][str(altcount)]['clear_count']
                             vts_alert_data['severity'] = details['severity']
+                            vts_alert_data['alert_timestamp'] = datetime.datetime.strptime(record['report_duration'], "%Y-%m-%d %H:%M:%S").isoformat()
                             vts_alert_data['vts_alert_history_ids'] = vts_alert_history_ids
                             vts_alert_data['transporter_name'] = ''
                             vts_alert_data['transporter_code'] = alert_data['vendor_id']
@@ -230,6 +232,8 @@ class VTSAlertManager(alert_factory.AlertFactory):
                                 ]
                             }
                             #print('vts_alert_payload----->',vts_alert_payload)
+                            camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['location_id'],
+                                                        alert_section="VTS")
                             await cls.create_alert(vts_alert_data, camunda_url)
           
                 except Exception as e:

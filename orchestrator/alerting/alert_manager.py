@@ -16,6 +16,7 @@ import utilities.connection_mapping as connection_mapping
 import orchestrator.alerting.emlock_alert as emlock_alert
 import orchestrator.analytics.vts_analysis as vts_analysis
 from orchestrator.notification_manager.notify_email import *
+import orchestrator.analytics.emlock_analysis as emlock_analysis
 
 
 async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url):
@@ -49,6 +50,19 @@ async def close_alert(alert_data):
     alert_type = alert_data['alert_type']
     return await eval(f"{alert_type.lower()}_alert.{alert_type}AlertManager").close_bu_alert(alert_data)
 
+
+async def get_function_mapping():
+    function_map = {
+        "Justification": "is_justify", "Rejected": "is_rejected", "Approved": "is_approved",
+        "Override": "is_override", "interLockOk": "is_interlockok",
+        "excApprovalTimeExp": "is_exc_approval_time_exp", "Message": "is_message",
+        "Raised": "is_raised", "Cancelled": "is_cancelled", "Allocated": "is_allocated",
+        "SentToSap": "is_sent_to_sap", "OrderPlaced": "is_order_placed",
+        "Created": "is_created", "Tripped": "is_tripped", "VTS": "is_vts",
+        "AcceptClose": "is_accept", "InvalidAlert": "is_invalid", "FalseAlert": "is_false", "ValidAlert": "is_valid",
+        "Blocked": "is_blocked", "UnBlocked": "is_unblocked", "Interrupt": "is_interrupt", "Request": "is_extra_days"
+    }
+    return function_map
 
 async def close_va_alert(alert_data, input_data):
     """
@@ -128,6 +142,48 @@ async def close_vts_alert(alert_data, input_data):
     print("Un block tt params: ", params)
     return True, "Success"
     # return await vts_analysis.post_unblocked_tt(params)
+
+
+async def close_emlock_alert(alert_data, input_data):
+    """
+
+    Args:
+        alert_data:
+        input_data:
+
+    Returns:
+
+    """
+    if urdhva_base.context.context.exists():
+        rpt = urdhva_base.context.context.get('rpt', {})
+    else:
+        rpt = {}
+
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    meta_data = {}
+    if alert_data['violation_type'] == 'FanNotGenerated':
+        meta_data['loadNumber'] = input_data.get("load_number")
+        meta_data['fanNumber'] = input_data.get("fan_number")
+    if alert_data['violation_type'] == 'InvoiceNotGenerated':
+        meta_data['loadNumber'] = input_data.get("load_number")
+        meta_data['invoiceNumber'] = input_data.get("invoice_number")
+        meta_data['tripType'] = input_data.get("trip_type")
+        meta_data['ro_code'] = alert_data['dealer_id']
+        meta_data['terminal_code'] = alert_data['servicing_plant_id']
+
+    params = {
+        "emlockExceptionId": alert_data['external_id'],
+        "terminalCode": alert_data['sap_id'],
+        "truckNumber": alert_data['vehicle_number'],
+        "exceptionType": alert_data['violation_type'],
+        "status": "1" if input_data['action_type'] == 'Approved' else "2",
+        "acknowledgedUser": rpt.get("employee_id", ""),
+        "acknowledgedTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "remarks": input_data['action_msg'],
+        "metaData": json.dumps(meta_data)
+    }
+
 
 async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):
     if get_approved_time:
@@ -223,7 +279,7 @@ async def vts_alert_closer(alert_data, input_data):
     notify_email = NotifyEMail()
     notify_email.publish_message(
         **{
-            'to_emails': ['venu@algofusiontech.com', 'santoshkumar.s@algofusiontech.com'],
+            'to_emails': ['venu@algofusiontech.com',],
             'subject': f"VTS Alert Closed FOR {close_alert_data['bu']} BU And {alert_data['sap_id']} SAP ID",
             'body': read_template("/opt/ceg/algo/orchestrator/notification_templates/interlock_alert_closure.html", data=data),
             'html_content': True
@@ -232,6 +288,17 @@ async def vts_alert_closer(alert_data, input_data):
     print(f"VTS Alert Closed")
     resp = await close_vts_alert(alert_data, input_data)
     print("Alert Closed in VTS Portal: ", resp)
+
+async def emlock_alert_closer(alert_data, input_data):
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+    close_alert_data = {}
+    close_alert_data['alert_type'] = alert_data['alert_section']
+    close_alert_data['bu'] = alert_data['bu']
+    close_alert_data['alert_id'] = alert_data['id']
+    close_alert_data['interlock_id'] = alert_data['interlock_id']
+    await close_alert(close_alert_data)
+    resp = await close_emlock_alert(alert_data, input_data)
 
 async def _is_close_alert(input_data):
     """
@@ -377,7 +444,8 @@ class AlertAction:
                             "is_blocked": event_tags.get("is_blocked", False),
                             "is_unblocked": event_tags.get("is_unblocked", False),
                             "is_interrupt": event_tags.get("is_interrupt", False),
-                            "is_extra_days": event_tags.get("is_extra_days", False)
+                            "is_extra_days": event_tags.get("is_extra_days", False),
+                            "is_rejected": event_tags.get("is_rejected", False)
                         })
         # print("alert_history before update --> ", alert_history)
         # Modify the alert with the updated alert_history
@@ -423,7 +491,8 @@ class AlertAction:
                    "is_blocked": {"name": "blocked", "type": "Boolean"},
                    "is_unblocked": {"name": "unblocked", "type": "Boolean"},
                    "is_interrupt": {"name": "interrupt", "type": "Boolean"},
-                   "is_extra_days": {"name": "request", "type": "Boolean"}
+                   "is_extra_days": {"name": "request", "type": "Boolean"},
+                   "is_rejected": {"name": "reject", "type": "Boolean"}
                    }
         return {value['name']: {'type': 'Boolean', 'value': exception.get(key, False)}
                 for key, value in key_map.items()}
@@ -450,12 +519,14 @@ class AlertAction:
         }
         # print("messaged_data: ", messaged_data)
         # Posting data to camunda
-        url = helpers.get_camunda_url(
+        url = await helpers.get_camunda_url(
             bu=alert_data.bu,
             sap_id=alert_data.sap_id,
             alert_section=alert_data.alert_section
         )
-        url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+        # url = urdhva_base.settings.camunda_url + "/engine-rest/message"
+        url += "/engine-rest/message"
+        print("url: ", url)
         r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=messaged_data, verify=False)
 
         if int(r.status_code / 100) != 2:
@@ -483,7 +554,9 @@ class AlertAction:
         :param alert_data:
         :return:
         """
-        return await cls.publish_to_camunda(input_data, alert_data, "Reject")
+        # if alert_data.alert_section in ["VA", "VTS", "TAS", "RO"]:
+        #     return await cls.publish_to_camunda(input_data, alert_data, "Approved")
+        return await cls.publish_to_camunda(input_data, alert_data, "Approved")
 
     @classmethod
     async def approve_alert(cls, input_data, alert_data):

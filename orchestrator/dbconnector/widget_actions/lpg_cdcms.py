@@ -93,9 +93,10 @@ class LPGCDCMSActions:
         df = df.filter(pl.col("ZOName").fill_null("") != "NULL")
         df = df.filter(pl.col("DistributorName").fill_null("") != "NULL")
         data = {"Month": months, "ZOName": df['ZOName'].unique().to_list(),
-                "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(), 
-                "DistributorName": df["DistributorName"].unique().to_list(), "CylType": ['C142','C5'], 
-                "ConsumerType": ['PMUY', 'NPMUY'], "Financial_Year": ["2023-2024", "2024-2025"]}
+                "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(),
+                "DistributorName": df["DistributorName"].unique().to_list(),
+                "StateCode": df["StateCode"].unique().to_list(), "StateName": df["StateName"].unique().to_list(),
+                "CylType": ['C142','C5'], "ConsumerType": ['PMUY', 'NPMUY'], "Financial_Year": ["2023-2024", "2024-2025"]}
         return data
     
     
@@ -1164,13 +1165,13 @@ class LPGCDCMSActions:
                 dbc_enrollments_query_ += ' WHERE ' 
                 dbc_enrollments_query_ += ' AND '.join(conditions)
             dbc_enrollments_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName" '
+            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         else:
             if "where" not in dbc_enrollments_query_.lower():
                 dbc_enrollments_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 dbc_enrollments_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName" '
+            dbc_enrollments_query_ += ' GROUP BY "Month", "Month_Number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         resp = await function(query=dbc_enrollments_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -1203,7 +1204,12 @@ class LPGCDCMSActions:
                     pl.sum("DBCIssued").alias("DBCIssued"),
                     pl.sum("Month_Number").alias("Month_Number"),
                 ])
-            if grouped_resp is not None:
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.group_by(["Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                    pl.sum("DBCIssued").alias("DBCIssued"),
+                    pl.sum("Month_Number").alias("Month_Number"),
+                ])
+            if grouped_resp is not None:    
                 return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
         resp = resp.group_by(["Month"]).agg([
                 pl.sum("DBCIssued").alias("DBCIssued"),
@@ -1240,13 +1246,13 @@ class LPGCDCMSActions:
                 lpg_cdcms_nc_query_ += ' WHERE ' 
                 lpg_cdcms_nc_query_ += ' AND '.join(conditions)
             lpg_cdcms_nc_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         else:
             if "where" not in lpg_cdcms_nc_query_.lower():
                 lpg_cdcms_nc_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
             else:
                 lpg_cdcms_nc_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_nc_query_ += ' GROUP BY "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "ConsumerType" '
         resp = await function(query=lpg_cdcms_nc_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -1757,6 +1763,71 @@ class LPGCDCMSActions:
     
     
     @staticmethod
+    async def lpg_cdcms_daywise_overall_ctc_statistics(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        daywise_overall_ctc_statistics_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_overall_ctc_statistics")
+        _filters = []
+        daterange = None
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                    continue
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                daywise_overall_ctc_statistics_query_ += ' WHERE '
+                daywise_overall_ctc_statistics_query_ += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            daywise_overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_overall_ctc_statistics_query_, access_filters, drill_state)
+            daywise_overall_ctc_statistics_query_ += ' GROUP BY TO_CHAR("Execution_Datetime", \'Month\'), "ZoneNames", "ROName", "SAName", "SubCategory" '
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            daywise_overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_overall_ctc_statistics_query_, access_filters, drill_state)
+            daywise_overall_ctc_statistics_query_ += ' GROUP BY TO_CHAR("Execution_Datetime", \'Month\'), "ZoneNames", "ROName", "SAName", "SubCategory" '
+        try:
+            query_resp = await function(query=daywise_overall_ctc_statistics_query_)
+            resp = pl.DataFrame(query_resp)
+            resp = await filter_data(resp.to_pandas(), _filters)
+            resp = pl.from_pandas(resp)
+            for col in ["ACTC", "BCTC", "NCTC"]:                
+                resp = resp.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).alias(col))
+            
+            resp = resp.group_by(["Month"]).agg([
+                    pl.sum("ACTC").round(2).alias("ACTC"),
+                    pl.sum("BCTC").round(2).alias("BCTC"),
+                    pl.sum("NCTC").round(2).alias("NCTC"),
+                ])
+            numerical_columns = ["ACTC", "BCTC", "NCTC"]
+            string_columns = ["ZOName", "ROName", "SAName", "ConsumerType"]
+            for col in numerical_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
+            for col in string_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
+        except Exception as e:
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
+    
+    
+    @staticmethod
     async def lpg_cdcms_safety_check_pending(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1890,7 +1961,6 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_failure_stats_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_failure_stats")
         _filters = []
         if cross_filters:
@@ -1915,7 +1985,7 @@ class LPGCDCMSActions:
                 lpg_failure_stats_  += ' WHERE '
                 lpg_failure_stats_  += ' AND '.join(conditions)
             lpg_failure_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_failure_stats_  += ' GROUP BY "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","PaymentErrorName"'
+            lpg_failure_stats_  += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyFailureData.get_clause_conditions(formated=True)]
@@ -1924,9 +1994,10 @@ class LPGCDCMSActions:
                 lpg_failure_stats_  += ' WHERE "ZOName" IS NOT NULL'
             else:
                 lpg_failure_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_failure_stats_  += ' GROUP BY "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","PaymentErrorName"'
+            lpg_failure_stats_  += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName"'
             resp = await function(query=lpg_failure_stats_)
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["PaymentErrorName"], as_index=False
@@ -1935,7 +2006,7 @@ class LPGCDCMSActions:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
             for each_str_col in [
-                "ZOName", "ROName", "SAName", "JDEDistributorCode", "PaymentErrorName"
+                "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName"
             ]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
@@ -1946,12 +2017,12 @@ class LPGCDCMSActions:
         if resp:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-            for each_float_col in ["Consumers","Refills"]:
+            resp = await filter_data(resp, _filters)
+            for each_float_col in ["Consumers", "Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
 
-            for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","PaymentErrorName"]:
+            for each_str_col in ["ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
 
@@ -1980,11 +2051,98 @@ class LPGCDCMSActions:
     
     
     @staticmethod
+    async def lpg_cdcms_daywise_subsidy_failure_statistics(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        if not drill_state=='financial_year':
+            daywise_failure_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_failure_statistics")
+        else:
+            daywise_failure_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_failure_statistics_m")
+        _filters = []
+        daterange = None
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                    continue
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                daywise_failure_stats_query_ += ' WHERE '
+                daywise_failure_stats_query_ += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            daywise_failure_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_failure_stats_query_, access_filters, drill_state)
+            if not daterange and not drill_state == "financial_year":
+                daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            if daterange and not drill_state == "financial_year":
+                daywise_failure_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
+            if not drill_state == "financial_year":
+                daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName", "Financial_Year" '
+            else:
+                daywise_failure_stats_query_ += ' GROUP BY "Month", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName", "Financial_Year" '
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            daywise_failure_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_failure_stats_query_, access_filters, drill_state)
+            if not "where" in daywise_failure_stats_query_.lower() and not daterange and not drill_state == "financial_year":
+                daywise_failure_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            elif not "where" in daywise_failure_stats_query_.lower() and daterange and not drill_state == "financial_year":
+                daywise_failure_stats_query_ += f' WHERE "Delivery_Date" BETWEEN {daterange} '
+            elif not daterange and not drill_state == "financial_year":
+                daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            elif daterange and not drill_state == "financial_year":
+                daywise_failure_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
+            if not drill_state == "financial_year":
+                daywise_failure_stats_query_ += ' GROUP BY "Delivery_Date", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName", "Financial_Year" '
+            else:
+                daywise_failure_stats_query_ += ' GROUP BY "Month", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName", "Financial_Year" '
+        try:
+            query_resp = await function(query=daywise_failure_stats_query_)
+            resp = pl.DataFrame(query_resp)
+            resp = await filter_data(resp.to_pandas(), _filters)
+            resp = pl.from_pandas(resp)
+            resp = resp.with_columns(pl.col('Refills').fill_null(0).cast(pl.Float64).alias('Refills'))
+            if drill_state == "financial_year":
+                resp = resp.group_by(["Month", "Financial_Year"]).agg([
+                        pl.sum("Refills").round(2).alias("Refills"),
+                    ])
+            else:
+                resp = resp.group_by(["Delivery_Date", "PaymentErrorName"]).agg([
+                        pl.sum("Refills").round(2).alias("Refills"),
+                    ])
+                resp = resp.with_columns(pl.col("Delivery_Date").dt.strftime("%Y-%m-%d").alias("Delivery_Date"))
+            numerical_columns = ["Refills"]
+            string_columns = ["Delivery_Date"]
+            for col in numerical_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
+            for col in string_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
+        except Exception as e:
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
+    
+    
+    @staticmethod
     async def lpg_cdcms_exception_stats(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        df = pd.read_csv("/opt/ceg/algo/DistributorMappings.csv")
         lpg_exception_stats_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_exception_stats")
         _filters = []
         if cross_filters:
@@ -2009,7 +2167,7 @@ class LPGCDCMSActions:
                 lpg_exception_stats_  += ' WHERE '
                 lpg_exception_stats_  += ' AND '.join(conditions)
             lpg_exception_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_exception_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode","ExceptionName"'
+            lpg_exception_stats_  += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName","ExceptionName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
@@ -2018,9 +2176,10 @@ class LPGCDCMSActions:
                 lpg_exception_stats_  += ' WHERE "ZOName" IS NOT NULL'
             else:
                 lpg_exception_stats_  += ' AND "ZOName" IS NOT NULL'
-            lpg_exception_stats_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"JDEDistributorCode", "ExceptionName"'
+            lpg_exception_stats_  += ' GROUP BY "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName"'
             resp = await function(query=lpg_exception_stats_ )
             resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
             if resp.empty:
                 return {"status": True, "message": "success", "data": []}
             resp = resp.groupby(["ExceptionName"], as_index=False
@@ -2035,11 +2194,11 @@ class LPGCDCMSActions:
         if resp:
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
-            resp = pd.merge(resp, df, on='JDEDistributorCode', how='left')
-            for each_float_col in ["Consumers","Refills"]:
+            resp = await filter_data(resp, _filters)
+            for each_float_col in ["Consumers", "Refills"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0)
-            for each_str_col in ["ZOName","ROName","SAName","JDEDistributorCode","ExceptionName"]:
+            for each_str_col in ["ZOName", "ROName", "SAName", "DistributorName", "ExceptionName"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
@@ -2063,6 +2222,94 @@ class LPGCDCMSActions:
             return {"status": True, "message":"success", "data":[]}
         # If no filters are applied, return the default response
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    @staticmethod
+    async def lpg_cdcms_daywise_subsidy_exception_statistics(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        if not drill_state=='financial_year':
+            daywise_exception_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_exception_statistics")
+        else:
+            daywise_exception_stats_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_daywise_subsidy_exception_statistics_m")
+        _filters = []
+        daterange = None
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                    continue
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                daywise_exception_stats_query_ += ' WHERE '
+                daywise_exception_stats_query_ += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
+            if not daterange and not drill_state == "financial_year":
+                daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            elif daterange and not drill_state == "financial_year":
+                daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
+            if not drill_state == "financial_year":
+                daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
+            else:
+                daywise_exception_stats_query_ += ' GROUP BY "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
+        else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
+            if not "where" in daywise_exception_stats_query_.lower() and not daterange and not drill_state == "financial_year":
+                daywise_exception_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            elif not "where" in daywise_exception_stats_query_.lower() and daterange and not drill_state == "financial_year":
+                daywise_exception_stats_query_ += f' WHERE "Delivery_Date" BETWEEN {daterange} '
+            elif not daterange and not drill_state == "financial_year":
+                daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
+            elif daterange and not drill_state == "financial_year":
+                daywise_exception_stats_query_ += f' AND "Delivery_Date" BETWEEN {daterange} '
+            if not drill_state == "financial_year":
+                daywise_exception_stats_query_ += ' GROUP BY "Delivery_Date", "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
+            else:
+                daywise_exception_stats_query_ += ' GROUP BY "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
+        try:    
+            query_resp = await function(query=daywise_exception_stats_query_)
+            resp = pl.DataFrame(query_resp)
+            resp = await filter_data(resp.to_pandas(), _filters)
+            resp = pl.from_pandas(resp)
+            resp = resp.with_columns(pl.col('Refills').fill_null(0).cast(pl.Float64).alias('Refills'))
+            if drill_state == "financial_year":
+                resp = resp.group_by(["Month", "Financial_Year"]).agg([
+                        pl.sum("Refills").round(2).alias("Refills"),
+                    ])
+            else:
+                resp = resp.group_by(["Delivery_Date", "ExceptionName"]).agg([
+                        pl.sum("Refills").round(2).alias("Refills"),
+                    ])
+                resp = resp.with_columns(pl.col("Delivery_Date").dt.strftime("%Y-%m-%d").alias("Delivery_Date"))
+            numerical_columns = ["Refills"]
+            string_columns = ["Delivery_Date"]
+            for col in numerical_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null(0.0))
+            for col in string_columns:
+                if col in resp.columns:
+                    resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+            return {"status": True, "message": "success", "data": resp.to_dicts()}
+        except Exception as e:
+            print(f"Error executing query: {e}")
+            return {"status": False, "message": f"Error: {e}"}
 
     
     @staticmethod
@@ -2072,8 +2319,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_central_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_consumers")
         if filters:
@@ -2091,14 +2341,15 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_central_consumers_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_consumers_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
-        else:
-            if "where" not in lpg_cdcms_subsidy_central_consumers_query_.lower():
-                lpg_cdcms_subsidy_central_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            if not _fy:
                 lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_central_consumers_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_central_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            elif not _fy:
+                lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_consumers_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2173,8 +2424,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_central_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_transaction")
         if filters:
@@ -2192,14 +2446,15 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_central_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_transaction_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
-        else:
-            if "where" not in lpg_cdcms_subsidy_central_transaction_query_.lower():
-                lpg_cdcms_subsidy_central_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            if not _fy:
                 lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_central_transaction_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_central_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            elif not _fy:
+                lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_transaction_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2274,8 +2529,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_central_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_amount")
         if filters:
@@ -2293,14 +2551,15 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_central_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_amount_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
-        else:
-            if "where" not in lpg_cdcms_subsidy_central_amount_query_.lower():
-                lpg_cdcms_subsidy_central_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            if not _fy:
                 lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_central_amount_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_central_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            elif not _fy:
+                lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_central_amount_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2375,8 +2634,11 @@ class LPGCDCMSActions:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_state_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_consumers")
         if filters:
@@ -2394,14 +2656,15 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_state_consumers_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_consumers_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
-        else:
-            if "where" not in lpg_cdcms_subsidy_state_consumers_query_.lower():
-                lpg_cdcms_subsidy_state_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            if not _fy:
                 lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_state_consumers_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_state_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            elif not _fy:
+                lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_consumers_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2470,14 +2733,96 @@ class LPGCDCMSActions:
     
     
     @staticmethod
+    async def lpg_cdcms_subsidy_state_consumers_stacked_state(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        financial_year = await get_financial_year()
+        _filters = []
+        _fy = False
+        if cross_filters:
+            for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        lpg_cdcms_subsidy_state_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_consumers")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                lpg_cdcms_subsidy_state_consumers_query_ += ' WHERE ' 
+                lpg_cdcms_subsidy_state_consumers_query_ += ' AND '.join(conditions)
+            if not _fy:
+                lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_state_consumers_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_state_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'                
+            elif not _fy:
+                lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        resp = await function(query=lpg_cdcms_subsidy_state_consumers_query_)
+        resp = pl.DataFrame(resp)
+        resp = await filter_data(resp.to_pandas(), _filters)
+        resp = pl.from_pandas(resp)
+        numerical_columns = ["month_number", "consumer_count"]
+        string_columns = ["StateCode", "Month", "ZOName", "ROName", "SAName", "DistributorName"]
+        for col in numerical_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null(0.0))
+        for col in string_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            grouped_resp = None
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName"]).agg([
+                    pl.sum("consumer_count").alias("consumer_count"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName"]).agg([
+                    pl.sum("consumer_count").alias("consumer_count"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName", "SAName"]).agg([
+                    pl.sum("consumer_count").alias("consumer_count"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                    pl.sum("consumer_count").alias("consumer_count"),
+                ])
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
+        resp = resp.group_by(["StateCode", "Month"]).agg([
+                pl.sum("consumer_count").alias("consumer_count"),
+                pl.first("month_number").alias("month_number"),
+            ])
+        resp = resp.sort("month_number")
+        return {"status": True, "message": "success", "data": resp.to_dicts()}
+    
+    
+    @staticmethod
     async def lpg_cdcms_subsidy_state_transaction(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_state_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_transaction")
         if filters:
@@ -2495,14 +2840,15 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_state_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_transaction_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
-        else:
-            if "where" not in lpg_cdcms_subsidy_state_transaction_query_.lower():
-                lpg_cdcms_subsidy_state_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            if not _fy:
                 lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_state_transaction_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_state_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            elif not _fy:
+                lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_transaction_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2571,14 +2917,96 @@ class LPGCDCMSActions:
     
     
     @staticmethod
+    async def lpg_cdcms_subsidy_state_transaction_stacked_state(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        financial_year = await get_financial_year()
+        _filters = []
+        _fy = False
+        if cross_filters:
+            for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        lpg_cdcms_subsidy_state_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_transaction")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                lpg_cdcms_subsidy_state_transaction_query_ += ' WHERE ' 
+                lpg_cdcms_subsidy_state_transaction_query_ += ' AND '.join(conditions)
+            if not _fy:
+                lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_state_transaction_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_state_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            elif not _fy:
+                lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        resp = await function(query=lpg_cdcms_subsidy_state_transaction_query_)
+        resp = pl.DataFrame(resp)
+        resp = await filter_data(resp.to_pandas(), _filters)
+        resp = pl.from_pandas(resp) 
+        numerical_columns = ["month_number", "transaction_count"]
+        string_columns = ["Month", "ZOName", "ROName", "SAName", "DistributorName"]
+        for col in numerical_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null(0.0))
+        for col in string_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            grouped_resp = None
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName"]).agg([
+                    pl.sum("transaction_count").alias("transaction_count"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName"]).agg([
+                    pl.sum("transaction_count").alias("transaction_count"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName", "SAName"]).agg([
+                    pl.sum("transaction_count").alias("transaction_count"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                    pl.sum("transaction_count").alias("transaction_count"),
+                ])
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
+        resp = resp.group_by(["StateCode", "Month"]).agg([
+                pl.sum("transaction_count").alias("transaction_count"),
+                pl.first("month_number").alias("month_number"),
+            ])
+        resp = resp.sort("month_number")
+        return {"status": True, "message": "success", "data": resp.to_dicts()}
+    
+    
+    @staticmethod
     async def lpg_cdcms_subsidy_state_amount(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
         _filters = []
+        _fy = False
         if cross_filters:
             for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         lpg_cdcms_subsidy_state_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_amount")
         if filters:
@@ -2596,14 +3024,15 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_subsidy_state_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_amount_query_ += ' AND '.join(conditions)
-            lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
-        else:
-            if "where" not in lpg_cdcms_subsidy_state_amount_query_.lower():
-                lpg_cdcms_subsidy_state_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
-            else:
+            if not _fy:
                 lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
-            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName" '
+            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_state_amount_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_state_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            elif not _fy:
+                lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         resp = await function(query=lpg_cdcms_subsidy_state_amount_query_)
         resp = pl.DataFrame(resp)
         resp = await filter_data(resp.to_pandas(), _filters)
@@ -2672,6 +3101,87 @@ class LPGCDCMSActions:
     
     
     @staticmethod
+    async def lpg_cdcms_subsidy_state_amount_stacked_state(filters, cross_filters, drill_state):
+        Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+        Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        financial_year = await get_financial_year()
+        _filters = []
+        _fy = False
+        if cross_filters:
+            for filter in cross_filters:
+                if "Financial_Year" in filter.key:
+                    _fy = True
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        lpg_cdcms_subsidy_state_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_amount")
+        if filters:
+            conditions = []
+            for rec in filters:
+                rec.value = rec.value.split(",")
+                if isinstance(rec.value, str):
+                    condition = f"{rec.key} = '{rec.value}'"
+                else:
+                    if len(rec.value) == 1:
+                        condition = f"{rec.key} = '{rec.value[0]}'"
+                    else:
+                        condition = f"{rec.key} in {tuple(rec.value)}"
+                conditions.append(condition)
+            if conditions:
+                lpg_cdcms_subsidy_state_amount_query_ += ' WHERE ' 
+                lpg_cdcms_subsidy_state_amount_query_ += ' AND '.join(conditions)
+            if not _fy:
+                lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        else:
+            if "where" not in lpg_cdcms_subsidy_state_amount_query_.lower() and not _fy:
+                lpg_cdcms_subsidy_state_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
+            elif not _fy:
+                lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
+            lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
+        resp = await function(query=lpg_cdcms_subsidy_state_amount_query_)
+        resp = pl.DataFrame(resp)
+        resp = await filter_data(resp.to_pandas(), _filters)
+        resp = pl.from_pandas(resp)
+        numerical_columns = ["month_number", "SubsidyAmount"]
+        string_columns = ["StateCode", "Month", "ZOName", "ROName", "SAName", "DistributorName"]
+
+        for col in numerical_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null(0.0))
+
+        for col in string_columns:
+            if col in resp.columns:
+                resp = resp.with_columns(pl.col(col).fill_null("").cast(pl.Utf8))
+        if filters:
+            filter_keys = [rec.key.strip('"') for rec in filters]
+            grouped_resp = None
+            if "Month" in filter_keys and "ZOName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName"]).agg([
+                    pl.sum("SubsidyAmount").alias("SubsidyAmount"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName"]).agg([
+                    pl.sum("SubsidyAmount").alias("SubsidyAmount"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName", "SAName"]).agg([
+                    pl.sum("SubsidyAmount").alias("SubsidyAmount"),
+                ])
+            elif "Month" in filter_keys and "ZOName" in filter_keys and "ROName" in filter_keys and "SAName" in filter_keys and "DistributorName" not in filter_keys:
+                grouped_resp = resp.group_by(["StateCode", "Month", "ZOName", "ROName", "SAName", "DistributorName"]).agg([
+                    pl.sum("SubsidyAmount").alias("SubsidyAmount"),
+                ])
+            if grouped_resp is not None:
+                return {"status": True, "message": "success", "data": grouped_resp.to_dicts()}
+        resp = resp.group_by(["StateCode", "Month"]).agg([
+                pl.sum("SubsidyAmount").alias("SubsidyAmount"),
+                pl.first("month_number").alias("month_number"),
+            ])
+        resp = resp.sort("month_number")
+        return {"status": True, "message": "success", "data": resp.to_dicts()}
+    
+    
+    @staticmethod
     async def lpg_cdcms_backlogs(filters, cross_filters, drill_state):
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -2703,9 +3213,9 @@ class LPGCDCMSActions:
                 lpg_cdcms_backlogs_today_  += ' WHERE '
                 lpg_cdcms_backlogs_today_  += ' AND '.join(conditions)
             lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
-            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName"'
+            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName", "SAName", "DistributorName", "ConsumerType" '
             lpg_cdcms_backlogs_today_ += ' AND "CylType" = \'C142\' '
-            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
+            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName", "ConsumerType" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSubsidyExceptionData.get_clause_conditions(formated=True)]
@@ -2716,14 +3226,18 @@ class LPGCDCMSActions:
             else:
                 lpg_cdcms_backlogs_  += ' AND "CylType" = \'C142\' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'91 days\''
                 lpg_cdcms_backlogs_today_ += ' AND "CylType" = \'C142\' '
-            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
-            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName"'
+            lpg_cdcms_backlogs_  += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName", "ConsumerType"'
+            lpg_cdcms_backlogs_today_ += ' GROUP BY  "ZOName" ,"ROName","SAName" ,"DistributorName", "ConsumerType"'
             
             average_sales = await function(query=lpg_cdcms_backlogs_)
             latest_pending_bookings = await function(query=lpg_cdcms_backlogs_today_)
             average_sales = pl.DataFrame(average_sales)
             latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
             
+            average_sales = await filter_data(average_sales.to_pandas(), _filters)
+            latest_pending_bookings = await filter_data(latest_pending_bookings.to_pandas(), _filters)     
+            average_sales = pl.from_pandas(average_sales)
+            latest_pending_bookings = pl.from_pandas(latest_pending_bookings)       
             
             # Overall Number
             overall_average_sales = average_sales.with_columns(pl.lit("temp").alias("temp"))
@@ -2736,14 +3250,18 @@ class LPGCDCMSActions:
             average_sales = average_sales.group_by("ZOName").agg((pl.col("TotalSalesYesterday").sum() / 90).alias("AverageSales"))
             latest_pending_bookings = latest_pending_bookings.group_by("ZOName").agg(pl.col("Total_Pending").sum().alias("TotalPendingBookings"))
             backlog = latest_pending_bookings.join(average_sales, on="ZOName", how="left").with_columns((pl.col("TotalPendingBookings") / pl.col("AverageSales")).alias("Backlog"))
-                        
-            print("backlog :", backlog)
+
             return {"status": True, "message": "success", "overall_number": overall_backlog["Backlog"][-1], "data": backlog.to_dicts()}
                         
         average_sales = await function(query=lpg_cdcms_backlogs_)
         latest_pending_bookings = await function(query=lpg_cdcms_backlogs_today_)
         average_sales = pl.DataFrame(average_sales)
         latest_pending_bookings = pl.DataFrame(latest_pending_bookings)
+        
+        average_sales = await filter_data(average_sales.to_pandas(), _filters)
+        latest_pending_bookings = await filter_data(latest_pending_bookings.to_pandas(), _filters)
+        average_sales = pl.from_pandas(average_sales)
+        latest_pending_bookings = pl.from_pandas(latest_pending_bookings)       
         
         # Overall Number
         overall_average_sales = average_sales.with_columns(pl.lit("temp").alias("temp"))
@@ -2785,7 +3303,7 @@ class LPGCDCMSActions:
         lpg_cdcms_pcc_sales = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_pcc_sales")
         
         financial_year = await get_financial_year()
-        financial_start_date = '2024-04-01'
+        financial_start_date = financial_year.split("-")[0] + "-04-01"
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -2844,7 +3362,18 @@ class LPGCDCMSActions:
         
         april_consumer_stats = pl.DataFrame(april_consumer_stats)
         current_consumer_stats = pl.DataFrame(current_consumer_stats)
-        lpg_cdcms_pcc_sales = pl.DataFrame(lpg_cdcms_pcc_sales)
+        lpg_cdcms_pcc_sales = pl.DataFrame(lpg_cdcms_pcc_sales)       
+        current_consumer_stats = current_consumer_stats.rename({"SubCategory": "ConsumerType"})
+        april_consumer_stats = april_consumer_stats.rename({"SubCategory": "ConsumerType"})
+        
+        april_consumer_stats = await filter_data(april_consumer_stats.to_pandas(), _filters)
+        current_consumer_stats = await filter_data(current_consumer_stats.to_pandas(), _filters)
+        lpg_cdcms_pcc_sales = await filter_data(lpg_cdcms_pcc_sales.to_pandas(), _filters)
+        
+        april_consumer_stats = pl.from_pandas(april_consumer_stats)
+        current_consumer_stats = pl.from_pandas(current_consumer_stats)
+        lpg_cdcms_pcc_sales = pl.from_pandas(lpg_cdcms_pcc_sales)                
+        
         current_consumer_stats = current_consumer_stats.join(df, on='JDEDistributorCode', how='left')
         
         lpg_cdcms_pcc_sales = lpg_cdcms_pcc_sales.with_columns(pl.col("TotalSalesYesterday").cast(pl.Float64).alias("TotalSalesYesterday"))

@@ -95,7 +95,13 @@ lpg_dashboard_actions = [
     'lpg_operations_daywise_production',
     'cdcms_current_date_pending_count',
     'cdcms_current_date_bookings_count',
-    'cdcms_current_date_sales_count'
+    'cdcms_current_date_sales_count',
+    'maintenance_fault',
+    'interlock_name_count',
+    'tas_maintenance_fault',
+    'tas_maintenance_fault_dropdown',
+    'tas_normal_count',
+    'tas_analog_count'
 ]
 
 # Todo:- import all widget action modules here
@@ -193,7 +199,13 @@ widget_mapping = {
     'lpg_operations_daywise_production': {},
     'cdcms_current_date_pending_count': {},
     'cdcms_current_date_bookings_count': {},
-    'cdcms_current_date_sales_count': {}
+    'cdcms_current_date_sales_count': {},
+    'maintenance_fault': {},
+    'interlock_name_count': {},
+    'tas_maintenance_fault': {},
+    'tas_maintenance_fault_dropdown': {},
+    'tas_normal_count': {},
+    'tas_analog_count': {}
 }
 
 

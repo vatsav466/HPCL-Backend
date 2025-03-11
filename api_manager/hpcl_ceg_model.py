@@ -40,6 +40,8 @@ class RolesCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = RolesSchema
         upsert_keys = ['name']
 
@@ -53,6 +55,8 @@ class Roles(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = RolesSchema
         upsert_keys = ['name']
 
@@ -67,14 +71,26 @@ class Roles_Create_RoleParams(pydantic.BaseModel):
     name: str
     allowed_pages: typing.Optional[typing.List[RoleMapperCreate]] | None = None
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Roles_Update_Role_StatusParams(pydantic.BaseModel):
     enable: bool
     role_name: str
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Roles_Get_All_PagesParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class UsersSchema(UrdhvaPostgresBase):
@@ -86,10 +102,11 @@ class UsersSchema(UrdhvaPostgresBase):
     last_name: Mapped[str] = mapped_column("last_name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     password: Mapped[typing.Optional[urdhva_base.types.Secret]] = mapped_column("password", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    employee_number: Mapped[typing.Optional[str]] = mapped_column("employee_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
-    system_role: Mapped[str] = mapped_column("system_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    novex_role: Mapped[str] = mapped_column("novex_role", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    system_role: Mapped[typing.List[str]] = mapped_column("system_role", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    novex_role: Mapped[typing.List[str]] = mapped_column("novex_role", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     region: Mapped[typing.Optional[typing.List[str]]] = mapped_column("region", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     state: Mapped[typing.List[str]] = mapped_column("state", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     zone: Mapped[typing.List[str]] = mapped_column("zone", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
@@ -110,10 +127,11 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     last_name: str
     password: typing.Optional[urdhva_base.types.Secret] | None = None
     employee_id: str
+    employee_number: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.List[hpcl_ceg_enum.BusinessUnit]
     sap_id: typing.List[str]
-    system_role: str
-    novex_role: str
+    system_role: typing.List[str]
+    novex_role: typing.List[str]
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     state: typing.List[str]
     zone: typing.List[str]
@@ -124,6 +142,8 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
         upsert_keys = ['username', 'employee_id']
 
@@ -137,10 +157,11 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     last_name: typing.Optional[str] | None = None
     password: typing.Optional[urdhva_base.types.Secret] | None = None
     employee_id: typing.Optional[str] | None = None
+    employee_number: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
     sap_id: typing.Optional[typing.List[str]] | None = None
-    system_role: typing.Optional[str] | None = None
-    novex_role: typing.Optional[str] | None = None
+    system_role: typing.Optional[typing.List[str]] | None = None
+    novex_role: typing.Optional[typing.List[str]] | None = None
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     state: typing.Optional[typing.List[str]] | None = None
     zone: typing.Optional[typing.List[str]] | None = None
@@ -151,6 +172,8 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = UsersSchema
         upsert_keys = ['username', 'employee_id']
 
@@ -166,6 +189,10 @@ class Users_Fetch_UsersParams(pydantic.BaseModel):
     limit: typing.Optional[int] = pydantic.Field(100, **{})
     skip: typing.Optional[int] = pydantic.Field(0, **{})
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Users_Create_UserParams(pydantic.BaseModel):
     username: str
@@ -174,6 +201,10 @@ class Users_Create_UserParams(pydantic.BaseModel):
     last_name: str
     employee_id: str
     role: typing.List[str]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Users_Update_User_StatusParams(pydantic.BaseModel):
@@ -189,14 +220,26 @@ class Users_Update_User_StatusParams(pydantic.BaseModel):
     sales_area: typing.List[str]
     novex_role: str
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Users_LoginParams(pydantic.BaseModel):
     username: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.-]+$'})
     password: str
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Users_LogoutParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class DataFiltersCreate(pydantic.BaseModel):
@@ -290,6 +333,8 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LocationMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
@@ -338,6 +383,8 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LocationMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
@@ -352,21 +399,41 @@ class LocationMasterGetResp(pydantic.BaseModel):
 class Locationmaster_Upload_Location_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Locationmaster_Download_Location_MasterParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Locationmaster_Fetch_Global_StatsParams(pydantic.BaseModel):
     bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Locationmaster_Download_TemplateParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Locationmaster_Upload_Tags_DataParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Locationmaster_Update_Location_MasterParams(pydantic.BaseModel):
@@ -380,6 +447,10 @@ class Locationmaster_Update_Location_MasterParams(pydantic.BaseModel):
     address: typing.Optional[str] = pydantic.Field("", **{})
     pincode: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class RoleMasterSchema(UrdhvaPostgresBase):
@@ -419,6 +490,8 @@ class RoleMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = RoleMasterSchema
         upsert_keys = []
 
@@ -442,6 +515,8 @@ class RoleMaster(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = RoleMasterSchema
         upsert_keys = []
 
@@ -455,13 +530,25 @@ class RoleMasterGetResp(pydantic.BaseModel):
 class Rolemaster_Upload_Role_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Rolemaster_Download_Role_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Rolemaster_Download_TemplateParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class ROAssetMasterSchema(UrdhvaPostgresBase):
@@ -497,6 +584,8 @@ class ROAssetMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ROAssetMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id', 'region']
@@ -519,6 +608,8 @@ class ROAssetMaster(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ROAssetMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id', 'region']
@@ -533,13 +624,25 @@ class ROAssetMasterGetResp(pydantic.BaseModel):
 class Roassetmaster_Upload_Ro_Asset_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Roassetmaster_Download_Ro_Asset_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Roassetmaster_Download_TemplateParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class TASAssetMasterSchema(UrdhvaPostgresBase):
@@ -575,6 +678,8 @@ class TASAssetMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = TASAssetMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id', 'region']
@@ -597,6 +702,8 @@ class TASAssetMaster(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = TASAssetMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id', 'region']
@@ -611,13 +718,25 @@ class TASAssetMasterGetResp(pydantic.BaseModel):
 class Tasassetmaster_Upload_Tas_Asset_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Tasassetmaster_Download_Tas_Asset_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Tasassetmaster_Download_TemplateParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class LPGAssetMasterSchema(UrdhvaPostgresBase):
@@ -653,6 +772,8 @@ class LPGAssetMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LPGAssetMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id', 'region']
@@ -675,6 +796,8 @@ class LPGAssetMaster(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LPGAssetMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id', 'region']
@@ -689,13 +812,25 @@ class LPGAssetMasterGetResp(pydantic.BaseModel):
 class Lpgassetmaster_Upload_Lpg_Asset_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Lpgassetmaster_Download_Lpg_Asset_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Lpgassetmaster_Download_TemplateParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class assetDataCreate(pydantic.BaseModel):
@@ -748,6 +883,7 @@ class Alert_HistoryCreate(pydantic.BaseModel):
     is_unblocked: typing.Optional[bool] = pydantic.Field(False, )
     is_interrupt: typing.Optional[bool] = pydantic.Field(False, )
     is_extra_days: typing.Optional[bool] = pydantic.Field(False, )
+    is_rejected: typing.Optional[bool] = pydantic.Field(False, )
 
 
 class tagsCreate(pydantic.BaseModel):
@@ -811,6 +947,8 @@ class InterlockCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = InterlockSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id', 'zone']
@@ -834,6 +972,8 @@ class Interlock(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = InterlockSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id', 'zone']
@@ -874,6 +1014,8 @@ class EMLockCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = EMLockSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -894,6 +1036,8 @@ class EMLock(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = EMLockSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -942,6 +1086,8 @@ class VTSCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = VTSSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -966,6 +1112,8 @@ class VTS(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = VTSSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -985,6 +1133,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     sop_id: Mapped[typing.Optional[str]] = mapped_column("sop_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     severity: Mapped[typing.Any] = mapped_column("severity", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    alert_category: Mapped[typing.Optional[str]] = mapped_column("alert_category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_status: Mapped[typing.Any] = mapped_column("alert_status", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     alert_state: Mapped[typing.Any] = mapped_column("alert_state", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     unique_id: Mapped[str] = mapped_column("unique_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
@@ -1054,6 +1203,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     severity: hpcl_ceg_enum.Severity
+    alert_category: typing.Optional[str] = pydantic.Field("", **{})
     alert_status: hpcl_ceg_enum.AlertStatus
     alert_state: hpcl_ceg_enum.AlertState
     unique_id: str
@@ -1116,6 +1266,8 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = AlertsSchema
         upsert_keys = []
         search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
@@ -1130,6 +1282,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     sop_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     severity: typing.Optional[hpcl_ceg_enum.Severity] | None = None
+    alert_category: typing.Optional[str] = pydantic.Field("", **{})
     alert_status: typing.Optional[hpcl_ceg_enum.AlertStatus] | None = None
     alert_state: typing.Optional[hpcl_ceg_enum.AlertState] | None = None
     unique_id: typing.Optional[str] | None = None
@@ -1192,6 +1345,8 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = AlertsSchema
         upsert_keys = []
         search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'interlock_name', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
@@ -1217,12 +1372,24 @@ class Alerts_Alert_ActionParams(pydantic.BaseModel):
     action_description: typing.Optional[str] = pydantic.Field("", **{})
     doc_link: typing.Optional[str] = pydantic.Field("", **{})
     acknowledged_by: typing.Optional[str] = pydantic.Field("", **{})
+    load_number: typing.Optional[str] = pydantic.Field("", **{})
+    fan_number: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    trip_type: typing.Optional[str] = pydantic.Field("", **{})
     event_tags: typing.Optional[tagsCreate] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Alerts_Intitiate_Vts_ExceptionParams(pydantic.BaseModel):
     alert_id: str
     excep_msg: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
@@ -1231,23 +1398,43 @@ class Alerts_Get_Performance_IndexParams(pydantic.BaseModel):
     limit: typing.Optional[int] = pydantic.Field(0, **{})
     filters: typing.Optional[typing.List[DataFiltersCreate]] | None = None
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Alerts_Upload_DocumentParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Alerts_Stored_DocumentParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Alerts_Get_Frequent_Dryout_RoParams(pydantic.BaseModel):
     start_date: typing.Optional[datetime.datetime] | None = None
     end_date: typing.Optional[datetime.datetime] | None = None
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Alerts_Get_Frequent_Dryout_TerminalsParams(pydantic.BaseModel):
     start_date: typing.Optional[datetime.datetime] | None = None
     end_date: typing.Optional[datetime.datetime] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Alerts_Get_Closed_Alerts_DetailsParams(pydantic.BaseModel):
@@ -1255,6 +1442,10 @@ class Alerts_Get_Closed_Alerts_DetailsParams(pydantic.BaseModel):
     alert_id: str
     alert_section: str
     interlock_name: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class CEMSLocationMasterSchema(UrdhvaPostgresBase):
@@ -1292,6 +1483,8 @@ class CEMSLocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = CEMSLocationMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'zone', 'region', 'location_id:sap_id']
@@ -1315,6 +1508,8 @@ class CEMSLocationMaster(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = CEMSLocationMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'zone', 'region', 'location_id:sap_id']
@@ -1329,13 +1524,25 @@ class CEMSLocationMasterGetResp(pydantic.BaseModel):
 class Cemslocationmaster_Upload_Cems_Location_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Cemslocationmaster_Download_Cems_Location_MasterParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Cemslocationmaster_Download_TemplateParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class CEMSQuantityMasterSchema(UrdhvaPostgresBase):
@@ -1355,6 +1562,8 @@ class CEMSQuantityMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = CEMSQuantityMasterSchema
         upsert_keys = []
 
@@ -1368,6 +1577,8 @@ class CEMSQuantityMaster(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = CEMSQuantityMasterSchema
         upsert_keys = []
 
@@ -1425,6 +1636,8 @@ class CredsModelCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = CredsModelSchema
         upsert_keys = []
 
@@ -1439,6 +1652,8 @@ class CredsModel(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = CredsModelSchema
         upsert_keys = []
 
@@ -1457,9 +1672,17 @@ class Credsmodel_Create_CredentialParams(pydantic.BaseModel):
     tags: typing.Optional[typing.List[TagsCreate]] | None = None
     credentials: CredentialDataCreate
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Credsmodel_Load_CredsParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class DashboardOrderCreate(pydantic.BaseModel):
@@ -1485,8 +1708,8 @@ class productsDetailsCreate(pydantic.BaseModel):
 
 
 class IndentDryOutDataFiltersCreate(pydantic.BaseModel):
-    key: str
-    cond: str
+    key: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.\\-=" ]+$'})
+    cond: str = pydantic.Field(**{'pattern': '^([a-zA-Z0-9_.\\-=! ]+|)$'})
     value: typing.List[str]
 
 
@@ -1523,6 +1746,8 @@ class DryOutHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = DryOutHistorySchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -1545,6 +1770,8 @@ class DryOutHistory(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = DryOutHistorySchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -1583,6 +1810,8 @@ class CarryFwdIndentCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = CarryFwdIndentSchema
         upsert_keys = []
 
@@ -1601,6 +1830,8 @@ class CarryFwdIndent(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = CarryFwdIndentSchema
         upsert_keys = []
 
@@ -1666,6 +1897,8 @@ class IndentDryOutCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = IndentDryOutSchema
         upsert_keys = ['bu', 'product_no', 'rosapcode']
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'site_id:sap_id']
@@ -1698,6 +1931,8 @@ class IndentDryOut(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = IndentDryOutSchema
         upsert_keys = ['bu', 'product_no', 'rosapcode']
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'site_id:sap_id']
@@ -1718,26 +1953,50 @@ class Indentdryout_Sync_Data_From_Cris_To_CegParams(pydantic.BaseModel):
     destination_schema: str
     conflict_columns: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Get_Dried_Out_PlantsParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Indentdryout_Get_Alert_HistoryParams(pydantic.BaseModel):
     alert_id: str
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Get_Dry_Out_StatsParams(pydantic.BaseModel):
     filters: typing.List[DataFiltersCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Indentdryout_Get_Indent_AnalysisParams(pydantic.BaseModel):
     filters: typing.List[DataFiltersCreate]
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Get_Distinct_PlantParams(pydantic.BaseModel):
     bu: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
@@ -1749,18 +2008,34 @@ class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
     cat_a_dealers: typing.Optional[bool] = pydantic.Field(False, )
     dry_out_dealers: typing.Optional[bool] = pydantic.Field(False, )
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Create_Dry_Out_AlertParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Indentdryout_Sync_Ro_Daily_SalesParams(pydantic.BaseModel):
     from_date: datetime.datetime
     to_date: datetime.datetime
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Get_Dry_Out_CountParams(pydantic.BaseModel):
     filters: typing.Optional[typing.List[IndentDryOutDataFiltersCreate]] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Indentdryout_Get_Filtered_Location_DataParams(pydantic.BaseModel):
@@ -1768,29 +2043,57 @@ class Indentdryout_Get_Filtered_Location_DataParams(pydantic.BaseModel):
     bu: str
     filters: typing.Optional[typing.List[IndentDryOutDataFiltersCreate]] | None = None
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Get_Indent_DataParams(pydantic.BaseModel):
     filters: typing.List[DataFiltersCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Indentdryout_Get_Dried_Out_RoParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Get_Dried_Out_Ro_DataParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Indentdryout_Get_Distinct_Ro_NameParams(pydantic.BaseModel):
     filters: typing.List[IndentDryOutDataFiltersCreate]
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Get_Carry_Fwd_IndentsParams(pydantic.BaseModel):
     pass
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Indentdryout_Get_Dryout_ReportParams(pydantic.BaseModel):
     dry_out_in_days: typing.List[str]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class LpgOperationsSummarySchema(UrdhvaPostgresBase):
@@ -1858,6 +2161,8 @@ class LpgOperationsSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgOperationsSummarySchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone']
@@ -1896,6 +2201,8 @@ class LpgOperationsSummary(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgOperationsSummarySchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone']
@@ -1914,6 +2221,10 @@ class Lpgoperationssummary_Get_Productions_RateParams(pydantic.BaseModel):
     top: typing.Optional[int] = pydantic.Field(0, **{})
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Lpgoperationssummary_Get_Productivity_RateParams(pydantic.BaseModel):
     dimension: str
@@ -1921,6 +2232,10 @@ class Lpgoperationssummary_Get_Productivity_RateParams(pydantic.BaseModel):
     days: int
     top: typing.Optional[int] = pydantic.Field(0, **{})
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class LpgCsRejectionsSchema(UrdhvaPostgresBase):
@@ -1960,6 +2275,8 @@ class LpgCsRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgCsRejectionsSchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
@@ -1984,6 +2301,8 @@ class LpgCsRejections(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgCsRejectionsSchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
@@ -2028,6 +2347,8 @@ class LpgGdRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgGdRejectionsSchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
@@ -2050,6 +2371,8 @@ class LpgGdRejections(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgGdRejectionsSchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
@@ -2094,6 +2417,8 @@ class LpgPtRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgPtRejectionsSchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
@@ -2116,6 +2441,8 @@ class LpgPtRejections(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgPtRejectionsSchema
         upsert_keys = []
         access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
@@ -2136,6 +2463,8 @@ class LpgRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgRejectionsSchema
         upsert_keys = []
 
@@ -2145,6 +2474,8 @@ class LpgRejections(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgRejectionsSchema
         upsert_keys = []
 
@@ -2162,6 +2493,10 @@ class Lpgrejections_Get_RejectionsParams(pydantic.BaseModel):
     top: typing.Optional[int] = pydantic.Field(0, **{})
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Lpgrejections_Get_Cs_RejectionsParams(pydantic.BaseModel):
     dimension: str
@@ -2169,6 +2504,10 @@ class Lpgrejections_Get_Cs_RejectionsParams(pydantic.BaseModel):
     days: int
     top: typing.Optional[int] = pydantic.Field(0, **{})
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class Lpgrejections_Get_Gd_RejectionsParams(pydantic.BaseModel):
@@ -2178,6 +2517,10 @@ class Lpgrejections_Get_Gd_RejectionsParams(pydantic.BaseModel):
     top: typing.Optional[int] = pydantic.Field(0, **{})
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Lpgrejections_Get_Pt_RejectionsParams(pydantic.BaseModel):
     dimension: str
@@ -2185,6 +2528,10 @@ class Lpgrejections_Get_Pt_RejectionsParams(pydantic.BaseModel):
     days: int
     top: typing.Optional[int] = pydantic.Field(0, **{})
     bottom: typing.Optional[int] = pydantic.Field(0, **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class LpgSalesSummaryDataSchema(UrdhvaPostgresBase):
@@ -2288,6 +2635,8 @@ class LpgSalesSummaryDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgSalesSummaryDataSchema
         upsert_keys = []
         access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
@@ -2344,6 +2693,8 @@ class LpgSalesSummaryData(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgSalesSummaryDataSchema
         upsert_keys = []
         access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
@@ -2430,6 +2781,8 @@ class LpgConsumersSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgConsumersSummarySchema
         upsert_keys = []
         access_key_mapping = ['DistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
@@ -2473,6 +2826,8 @@ class LpgConsumersSummary(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgConsumersSummarySchema
         upsert_keys = []
         access_key_mapping = ['DistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
@@ -2515,6 +2870,8 @@ class ScreensCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ScreensSchema
         upsert_keys = []
 
@@ -2535,6 +2892,8 @@ class Screens(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ScreensSchema
         upsert_keys = []
 
@@ -2580,6 +2939,8 @@ class DeviceMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = DeviceMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -2603,6 +2964,8 @@ class DeviceMaster(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = DeviceMasterSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -2659,6 +3022,8 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
         upsert_keys = []
         access_key_mapping = ['location_id:sap_id']
@@ -2687,6 +3052,8 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
         upsert_keys = []
         access_key_mapping = ['location_id:sap_id']
@@ -2694,6 +3061,70 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
 
 class VtsAlertHistoryGetResp(pydantic.BaseModel):
     data: typing.List[VtsAlertHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class EmLockAlertHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    emlock_exception_id: Mapped[str] = mapped_column("emlock_exception_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    terminal_code: Mapped[str] = mapped_column("terminal_code", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    truck_number: Mapped[str] = mapped_column("truck_number", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    exception_type: Mapped[str] = mapped_column("exception_type", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    ro_code: Mapped[typing.Optional[str]] = mapped_column("ro_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    created_datetime: Mapped[str] = mapped_column("created_datetime", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class EmLockAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    emlock_exception_id: str
+    terminal_code: str
+    truck_number: str
+    exception_type: str
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    created_datetime: str
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = EmLockAlertHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class EmLockAlertHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'em_lock_alert_history'
+    
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    emlock_exception_id: typing.Optional[str] | None = None
+    terminal_code: typing.Optional[str] | None = None
+    truck_number: typing.Optional[str] | None = None
+    exception_type: typing.Optional[str] | None = None
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    created_datetime: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = EmLockAlertHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class EmLockAlertHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[EmLockAlertHistory]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
 
@@ -2727,6 +3158,8 @@ class VaAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = VaAlertHistorySchema
         upsert_keys = []
         access_key_mapping = ['location_id:sap_id']
@@ -2747,6 +3180,8 @@ class VaAlertHistory(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = VaAlertHistorySchema
         upsert_keys = []
         access_key_mapping = ['location_id:sap_id']
@@ -2877,6 +3312,8 @@ class M60LevelMetaDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = M60LevelMetaDataSchema
         upsert_keys = []
         access_key_mapping = ['SBU_Name:bu', 'ZONE:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
@@ -2942,6 +3379,8 @@ class M60LevelMetaData(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = M60LevelMetaDataSchema
         upsert_keys = []
         access_key_mapping = ['SBU_Name:bu', 'ZONE:zone', 'SalesArea_Name:sales_area', 'Region_Name:region']
@@ -3002,6 +3441,8 @@ class MomLevelFinalMetaDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = MomLevelFinalMetaDataSchema
         upsert_keys = []
         access_key_mapping = ['ORGSBUNAME:bu', 'ORGZONENAME:zone', 'ORGSANAME:sales_area']
@@ -3032,6 +3473,8 @@ class MomLevelFinalMetaData(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = MomLevelFinalMetaDataSchema
         upsert_keys = []
         access_key_mapping = ['ORGSBUNAME:bu', 'ORGZONENAME:zone', 'ORGSANAME:sales_area']
@@ -3108,6 +3551,8 @@ class IndustryPerformanceCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = IndustryPerformanceSchema
         upsert_keys = []
         access_key_mapping = ['ORGSBUNAME:bu', 'ORGZONENAME:zone', 'ORGSANAME:sales_area']
@@ -3146,6 +3591,8 @@ class IndustryPerformance(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = IndustryPerformanceSchema
         upsert_keys = []
         access_key_mapping = ['ORGSBUNAME:bu', 'ORGZONENAME:zone', 'ORGSANAME:sales_area']
@@ -3228,6 +3675,8 @@ class ConsumerPumpTankDeliveryCreate(urdhva_base.postgresmodel.BasePostgresModel
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumerPumpTankDeliverySchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -3269,6 +3718,8 @@ class ConsumerPumpTankDelivery(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumerPumpTankDeliverySchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -3335,6 +3786,8 @@ class ConsumperPumpTransactionCreate(urdhva_base.postgresmodel.BasePostgresModel
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumperPumpTransactionSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -3368,6 +3821,8 @@ class ConsumperPumpTransaction(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumperPumpTransactionSchema
         upsert_keys = []
         access_key_mapping = ['bu', 'sap_id']
@@ -3400,6 +3855,8 @@ class BuLevelGeoCoordinatesCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = BuLevelGeoCoordinatesSchema
         upsert_keys = []
         access_key_mapping = ['bu']
@@ -3416,6 +3873,8 @@ class BuLevelGeoCoordinates(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = BuLevelGeoCoordinatesSchema
         upsert_keys = []
         access_key_mapping = ['bu']
@@ -3429,6 +3888,10 @@ class BuLevelGeoCoordinatesGetResp(pydantic.BaseModel):
 
 class Bulevelgeocoordinates_Upload_Geo_MasterParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class LpgSubsidyExceptionDataSchema(UrdhvaPostgresBase):
@@ -3474,6 +3937,8 @@ class LpgSubsidyExceptionDataCreate(urdhva_base.postgresmodel.BasePostgresModel)
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgSubsidyExceptionDataSchema
         upsert_keys = []
         access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
@@ -3501,6 +3966,8 @@ class LpgSubsidyExceptionData(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgSubsidyExceptionDataSchema
         upsert_keys = []
         access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
@@ -3553,6 +4020,8 @@ class LpgSubsidyFailureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgSubsidyFailureDataSchema
         upsert_keys = []
         access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
@@ -3579,6 +4048,8 @@ class LpgSubsidyFailureData(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgSubsidyFailureDataSchema
         upsert_keys = []
         access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
@@ -3619,6 +4090,8 @@ class LpgOperationsRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel)
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgOperationsRejectionsSchema
         upsert_keys = []
         access_key_mapping = ['zone']
@@ -3639,6 +4112,8 @@ class LpgOperationsRejections(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = LpgOperationsRejectionsSchema
         upsert_keys = []
         access_key_mapping = ['zone']
@@ -3703,6 +4178,8 @@ class ConsumerPumpTransactionsCreate(urdhva_base.postgresmodel.BasePostgresModel
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumerPumpTransactionsSchema
         upsert_keys = ['unique_txn_id']
         access_key_mapping = ['ROID:sap_id']
@@ -3734,6 +4211,8 @@ class ConsumerPumpTransactions(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumerPumpTransactionsSchema
         upsert_keys = ['unique_txn_id']
         access_key_mapping = ['ROID:sap_id']
@@ -3747,6 +4226,10 @@ class ConsumerPumpTransactionsGetResp(pydantic.BaseModel):
 
 class Consumerpumptransactions_Bulk_Update_Cp_TransactionsParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class ConsumerPumpTankInventorySchema(UrdhvaPostgresBase):
@@ -3796,6 +4279,8 @@ class ConsumerPumpTankInventoryCreate(urdhva_base.postgresmodel.BasePostgresMode
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumerPumpTankInventorySchema
         upsert_keys = ['unique_txn_id']
         access_key_mapping = ['sap_id']
@@ -3824,6 +4309,8 @@ class ConsumerPumpTankInventory(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumerPumpTankInventorySchema
         upsert_keys = ['unique_txn_id']
         access_key_mapping = ['sap_id']
@@ -3837,6 +4324,10 @@ class ConsumerPumpTankInventoryGetResp(pydantic.BaseModel):
 
 class Consumerpumptankinventory_Bulk_Update_Cp_Tank_InventoryParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class ConsumerPumpStocksReceiptsSchema(UrdhvaPostgresBase):
@@ -3884,6 +4375,8 @@ class ConsumerPumpStocksReceiptsCreate(urdhva_base.postgresmodel.BasePostgresMod
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumerPumpStocksReceiptsSchema
         upsert_keys = ['unique_txn_id']
         access_key_mapping = ['roid:sap_id']
@@ -3911,6 +4404,8 @@ class ConsumerPumpStocksReceipts(urdhva_base.postgresmodel.PostgresModel):
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = ConsumerPumpStocksReceiptsSchema
         upsert_keys = ['unique_txn_id']
         access_key_mapping = ['roid:sap_id']
@@ -3924,6 +4419,10 @@ class ConsumerPumpStocksReceiptsGetResp(pydantic.BaseModel):
 
 class Consumerpumpstocksreceipts_Bulk_Update_Cp_Stock_ReceiptsParams(pydantic.BaseModel):
     pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class HostSickTtsSchema(UrdhvaPostgresBase):
@@ -3940,6 +4439,11 @@ class HostSickTtsSchema(UrdhvaPostgresBase):
     sick_declared_by: Mapped[typing.Optional[str]] = mapped_column("sick_declared_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sick_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("sick_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, compartment_number, product_name, sick_date, sap_id, name="host_sick_tts_load_number_truck_number_created_date_customer_name_compartment_number_product_name_sick_date_sap_id"),)
 
 
 class HostSickTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3956,11 +4460,16 @@ class HostSickTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sick_declared_by: typing.Optional[str] = pydantic.Field("", **{})
     sick_date: typing.Optional[datetime.datetime] | None = None
     remarks: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostSickTtsSchema
-        upsert_keys = []
+        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date', 'sap_id']
 
 
 class HostSickTts(urdhva_base.postgresmodel.PostgresModel):
@@ -3977,17 +4486,30 @@ class HostSickTts(urdhva_base.postgresmodel.PostgresModel):
     sick_declared_by: typing.Optional[str] = pydantic.Field("", **{})
     sick_date: typing.Optional[datetime.datetime] | None = None
     remarks: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostSickTtsSchema
-        upsert_keys = []
+        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'compartment_number', 'product_name', 'sick_date', 'sap_id']
 
 
 class HostSickTtsGetResp(pydantic.BaseModel):
     data: typing.List[HostSickTts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Hostsicktts_Download_DataParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class HostCancelledTtsSchema(UrdhvaPostgresBase):
@@ -4001,6 +4523,11 @@ class HostCancelledTtsSchema(UrdhvaPostgresBase):
     required_qty: Mapped[typing.Optional[int]] = mapped_column("required_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     cancelled_by: Mapped[typing.Optional[str]] = mapped_column("cancelled_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     cancelled_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("cancelled_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, product_name, cancelled_date, sap_id, name="host_cancelled_tts_load_number_truck_number_created_date_customer_name_product_name_cancelled_date_sap_id"),)
 
 
 class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4014,11 +4541,16 @@ class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     required_qty: typing.Optional[int] = pydantic.Field(0, **{})
     cancelled_by: typing.Optional[str] = pydantic.Field("", **{})
     cancelled_date: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostCancelledTtsSchema
-        upsert_keys = []
+        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date', 'sap_id']
 
 
 class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4032,11 +4564,16 @@ class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
     required_qty: typing.Optional[int] = pydantic.Field(0, **{})
     cancelled_by: typing.Optional[str] = pydantic.Field("", **{})
     cancelled_date: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostCancelledTtsSchema
-        upsert_keys = []
+        upsert_keys = ['load_number', 'truck_number', 'created_date', 'customer_name', 'product_name', 'cancelled_date', 'sap_id']
 
 
 class HostCancelledTtsGetResp(pydantic.BaseModel):
@@ -4051,10 +4588,16 @@ class HostKFactorChangesSchema(UrdhvaPostgresBase):
     sr_number: Mapped[typing.Optional[int]] = mapped_column("sr_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    preset_number: Mapped[typing.Optional[str]] = mapped_column("preset_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     bcu_parameter: Mapped[typing.Optional[str]] = mapped_column("bcu_parameter", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     initial_setting: Mapped[typing.Optional[str]] = mapped_column("initial_setting", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     final_setting: Mapped[typing.Optional[str]] = mapped_column("final_setting", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(bcu_number, preset_number, timestamp, initial_setting, final_setting, sap_id, name="host_k_factor_changes_bcu_number_preset_number_timestamp_initial_setting_final_setting_sap_id"),)
 
 
 class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4063,15 +4606,21 @@ class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sr_number: typing.Optional[int] = pydantic.Field(0, **{})
     bay_number: typing.Optional[str] = pydantic.Field("", **{})
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    preset_number: typing.Optional[str] = pydantic.Field("", **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
     bcu_parameter: typing.Optional[str] = pydantic.Field("", **{})
     initial_setting: typing.Optional[str] = pydantic.Field("", **{})
     final_setting: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostKFactorChangesSchema
-        upsert_keys = []
+        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting', 'sap_id']
 
 
 class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
@@ -4080,15 +4629,21 @@ class HostKFactorChanges(urdhva_base.postgresmodel.PostgresModel):
     sr_number: typing.Optional[int] = pydantic.Field(0, **{})
     bay_number: typing.Optional[str] = pydantic.Field("", **{})
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
+    preset_number: typing.Optional[str] = pydantic.Field("", **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
     bcu_parameter: typing.Optional[str] = pydantic.Field("", **{})
     initial_setting: typing.Optional[str] = pydantic.Field("", **{})
     final_setting: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostKFactorChangesSchema
-        upsert_keys = []
+        upsert_keys = ['bcu_number', 'preset_number', 'timestamp', 'initial_setting', 'final_setting', 'sap_id']
 
 
 class HostKFactorChangesGetResp(pydantic.BaseModel):
@@ -4103,13 +4658,18 @@ class HostLocalLoadedTtsSchema(UrdhvaPostgresBase):
     sr_number: Mapped[typing.Optional[int]] = mapped_column("sr_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    recipe_number: Mapped[typing.Optional[str]] = mapped_column("recipe_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    recipe_name: Mapped[typing.Optional[str]] = mapped_column("recipe_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     truck_number: Mapped[typing.Optional[str]] = mapped_column("truck_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     card_number: Mapped[typing.Optional[str]] = mapped_column("card_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    start_totalizer: Mapped[typing.Optional[int]] = mapped_column("start_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    end_totalizer: Mapped[typing.Optional[int]] = mapped_column("end_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    start_totalizer: Mapped[typing.Optional[float]] = mapped_column("start_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    end_totalizer: Mapped[typing.Optional[float]] = mapped_column("end_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     loaded_qty: Mapped[typing.Optional[int]] = mapped_column("loaded_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     transaction_end_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("transaction_end_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(sr_number, bcu_number, recipe_name, truck_number, card_number, start_totalizer, end_totalizer, loaded_qty, transaction_end_time, sap_id, name="host_local_loaded_tts_sr_number_bcu_number_recipe_name_truck_number_card_number_start_totalizer_end_totalizer_loaded_qty_transaction_end_time_sap_id"),)
 
 
 class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4118,18 +4678,23 @@ class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sr_number: typing.Optional[int] = pydantic.Field(0, **{})
     bay_number: typing.Optional[str] = pydantic.Field("", **{})
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
-    recipe_number: typing.Optional[str] = pydantic.Field("", **{})
+    recipe_name: typing.Optional[str] = pydantic.Field("", **{})
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     card_number: typing.Optional[str] = pydantic.Field("", **{})
-    start_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
-    end_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    start_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
     loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
     transaction_end_time: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostLocalLoadedTtsSchema
-        upsert_keys = []
+        upsert_keys = ['sr_number', 'bcu_number', 'recipe_name', 'truck_number', 'card_number', 'start_totalizer', 'end_totalizer', 'loaded_qty', 'transaction_end_time', 'sap_id']
 
 
 class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4138,18 +4703,23 @@ class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     sr_number: typing.Optional[int] = pydantic.Field(0, **{})
     bay_number: typing.Optional[str] = pydantic.Field("", **{})
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
-    recipe_number: typing.Optional[str] = pydantic.Field("", **{})
+    recipe_name: typing.Optional[str] = pydantic.Field("", **{})
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     card_number: typing.Optional[str] = pydantic.Field("", **{})
-    start_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
-    end_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    start_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
     loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
     transaction_end_time: typing.Optional[datetime.datetime] | None = None
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostLocalLoadedTtsSchema
-        upsert_keys = []
+        upsert_keys = ['sr_number', 'bcu_number', 'recipe_name', 'truck_number', 'card_number', 'start_totalizer', 'end_totalizer', 'loaded_qty', 'transaction_end_time', 'sap_id']
 
 
 class HostLocalLoadedTtsGetResp(pydantic.BaseModel):
@@ -4173,6 +4743,11 @@ class HostBayReAssignmentSchema(UrdhvaPostgresBase):
     reassigned_bay: Mapped[typing.Optional[str]] = mapped_column("reassigned_bay", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bay_reassignment_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("bay_reassignment_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(created_date, load_number, truck_number, customer_name, compartment_number, product_name, required_qty, loaded_qty, bay_reassignment_time, sap_id, name="host_bay_re_assignment_created_date_load_number_truck_number_customer_name_compartment_number_product_name_required_qty_loaded_qty_bay_reassignment_time_sap_id"),)
 
 
 class HostBayReAssignmentCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4190,11 +4765,16 @@ class HostBayReAssignmentCreate(urdhva_base.postgresmodel.BasePostgresModel):
     reassigned_bay: typing.Optional[str] = pydantic.Field("", **{})
     bay_reassignment_time: typing.Optional[datetime.datetime] | None = None
     remarks: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostBayReAssignmentSchema
-        upsert_keys = []
+        upsert_keys = ['created_date', 'load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'required_qty', 'loaded_qty', 'bay_reassignment_time', 'sap_id']
 
 
 class HostBayReAssignment(urdhva_base.postgresmodel.PostgresModel):
@@ -4212,11 +4792,16 @@ class HostBayReAssignment(urdhva_base.postgresmodel.PostgresModel):
     reassigned_bay: typing.Optional[str] = pydantic.Field("", **{})
     bay_reassignment_time: typing.Optional[datetime.datetime] | None = None
     remarks: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostBayReAssignmentSchema
-        upsert_keys = []
+        upsert_keys = ['created_date', 'load_number', 'truck_number', 'customer_name', 'compartment_number', 'product_name', 'required_qty', 'loaded_qty', 'bay_reassignment_time', 'sap_id']
 
 
 class HostBayReAssignmentGetResp(pydantic.BaseModel):
@@ -4232,6 +4817,11 @@ class HostManualBayAssignedSchema(UrdhvaPostgresBase):
     user_name: Mapped[typing.Optional[str]] = mapped_column("user_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     text: Mapped[typing.Optional[str]] = mapped_column("text", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(user_name, timestamp, sap_id, name="host_manual_bay_assigned_user_name_timestamp_sap_id"),)
 
 
 class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4241,11 +4831,16 @@ class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     user_name: typing.Optional[str] = pydantic.Field("", **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
     text: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostManualBayAssignedSchema
-        upsert_keys = []
+        upsert_keys = ['user_name', 'timestamp', 'sap_id']
 
 
 class HostManualBayAssigned(urdhva_base.postgresmodel.PostgresModel):
@@ -4255,11 +4850,16 @@ class HostManualBayAssigned(urdhva_base.postgresmodel.PostgresModel):
     user_name: typing.Optional[str] = pydantic.Field("", **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
     text: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostManualBayAssignedSchema
-        upsert_keys = []
+        upsert_keys = ['user_name', 'timestamp', 'sap_id']
 
 
 class HostManualBayAssignedGetResp(pydantic.BaseModel):
@@ -4274,6 +4874,11 @@ class HostManualFanPrintedSchema(UrdhvaPostgresBase):
     manual_fan_count: Mapped[typing.Optional[int]] = mapped_column("manual_fan_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     auto_fan_count: Mapped[typing.Optional[int]] = mapped_column("auto_fan_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     total_count: Mapped[typing.Optional[int]] = mapped_column("total_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, sap_id, name="host_manual_fan_printed_manual_fan_count_auto_fan_count_total_count_sap_id"),)
 
 
 class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4282,11 +4887,16 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     manual_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     auto_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     total_count: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = []
+        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'sap_id']
 
 
 class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
@@ -4295,11 +4905,16 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
     manual_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     auto_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     total_count: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = []
+        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'sap_id']
 
 
 class HostManualFanPrintedGetResp(pydantic.BaseModel):
@@ -4315,9 +4930,14 @@ class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
     bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     meter_number: Mapped[typing.Optional[int]] = mapped_column("meter_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
-    start_totalizer: Mapped[typing.Optional[int]] = mapped_column("start_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    end_totalizer: Mapped[typing.Optional[int]] = mapped_column("end_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    net_totalizer: Mapped[typing.Optional[int]] = mapped_column("net_totalizer", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    start_totalizer: Mapped[typing.Optional[float]] = mapped_column("start_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    end_totalizer: Mapped[typing.Optional[float]] = mapped_column("end_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    net_totalizer: Mapped[typing.Optional[float]] = mapped_column("net_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, name="host_unauthorised_flow_bcu_number_meter_number_timestamp_start_totalizer_end_totalizer_net_totalizer_sap_id"),)
 
 
 class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4327,14 +4947,19 @@ class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
     meter_number: typing.Optional[int] = pydantic.Field(0, **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
-    start_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
-    end_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
-    net_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    start_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    net_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = []
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id']
 
 
 class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
@@ -4344,14 +4969,19 @@ class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
     meter_number: typing.Optional[int] = pydantic.Field(0, **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
-    start_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
-    end_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
-    net_totalizer: typing.Optional[int] = pydantic.Field(0, **{})
+    start_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    end_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    net_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = []
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id']
 
 
 class HostUnauthorisedFlowGetResp(pydantic.BaseModel):
@@ -4366,9 +4996,14 @@ class HostOverLoadedTtsSchema(UrdhvaPostgresBase):
     load_number: Mapped[typing.Optional[int]] = mapped_column("load_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     truck_number: Mapped[typing.Optional[str]] = mapped_column("truck_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     compartment_number: Mapped[typing.Optional[int]] = mapped_column("compartment_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    product_name: Mapped[typing.Optional[str]] = mapped_column("product_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    blend_name: Mapped[typing.Optional[str]] = mapped_column("blend_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     required_qty: Mapped[typing.Optional[int]] = mapped_column("required_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     loaded_qty: Mapped[typing.Optional[int]] = mapped_column("loaded_qty", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, blend_name, required_qty, loaded_qty, sap_id, name="host_over_loaded_tts_load_number_truck_number_compartment_number_blend_name_required_qty_loaded_qty_sap_id"),)
 
 
 class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4377,14 +5012,19 @@ class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     load_number: typing.Optional[int] = pydantic.Field(0, **{})
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
-    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    blend_name: typing.Optional[str] = pydantic.Field("", **{})
     required_qty: typing.Optional[int] = pydantic.Field(0, **{})
     loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostOverLoadedTtsSchema
-        upsert_keys = []
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty', 'sap_id']
 
 
 class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4393,17 +5033,176 @@ class HostOverLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     load_number: typing.Optional[int] = pydantic.Field(0, **{})
     truck_number: typing.Optional[str] = pydantic.Field("", **{})
     compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
-    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    blend_name: typing.Optional[str] = pydantic.Field("", **{})
     required_qty: typing.Optional[int] = pydantic.Field(0, **{})
     loaded_qty: typing.Optional[int] = pydantic.Field(0, **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
         schema_class = HostOverLoadedTtsSchema
-        upsert_keys = []
+        upsert_keys = ['load_number', 'truck_number', 'compartment_number', 'blend_name', 'required_qty', 'loaded_qty', 'sap_id']
 
 
 class HostOverLoadedTtsGetResp(pydantic.BaseModel):
     data: typing.List[HostOverLoadedTts]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class TagsDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'tags_data'
+    
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    count: Mapped[typing.Optional[str]] = mapped_column("count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'tags_data'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    count: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    system: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TagsDataSchema
+        upsert_keys = []
+        search_fields = ['sap_id', 'name', 'device_type', 'zone', 'system']
+
+
+class TagsData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'tags_data'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    count: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    system: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = TagsDataSchema
+        upsert_keys = []
+        search_fields = ['sap_id', 'name', 'device_type', 'zone', 'system']
+
+
+class TagsDataGetResp(pydantic.BaseModel):
+    data: typing.List[TagsData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Tagsdata_Things_Board_Device_DataParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Tagsdata_Get_Tags_DataParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class PerformanceIndexSchema(UrdhvaPostgresBase):
+    __tablename__ = 'performance_index'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category: Mapped[str] = mapped_column("category", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class PerformanceIndexCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'performance_index'
+    
+    bu: str
+    sap_id: str
+    category: str
+    zone: str
+    region: str
+    name: str
+    score: float
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceIndexSchema
+        upsert_keys = []
+
+
+class PerformanceIndex(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'performance_index'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    category: typing.Optional[str] | None = None
+    zone: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
+    score: typing.Optional[float] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceIndexSchema
+        upsert_keys = []
+
+
+class PerformanceIndexGetResp(pydantic.BaseModel):
+    data: typing.List[PerformanceIndex]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Performanceindex_Get_Pi_ScoreParams(pydantic.BaseModel):
+    bu: str
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    strategy: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Performanceindex_Get_Pi_Score_By_CategoryParams(pydantic.BaseModel):
+    bu: str
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields

@@ -472,6 +472,16 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
     return await VtsAlertHistory.get_all(params, skip_secrets=True)
 
 
+@router.get('/emlockalerthistory/{id}', response_model=EmLockAlertHistory, tags=['EmLockAlertHistory'])
+async def get(id: str):
+    return await EmLockAlertHistory.get(id, skip_secrets=True)
+
+
+@router.get('/emlockalerthistory', response_model=EmLockAlertHistoryGetResp, tags=['EmLockAlertHistory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await EmLockAlertHistory.get_all(params, skip_secrets=True)
+
+
 @router.get('/vaalerthistory/{id}', response_model=VaAlertHistory, tags=['VaAlertHistory'])
 async def get(id: str):
     return await VaAlertHistory.get(id, skip_secrets=True)
@@ -990,3 +1000,53 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/hostoverloadedtts/{id}', tags=['HostOverLoadedTts'])
 async def delete(id: str):
     return await HostOverLoadedTts.delete(id)
+
+
+@router.post('/tagsdata', response_model=TagsData, tags=['TagsData'])
+async def create(inputObj: TagsDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/tagsdata', response_model=TagsData, tags=['TagsData'])
+async def update(inputObj: TagsData):
+    return await inputObj.modify()
+
+
+@router.get('/tagsdata/{id}', response_model=TagsData, tags=['TagsData'])
+async def get(id: str):
+    return await TagsData.get(id, skip_secrets=True)
+
+
+@router.get('/tagsdata', response_model=TagsDataGetResp, tags=['TagsData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await TagsData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/tagsdata/{id}', tags=['TagsData'])
+async def delete(id: str):
+    return await TagsData.delete(id)
+
+
+@router.post('/performanceindex', response_model=PerformanceIndex, tags=['PerformanceIndex'])
+async def create(inputObj: PerformanceIndexCreate):
+    return await inputObj.create()
+
+
+@router.put('/performanceindex', response_model=PerformanceIndex, tags=['PerformanceIndex'])
+async def update(inputObj: PerformanceIndex):
+    return await inputObj.modify()
+
+
+@router.get('/performanceindex/{id}', response_model=PerformanceIndex, tags=['PerformanceIndex'])
+async def get(id: str):
+    return await PerformanceIndex.get(id, skip_secrets=True)
+
+
+@router.get('/performanceindex', response_model=PerformanceIndexGetResp, tags=['PerformanceIndex'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PerformanceIndex.get_all(params, skip_secrets=True)
+
+
+@router.delete('/performanceindex/{id}', tags=['PerformanceIndex'])
+async def delete(id: str):
+    return await PerformanceIndex.delete(id)

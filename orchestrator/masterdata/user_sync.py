@@ -34,25 +34,25 @@ async def sync_users(file_path):
     df['username'] = df['EMPLOYEE_NUMBER']
     df['employee_id'] = df['EMPLOYEE_NUMBER']
     df['sap_id'] = df['LOCATION']
-    df['email'] = df['EMP_EMAIL']
+    df['email'] = df['EMPLOYEE_EMAIL']
     
-    if 'Zone' in df.columns:
-        df['zone'] = df['Zone']
-    if 'Region' in df.columns:
-        df['region'] = df['Region']
+    if 'ZONE' in df.columns:
+        df['zone'] = df['ZONE']
+    if 'REGION' in df.columns:
+        df['region'] = df['REGION']
 
     df['first_name'] = df['EMPLOYEE_NAME']
     df['last_name'] = ''
     df['system_role'] = df['ROLE_NAME']
     df['novex_role'] = df['NOVEX_ROLE']
     df['bu'] = df['BU']
+    df['employee_number'] = df['EMPLOYEE_NUMBER']
 
     # Fetch existing user records
-    existing_users = await hpcl_ceg_model.Users.get_all(resp_type='plain')  # Assuming a method to fetch all users
+    existing_users = await hpcl_ceg_model.Users.get_all(resp_type='plain')
     print("existing_users --> ", existing_users)
     existing_users_map = {user['employee_id']: user for user in existing_users["data"]}
 
-    df = df.drop_duplicates(subset=['employee_id'], keep=False)
     # Ensure required columns exist
     for key in ['region', 'state', 'zone', 'sales_area', 'escalation_level']:
         if key not in df.columns:
@@ -62,20 +62,55 @@ async def sync_users(file_path):
              'first_name', 'last_name', 'system_role', 'novex_role', 'bu']]
 
     df = df[df['employee_id'] != '']
-    data = df.to_dict(orient='records')
+    # Aggregate roles, zones, regions, etc. for duplicate employee IDs
+    aggregated_df = (
+        df.groupby("employee_id", as_index=False)
+        .agg({
+            "username": "first",
+            "sap_id": lambda x: list(set(x.dropna())),
+            "email": "first",
+            "first_name": "first",
+            "last_name": "first",
+            "system_role": lambda x: list(set(x.dropna())),
+            "novex_role": lambda x: list(set(x.dropna())),
+            "bu": lambda x: list(set(x.dropna())),
+            "region": lambda x: list(set(x.dropna())),
+            "state": lambda x: list(set(x.dropna())),
+            "zone": lambda x: list(set(x.dropna())),
+            "sales_area": lambda x: list(set(x.dropna())),
+            "escalation_level": lambda x: list(set(x.dropna()))
+        })
+    )
 
-    # Retain `status` and `is_ad_user` for existing users, set `False` for new ones
+    data = aggregated_df.to_dict(orient="records")
+
+    # Process data for database insertion - fix the array/string mismatch
     for record in data:
         emp_id = record['employee_id']
+        # Retain existing user data or set defaults for new users
         if emp_id in existing_users_map:
             record['status'] = existing_users_map[emp_id]['status']
             record['is_ad_user'] = existing_users_map[emp_id]['is_ad_user']
         else:
-            record['status'] = False
-            record['is_ad_user'] = False
+            record['status'] = True
+            record['is_ad_user'] = True
 
-        for key in ['sap_id', 'bu', 'region', 'state', 'zone', 'sales_area']:
-            record[key] = [rec.strip() for rec in record[key].split(",")] if record[key] else []
+        # Convert list fields to proper database-compatible format
+        # For fields that should be arrays in PostgreSQL
+        for key in ['sap_id', 'bu', 'system_role', 'novex_role', 'region', 'state', 'zone', 'sales_area']:
+            if isinstance(record[key], list):
+                # Filter out empty strings and convert all elements to strings
+                record[key] = [str(item) for item in record[key] if item]
+                # If list is empty after filtering, set to None or empty list based on your DB requirements
+                if not record[key]:
+                    record[key] = []  # PostgreSQL empty array
+            elif record[key] is not None and not isinstance(record[key], str):
+                record[key] = str(record[key])
+
+        # Handle escalation_level specifically as a string, not an array
+        if isinstance(record['escalation_level'], list):
+            # Join the list elements into a comma-separated string
+            record['escalation_level'] = ','.join(str(item) for item in record['escalation_level'] if item) if record['escalation_level'] else None
 
     await hpcl_ceg_model.Users.bulk_update(data, upsert=True)
 

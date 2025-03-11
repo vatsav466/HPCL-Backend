@@ -69,7 +69,7 @@ async def load_roles_master(bu, sap_id, role):
     print(f"Loading data")
     role = role.split(",") 
     role = [r.strip() for r in role]
-    params = urdhva_base.queryparams.QueryParams(limit=100000, q=f"bu='{{{bu}}}'")
+    params = urdhva_base.queryparams.QueryParams(limit=10000, q=f"bu='{{{bu}}}'")
     resp = await hpcl_ceg_model.Users.get_all(params)
     resp_dict = resp.__dict__
     if resp_dict.get('body'):
@@ -93,7 +93,7 @@ async def load_roles_master(bu, sap_id, role):
     print("role before resp_filtered ", role)
     resp_filtered = df.filter(
         (pl.col("sap_id").list.contains(str(sap_id))) &
-        (pl.col("novex_role").is_in(role))
+        (pl.col("novex_role").list.contains(str(role)))
     )
     return resp_filtered.to_dicts()
 

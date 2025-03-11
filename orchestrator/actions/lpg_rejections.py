@@ -35,7 +35,8 @@ class LpgRejections:
         return ["alert_id", "interlock_name", "bu", "interlock_id", "sap_id"]
 
     async def get_current_cs_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_cs_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -45,7 +46,8 @@ class LpgRejections:
                     FROM 
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
+                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
+                        
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -57,7 +59,7 @@ class LpgRejections:
                             FROM
                                 "alerts"
                             WHERE
-                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='cs_rejections' """
+                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='Check Scale Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         # if not check_alerts.is_empty():
@@ -75,13 +77,16 @@ class LpgRejections:
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
             self.params["device_type"] = "Check Scale Rejection"
-            self.params["interlock_name"] = "cs_rejections"
+            self.params["interlock_name"] = "Check Scale Rejection"
             self.params["sop_id"] = "SOP077"
+            self.params["message"] = f"Check Scale rejection is going above 8%. The current rejection rate is {str(data['rejection'])}"
+            self.params["alert_history"] = [{"action_msg": self.params["message"],  "action_type": "Created"}]
             await create_alert(self.params)
 
 
     async def get_current_gd_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_gd_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -92,7 +97,7 @@ class LpgRejections:
                     FROM
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
+                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -104,7 +109,7 @@ class LpgRejections:
                             FROM
                                 "alerts"
                             WHERE
-                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='gd_rejections' """
+                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='Valve Leak Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         # if not check_alerts.is_empty():
@@ -121,14 +126,20 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
-            self.params["device_type"] = "Valve Leakage Rejection"
-            self.params["interlock_name"] = "gd_rejections"
+            self.params["device_type"] = "Valve Leak Rejection"
+            self.params["interlock_name"] = "Valve Leak Rejection"
             self.params["sop_id"] = "SOP078"
+            if float(data['rejection']) < 1:
+                self.params["message"] = f"Valve Leak rejection is going below 1%. The current rejection rate is {str(data['rejection'])}"
+            else:
+                self.params["message"] = f"Valve Leak rejection is going above 6%. The current rejection rate is {str(data['rejection'])}"
+            self.params["alert_history"] = [{"action_msg": self.params["message"], "action_type": "Created"}]
             await create_alert(self.params)
 
 
     async def get_current_pt_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_pt_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -139,7 +150,7 @@ class LpgRejections:
                     FROM
                         "{table}"
                     WHERE
-                        process_date > '{yesterday}' GROUP BY sap_id, plant, zone"""
+                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -151,7 +162,7 @@ class LpgRejections:
                             FROM
                                 "alerts"
                             WHERE
-                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='pt_rejections' """
+                                "bu"= 'LPG' AND alert_status='Open' AND interlock_name ='O-Ring Leak Rejection' """
         check_alerts = await function(query=check_alerts)
         check_alerts = pl.DataFrame(check_alerts)
         # if not check_alerts.is_empty():
@@ -168,37 +179,41 @@ class LpgRejections:
             self.params["severity"] = "Critical"
             self.params["zone"] = data["zone"]
             self.params["device_name"] = str(data['rejection'])
-            self.params["device_type"] = "O-Ring Leakage Rejection"
-            self.params["interlock_name"] = "pt_rejections"
+            self.params["device_type"] = "O-Ring Leak Rejection"
+            self.params["interlock_name"] = "O-Ring Leak Rejection"
             self.params["sop_id"] = "SOP079"
+            if float(data['rejection']) < 1:
+                self.params["message"] = f"O-Ring Leak rejection is going below 1%. The current rejection rate is {str(data['rejection'])}"
+            else:
+                self.params["message"] = f"O-Ring Leak rejection is going above 12%. The current rejection rate is {str(data['rejection'])}"
+            self.params["alert_history"] = [{"action_msg": self.params["message"], "action_type": "Created"}]
             await create_alert(self.params)
 
 
     async def check_rejections(self, params):
         if not self.params:
             self.params = params
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")
         rejection_type = params["interlock_name"]
         table = f"lpg_{rejection_type}"
+        print(f"- Checking Rejection of {table} -")
 
         check_alerts = await hpcl_ceg_model.Alerts.get(self.params['alert_id'])
         if not isinstance(check_alerts, dict):
             check_alerts = check_alerts.__dict__
-        check_alerts = pl.DataFrame(check_alerts)
-
+        check_alerts = pl.DataFrame([check_alerts])        
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_rejection = f""" SELECT AVG(sortoutpercentage)*100 AS rejection, plant FROM "{table}" WHERE process_date > '{yesterday}' GROUP BY plant"""
-        current_rejection = await function(query=current_rejection)
-        current_rejection = pl.DataFrame(current_rejection)
-
-        if not check_alerts.is_empty():
-            check_alerts = current_rejection.join(check_alerts, on="sap_id", how="inner")
-            check_alerts = check_alerts.with_columns(pl.when(pl.col("rejection") < 8).then(pl.lit("decreased")).otherwise(pl.lit("increased")).alias("rejection_status")).select(["rejection_status"])
-        else:
-            return False, {}
-        return True, check_alerts.to_dicts()[-1]
+        
+        previous_rejection = f""" SELECT * FROM alerts WHERE created_at>='{(datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d")}' and interlock_name='{params["interlock_name"]}' """
+        previous_rejection = await function(query=previous_rejection)
+        previous_rejection = pl.DataFrame(previous_rejection)
+        
+        if check_alerts['location_name'][-1] in previous_rejection["location_name"].unique().to_list():
+            return True, {"rejection_status": "increased"}
+        elif check_alerts['location_name'][-1] not in previous_rejection["location_name"].unique().to_list():
+            return True, {"rejection_status": "decreased"}
+                
         
 if __name__ == "__main__":
     lpg = LpgRejections()
