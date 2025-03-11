@@ -29,8 +29,8 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         df = await function(query=lpg_query)
         df = pl.DataFrame(df)
         
-        base_path = "/opt/ceg/algo/dnc_backend_v2/things_board/device_data"  # Update with actual path
-        mapping_base_path = '/opt/ceg/algo/dnc_backend_v2/utilities/'
+        base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
+        mapping_base_path = '/opt/ceg/algo/utilities/'
         mapping_df = pl.read_csv(os.path.join(mapping_base_path, 'DashboardAssetMapping.csv'))
         mapping_df = mapping_df.with_columns(mapping_df["Device Type"].fill_null(strategy="forward"))
 
