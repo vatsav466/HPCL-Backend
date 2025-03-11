@@ -5000,7 +5000,7 @@ class GlobalAnalytics:
         #     print("date --> ", date)
 
         #     # Lookup dictionaries for interlock categories
-        #     maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenanace}
+        #     maintenance_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Maintenance}
         #     fault_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Fault}
         #     # normal_interlocks = {item["interlock_name"]: item["alert_category"] for item in category_mapping.Normal}
 
@@ -5260,7 +5260,7 @@ class GlobalAnalytics:
             print("date --> ", date)
 
             # Lookup dictionaries for interlock categories - modified to map to equipment_name instead of interlock_name
-            maintenance_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"])} for item in category_mapping.Maintenanace}
+            maintenance_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"])} for item in category_mapping.Maintenance}
             fault_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"])} for item in category_mapping.Fault}
             # normal_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"])} for item in category_mapping.Normal}
 
@@ -5933,7 +5933,7 @@ class GlobalAnalytics:
                     else:
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
-                            
+
                         if "zone" in row:
                             detail_item["zone"] = row["zone"]
                         
