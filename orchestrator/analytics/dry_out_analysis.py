@@ -997,7 +997,8 @@ async def current_month_frequent_drout_terminals(data):
     return dryout_resp
 
 async def get_atg_ack(dry_out_in_days='1'):
-    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume  >  0"""
+    to_day = datetime.datetime.now().strftime("%Y-%m-%d")
+    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume  >  0 and Recptentrydate::DATE = '{to_day}'"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "cris", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1010,7 +1011,7 @@ async def get_atg_ack(dry_out_in_days='1'):
 
     query = f"""select distinct sap_id from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status = 'Open' and dry_out_in_days = '{dry_out_in_days}'"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
-        "cris", "1")
+        "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
