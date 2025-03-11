@@ -18,6 +18,8 @@ HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', '
 # Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
 Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"',
                 '"month_name"']
+APG_Filters = ['"cumulative_level"', '"ProductName"',
+                '"month_name"']
 # Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"'"ProductName"'', '"ProductName"']
 # Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
@@ -149,6 +151,15 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
                 if key in Lubes_Filters and Lubes_Filters.index(key) > index:
                     index = Lubes_Filters.index(key)
             group_by_filter = [Lubes_Filters[index + 1]]
+        
+        
+        if ('Aviation' in [x['value'].strip('"') for x in cross_filters] or 'PETCHEM' in [x['value'].strip('"') for x in cross_filters] or 'GAS' in [x['value'].strip('"') for x in cross_filters]):
+            for key in [rec['key'] for rec in cross_filters]:          
+                if key in APG_Filters and APG_Filters.index(key) > index:
+                    index = APG_Filters.index(key)
+            group_by_filter = [APG_Filters[index + 1]]
+        
+        
         else:
             for key in [rec['key'] for rec in cross_filters]:
                 if key in Base_Filters and Base_Filters.index(key) > index:
