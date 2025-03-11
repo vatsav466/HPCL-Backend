@@ -172,7 +172,11 @@ def _check_quarter(quarter: int) -> int:
     else:
         raise ValueError(f"quarter {quarter} is out of range")
 
-
+def get_month_abbr(date_str):
+    # Convert string to datetime object
+    date_obj = datetime.datetime.strptime(date_str, "%Y-%m-%d")
+    # Return abbreviated month name
+    return date_obj.strftime("%b")
 class _Hashable:
     """A class to make Fiscal objects hashable"""
 
