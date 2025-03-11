@@ -1794,37 +1794,27 @@ class LPGCDCMSActions:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_overall_ctc_statistics_query_, access_filters, drill_state)
-            if not daterange:
-                daywise_overall_ctc_statistics_query_ += ' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Execution_Date" <= NOW() '
-            if daterange:
-                daywise_overall_ctc_statistics_query_ += f' AND "Execution_Date" BETWEEN {daterange} '
             daywise_overall_ctc_statistics_query_ += ' GROUP BY TO_CHAR("Execution_Datetime", \'Month\'), "ZoneNames", "ROName", "SAName", "SubCategory" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_overall_ctc_statistics_query_, access_filters, drill_state)
-            if not "where" in daywise_overall_ctc_statistics_query_.lower() and not daterange:
-                daywise_overall_ctc_statistics_query_ += ' WHERE "Execution_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Execution_Date" <= NOW() '
-            elif not "where" in daywise_overall_ctc_statistics_query_.lower() and daterange:
-                daywise_overall_ctc_statistics_query_ += f' WHERE "Execution_Date" BETWEEN {daterange} '
-            elif not daterange:
-                daywise_overall_ctc_statistics_query_ += ' AND "Execution_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Execution_Date" <= NOW() '
-            elif daterange:
-                daywise_overall_ctc_statistics_query_ += f' AND "Execution_Date" BETWEEN {daterange} '
             daywise_overall_ctc_statistics_query_ += ' GROUP BY TO_CHAR("Execution_Datetime", \'Month\'), "ZoneNames", "ROName", "SAName", "SubCategory" '
         try:
             query_resp = await function(query=daywise_overall_ctc_statistics_query_)
             resp = pl.DataFrame(query_resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
-            resp = resp.with_columns(pl.col('consumer_count').fill_null(0).cast(pl.Float64).alias('consumer_count'))
+            for col in ["ACTC", "BCTC", "NCTC"]:                
+                resp = resp.with_columns(pl.col(col).fill_null(0).cast(pl.Float64).alias(col))
             
-            resp = resp.group_by(["Execution_Date", "ConsumerType"]).agg([
-                    pl.sum("consumer_count").round(2).alias("consumer_count"),
+            resp = resp.group_by(["Month"]).agg([
+                    pl.sum("ACTC").round(2).alias("ACTC"),
+                    pl.sum("BCTC").round(2).alias("BCTC"),
+                    pl.sum("NCTC").round(2).alias("NCTC"),
                 ])
-            resp = resp.with_columns(pl.col("Execution_Date").dt.strftime("%Y-%m-%d").alias("Execution_Date"))
-            numerical_columns = ["consumer_count"]
-            string_columns = ["Execution_Date", "ConsumerType"]
+            numerical_columns = ["ACTC", "BCTC", "NCTC"]
+            string_columns = ["ZOName", "ROName", "SAName", "ConsumerType"]
             for col in numerical_columns:
                 if col in resp.columns:
                     resp = resp.with_columns(pl.col(col).fill_null(0.0))
