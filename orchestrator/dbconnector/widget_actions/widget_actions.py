@@ -289,7 +289,7 @@ class WidgetActions:
             condition = filter_item['cond']
             value = filter_item['value']
 
-            if condition == 'equals':
+            if condition in ['=', 'equals']:
                 if '.' in key:
                     if isinstance(value, int):
                         conditions.append(f''' {key} = {value} ''')
