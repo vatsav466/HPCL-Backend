@@ -1225,7 +1225,8 @@ class IndentDryOut:
             )
             # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
             return await self.send_alert_action(is_delivered=True)
-        return await self.send_alert_action(is_delivered=False)
+        return await self.is_product_delivered_ims(params=params)
+        # return await self.send_alert_action(is_delivered=False)
 
     async def _is_product_delivered(self, params: dict):
         # Not In Use
