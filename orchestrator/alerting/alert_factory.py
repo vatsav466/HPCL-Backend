@@ -224,7 +224,7 @@ class AlertFactory:
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
         """
-        print("alert_data close ---> ", alert_data)
+        # print("alert_data close ---> ", alert_data)
         try:
             # il_data = None
             # al_data = None
