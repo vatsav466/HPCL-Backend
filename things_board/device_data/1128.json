@@ -2233,12 +2233,12 @@
                 },
                 {
                     "sensor_name": "Primary Gauge Level",
-                    "sensor_tag": "TANK.TK-20.LEVEL",
+                    "sensor_tag": "",
                     "normal_value": ""
                 },
                 {
                     "sensor_name": "TANK LEAKAGE STATUS",
-                    "sensor_tag": "TANK.TK-20.TANK_ALERT_ALARM",
+                    "sensor_tag": "",
                     "normal_value": "0"
                 },
                 {
@@ -8647,7 +8647,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-501B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-501B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -8805,7 +8805,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-502B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-502B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -8963,7 +8963,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-503B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-503B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -9121,7 +9121,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-504B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-504B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -9279,7 +9279,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-505B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-505B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -9437,7 +9437,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-506B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-506B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -9595,7 +9595,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-507B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-507B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -9753,7 +9753,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-508B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-508B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -9911,7 +9911,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-509B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-509B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10069,7 +10069,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-510B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-510B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -10227,7 +10227,7 @@
                 },
                 {
                     "sensor_name": "DAY START TOTALIZER MISMATCH",
-                    "sensor_tag": "SmartLoad-Dual.BC-511B.BCU_C3_TOTALIZER_MISMATCH_ALARM",
+                    "sensor_tag": "SmartLoad-Dual.BC-511B.BCU_C1_TOTALIZER_MISMATCH_ALARM",
                     "normal_value": "0"
                 }
             ]
@@ -11003,7 +11003,7 @@
                 },
                 {
                     "sensor_name": "Water Volume",
-                    "sensor_tag": "PLC.GEPLC.TOV_ON_SCREEN",
+                    "sensor_tag": "PLC.TASPLC.TOV_ON_SCREEN",
                     "normal_value": "0"
                 }
             ]
