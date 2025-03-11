@@ -93,7 +93,6 @@ def fetch_data(query, getData=False, params=None):
                     password=params["password"],
                     port=params["port"]
                 )
-            pg_conn.set_session(statement_timeout=300000)
             cursor = pg_conn.cursor()
         except Exception as e:
             print("Exception :", str(e))
@@ -120,7 +119,7 @@ def get_data(params):
     table_name = "lpg_operations_data"
     
     first_insertion = False
-    query = """ SELECT DISTINCT("short_name") FROM "lpg_operations_summary";"""
+    query = """ SELECT DISTINCT("short_name") FROM "lpg_operations_summary"; """
     creds = credential_loader.get_credentials('APP_DB')
     app_db_params={
             "host": creds["host"],
@@ -170,8 +169,13 @@ if __name__=="__main__":
                 "port": 5432
                 }
                 get_data(params)
-            except psycopg2.errors.QueryCanceled:
-                print("Query timed out !!! ")
+            except Exception as e:
+                if "psycopg2.OperationalError" in str(e):
+                    print(f"-- OperationalError while fetching data for {plant["PlantName"]} --")
+                    print("Traceback :", traceback.format_exc())
+                    continue
+                else:
+                    raise Exception(e)
         print("*"*50)
         print("-- Data Insertion to lpg_operations_data completed --")
         print("*"*50)
@@ -194,3 +198,4 @@ if __name__=="__main__":
         pg_conn.commit()
         cursor.close()
         pg_conn.close()
+        print('-- Removed the data from lpg_operations_data table --')
