@@ -429,7 +429,7 @@ async def indentdryout_get_indent_analysis(data: Indentdryout_Get_Indent_Analysi
 # Action get_dry_out_count
 @router.post('/get_dry_out_count', tags=['IndentDryOut'])
 async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountParams):
-    basic_condtion = ["progress_rate != '11'"]
+    basic_condtion = ["progress_rate != '11'", "mark_as_false = true"]
     where_clause = []
     dry_out_in_days = '1'
     if not data.filters:
@@ -580,7 +580,7 @@ async def indentdryout_get_indent_data(data: Indentdryout_Get_Indent_DataParams)
 @router.post('/get_dried_out_ro', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParams):
     top_x_axis = connection_mapping.dry_out_top_x_axis
-    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
+    where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "mark_as_false = true"]
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
         extra_key_mapping={"sap_id": "terminal_plant_id"}))
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
