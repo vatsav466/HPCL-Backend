@@ -5295,7 +5295,6 @@ class GlobalAnalytics:
                     DATE(created_at) AS created_date,
                     sap_id,
                     zone,
-                    sop_id,
                     interlock_name,
                     location_name,
                     COUNT(*) AS alert_count
@@ -5314,7 +5313,7 @@ class GlobalAnalytics:
 
             # Complete the query
             query += """
-                GROUP BY created_date, sop_id, zone, interlock_name, sap_id, location_name
+                GROUP BY created_date, zone, interlock_name, sap_id, location_name
                 ORDER BY created_date DESC, alert_count DESC;
             """
 
@@ -5353,9 +5352,8 @@ class GlobalAnalytics:
                     lambda name: maintenance_interlocks.get(name, fault_interlocks.get(name, {})).get("alert_category")
                 ).alias("alert_category"),
                 
-                pl.col("interlock_name").map_elements(
-                    lambda name: "Maintenance" if name in maintenance_interlocks else "Fault"
-                ).alias("alert_type"),
+                # Changed to always return "Equipment" instead of "Maintenance" or "Fault"
+                pl.lit("Equipment").alias("alert_type"),
                 
                 # Add equipment_name column
                 pl.col("interlock_name").map_elements(
@@ -5387,14 +5385,14 @@ class GlobalAnalytics:
                         group_cols.append("location_name")
                     
                     if zone_filter or plant_filter:
-                        group_cols.extend(["sap_id", "sop_id"])
+                        group_cols.extend(["sap_id"])
                         
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
                     )
                 else:
                     # Group by equipment level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "sop_id", "zone", "location_name", "equipment_name", "month_year", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
+                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "equipment_name", "month_year", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
                         pl.sum("alert_count").alias("total")
                     )
 
@@ -5421,18 +5419,12 @@ class GlobalAnalytics:
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
                         
-                        if "sop_id" in row:
-                            detail_item["sop_id"] = row["sop_id"]
-                        
                         # Use equipment_name instead of interlock_name
                         if "equipment_name" in row:
                             detail_item["equipment_name"] = row["equipment_name"]
                     else:
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
-                        
-                        if "sop_id" in row:
-                            detail_item["sop_id"] = row["sop_id"]
                         
                         if "zone" in row:
                             detail_item["zone"] = row["zone"]
@@ -5460,14 +5452,14 @@ class GlobalAnalytics:
                         group_cols.append("location_name")
                     
                     if zone_filter or plant_filter:
-                        group_cols.extend(["sap_id", "sop_id"])
+                        group_cols.extend(["sap_id"])
                         
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
                     )
                 else:
                     # Group by equipment level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "sop_id", "zone", "location_name", "equipment_name", "created_date", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
+                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "equipment_name", "created_date", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
                         pl.sum("alert_count").alias("total")
                     )
 
@@ -5495,18 +5487,12 @@ class GlobalAnalytics:
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
                         
-                        if "sop_id" in row:
-                            detail_item["sop_id"] = row["sop_id"]
-                        
                         # Use equipment_name instead of interlock_name
                         if "equipment_name" in row:
                             detail_item["equipment_name"] = row["equipment_name"]
                     else:
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
-                        
-                        if "sop_id" in row:
-                            detail_item["sop_id"] = row["sop_id"]
                         
                         if "zone" in row:
                             detail_item["zone"] = row["zone"]
