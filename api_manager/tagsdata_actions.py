@@ -10,7 +10,7 @@ import utilities.connection_mapping as connection_mapping
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.device_data_mapping import device_mapping
-from utilities.analog_data_mapping import Maintenanace, Fault
+from utilities.analog_data_mapping import Maintenance, Fault
 
 router = fastapi.APIRouter(prefix='/tagsdata')
 # Create a dictionary for quick lookup

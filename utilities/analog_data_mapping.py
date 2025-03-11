@@ -1,4 +1,4 @@
-Maintenanace = [
+Maintenance = [
     {"sop_id": "SOP007", "interlock_name": "ESD Push button_Under Maintenance", "alert_category": "Safety", "equipment_name": "ESD"},
     {"sop_id": "SOP008", "interlock_name": "Rim Seal system_Under Maintenance", "alert_category": "Safety", "equipment_name": "RimSeal"},
     {"sop_id": "SOP009", "interlock_name": "Tank_Under Maintenance", "alert_category": "Safety", "equipment_name": ""},
