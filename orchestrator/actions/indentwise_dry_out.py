@@ -1198,6 +1198,7 @@ class IndentDryOut:
             cris_resp = cris_resp[0]
         else:
             cris_resp = {}
+            return await self.is_product_delivered_ims(params=params)
         if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
             input_data = {
                 "action_msg": "",
