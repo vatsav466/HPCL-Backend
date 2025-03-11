@@ -5394,7 +5394,7 @@ class GlobalAnalytics:
                     )
                 else:
                     # Group by equipment level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "sop_id", "equipment_name", "month_year", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "zone", "location_name", "equipment_name", "month_year", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
                         pl.sum("alert_count").alias("total")
                     )
 
@@ -5433,6 +5433,12 @@ class GlobalAnalytics:
                         
                         if "sop_id" in row:
                             detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "zone" in row:
+                            detail_item["zone"] = row["zone"]
+                        
+                        if "location_name" in row:
+                            detail_item["location_name"] = row["location_name"]
                         # Use equipment_name instead of interlock_name
                         detail_item["equipment_name"] = row["equipment_name"]
                     
@@ -5461,7 +5467,7 @@ class GlobalAnalytics:
                     )
                 else:
                     # Group by equipment level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "sop_id", "equipment_name", "created_date", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
+                    grouped = resp_df.group_by(["sap_id", "sop_id", "zone", "location_name", "equipment_name", "created_date", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
                         pl.sum("alert_count").alias("total")
                     )
 
@@ -5501,6 +5507,12 @@ class GlobalAnalytics:
                         
                         if "sop_id" in row:
                             detail_item["sop_id"] = row["sop_id"]
+                        
+                        if "zone" in row:
+                            detail_item["zone"] = row["zone"]
+                        
+                        if "location_name" in row:
+                            detail_item["location_name"] = row["location_name"]
                         # Use equipment_name instead of interlock_name
                         detail_item["equipment_name"] = row["equipment_name"]
                         
