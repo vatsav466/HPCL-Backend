@@ -52,40 +52,54 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 device_type = device.get('device_type', '')
                 equipment_name = device.get('device_name', '')
                 sensors = device.get('sensors', [])
+                
                 # getting the equipment names according to the device type
-                equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)[
-                    "Equipments(sensor_type)"].to_list()
+                equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)["Equipments(sensor_type)"].to_list()
                 system_counts = defaultdict(int)
                 system_total_count = defaultdict(int)  # for total count
                 system_m_f_count = defaultdict(int)  # for maintainance_fault count
-
+                
                 for sensor in sensors:
                     sensor_name = sensor.get('sensor_name', '').strip()
                     # looping every equipment to check whether it is present in sensor name
                     for equipment in equipment_names:
-                        if equipment and equipment.strip().lower() in sensor_name.lower():
+                        equipment = equipment.strip() if equipment else ""
+                        if equipment and equipment.lower() in sensor_name.lower():
                             system = device_mapping_dict.get(device_type, {}).get(equipment)
                             if system:
-                                # system_counts[system] += 1
                                 system_total_count[system] += 1
-                                for maintanence in Maintenanace:
-                                    if maintanence.get('equipment_name') and maintanence['equipment_name'] == equipment:
-                                        interlockName = maintanence['interlock_name']
-                                        print("interlockName: ", interlockName)
-                                        params = urdhva_base.queryparams.QueryParams(limit=10000,
-                                                                                     q=f"interlock_name='{interlockName}'")
-                                        total = await Alerts.count(params)
-                                        print("total: ", total)
-                                        system_m_f_count[system] += total
+                                
+                                # Find matching maintenance records
+                                for maintenance in Maintenance:
+                                    maintenance_equipment = maintenance.get('equipment_name', '').strip() if maintenance.get('equipment_name') else ""
+                                    # Use same comparison logic as with sensors
+                                    if maintenance_equipment and maintenance_equipment.lower() == equipment.lower():
+                                        interlock_name = maintenance.get('interlock_name')
+                                        if interlock_name:
+                                            print("maintenance interlock_name: ", interlock_name)
+                                            params = urdhva_base.queryparams.QueryParams(
+                                                limit=10000,
+                                                q=f"interlock_name='{interlock_name}'"
+                                            )
+                                            total = await Alerts.count(params)
+                                            print("total maintenance: ", total)
+                                            system_m_f_count[system] += total
+                                
+                                # Find matching fault records
                                 for fault in Fault:
-                                    if fault.get('equipment_name') and fault['equipment_name'] == equipment:
-                                        interlockName = fault['interlock_name']
-                                        print("interlockName: ", interlockName)
-                                        params = urdhva_base.queryparams.QueryParams(limit=10000,
-                                                                                     q=f"interlock_name='{interlockName}'")
-                                        total = await Alerts.count(params)
-                                        print("total: ", total)
-                                        system_m_f_count[system] += total
+                                    fault_equipment = fault.get('equipment_name', '').strip() if fault.get('equipment_name') else ""
+                                    # Use same comparison logic as with sensors
+                                    if fault_equipment and fault_equipment.lower() == equipment.lower():
+                                        interlock_name = fault.get('interlock_name')
+                                        if interlock_name:
+                                            print("fault interlock_name: ", interlock_name)
+                                            params = urdhva_base.queryparams.QueryParams(
+                                                limit=10000,
+                                                q=f"interlock_name='{interlock_name}'"
+                                            )
+                                            total = await Alerts.count(params)
+                                            print("total fault: ", total)
+                                            system_m_f_count[system] += total
                 # taking keys to merge the above declared two dicts
                 all_keys = set(system_total_count.keys()).union(system_m_f_count.keys())
                 # declaring varibale to store the merged dict
