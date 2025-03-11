@@ -5170,12 +5170,12 @@ class GlobalAnalytics:
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
-                sorted_monthly_data = {
-                    month: result[category][month] for category in result for month in sorted(
-                        result[category].keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
-                    )
-                }
-                return {"status": True, "message": "success", "monthly_data": sorted_monthly_data}
+                # sorted_monthly_data = {
+                #     month: result[category][month] for category in result for month in sorted(
+                #         result[category].keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
+                #     )
+                # }
+                return {"status": True, "message": "success", "monthly_data": result}
             else:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
@@ -5242,15 +5242,15 @@ class GlobalAnalytics:
                     result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
                     result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
                 
-                sorted_daily_data = {
-                    category: {
-                        date: result[category][date] for date in sorted(
-                            result[category].keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
-                        )
-                    } for category in result
-                }
+                # sorted_daily_data = {
+                #     category: {
+                #         date: result[category][date] for date in sorted(
+                #             result[category].keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
+                #         )
+                #     } for category in result
+                # }
 
-                return {"status": True, "message": "success", "daily_data": sorted_daily_data}
+                return {"status": True, "message": "success", "daily_data": result}
         except Exception as e:
             print(traceback.format_exc())
     
@@ -5441,14 +5441,14 @@ class GlobalAnalytics:
                     detail_item["count"] = row["total"]
                     result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
                 # Sort daily_data by date (latest first)
-                sorted_daily_data = {
-                    category: {
-                        date: result[category][date] for date in sorted(
-                            result[category].keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
-                        )
-                    } for category in result
-                }
-                return {"status": True, "message": "success", "daily_data": sorted_daily_data}
+                # sorted_daily_data = {
+                #     category: {
+                #         date: result[category][date] for date in sorted(
+                #             result[category].keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
+                #         )
+                #     } for category in result
+                # }
+                return {"status": True, "message": "success", "daily_data": result}
 
             else:
                 # Monthly aggregation
@@ -5516,12 +5516,12 @@ class GlobalAnalytics:
                         
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
-                sorted_monthly_data = {
-                    month: result[category][month] for category in result for month in sorted(
-                        result[category].keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
-                    )
-                }
-                return {"status": True, "message": "success", "monthly_data": sorted_monthly_data}
+                # sorted_monthly_data = {
+                #     month: result[category][month] for category in result for month in sorted(
+                #         result[category].keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
+                #     )
+                # }
+                return {"status": True, "message": "success", "monthly_data": result}
         
         except Exception as e:
             print(traceback.format_exc())
@@ -5639,13 +5639,13 @@ class GlobalAnalytics:
 
                     result.setdefault(created_date, []).append(entry)
 
-                # Sort results
-                sorted_daily_data = {
-                    date: result[date] for date in sorted(
-                        result.keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
-                    )
-                }
-                return {"status": True, "message": "success", "daily_data": sorted_daily_data}
+                # # Sort results
+                # sorted_daily_data = {
+                #     date: result[date] for date in sorted(
+                #         result.keys(), key=lambda x: datetime.strptime(x, "%Y-%m-%d"), reverse=True
+                #     )
+                # }
+                return {"status": True, "message": "success", "daily_data": result}
 
             else:
                 # **Monthly Data Aggregation**
@@ -5670,12 +5670,12 @@ class GlobalAnalytics:
                     result.setdefault(month, []).append(entry)
 
                 # Sort results
-                sorted_monthly_data = {
-                    month: result[month] for month in sorted(
-                        result.keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
-                    )
-                }
-                return {"status": True, "message": "success", "monthly_data": sorted_monthly_data}
+                # sorted_monthly_data = {
+                #     month: result[month] for month in sorted(
+                #         result.keys(), key=lambda x: datetime.strptime(x, "%b-%Y"), reverse=True
+                #     )
+                # }
+                return {"status": True, "message": "success", "monthly_data": result}
 
         except Exception as e:
             print(traceback.format_exc())
