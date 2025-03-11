@@ -259,7 +259,7 @@ async def indentdryout_get_alert_history(data: Indentdryout_Get_Alert_HistoryPar
                            f" {convert_time_read_format(str(history['ims_datetime']), is_ist=True)}")
         else:
             history_msg = (f"Action:- {history['action_msg']}, {history['action_type']}: "
-                           f"Processed at {convert_time_read_format(str(history['ims_datetime']), is_ist=True)}")
+                           f"Processed at {convert_time_read_format(str(history['ims_datetime']) if 'ims_datetime' in history.keys() else "-", is_ist=True)}")
         return history_msg
 
     def convert_time_read_format(date_time, is_ist=False):
@@ -471,34 +471,37 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     WHERE {condition} AND {condition_1} AND dry_out_in_days='1' GROUP BY dry_out_in_days
     """
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    print("stats_query: ", stats_query)
     dry_out_data = await function(
         query=stats_query
     )
     if dry_out_data:
         dry_out = dry_out_data[0]["total_unique_count"]
-    # For DryOut
-    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
-        WHERE {condition} AND {condition_2} AND dry_out_in_days='2' GROUP BY dry_out_in_days
-        """
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    dry_out_data = await function(
-        query=stats_query
-    )
-    if dry_out_data:
-        intraday_dry_out = dry_out_data[0]["total_unique_count"]
-    # For DryOut
-    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
-        WHERE {condition} AND {condition_3} AND dry_out_in_days='3' GROUP BY dry_out_in_days
-        """
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    dry_out_data = await function(
-        query=stats_query
-    )
-    if dry_out_data:
-        potential_dry_out = dry_out_data[0]["total_unique_count"]
+
+    # For Intra DryOut
+    # stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts
+    #     WHERE {condition} AND {condition_2} AND dry_out_in_days='2' GROUP BY dry_out_in_days
+    #     """
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # dry_out_data = await function(
+    #     query=stats_query
+    # )
+    # if dry_out_data:
+    #     intraday_dry_out = dry_out_data[0]["total_unique_count"]
+
+    # For Potential DryOut
+    # stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts
+    #     WHERE {condition} AND {condition_3} AND dry_out_in_days='3' GROUP BY dry_out_in_days
+    #     """
+    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    # dry_out_data = await function(
+    #     query=stats_query
+    # )
+    # if dry_out_data:
+    #     potential_dry_out = dry_out_data[0]["total_unique_count"]
 
     # _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
-    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out}
+    _data = {"dry_out": dry_out} #, "intraday_dry_out": intraday_dry_out}
     return {"status": True, "message": "Success", "data": _data}
 
 
@@ -651,7 +654,20 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Valid \\ WIP Indents",
             "value": sum(item['value'] for item in stats if 4 <= item['serial'] <= 10),
             "serial": 14, "condition": "=", "group": "pending"
+        }, {
+            "section": "EMLock",
+            "value": 0, "serial": 18, "condition": "=", "group": "wip"
         }])
+    # {
+    #     "section": "ATG Ack",
+    #     "value": 0, "serial": 19, "condition": "=", "group": "delivered"
+    # }, {
+    #     "section": "EMLock Unlock",
+    #     "value": 0, "serial": 20, "condition": "=", "group": "delivered"
+    # }, {
+    #     "section": "VTS Return",
+    #     "value": 0, "serial": 20, "condition": "=", "group": "delivered"
+    # }
     stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
@@ -697,7 +713,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     stats = sorted(stats, key=lambda x: x['serial'])
     updated_stats = []
     for each_stats in stats:
-        if each_stats['section'] == 'Indent Delivered':
+        if each_stats['section'] == 'Delivery Confirmation':
             each_stats['value'] = delivered_count
         updated_stats.append(each_stats)
     return {
@@ -712,7 +728,8 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
 # Action get_dried_out_ro_data
 @router.post('/get_dried_out_ro_data', tags=['IndentDryOut'])
 async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro_DataParams):
-    top_x_axis = connection_mapping.dry_out_top_x_axis
+    top_x_axis_updated = connection_mapping.dry_out_top_x_axis
+    top_x_axis = [x for x in top_x_axis_updated if x.get("name") not in ['ATG Ack', 'EMLock Unlock', 'VTS Return']]
     bottom_x_axis = connection_mapping.dry_out_bottom_x_axis
 
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]

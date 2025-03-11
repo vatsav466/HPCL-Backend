@@ -995,3 +995,15 @@ async def current_month_frequent_drout_terminals(data):
         query=dry_out_query
     )
     return dryout_resp
+
+async def get_atg_ack():
+    query = f"""select Site_id, (select erp_code from ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate from "hpcl_live".tr_delivery_data trd where enable = true and net_volume  >  0"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dryout_resp = await function(
+        query=query
+    )
+    return dryout_resp
