@@ -709,12 +709,15 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "serial": 17, "condition": "=", "group": "carry_fwd_indent"
         }])
     ro_not_in_ims_count = await dry_out_analysis.ro_not_in_ims()
+    atg_ack = await dry_out_analysis.get_atg_ack(dry_out_in_days=dry_out_in_days_query)
     # stats.append({"section": "RO Not In IMS", "value": len(ro_not_in_ims_count), "serial": 18, "condition": "=", "group": "ro_not_in_ims"})
     stats = sorted(stats, key=lambda x: x['serial'])
     updated_stats = []
     for each_stats in stats:
         if each_stats['section'] == 'Delivery Confirmation':
             each_stats['value'] = delivered_count
+        if each_stats['section'] == 'ATG Ack':
+            each_stats['value'] = atg_ack
         updated_stats.append(each_stats)
     return {
         "status": True, "message": "Success", "stats": updated_stats,
