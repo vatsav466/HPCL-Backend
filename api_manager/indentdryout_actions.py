@@ -479,15 +479,15 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
         dry_out = dry_out_data[0]["total_unique_count"]
 
     # For Intra DryOut
-    # stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts
-    #     WHERE {condition} AND {condition_2} AND dry_out_in_days='2' GROUP BY dry_out_in_days
-    #     """
-    # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    # dry_out_data = await function(
-    #     query=stats_query
-    # )
-    # if dry_out_data:
-    #     intraday_dry_out = dry_out_data[0]["total_unique_count"]
+    stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts
+        WHERE {condition} AND {condition_2} AND dry_out_in_days='2' GROUP BY dry_out_in_days
+        """
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    dry_out_data = await function(
+        query=stats_query
+    )
+    if dry_out_data:
+        intraday_dry_out = dry_out_data[0]["total_unique_count"]
 
     # For Potential DryOut
     # stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts
@@ -501,7 +501,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     #     potential_dry_out = dry_out_data[0]["total_unique_count"]
 
     # _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out, "potential_dry_out": potential_dry_out}
-    _data = {"dry_out": dry_out} #, "intraday_dry_out": intraday_dry_out}
+    _data = {"dry_out": dry_out, "intraday_dry_out": intraday_dry_out}
     return {"status": True, "message": "Success", "data": _data}
 
 
