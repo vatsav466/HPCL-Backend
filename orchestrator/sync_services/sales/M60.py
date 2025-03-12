@@ -355,6 +355,7 @@ def get_and_insert_data(cursor, query, params=None):
     
     data['SBU_Name'] = data['SBU_Name'].str.replace('PETROCHEMICALS SBU','PETCHEM').str.replace('GAS HQO','GAS')
     data.to_csv('/tmp/tibco_data.csv',index = False)
+    data.loc[data['SBU_Name'] =='GAS','Zone_Name'] = 'HQO Customer'
     data = pl.from_pandas(data)
     print("*" * 50)
     print("Data Schema", data.schema)
