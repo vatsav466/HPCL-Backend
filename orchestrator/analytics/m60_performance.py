@@ -18,6 +18,8 @@ HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', '
 # Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
 Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"',
                 '"month_name"']
+APG_Filters = ['"cumulative_level"', '"ProductName"',
+                '"month_name"']
 # Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"'"ProductName"'', '"ProductName"']
 # Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
@@ -149,6 +151,15 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
                 if key in Lubes_Filters and Lubes_Filters.index(key) > index:
                     index = Lubes_Filters.index(key)
             group_by_filter = [Lubes_Filters[index + 1]]
+        
+        
+        if ('Aviation' in [x['value'].strip('"') for x in cross_filters] or 'PETCHEM' in [x['value'].strip('"') for x in cross_filters] or 'GAS' in [x['value'].strip('"') for x in cross_filters]):
+            for key in [rec['key'] for rec in cross_filters]:          
+                if key in APG_Filters and APG_Filters.index(key) > index:
+                    index = APG_Filters.index(key)
+            group_by_filter = [APG_Filters[index + 1]]
+        
+        
         else:
             for key in [rec['key'] for rec in cross_filters]:
                 if key in Base_Filters and Base_Filters.index(key) > index:
@@ -166,6 +177,7 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     # Removing extra keys like all/_empty/* to mak sure all results appear in api response
     # Filtering cross filters
+    org_cross_filters = cross_filters.copy()
     cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
                      and cross_filter.get("value") and cross_filter["value"].lower() in ['*', '_empty', 'all'])]
 
@@ -173,7 +185,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     filters = [filter_cond for filter_cond in filters
                if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
                        filter_cond["value"].lower() in ['*', '_empty', 'all'])]
-
     sbuName_req = ''
     sbuWise = False
     if '"sbu_wise"' in [x['key'] for x in cross_filters]:
@@ -249,7 +260,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             history = f"""ROUND(SUM("{DBNames['m60_h']}"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
         elif condition['key'].strip('"') == "T":
             target = f""" ROUND(SUM("{DBNames['m60_ta']}"."TARGET_QTY_TMT")::numeric,2) AS "TARGET_TMT_SALES" """
-        elif condition['key'].strip('"') == "C":
+            
+        elif condition['key'].strip('"') == "C" and '"T"' not in [x['key'] for x in filters]:
             continue
         elif condition['key'].strip('"') == "YTD":
             # Calculating start and end dates for YTD for both actual and history
@@ -307,6 +319,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             # Not considering now
             ...
         else:
+           if condition['key']  != '"C"':
+            print("condiution in else",condition)
             # Clearing if value was an empty string
             if not condition["value"]:
                 continue
@@ -368,11 +382,46 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if '"C"' not in [x['key'] for x in filters]:
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
+        elif '"C"'  in [x['key'] for x in filters] and '"YTD"'  in [x['key'] for x in filters] and '"T"'  in [x['key'] for x in filters] and (len(org_cross_filters) == 0 or(len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"') ):
+            print("cross_filters",cross_filters)
+            group_keys.append('month_name')
+            target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
+                                             where_conditions + Default_Filters, start_date, end_date, group_keys)
+        
+        elif '"C"'  in [x['key'] for x in filters] and '"YTD"' not in [x['key'] for x in filters] and '"T"'  in [x['key'] for x in filters]  and (len(org_cross_filters) == 0 or(len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"') ):
+            group_keys.append('month_name')
+            target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
+                                             where_conditions + Default_Filters, start_date, end_date, group_keys)
         else:
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         if target_data:
-            if '"C"' not in [x['key'] for x in filters]:
+            print("target_data",target_data)
+            print("filters",filters)
+            #if '"C"'   in [x['key'] for x in filters] and '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and len(org_cross_filters) == 0:
+            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0):
+                
+                print("start_date",start_date)
+                print("end_date",end_date)
+                '''
+                if end_date:
+                    end_month = fiscal_year.get_month_abbr(end_date)
+                    print("end_mionth is ",end_month)
+                    target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
+                '''
+                target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+                print("target_data after conversion",target_data)
+                if "month_name" in target_data.columns.tolist():
+                    del target_data['month_name']
+                if "TARGET_TMT_SALES" in target_data.columns.tolist():
+                    sample_data = pd.DataFrame(columns = ['TARGET_TMT_SALES'])
+                    sample_data['TARGET_TMT_SALES'] = target_data['TARGET_TMT_SALES'].sum()
+                if not sample_data.empty:
+                    target_data = sample_data
+                print("target_data after conversion",target_data)
+            elif  '"C"' not   in [x['key'] for x in filters]:
+                target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+            elif  '"C"'    in [x['key'] for x in filters] and len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"':
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
                 target_data = pd.DataFrame(target_data)
@@ -463,7 +512,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     if not group_by_filter:
         result_df = pd.DataFrame()
         for col in merged_df.columns:
-            result_df[col] = [merged_df[col].sum()]
+            print("merged_columns",merged_df.columns)
+            print("col",col)
+            if col not in "month_name":
+                result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
     # Ordering Data for Month and SBU names
     if not merged_df.empty and ('"month_name"' in group_by_filter or '"SBU_Name"' in group_by_filter):

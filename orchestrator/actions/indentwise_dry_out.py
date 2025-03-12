@@ -133,6 +133,7 @@ class IndentDryOut:
         self.params['alert_type'] = 'RO'
         self.params['bu'] = 'RO'
         self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
+        self.params['mark_as_false'] = True
         camunda_host = connection_mapping.camunda_listener_mapping.get("camunda_dryout_01")
         camunda_url = f"http://{camunda_host['host']}:{camunda_host['port']}"
         if self.params['camunda_host']:
@@ -172,7 +173,8 @@ class IndentDryOut:
                             continue
                         query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
                                  f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
-                                 f"""servicing_plant_id='{each_indent["LOCN_CODE"]}' """                                 
+                                 f"""servicing_plant_id='{each_indent["LOCN_CODE"]}' """
+                                 f"""dry_out_in_days='{self.params["dry_out_in_days"]}'"""
                                  f"""where id='{record["alert_id"]}'""")
                         # f"""servicing_plant_name='{self.params['servicing_plant_name']}' """
                         await hpcl_ceg_model.Alerts.update_by_query(query)
@@ -191,10 +193,10 @@ class IndentDryOut:
                     # checking with indent_no from ims
                     if alerts_data['data']:
                         for record in alerts_data['data']:
-                            if record['dry_out_in_days'] != self.params['dry_out_in_days']:
-                                query = (f"update alerts set dry_out_in_days={self.params['dry_out_in_days']} "
-                                         f"where id='{record['id']}'")
-                                await hpcl_ceg_model.Alerts.update_by_query(query)
+                            # if record['dry_out_in_days'] != self.params['dry_out_in_days']:
+                            query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
+                                     f"where id='{record['id']}'")
+                            await hpcl_ceg_model.Alerts.update_by_query(query)
                     else:
                         # not alerts with indent_no then create alerts
                         self.params['indent_no'] = str(each_indent['INDENT_NO'])
@@ -214,6 +216,11 @@ class IndentDryOut:
                      f"alert_status in ('Open', 'InProgress') and product_code='{self.params['product_code']}'")
             alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
             if alerts_data['data']:
+                for record in alerts_data['data']:
+                    # if record['dry_out_in_days'] != self.params['dry_out_in_days']:
+                    query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
+                             f"where id='{record['id']}'")
+                    await hpcl_ceg_model.Alerts.update_by_query(query)
                 print("Already alert available nothing to do")
             else:
                 print("Create empty alert")
@@ -1192,6 +1199,7 @@ class IndentDryOut:
             cris_resp = cris_resp[0]
         else:
             cris_resp = {}
+            return await self.is_product_delivered_ims(params=params)
         if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
             input_data = {
                 "action_msg": "",
@@ -1218,7 +1226,8 @@ class IndentDryOut:
             )
             # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
             return await self.send_alert_action(is_delivered=True)
-        return await self.send_alert_action(is_delivered=False)
+        return await self.is_product_delivered_ims(params=params)
+        # return await self.send_alert_action(is_delivered=False)
 
     async def _is_product_delivered(self, params: dict):
         # Not In Use

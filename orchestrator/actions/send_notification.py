@@ -84,7 +84,7 @@ class SendNotification:
             message. If an error occurs, returns False and an error message.
         """
         self.params = params
-        print("parms: ", self.params)
+        # print("parms: ", self.params)
         try:
             if not await self._load_and_validate_alert():
                 return await self._handle_invalid_alert()

@@ -26,7 +26,7 @@ def get_db_connection(params):
     """
     server = params['host']
     database = params['database']
-    username = params['username']
+    username = params['user']
     password = params["password"]
     port = params["port"]
     if "connection_type" in params:
@@ -355,6 +355,7 @@ def get_and_insert_data(cursor, query, params=None):
     
     data['SBU_Name'] = data['SBU_Name'].str.replace('PETROCHEMICALS SBU','PETCHEM').str.replace('GAS HQO','GAS')
     data.to_csv('/tmp/tibco_data.csv',index = False)
+    data.loc[data['SBU_Name'] =='GAS','Zone_Name'] = 'HQO Customer'
     data = pl.from_pandas(data)
     print("*" * 50)
     print("Data Schema", data.schema)
@@ -441,7 +442,7 @@ if __name__ == "__main__":
             "user":creds['user'],
             "password":creds['password'],
             "port":creds['port'],
-            "table_name":"MOM_DAY_LEVEL_DATA",
+            "table_name":"M60_LEVEL_METADATA",
             "connection_type":"mssql"
                 
             }

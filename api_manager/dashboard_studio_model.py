@@ -122,7 +122,7 @@ class filtered_keysCreate(pydantic.BaseModel):
 class WidgetFiltersCreate(pydantic.BaseModel):
     key: str = pydantic.Field(**{'pattern': '^[a-zA-Z0-9_.\\-=" ]+$'})
     cond: str
-    value: typing.Optional[str] = pydantic.Field("", **{'pattern': '^([a-zA-Z0-9,\\[\\]\\{\\}\\(\\)&><#_.\\-=" ]+|)$'})
+    value: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class ChartsSchema(UrdhvaPostgresBase):

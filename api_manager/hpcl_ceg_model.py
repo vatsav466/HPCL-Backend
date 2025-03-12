@@ -1142,8 +1142,11 @@ class AlertsSchema(UrdhvaPostgresBase):
     interlock_name: Mapped[typing.Optional[str]] = mapped_column("interlock_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     interlock_id: Mapped[typing.Optional[str]] = mapped_column("interlock_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    equipment_id: Mapped[typing.Optional[str]] = mapped_column("equipment_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    equipment_type: Mapped[typing.Optional[str]] = mapped_column("equipment_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_name: Mapped[typing.Optional[str]] = mapped_column("device_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_msg: Mapped[typing.Optional[str]] = mapped_column("device_msg", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     vehicle_number: Mapped[typing.Optional[str]] = mapped_column("vehicle_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1212,8 +1215,11 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     interlock_name: typing.Optional[str] = pydantic.Field("", **{})
     interlock_id: typing.Optional[str] = pydantic.Field("", **{})
     device_id: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_id: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_type: typing.Optional[str] = pydantic.Field("", **{})
     device_name: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
     device_msg: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
@@ -1291,8 +1297,11 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     interlock_name: typing.Optional[str] = pydantic.Field("", **{})
     interlock_id: typing.Optional[str] = pydantic.Field("", **{})
     device_id: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_id: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_type: typing.Optional[str] = pydantic.Field("", **{})
     device_name: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
     device_msg: typing.Optional[str] = pydantic.Field("", **{})
     vehicle_number: typing.Optional[str] = pydantic.Field("", **{})
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
@@ -5064,6 +5073,7 @@ class TagsDataSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    mf_count: Mapped[typing.Optional[str]] = mapped_column("mf_count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5076,6 +5086,7 @@ class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     system: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+    mf_count: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -5096,6 +5107,7 @@ class TagsData(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     system: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+    mf_count: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

@@ -797,6 +797,14 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     stats_resp['DRY_OUT_IN_DAYS'] = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
     stats_resp.replace({"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True)
     stats_resp.replace({"VALID_INDENT": {"H": "ON_HOLD_RELEASED", "Y": "VALID_INDENT", "N": "ON_HOLD"}}, inplace=True)
+    stats_resp['PROD_REQD_DT'] = stats_resp['PROD_REQD_DT'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['SEND_TO_JDE_TIME'] = stats_resp['SEND_TO_JDE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['DELIVERY_DATE'] = stats_resp['DELIVERY_DATE'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['INDENT_HOLD_RELEASE_TIME'] = stats_resp['INDENT_HOLD_RELEASE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['INDENT_EXECUTABLE_TIME'] = stats_resp['INDENT_EXECUTABLE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['PROD_ALLOT_TIME'] = stats_resp['PROD_ALLOT_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['LOADED_ON'] = stats_resp['LOADED_ON'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp = stats_resp.fillna("")
     return stats_resp.to_dict(orient='records')
 
 
@@ -995,3 +1003,66 @@ async def current_month_frequent_drout_terminals(data):
         query=dry_out_query
     )
     return dryout_resp
+
+async def get_atg_ack(dry_out_in_days='1'):
+    to_day = datetime.datetime.now().strftime("%Y-%m-%d")
+    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume  >  0 and Recptentrydate::DATE = '{to_day}'"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dryout_resp = await function(
+        query=query
+    )
+    atg_ack_df = pd.DataFrame(dryout_resp)
+
+    # query = f"""select distinct sap_id from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status = 'Open' and dry_out_in_days = '{dry_out_in_days}'"""
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    # alert_df = pd.DataFrame(resp)
+    #
+    # df = pd.merge(
+    #     atg_ack_df.drop_duplicates(subset="sap_ro_code"), alert_df,
+    #     left_on=["sap_ro_code"], right_on=["sap_id"], how="inner")
+    return len(atg_ack_df)
+
+async def update_dry_out_from_cris(records):
+    records = pd.DataFrame(records)
+    records["product_code"] = records["product_grp"].replace(product_code_mapping)
+    records = records.astype(str)
+
+    query = f"""select sap_id as rosapcode, product_code from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close' and dry_out_in_days in ('1','2')"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dryout_resp = await function(
+        query=query
+    )
+    dryout_resp = pd.DataFrame(dryout_resp)
+    dryout_resp = dryout_resp.astype(str)
+    dryout_resp = dryout_resp.drop_duplicates(subset=["rosapcode", "product_code"])
+
+    final_resp = pd.merge(
+        records, dryout_resp,
+        left_on=["rosapcode", "product_code"],
+        right_on=["rosapcode", "product_code"],
+        how='outer', indicator=True
+    )
+    right_df = final_resp[final_resp['_merge'] == 'right_only']
+    print(right_df)
+    for right in right_df.to_dict(orient='records'):
+        query = f"""update alerts set mark_as_false=false where alert_status != 'Close' and sap_id = '{right["rosapcode"]}' and product_code = '{right["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
+        await hpcl_ceg_model.Alerts.update_by_query(query)
+
+    for both in final_resp[final_resp['_merge'] == 'both'].to_dict(orient='records'):
+        query = f"""update alerts set mark_as_false=true where alert_status != 'Close' and sap_id = '{both["rosapcode"]}' and product_code = '{both["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
+        await hpcl_ceg_model.Alerts.update_by_query(query)

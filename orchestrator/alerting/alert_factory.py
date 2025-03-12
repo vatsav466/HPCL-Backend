@@ -115,6 +115,7 @@ class AlertFactory:
                                                         'vehicle_blocked_start_date': alert_data.get("vehicle_blocked_start_date", None),
                                                         'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
+                                                        'mark_as_false': alert_data.get('mark_as_false', False),
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
                                                         'raw_data': {}}).create()
 
@@ -228,7 +229,7 @@ class AlertFactory:
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
         """
-        print("alert_data close ---> ", alert_data)
+        # print("alert_data close ---> ", alert_data)
         try:
             # il_data = None
             # al_data = None
