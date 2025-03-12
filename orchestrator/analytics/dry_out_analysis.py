@@ -1049,10 +1049,12 @@ async def update_dry_out_from_cris(records):
         right_on=["rosapcode", "product_code"],
         how='outer', indicator=True
     )
-    left_df = final_resp[final_resp['_merge'] == 'left_only']
     right_df = final_resp[final_resp['_merge'] == 'right_only']
-    print(left_df)
     print(right_df)
     for right in right_df.to_dict(orient='records'):
         query = f"""update alerts set mark_as_false=false where alert_status != 'Close' and sap_id = '{right["rosapcode"]}' and product_code = '{right["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
+        await hpcl_ceg_model.Alerts.update_by_query(query)
+
+    for both in final_resp[final_resp['_merge'] == 'both'].to_dict(orient='records'):
+        query = f"""update alerts set mark_as_false=true where alert_status != 'Close' and sap_id = '{both["rosapcode"]}' and product_code = '{both["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
         await hpcl_ceg_model.Alerts.update_by_query(query)
