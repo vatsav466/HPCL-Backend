@@ -1036,10 +1036,9 @@ async def get_atg_ack(sap_id: str, product_code: str):
     )
     print("atg_resp: ", atg_resp)
     atg_resp = pd.DataFrame(atg_resp)
-    atg_resp = atg_resp.astype(str)
+    if 'item_name' in atg_resp.columns:
+        atg_resp['item_name'] = atg_resp['item_name'].astype(str)
     atg_resp.replace({"item_name": await cris_product_mapping()}, inplace=True)
-    print("atg_resp: ", atg_resp)
-    atg_resp = atg_resp[atg_resp['item_name'] == product_code]
     print("atg_resp: ", atg_resp)
 
     # query = f"""select distinct sap_id from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status = 'Open' and dry_out_in_days = '{dry_out_in_days}'"""
@@ -1058,6 +1057,8 @@ async def get_atg_ack(sap_id: str, product_code: str):
     #     left_on=["sap_ro_code"], right_on=["sap_id"], how="inner")
     if atg_resp.empty:
         return []
+    atg_resp = atg_resp[atg_resp['item_name'] == product_code]
+    print("atg_resp: ", atg_resp)
     return atg_resp.to_dict(orient='records')
 
 async def update_dry_out_from_cris(records):
@@ -1106,7 +1107,7 @@ async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
         if not alert_data.get("atg_ack", False):
             query = f"""update alerts set atg_ack=true, atg_ack_time='{atg_resp.get("recptentrydate").strftime("%Y-%m-%d %H:%M:%S")}' where id = {alert_id}"""
             print(f"update query for atg: {query}")
-            # await hpcl_ceg_model.Alerts.update_by_query(query)
+            await hpcl_ceg_model.Alerts.update_by_query(query)
 
 async def cris_product_mapping():
     product_mapping = {
