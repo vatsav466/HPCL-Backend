@@ -190,11 +190,12 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         # Fill null values for sap_id and location_name to prevent group_by issues
         res = res.with_columns(
             pl.col("sap_id").fill_null("Unknown"),
-            pl.col("name").fill_null("Unknown")
+            pl.col("name").fill_null("Unknown"),
+            pl.col("zone").fill_null("Unknown"),
         )
 
         # Aggregate count based on device_type, system, sap_id, and location_name
-        res = res.group_by(["device_type", "system", "sap_id", "name"], maintain_order=True).agg([
+        res = res.group_by(["zone",  "name", "sap_id", "system", "device_type"], maintain_order=True).agg([
             pl.col("count").sum().alias("total_count"),
             pl.col("mf_count").sum().alias("mf_count")
         ])
