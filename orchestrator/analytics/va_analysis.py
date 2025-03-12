@@ -161,6 +161,33 @@ async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
             return resp.get("count", 0)
     return 0
 
+async def get_lpg_alerts_count(bu: str, violation_type: str, sap_id: str):
+    va_mapping = va_alert_mapping.VA_Alert_Mapping
+    if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
+        va_mapping = va_mapping[bu][violation_type]
+        count=1
+        date=f"CURRENT_DATE - INTERVAL '{count} day'"
+        while True:
+            query = (f"""select * from alerts """
+                    f"where bu = '{bu}' and "
+                    f"alert_section = 'LPG' and "
+                    f"violation_type = '{violation_type}' and "
+                    f"sap_id = '{sap_id}' and "
+                    f"created_at::DATE='{date}'")
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+            resp = await function(query=query)
+            print("Query: ", query)
+            print(resp)
+            if not resp:
+                return count-1
+            if count>3:
+                return count-1
+            count+=1
+            date=f"CURRENT_DATE - INTERVAL '{count} days'"
+    return 0
+
 async def get_va_levels(bu: str, violation_type: str, sap_id: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
     if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
@@ -180,4 +207,23 @@ async def get_va_levels(bu: str, violation_type: str, sap_id: str):
                 if va_alert_count > int(value['value']):
                     return "level - 3"
             previous_count = value['value']
+    return ""
+
+async def get_lpg_levels(bu: str, violation_type: str, sap_id: str):
+    va_mapping = va_alert_mapping.VA_Alert_Mapping
+    if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
+        va_mapping = va_mapping[bu][violation_type]
+        print("va_mapping: ", va_mapping)
+        lpg_alert_count = await get_lpg_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
+        print("va_alert_count: ", lpg_alert_count)
+        previous_count = 0
+        for key, value in va_mapping['escalations'].items():
+            if lpg_alert_count== int(value['value']):
+                return "level - 1"
+            if lpg_alert_count == int(value['value']):
+                return "level - 2"
+            if lpg_alert_count == int(value['value']):
+                return "level - 3"
+            if lpg_alert_count >= int(value['value']):
+                return "level - 4"        
     return ""

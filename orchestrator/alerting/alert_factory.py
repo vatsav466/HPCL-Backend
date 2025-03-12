@@ -129,6 +129,10 @@ class AlertFactory:
                     await redis_ins.setex(alert_data['alert_id'], 15*60, alert_resp['id'])
                 else:
                     await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
+            elif alert_data.get("alert_section",'') in ["LPG"] and alert_data.get("interlock_name","") in ["Valve Leak Rejection","Check Scale Rejection","O-Ring Leak Rejection"]:
+                alert_level = await va_analysis.get_lpg_levels(
+                    bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
+                )
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,

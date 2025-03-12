@@ -396,9 +396,9 @@ lpg_interlock_mapping = [
     {"sop_id": "SOP029", "interlock_name": "Healthiness of Pump Operations"},
     {"sop_id": "SOP033", "interlock_name": "Healthiness of Fire Engine"},
     {"sop_id": "SOP034", "interlock_name": "Healthiness of Deluge Valve"},
-    {"sop_id": "SOP077", "interlock_name": "cs_rejections", "workflow_name": "UC_LPG_SOP07_77"},
-    {"sop_id": "SOP078", "interlock_name": "gd_rejections", "workflow_name": "UC_LPG_SOP08_78"},
-    {"sop_id": "SOP079", "interlock_name": "pt_rejections", "workflow_name": "UC_LPG_SOP09_79"}]
+    {"sop_id": "SOP077", "interlock_name": "Check Scale Rejection", "workflow_name": "UC_LPG_SOP07_77"},
+    {"sop_id": "SOP078", "interlock_name": "Valve Leak Rejection", "workflow_name": "UC_LPG_SOP08_78"},
+    {"sop_id": "SOP079", "interlock_name": "O-Ring Leak Rejection", "workflow_name": "UC_LPG_SOP09_79"}]
 
 rdi_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "Product Quality Density"},
                          {"sop_id": "SOP002", "interlock_name": "Product Quality Water"},
