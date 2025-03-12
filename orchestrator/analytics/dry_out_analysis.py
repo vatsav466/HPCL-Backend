@@ -8,6 +8,7 @@ import charts_actions
 import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
+from orchestrator.dbconnector.widget_actions.lpg_plant_queries import today
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
 req_keys = {
@@ -1108,6 +1109,16 @@ async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
             query = f"""update alerts set atg_ack=true, atg_ack_time='{atg_resp.get("recptentrydate").strftime("%Y-%m-%d %H:%M:%S")}' where id = {alert_id}"""
             print(f"update query for atg: {query}")
             await hpcl_ceg_model.Alerts.update_by_query(query)
+
+async def get_atg_ack_count(dry_out_in_days='1'):
+    to_day = urdhva_base.utilities.get_present_time().strfime("%Y-%m-%d")
+    query = (f"select count(distinct sap_id) from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' "
+             f"and dry_out_in_days='{dry_out_in_days}' and atg_ack=true atg_ack_time::DATE = '{to_day}'")
+    data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
+    print("Data: ", data)
+    if data:
+        return data[0].get("count", 0)
+    return 0
 
 async def cris_product_mapping():
     product_mapping = {
