@@ -143,7 +143,7 @@ class SendNotification:
         message_type = self.params.get("messagetype")
         roles_list = ""
         if self.alert_data.get("alert_section","") in ["VTS"]:
-            roles_list = await self._role_configuration_rolemailto()
+            roles_list = (await self._role_configuration_rolemailto() or "")
         elif self.alert_data.get("alert_section","") in ["VA","LPG"]:
             roles_list = await self._get_va_roles_list()
         else:
