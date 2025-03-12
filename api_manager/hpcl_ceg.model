@@ -628,6 +628,10 @@ Model Alerts {
     origin_altid optional str
     alert_message optional str
     external_timestamp optional datetime
+    atg_ack optional bool
+    emlock_ack optional bool
+    vts_return optional bool
+    atg_ack_time optional datetime
 
     // VTS
     transporter_name optional str

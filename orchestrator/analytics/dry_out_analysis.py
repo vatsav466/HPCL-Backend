@@ -1004,18 +1004,22 @@ async def current_month_frequent_drout_terminals(data):
     )
     return dryout_resp
 
-async def get_atg_ack(dry_out_in_days='1'):
+async def get_atg_ack(sap_id: str, product_code: str):
     to_day = datetime.datetime.now().strftime("%Y-%m-%d")
-    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume  >  0 and Recptentrydate::DATE = '{to_day}'"""
+    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms """ \
+            f"""where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate """ \
+            f"""from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume > 0 """ \
+            f"""sap_ro_code = '{sap_id}' and "Product_no" = '{product_code}' """ \
+            f"""and Recptentrydate::DATE = '{to_day}'"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "cris", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-    dryout_resp = await function(
+    atg_resp = await function(
         query=query
     )
-    atg_ack_df = pd.DataFrame(dryout_resp)
+    print("atg_resp: ", atg_resp)
 
     # query = f"""select distinct sap_id from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status = 'Open' and dry_out_in_days = '{dry_out_in_days}'"""
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
@@ -1031,7 +1035,7 @@ async def get_atg_ack(dry_out_in_days='1'):
     # df = pd.merge(
     #     atg_ack_df.drop_duplicates(subset="sap_ro_code"), alert_df,
     #     left_on=["sap_ro_code"], right_on=["sap_id"], how="inner")
-    return len(atg_ack_df)
+    return len(atg_resp)
 
 async def update_dry_out_from_cris(records):
     records = pd.DataFrame(records)
@@ -1066,3 +1070,17 @@ async def update_dry_out_from_cris(records):
     for both in final_resp[final_resp['_merge'] == 'both'].to_dict(orient='records'):
         query = f"""update alerts set mark_as_false=true where alert_status != 'Close' and sap_id = '{both["rosapcode"]}' and product_code = '{both["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
         await hpcl_ceg_model.Alerts.update_by_query(query)
+
+async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
+    alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
+
+    atg_resp = await get_atg_ack(sap_id=sap_id, product_code=product_code)
+    if atg_resp:
+        atg_resp = atg_resp[0]
+        if not alert_data.get("atg_ack", False):
+            query = f"""update alerts set atg_ack=true, atg_ack_time='{atg_resp.get("Recptentrydate").strftime("%Y-%m-%d %H:%M:%S")}' where id = {alert_id}"""
+            print(query)
+            # await hpcl_ceg_model.Alerts.update_by_query(query)
+
