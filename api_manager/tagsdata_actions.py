@@ -57,7 +57,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 # # getting the equipment names according to the device type
                 # equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)[
                 #     "Equipments(sensor_name)"].to_list()
-                equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)["Equipments(sensor_type)"].to_list()
+                equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)["Equipments(sensor_name)"].to_list()
                 system_counts = defaultdict(int)
                 system_total_count = defaultdict(int)  # for total count
                 system_m_f_count = defaultdict(int)  # for maintainance_fault count
@@ -170,21 +170,33 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
 async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
     resp = await TagsData.get_all(resp_type='plain')
     res = resp.get("data", [])
+
     if res:
         res = pl.DataFrame(res)
-        # Split equipment_name and extract name
+
+        # Split equipment_name safely
         res = res.with_columns(
             pl.col("equipment_name").str.split('@').alias("split_name")
         ).with_columns(
-            pl.col("split_name").list.get(0).alias("equipment_name")
+            pl.col("split_name").list.get(0).fill_null("").alias("equipment_name")
         ).drop("split_name")  # Drop intermediate column
-        # Convert count to integer
-        res = res.with_columns(pl.col("count").cast(pl.Int64, strict=False))
-        # Aggregate count based on device_type and system, keeping sap_id and location_name
-        res = res.group_by(["device_type", "system"]).agg([
+
+        # Convert count and mf_count to integer safely
+        res = res.with_columns(
+            pl.col("count").cast(pl.Int64, strict=False).fill_null(0),
+            pl.col("mf_count").cast(pl.Int64, strict=False).fill_null(0)
+        )
+
+        # Fill null values for sap_id and location_name to prevent group_by issues
+        res = res.with_columns(
+            pl.col("sap_id").fill_null("Unknown"),
+            pl.col("location_name").fill_null("Unknown")
+        )
+
+        # Aggregate count based on device_type, system, sap_id, and location_name
+        res = res.group_by(["device_type", "system", "sap_id", "location_name"], maintain_order=True).agg([
             pl.col("count").sum().alias("total_count"),
-            pl.col("mf_count").sum().alias("mf_count"),
-            pl.col("sap_id").first(),  # Keep first sap_id (change to list() if needed)
-            pl.col("name").first()  # Keep first location_name
+            pl.col("mf_count").sum().alias("mf_count")
         ])
+
         return {"status": True, "message": "Success", "data": res.to_dicts()}
