@@ -1006,7 +1006,7 @@ async def current_month_frequent_drout_terminals(data):
 
 async def get_atg_ack(sap_id: str, product_code: str):
     to_day = datetime.datetime.now().strftime("%Y-%m-%d")
-    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms """ \ 
+    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms """ \
             f"""where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate """ \
             f"""from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume > 0 """ \
             f"""sap_ro_code = '{sap_id}' and "Product_no" = '{product_code}' """ \
@@ -1076,7 +1076,7 @@ async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
 
-    atg_resp = await get_atg_ack(sap_id=sap_id, product_code=product_code):
+    atg_resp = await get_atg_ack(sap_id=sap_id, product_code=product_code)
     if atg_resp:
         atg_resp = atg_resp[0]
         if not alert_data.get("atg_ack", False):
