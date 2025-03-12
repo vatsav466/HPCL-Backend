@@ -1116,7 +1116,8 @@ async def get_atg_ack_count(dry_out_in_days='1'):
              f"and dry_out_in_days='{dry_out_in_days}' and atg_ack=true and atg_ack_time::DATE = '{to_day}'")
     data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
     print("Data: ", data)
-    if data:
+    if data.get("data", []):
+        data = data.get("data", [])
         return data[0].get("count", 0)
     return 0
 
