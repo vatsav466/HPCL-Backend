@@ -5041,7 +5041,7 @@ class GlobalAnalytics:
             
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND location_name IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
@@ -5105,16 +5105,16 @@ class GlobalAnalytics:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["interlock_name", "created_date", "alert_category", "alert_type"]
+                    group_cols = ["sap_id", "zone", "location_name", "interlock_name", "created_date", "alert_category", "alert_type"]
                     
-                    if zone_filter:
-                        group_cols.append("zone")
+                    # if zone_filter:
+                    #     group_cols.append("zone")
                     
-                    if plant_filter:
-                        group_cols.append("location_name")
+                    # if plant_filter:
+                    #     group_cols.append("location_name")
                     
-                    if zone_filter or plant_filter:
-                        group_cols.extend(["sap_id"])
+                    # if zone_filter or plant_filter:
+                    #     group_cols.extend(["sap_id"])
                         
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
@@ -5171,16 +5171,16 @@ class GlobalAnalytics:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["interlock_name", "month_year", "alert_category", "alert_type"]
+                    group_cols = ["sap_id", "zone", "location_name", "interlock_name", "month_year", "alert_category", "alert_type"]
                     
-                    if zone_filter:
-                        group_cols.append("zone")
+                    # if zone_filter:
+                    #     group_cols.append("zone")
                     
-                    if plant_filter:
-                        group_cols.append("location_name")
+                    # if plant_filter:
+                    #     group_cols.append("location_name")
                     
-                    if zone_filter or plant_filter:
-                        group_cols.extend(["sap_id"])
+                    # if zone_filter or plant_filter:
+                    #     group_cols.extend(["sap_id"])
                         
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
