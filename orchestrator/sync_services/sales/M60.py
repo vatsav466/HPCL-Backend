@@ -26,7 +26,7 @@ def get_db_connection(params):
     """
     server = params['host']
     database = params['database']
-    username = params['username']
+    username = params['user']
     password = params["password"]
     port = params["port"]
     if "connection_type" in params:
@@ -441,7 +441,7 @@ if __name__ == "__main__":
             "user":creds['user'],
             "password":creds['password'],
             "port":creds['port'],
-            "table_name":"MOM_DAY_LEVEL_DATA",
+            "table_name":"M60_LEVEL_METADATA",
             "connection_type":"mssql"
                 
             }
