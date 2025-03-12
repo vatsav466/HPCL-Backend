@@ -10,7 +10,7 @@ import utilities.connection_mapping as connection_mapping
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.device_data_mapping import device_mapping
-from utilities.analog_data_mapping import Maintenanace, Fault
+from utilities.analog_data_mapping import Maintenance, Fault
 
 router = fastapi.APIRouter(prefix='/tagsdata')
 # Create a dictionary for quick lookup
@@ -29,6 +29,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         df = await function(query=lpg_query)
         df = pl.DataFrame(df)
         # BASEPATH = os.path.join(os.path.dirname(utilities.helpers.__file__)
+
         base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
         mapping_base_path = '/opt/ceg/algo/utilities/'
         mapping_df = pl.read_csv(os.path.join(mapping_base_path, 'DashboardAssetMapping.csv'))
@@ -52,13 +53,15 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 device_type = device.get('device_type', '')
                 equipment_name = device.get('device_name', '')
                 sensors = device.get('sensors', [])
-                # getting the equipment names according to the device type
-                equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)[
-                    "Equipments(sensor_name)"].to_list()
+                #
+                # # getting the equipment names according to the device type
+                # equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)[
+                #     "Equipments(sensor_name)"].to_list()
+                equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)["Equipments(sensor_type)"].to_list()
                 system_counts = defaultdict(int)
                 system_total_count = defaultdict(int)  # for total count
                 system_m_f_count = defaultdict(int)  # for maintainance_fault count
-
+                
                 for sensor in sensors:
                     sensor_name = sensor.get('sensor_name', '').strip()
                     print("sensor_name: ", sensor_name)
@@ -74,9 +77,8 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                             print("sensor_type: ", sensor_type)
                             # exit()
                             if system:
-                                # system_counts[system] += 1
                                 system_total_count[system] += 1
-                                for maintanence in Maintenanace:
+                                for maintanence in Maintenance:
                                     print("maintanence: ", maintanence)
                                     if maintanence.get('equipment_name') and maintanence['equipment_name'] == sensor_type:
                                         interlockName = maintanence['interlock_name']

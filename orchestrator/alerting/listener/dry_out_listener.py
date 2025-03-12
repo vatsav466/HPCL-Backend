@@ -10,6 +10,7 @@ import orchestrator.alerting.alert_helper as alert_helper
 import utilities.connection_mapping as connection_mapping
 from charts_actions import charts_connection_vault_routing
 from orchestrator.alerting.alert_manager import create_alert
+import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from orchestrator.actions.indent_dry_out import IndentDryOut as indent_dry_out
 
@@ -145,6 +146,8 @@ class DryoutCollector:
                      f"status='Close',end_time='{datetime.datetime.now(tz=datetime.timezone.utc)}' "
                      f"where {' AND '.join(conditions)}")
             await hpcl_ceg_model.DryOutHistory.update_by_query(query)
+
+        await dry_out_analysis.update_dry_out_from_cris(records)
 
 
 if __name__ == "__main__":

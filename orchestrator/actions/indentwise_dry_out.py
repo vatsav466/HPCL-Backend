@@ -133,6 +133,7 @@ class IndentDryOut:
         self.params['alert_type'] = 'RO'
         self.params['bu'] = 'RO'
         self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
+        self.params['mark_as_false'] = True
         camunda_host = connection_mapping.camunda_listener_mapping.get("camunda_dryout_01")
         camunda_url = f"http://{camunda_host['host']}:{camunda_host['port']}"
         if self.params['camunda_host']:
@@ -1225,7 +1226,8 @@ class IndentDryOut:
             )
             # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
             return await self.send_alert_action(is_delivered=True)
-        return await self.send_alert_action(is_delivered=False)
+        return await self.is_product_delivered_ims(params=params)
+        # return await self.send_alert_action(is_delivered=False)
 
     async def _is_product_delivered(self, params: dict):
         # Not In Use

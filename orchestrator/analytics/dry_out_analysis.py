@@ -1024,3 +1024,35 @@ async def get_atg_ack(dry_out_in_days='1'):
         atg_ack_df.drop_duplicates(subset="sap_ro_code"), alert_df,
         left_on=["sap_ro_code"], right_on=["sap_id"], how="inner")
     return len(df)
+
+async def update_dry_out_from_cris(records):
+    records = pd.DataFrame(records)
+    records["product_code"] = records["product_grp"].replace(product_code_mapping)
+    records = records.astype(str)
+
+    query = f"""select sap_id as rosapcode, product_code from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close' and dry_out_in_days in ('1','2')"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dryout_resp = await function(
+        query=query
+    )
+    dryout_resp = pd.DataFrame(dryout_resp)
+    dryout_resp = dryout_resp.astype(str)
+    dryout_resp = dryout_resp.drop_duplicates(subset=["rosapcode", "product_code"])
+
+    final_resp = pd.merge(
+        records, dryout_resp,
+        left_on=["rosapcode", "product_code"],
+        right_on=["rosapcode", "product_code"],
+        how='outer', indicator=True
+    )
+    left_df = final_resp[final_resp['_merge'] == 'left_only']
+    right_df = final_resp[final_resp['_merge'] == 'right_only']
+    print(left_df)
+    print(right_df)
+    for right in right_df.to_dict(orient='records'):
+        query = f"""update alerts set mark_as_false=false where alert_status != 'Close' and sap_id = '{right["rosapcode"]}' and product_code = '{right["product_code"]}' and interlock_name = 'Dry Out Each Indent Wise MainFlow'"""
+        await hpcl_ceg_model.Alerts.update_by_query(query)
