@@ -1006,11 +1006,26 @@ async def current_month_frequent_drout_terminals(data):
 
 async def get_atg_ack(sap_id: str, product_code: str):
     to_day = datetime.datetime.now().strftime("%Y-%m-%d")
-    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms """ \
-            f"""where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate """ \
+    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate """ \
             f"""from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume > 0 """ \
-            f"""sap_ro_code = '{sap_id}' and "Product_no" = '{product_code}' """ \
+            f"""and sap_ro_code = '{sap_id}' and "Product_no" = '{product_code}' """ \
             f"""and Recptentrydate::DATE = '{to_day}'"""
+    query = f"""
+        SELECT trd.Site_id, 
+               ms.erp_code AS sap_ro_code, 
+               trd.Tank_no, 
+               trd.Product_no, 
+               trd.Product_no as item_name
+               trd.Recptentrydate
+        FROM "HPCL_HOS".tr_delivery_data trd
+        JOIN "HPCL_HOS".ms_site ms 
+            ON trd.site_id = ms.site_id
+        WHERE trd.enable = true 
+            AND trd.net_volume > 0
+            AND ms.erp_code = '{sap_id}'
+--             AND trd.Product_no = '{product_code}'
+            AND trd.Recptentrydate::DATE = '{to_day}'
+    """
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "cris", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1020,6 +1035,9 @@ async def get_atg_ack(sap_id: str, product_code: str):
         query=query
     )
     print("atg_resp: ", atg_resp)
+    atg_resp = pd.DataFrame(atg_resp)
+    atg_resp.replace({"item_name": await cris_product_mapping()}, inplace=True)
+    atg_resp = atg_resp[atg_resp['item_name'] == product_code]
 
     # query = f"""select distinct sap_id from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status = 'Open' and dry_out_in_days = '{dry_out_in_days}'"""
     # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
@@ -1035,7 +1053,9 @@ async def get_atg_ack(sap_id: str, product_code: str):
     # df = pd.merge(
     #     atg_ack_df.drop_duplicates(subset="sap_ro_code"), alert_df,
     #     left_on=["sap_ro_code"], right_on=["sap_id"], how="inner")
-    return len(atg_resp)
+    if atg_resp.empty():
+        return []
+    return atg_resp.to_dict(orient='records')
 
 async def update_dry_out_from_cris(records):
     records = pd.DataFrame(records)
@@ -1080,7 +1100,25 @@ async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
     if atg_resp:
         atg_resp = atg_resp[0]
         if not alert_data.get("atg_ack", False):
-            query = f"""update alerts set atg_ack=true, atg_ack_time='{atg_resp.get("Recptentrydate").strftime("%Y-%m-%d %H:%M:%S")}' where id = {alert_id}"""
+            query = f"""update alerts set atg_ack=true, atg_ack_time='{atg_resp.get("recptentrydate").strftime("%Y-%m-%d %H:%M:%S")}' where id = {alert_id}"""
             print(query)
             # await hpcl_ceg_model.Alerts.update_by_query(query)
 
+async def cris_product_mapping():
+    product_mapping = {
+        "3672000": "POWER 95",
+        "2821000": "MS",
+        "3925000": "POWER 95",
+        "2812000": "HSD",
+        "3373000": "POWER 100",
+        "1683000": "HSD",
+        "4211000": "MS",
+        "1322100": "POWER 95",
+        # "2822000": "E20",
+        "2822000": "MS",
+        "1683100": "TURBO",
+        "1322000": "MS",
+        "2823000": "MS",
+        "2682000": "POWER 99"
+    }
+    return product_mapping
