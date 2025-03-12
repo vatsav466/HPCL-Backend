@@ -797,6 +797,14 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     stats_resp['DRY_OUT_IN_DAYS'] = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
     stats_resp.replace({"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True)
     stats_resp.replace({"VALID_INDENT": {"H": "ON_HOLD_RELEASED", "Y": "VALID_INDENT", "N": "ON_HOLD"}}, inplace=True)
+    stats_resp['PROD_REQD_DT'] = stats_resp['PROD_REQD_DT'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['SEND_TO_JDE_TIME'] = stats_resp['SEND_TO_JDE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['DELIVERY_DATE'] = stats_resp['DELIVERY_DATE'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['INDENT_HOLD_RELEASE_TIME'] = stats_resp['INDENT_HOLD_RELEASE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['INDENT_EXECUTABLE_TIME'] = stats_resp['INDENT_EXECUTABLE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['PROD_ALLOT_TIME'] = stats_resp['PROD_ALLOT_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp['LOADED_ON'] = stats_resp['LOADED_ON'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    stats_resp = stats_resp.fillna("")
     return stats_resp.to_dict(orient='records')
 
 
