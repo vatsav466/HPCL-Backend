@@ -1111,9 +1111,9 @@ async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
             await hpcl_ceg_model.Alerts.update_by_query(query)
 
 async def get_atg_ack_count(dry_out_in_days='1'):
-    to_day = urdhva_base.utilities.get_present_time().strfime("%Y-%m-%d")
+    to_day = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
     query = (f"select count(distinct sap_id) from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' "
-             f"and dry_out_in_days='{dry_out_in_days}' and atg_ack=true atg_ack_time::DATE = '{to_day}'")
+             f"and dry_out_in_days='{dry_out_in_days}' and atg_ack=true and atg_ack_time::DATE = '{to_day}'")
     data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
     print("Data: ", data)
     if data:
