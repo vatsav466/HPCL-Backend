@@ -567,8 +567,11 @@ Model Alerts {
     interlock_name optional str
     interlock_id optional str
     device_id optional str
+    equipment_id optional str
     device_type optional str
+    equipment_type optional str
     device_name optional str
+    equipment_name optional str
     device_msg optional str                 // Message received from the device
     vehicle_number optional str
     violation_type optional str
