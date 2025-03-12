@@ -28,9 +28,9 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         lpg_query = "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
         df = await function(query=lpg_query)
         df = pl.DataFrame(df)
-        
-        base_path = "/opt/ceg/algo/dnc_backend_v2/things_board/device_data"  # Update with actual path
-        mapping_base_path = '/opt/ceg/algo/dnc_backend_v2/utilities/'
+        # BASEPATH = os.path.join(os.path.dirname(utilities.helpers.__file__)
+        base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
+        mapping_base_path = '/opt/ceg/algo/utilities/'
         mapping_df = pl.read_csv(os.path.join(mapping_base_path, 'DashboardAssetMapping.csv'))
         mapping_df = mapping_df.with_columns(mapping_df["Device Type"].fill_null(strategy="forward"))
 
@@ -54,22 +54,31 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 sensors = device.get('sensors', [])
                 # getting the equipment names according to the device type
                 equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)[
-                    "Equipments(sensor_type)"].to_list()
+                    "Equipments(sensor_name)"].to_list()
                 system_counts = defaultdict(int)
                 system_total_count = defaultdict(int)  # for total count
                 system_m_f_count = defaultdict(int)  # for maintainance_fault count
 
                 for sensor in sensors:
                     sensor_name = sensor.get('sensor_name', '').strip()
+                    print("sensor_name: ", sensor_name)
                     # looping every equipment to check whether it is present in sensor name
                     for equipment in equipment_names:
                         if equipment and equipment.strip().lower() in sensor_name.lower():
-                            system = device_mapping_dict.get(device_type, {}).get(equipment)
+                            print("matched equipment name: ", equipment)
+                            sensor_type = mapping_df.filter(
+                                (pl.col('Device Type') == device_type) & (
+                                        pl.col('Equipments(sensor_name)') == equipment)
+                            )["Equipments(sensor_type)"].item()
+                            system = device_mapping_dict.get(device_type, {}).get(sensor_type)
+                            print("sensor_type: ", sensor_type)
+                            # exit()
                             if system:
                                 # system_counts[system] += 1
                                 system_total_count[system] += 1
                                 for maintanence in Maintenanace:
-                                    if maintanence.get('equipment_name') and maintanence['equipment_name'] == equipment:
+                                    print("maintanence: ", maintanence)
+                                    if maintanence.get('equipment_name') and maintanence['equipment_name'] == sensor_type:
                                         interlockName = maintanence['interlock_name']
                                         print("interlockName: ", interlockName)
                                         params = urdhva_base.queryparams.QueryParams(limit=10000,
@@ -78,7 +87,8 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                                         print("total: ", total)
                                         system_m_f_count[system] += total
                                 for fault in Fault:
-                                    if fault.get('equipment_name') and fault['equipment_name'] == equipment:
+                                    print("fault: ", fault)
+                                    if fault.get('equipment_name') and fault['equipment_name'] == sensor_type:
                                         interlockName = fault['interlock_name']
                                         print("interlockName: ", interlockName)
                                         params = urdhva_base.queryparams.QueryParams(limit=10000,
