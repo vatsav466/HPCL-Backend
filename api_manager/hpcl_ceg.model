@@ -1759,6 +1759,7 @@ Model HostManualFanPrinted {
     manual_fan_count optional unique_field int
     auto_fan_count optional unique_field int
     total_count optional unique_field int
+    date optional unique_field datetime
     sap_id optional unique_field str
     location_name optional str
     zone optional str

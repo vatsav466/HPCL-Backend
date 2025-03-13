@@ -538,6 +538,9 @@ class DataMonitor:
                         continue
 
                     if isinstance(result, pl.DataFrame) and result.shape[0] > 0:
+                        result = result.with_columns(pl.lit(sap_id).alias("sap_id"))
+                        if table_name == "HOST_MANUALFANPRINTED":
+                            result = result.with_columns(pl.lit(pl.datetime.datetime.now()).alias("date"))
                         all_data[table_name] = result.to_dicts()
                     else:
                         all_data[table_name] = []

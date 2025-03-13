@@ -4907,11 +4907,12 @@ class HostManualFanPrintedSchema(UrdhvaPostgresBase):
     manual_fan_count: Mapped[typing.Optional[int]] = mapped_column("manual_fan_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     auto_fan_count: Mapped[typing.Optional[int]] = mapped_column("auto_fan_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     total_count: Mapped[typing.Optional[int]] = mapped_column("total_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, sap_id, name="host_manual_fan_printed_manua_autof_total_sapid"),)
+    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, date, sap_id, name="host_manual_fan_printed_manua_autof_total_date_sapid"),)
 
 
 class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4920,6 +4921,7 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     manual_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     auto_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     total_count: typing.Optional[int] = pydantic.Field(0, **{})
+    date: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -4929,7 +4931,7 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'sap_id']
+        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'date', 'sap_id']
 
 
 class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
@@ -4938,6 +4940,7 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
     manual_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     auto_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     total_count: typing.Optional[int] = pydantic.Field(0, **{})
+    date: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -4947,7 +4950,7 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'sap_id']
+        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'date', 'sap_id']
 
 
 class HostManualFanPrintedGetResp(pydantic.BaseModel):
