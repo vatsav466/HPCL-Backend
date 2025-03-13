@@ -4466,7 +4466,7 @@ class HostSickTtsSchema(UrdhvaPostgresBase):
     bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, compartment_number, product_name, sick_date, sap_id, bcu_number, bay_number, name="host_sick_tts_load_number_truck_number_created_date_customer_name_compartment_number_product_name_sick_date_sap_id_bcu_number_bay_number"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, compartment_number, product_name, sick_date, sap_id, bcu_number, bay_number, name="host_sick_tts_loadn_truck_creat_custo_compa_produ_sickd_sapid_"),)
 
 
 class HostSickTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4554,7 +4554,7 @@ class HostCancelledTtsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, product_name, cancelled_date, sap_id, name="host_cancelled_tts_load_number_truck_number_created_date_customer_name_product_name_cancelled_date_sap_id"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, created_date, customer_name, product_name, cancelled_date, sap_id, name="host_cancelled_tts_loadn_truck_creat_custo_produ_cance_sapid"),)
 
 
 class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4624,7 +4624,7 @@ class HostKFactorChangesSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, preset_number, timestamp, initial_setting, final_setting, sap_id, name="host_k_factor_changes_bcu_number_preset_number_timestamp_initial_setting_final_setting_sap_id"),)
+    __table_args__ = (UniqueConstraint(bcu_number, preset_number, timestamp, initial_setting, final_setting, sap_id, name="host_k_factor_changes_bcunu_prese_times_initi_final_sapid"),)
 
 
 class HostKFactorChangesCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4696,7 +4696,7 @@ class HostLocalLoadedTtsSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(sr_number, bcu_number, recipe_name, truck_number, card_number, start_totalizer, end_totalizer, loaded_qty, transaction_end_time, sap_id, name="host_local_loaded_tts_sr_number_bcu_number_recipe_name_truck_number_card_number_start_totalizer_end_totalizer_loaded_qty_transaction_end_time_sap_id"),)
+    __table_args__ = (UniqueConstraint(sr_number, bcu_number, recipe_name, truck_number, card_number, start_totalizer, end_totalizer, loaded_qty, transaction_end_time, sap_id, name="host_local_loaded_tts_srnum_bcunu_recip_truck_cardn_start_endt"),)
 
 
 class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4776,7 +4776,7 @@ class HostBayReAssignmentSchema(UrdhvaPostgresBase):
     assigned_bay: Mapped[typing.Optional[str]] = mapped_column("assigned_bay", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     reassign_loaded_qty: Mapped[typing.Optional[str]] = mapped_column("reassign_loaded_qty", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(created_date, load_number, truck_number, customer_name, compartment_number, product_name, required_qty, loaded_qty, bay_reassignment_time, sap_id, assigned_bay, reassign_loaded_qty, name="host_bay_re_assignment_created_date_load_number_truck_number_customer_name_compartment_number_product_name_required_qty_loaded_qty_bay_reassignment_time_sap_id_assigned_bay_reassign_loaded_qty"),)
+    __table_args__ = (UniqueConstraint(created_date, load_number, truck_number, customer_name, compartment_number, product_name, required_qty, loaded_qty, bay_reassignment_time, sap_id, assigned_bay, reassign_loaded_qty, name="host_bay_re_assignment_creat_loadn_truck_custo_compa_produ_req"),)
 
 
 class HostBayReAssignmentCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4911,7 +4911,7 @@ class HostManualFanPrintedSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, sap_id, name="host_manual_fan_printed_manual_fan_count_auto_fan_count_total_count_sap_id"),)
+    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, sap_id, name="host_manual_fan_printed_manua_autof_total_sapid"),)
 
 
 class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4970,7 +4970,7 @@ class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, name="host_unauthorised_flow_bcu_number_meter_number_timestamp_start_totalizer_end_totalizer_net_totalizer_sap_id"),)
+    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, name="host_unauthorised_flow_bcunu_meter_times_start_endto_netto_sap"),)
 
 
 class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5039,7 +5039,7 @@ class HostOverLoadedTtsSchema(UrdhvaPostgresBase):
     bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, product_name, required_qty, loaded_qty, sap_id, created_date, bcu_number, bay_number, name="host_over_loaded_tts_load_number_truck_number_compartment_number_product_name_required_qty_loaded_qty_sap_id_created_date_bcu_number_bay_number"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, compartment_number, product_name, required_qty, loaded_qty, sap_id, created_date, bcu_number, bay_number, name="host_over_loaded_tts_loadn_truck_compa_produ_requi_loade_sapid"),)
 
 
 class HostOverLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5112,7 +5112,7 @@ class HostMFMFactorSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(mfm_number, bcu_number, stock_code, current_k_factor, last_k_factor, last_k_factor_change_date, current_meter_factor, last_meter_factor, last_meter_factor_change_date, sap_id, name="host_mfm_factor_mfm_number_bcu_number_stock_code_current_k_factor_last_k_factor_last_k_factor_change_date_current_meter_factor_last_meter_factor_last_meter_factor_change_date_sap_id"),)
+    __table_args__ = (UniqueConstraint(mfm_number, bcu_number, stock_code, current_k_factor, last_k_factor, last_k_factor_change_date, current_meter_factor, last_meter_factor, last_meter_factor_change_date, sap_id, name="host_mfm_factor_mfmnu_bcunu_stock_curre_lastk_lastk_curre_last"),)
 
 
 class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
