@@ -123,9 +123,10 @@ def get_date_filters(filters, resp_type="months"):
             fiscal_year_pre = condition['value']
         elif condition["key"] == "month_name" or condition["key"] == '"month_name"':
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
-            #filters.append({"key": "month_name", "cond": "one-off", "value": condition["value"].split(",")})   
-    filters = [condition for condition in filters if condition['key'].strip('"') not in ['YTM', 'DATE', 'month_name',
-                                                                                    'ind_sbu_cumulative','ind_analytics','table_graph','fiscal_year','company_name', 'table','table_month','inc','OMC', 'A', 'H', 'C']]
+            #filters.append({"key": "month_name", "cond": "one-off", "value": condition["value"].split(",")})
+    discard_filters = ['YTM', 'DATE', 'month_name', 'ind_sbu_cumulative', 'ind_analytics','table_graph', 'fiscal_year',
+                       'company_name', 'table', 'table_month', 'inc', 'OMC', 'A', 'H', 'C']
+    filters = [condition for condition in filters if condition['key'].strip('"') not in discard_filters]
     if not months:
         months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%b').tolist()
     return filters, fiscal_year_pre, fiscal_year_last, [key.upper() for key in months]
@@ -587,7 +588,6 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     return {'message':'Industry_Performance','status':True,'data':data}
 
     return {'message':'Industry_Performance','status':True,'data':{key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
-    
 
 
 def generate_stacked_data(df, resp_format='', month_column=''):
@@ -982,12 +982,24 @@ async def generate_omc_compare_data(filters, drill_state):
     :param drill_state:
     :return:
     """
-    filters, fiscal_year_pre, fiscal_year_last, months = get_date_filters(filters)
+    months_list = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']
+    months = []
+    ind_sbu_cumulative = [x['value'] for x in filters if 'ind_sbu_cumulative' in x['key'].lower()]
+    # If ind_sbu_cumulative is true doing Cumulative upto given month else only for the given month
+    if True in ind_sbu_cumulative or 'true' in ind_sbu_cumulative:
+        req_month = [x['value'] for x in filters if x['key'] == '"month_name"'][0]
+        req_index = months_list.index(req_month.strip('"'))
+        months = months_list[:req_index + 1]
+    filters, fiscal_year_pre, fiscal_year_last, months_ = get_date_filters(filters)
+    if not months_:
+        months = months_
     where_conditions = []
-    filters = [cond_filter for cond_filter in filters if cond_filter['key'].strip('"') != "fiscal_year"]
+    filters = [cond_filter for cond_filter in filters if cond_filter['key'].strip('"') not in ["fiscal_year", 'month_name']]
     filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2023-2024", "2024-2025"]})
     for filter_cond in filters:
         filter_cond['key'] = filter_cond['key'].strip('"')
+    if months:
+        filters.append({'key': 'month_name', 'cond': 'one-off', 'value': months})
 
     fiscal_year_pre = (f"{fiscal_year.FiscalYear.current().start.year}-"
                        f"{fiscal_year.FiscalYear.current().end.year}")
