@@ -9,7 +9,8 @@ Maintenance = [
     {"sop_id": "SOP013", "interlock_name": "Fire engine_Under Maintenance", "alert_category": "Safety", "equipment_name": "Fire Engine"},
     {"sop_id": "SOP013", "interlock_name": "JockeyPump_Under Maintenance", "alert_category": "Safety", "equipment_name": "Jockey Pump"},
     {"sop_id": "SOP013", "interlock_name": "HydrantPT_Under Maintenance", "alert_category": "Safety", "equipment_name": "PT Hydrant"},
-    {"sop_id": "SOP014", "interlock_name": "HCD_Under Maintenance", "alert_category": "Safety", "equipment_name": "HCD"}
+    {"sop_id": "SOP014", "interlock_name": "HCD_Under Maintenance", "alert_category": "Safety", "equipment_name": "HCD"},
+    {"sop_id": "SOP035", "interlock_name": "Gantry Permissive_Override", "alert_category": "Gantry", "equipment_name": "BCU"},
 ]
 
 Fault = [
@@ -83,7 +84,6 @@ Normal = [
     {"sop_id": "SOP032", "interlock_name": "Primary Radar Guage_HH alarm", "alert_category": "Process", "equipment_name": "Primary Radar"},
     {"sop_id": "SOP033", "interlock_name": "SickTT Reported", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP034", "interlock_name": "Cancel TT Reported", "alert_category": "Gantry", "equipment_name": "BCU"},
-    {"sop_id": "SOP035", "interlock_name": "Gantry Permissive_Override", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP036", "interlock_name": "Unauthorized flow_BCU", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP037", "interlock_name": "Manual Bay reasignment reported", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP038", "interlock_name": "TT Overloaded", "alert_category": "Gantry", "equipment_name": "BCU"},

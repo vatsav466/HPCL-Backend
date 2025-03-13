@@ -117,6 +117,17 @@
         "METER_NUMBER": "meter_number",
         "NET_TOTALIZER": "net_totalizer",
         "BLEND_NAME": "blend_name",
-        "PRESET_NUMBER": "preset_number"
+        "PRESET_NUMBER": "preset_number",
+        "MFM_NUMBER": "mfm_number",
+        "ASSOCIATED_DEVICE_NUMBER": "bcu_number",
+        "STOCK_CODE": "stock_code",
+        "CURRENT_K_FACTOR": "current_k_factor",
+        "LAST_K_FACTOR": "last_k_factor",
+        "LAST_K_FACTOR_CHANGE_DATE": "last_k_factor_change_date",
+        "CURRENT_METER_FACTOR": "current_meter_factor",
+        "LAST_METER_FACTOR": "last_meter_factor",
+        "LAST_METER_FACTOR_CHANGE_DATE": "last_meter_factor_change_date",
+        "ASSIGNED_BAY": "assigned_bay",
+        "REASSIGN_LOADED_QTY": "reassign_loaded_qty"
     }
 }

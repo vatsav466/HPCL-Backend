@@ -258,8 +258,77 @@ def get_and_insert_data(cursor, query, params=None):
     data['SBU_Name'] = data['SBU_Name'].str.replace('DS I&C','I&C').str.replace('Direct','I&C').str.replace('DS Lubes','Lubes').str.replace('Direct I&C','I&C').str.replace('PETROCHEMICALS SBU','PETCHEM').str.replace('GAS HQO','GAS')
     data['Zone_Name'] = data['Zone_Name'].str.replace('North Central LPG Zone','North Central LPG Zo').str.replace('South Central Retail Zone','South Central Retail').str.replace('South Central LPG Zone ','South Central LPG Zo').str.replace('EAST CENTRAL ZONE','East Central Zone').str.replace('North West Frontier Zone','North West Frontier').str.replace('North West Retail Zone','North West Retail Zo').str.replace('North Central Retail Zone','North Central Retail')
     data['Zone_Name'] = data['Zone_Name'].str.replace('East Zone','East').str.replace('West Zone','West').str.replace('North Zone','North').str.replace('South Zone','South')
-    data = pl.from_pandas(data)
+    print(data['MATERIAL_CD'].unique().tolist())
+    print(data.dtypes)
+    data.loc[(data['MATERIAL_CD'] == '1739000')&(data['SBU_Name'] =='GAS'),'ProductName'] = 'LNG'
+    data.loc[(data['MATERIAL_CD'] == '0992000')&(data['SBU_Name'] =='GAS'),'ProductName'] = 'CNG'
     
+    cursor.execute(f"""
+                   
+                   select * FROM CONN_ENT.VW_AY_INV3_LUBES_STG  where SALES_ORG=4000
+                   """)
+    di = {}
+    
+    
+    lubes_data = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    lubes_data = pd.DataFrame.from_records(lubes_data, columns=columns)
+    for idx,row_data in lubes_data.iterrows():
+        if row_data['SUPPLY_LOC'] not in di:
+            di[row_data['SUPPLY_LOC']] = row_data['SALES_DISTRICT']
+
+    lubes_ps_data = data[data['SBU_Name'] == 'Lubes']
+    data = data[~(data['SBU_Name'] == 'Lubes')]
+    lubes_ps_data['PLANT_CD'] = lubes_ps_data['PLANT_CD'].astype(str)
+    lubes_data['SUPPLY_LOC'] = lubes_data['SUPPLY_LOC'].astype(str)
+    for each_plant in lubes_ps_data['PLANT_CD'].unique().tolist():
+        if each_plant in di:
+            lubes_ps_data.loc[lubes_ps_data['PLANT_CD'] == each_plant,'ZZONE']= di[each_plant]
+    zone_map = {'WES':'West','NOR':'North','SOU':'South','EAS':'East','HQO':'HQO Customer'}
+    #lubes_ps_data = lubes_ps_data.merge(lubes_data[['SUPPLY_LOC','SALES_DISTRICT']],left_on = 'PLANT_CD',right_on = 'SUPPLY_LOC')
+    lubes_ps_data['Zone_Name'] = lubes_ps_data['ZZONE'].map(zone_map)
+    lubes_ps_data.to_csv('/tmp/lubes_ps_data.csv',index = False)
+    data = pd.concat([lubes_ps_data,data])
+
+    
+    '''
+    
+    cursor.execute(f"""
+                   
+                   select t1.SUPPLY_LOC,t2.PLANT_CD,t2.ZZONE,t2.SBU FROM CONN_ENT.VW_AY_INV3_LUBES_STG t1 LEFT JOIN PS.EDW_PLANT_DIM t2 on t1.SUPPLY_LOC=t2.PLANT_CD 
+
+                   """)
+    lubes_data = cursor.fetchall()
+    print('Total Records :', len(data))
+    columns = [column[0] for column in cursor.description]
+    lubes_data = pd.DataFrame.from_records(lubes_data, columns=columns)
+    
+    lubes_ps_data = data[data['SBU_Name'] == 'Lubes']
+    data = data[~(data['SBU_Name'] == 'Lubes')]
+    lubes_data['PLANT_CD'] = lubes_data['PLANT_CD'].astype(str)
+    lubes_ps_data['PLANT_CD'] = lubes_ps_data['PLANT_CD'].astype(str)
+    print(lubes_ps_data.dtypes)
+    print(lubes_data.dtypes)
+    di = {}
+    
+    for idx,row_data in lubes_data.iterrows():
+        if row_data['PLANT_CD'] not in di:
+            di[row_data['PLANT_CD']] = row_data['ZZONE']
+    for each_plant in  lubes_ps_data['PLANT_CD'].unique().tolist():
+           if each_plant in di:
+            lubes_ps_data.loc[lubes_ps_data['PLANT_CD'] ==each_plant,'ZZONE'] = di[each_plant]
+    zone_map = {'NWF':'North West Frontier','NZ':'North','EZ':'East','SZ':'South','ECZ':'East Central Zone','NWR':'North West Retail Zo',
+                'WZ':'West','NCR':'North Central Retail','CEN':'Central Zone','SCR':'South Central Retail','NCL':'North Central LPG Zo',
+                'NFZ':'North Frontier Zone','NWL':'North West LPG Zo','SCL':'South Central LPG Zo','SWZ':'South Western Zone'}
+    lubes_ps_data['Zone_Name'] = lubes_ps_data['ZZONE'].map(zone_map)
+    lubes_ps_data.to_csv('/tmp/lubes.csv',index = False)
+    data.to_csv('/tmp/data_latest.csv',index  = False)
+    print("data",len(data))
+    print("psdata",len(lubes_ps_data))
+    data = pd.concat([data,lubes_ps_data])
+    data = pl.from_pandas(data)
+    '''
+    data = pl.from_pandas(data)
     
     insertToDB(data, params["table_name"])
 
@@ -892,6 +961,118 @@ FROM (
 ORDER BY ORGSBUCD, DAY_ID;
 
 
+    """
+    query_daywise =f"""
+    SELECT
+    ORGSBUCD,
+    ORGSBUNAME,
+    ORGZONECD,
+    ORGZONENAME,
+    CASE WHEN ORGSBUCD = '5000' THEN '-' ELSE ORGROCD END AS ORGROCD,
+    ORGRONAME,
+    CASE WHEN ORGSBUCD = '5000' THEN '-' ELSE ORGSACD END AS ORGSACD,
+    ORGSANAME,
+    PRODUCTCODE,
+    MATERIAL_CD,-- Added MATERIAL_CD
+    PLANT_CD,
+    MATERIALGROUPNAME,
+    CURFISCALYEAR,
+    FISCALYEAR,
+    YEARMONTH,
+    DAY_ID, -- Adding day-level granularity
+    NETWEIGHT_UOM,
+    NETWEIGHT AS NETWEIGHT_KG,
+    
+    CASE
+        WHEN ORGSBUCD IN ('7000', '5000', '2000', '3000', '4000', '5500', '5750') THEN NETWEIGHT / 1000000
+        ELSE NETWEIGHT
+    END AS NETWEIGHT_TMT
+FROM (
+    SELECT
+        CASE
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032', '038') THEN '4000'
+            ELSE E2.ORG_SBU_CD 
+        END AS ORGSBUCD,
+        CASE
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032', '038') THEN 'HPCL Mkt DS Lubes'
+            ELSE E8.ORG_SBU_NM
+        END AS ORGSBUNAME,
+        CASE
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032', '038') THEN ''
+            ELSE E2.ORG_ZONE_CD
+        END AS ORGZONECD,
+        CASE
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032', '038') THEN ''
+            ELSE E8.ORG_ZONE_NM
+        END AS ORGZONENAME,
+        CASE
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032', '038') THEN ''
+            ELSE E2.ORG_RO_CD
+        END AS ORGROCD,
+        CASE
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032', '038') THEN ''
+            ELSE E8.ORG_RO_NM
+        END AS ORGRONAME,
+        CASE
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032', '038') THEN ''
+            ELSE E2.ORG_SA_CD
+        END AS ORGSACD,
+        CASE
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032', '038') THEN ''
+            ELSE E8.ORG_SA_NM
+        END AS ORGSANAME,
+        CASE
+            WHEN E2.ORG_SBU_CD <> 4000 THEN E1.MATERIAL_GROUP_CD
+            ELSE ''
+        END AS PRODUCTCODE,
+        E1.MATERIAL_CD,  -- Added MATERIAL_CD
+        E1.PLANT_CD,
+        CASE
+            WHEN E2.ORG_SBU_CD <> 4000 THEN E7.MATERIAL_GROUP_NM
+            WHEN E1.MATERIAL_GROUP_CD IN ('024', '025', '026', '027', '028', '029', '030', '031', '032') THEN 'LUBES RETAIL'
+            ELSE E7.MATERIAL_GROUP_NM
+        END AS MATERIALGROUPNAME,
+        E3.CUR_FISCAL_YEAR AS CURFISCALYEAR,
+        E3.FISCAL_YEAR AS FISCALYEAR,
+        E3.YEARMONTH AS YEARMONTH,
+        E3.DT_ID AS DAY_ID, -- Adding day-level granularity
+        E1.WEIGHT_UNIT AS NETWEIGHT_UOM,
+        SUM(E1.NET_WEIGHT) AS NETWEIGHT
+        
+    FROM
+        PS.EDW_PRIMARY_SALES_FACT E1  
+        LEFT OUTER JOIN PS.EDW_CUSTOMER_SA_DIM E2 ON E2.CUST_SA_ID = E1.PS_CUST_SA_ID
+        LEFT OUTER JOIN PS.EDW_DT_DIM E3 ON E3.DT_ID = E1.PS_DT_ID
+        LEFT OUTER JOIN PS.EDW_CUSTOMER_DIM E5 ON E1.PS_CUST_ID = E5.CUST_ID
+        LEFT OUTER JOIN PS.EDW_DISTRICT_DIM E6 ON E5.CUST_DISTRICT_CD = E6.DISTRICT_CD
+        LEFT OUTER JOIN PS.EDW_MATERIAL_GROUP_DIM E7 ON E1.PS_MATERIAL_GROUP_ID = E7.MATERIAL_GROUP_ID
+        LEFT OUTER JOIN PS.EDW_SALES_ORG_DIM E8 ON E2.ORG_SA_CD = E8.ORG_SA_CD
+    WHERE
+        E1.PS_DT_ID >= 20230401
+        AND E2.ORG_SBU_CD IN ('7000', '5000', '2000', '3000', '4000','5500','5750')
+    GROUP BY
+        E2.ORG_SBU_CD,
+        E8.ORG_SBU_NM,
+        E2.ORG_ZONE_CD,
+        E8.ORG_ZONE_NM,
+        E2.ORG_RO_CD,
+        E8.ORG_RO_NM,
+        E2.ORG_SA_CD,
+        E8.ORG_SA_NM,
+        CASE WHEN E2.ORG_SBU_CD <> 4000 THEN E1.MATERIAL_GROUP_CD ELSE NULL END,
+        CASE WHEN E2.ORG_SBU_CD <> 4000 THEN E7.MATERIAL_GROUP_NM ELSE NULL END,
+        E3.CUR_FISCAL_YEAR,
+        E3.FISCAL_YEAR,
+        E3.YEARMONTH,
+        E3.DT_ID, -- Adding day-level granularity
+        E1.WEIGHT_UNIT,
+        E1.MATERIAL_CD,  -- Added MATERIAL_CD in GROUP BY
+        E1.PLANT_CD
+) OrigView
+
+ORDER BY ORGSBUCD, DAY_ID;
+
+    
     """
     connection = get_db_connection(params)
     

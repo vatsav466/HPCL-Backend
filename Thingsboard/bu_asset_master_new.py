@@ -41,13 +41,41 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
         # Find indices of columns containing "Normal Value"
         normal_value_indices = [i for i, col in enumerate(df.columns)
                                 if 'normal value' in str(col).lower()]
+        
+        # Find indices of columns containing "Sensor ID" and "Sensor Type"
+        sensor_id_indices = [i for i, col in enumerate(df.columns)
+                            if 'sensor_id' in str(col).lower()]
+                
+        sensor_type_indices = [i for i, col in enumerate(df.columns)
+                            if 'sensor_type' in str(col).lower()]
 
         # Get all columns that come before "Normal Value" columns and their corresponding Normal Value columns
         sensor_columns = []
         for idx in normal_value_indices:
             if idx > 0:
-                sensor_columns.append((idx - 1, idx))  # Store pairs of (sensor column, normal value column)
-
+                # Find corresponding sensor ID and type for this sensor
+                sensor_idx = idx - 1
+                
+                # Find the closest sensor ID column (if available)
+                corresponding_id_idx = None
+                if sensor_id_indices:
+                    # Get the closest sensor ID column
+                    for id_idx in sensor_id_indices:
+                        if abs(id_idx - sensor_idx) <= 3:  # Assuming ID is within 3 columns of the sensor
+                            corresponding_id_idx = id_idx
+                            break
+                
+                # Find the closest sensor type column (if available)
+                corresponding_type_idx = None
+                if sensor_type_indices:
+                    # Get the closest sensor type column
+                    for type_idx in sensor_type_indices:
+                        if abs(type_idx - sensor_idx) <= 3:  # Assuming type is within 3 columns of the sensor
+                            corresponding_type_idx = type_idx
+                            break
+                            
+                # Store tuples of (sensor column, normal value column, sensor ID column, sensor type column)
+                sensor_columns.append((sensor_idx, idx, corresponding_id_idx, corresponding_type_idx))
         def normalize_value(value):
             def is_float(string):
                 try:
@@ -70,22 +98,35 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
 
             # Process sensors with their normal values
             sensors = []
-            for sensor_idx, normal_value_idx in sensor_columns:
+            for sensor_idx, normal_value_idx, id_idx, type_idx in sensor_columns:
                 sensor_name = str(df.columns[sensor_idx]).strip()
                 sensor_tag = str(row.iloc[sensor_idx]).strip()
                 normal_value = normalize_value(str(row.iloc[normal_value_idx]).strip())
+                
+                # Get sensor ID and type if available
+                sensor_id = str(row.iloc[id_idx]).strip() if id_idx is not None else ""
+                sensor_type = str(row.iloc[type_idx]).strip() if type_idx is not None else ""
+                # Normalize the values to handle NaN
+                if sensor_id.lower() == 'nan':
+                    sensor_id = ""
+                if sensor_type.lower() == 'nan':
+                    sensor_type = ""
 
                 if sensor_tag.lower() != 'nan':
                     sensors.append({
                         "sensor_name": sensor_name,
                         "sensor_tag": sensor_tag,
-                        "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
+                        "normal_value": normal_value if normal_value.lower() != 'nan' else '0',
+                        "sensor_id": sensor_id,
+                        "sensor_type": sensor_type
                     })
                 else:
                     sensors.append({
                         "sensor_name": sensor_name,
                         "sensor_tag": "",
-                        "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
+                        "normal_value": normal_value if normal_value.lower() != 'nan' else '0',
+                        "sensor_id": sensor_id,
+                        "sensor_type": sensor_type
                     })
             if sensors:
                 devices_data.append({
@@ -285,6 +326,8 @@ class ThingsBoardInterface:
             for sensor in device['sensors']:
                 sensor_name = sensor.get('sensor_name')
                 normal_value = sensor.get('normal_value', '0')
+                sensor_id = sensor.get('sensor_id')
+                sensor_type = sensor.get('sensor_type')
                 device_scope[sensor_name] = normal_value
 
         device_data = self.api_handler("GET", "/api/tenant/deviceInfos", {},

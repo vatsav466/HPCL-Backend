@@ -390,7 +390,7 @@ class BasePostgresModel(pydantic.BaseModel):
             result = await session.scalars(select(cls.Config.schema_class).from_statement(text(" ".join(query))))
             resp = result.all()
             results = [{key: value for key, value in row.__dict__.items() if not key.startswith("_")} for row in resp]
-            total = await cls.count(params, entity_id)
+            total = await cls.count(params, entity_id) if len(results) > 0 else 0
             results_data = {"data": results, "count": len(results), "total": total}
             if resp_type == "encoded":
                 return JSONResponse(content=jsonable_encoder(results_data))

@@ -399,7 +399,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             print("target_data",target_data)
             print("filters",filters)
             #if '"C"'   in [x['key'] for x in filters] and '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and len(org_cross_filters) == 0:
-            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0):
+            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0) and '"C"'   in [x['key'] for x in filters]:
                 
                 print("start_date",start_date)
                 print("end_date",end_date)

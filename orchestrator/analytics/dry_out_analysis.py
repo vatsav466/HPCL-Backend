@@ -8,6 +8,7 @@ import charts_actions
 import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
+from orchestrator.dbconnector.widget_actions.lpg_plant_queries import today
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
 req_keys = {
@@ -1006,11 +1007,26 @@ async def current_month_frequent_drout_terminals(data):
 
 async def get_atg_ack(sap_id: str, product_code: str):
     to_day = datetime.datetime.now().strftime("%Y-%m-%d")
-    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms """ \ 
-            f"""where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate """ \
+    query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate """ \
             f"""from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume > 0 """ \
-            f"""sap_ro_code = '{sap_id}' and "Product_no" = '{product_code}' """ \
+            f"""and sap_ro_code = '{sap_id}' and "Product_no" = '{product_code}' """ \
             f"""and Recptentrydate::DATE = '{to_day}'"""
+    query = f"""
+        SELECT trd.Site_id, 
+               ms.erp_code AS sap_ro_code, 
+               trd.Tank_no, 
+               trd.Product_no, 
+               trd.Product_no as item_name,
+               trd.Recptentrydate
+        FROM "HPCL_HOS".tr_delivery_data trd
+        JOIN "HPCL_HOS".ms_site ms 
+            ON trd.site_id = ms.site_id
+        WHERE trd.enable = true 
+            AND trd.net_volume > 0
+            AND ms.erp_code = '{sap_id}'
+--             AND trd.Product_no = '{product_code}'
+            AND trd.Recptentrydate::DATE = '{to_day}'
+    """
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "cris", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1019,6 +1035,11 @@ async def get_atg_ack(sap_id: str, product_code: str):
     atg_resp = await function(
         query=query
     )
+    print("atg_resp: ", atg_resp)
+    atg_resp = pd.DataFrame(atg_resp)
+    if 'item_name' in atg_resp.columns:
+        atg_resp['item_name'] = atg_resp['item_name'].astype(str)
+    atg_resp.replace({"item_name": await cris_product_mapping()}, inplace=True)
     print("atg_resp: ", atg_resp)
 
     # query = f"""select distinct sap_id from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status = 'Open' and dry_out_in_days = '{dry_out_in_days}'"""
@@ -1035,7 +1056,11 @@ async def get_atg_ack(sap_id: str, product_code: str):
     # df = pd.merge(
     #     atg_ack_df.drop_duplicates(subset="sap_ro_code"), alert_df,
     #     left_on=["sap_ro_code"], right_on=["sap_id"], how="inner")
-    return len(atg_resp)
+    if atg_resp.empty:
+        return []
+    atg_resp = atg_resp[atg_resp['item_name'] == product_code]
+    print("atg_resp: ", atg_resp)
+    return atg_resp.to_dict(orient='records')
 
 async def update_dry_out_from_cris(records):
     records = pd.DataFrame(records)
@@ -1072,15 +1097,110 @@ async def update_dry_out_from_cris(records):
         await hpcl_ceg_model.Alerts.update_by_query(query)
 
 async def update_atg_ack(alert_id: str, sap_id: str, product_code: str):
+    print(f"alert_id: {alert_id} sap_id: {sap_id} product_code: {product_code}")
     alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
 
-    atg_resp = await get_atg_ack(sap_id=sap_id, product_code=product_code):
+    atg_resp = await get_atg_ack(sap_id=sap_id, product_code=product_code)
     if atg_resp:
         atg_resp = atg_resp[0]
         if not alert_data.get("atg_ack", False):
-            query = f"""update alerts set atg_ack=true, atg_ack_time='{atg_resp.get("Recptentrydate").strftime("%Y-%m-%d %H:%M:%S")}' where id = {alert_id}"""
-            print(query)
-            # await hpcl_ceg_model.Alerts.update_by_query(query)
+            query = f"""update alerts set atg_ack=true, atg_ack_time='{atg_resp.get("recptentrydate").strftime("%Y-%m-%d %H:%M:%S")}' where id = {alert_id}"""
+            print(f"update query for atg: {query}")
+            await hpcl_ceg_model.Alerts.update_by_query(query)
 
+async def get_atg_ack_count(dry_out_in_days='1'):
+    to_day = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
+    query = (f"select count(distinct sap_id) from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' "
+             f"and dry_out_in_days='{dry_out_in_days}' and atg_ack=true and atg_ack_time::DATE = '{to_day}'")
+    data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
+    print("Data: ", data)
+    if data.get("data", []):
+        data = data.get("data", [])
+        return data[0].get("count", 0)
+    return 0
+
+async def cris_product_mapping():
+    product_mapping = {
+        "3672000": "POWER 95",
+        "2821000": "MS",
+        "3925000": "POWER 95",
+        "2812000": "HSD",
+        "3373000": "POWER 100",
+        "1683000": "HSD",
+        "4211000": "MS",
+        "1322100": "POWER 95",
+        # "2822000": "E20",
+        "2822000": "MS",
+        "1683100": "TURBO",
+        "1322000": "MS",
+        "2823000": "MS",
+        "2682000": "POWER 99",
+        "2811000": "MS",
+        "3912000": "TURBO",
+        "2816000": "POWER 99"
+    }
+    return product_mapping
+
+async def dry_out_diff():
+    cris_query = f'''select site_id, fcc_code, item_name,item_name product_grp, rosapcode, tank_no, status, tank_cnt
+                        from (
+                                select site_id, fcc_code,product_grp item_name,count(distinct tank_no) tank_cnt, 
+                                rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no,
+                                case when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) <=0 then 1 
+                                when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) < 
+                                (sum(sch.avgsales_7days)/7) then 2
+                                when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) >= 
+                                (sum(sch.avgsales_7days)/7) and sum(case when pumpable_Stock>=0 
+                                then pumpable_Stock else 0 end) <= (sum(sch.avgsales_7days)/7)*3 then 3
+                                when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) > 
+                                (sum(sch.avgsales_7days)/7)*3 and sum(case when pumpable_Stock>=0 then 
+                                pumpable_Stock else 0 end) <=(sum(sch.avgsales_7days)/7)*6 then 4 
+                                else 5 end status
+                                from "HPCL_HOS".sch_inventory_forecast_dashboard sch
+                                where sch.volume>0
+                                group by site_id, fcc_code, product_grp,rosapcode
+                                order by site_id, fcc_code, product_grp
+                            ) result1
+                            where result1.status in ('1', '2')
+            '''
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    cris_resp = await function(
+        query=cris_query
+    )
+
+    novex_query = (f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days"
+                   f"mark_as_false from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close'")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    novex_resp = await function(
+        query=novex_query
+    )
+
+    cris_resp = pd.DataFrame(cris_resp)
+    novex_resp = pd.DataFrame(novex_resp)
+    novex_resp.replace({"product_code": await cris_product_mapping()}, inplace=True)
+
+    cris_resp = cris_resp.astype(str)
+    novex_resp = novex_resp.astype(str)
+    cris_resp = cris_resp.drop_duplicates(subset=['item_name', 'rosapcode', 'status'])
+    novex_resp = novex_resp.drop_duplicates(subset=['product_code', 'sap_id', 'dry_out_in_days'])
+
+    resp = pd.merge(
+        cris_resp, novex_resp,
+        left_on=['item_name', 'rosapcode', 'status'],
+        right_on=['product_code', 'sap_id', 'dry_out_in_days'],
+        how='outer',
+        indicator=True
+    )
+    resp = resp[resp['_merge'] != 'both']
+    resp.to_csv("/tmp/dryout_difference.csv", index=False)
+    return resp

@@ -1650,6 +1650,8 @@ Model HostSickTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    bcu_number optional unique_field str
+    bay_number optional unique_field str
 
     Action=> download_data {
     }
@@ -1731,6 +1733,8 @@ Model HostBayReAssignment {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    assigned_bay optional unique_field str
+    reassign_loaded_qty optional unique_field str
 
     Config=> {
         access_key_mapping=''
@@ -1755,6 +1759,7 @@ Model HostManualFanPrinted {
     manual_fan_count optional unique_field int
     auto_fan_count optional unique_field int
     total_count optional unique_field int
+    date optional unique_field datetime
     sap_id optional unique_field str
     location_name optional str
     zone optional str
@@ -1785,9 +1790,31 @@ Model HostOverLoadedTts{
     load_number optional unique_field int
     truck_number optional unique_field str
     compartment_number optional unique_field int
-    blend_name optional unique_field str
+    product_name optional unique_field str
     required_qty optional unique_field int
     loaded_qty optional unique_field int
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+    created_date optional unique_field datetime
+    bcu_number optional unique_field str
+    bay_number optional unique_field str
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostMFMFactor {
+    mfm_number optional unique_field str
+    bcu_number optional unique_field str
+    stock_code optional unique_field str
+    current_k_factor optional unique_field str
+    last_k_factor optional unique_field str
+    last_k_factor_change_date optional unique_field datetime
+    current_meter_factor optional unique_field str
+    last_meter_factor optional unique_field str
+    last_meter_factor_change_date optional unique_field str
     sap_id optional unique_field str
     location_name optional str
     zone optional str
