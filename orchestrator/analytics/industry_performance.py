@@ -999,7 +999,7 @@ async def generate_omc_compare_data(filters, drill_state):
     for filter_cond in filters:
         filter_cond['key'] = filter_cond['key'].strip('"')
     if months:
-        filters.append({'key': 'month_name', 'condition': 'equals', 'value': months})
+        filters.append({'key': 'month_name', 'cond': 'one-off', 'value': months})
 
     fiscal_year_pre = (f"{fiscal_year.FiscalYear.current().start.year}-"
                        f"{fiscal_year.FiscalYear.current().end.year}")
