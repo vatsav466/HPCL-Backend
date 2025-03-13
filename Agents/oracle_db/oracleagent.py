@@ -7,6 +7,7 @@ import cx_Oracle
 import traceback
 import pandas as pd
 import polars as pl
+import pyarrow as pa
 from rabbitmq_producer import RabbitMQProducer
 from sshtunnel import SSHTunnelForwarder
 import time
@@ -343,7 +344,27 @@ class Oracle(BaseAction):
                 print(f"Warning: Encoding issue when saving {table_name}.csv - trying alternate encoding")
                 final_df.to_csv(f"{table_name}.csv", mode='a', index=False, header=False, encoding='utf-8-sig')
                 
+            # Convert DataFrame to Polars, ensuring correct data types
+            # try:
+            #     return pl.from_pandas(final_df, use_pyarrow=True)
+            # except Exception as e:
+            #     print("Error converting DataFrame with PyArrow:", e)
+
+            # Convert columns manually if PyArrow fails
+            for col in final_df.columns:
+                if pd.api.types.is_integer_dtype(final_df[col]):
+                    final_df[col] = final_df[col].astype("int64")  # Convert nullable int to standard int
+                elif pd.api.types.is_float_dtype(final_df[col]):
+                    final_df[col] = final_df[col].astype("float64")
+                elif pd.api.types.is_object_dtype(final_df[col]):
+                    final_df[col] = final_df[col].astype("string")
+
             return pl.from_pandas(final_df)
+
+        except Exception as e:
+            print(f"Error fetching data for {table_name}: {e}")
+            return None
+
         except cx_Oracle.Error as err:
             print(err)
             traceback.print_exc(file=sys.stdout)
