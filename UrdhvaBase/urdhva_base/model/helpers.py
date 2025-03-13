@@ -26,6 +26,7 @@ class Base:
 
     def render(self):
         templateEnv.globals.update(convert_snake_case=urdhva_base.utilities.snake_case)
+        templateEnv.globals.update(generate_unique_id=urdhva_base.utilities.generate_unique_id)
         return templateEnv.get_template(self.__class__.__name__.lower()).render(input=self)
 
 
