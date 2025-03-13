@@ -710,7 +710,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         }])
     ro_not_in_ims_count = await dry_out_analysis.ro_not_in_ims()
     # atg_ack = await dry_out_analysis.get_atg_ack(sap_id="", product_code="")
-    atg_ack = 0
+    atg_ack = await dry_out_analysis.get_atg_ack_count(dry_out_in_days=str(dry_out_in_days_query))
     # stats.append({"section": "RO Not In IMS", "value": len(ro_not_in_ims_count), "serial": 18, "condition": "=", "group": "ro_not_in_ims"})
     stats = sorted(stats, key=lambda x: x['serial'])
     updated_stats = []
