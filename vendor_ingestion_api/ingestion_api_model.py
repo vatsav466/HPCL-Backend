@@ -101,6 +101,10 @@ class Vts_Ingest_DataParams(pydantic.BaseModel):
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.List[vtsDataCreate]
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Vts_Ingest_Data_Blocked_TrucksParams(pydantic.BaseModel):
     vendor_id: str
@@ -108,12 +112,20 @@ class Vts_Ingest_Data_Blocked_TrucksParams(pydantic.BaseModel):
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.List[vtsBlockedTruckCreate]
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Vts_Ingest_Data_Un_Blocked_TrucksParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.List[vtsBlockedTruckCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class vaDataCreate(pydantic.BaseModel):
@@ -135,12 +147,20 @@ class Va_Ingest_DataParams(pydantic.BaseModel):
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.Optional[typing.List[vaDataCreate]] | None = None
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Va_Ingest_Data_ScoreParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.List[vaScoreCreate]
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class productsDetailsCreate(pydantic.BaseModel):
@@ -152,8 +172,7 @@ class productsDetailsCreate(pydantic.BaseModel):
 class crisDataCreate(pydantic.BaseModel):
     interlock_type: str
     interlock_description: typing.Optional[str] = pydantic.Field("", **{})
-    device_id: str
-    device_value: typing.Optional[str] = pydantic.Field("", **{})
+    device_name: str
     alarm_id: str
     tank_id: typing.Optional[str] = pydantic.Field("", **{})
     nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
@@ -171,11 +190,19 @@ class Cris_Ingest_DataParams(pydantic.BaseModel):
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.Optional[typing.List[crisDataCreate]] | None = None
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Ims_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
     location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class emlockDataCreate(pydantic.BaseModel):
@@ -202,8 +229,14 @@ class Emlock_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     data: typing.Optional[typing.List[emlockVendorDataCreate]] | None = None
 
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
 
 class Taslistener_Get_DataParams(pydantic.BaseModel):
     input_data: dict
 
-
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
