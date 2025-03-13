@@ -1014,7 +1014,8 @@ async def generate_omc_compare_data(filters, drill_state):
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
                                        group_by, "")
     # Transform data
-    table = defaultdict(lambda: {"History": {}, "Market Share": {}, "Growth": {}, "Sales": {}})
+    table = defaultdict(lambda: {"History": {}, "Market Share": {}, "Growth": {}, "Sales": {},
+                                 "Market Share History": {}})
 
     for entry in resp_data:
         drill_key = entry[drill_state]
@@ -1034,6 +1035,8 @@ async def generate_omc_compare_data(filters, drill_state):
         total_sales = sum(entry['Sales'].values())
         for company in entry['Sales']:
             entry['Market Share'][company] = round(entry['Sales'].get(company, 0) / total_sales * 100, 2)
+        for company in entry['History']:
+            entry['Market Share History'][company] = round(entry['History'].get(company, 0) / total_sales * 100, 2)
         for company in entry['Sales']:
             if entry['History'].get(company, 0):
                 entry['Growth'][company] = round((entry['Sales'].get(company, 0) -
