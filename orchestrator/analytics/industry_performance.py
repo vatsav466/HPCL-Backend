@@ -650,8 +650,41 @@ def generate_stacked_data(df, resp_format='', month_column=''):
     df.fillna(0, inplace=True)
     return {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}
 
+def get_mappers():
+   
+    mappers = {
+        'MPSU':['HPCL','BPCL','IOCL'],
+        'PSU':['HPCL','BPCL','IOCL','GAIL','CPCL','MRPL','NRL','OIL','ONGC'],
+        'PVT':['RIL','NEL','HMEL','SHELL','SMA'],
+        'PSU+PVT':['HPCL','BPCL','IOCL','GAIL','CPCL','MRPL','NRL','OIL','ONGC','RIL','NEL','HMEL','SHELL','SMA'],
+        'order':['HPCL','BPCL','IOCL','GAIL','CPCL','MRPL','NRL','OIL','ONGC','RIL','NEL','HMEL','SHELL','SMA'],
 
+        'const_colors' : [
+            { "name": "HPCL", "color": "#1D4ED8" }, # Blue-700
+            { "name": "BPCL", "color": "#FBBF24" }, # Amber-400
+            { "name": "IOCL", "color": "#EA580C" }, # Orange-600
+            { "name": "RIL", "color": "#A855F7" }, # Purple-500
+            { "name": "Nyra", "color": "#14B8A6" }, # Teal-500
+            { "name": "Shell","color": "#A16207" }, # Yellow-700
+            { "name": "MRPL", "color": "#4D7C0F" }, # Lime-700
+            { "name": "GALE", "color": "#991B1B" }, # Red-800
+            { "name": "CPCL", "color": "#44403C" }, # Stone-700
+            { "name": "HMEL", "color": "#052E16" }, # Green-950
+            { "name": "NRL", "color": "#3B0764" }, # Purple-950
+            { "name": "NEL", "color": "#7C2D12" }, # Orange-900
+            { "name": "OIL", "color": "#1F2937" }, # Gray-800
+            { "name": "SMA", "color": "#4A044E" }, # Violet-900
+            { "name": "BURL", "color": "#9D174D" } # Pink-800
+            ]
+
+    }
+    return mappers
+    
 async def industry_performance(filters, cross_filters, drill_state="", time_grain="", resp_format="", resp_level=""):
+    if len(filters) ==1 :
+        if filters[0]['key'] == '"mappers"':
+            return get_mappers()
+        
     resp_format_org = resp_format
     if resp_format == 'company_level_heatmap':
         resp_format = 'company_level'
