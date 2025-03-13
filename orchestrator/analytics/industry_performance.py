@@ -1108,7 +1108,7 @@ async def generate_omc_compare_data(filters, drill_state):
             else:
                 entry['Growth'][company] = 100
         for name in entry:
-            if isinstance(entry['name'], dict):
+            if isinstance(entry[name], dict):
                 entry[name] = {key: value for key, value in entry[name].items() if key in required_companies}
 
     return structured_data
