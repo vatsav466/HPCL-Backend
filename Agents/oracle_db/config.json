@@ -40,7 +40,8 @@
         "HOST_LOCALLOADEDTTS": "HostLocalLoadedTts",
         "HOST_BAYREASSIGNMENT": "HostBayReAssignment",
         "HOST_MANUALBAYASSIGNED": "HostManualBayAssigned",
-        "HOST_SICKTTS": "HostSickTts"
+        "HOST_SICKTTS": "HostSickTts",
+        "HOST_MFMKFACTOR": "HostMFMFactor"
     },
 
     "interlock_name": {
@@ -52,7 +53,8 @@
       "HostLocalLoadedTts":"BCU Local Loading",
       "HostBayReAssignment":"Bay reasignment",
       "HostManualBayAssigned":"Manual - bay assignment of more then 5% of total TT loaded",
-      "HostSickTts":"SickTT Reported"
+      "HostSickTts":"SickTT Reported",
+      "HostMFMFactor": "MFM Data Changed"
 
     } ,
 
@@ -65,19 +67,21 @@
         "HostLocalLoadedTts":"Medium",
         "HostBayReAssignment":"Medium",
         "HostManualBayAssigned":"Medium",
-        "HostSickTts":"Medium"
+        "HostSickTts":"Medium",
+        "HostMFMFactor": "Medium"
 
     },
     "sop_id":{
-        "HostUnauthorisedFlow":"SOP036",
-        "HostCancelledTts":"SOP034",
-        "HostManualFanPrinted":"SOP030",
-        "HostOverLoadedTts":"SOP038",
-        "HostKFactorChanges":"SOP044",
+        "HostUnauthorisedFlow":"SOP061",
+        "HostCancelledTts":"SOP062",
+        "HostManualFanPrinted":"SOP063",
+        "HostOverLoadedTts":"SOP064",
+        "HostKFactorChanges":"SOP065",
         "HostLocalLoadedTts":"SOP025",
-        "HostBayReAssignment":"SOP037",
-        "HostManualBayAssigned":"SOP043",
-        "HostSickTts":"SOP033" 
+        "HostBayReAssignment":"SOP066",
+        "HostManualBayAssigned":"SOP067",
+        "HostSickTts":"SOP068",
+        "HostMFMFactor": "SOP069"
     },
 
     "column_rename": {
