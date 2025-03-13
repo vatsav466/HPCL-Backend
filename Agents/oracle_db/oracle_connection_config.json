@@ -1,0 +1,96 @@
+{
+    "oracle": {
+        "host": "10.1.83.130",
+        "port": 1521,
+        "sid": "ORCL",
+        "user_name": "hostdncinterface",
+        "password": "dnc#25hpcl"
+    },
+
+    
+   "oracle_tables": {
+          "HOST_SICKTTS": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          },
+          "HOST_CANCELLEDTTS": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          },
+          "HOST_KFACTORCHANGES": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          },
+          "HOST_LOCALLOADEDTTS": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          },
+          "HOST_BAYREASSIGNMENT": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          },
+          "HOST_MANUALBAYASSIGNED": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          },
+          "HOST_MANUALFANPRINTED": {
+            "interval": 300,
+            "function_name": "incremental_check",
+            "max_full_dump": 3000,
+            "incremental": true,
+            "increment_check": ["MANUAL_FAN_COUNT", "AUTO_FAN_COUNT"]
+          },
+          "HOST_UNAUTHORIZEDFLOW": {
+            "interval": 300,
+            "function_name": "incremental_check",
+            "max_full_dump": 3000,
+            "incremental": true,
+            "increment_check": ["START_TOTALIZER", "END_TOTALIZER"]
+          },
+          "HOST_OVERLOADEDTTS": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          },
+          "HOST_MFMKFACTOR": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          }
+        },
+      
+      
+    
+
+    
+    "conn_host": "10.90.38.167",
+    "conn_port": "5672",
+    "conn_user": "hpcl_ceg",
+    "conn_secret": "algo#ceg@4321",
+    "conn_channel": "",
+    "vhost": "hpcl_ceg",
+
+    "sap_id" : "1128"
+}
