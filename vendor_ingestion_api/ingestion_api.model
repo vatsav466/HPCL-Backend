@@ -155,8 +155,7 @@ Model productsDetails internal {
 Model crisData internal {
     interlock_type str
     interlock_description optional str
-    device_id str
-    device_value optional str
+    device_name str
     alarm_id str
     tank_id optional str
     nozzle_id optional str
