@@ -3631,6 +3631,69 @@
             ]
         },
         {
+            "name": "hostmfmfactor",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "HostMFMFactor",
+            "attributes": {},
+            "uris": [
+                "/api/hostmfmfactor/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "hostmfmfactor_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "HostMFMFactor_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/hostmfmfactor/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "hostmfmfactor_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "HostMFMFactor_admin",
+            "attributes": {},
+            "uris": [
+                "/api/hostmfmfactor/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "tagsdata",
             "type": "all",
             "ownerManagedAccess": false,
