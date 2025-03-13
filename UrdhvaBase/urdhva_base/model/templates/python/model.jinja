@@ -61,7 +61,7 @@ class {{input.name}}Schema(UrdhvaPostgresBase):
     {% endfor -%}
     {% if table_args | length > 0 %}
 
-    __table_args__ = (UniqueConstraint({%- for k in table_args -%}{{k }}{% if not loop.last -%}, {% endif -%}{%- endfor -%}, name="{{convert_snake_case(input.name)}}_{{ table_args|join("_")| replace('UrdhvaPostgresBase.', '')}}"),)
+    __table_args__ = (UniqueConstraint({%- for k in table_args -%}{{k }}{% if not loop.last -%}, {% endif -%}{%- endfor -%}, name="{{generate_unique_id(input.name, table_args)}}"),)
     {%  endif %}
 {% endif %}
 {% endif %}

@@ -52,6 +52,13 @@ def run_once(func):
     return wrapper
 
 
+def generate_unique_id(name, table_args):
+    unique_constraint = f"{snake_case(name)}_{'_'.join(table_args).replace('UrdhvaPostgresBase.', '')}"
+    if len(unique_constraint) > 63:
+        unique_constraint = f"{snake_case(name)}_{'_'.join([args.replace('_', '')[0:5] for args in table_args]).replace('UrdhvaPostgresBase.', '')}"[0:62]
+    return unique_constraint
+
+
 def snake_case(s):
     """
     # Replace hyphens with spaces, then apply regular expression substitutions for title case conversion

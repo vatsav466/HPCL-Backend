@@ -173,6 +173,8 @@ class crisDataCreate(pydantic.BaseModel):
     interlock_type: str
     interlock_description: typing.Optional[str] = pydantic.Field("", **{})
     device_name: str
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
+    severity: typing.Optional[str] = pydantic.Field("", **{})
     alarm_id: str
     tank_id: typing.Optional[str] = pydantic.Field("", **{})
     nozzle_id: typing.Optional[str] = pydantic.Field("", **{})

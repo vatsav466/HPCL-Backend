@@ -181,7 +181,8 @@ class AlertFactory:
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 # workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
-                workflowid = interlock_name["workflow_name"] if "workflow_name" in interlock_name.keys() else interlock_name["interlock_name"]
+                # workflowid = interlock_name["workflow_name"] if "workflow_name" in interlock_name.keys() else interlock_name["interlock_name"]
+                workflowid = interlock_name.get("workflow_name") or interlock_name.get("interlock_name") or None
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 # Uncomment below line to stop workflow for VA
                 # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:

@@ -262,6 +262,37 @@ def get_and_insert_data(cursor, query, params=None):
     print(data.dtypes)
     data.loc[(data['MATERIAL_CD'] == '1739000')&(data['SBU_Name'] =='GAS'),'ProductName'] = 'LNG'
     data.loc[(data['MATERIAL_CD'] == '0992000')&(data['SBU_Name'] =='GAS'),'ProductName'] = 'CNG'
+    
+    cursor.execute(f"""
+                   
+                   select * FROM CONN_ENT.VW_AY_INV3_LUBES_STG  where SALES_ORG=4000
+                   """)
+    di = {}
+    
+    
+    lubes_data = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    lubes_data = pd.DataFrame.from_records(lubes_data, columns=columns)
+    for idx,row_data in lubes_data.iterrows():
+        if row_data['SUPPLY_LOC'] not in di:
+            di[row_data['SUPPLY_LOC']] = row_data['SALES_DISTRICT']
+
+    lubes_ps_data = data[data['SBU_Name'] == 'Lubes']
+    data = data[~(data['SBU_Name'] == 'Lubes')]
+    lubes_ps_data['PLANT_CD'] = lubes_ps_data['PLANT_CD'].astype(str)
+    lubes_data['SUPPLY_LOC'] = lubes_data['SUPPLY_LOC'].astype(str)
+    for each_plant in lubes_ps_data['PLANT_CD'].unique().tolist():
+        if each_plant in di:
+            lubes_ps_data.loc[lubes_ps_data['PLANT_CD'] == each_plant,'ZZONE']= di[each_plant]
+    zone_map = {'WES':'West','NOR':'North','SOU':'South','EAS':'East','HQO':'HQO Customer'}
+    #lubes_ps_data = lubes_ps_data.merge(lubes_data[['SUPPLY_LOC','SALES_DISTRICT']],left_on = 'PLANT_CD',right_on = 'SUPPLY_LOC')
+    lubes_ps_data['Zone_Name'] = lubes_ps_data['ZZONE'].map(zone_map)
+    lubes_ps_data.to_csv('/tmp/lubes_ps_data.csv',index = False)
+    data = pd.concat([lubes_ps_data,data])
+
+    
+    '''
+    
     cursor.execute(f"""
                    
                    select t1.SUPPLY_LOC,t2.PLANT_CD,t2.ZZONE,t2.SBU FROM CONN_ENT.VW_AY_INV3_LUBES_STG t1 LEFT JOIN PS.EDW_PLANT_DIM t2 on t1.SUPPLY_LOC=t2.PLANT_CD 
@@ -295,6 +326,8 @@ def get_and_insert_data(cursor, query, params=None):
     print("data",len(data))
     print("psdata",len(lubes_ps_data))
     data = pd.concat([data,lubes_ps_data])
+    data = pl.from_pandas(data)
+    '''
     data = pl.from_pandas(data)
     
     insertToDB(data, params["table_name"])
