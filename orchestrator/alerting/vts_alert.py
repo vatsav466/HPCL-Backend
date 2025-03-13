@@ -91,7 +91,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
                             #print("last_created_at---->",last_created_at)
                             last_created_at = alert_count['data'][0]['created_at']
                             if last_created_at > maintenance_time:
-                                logger.info(f"Instance Already created for this vehicle_number:{record['tl_number']} bu:{record['location_type']} sap_id:{record['location_id']}")
+                                logger.info(f"Instance Already created for this for {key} vehicle_number:{record['tl_number']} bu:{record['location_type']} sap_id:{record['location_id']}")
                                 #print(f"Instance Already created for this vehicle_number:{record['tl_number']} bu:{record['location_type']} sap_id:{record['location_id']}")
                                 continue
                             else:
