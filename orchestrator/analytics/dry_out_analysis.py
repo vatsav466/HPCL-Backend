@@ -1136,6 +1136,71 @@ async def cris_product_mapping():
         "1683100": "TURBO",
         "1322000": "MS",
         "2823000": "MS",
-        "2682000": "POWER 99"
+        "2682000": "POWER 99",
+        "2811000": "MS",
+        "3912000": "TURBO",
+        "2816000": "POWER 99"
     }
     return product_mapping
+
+async def dry_out_diff():
+    cris_query = f'''select site_id, fcc_code, item_name,item_name product_grp, rosapcode, tank_no, status, tank_cnt
+                        from (
+                                select site_id, fcc_code,product_grp item_name,count(distinct tank_no) tank_cnt, 
+                                rosapcode, STRING_AGG(CAST(tank_no AS TEXT), ',') tank_no,
+                                case when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) <=0 then 1 
+                                when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) < 
+                                (sum(sch.avgsales_7days)/7) then 2
+                                when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) >= 
+                                (sum(sch.avgsales_7days)/7) and sum(case when pumpable_Stock>=0 
+                                then pumpable_Stock else 0 end) <= (sum(sch.avgsales_7days)/7)*3 then 3
+                                when sum(case when pumpable_Stock>=0 then pumpable_Stock else 0 end) > 
+                                (sum(sch.avgsales_7days)/7)*3 and sum(case when pumpable_Stock>=0 then 
+                                pumpable_Stock else 0 end) <=(sum(sch.avgsales_7days)/7)*6 then 4 
+                                else 5 end status
+                                from "HPCL_HOS".sch_inventory_forecast_dashboard sch
+                                where sch.volume>0
+                                group by site_id, fcc_code, product_grp,rosapcode
+                                order by site_id, fcc_code, product_grp
+                            ) result1
+                            where result1.status in ('1', '2')
+            '''
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    cris_resp = await function(
+        query=cris_query
+    )
+
+    novex_query = (f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days"
+                   f"mark_as_false from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close'")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    novex_resp = await function(
+        query=novex_query
+    )
+
+    cris_resp = pd.DataFrame(cris_resp)
+    novex_resp = pd.DataFrame(novex_resp)
+    novex_resp.replace({"product_code": await cris_product_mapping()}, inplace=True)
+
+    cris_resp = cris_resp.astype(str)
+    novex_resp = novex_resp.astype(str)
+    cris_resp = cris_resp.drop_duplicates(subset=['item_name', 'rosapcode', 'status'])
+    novex_resp = novex_resp.drop_duplicates(subset=['product_code', 'sap_id', 'dry_out_in_days'])
+
+    resp = pd.merge(
+        cris_resp, novex_resp,
+        left_on=['item_name', 'rosapcode', 'status'],
+        right_on=['product_code', 'sap_id', 'dry_out_in_days'],
+        how='outer',
+        indicator=True
+    )
+    resp = resp[resp['_merge'] != 'both']
+    resp.to_csv("/tmp/dryout_difference.csv", index=False)
+    return resp
