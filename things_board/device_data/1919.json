@@ -13417,6 +13417,11 @@
                     "sensor_name": "TLF Header Line MOV Close",
                     "sensor_tag": "PLC.SFTPLC.EFFECT_ALL_HEADER_MOV_CLOSED",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Hooter activated in control room",
+                    "sensor_tag": "PLC.SFTPLC.EFFECT_HOOTER_FOR_DYKE_FWP_CR",
+                    "normal_value": "0"
                 }
             ]
         },
@@ -13446,6 +13451,11 @@
                     "sensor_name": "TLF Header Line MOV Close",
                     "sensor_tag": "PLC.SFTPLC.EFFECT_ALL_HEADER_MOV_CLOSED",
                     "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Hooter activated in control room",
+                    "sensor_tag": "PLC.SFTPLC.EFFECT_HOOTER_FOR_DYKE_FWP_CR",
+                    "normal_value": "0"
                 }
             ]
         },
@@ -13474,6 +13484,11 @@
                 {
                     "sensor_name": "TLF Header Line MOV Close",
                     "sensor_tag": "PLC.SFTPLC.EFFECT_ALL_HEADER_MOV_CLOSED",
+                    "normal_value": "0"
+                },
+                {
+                    "sensor_name": "Hooter activated in control room",
+                    "sensor_tag": "PLC.SFTPLC.EFFECT_HOOTER_FOR_DYKE_FWP_CR",
                     "normal_value": "0"
                 }
             ]
