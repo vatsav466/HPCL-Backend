@@ -2,6 +2,8 @@ import urdhva_base
 import json
 import psycopg2
 import uuid
+import numpy as np
+import pandas as pd
 import polars as pl
 import hpcl_ceg_model
 import asyncio  # For handling async calls
@@ -55,6 +57,12 @@ class Postgresql:
 
     async def create_table(self, schema_name, table_name, sample_records, primary_key=[], unique_key=[]):
         """Create a table and upsert sample records."""
+        for record in sample_records:
+            for key, value in record.items():
+                if value is None or (isinstance(value, float) and np.isnan(value)) or value is pd.NaT:
+                    record[key] = None
+                if key == "timestamp" and isinstance(value, str):  # Convert timestamp properly
+                    record[key] = pd.to_datetime(value)  # Converts to datetime
         print("sample_records --> ", sample_records)
         if not isinstance(sample_records, pl.DataFrame):
             sample_records = pl.DataFrame(sample_records)

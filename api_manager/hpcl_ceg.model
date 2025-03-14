@@ -1777,7 +1777,7 @@ Model HostManualFanPrinted {
 Model HostUnauthorisedFlow {
     bay_number optional str
     bcu_number optional unique_field str
-    meter_number optional unique_field str
+    meter_number optional unique_field int
     timestamp optional unique_field datetime
     start_totalizer optional unique_field float
     end_totalizer optional unique_field float
@@ -1814,10 +1814,10 @@ Model HostMFMFactor {
     mfm_number optional unique_field str
     bcu_number optional unique_field str
     stock_code optional unique_field str
-    current_k_factor optional unique_field str
+    current_k_factor optional unique_field float
     last_k_factor optional unique_field str
     last_k_factor_change_date optional unique_field str
-    current_meter_factor optional unique_field str
+    current_meter_factor optional unique_field float
     last_meter_factor optional unique_field str
     last_meter_factor_change_date optional unique_field str
     sap_id optional unique_field str

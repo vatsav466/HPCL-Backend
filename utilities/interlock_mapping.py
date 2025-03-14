@@ -410,20 +410,13 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
     if not bu or (not interlock_name and not sop_id):
         return {}
     mapping = eval(f'{urdhva_base.utilities.snake_case(bu)}_interlock_mapping')
-    print("mapping --> ", mapping)
     filtered_data = []
     if sop_id:
-        print("sop_id-->", sop_id)
         filtered_data = list(filter(lambda x: x['sop_id'].lower() == sop_id.lower(), mapping))
-        print(f"Entries with sop_id '{sop_id}':")
-        # for item in filtered_data:
-        #     print(item)
         if len(filtered_data) > 1 and interlock_name:
             filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), filtered_data))
-            print("filtered_data(1)------>", filtered_data)
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-        print("filtered_data(2)", filtered_data)
     print("filtered_data--->", filtered_data)
     return filtered_data[0] if filtered_data else {}
 
