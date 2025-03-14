@@ -1895,3 +1895,29 @@ Model PerformanceIndex {
         sap_id optional str
     }
 }
+
+Model CrisAlertHistory {
+    vendor_name optional str
+    vendor_id optional str
+    location_id optional str
+    location_type optional str
+    ro_code optional str
+    interlock_type optional str
+    interlock_description optional str
+    device_name optional str
+    device_id optional str
+    severity optional str
+    tank_id optional str
+    nozzle_id optional str
+    pump_no optional str
+    alarm_id unique_field str
+    occurrence_date optional datetime
+    closure_date optional datetime
+    indent_no optional str
+    products optional productsDetails
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='location_id:sap_id'
+    }
+}

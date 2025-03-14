@@ -1100,3 +1100,14 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/performanceindex/{id}', tags=['PerformanceIndex'])
 async def delete(id: str):
     return await PerformanceIndex.delete(id)
+
+
+@router.get('/crisalerthistory/{id}', response_model=CrisAlertHistory, tags=['CrisAlertHistory'])
+async def get(id: str):
+    return await CrisAlertHistory.get(id, skip_secrets=True)
+
+
+@router.get('/crisalerthistory', response_model=CrisAlertHistoryGetResp, tags=['CrisAlertHistory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CrisAlertHistory.get_all(params, skip_secrets=True)
+

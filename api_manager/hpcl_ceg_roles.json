@@ -3923,6 +3923,69 @@
                     "name": "get_pi_score_by_category"
                 }
             ]
+        },
+        {
+            "name": "crisalerthistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CrisAlertHistory",
+            "attributes": {},
+            "uris": [
+                "/api/crisalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "crisalerthistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CrisAlertHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/crisalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "crisalerthistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CrisAlertHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/crisalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
