@@ -186,6 +186,7 @@ class crisDataCreate(pydantic.BaseModel):
 
 
 class Cris_Ingest_DataParams(pydantic.BaseModel):
+    vendor_name: str
     vendor_id: str
     location_id: str
     ro_code: str

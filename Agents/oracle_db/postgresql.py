@@ -71,7 +71,7 @@ class Postgresql:
         print(result)
         
          # Process each record to create and close alerts
-        if result:
+        if result and table_name != "HostUnauthorisedFlow":
           for record in data:
             try:
               # Fetch config based on table name

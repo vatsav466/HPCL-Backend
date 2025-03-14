@@ -3694,6 +3694,69 @@
             ]
         },
         {
+            "name": "masterstatus",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "MasterStatus",
+            "attributes": {},
+            "uris": [
+                "/api/masterstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "masterstatus_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "MasterStatus_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/masterstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "masterstatus_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "MasterStatus_admin",
+            "attributes": {},
+            "uris": [
+                "/api/masterstatus/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "tagsdata",
             "type": "all",
             "ownerManagedAccess": false,

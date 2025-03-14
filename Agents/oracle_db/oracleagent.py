@@ -3,6 +3,7 @@ import json
 import base64
 import typing
 import asyncio
+import datetime
 import cx_Oracle
 import traceback
 import pandas as pd
@@ -474,6 +475,7 @@ class DataMonitor:
             if not previous_records:
                 return current_records  # First-time, send all data
 
+            # Create a mapping of previous records using key fields
             previous_dict = {self._create_record_key(record, check_columns): record for record in previous_records}
 
             changed_records = []
@@ -485,10 +487,34 @@ class DataMonitor:
                     continue
 
                 previous = previous_dict[key_fields]
-                for col in check_columns:
-                    if col in current and col in previous and self.is_significant_change(current[col], previous[col]):
+                
+                # Special case for HOST_UNAUTHORIZEDFLOW
+                if table_name == "HOST_UNAUTHORIZEDFLOW":
+                    # Find timestamp column (assuming it's named 'timestamp', 'created_at', or similar)
+                    timestamp_col = next((col for col in current.keys() if 'time' in col.lower() or 'date' in col.lower()), None)
+                    
+                    # Create copies of records without timestamp
+                    current_without_timestamp = {k: v for k, v in current.items() if k != timestamp_col}
+                    previous_without_timestamp = {k: v for k, v in previous.items() if k != timestamp_col}
+                    
+                    # Check if any non-timestamp data has changed
+                    has_data_change = False
+                    for col in current_without_timestamp:
+                        if col in previous_without_timestamp and self.is_significant_change(current_without_timestamp[col], previous_without_timestamp[col]):
+                            has_data_change = True
+                            break
+                    
+                    if has_data_change:
                         changed_records.append(current)
-                        break
+                else:
+                    has_change = False
+                    # Regular check for other tables
+                    for col in current.keys():
+                        if col in current and col in previous and self.is_significant_change(current[col], previous[col]):
+                            has_change = True
+                            break
+                    if has_change:
+                        changed_records.append(current)
 
             return changed_records
         except Exception as e:
@@ -539,8 +565,8 @@ class DataMonitor:
 
                     if isinstance(result, pl.DataFrame) and result.shape[0] > 0:
                         result = result.with_columns(pl.lit(sap_id).alias("sap_id"))
-                        if table_name == "HOST_MANUALFANPRINTED":
-                            result = result.with_columns(pl.lit(pl.datetime.datetime.now()).alias("date"))
+                        # if table_name == "HOST_MANUALFANPRINTED":
+                        #     result = result.with_columns(pl.lit(datetime.datetime.now()).alias("date"))
                         all_data[table_name] = result.to_dicts()
                     else:
                         all_data[table_name] = []
@@ -589,8 +615,10 @@ class DataMonitor:
                         new_records = [r for r in new_records if not self._records_equal(r, self.last_sent_record[table_name])]
 
                     if new_records and (current_time - last_send) >= interval:
-                        changed_data[table_name] = [new_records[0]]
-                        self.last_sent_record[table_name] = new_records[0]
+                        # changed_data[table_name] = [new_records[0]]
+                        # self.last_sent_record[table_name] = new_records[0]
+                        changed_data[table_name] = new_records  # Send all changed records
+                        self.last_sent_record[table_name] = new_records[-1] if new_records else None
                         self.last_send_time[table_name] = current_time
 
                 else:
@@ -602,7 +630,9 @@ class DataMonitor:
                             changed_data[table_name] = self.accumulated_changes[table_name]
                             self.accumulated_changes[table_name] = []
                             self.last_send_time[table_name] = current_time
-
+            if "HOST_MANUALFANPRINTED" in changed_data:
+                for record in changed_data["HOST_MANUALFANPRINTED"]:
+                    record["date"] = datetime.datetime.now().isoformat()
             if changed_data:
                 RabbitMQProducer().send_to_rabbitmq(changed_data)
 

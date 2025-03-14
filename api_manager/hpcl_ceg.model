@@ -1673,6 +1673,10 @@ Model HostCancelledTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    compartment_number optional unique_field str
+    entry_time optional unique_field datetime
+    exit_time optional unique_field datetime
+    remarks optional str
 
     Config=> {
         access_key_mapping=''
@@ -1711,6 +1715,7 @@ Model HostLocalLoadedTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    compartment_number optional unique_field str
 
     Config=> {
         access_key_mapping=''
@@ -1772,7 +1777,7 @@ Model HostManualFanPrinted {
 Model HostUnauthorisedFlow {
     bay_number optional str
     bcu_number optional unique_field str
-    meter_number optional unique_field int
+    meter_number optional unique_field str
     timestamp optional unique_field datetime
     start_totalizer optional unique_field float
     end_totalizer optional unique_field float
@@ -1811,13 +1816,23 @@ Model HostMFMFactor {
     stock_code optional unique_field str
     current_k_factor optional unique_field str
     last_k_factor optional unique_field str
-    last_k_factor_change_date optional unique_field datetime
+    last_k_factor_change_date optional unique_field str
     current_meter_factor optional unique_field str
     last_meter_factor optional unique_field str
     last_meter_factor_change_date optional unique_field str
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model MasterStatus {
+    status optional str
+    location_code optional str
+    active_server_name optional str
 
     Config=> {
         access_key_mapping=''
