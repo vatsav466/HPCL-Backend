@@ -1174,7 +1174,7 @@ async def dry_out_diff():
         query=cris_query
     )
 
-    novex_query = (f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days"
+    novex_query = (f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days, "
                    f"mark_as_false from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close'")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
