@@ -5408,3 +5408,95 @@ class Performanceindex_Get_Pi_Score_By_CategoryParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+class CrisAlertHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'cris_alert_history'
+    
+    vendor_name: Mapped[typing.Optional[str]] = mapped_column("vendor_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    ro_code: Mapped[typing.Optional[str]] = mapped_column("ro_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    interlock_type: Mapped[typing.Optional[str]] = mapped_column("interlock_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    interlock_description: Mapped[typing.Optional[str]] = mapped_column("interlock_description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_name: Mapped[typing.Optional[str]] = mapped_column("device_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_id: Mapped[typing.Optional[str]] = mapped_column("device_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    severity: Mapped[typing.Optional[str]] = mapped_column("severity", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tank_id: Mapped[typing.Optional[str]] = mapped_column("tank_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    nozzle_id: Mapped[typing.Optional[str]] = mapped_column("nozzle_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    pump_no: Mapped[typing.Optional[str]] = mapped_column("pump_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    alarm_id: Mapped[str] = mapped_column("alarm_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    occurrence_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("occurrence_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    closure_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closure_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    products: Mapped[typing.Optional[typing.Any]] = mapped_column("products", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(alarm_id, name="cris_alert_history_alarm_id"),)
+
+
+class CrisAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'cris_alert_history'
+    
+    vendor_name: typing.Optional[str] = pydantic.Field("", **{})
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_type: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_description: typing.Optional[str] = pydantic.Field("", **{})
+    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
+    severity: typing.Optional[str] = pydantic.Field("", **{})
+    tank_id: typing.Optional[str] = pydantic.Field("", **{})
+    nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
+    pump_no: typing.Optional[str] = pydantic.Field("", **{})
+    alarm_id: str
+    occurrence_date: typing.Optional[datetime.datetime] | None = None
+    closure_date: typing.Optional[datetime.datetime] | None = None
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
+    products: typing.Optional[productsDetailsCreate] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = CrisAlertHistorySchema
+        upsert_keys = ['alarm_id']
+        access_key_mapping = ['location_id:sap_id']
+
+
+class CrisAlertHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'cris_alert_history'
+    
+    vendor_name: typing.Optional[str] = pydantic.Field("", **{})
+    vendor_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_type: typing.Optional[str] = pydantic.Field("", **{})
+    ro_code: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_type: typing.Optional[str] = pydantic.Field("", **{})
+    interlock_description: typing.Optional[str] = pydantic.Field("", **{})
+    device_name: typing.Optional[str] = pydantic.Field("", **{})
+    device_id: typing.Optional[str] = pydantic.Field("", **{})
+    severity: typing.Optional[str] = pydantic.Field("", **{})
+    tank_id: typing.Optional[str] = pydantic.Field("", **{})
+    nozzle_id: typing.Optional[str] = pydantic.Field("", **{})
+    pump_no: typing.Optional[str] = pydantic.Field("", **{})
+    alarm_id: typing.Optional[str] | None = None
+    occurrence_date: typing.Optional[datetime.datetime] | None = None
+    closure_date: typing.Optional[datetime.datetime] | None = None
+    indent_no: typing.Optional[str] = pydantic.Field("", **{})
+    products: typing.Optional[productsDetailsCreate] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = CrisAlertHistorySchema
+        upsert_keys = ['alarm_id']
+        access_key_mapping = ['location_id:sap_id']
+
+
+class CrisAlertHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[CrisAlertHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

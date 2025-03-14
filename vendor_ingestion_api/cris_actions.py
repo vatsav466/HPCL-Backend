@@ -2,8 +2,10 @@ import urdhva_base
 from ingestion_api_enum import *
 from ingestion_api_model import *
 import fastapi
-import json
-import requests
+import datetime
+import hpcl_ceg_model
+import utilities.helpers as helpers
+import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/cris')
 
@@ -26,34 +28,36 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
     - dict: Status message indicating the success of the data submission.
     """
     logger.info(f"Received CRIS data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
+
+    if isinstance(data.data, list) and len(data.data) > 0:
+        enriched_data = [
+            {
+                **entry.dict(),
+                'vendor_name': data.vendor_name,
+                'vendor_id': data.vendor_id,
+                'location_id': data.location_id,
+                'ro_code': data.ro_code,
+                'location_type': data.location_type,
+            }
+            for entry in data.data
+        ]
+    else:
+        logger.error(f"Invalid data structure: data.data is not a list or is empty")
+        return {"status": False, "message": "Invalid data", "data": []}
+    for entry in enriched_data:
+        entry['occurrence_date'] = datetime.datetime.strptime(entry['occurrence_date'], "%Y-%m-%d %H:%M:%S").isoformat()
+        if entry['closure_date']:
+            entry['closure_date'] = datetime.datetime.strptime(entry['closure_date'], "%Y-%m-%d %H:%M:%S").isoformat()
+        await hpcl_ceg_model.CrisAlertHistoryCreate(**entry).create(upsert=True)
+        if not entry['closure_date']:
+            camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
+                                                        alert_section="RO")
+            await alert_manager.create_alert({**entry, "alert_type": "RO"}, camunda_url=camunda_url)
+        else:
+            query = (f"""select * from alerts where external_id = '{entry["alarm_id"]}'"""
+                     f"and violation_type = '{entry["interlock_type"]}' and alert_status != 'Close'")
+            alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+            alert_data = alert_data.get("data", [])
+            await alert_manager.close_alert(alert_data=alert_data)
+
     return True, "Success"
-
-    # try:
-    #     header = {"Content-Type": "application/json", "Accept": "application/json"}
-
-    #     tagmap = dict()
-    #     alertid = ""
-        
-    #     for _data in data.data:
-    #         if isinstance(_data, dict):
-    #             _data = _data.__dict__
-        
-    #         cris_interlock = {"businessKey": alertid,
-    #                 "variables": {"vendor_id": {"value": data.vendor_id, "type": "String"},
-    #                                 "location_id": {"value": data.location_id, "type": "String"},
-    #                                 "location_type": {"value": data.location_type, "type": "String"},
-    #                                 "interlock_type": {"value": _data['interlock_type'], "type": "String"},
-    #                                 "interlock_description": {"value": _data['interlock_description'], "type": "String"},
-    #                                 "device_id": {"value": _data['device_id'], "type": "String"},
-    #                                 "device_value": {"value": _data['device_value'], "type": "String"}
-    #                                 }}
-    #         camundaurl = urdhva_base.settings.camundaurl + "/engine-rest/process-definition/key/" + tagmap[alertname] + "/start"
-    #         r = requests.post(camundaurl, headers=headers, data=json.dumps(cris_interlock))
-    #         logger.info("Justify for:%s Data:%s Camunda Resp:%s" % (businesskey, body, r.status_code))
-    #     return {
-    #         "status": True, "message": "Justification Submitted", "data": []
-    #     }
-        
-    # except Exception as e:
-    #     logger.error(e)
-    #     return {"status": False, "message": str(e), "data": []}

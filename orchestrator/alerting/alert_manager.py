@@ -188,6 +188,7 @@ async def close_emlock_alert(alert_data, input_data):
         "metaData": json.dumps(meta_data)
     }
     print("Params EMLock: ", params)
+    await emlock_analysis.close_emlock_alert(alert_data=params)
 
 
 async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):
