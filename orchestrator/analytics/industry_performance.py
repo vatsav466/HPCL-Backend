@@ -15,7 +15,6 @@ from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
-
 Base_Filters = ['"cumulative_level"', '"sbu_name"', '"region_name"', '"statename"', '"distname"',
                 '"month_name"', '"productname"']
 OMC = {
@@ -989,12 +988,13 @@ async def get_category_wise_cumulative_data(filters):
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
         where_conditions = [clause]
-    group_by = ["coname", "company_name","fiscal_year"]
-    req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "coname", "company_name","fiscal_year"]
+    group_by = ["coname", "company_name", "fiscal_year"]
+    req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "coname", "company_name", "fiscal_year"]
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
                                        group_by, "")
     df = pd.DataFrame(resp_data)
-    df["sales"] = df["sales"].astype(str).apply(Decimal)
+    df.to_csv('/tmp/df.csv',index = False)
+    df["sales"] = df["sales"].astype(str).apply(float)
     fiscal_years = sorted(df["fiscal_year"].unique())
     result_dict = {year: {} for year in fiscal_years}
     for year in fiscal_years:
@@ -1101,7 +1101,7 @@ async def generate_omc_compare_data(filters, drill_state):
 
     group_by = ["coname", "fiscal_year"]
     req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "fiscal_year", "coname"]
-    if drill_state not in group_by:
+    if drill_state and drill_state not in group_by:
         group_by.append(drill_state)
         req_keys.append(drill_state)
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
@@ -1111,7 +1111,7 @@ async def generate_omc_compare_data(filters, drill_state):
                                  "Market Share History": {}})
 
     for entry in resp_data:
-        drill_key = entry[drill_state]
+        drill_key = entry[drill_state] if drill_state else "cumulative"
         company = entry["coname"]
         sales = float(entry["sales"])  # Convert Decimal to int
 
@@ -1121,7 +1121,7 @@ async def generate_omc_compare_data(filters, drill_state):
             table[drill_key]["History"][company] = sales
 
     # Convert table to list format
-    structured_data = [{f"{drill_state}": key, **values} for key, values in table.items() if key]
+    structured_data = [{f"{drill_state if drill_state else 'cumulative'}": key, **values} for key, values in table.items() if key]
 
     # Calculating Market Share
     for entry in structured_data:
@@ -1140,7 +1140,9 @@ async def generate_omc_compare_data(filters, drill_state):
         for name in entry:
             if isinstance(entry[name], dict):
                 entry[name] = {key: value for key, value in entry[name].items() if key in required_companies}
-
+    for rec in structured_data:
+        if 'cumulative' in rec:
+            del rec['cumulative']
     return structured_data
 
 
