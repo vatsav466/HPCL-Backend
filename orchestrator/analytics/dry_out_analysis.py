@@ -675,8 +675,21 @@ async def _get_ims_day_wise_report(report_date: str):
     stats_resp = stats_resp.drop_duplicates(subset=["LOCN_CODE", "INDENT_NO", "DEALER_CODE", "PROD"], keep='first')
     return stats_resp.to_dict(orient='records')
 
+async def get_custom_timestamp():
+    now = datetime.datetime.now()
+    # If minutes are less than 10, take the previous hour
+    if now.minute < 10:
+        adjusted_time = now - datetime.timedelta(hours=1)
+    else:
+        adjusted_time = now
+    # Format as YYMMDD-HH00
+    timestamp = adjusted_time.strftime("%y%m%d-%H00")
+
+    return timestamp
+
 async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     dry_out_in_days = "', '".join(x for x in dry_out_in_days)
+    date_time = await get_custom_timestamp()
     query = f"""WITH CombinedData AS (
                     SELECT 
                         ir."LOCN_CODE",
@@ -710,13 +723,17 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     LEFT JOIN 
                         "IMS_SAP"."INDENT_PRODUCTS" ip
                     ON 
-                        COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
+                        ir.run_id = '{date_time}'
+                        AND ip.run_id = '{date_time}'
+                        AND COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
                         AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
                     LEFT JOIN 
                         "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
                     ON 
-                        COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
+                        ir.run_id = '{date_time}'
+                        AND ip.run_id = '{date_time}'
+                        AND COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
                         AND tse."CARD_STATUS" = 'O'
                         AND tse."LOADED_ON" >= ir."PROD_REQD_DT"
@@ -738,7 +755,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         avgsales_7days
                     
                     FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
-                    WHERE run_id = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMMDD-HH00')
+                    WHERE run_id = '{date_time}'
                 )
                 SELECT 
                     a.zone as "ZONE",
@@ -766,7 +783,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     cd."LOADED_ON",
                     sd.avgsales_7days as "AVGSALES_7DAYS"
                 FROM 
-                    (SELECT * 
+                    (SELECT sap_id, indent_no, product_code, zone, region, sales_area, location_name, terminal_plant_id, indent_status, dry_out_in_days
                      FROM alerts 
                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
                      AND indent_status NOT IN ('Cancelled', 'Completed')
@@ -780,10 +797,12 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                 LEFT JOIN 
                     SalesData sd
                 ON 
-                    COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
-                    AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
-                WHERE 
-                    cd.rn = 1 or cd.rn is null
+                    a.sap_id = sd.rosapcode OR (a.sap_id IS NULL AND sd.rosapcode IS NULL)
+                    AND a.product_code = sd.item_name_code OR (a.product_code IS NULL AND sd.item_name_code IS NULL)
+--                     COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
+--                     AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
+--                 WHERE 
+--                     cd.rn = 1 or cd.rn is null
                 ORDER BY 
                     a.indent_no desc;"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
