@@ -1819,10 +1819,10 @@ Model HostMFMFactor {
     mfm_number optional unique_field str
     bcu_number optional str
     stock_code optional unique_field str
-    current_k_factor optional unique_field float
+    current_k_factor optional float
     last_k_factor optional str
     last_k_factor_change_date optional str
-    current_meter_factor optional unique_field float
+    current_meter_factor optional float
     last_meter_factor optional str
     last_meter_factor_change_date optional str
     sap_id optional unique_field str

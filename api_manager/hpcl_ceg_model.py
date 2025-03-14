@@ -5141,7 +5141,7 @@ class HostMFMFactorSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(mfm_number, stock_code, current_k_factor, current_meter_factor, sap_id, name="host_mfm_factor_mfmnu_stock_curre_curre_sapid"),)
+    __table_args__ = (UniqueConstraint(mfm_number, stock_code, sap_id, name="host_mfm_factor_mfm_number_stock_code_sap_id"),)
 
 
 class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5165,7 +5165,7 @@ class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'stock_code', 'current_k_factor', 'current_meter_factor', 'sap_id']
+        upsert_keys = ['mfm_number', 'stock_code', 'sap_id']
 
 
 class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
@@ -5189,7 +5189,7 @@ class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'stock_code', 'current_k_factor', 'current_meter_factor', 'sap_id']
+        upsert_keys = ['mfm_number', 'stock_code', 'sap_id']
 
 
 class HostMFMFactorGetResp(pydantic.BaseModel):
