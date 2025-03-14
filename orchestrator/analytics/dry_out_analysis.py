@@ -712,32 +712,25 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         ip."JDE_TRUCK_NO",
                         tse."LOADED_ON",
                         ROW_NUMBER() OVER (
-                            PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
-                                         COALESCE(ir."INDENT_NO"::TEXT, ''), 
-                                         COALESCE(ir."DEALER_CODE"::TEXT, ''), 
-                                         COALESCE(ip."PROD"::TEXT, '') 
-                            ORDER BY tse."LOADED_ON" ASC
+                            PARTITION BY ir."LOCN_CODE", ir."INDENT_NO", ir."DEALER_CODE", ip."PROD"
+                            ORDER BY tse."LOADED_ON" ASC NULLS LAST
                         ) AS rn
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST" ir
                     LEFT JOIN 
-                        "IMS_SAP"."INDENT_PRODUCTS" ip
+                        (select * from "IMS_SAP"."INDENT_PRODUCTS" where substr(run_id, 1, 6) = '{date_time[:6]}') as ip
                     ON 
---                        ir.run_id = '{date_time}'
---                        AND ip.run_id = '{date_time}'
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
                         AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
                     LEFT JOIN 
-                        "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+                        (select * from "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" where substr(run_id, 1, 6) = '{date_time[:6]}') as tse 
                     ON 
---                         ir.run_id = '{date_time}'
---                         AND ip.run_id = '{date_time}'
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
                         AND tse."CARD_STATUS" = 'O'
                         AND tse."LOADED_ON" >= ir."PROD_REQD_DT"
-                        AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+                        AND tse."LOADED_ON" BETWEEN ir."PROD_REQD_DT" AND (ir."PROD_REQD_DT" + INTERVAL '1 day')
                 ),
                 SalesData AS (
                     SELECT 
@@ -755,7 +748,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         avgsales_7days
                     
                     FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
-                    WHERE run_id = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMMDD-HH00')
+                    WHERE run_id = '{date_time}'
                 )
                 SELECT 
                     a.zone as "ZONE",
@@ -797,8 +790,6 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                 LEFT JOIN 
                     SalesData sd
                 ON 
---                     a.sap_id = sd.rosapcode OR (a.sap_id IS NULL AND sd.rosapcode IS NULL)
---                     AND a.product_code = sd.item_name_code OR (a.product_code IS NULL AND sd.item_name_code IS NULL)
                     COALESCE(a.sap_id::TEXT, '') = COALESCE(sd.rosapcode::TEXT, '')
                     AND COALESCE(a.product_code::TEXT, '') = COALESCE(sd.item_name_code::TEXT, '')
                 WHERE 
