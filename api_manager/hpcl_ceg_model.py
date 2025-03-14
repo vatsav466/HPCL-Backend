@@ -4979,7 +4979,7 @@ class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
     
     bay_number: Mapped[typing.Optional[str]] = mapped_column("bay_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bcu_number: Mapped[typing.Optional[str]] = mapped_column("bcu_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    meter_number: Mapped[typing.Optional[int]] = mapped_column("meter_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    meter_number: Mapped[typing.Optional[str]] = mapped_column("meter_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     timestamp: Mapped[typing.Optional[datetime.datetime]] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     start_totalizer: Mapped[typing.Optional[float]] = mapped_column("start_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
     end_totalizer: Mapped[typing.Optional[float]] = mapped_column("end_totalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
@@ -4996,7 +4996,7 @@ class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
     
     bay_number: typing.Optional[str] = pydantic.Field("", **{})
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
-    meter_number: typing.Optional[int] = pydantic.Field(0, **{})
+    meter_number: typing.Optional[str] = pydantic.Field("", **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
     start_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
     end_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
@@ -5018,7 +5018,7 @@ class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
     
     bay_number: typing.Optional[str] = pydantic.Field("", **{})
     bcu_number: typing.Optional[str] = pydantic.Field("", **{})
-    meter_number: typing.Optional[int] = pydantic.Field(0, **{})
+    meter_number: typing.Optional[str] = pydantic.Field("", **{})
     timestamp: typing.Optional[datetime.datetime] | None = None
     start_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
     end_totalizer: typing.Optional[float] = pydantic.Field(0.0, **{})
@@ -5122,7 +5122,7 @@ class HostMFMFactorSchema(UrdhvaPostgresBase):
     stock_code: Mapped[typing.Optional[str]] = mapped_column("stock_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     current_k_factor: Mapped[typing.Optional[str]] = mapped_column("current_k_factor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     last_k_factor: Mapped[typing.Optional[str]] = mapped_column("last_k_factor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    last_k_factor_change_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("last_k_factor_change_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    last_k_factor_change_date: Mapped[typing.Optional[str]] = mapped_column("last_k_factor_change_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     current_meter_factor: Mapped[typing.Optional[str]] = mapped_column("current_meter_factor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     last_meter_factor: Mapped[typing.Optional[str]] = mapped_column("last_meter_factor", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     last_meter_factor_change_date: Mapped[typing.Optional[str]] = mapped_column("last_meter_factor_change_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -5141,7 +5141,7 @@ class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
     stock_code: typing.Optional[str] = pydantic.Field("", **{})
     current_k_factor: typing.Optional[str] = pydantic.Field("", **{})
     last_k_factor: typing.Optional[str] = pydantic.Field("", **{})
-    last_k_factor_change_date: typing.Optional[datetime.datetime] | None = None
+    last_k_factor_change_date: typing.Optional[str] = pydantic.Field("", **{})
     current_meter_factor: typing.Optional[str] = pydantic.Field("", **{})
     last_meter_factor: typing.Optional[str] = pydantic.Field("", **{})
     last_meter_factor_change_date: typing.Optional[str] = pydantic.Field("", **{})
@@ -5165,7 +5165,7 @@ class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
     stock_code: typing.Optional[str] = pydantic.Field("", **{})
     current_k_factor: typing.Optional[str] = pydantic.Field("", **{})
     last_k_factor: typing.Optional[str] = pydantic.Field("", **{})
-    last_k_factor_change_date: typing.Optional[datetime.datetime] | None = None
+    last_k_factor_change_date: typing.Optional[str] = pydantic.Field("", **{})
     current_meter_factor: typing.Optional[str] = pydantic.Field("", **{})
     last_meter_factor: typing.Optional[str] = pydantic.Field("", **{})
     last_meter_factor_change_date: typing.Optional[str] = pydantic.Field("", **{})
