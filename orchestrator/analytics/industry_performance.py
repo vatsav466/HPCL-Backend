@@ -1000,12 +1000,19 @@ async def get_category_wise_cumulative_data(filters):
     for year in fiscal_years:
         filtered_df = df[df["fiscal_year"] == year]
         
+        filtered_df_mpsu = filtered_df[filtered_df['coname'].isin(OMC['MPSU'])]
+        filtered_df_mpsu['company_name'] = 'MPSU'
+        filtered_df_psu = filtered_df[filtered_df['coname'].isin(OMC['MPSU']+OMC['OtherPSU'])]
+        filtered_df_psu['company_name'] = 'PSU'
+        filtered_df_pvt = filtered_df[filtered_df['coname'].isin(OMC['PSU']+OMC['PVT'])]
+        filtered_df_pvt['company_name'] = 'PSU+PVT'
+        filtered_df = pd.concat([filtered_df_mpsu,filtered_df_psu,filtered_df_pvt])
+        #filtered_df.to_csv('/tmp/filter.csv',index = False)
         for category in filtered_df["company_name"].unique():
             category_df = filtered_df[filtered_df["company_name"] == category]
             result_dict[year][category] = {
                 row["coname"]: row["sales"] for _, row in category_df.iterrows()
             }
-
     # Compute growth percentage
     growth_dict = {}
     if len(fiscal_years) > 1:
@@ -1161,3 +1168,4 @@ async def generate_industry_recommendations():
     # Generating auto recommendations
     # Compare HPCL last year vs this year lower by state, district, product
     ...
+
