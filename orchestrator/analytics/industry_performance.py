@@ -993,7 +993,6 @@ async def get_category_wise_cumulative_data(filters):
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
                                        group_by, "")
     df = pd.DataFrame(resp_data)
-    df.to_csv('/tmp/df.csv',index = False)
     df["sales"] = df["sales"].astype(str).apply(float)
     fiscal_years = sorted(df["fiscal_year"].unique())
     result_dict = {year: {} for year in fiscal_years}
@@ -1013,6 +1012,7 @@ async def get_category_wise_cumulative_data(filters):
             result_dict[year][category] = {
                 row["coname"]: row["sales"] for _, row in category_df.iterrows()
             }
+
     # Compute growth percentage
     growth_dict = {}
     if len(fiscal_years) > 1:
@@ -1046,7 +1046,7 @@ async def generate_omc_compare_data(filters, drill_state):
     ind_sbu_cumulative = [x['value'] for x in filters if 'ind_sbu_cumulative' in x['key'].lower()]
 
     # Fetching all selected Company groups
-    selected_co = [x['value'] for x in filters if x['key'].strip() == 'cogroup']
+    selected_co = [x['value'].strip() for x in filters if x['key'].strip() == 'cogroup']
     # If no group selected then considering only MPSU
     if not selected_co:
         selected_co = ["MPSU"]
@@ -1055,9 +1055,12 @@ async def generate_omc_compare_data(filters, drill_state):
     market_share_companies = []
     for co in selected_co:
         market_share_companies.extend(OMC.get(co, []))
+
+    market_share_companies = list(set(market_share_companies))
         
     # Fetching all selected companies which will send for display
-    required_companies = [x['value'].split(',') for x in filters if x['key'].strip('"') == 'coname'][0]
+    required_companies = list(set([[rec.strip() for rec in x['value'].split(',')]
+                                   for x in filters if x['key'].strip('"') == 'coname'][0]))
     if not required_companies:
         required_companies = market_share_companies
 
