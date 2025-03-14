@@ -1817,7 +1817,7 @@ Model HostOverLoadedTts{
 
 Model HostMFMFactor {
     mfm_number optional unique_field str
-    bcu_number optional unique_field str
+    bcu_number optional str
     stock_code optional unique_field str
     current_k_factor optional unique_field float
     last_k_factor optional str

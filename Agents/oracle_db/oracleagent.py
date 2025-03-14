@@ -1,6 +1,6 @@
 import sys
 import json
-import base64
+import datetime  # Add missing import
 import typing
 import asyncio
 import cx_Oracle
@@ -8,31 +8,35 @@ import traceback
 import pandas as pd
 import polars as pl
 from rabbitmq_producer import RabbitMQProducer
-from sshtunnel import SSHTunnelForwarder
 
 # Set stdout encoding to UTF-8 to handle non-ASCII characters
 sys.stdout.reconfigure(encoding='utf-8')
 
 dtype_map = {
-            'String': 'VARCHAR2(255)',
-            'Int64': 'NUMBER',
-            'Int32': 'NUMBER',
-            'Boolean': 'NUMBER(1)',
-            'Float64': 'NUMBER',
-            'Float32': 'NUMBER',
-            'Object': 'VARCHAR2(4000)',
-            'Datetime': 'DATE',
-            'Utf8': 'NVARCHAR2(255)',
-            "Datetime(time_unit='us', time_zone=None)": 'DATE'
-        }
+    'String': 'VARCHAR2(255)',
+    'Int64': 'NUMBER',
+    'Int32': 'NUMBER',
+    'Boolean': 'NUMBER(1)',
+    'Float64': 'NUMBER',
+    'Float32': 'NUMBER',
+    'Object': 'VARCHAR2(4000)',
+    'Datetime': 'DATE',
+    'Utf8': 'NVARCHAR2(255)',
+    "Datetime(time_unit='us', time_zone=None)": 'DATE'
+}
 
 with open("config.json", "r", encoding="utf-8") as config_file:
     config = json.load(config_file)
 
-# Extract Oracle credentials and table names
+# Extract configuration
 oracle_config = config["oracle"]
 table_names = config["oracle_tables"]
-sap_id = config["sap_id"]
+sap_id = config.get("sap_id", "")  # Safely get sap_id with default
+
+# Define table_queries - this was missing
+table_queries = {}  # Define empty dict or specific queries as needed
+# Example: table_queries = {"HOST_UNAUTHORIZEDFLOW": "SELECT * FROM HOST_UNAUTHORIZEDFLOW"}
+
 
 class BaseAction:
     def __init__(self, params: typing.Dict, sleep_duration=30):
@@ -42,6 +46,8 @@ class BaseAction:
 
 
 class Oracle(BaseAction):
+    # Oracle class implementation unchanged...
+    # [Oracle class code remains the same]
     def __init__(self, params: typing.Dict):
         super().__init__(params)
 
@@ -343,7 +349,7 @@ class Oracle(BaseAction):
                 
             return pl.from_pandas(final_df)
         except cx_Oracle.Error as err:
-            print(err)
+            print(f"Oracle Error for table {table_name}: {err}")
             traceback.print_exc(file=sys.stdout)
             return {
                 "status": False, "message": f"Not able to fetch data {err}", "data": []
@@ -417,8 +423,8 @@ class DataMonitor:
         self.oracle = oracle
         self.table_names = table_names
         self.sleep_duration = sleep_duration
-        self.previous_data = {}  # Initialize as an empty dictionary, not a list
-        self.table_queries = table_queries or {}
+        self.previous_data = {}  # Initialize as an empty dictionary
+        self.table_queries = table_queries  # Use the global table_queries
 
     async def compare_and_send(self, current_data):
         """
@@ -445,13 +451,16 @@ class DataMonitor:
 
                 if new_records:
                     changed_data[table_name] = new_records  # Store only changed records
+                    
+            # Add timestamp to specific table records if needed
             if "HOST_MANUALFANPRINTED" in changed_data:
                 for record in changed_data["HOST_MANUALFANPRINTED"]:
-                    record["date"] = datetime.date()
+                    recor["date"] = datetime.date.today()
                     record["date_time"] = datetime.datetime.now().isoformat()
+                    
             # Send only changed records
             if changed_data:
-                await RabbitMQProducer().send_to_rabbitmq(changed_data)  # Added await
+                await RabbitMQProducer().send_to_rabbitmq(changed_data)
                 print(f"Sent changed data to RabbitMQ for tables: {list(changed_data.keys())}")
             else:
                 print("No changes detected. Nothing to send.")
@@ -468,63 +477,78 @@ class DataMonitor:
         Fetch data asynchronously from Oracle tables.
         """
         try:
-            tasks = {
-                table: self.oracle.get_data(query=f"SELECT *, TO_CHAR(timestamp, 'YYYY-MM-DD') AS timestamp FROM {table}", table_name=table) 
-                if table == "HOST_UNAUTHORIZEDFLOW" 
-                else self.oracle.get_data(table_name=table, query=query) if query 
-                else self.oracle.get_data(table_name=table)
-                for table, query in self.table_queries.items()
-            }
+            # Create a dictionary to store tasks
+            tasks = {}
+            results = {}
+            
+            # Create tasks for each table
+            for table in self.table_names:
+                if table == "HOST_UNAUTHORIZEDFLOW":
+                    # Special case for this table
+                    query = f"SELECT t.*, TO_CHAR(t.timestamp, 'YYYY-MM-DD') AS timestamp FROM {table} t"
+                    tasks[table] = self.oracle.get_data(table_name=table, query=query)
+                elif table in self.table_queries and self.table_queries[table]:
+                    # Use custom query if defined
+                    tasks[table] = self.oracle.get_data(table_name=table, query=self.table_queries[table])
+                else:
+                    # Default case - just get all data from the table
+                    tasks[table] = self.oracle.get_data(table_name=table)
+            
+            # Execute all tasks in parallel
+            for table_name, task in tasks.items():
+                try:
+                    result = await task
+                    results[table_name] = result
+                except Exception as e:
+                    print(f"Error fetching data for table {table_name}: {e}")
+                    results[table_name] = None
 
-            # Use asyncio.gather on the values
-            result = await asyncio.gather(*tasks.values())
-
-            # Maintain table names with results
-            results = dict(zip(tasks.keys(), result))
-
-
-            # Safe printing with error handling
-            try:
-                print("Number of results:", len(results))  # Just print the count, not the actual data
-            except UnicodeEncodeError:
-                print("Note: Unable to print results due to encoding issues")
+            print(f"Number of results: {len(results)}")
 
             processed_results = {}
 
-            for table, item in zip(self.table_names, results):
-                if isinstance(item, dict):  # Handle error messages
-                    print(f"Error in {table}:", item.get("message", "Unknown error"))
-                    continue  # Skip errors
+            for table_name, result in results.items():
+                # Skip tables with errors or no data
+                if result is None:
+                    continue
+                    
+                if isinstance(result, dict):  # Handle error messages
+                    print(f"Error in {table_name}:", result.get("message", "Unknown error"))
+                    continue
                 
-                if isinstance(item, pl.DataFrame) and item.shape[0] > 0:  # Skip empty DataFrames
+                if isinstance(result, pl.DataFrame) and result.shape[0] > 0:  # Skip empty DataFrames
                     try:
-                        records = item.to_dicts()
+                        records = result.to_dicts()
                         
                         # Add sap_id to each record
                         for record in records:
-                            record["sap_id"] = sap_id  
+                            record["sap_id"] = sap_id
                         
-                        processed_results[table] = records  # Store data under table name
+                        processed_results[table_name] = records
+                        print(f"Processed {len(records)} records for {table_name}")
                     except Exception as e:
-                        print(f"Error processing data for table {table}: {e}")
+                        print(f"Error processing data for table {table_name}: {e}")
             
-            # Safe printing for processed results
-            try:
-                print(f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}")
-            except UnicodeEncodeError:
-                print(f"Processed data for {len(processed_results)} tables (names not printable due to encoding)")
-                
-            return processed_results  # Return as a dictionary
+            print(f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}")
+            return processed_results
+            
         except Exception as e:
             print(traceback.format_exc())
             print(f"Error in fetch_data: {e}")
-            return {}  # Return empty dict on error, not None
+            return {}  # Return empty dict on error
 
     async def run(self):
         """
         Periodically check Oracle DB for data changes
         """
         try:
+            # Test the Oracle connection first
+            connection_test = await self.oracle.test_connection()
+            if not connection_test["status"]:
+                print(f"ERROR: Cannot connect to Oracle database: {connection_test['message']}")
+                print("Please check your Oracle credentials and connection settings.")
+                return
+                
             print("Starting data monitoring...")
             while True:
                 print(f"Fetching data (checking every {self.sleep_duration} seconds)")
@@ -546,9 +570,28 @@ class DataMonitor:
             await self.run()
 
 async def main():
-    oracle = Oracle(oracle_config)  # Initialize Oracle connection
+    # Test Oracle connection before starting monitoring
+    oracle = Oracle(oracle_config)
+    
+    print("Testing Oracle connection...")
+    connection_result = await oracle.test_connection()
+    if not connection_result["status"]:
+        print(f"ERROR: Could not connect to Oracle: {connection_result['message']}")
+        print("Check your connection details in config.json and try again.")
+        return
+
+    print("Oracle connection successful!")
+    
+    # Initialize the monitor
     monitor = DataMonitor(oracle, table_names, sleep_duration=10)
-    await monitor.run()  # Start monitoring
+    
+    # Print configuration info
+    print(f"Configured to monitor {len(table_names)} tables:")
+    for i, table in enumerate(table_names):
+        print(f"  {i+1}. {table}")
+    
+    # Start monitoring
+    await monitor.run()
 
 if __name__ == "__main__":
     asyncio.run(main())
