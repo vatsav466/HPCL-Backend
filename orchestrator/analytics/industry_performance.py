@@ -14,6 +14,8 @@ from orchestrator.dbconnector.widget_actions import widget_actions
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+from decimal import Decimal
+
 
 Base_Filters = ['"cumulative_level"', '"sbu_name"', '"region_name"', '"statename"', '"distname"',
                 '"month_name"', '"productname"']
@@ -982,17 +984,46 @@ async def get_category_wise_cumulative_data(filters):
     """
     filters, fiscal_year_pre, fiscal_year_last, months = get_date_filters(filters)
     where_conditions = []
-    filters.append({"key": "\"fiscal_year\"", "cond": "equals", "value": "2024-2025"})
+    filters.append({"key": "\"fiscal_year\"", "cond": "one-off", "value": ["2023-2024","2024-2025"]})
     for filter_cond in filters:
         filter_cond['key'] = filter_cond['key'].strip('"')
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
         where_conditions = [clause]
-    group_by = ["coname", "company_name"]
-    req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "coname", "company_name"]
+    group_by = ["coname", "company_name","fiscal_year"]
+    req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "coname", "company_name","fiscal_year"]
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
                                        group_by, "")
     df = pd.DataFrame(resp_data)
+    df["sales"] = df["sales"].astype(str).apply(Decimal)
+    fiscal_years = sorted(df["fiscal_year"].unique())
+    result_dict = {year: {} for year in fiscal_years}
+    for year in fiscal_years:
+        filtered_df = df[df["fiscal_year"] == year]
+        
+        for category in filtered_df["company_name"].unique():
+            category_df = filtered_df[filtered_df["company_name"] == category]
+            result_dict[year][category] = {
+                row["coname"]: row["sales"] for _, row in category_df.iterrows()
+            }
+
+    # Compute growth percentage
+    growth_dict = {}
+    if len(fiscal_years) > 1:
+        for category in result_dict[fiscal_years[0]].keys():
+            growth_dict[category] = {}
+            for company in result_dict[fiscal_years[0]][category].keys():
+                val_prev = result_dict[fiscal_years[0]].get(category, {}).get(company, Decimal(0))
+                val_curr = result_dict[fiscal_years[1]].get(category, {}).get(company, Decimal(0))
+
+                if val_prev != 0:
+                    growth_percentage = ((val_curr - val_prev) / val_prev) * 100
+                else:
+                    growth_percentage = Decimal(0)
+
+                growth_dict[category][company] = round(growth_percentage, 2)
+    result_dict["growth_percentage"] = growth_dict
+    return result_dict
     result = df.groupby('company_name').apply(lambda x: dict(zip(x['coname'], x['sales']))).to_dict()
     return result
 
