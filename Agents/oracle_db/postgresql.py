@@ -1,12 +1,13 @@
 import urdhva_base
+import re
 import json
-import psycopg2
 import uuid
+import asyncio
+import psycopg2
 import numpy as np
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
-import asyncio  # For handling async calls
 import orchestrator.alerting.alert_factory as alert_factory
 
 
@@ -32,7 +33,6 @@ except FileNotFoundError:
 except Exception as e:
     print(f"Unexpected error: {e}")
     config = None
-
 
 class Postgresql:
     def __init__(self):
@@ -75,9 +75,10 @@ class Postgresql:
             raise ValueError(f"Model '{table_name}' not found in hpcl_ceg_model.")
 
         # Upsert the data - Ensure `await` is used
-        status, msg = await model.bulk_update(data, upsert=True)  # Use upsert=True if needed
+        status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created'])  # Use upsert=True if needed
         # Get only alert not created records
-        query = f"select * from {table_name} where alert_created = false"
+        table_db_name = getattr(model, '__tablename__', table_name)
+        query = f"""select * from "{table_db_name}" where alert_created = false"""
         resp = await model.get_aggr_data(query)
         
          # Process each record to create and close alerts
@@ -109,7 +110,7 @@ class Postgresql:
                         continue
                     
                     # Set alert_created = true for alert created record
-                    query = f"update {table_name} set alert_created = true where id = {record['id']}"
+                    query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
                     await model.update_by_query(query)
 
                     # Extract alert_id from response (assuming response contains alert_id)
