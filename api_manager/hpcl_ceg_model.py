@@ -5193,6 +5193,11 @@ class MasterStatusSchema(UrdhvaPostgresBase):
     status: Mapped[typing.Optional[str]] = mapped_column("status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_code: Mapped[typing.Optional[str]] = mapped_column("location_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     active_server_name: Mapped[typing.Optional[str]] = mapped_column("active_server_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(status, location_code, active_server_name, sap_id, name="master_status_status_location_code_active_server_name_sap_id"),)
 
 
 class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5201,13 +5206,16 @@ class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
     status: typing.Optional[str] = pydantic.Field("", **{})
     location_code: typing.Optional[str] = pydantic.Field("", **{})
     active_server_name: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = []
+        upsert_keys = ['status', 'location_code', 'active_server_name', 'sap_id']
 
 
 class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
@@ -5216,13 +5224,16 @@ class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
     status: typing.Optional[str] = pydantic.Field("", **{})
     location_code: typing.Optional[str] = pydantic.Field("", **{})
     active_server_name: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = []
+        upsert_keys = ['status', 'location_code', 'active_server_name', 'sap_id']
 
 
 class MasterStatusGetResp(pydantic.BaseModel):
