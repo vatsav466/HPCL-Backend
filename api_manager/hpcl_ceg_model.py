@@ -453,6 +453,14 @@ class Locationmaster_Update_Location_MasterParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Locationmaster_Get_Sod_Engineering_StatsParams(pydantic.BaseModel):
+    sap_id: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     

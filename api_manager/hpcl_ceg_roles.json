@@ -219,6 +219,9 @@
                 },
                 {
                     "name": "update_location_master"
+                },
+                {
+                    "name": "get_sod_engineering_stats"
                 }
             ]
         },
@@ -234,6 +237,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_sod_engineering_stats"
                 }
             ]
         },
@@ -276,6 +282,9 @@
                 },
                 {
                     "name": "update_location_master"
+                },
+                {
+                    "name": "get_sod_engineering_stats"
                 }
             ]
         },
@@ -4047,6 +4056,10 @@
         {
             "name": "update_location_master",
             "displayName": "update_location_master"
+        },
+        {
+            "name": "get_sod_engineering_stats",
+            "displayName": "get_sod_engineering_stats"
         },
         {
             "name": "upload_role_master",
