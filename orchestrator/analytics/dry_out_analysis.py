@@ -723,16 +723,16 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     LEFT JOIN 
                         "IMS_SAP"."INDENT_PRODUCTS" ip
                     ON 
-                        # ir.run_id = '{date_time}'
-                        # AND ip.run_id = '{date_time}'
+--                        ir.run_id = '{date_time}'
+--                        AND ip.run_id = '{date_time}'
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
                         AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
                     LEFT JOIN 
                         "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
                     ON 
-                        # ir.run_id = '{date_time}'
-                        # AND ip.run_id = '{date_time}'
+--                         ir.run_id = '{date_time}'
+--                         AND ip.run_id = '{date_time}'
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
                         AND tse."CARD_STATUS" = 'O'
