@@ -75,69 +75,76 @@ class Postgresql:
             raise ValueError(f"Model '{table_name}' not found in hpcl_ceg_model.")
 
         # Upsert the data - Ensure `await` is used
-        result = await model.bulk_update(data, upsert=True)  # Use upsert=True if needed
-        print(result)
+        status, msg = await model.bulk_update(data, upsert=True)  # Use upsert=True if needed
+        # Get only alert not created records
+        query = f"select * from {table_name} where alert_created = false"
+        resp = await model.get_aggr_data(query)
         
          # Process each record to create and close alerts
-        if result and table_name != "HostUnauthorisedFlow":
-          for record in data:
-            try:
-              # Fetch config based on table name
-              interlock_name = config['interlock_name'].get(table_name)
-              severity = config['severity'].get(table_name, "Medium")
-              sop_id = config['sop_id'].get(table_name)
+        if resp.get("data", []):
+            for record in resp.get("data", []):
+                try:
+                    # Fetch config based on table name
+                    interlock_name = config['interlock_name'].get(table_name)
+                    severity = config['severity'].get(table_name, "Medium")
+                    sop_id = config['sop_id'].get(table_name)
 
-              # Extract necessary fields from the record
-              alert_data = {
-                'bu': 'TAS',
-                'sop_id': sop_id,
-                'sap_id': record.get('sap_id'),
-                'interlock_name': interlock_name,
-                'severity': severity,
-                'alert_id': str(uuid.uuid1()),
-                'device_name': record.get('bcu_number'),
-                'device_type': 'Gantry'
-              }
+                    # Extract necessary fields from the record
+                    alert_data = {
+                        'bu': 'TAS',
+                        'sop_id': sop_id,
+                        'sap_id': record.get('sap_id'),
+                        'interlock_name': interlock_name,
+                        'severity': severity,
+                        'alert_id': str(uuid.uuid1()),
+                        'device_name': record.get('bcu_number'),
+                        'device_type': 'Gantry'
+                    }
 
-              # Create Alert
-              success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-              print("msg :", msg)
-              if not success:
-                  print(f"Failed to create alert: {msg}")
-                  continue
-              # Extract alert_id from response (assuming response contains alert_id)
-              query = (f"external_id='{alert_data['alert_id']}'")
-              params = urdhva_base.queryparams.QueryParams()
-              params.limit = 1
-              params.q = query
-              alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
-              
-              body =  alert_resp.body
-              data = json.loads(body.decode('utf-8'))
-              if 'data' in data and data['data']:
-                  alert_id = data['data'][0]['external_id']
-              else:
-                  print(f'Alert not found for {alert_data['alert_id']}')
-                  continue
-               # alert_id = msg.get("alert_id") if isinstance(msg, dict) else None
-              # Close Alert
-              close_data = {
-                'bu': 'TAS',
-                'sop_id': sop_id,
-                'sap_id': alert_data['sap_id'],
-                'interlock_name': interlock_name,
-                'alert_id' : alert_id
-                  
-              }
-              close_success, close_msg = await alert_factory.AlertFactory.close_alert(close_data)
-              print("close_msg :", close_msg)
-              if not close_success:
-                  print(f"Failed to close alert: {close_msg}")
+                    # Create Alert
+                    success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                    print("msg :", msg)
+                    if not success:
+                        print(f"Failed to create alert: {msg}")
+                        continue
+                    
+                    # Set alert_created = true for alert created record
+                    query = f"update {table_name} set alert_created = true where id = {record['id']}"
+                    await model.update_by_query(query)
 
-            except Exception as e:
-             print(f"Error : {str(e)}")
-             continue
+                    # Extract alert_id from response (assuming response contains alert_id)
+                    query = (f"external_id='{alert_data['alert_id']}'")
+                    params = urdhva_base.queryparams.QueryParams()
+                    params.limit = 1
+                    params.q = query
+                    alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
+                    
+                    body =  alert_resp.body
+                    data = json.loads(body.decode('utf-8'))
+                    if 'data' in data and data['data']:
+                        alert_id = data['data'][0]['external_id']
+                    else:
+                        print(f'Alert not found for {alert_data['alert_id']}')
+                        continue
+                    # alert_id = msg.get("alert_id") if isinstance(msg, dict) else None
+                    # Close Alert
+                    close_data = {
+                        'bu': 'TAS',
+                        'sop_id': sop_id,
+                        'sap_id': alert_data['sap_id'],
+                        'interlock_name': interlock_name,
+                        'alert_id' : alert_id
+                        
+                    }
+                    close_success, close_msg = await alert_factory.AlertFactory.close_alert(close_data)
+                    print("close_msg :", close_msg)
+                    if not close_success:
+                        print(f"Failed to close alert: {close_msg}")
 
-          return {"status": "Table created and alerts processed"}
+                except Exception as e:
+                    print(f"Error : {str(e)}")
+                    continue
+
+            return {"status": "Table created and alerts processed"}
         else:
             print("Bulk not posted")

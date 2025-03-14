@@ -1656,6 +1656,7 @@ Model HostSickTts {
     zone optional str
     bcu_number optional unique_field str
     bay_number optional unique_field str
+    alert_created optional bool
 
     Action=> download_data {
     }
@@ -1681,6 +1682,7 @@ Model HostCancelledTts {
     entry_time optional unique_field datetime
     exit_time optional unique_field datetime
     remarks optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1699,6 +1701,7 @@ Model HostKFactorChanges {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1720,6 +1723,7 @@ Model HostLocalLoadedTts {
     location_name optional str
     zone optional str
     compartment_number optional unique_field str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1744,6 +1748,7 @@ Model HostBayReAssignment {
     zone optional str
     assigned_bay optional unique_field str
     reassign_loaded_qty optional unique_field str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1758,6 +1763,7 @@ Model HostManualBayAssigned {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1773,6 +1779,7 @@ Model HostManualFanPrinted {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1790,6 +1797,7 @@ Model HostUnauthorisedFlow {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1809,6 +1817,7 @@ Model HostOverLoadedTts{
     created_date optional unique_field datetime
     bcu_number optional unique_field str
     bay_number optional unique_field str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
@@ -1828,6 +1837,7 @@ Model HostMFMFactor {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
