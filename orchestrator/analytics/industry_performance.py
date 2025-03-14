@@ -14,7 +14,6 @@ from orchestrator.dbconnector.widget_actions import widget_actions
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
-from decimal import Decimal
 
 
 Base_Filters = ['"cumulative_level"', '"sbu_name"', '"region_name"', '"statename"', '"distname"',
@@ -1013,13 +1012,13 @@ async def get_category_wise_cumulative_data(filters):
         for category in result_dict[fiscal_years[0]].keys():
             growth_dict[category] = {}
             for company in result_dict[fiscal_years[0]][category].keys():
-                val_prev = result_dict[fiscal_years[0]].get(category, {}).get(company, Decimal(0))
-                val_curr = result_dict[fiscal_years[1]].get(category, {}).get(company, Decimal(0))
+                val_prev = float(result_dict[fiscal_years[0]].get(category, {}).get(company,0))
+                val_curr = float(result_dict[fiscal_years[1]].get(category, {}).get(company, 0))
 
                 if val_prev != 0:
                     growth_percentage = ((val_curr - val_prev) / val_prev) * 100
                 else:
-                    growth_percentage = Decimal(0)
+                    growth_percentage = 0
 
                 growth_dict[category][company] = round(growth_percentage, 2)
     result_dict["growth_percentage"] = growth_dict
