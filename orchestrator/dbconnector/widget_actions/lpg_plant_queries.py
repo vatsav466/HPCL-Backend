@@ -866,9 +866,12 @@ LIMIT 10000;''',
                                             "ROName",
                                             "SAName",
                                             "SubCategory" AS "ConsumerType",
-                                            TO_CHAR("Execution_Datetime", 'Month') AS "Month"
+                                            TO_CHAR("Execution_Datetime", 'Month') AS "Month",
+                                            sum("ACTCCount") as "ACTC",
+                                            sum("BCTCCount") as "BCTC",
+                                            sum("NCTCCount") as "NCTC"
                                         from
-                                            "LPG_CONSUMERS_OVERALL_SUMMARY"
+                                            "lpg_consumers_statistics_month_end_data"
                                                 ''',
 
     "lpg_cdcms_safety_check_pending": f'''select

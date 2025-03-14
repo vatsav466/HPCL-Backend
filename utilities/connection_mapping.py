@@ -43,8 +43,9 @@ dry_out_top_x_axis = [{"name": "Indent Not Raised", "group": "not_raised"},
                   {"name": "Sent to SAP", "group": "wip"}, {"name": "Sales Order Placed", "group": "wip"},
                   {"name": "R2 Swiped", "group": "wip"}, {"name": "Invoice Created", "group": "wip"},
                   {"name": "R3 Swiped", "group": "wip"}, {"name": "VTS", "group": "wip"},
-                  {"name": "ATG Ack", "group": "delivered"}, {"name": "EMLock Unlock", "group": "delivered"},
-                  {"name": "Delivery Confirmation", "group": "delivered"}, {"name": "VTS Return", "group": "delivered"}]
+                  {"name": "ATG Ack", "group": "delivered"}, {"name": "Delivery Confirmation", "group": "delivered"},
+                  {"name": "EMLock", "group": "delivered"}, {"name": "VTS Return", "group": "delivered"},
+                  {"name": "Trip Completed", "group": "delivered"}]
 
 truck_details = ["Dealer TT", "TT Available", "Empty Dealer TT Return", "Empty Transporter Return"]
 
@@ -399,17 +400,17 @@ alert_action = {
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "Maintenanace Officer LPG", "TAS Officer", "Zonal TAS Officer"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Maintenanace Officer LPG", "Zonal HSE LPG", "Zonal Operations Head LPG", "HQO LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG", "HQO LPG", "HQO HSE LPG", "HQO Operations LPG"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Maintenanace Officer LPG", "Zonal HSE LPG", "Zonal Operations Head LPG", "HQO LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG", "HQO LPG", "HQO HSE LPG", "HQO Operations LPG"]
                 }
             },
             "category": {
@@ -421,7 +422,15 @@ alert_action = {
                 "Quality": "Quality",
                 "Other": "Other"
             },
-            "rca_reason": []
+            "rca_reason": [
+                "Equipment issue",
+                "Lack of Awareness",
+                "InvalidAlert",
+                "FalseAlert",
+                "Maintenance Issue",
+                "Calibration Issue",
+                "Other"
+            ]
         },
         "VA": {
             "alert_section": "VA",

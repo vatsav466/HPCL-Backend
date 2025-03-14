@@ -101,7 +101,8 @@ lpg_dashboard_actions = [
     'tas_maintenance_fault',
     'tas_maintenance_fault_dropdown',
     'tas_normal_count',
-    'tas_analog_count'
+    'tas_analog_count',
+    'local_loaded'
 ]
 
 # Todo:- import all widget action modules here
@@ -205,7 +206,8 @@ widget_mapping = {
     'tas_maintenance_fault': {},
     'tas_maintenance_fault_dropdown': {},
     'tas_normal_count': {},
-    'tas_analog_count': {}
+    'tas_analog_count': {},
+    'local_loaded': {}
 }
 
 
@@ -289,7 +291,7 @@ class WidgetActions:
             condition = filter_item['cond']
             value = filter_item['value']
 
-            if condition == 'equals':
+            if condition in ['=', 'equals']:
                 if '.' in key:
                     if isinstance(value, int):
                         conditions.append(f''' {key} = {value} ''')

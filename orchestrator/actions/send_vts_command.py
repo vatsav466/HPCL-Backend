@@ -50,7 +50,7 @@ class SendVtsCommand:
                 "auto_unblock", False) else str(urdhva_base.utilities.get_present_time().isoformat())
             approved_datetime = await alert_manager.get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
             doc_link = await alert_manager.get_doc_link_from_alert_history(alert_data)
-            params = {
+            params1 = {
                 "TT_No": alert_data['vehicle_number'],
                 "UnBlockedBy": rpt.get("email", "NOVEX_USER"),
                 "UnBlockedDateTime": un_block_datetime,
@@ -66,7 +66,19 @@ class SendVtsCommand:
                     "DocPaths": doc_link if doc_link else []
                 }
             }
-            # await vts_analysis.post_unblocked_tt(params)
+            # await vts_analysis.post_unblocked_tt(params1)
+            if not params['auto_unblock']:
+                query = (f"location_id='{alert_data['sap_id']}' and tl_number='{alert_data['vehicle_number']}' "
+                         f"and {alert_data['violation_type']}>=1 and created_at<'{alert_data['created_at']}' and location_type='{alert_data['bu']}' "
+                         f"and auto_unblock!='false'")
+                data = await hpcl_ceg_model.VtsAlertHistory.get_all(urdhva_base.queryparams.QueryParams(q=query),
+                                                                    resp_type='plain')
+                data = data['data'][0]
+                data['auto_unblock'] = False
+                await hpcl_ceg_model.VtsAlertHistory(**data).modify()
+                alert_data['mark_as_false'] = True
+                await hpcl_ceg_model.Alerts(**alert_data).modify()
+            
             alert_message = (
                 f"Alert details Alert ID: {alert_data.get('unique_id', '')}, status: Unblock, Vehicle: {alert_data.get('vehicle_number', '')} trip details are sent successfully to VTS to Unblock the Vehicle "
             )

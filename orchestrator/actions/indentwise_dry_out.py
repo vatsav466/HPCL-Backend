@@ -20,6 +20,7 @@ from orchestrator.alerting.alert_manager import close_alert
 from orchestrator.alerting.alert_manager import create_alert
 from hpcl_ceg_model import Alerts_Alert_ActionParams, Alerts
 from hpcl_ceg_enum import AlertActionType as AlertActionType
+import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 from alerts_actions import alerts_alert_action as alerts_alert_action
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 
@@ -133,6 +134,7 @@ class IndentDryOut:
         self.params['alert_type'] = 'RO'
         self.params['bu'] = 'RO'
         self.params['interlock_name'] = 'Dry Out Each Indent Wise MainFlow'
+        self.params['mark_as_false'] = True
         camunda_host = connection_mapping.camunda_listener_mapping.get("camunda_dryout_01")
         camunda_url = f"http://{camunda_host['host']}:{camunda_host['port']}"
         if self.params['camunda_host']:
@@ -1130,6 +1132,13 @@ class IndentDryOut:
         if not self.params:
             self.params = params
             await self.get_connection_name()
+        _prod = await self.prod_code_mapping()
+        reverse_mapping = {v: k for k, v in _prod.items()}
+        await dry_out_analysis.update_atg_ack(
+            alert_id=self.params.get("alert_id"),
+            sap_id=self.params.get("dealer_id", ""),
+            product_code=reverse_mapping.get(self.params.get("product_code", ""), "")
+        )
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("cris")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id"))
@@ -1198,6 +1207,7 @@ class IndentDryOut:
             cris_resp = cris_resp[0]
         else:
             cris_resp = {}
+            return await self.is_product_delivered_ims(params=params)
         if int(cris_resp.get("status", 1)) > int(dry_out_in_days):
             input_data = {
                 "action_msg": "",
@@ -1224,7 +1234,8 @@ class IndentDryOut:
             )
             # await self.update_alert_status(indent_status=IndentStatus.InvoiceCreated)
             return await self.send_alert_action(is_delivered=True)
-        return await self.send_alert_action(is_delivered=False)
+        return await self.is_product_delivered_ims(params=params)
+        # return await self.send_alert_action(is_delivered=False)
 
     async def _is_product_delivered(self, params: dict):
         # Not In Use

@@ -93,7 +93,7 @@ async def load_roles_master(bu, sap_id, role):
     print("role before resp_filtered ", role)
     resp_filtered = df.filter(
         (pl.col("sap_id").list.contains(str(sap_id))) &
-        (pl.col("novex_role").is_in(role))
+        (pl.col("novex_role").list.contains(str(role)))
     )
     return resp_filtered.to_dicts()
 

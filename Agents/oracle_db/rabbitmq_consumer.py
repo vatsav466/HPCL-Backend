@@ -81,6 +81,16 @@ class RabbitMQConsumer:
                         df["zone"] = df["sap_id"].map(lambda sap_id: location_mapping.get(sap_id, [None, {}])[1].get("zone", ""))
                     # Convert back to list of dictionaries
                     cleaned_records = df.to_dict(orient="records")
+                    for record in cleaned_records:
+                        for key, value in record.items():
+                            if isinstance(value, pd.Timestamp):
+                                record[key] = value.to_pydatetime() if not pd.isna(value) else None 
+                            elif isinstance(value, float) and np.isnan(value):
+                                record[key] = None  # Replace NaN floats with None
+                            elif isinstance(value, int) and np.isnan(value):
+                                record[key] = None  # Handle cases where NaN appears in integer fields
+                            elif isinstance(value, (float, int)) and key in ["mfm_number", "bcu_number", "stock_code", "current_k_factor", "last_k_factor", "current_meter_factor", "last_meter_factor"]:
+                                record[key] = str(value)  # Convert numbers to string format for safe SQL insertion
                     print("cleaned_records --> ", cleaned_records)
 
                     # Ensure await is used while creating the table

@@ -567,8 +567,11 @@ Model Alerts {
     interlock_name optional str
     interlock_id optional str
     device_id optional str
+    equipment_id optional str
     device_type optional str
+    equipment_type optional str
     device_name optional str
+    equipment_name optional str
     device_msg optional str                 // Message received from the device
     vehicle_number optional str
     violation_type optional str
@@ -625,6 +628,10 @@ Model Alerts {
     origin_altid optional str
     alert_message optional str
     external_timestamp optional datetime
+    atg_ack optional bool
+    emlock_ack optional bool
+    vts_return optional bool
+    atg_ack_time optional datetime
 
     // VTS
     transporter_name optional str
@@ -1643,6 +1650,8 @@ Model HostSickTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    bcu_number optional unique_field str
+    bay_number optional unique_field str
 
     Action=> download_data {
     }
@@ -1664,6 +1673,10 @@ Model HostCancelledTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    compartment_number optional unique_field str
+    entry_time optional unique_field datetime
+    exit_time optional unique_field datetime
+    remarks optional str
 
     Config=> {
         access_key_mapping=''
@@ -1702,6 +1715,7 @@ Model HostLocalLoadedTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    compartment_number optional unique_field str
 
     Config=> {
         access_key_mapping=''
@@ -1724,6 +1738,8 @@ Model HostBayReAssignment {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    assigned_bay optional unique_field str
+    reassign_loaded_qty optional unique_field str
 
     Config=> {
         access_key_mapping=''
@@ -1748,6 +1764,7 @@ Model HostManualFanPrinted {
     manual_fan_count optional unique_field int
     auto_fan_count optional unique_field int
     total_count optional unique_field int
+    date optional unique_field datetime
     sap_id optional unique_field str
     location_name optional str
     zone optional str
@@ -1778,12 +1795,44 @@ Model HostOverLoadedTts{
     load_number optional unique_field int
     truck_number optional unique_field str
     compartment_number optional unique_field int
-    blend_name optional unique_field str
+    product_name optional unique_field str
     required_qty optional unique_field int
     loaded_qty optional unique_field int
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    created_date optional unique_field datetime
+    bcu_number optional unique_field str
+    bay_number optional unique_field str
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model HostMFMFactor {
+    mfm_number optional unique_field str
+    bcu_number optional unique_field str
+    stock_code optional unique_field str
+    current_k_factor optional unique_field str
+    last_k_factor optional unique_field str
+    last_k_factor_change_date optional unique_field datetime
+    current_meter_factor optional unique_field str
+    last_meter_factor optional unique_field str
+    last_meter_factor_change_date optional unique_field str
+    sap_id optional unique_field str
+    location_name optional str
+    zone optional str
+
+    Config=> {
+        access_key_mapping=''
+    }
+}
+
+Model MasterStatus {
+    status optional str
+    location_code optional str
+    active_server_name optional str
 
     Config=> {
         access_key_mapping=''
@@ -1798,6 +1847,7 @@ Model TagsData {
     zone optional str
     system optional str
     equipment_name optional str
+    mf_count optional str
 
 
     Action=> things_board_device_data{

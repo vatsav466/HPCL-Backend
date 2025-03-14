@@ -7,21 +7,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 10,
+                    "value": 1,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
@@ -35,21 +35,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 10,
+                    "value": 1,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
@@ -63,21 +63,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 10,
+                    "value": 1,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 25,
+                    "value": 2,
                     "assign_role": "",
                     "escalation_role": "",
                     "escalation_time": ""
@@ -317,21 +317,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 1,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "Zonal Operation SOD",
                     "escalation_role": "Zonal HSE SOD",
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "HQO Operation SOD",
                     "escalation_role": "HQO HSE SOD",
                     "escalation_time": "PT30S"
@@ -935,21 +935,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 1,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "HQO Operations LPG",
                     "escalation_role": "HQO HSE LPG",
                     "escalation_time": "PT30S"
@@ -963,21 +963,21 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 1,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT30S"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
-                    "value": 0,
+                    "value": 2,
                     "assign_role": "HQO Operations LPG",
                     "escalation_role": "HQO HSE LPG",
                     "escalation_time": "PT30S"
@@ -1075,14 +1075,14 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 5,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 5,
+                    "value": 15,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT1H"
@@ -1103,14 +1103,14 @@ VA_Alert_Mapping = {
             "escalations": {
                 "level - 1": {
                     "condition": "<",
-                    "value": 0,
+                    "value": 5,
                     "assign_role": "Safety Officer LPG",
                     "escalation_role": "Location In-Charge LPG",
                     "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
-                    "value": 5,
+                    "value": 15,
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT1H"
@@ -1233,6 +1233,111 @@ VA_Alert_Mapping = {
                     "assign_role": "Zonal Operations Head LPG",
                     "escalation_role": "Zonal HSE LPG",
                     "escalation_time": "PT6H"
+                }
+            }
+        },
+        "Check Scale Rejection": {
+            "name": "Check Scale Rejection",
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 0,
+                    "assign_role": "Maintenanace Officer LPG",
+                    "escalation_role": "Maintenanace Officer LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 1,
+                    "assign_role": "Location In-Charge LPG",
+                    "escalation_role": "Location In-Charge LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 2,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal Operations Head LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 4": {
+                    "condition": ">",
+                    "value": 3,
+                    "assign_role": "HQO LPG",
+                    "escalation_role": "HQO LPG",
+                    "escalation_time": "PT24H"
+                }
+            }
+        },
+        "Valve Leak Rejection": {
+            "name": "Valve Leak Rejection",
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 0,
+                    "assign_role": "Maintenanace Officer LPG",
+                    "escalation_role": "Maintenanace Officer LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 1,
+                    "assign_role": "Location In-Charge LPG",
+                    "escalation_role": "Location In-Charge LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 2,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal Operations Head LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 4": {
+                    "condition": ">",
+                    "value": 3,
+                    "assign_role": "HQO LPG",
+                    "escalation_role": "HQO LPG",
+                    "escalation_time": "PT24H"
+                }
+            }
+        },
+        "O-Ring Leak Rejection": {
+            "name": "O-Ring Leak Rejection",
+            "severity": "Critical",
+            "period": "weekly",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 0,
+                    "assign_role": "Maintenanace Officer LPG",
+                    "escalation_role": "Maintenanace Officer LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 1,
+                    "assign_role": "Location In-Charge LPG",
+                    "escalation_role": "Location In-Charge LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 3": {
+                    "condition": ">",
+                    "value": 2,
+                    "assign_role": "Zonal Operations Head LPG",
+                    "escalation_role": "Zonal Operations Head LPG",
+                    "escalation_time": "PT24H"
+                },
+                "level - 4": {
+                    "condition": ">",
+                    "value": 3,
+                    "assign_role": "HQO LPG",
+                    "escalation_role": "HQO LPG",
+                    "escalation_time": "PT24H"
                 }
             }
         }

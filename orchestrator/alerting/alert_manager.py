@@ -162,7 +162,7 @@ async def close_emlock_alert(alert_data, input_data):
     if not isinstance(alert_data, dict):
         alert_data = alert_data.__dict__
     meta_data = {}
-    if alert_data['violation_type'] == 'FanNotGenerated':
+    if alert_data['violation_type'] in ['FanNotGenerated', 'ShipmentNumberNotGenerated']:
         meta_data['loadNumber'] = input_data.get("load_number")
         meta_data['fanNumber'] = input_data.get("fan_number")
     if alert_data['violation_type'] == 'InvoiceNotGenerated':
@@ -183,6 +183,7 @@ async def close_emlock_alert(alert_data, input_data):
         "remarks": input_data['action_msg'],
         "metaData": json.dumps(meta_data)
     }
+    print("Params EMLock: ", params)
 
 
 async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):

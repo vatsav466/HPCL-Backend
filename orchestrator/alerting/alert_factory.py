@@ -115,6 +115,7 @@ class AlertFactory:
                                                         'vehicle_blocked_start_date': alert_data.get("vehicle_blocked_start_date", None),
                                                         'vehicle_blocked_end_date': alert_data.get("vehicle_blocked_end_date", None),
                                                         'origin_altid': alert_data.get('origin_altid',''),
+                                                        'mark_as_false': alert_data.get('mark_as_false', False),
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
                                                         'raw_data': {}}).create()
 
@@ -129,6 +130,10 @@ class AlertFactory:
                     await redis_ins.setex(alert_data['alert_id'], 15*60, alert_resp['id'])
                 else:
                     await redis_ins.setex(alert_data['alert_id'], 3*60*60, alert_resp['id'])
+            elif alert_data.get("alert_section",'') in ["LPG"] and alert_data.get("interlock_name","") in ["Valve Leak Rejection","Check Scale Rejection","O-Ring Leak Rejection"]:
+                alert_level = await va_analysis.get_lpg_levels(
+                    bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
+                )
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
@@ -176,7 +181,8 @@ class AlertFactory:
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
                 interlock_name = interlock_mapping.get_interlock_name(bu=bu, interlock_name=interlock_name,sop_id=sop_id)
                 # workflowid = interlock_name["workflow_name"] if interlock_name["workflow_name"] else interlock_name["interlock_name"]
-                workflowid = interlock_name["workflow_name"] if "workflow_name" in interlock_name.keys() else interlock_name["interlock_name"]
+                # workflowid = interlock_name["workflow_name"] if "workflow_name" in interlock_name.keys() else interlock_name["interlock_name"]
+                workflowid = interlock_name.get("workflow_name") or interlock_name.get("interlock_name") or None
                 workflow_id = interlock_mapping.fmt_il_name(workflowid)
                 # Uncomment below line to stop workflow for VA
                 # if alert_data_dict.get("alert_section") not in ["VA", "VTS"]:
@@ -224,7 +230,7 @@ class AlertFactory:
         Returns:
             dict: A dictionary containing the status, message and the closed alert document
         """
-        print("alert_data close ---> ", alert_data)
+        # print("alert_data close ---> ", alert_data)
         try:
             # il_data = None
             # al_data = None
