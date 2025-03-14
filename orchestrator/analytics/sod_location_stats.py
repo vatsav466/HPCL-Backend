@@ -12,7 +12,7 @@ async def generate_sod_engineering_location_stats(sap_id):
     """
     status, location_data = await helpers.get_location_details('TAS', sap_id)
     if not status:
-        return False, "Invalid Location / Location not found"
+        return {"status": False, "data": "Invalid Location / Location not found"}
     # Hardcoded data for UI development purpose
     json_data = [{"id": "lrca", "name": "LRCA", "status": "standby"},
                  {"id": "lrcb", "name": "LRCB", "status": "online"},
@@ -33,4 +33,4 @@ async def generate_sod_engineering_location_stats(sap_id):
                  {"id": "dyke", "name": "Dyke", "total": 4, "faulty": 0, "maintanance": 0},
                  {"id": "jockey_pump", "name": "Jockey Pump", "total": 4, "faulty": 1, "maintanance": 1},
                  {"id": "air_compressor", "name": "Air Compressor", "total": 6, "faulty": 0, "maintanance": 1}]
-    return True, json_data
+    return {"status": True, "data":  json_data}
