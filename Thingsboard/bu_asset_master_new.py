@@ -41,41 +41,32 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
         # Find indices of columns containing "Normal Value"
         normal_value_indices = [i for i, col in enumerate(df.columns)
                                 if 'normal value' in str(col).lower()]
-        
-        # Find indices of columns containing "Sensor ID" and "Sensor Type"
-        sensor_id_indices = [i for i, col in enumerate(df.columns)
-                            if 'sensor_id' in str(col).lower()]
-                
-        sensor_type_indices = [i for i, col in enumerate(df.columns)
-                            if 'sensor_type' in str(col).lower()]
 
-        # Get all columns that come before "Normal Value" columns and their corresponding Normal Value columns
+        # Process each normal value column to find associated sensor_id and sensor_type
         sensor_columns = []
-        for idx in normal_value_indices:
-            if idx > 0:
-                # Find corresponding sensor ID and type for this sensor
-                sensor_idx = idx - 1
+        for nv_idx in normal_value_indices:
+            if nv_idx > 0:  # Ensure there's a preceding column for sensor tag
+                sensor_tag_idx = nv_idx - 1
+                sensor_id_idx = nv_idx + 1 if (nv_idx + 1) < len(df.columns) else None
+                sensor_type_idx = nv_idx + 2 if (nv_idx + 2) < len(df.columns) else None
+
+                # Check if sensor_id column exists and has correct name
+                valid_sensor_id = False
+                if sensor_id_idx is not None:
+                    col_name = str(df.columns[sensor_id_idx]).lower()
+                    valid_sensor_id = 'sensor_id' in col_name
                 
-                # Find the closest sensor ID column (if available)
-                corresponding_id_idx = None
-                if sensor_id_indices:
-                    # Get the closest sensor ID column
-                    for id_idx in sensor_id_indices:
-                        if abs(id_idx - sensor_idx) <= 3:  # Assuming ID is within 3 columns of the sensor
-                            corresponding_id_idx = id_idx
-                            break
-                
-                # Find the closest sensor type column (if available)
-                corresponding_type_idx = None
-                if sensor_type_indices:
-                    # Get the closest sensor type column
-                    for type_idx in sensor_type_indices:
-                        if abs(type_idx - sensor_idx) <= 3:  # Assuming type is within 3 columns of the sensor
-                            corresponding_type_idx = type_idx
-                            break
-                            
-                # Store tuples of (sensor column, normal value column, sensor ID column, sensor type column)
-                sensor_columns.append((sensor_idx, idx, corresponding_id_idx, corresponding_type_idx))
+                # Check if sensor_type column exists and has correct name
+                valid_sensor_type = False
+                if sensor_type_idx is not None:
+                    col_name = str(df.columns[sensor_type_idx]).lower()
+                    valid_sensor_type = 'sensor_type' in col_name
+
+                # Append indices only if columns are correctly named
+                sensor_id_idx_final = sensor_id_idx if valid_sensor_id else None
+                sensor_type_idx_final = sensor_type_idx if valid_sensor_type else None
+                sensor_columns.append((sensor_tag_idx, nv_idx, sensor_id_idx_final, sensor_type_idx_final))
+
         def normalize_value(value):
             def is_float(string):
                 try:
@@ -96,38 +87,31 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
             if not device_name:
                 continue
 
-            # Process sensors with their normal values
             sensors = []
-            for sensor_idx, normal_value_idx, id_idx, type_idx in sensor_columns:
-                sensor_name = str(df.columns[sensor_idx]).strip()
-                sensor_tag = str(row.iloc[sensor_idx]).strip()
-                normal_value = normalize_value(str(row.iloc[normal_value_idx]).strip())
-                
-                # Get sensor ID and type if available
-                sensor_id = str(row.iloc[id_idx]).strip() if id_idx is not None else ""
-                sensor_type = str(row.iloc[type_idx]).strip() if type_idx is not None else ""
-                # Normalize the values to handle NaN
-                if sensor_id.lower() == 'nan':
-                    sensor_id = ""
-                if sensor_type.lower() == 'nan':
-                    sensor_type = ""
+            for sensor_tag_idx, nv_idx, sensor_id_idx, sensor_type_idx in sensor_columns:
+                sensor_name = str(df.columns[sensor_tag_idx]).strip()
+                sensor_tag = str(row.iloc[sensor_tag_idx]).strip()
+                normal_value = normalize_value(str(row.iloc[nv_idx]).strip())
 
-                if sensor_tag.lower() != 'nan':
-                    sensors.append({
-                        "sensor_name": sensor_name,
-                        "sensor_tag": sensor_tag,
-                        "normal_value": normal_value if normal_value.lower() != 'nan' else '0',
-                        "sensor_id": sensor_id,
-                        "sensor_type": sensor_type
-                    })
-                else:
-                    sensors.append({
-                        "sensor_name": sensor_name,
-                        "sensor_tag": "",
-                        "normal_value": normal_value if normal_value.lower() != 'nan' else '0',
-                        "sensor_id": sensor_id,
-                        "sensor_type": sensor_type
-                    })
+                sensor_entry = {
+                    "sensor_name": sensor_name,
+                    "sensor_tag": sensor_tag if sensor_tag.lower() != 'nan' else "",
+                    "normal_value": normal_value if normal_value.lower() != 'nan' else '0'
+                }
+
+                # Add sensor_id if column exists
+                if sensor_id_idx is not None:
+                    sensor_id = str(row.iloc[sensor_id_idx]).strip()
+                    sensor_entry["sensor_id"] = sensor_id if sensor_id.lower() != 'nan' else ""
+
+                # Add sensor_type if column exists
+                if sensor_type_idx is not None:
+                    sensor_type = str(row.iloc[sensor_type_idx]).strip()
+                    sensor_entry["sensor_type"] = sensor_type if sensor_type.lower() != 'nan' else ""
+
+                # Include sensor entry even if tag is empty (to capture normal values)
+                sensors.append(sensor_entry)
+
             if sensors:
                 devices_data.append({
                     "device_name": device_name,
@@ -437,7 +421,7 @@ class ThingsBoardInterface:
 
 
 if __name__ == "__main__":
-    file_path = "/opt/ceg/algo/things_board/device_data/11128.xlsx"
+    file_path = "path to your excel"
     ThingsBoardInterface().create_bu_devices("TAS", "11128", "Mathura", file_path)
 
 

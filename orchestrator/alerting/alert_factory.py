@@ -90,6 +90,8 @@ class AlertFactory:
                                                         'clear_count': alert_data.get('clear_count',False),
                                                         'alert_history': alert_data.get('alert_history',[]),
                                                         'device_msg': alert_data.get('message', ''),
+                                                        'equipment_type': alert_data.get('equipment_type',''),
+                                                        'equipment_name': alert_data.get('equipment_name',''),
                                                         'alert_message': alert_data.get('alert_message',''),
                                                         'last_sms_to': [], 'last_mailed_to': [],
                                                         'last_escalated_to': [],
