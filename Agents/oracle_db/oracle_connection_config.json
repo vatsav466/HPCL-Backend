@@ -63,7 +63,7 @@
             "function_name": "incremental_check",
             "max_full_dump": 3000,
             "incremental": true,
-            "increment_check": ["START_TOTALIZER", "END_TOTALIZER"]
+            "increment_check": ["BCU_NUMBER", "BAY_NUMBER", "METER_NUMBER", "START_TOTALIZER", "END_TOTALIZER", "DATE"]
           },
           "HOST_OVERLOADEDTTS": {
             "interval": 300,
@@ -73,6 +73,13 @@
             "increment_check": [""]
           },
           "HOST_MFMKFACTOR": {
+            "interval": 300,
+            "function_name": "",
+            "max_full_dump": 3000,
+            "incremental": false,
+            "increment_check": [""]
+          },
+          "MASTER_STATUS": {
             "interval": 300,
             "function_name": "",
             "max_full_dump": 3000,

@@ -1782,13 +1782,14 @@ Model HostUnauthorisedFlow {
     bay_number optional str
     bcu_number optional unique_field str
     meter_number optional unique_field int
-    timestamp optional unique_field datetime
+    timestamp optional datetime
     start_totalizer optional unique_field float
     end_totalizer optional unique_field float
     net_totalizer optional unique_field float
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    date optional unique_field date
 
     Config=> {
         access_key_mapping=''
