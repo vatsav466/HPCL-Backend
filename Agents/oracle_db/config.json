@@ -15,7 +15,9 @@
         "HOST_MANUALBAYASSIGNED",
         "HOST_MANUALFANPRINTED",
         "HOST_UNAUTHORIZEDFLOW",
-        "HOST_OVERLOADEDTTS"
+        "HOST_OVERLOADEDTTS",
+        "HOST_MFMKFACTOR",
+        "MASTER_STATUS"
     ],
     "conn_host": "10.90.38.167",
     "conn_port": "5672",
@@ -41,7 +43,8 @@
         "HOST_BAYREASSIGNMENT": "HostBayReAssignment",
         "HOST_MANUALBAYASSIGNED": "HostManualBayAssigned",
         "HOST_SICKTTS": "HostSickTts",
-        "HOST_MFMKFACTOR": "HostMFMFactor"
+        "HOST_MFMKFACTOR": "HostMFMFactor",
+        "MASTER_STATUS": "MasterStatus"
     },
 
     "interlock_name": {
@@ -132,6 +135,9 @@
         "LAST_METER_FACTOR": "last_meter_factor",
         "LAST_METER_FACTOR_CHANGE_DATE": "last_meter_factor_change_date",
         "ASSIGNED_BAY": "assigned_bay",
-        "REASSIGN_LOADED_QTY": "reassign_loaded_qty"
+        "REASSIGN_LOADED_QTY": "reassign_loaded_qty",
+        "STATUS": "status",
+        "LOCATION_CODE": "location_code",
+        "ACTIVE_SERVER_NAME": "active_server_name"
     }
 }

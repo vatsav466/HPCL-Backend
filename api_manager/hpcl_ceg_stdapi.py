@@ -1027,6 +1027,31 @@ async def delete(id: str):
     return await HostMFMFactor.delete(id)
 
 
+@router.post('/masterstatus', response_model=MasterStatus, tags=['MasterStatus'])
+async def create(inputObj: MasterStatusCreate):
+    return await inputObj.create()
+
+
+@router.put('/masterstatus', response_model=MasterStatus, tags=['MasterStatus'])
+async def update(inputObj: MasterStatus):
+    return await inputObj.modify()
+
+
+@router.get('/masterstatus/{id}', response_model=MasterStatus, tags=['MasterStatus'])
+async def get(id: str):
+    return await MasterStatus.get(id, skip_secrets=True)
+
+
+@router.get('/masterstatus', response_model=MasterStatusGetResp, tags=['MasterStatus'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await MasterStatus.get_all(params, skip_secrets=True)
+
+
+@router.delete('/masterstatus/{id}', tags=['MasterStatus'])
+async def delete(id: str):
+    return await MasterStatus.delete(id)
+
+
 @router.post('/tagsdata', response_model=TagsData, tags=['TagsData'])
 async def create(inputObj: TagsDataCreate):
     return await inputObj.create()
