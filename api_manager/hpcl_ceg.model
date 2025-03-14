@@ -293,6 +293,10 @@ Model LocationMaster {
         sales_area optional str
     }
 
+    Action=> get_sod_engineering_stats {
+        sap_id str
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,region,sales_area,sap_id'
