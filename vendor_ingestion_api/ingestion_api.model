@@ -170,6 +170,7 @@ Model crisData internal {
 
 Model CRIS crud_disable {
     Action=> ingest_data {
+        vendor_name str
         vendor_id str
         location_id str
         ro_code str
