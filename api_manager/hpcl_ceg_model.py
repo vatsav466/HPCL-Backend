@@ -4930,12 +4930,13 @@ class HostManualFanPrintedSchema(UrdhvaPostgresBase):
     manual_fan_count: Mapped[typing.Optional[int]] = mapped_column("manual_fan_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     auto_fan_count: Mapped[typing.Optional[int]] = mapped_column("auto_fan_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     total_count: Mapped[typing.Optional[int]] = mapped_column("total_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
-    date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, date, sap_id, name="host_manual_fan_printed_manua_autof_total_date_sapid"),)
+    __table_args__ = (UniqueConstraint(manual_fan_count, auto_fan_count, total_count, date, date_time, sap_id, name="host_manual_fan_printed_manua_autof_total_date_datet_sapid"),)
 
 
 class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4944,7 +4945,8 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     manual_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     auto_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     total_count: typing.Optional[int] = pydantic.Field(0, **{})
-    date: typing.Optional[datetime.datetime] | None = None
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -4954,7 +4956,7 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'date', 'sap_id']
+        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'date', 'date_time', 'sap_id']
 
 
 class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
@@ -4963,7 +4965,8 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
     manual_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     auto_fan_count: typing.Optional[int] = pydantic.Field(0, **{})
     total_count: typing.Optional[int] = pydantic.Field(0, **{})
-    date: typing.Optional[datetime.datetime] | None = None
+    date: typing.Optional[datetime.date] | None = None
+    date_time: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
@@ -4973,7 +4976,7 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'date', 'sap_id']
+        upsert_keys = ['manual_fan_count', 'auto_fan_count', 'total_count', 'date', 'date_time', 'sap_id']
 
 
 class HostManualFanPrintedGetResp(pydantic.BaseModel):
@@ -4995,9 +4998,8 @@ class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, meter_number, start_totalizer, end_totalizer, net_totalizer, sap_id, date, name="host_unauthorised_flow_bcunu_meter_start_endto_netto_sapid_dat"),)
+    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, name="host_unauthorised_flow_bcunu_meter_times_start_endto_netto_sap"),)
 
 
 class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5013,14 +5015,13 @@ class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
-    date: typing.Optional[datetime.date] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = ['bcu_number', 'meter_number', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id']
 
 
 class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
@@ -5036,14 +5037,13 @@ class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
-    date: typing.Optional[datetime.date] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = ['bcu_number', 'meter_number', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id']
 
 
 class HostUnauthorisedFlowGetResp(pydantic.BaseModel):
@@ -5141,7 +5141,7 @@ class HostMFMFactorSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(mfm_number, bcu_number, stock_code, current_k_factor, last_k_factor, last_k_factor_change_date, current_meter_factor, last_meter_factor, last_meter_factor_change_date, sap_id, name="host_mfm_factor_mfmnu_bcunu_stock_curre_lastk_lastk_curre_last"),)
+    __table_args__ = (UniqueConstraint(mfm_number, bcu_number, stock_code, current_k_factor, current_meter_factor, sap_id, name="host_mfm_factor_mfmnu_bcunu_stock_curre_curre_sapid"),)
 
 
 class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5165,7 +5165,7 @@ class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'bcu_number', 'stock_code', 'current_k_factor', 'last_k_factor', 'last_k_factor_change_date', 'current_meter_factor', 'last_meter_factor', 'last_meter_factor_change_date', 'sap_id']
+        upsert_keys = ['mfm_number', 'bcu_number', 'stock_code', 'current_k_factor', 'current_meter_factor', 'sap_id']
 
 
 class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
@@ -5189,7 +5189,7 @@ class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'bcu_number', 'stock_code', 'current_k_factor', 'last_k_factor', 'last_k_factor_change_date', 'current_meter_factor', 'last_meter_factor', 'last_meter_factor_change_date', 'sap_id']
+        upsert_keys = ['mfm_number', 'bcu_number', 'stock_code', 'current_k_factor', 'current_meter_factor', 'sap_id']
 
 
 class HostMFMFactorGetResp(pydantic.BaseModel):
@@ -5208,7 +5208,7 @@ class MasterStatusSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(status, location_code, active_server_name, sap_id, name="master_status_status_location_code_active_server_name_sap_id"),)
+    __table_args__ = (UniqueConstraint(status, location_code, sap_id, name="master_status_status_location_code_sap_id"),)
 
 
 class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5226,7 +5226,7 @@ class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = ['status', 'location_code', 'active_server_name', 'sap_id']
+        upsert_keys = ['status', 'location_code', 'sap_id']
 
 
 class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
@@ -5244,7 +5244,7 @@ class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = ['status', 'location_code', 'active_server_name', 'sap_id']
+        upsert_keys = ['status', 'location_code', 'sap_id']
 
 
 class MasterStatusGetResp(pydantic.BaseModel):

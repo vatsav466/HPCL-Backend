@@ -1768,7 +1768,8 @@ Model HostManualFanPrinted {
     manual_fan_count optional unique_field int
     auto_fan_count optional unique_field int
     total_count optional unique_field int
-    date optional unique_field datetime
+    date optional unique_field date
+    date_time optional unique_field datetime
     sap_id optional unique_field str
     location_name optional str
     zone optional str
@@ -1782,14 +1783,13 @@ Model HostUnauthorisedFlow {
     bay_number optional str
     bcu_number optional unique_field str
     meter_number optional unique_field int
-    timestamp optional datetime
+    timestamp optional unique_field datetime
     start_totalizer optional unique_field float
     end_totalizer optional unique_field float
     net_totalizer optional unique_field float
     sap_id optional unique_field str
     location_name optional str
     zone optional str
-    date optional unique_field date
 
     Config=> {
         access_key_mapping=''
@@ -1820,11 +1820,11 @@ Model HostMFMFactor {
     bcu_number optional unique_field str
     stock_code optional unique_field str
     current_k_factor optional unique_field float
-    last_k_factor optional unique_field str
-    last_k_factor_change_date optional unique_field str
+    last_k_factor optional str
+    last_k_factor_change_date optional str
     current_meter_factor optional unique_field float
-    last_meter_factor optional unique_field str
-    last_meter_factor_change_date optional unique_field str
+    last_meter_factor optional str
+    last_meter_factor_change_date optional str
     sap_id optional unique_field str
     location_name optional str
     zone optional str
@@ -1837,7 +1837,7 @@ Model HostMFMFactor {
 Model MasterStatus {
     status optional unique_field int
     location_code optional unique_field str
-    active_server_name optional unique_field str
+    active_server_name optional str
     sap_id optional unique_field str
     location_name optional str
     zone optional str
