@@ -1841,6 +1841,7 @@ Model MasterStatus {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
+    alert_created optional bool
 
     Config=> {
         access_key_mapping=''
