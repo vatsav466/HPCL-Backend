@@ -1642,7 +1642,7 @@ Model ConsumerPumpStocksReceipts {
 Model HostSickTts {
     load_number optional unique_field int
     truck_number optional unique_field str
-    created_date optional unique_field date
+    created_date optional date
     customer_name optional unique_field str
     compartment_number optional unique_field int
     product_name optional unique_field str
@@ -1737,7 +1737,7 @@ Model HostLocalLoadedTts {
 }
 
 Model HostBayReAssignment {
-    created_date optional unique_field datetime
+    created_date optional datetime
     load_number optional unique_field int
     fan_number optional str
     truck_number optional unique_field str
