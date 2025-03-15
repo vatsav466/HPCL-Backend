@@ -1649,7 +1649,7 @@ Model HostSickTts {
     required_qty optional int
     loaded_qty optional int
     sick_declared_by optional str
-    sick_date optional unique_field datetime
+    sick_date optional datetime
     remarks optional str
     sap_id optional unique_field str
     location_name optional str
@@ -1657,6 +1657,8 @@ Model HostSickTts {
     bcu_number optional unique_field str
     bay_number optional unique_field str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional unique_field datetime
 
     Action=> download_data {
     }
@@ -1669,12 +1671,12 @@ Model HostSickTts {
 Model HostCancelledTts {
     load_number optional unique_field int
     truck_number optional unique_field str
-    created_date optional unique_field datetime
+    created_date optional datetime
     customer_name optional unique_field str
     product_name optional unique_field str
     required_qty optional int
     cancelled_by optional str
-    cancelled_date optional unique_field datetime
+    cancelled_date optional datetime
     sap_id optional unique_field str
     location_name optional str
     zone optional str
@@ -1683,6 +1685,8 @@ Model HostCancelledTts {
     exit_time optional unique_field datetime
     remarks optional str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional unique_field datetime
 
     Config=> {
         access_key_mapping=''
@@ -1718,12 +1722,14 @@ Model HostLocalLoadedTts {
     start_totalizer optional unique_field float
     end_totalizer optional unique_field float
     loaded_qty optional unique_field int
-    transaction_end_time optional unique_field datetime
+    transaction_end_time optional datetime
     sap_id optional unique_field str
     location_name optional str
     zone optional str
     compartment_number optional unique_field int
     alert_created optional bool
+    date optional unique_field date
+    date_time optional unique_field datetime
 
     Config=> {
         access_key_mapping=''
@@ -1741,7 +1747,7 @@ Model HostBayReAssignment {
     required_qty optional unique_field int
     loaded_qty optional unique_field int
     reassigned_bay optional str
-    bay_reassignment_time optional unique_field datetime
+    bay_reassignment_time optional datetime
     remarks optional str
     sap_id optional unique_field str
     location_name optional str
@@ -1749,6 +1755,8 @@ Model HostBayReAssignment {
     assigned_bay optional unique_field str
     reassign_loaded_qty optional unique_field str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional unique_field datetime
 
     Config=> {
         access_key_mapping=''
@@ -1814,10 +1822,12 @@ Model HostOverLoadedTts{
     sap_id optional unique_field str
     location_name optional str
     zone optional str
-    created_date optional unique_field datetime
+    created_date optional datetime
     bcu_number optional unique_field str
     bay_number optional unique_field str
     alert_created optional bool
+    date optional unique_field date
+    date_time optional unique_field datetime
 
     Config=> {
         access_key_mapping=''
