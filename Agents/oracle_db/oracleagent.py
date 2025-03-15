@@ -419,7 +419,7 @@ class Oracle(BaseAction):
 
 
 class DataMonitor:
-    def __init__(self, oracle, table_names, sleep_duration=10):
+    def __init__(self, oracle, table_names, sleep_duration=300):
         self.oracle = oracle
         self.table_names = table_names
         self.sleep_duration = sleep_duration
@@ -566,7 +566,7 @@ class DataMonitor:
             print(f"Error in run: {e}")
             # Restart the monitoring after a delay
             print("Restarting monitoring in 30 seconds...")
-            await asyncio.sleep(30)
+            await asyncio.sleep(300)
             await self.run()
 
 async def main():
@@ -583,7 +583,7 @@ async def main():
     print("Oracle connection successful!")
     
     # Initialize the monitor
-    monitor = DataMonitor(oracle, table_names, sleep_duration=10)
+    monitor = DataMonitor(oracle, table_names, sleep_duration=300)
     
     # Print configuration info
     print(f"Configured to monitor {len(table_names)} tables:")
