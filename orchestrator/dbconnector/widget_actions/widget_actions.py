@@ -106,7 +106,9 @@ lpg_dashboard_actions = [
     'unauthorised_flow',
     'sick_tts',
     'cancelled_tts',
-    'kfactor'
+    'kfactor',
+    'manualfanprinted',
+    'overloaded_tts'
 ]
 
 # Todo:- import all widget action modules here
@@ -215,8 +217,9 @@ widget_mapping = {
     'unauthorised_flow': {},
     'sick_tts': {},
     'cancelled_tts': {},
-    'kfactor': {}
-
+    'kfactor': {},
+    'manualfanprinted': {},
+    'overloaded_tts': {}
 }
 
 
