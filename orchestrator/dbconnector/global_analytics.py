@@ -6762,8 +6762,8 @@ class GlobalAnalytics:
                     h.sap_id,
                     (SELECT COUNT(*) 
                     FROM alerts a 
-                    WHERE a.interlock_name = 'Manual FAN printed more 5% of total TT loaded') AS alert_count
-                    SUM('manual_fan_count') as total_manual_fan_count
+                    WHERE a.interlock_name = 'Manual FAN printed more 5% of total TT loaded') AS alert_count,
+                    SUM(h.manual_fan_count) as total_manual_fan_count
                 FROM 
                     host_manual_fan_printed h
                 WHERE 1=1
@@ -6819,7 +6819,7 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_manual_fan_count").alias("manualfan_count")
@@ -6832,7 +6832,6 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        "bcu_number": row["bcu_number"],
                         "total_alerts": row["total_alerts"],
                         "total_manual_fan_count": row["manualfan_count"]
                     }
@@ -6844,7 +6843,7 @@ class GlobalAnalytics:
                     pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
                 )
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_manual_fan_count").alias("manualfan_count")
@@ -6857,7 +6856,6 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        "bcu_number": row["bcu_number"],
                         "total_alerts": row["total_alerts"],
                         "total_manual_fan_count": row["manualfan_count"]
                     }
