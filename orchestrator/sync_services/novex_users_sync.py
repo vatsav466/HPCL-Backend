@@ -156,4 +156,4 @@ async def sync_users():
 
 
 if __name__ == "__main__":
-    sync_users()
+    asyncio.run(sync_users())
