@@ -4979,7 +4979,7 @@ class HostManualFanPrintedSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(auto_fan_count, total_count, date, date_time, sap_id, name="host_manual_fan_printed_autof_total_date_datet_sapid"),)
+    __table_args__ = (UniqueConstraint(auto_fan_count, total_count, date, sap_id, name="host_manual_fan_printed_auto_fan_count_total_count_date_sap_id"),)
 
 
 class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5000,7 +5000,7 @@ class HostManualFanPrintedCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = ['auto_fan_count', 'total_count', 'date', 'date_time', 'sap_id']
+        upsert_keys = ['auto_fan_count', 'total_count', 'date', 'sap_id']
 
 
 class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
@@ -5021,7 +5021,7 @@ class HostManualFanPrinted(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualFanPrintedSchema
-        upsert_keys = ['auto_fan_count', 'total_count', 'date', 'date_time', 'sap_id']
+        upsert_keys = ['auto_fan_count', 'total_count', 'date', 'sap_id']
 
 
 class HostManualFanPrintedGetResp(pydantic.BaseModel):
