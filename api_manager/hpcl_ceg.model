@@ -1658,7 +1658,7 @@ Model HostSickTts {
     bay_number optional unique_field str
     alert_created optional bool
     date optional unique_field date
-    date_time optional unique_field datetime
+    date_time optional datetime
 
     Action=> download_data {
     }
@@ -1686,7 +1686,7 @@ Model HostCancelledTts {
     remarks optional str
     alert_created optional bool
     date optional unique_field date
-    date_time optional unique_field datetime
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1729,7 +1729,7 @@ Model HostLocalLoadedTts {
     compartment_number optional unique_field int
     alert_created optional bool
     date optional unique_field date
-    date_time optional unique_field datetime
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1756,7 +1756,7 @@ Model HostBayReAssignment {
     reassign_loaded_qty optional unique_field str
     alert_created optional bool
     date optional unique_field date
-    date_time optional unique_field datetime
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1827,7 +1827,7 @@ Model HostOverLoadedTts{
     bay_number optional unique_field str
     alert_created optional bool
     date optional unique_field date
-    date_time optional unique_field datetime
+    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
