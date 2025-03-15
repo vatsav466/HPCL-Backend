@@ -11,7 +11,7 @@ import numpy as np
 import mysql.connector
 sys.path.append("/opt/ceg/algo")
 import utilities.users_config as users_config
-import api_manager.hpcl_ceg_model as hpcl_ceg_model
+# import api_manager.hpcl_ceg_model as hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 
