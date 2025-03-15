@@ -4578,7 +4578,7 @@ class HostCancelledTtsSchema(UrdhvaPostgresBase):
     date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
     date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(load_number, truck_number, customer_name, product_name, sap_id, compartment_number, entry_time, exit_time, date, date_time, name="host_cancelled_tts_loadn_truck_custo_produ_sapid_compa_entry_e"),)
+    __table_args__ = (UniqueConstraint(load_number, truck_number, customer_name, product_name, sap_id, compartment_number, date, date_time, name="host_cancelled_tts_loadn_truck_custo_produ_sapid_compa_date_da"),)
 
 
 class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4608,7 +4608,7 @@ class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostCancelledTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'customer_name', 'product_name', 'sap_id', 'compartment_number', 'entry_time', 'exit_time', 'date', 'date_time']
+        upsert_keys = ['load_number', 'truck_number', 'customer_name', 'product_name', 'sap_id', 'compartment_number', 'date', 'date_time']
 
 
 class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
@@ -4638,7 +4638,7 @@ class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostCancelledTtsSchema
-        upsert_keys = ['load_number', 'truck_number', 'customer_name', 'product_name', 'sap_id', 'compartment_number', 'entry_time', 'exit_time', 'date', 'date_time']
+        upsert_keys = ['load_number', 'truck_number', 'customer_name', 'product_name', 'sap_id', 'compartment_number', 'date', 'date_time']
 
 
 class HostCancelledTtsGetResp(pydantic.BaseModel):

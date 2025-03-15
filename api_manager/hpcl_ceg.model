@@ -1681,8 +1681,8 @@ Model HostCancelledTts {
     location_name optional str
     zone optional str
     compartment_number optional unique_field int
-    entry_time optional unique_field datetime
-    exit_time optional unique_field datetime
+    entry_time optional datetime
+    exit_time optional datetime
     remarks optional str
     alert_created optional bool
     date optional unique_field date
