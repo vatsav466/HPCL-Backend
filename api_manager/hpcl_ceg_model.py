@@ -114,6 +114,7 @@ class UsersSchema(UrdhvaPostgresBase):
     escalation_level: Mapped[typing.Optional[typing.Any]] = mapped_column("escalation_level", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     is_ad_user: Mapped[bool] = mapped_column("is_ad_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
     status: Mapped[bool] = mapped_column("status", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    manual_user: Mapped[bool] = mapped_column("manual_user", Boolean, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(username, employee_id, name="users_username_employee_id"),)
 
@@ -139,6 +140,7 @@ class UsersCreate(urdhva_base.postgresmodel.BasePostgresModel):
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
     is_ad_user: bool
     status: bool
+    manual_user: bool
 
     class Config:
         collection_name = 'data_flow'
@@ -169,6 +171,7 @@ class Users(urdhva_base.postgresmodel.PostgresModel):
     escalation_level: typing.Optional[hpcl_ceg_enum.NotificationLevel] | None = None
     is_ad_user: typing.Optional[bool] | None = None
     status: typing.Optional[bool] | None = None
+    manual_user: typing.Optional[bool] | None = None
 
     class Config:
         collection_name = 'data_flow'

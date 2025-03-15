@@ -168,6 +168,7 @@ Model Users {
     // User authentication type
     is_ad_user bool
     status bool
+    manual_user bool
 
     // API to list out created users
     Action=> fetch_users {

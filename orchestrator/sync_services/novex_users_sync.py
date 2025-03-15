@@ -1,16 +1,21 @@
 import sys
+import ast
 import pyodbc
+import asyncio
+import psycopg2
 import importlib
+import urdhva_base
 import pandas as pd
 import polars as pl
 import numpy as np
 import mysql.connector
 sys.path.append("/opt/ceg/algo")
-import orchestrator.dbconnector.credential_loader as credential_loader
 import utilities.users_config as users_config
+import api_manager.hpcl_ceg_model as hpcl_ceg_model
+import orchestrator.dbconnector.credential_loader as credential_loader
 
 
-def get_db_connection():
+async def get_db_connection():
     """
     Establish a database connection
     Args:
@@ -29,7 +34,7 @@ def get_db_connection():
     return connection
 
 
-def fetch_data(cursor, query, getData=False, params=None):
+async def fetch_data(cursor, query, getData=False, params=None):
     """
     Fetch data from database using a SQL query
     Args:
@@ -48,9 +53,43 @@ def fetch_data(cursor, query, getData=False, params=None):
     columns = [column[0] for column in cursor.description]
     data = pd.DataFrame.from_records(data, columns=columns)
     return data    
-    
 
-def combine_roles(data, _id, role_name):
+
+async def clear_existing_user(bu):
+    creds = credential_loader.get_credentials('APP_DB')
+    pg_conn = psycopg2.connect(
+                host=creds["host"],
+                database=creds["database"],
+                user=creds["user"],
+                password=creds["password"],
+                port=creds["port"]
+            )
+    query = f""" DELETE FROM users WHERE bu={bu} and manual_user IS FALSE """
+    cursor = pg_conn.cursor()
+    cursor.execute(query)
+    pg_conn.commit()
+    cursor.close()
+    pg_conn.close()    
+
+
+async def insert_users(data):
+    total_record = len(data)
+    for item in data:
+        for key in ['bu', 'sap_id', 'region', 'state', 'zone', 'sales_area', 'system_role', 'novex_role']:
+            if isinstance(item[key], str):
+                item[key] = ast.literal_eval(item[key])
+            if item[key] == None:
+                item[key] = []
+    count = 1
+    for user in data:
+        print("-*"*10)
+        print(f"Inserting {count} / {total_record}")
+        print("Users :", user)
+        hpcl_ceg_model.UsersCreate(**user)
+        await hpcl_ceg_model.UsersCreate(**user).create()
+
+
+async def combine_roles(data, _id, role_name):
     """
     Combine the different roles of single users into list of roles and removes the duplicates
     Arg:
@@ -71,7 +110,7 @@ def combine_roles(data, _id, role_name):
     return data
 
 
-def process_data(data):
+async def process_data(data):
     novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
                        "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
                        "state", "zone", "sales_area", "escalation_level", "is_ad_user", "status"]
@@ -99,21 +138,22 @@ def process_data(data):
     return data
 
 
-def main():
-    connection = get_db_connection()
+async def sync_users():
+    connection = await get_db_connection()
     cursor = connection.cursor()
     for bu in ["lpg"]:
         query = getattr(users_config, f"{bu}_query", None)
         if not query:
             return
-        data = fetch_data(cursor, query)
+        data = await fetch_data(cursor, query)
         role_master = pd.read_csv("/opt/ceg/algo/novex_role_master.csv")
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
-        data = combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
-        data = process_data(data)
-        return data
+        data = await combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
+        data = await process_data(data)
+        print(data)
+        # await clear_existing_user(bu)
+        # await insert_users(data.to_dict(orient="records"))
+
 
 if __name__ == "__main__":
-    df = main()
-    print(df.to_string())
-    df.to_csv("/opt/ceg/algo/testing_automated_file.csv")
+    sync_users()
