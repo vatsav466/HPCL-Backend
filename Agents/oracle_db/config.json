@@ -92,6 +92,7 @@
         "TRUCK_NUMBER": "truck_number",
         "CREATED_DATE": "created_date",
         "CUSTOMER_NAME": "customer_name",
+        "COMPONENT_NUMBER": "compartment_number",
         "COMPARTMENT_NUMBER": "compartment_number",
         "PRODUCT_NAME": "product_name",
         "REQUIRED_QTY": "required_qty",

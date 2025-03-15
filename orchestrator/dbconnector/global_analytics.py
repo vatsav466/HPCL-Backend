@@ -6036,7 +6036,7 @@ class GlobalAnalytics:
             # Complete the query with proper GROUP BY
             query += """
                 GROUP BY 
-                    created_date, h.zone, h.location_name, h.sap_id, h.bcu_number
+                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
                 ORDER BY 
                     created_date DESC, alert_count DESC
             """
@@ -6165,7 +6165,7 @@ class GlobalAnalytics:
                     FROM alerts a 
                     WHERE a.device_name = h.bcu_number 
                     AND a.interlock_name = 'Unauthorized flow_BCU') AS alert_count,
-                    SUM(h.net_totalizer) AS total_net_totalizer
+                    CAST(SUM(h.net_totalizer) AS FLOAT) AS total_net_totalizer
                 FROM 
                     host_unauthorised_flow h
                 WHERE 1=1
@@ -6186,7 +6186,7 @@ class GlobalAnalytics:
             # Complete the query with proper GROUP BY
             query += """
                 GROUP BY 
-                    created_date, h.zone, h.location_name, h.sap_id, h.bcu_number
+                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
                 ORDER BY 
                     created_date DESC, alert_count DESC
             """
@@ -6337,7 +6337,7 @@ class GlobalAnalytics:
             # Complete the query with proper GROUP BY
             query += """
                 GROUP BY 
-                    created_date, h.zone, h.location_name, h.sap_id, h.bcu_number
+                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
                 ORDER BY 
                     created_date DESC, alert_count DESC
             """
@@ -6491,7 +6491,7 @@ class GlobalAnalytics:
             # Complete the query with proper GROUP BY
             query += """
                 GROUP BY 
-                    created_date, h.zone, h.location_name, h.sap_id, h.bcu_number
+                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
                 ORDER BY 
                     created_date DESC, alert_count DESC
             """
@@ -6640,7 +6640,7 @@ class GlobalAnalytics:
             # Complete the query with proper GROUP BY
             query += """
                 GROUP BY 
-                    created_date, h.zone, h.location_name, h.sap_id, h.bcu_number
+                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
                 ORDER BY 
                     created_date DESC, alert_count DESC
             """
