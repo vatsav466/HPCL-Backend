@@ -1176,10 +1176,12 @@ async def generate_omc_compare_data(filters, drill_state):
     # Calculating Market Share
     for entry in structured_data:
         total_sales = sum(entry['Sales'].values())
+        total_history_sales = sum(entry['History'].values())
         for company in entry['Sales']:
-            entry['Market Share'][company] = round(entry['Sales'].get(company, 0) / total_sales * 100, 2)
+            entry['Market Share'][company] = round((entry['Sales'].get(company, 0) / total_sales) * 100, 2)
         for company in entry['History']:
-            entry['Market Share History'][company] = round(entry['History'].get(company, 0) / total_sales * 100, 2)
+            entry['Market Share History'][company] = (
+                round((entry['History'].get(company, 0) / total_history_sales * 100), 2))
         for company in entry['Sales']:
             if entry['History'].get(company, 0):
                 entry['Growth'][company] = round((entry['Sales'].get(company, 0) -
