@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
+from datetime import datetime, date
 import orchestrator.alerting.alert_factory as alert_factory
 
 
@@ -58,11 +59,37 @@ class Postgresql:
     async def create_table(self, schema_name, table_name, sample_records, primary_key=[], unique_key=[]):
         """Create a table and upsert sample records."""
         for record in sample_records:
+            if "date" in record and isinstance(record["date"], str):
+                try:
+                    record["date"] = date.fromisoformat(record["date"])
+                except ValueError:
+                    # Alternative parsing if not in ISO format
+                    record["date"] = pd.to_datetime(record["date"]).date()
+            
+            if "date_time" in record and isinstance(record["date_time"], str):
+                try:
+                    record["date_time"] = datetime.fromisoformat(record["date_time"])
+                except ValueError:
+                    # Alternative parsing if not in ISO format
+                    record["date_time"] = pd.to_datetime(record["date_time"])
+            
             for key, value in record.items():
                 if value is None or (isinstance(value, float) and np.isnan(value)) or value is pd.NaT:
                     record[key] = None
                 if key == "timestamp" and isinstance(value, str):  # Convert timestamp properly
                     record[key] = pd.to_datetime(value)  # Converts to datetime
+                # Add these checks to your existing function
+                if "created_date" in record and isinstance(record["created_date"], str):
+                    record["created_date"] = pd.to_datetime(record["created_date"])
+
+                if "cancelled_date" in record and isinstance(record["cancelled_date"], str):
+                    record["cancelled_date"] = pd.to_datetime(record["cancelled_date"])
+
+                if "entry_time" in record and isinstance(record["entry_time"], str):
+                    record["entry_time"] = pd.to_datetime(record["entry_time"])
+
+                if "exit_time" in record and isinstance(record["exit_time"], str):
+                    record["exit_time"] = pd.to_datetime(record["exit_time"])
         print("sample_records --> ", sample_records)
         if not isinstance(sample_records, pl.DataFrame):
             sample_records = pl.DataFrame(sample_records)

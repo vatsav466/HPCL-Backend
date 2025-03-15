@@ -4564,7 +4564,7 @@ class HostCancelledTtsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    compartment_number: Mapped[typing.Optional[str]] = mapped_column("compartment_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    compartment_number: Mapped[typing.Optional[int]] = mapped_column("compartment_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     entry_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("entry_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     exit_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("exit_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     remarks: Mapped[typing.Optional[str]] = mapped_column("remarks", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -4587,7 +4587,7 @@ class HostCancelledTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
-    compartment_number: typing.Optional[str] = pydantic.Field("", **{})
+    compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
     entry_time: typing.Optional[datetime.datetime] | None = None
     exit_time: typing.Optional[datetime.datetime] | None = None
     remarks: typing.Optional[str] = pydantic.Field("", **{})
@@ -4615,7 +4615,7 @@ class HostCancelledTts(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
-    compartment_number: typing.Optional[str] = pydantic.Field("", **{})
+    compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
     entry_time: typing.Optional[datetime.datetime] | None = None
     exit_time: typing.Optional[datetime.datetime] | None = None
     remarks: typing.Optional[str] = pydantic.Field("", **{})
@@ -4724,7 +4724,7 @@ class HostLocalLoadedTtsSchema(UrdhvaPostgresBase):
     sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    compartment_number: Mapped[typing.Optional[str]] = mapped_column("compartment_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    compartment_number: Mapped[typing.Optional[int]] = mapped_column("compartment_number", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(sr_number, bcu_number, recipe_name, truck_number, card_number, start_totalizer, end_totalizer, loaded_qty, transaction_end_time, sap_id, compartment_number, name="host_local_loaded_tts_srnum_bcunu_recip_truck_cardn_start_endt"),)
@@ -4746,7 +4746,7 @@ class HostLocalLoadedTtsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
-    compartment_number: typing.Optional[str] = pydantic.Field("", **{})
+    compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
@@ -4773,7 +4773,7 @@ class HostLocalLoadedTts(urdhva_base.postgresmodel.PostgresModel):
     sap_id: typing.Optional[str] = pydantic.Field("", **{})
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
-    compartment_number: typing.Optional[str] = pydantic.Field("", **{})
+    compartment_number: typing.Optional[int] = pydantic.Field(0, **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:

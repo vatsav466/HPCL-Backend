@@ -138,6 +138,8 @@
         "REASSIGN_LOADED_QTY": "reassign_loaded_qty",
         "STATUS": "status",
         "LOCATION_CODE": "location_code",
-        "ACTIVE_SERVER_NAME": "active_server_name"
-    }
+        "ACTIVE_SERVER_NAME": "active_server_name",
+        "ENTRY_TIME": "entry_time",
+        "EXIT_TIME": "exit_time"
+}
 }

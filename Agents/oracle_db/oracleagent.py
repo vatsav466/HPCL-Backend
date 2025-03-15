@@ -455,7 +455,7 @@ class DataMonitor:
             # Add timestamp to specific table records if needed
             if "HOST_MANUALFANPRINTED" in changed_data:
                 for record in changed_data["HOST_MANUALFANPRINTED"]:
-                    recor["date"] = datetime.date.today()
+                    record["date"] = datetime.date.today()
                     record["date_time"] = datetime.datetime.now().isoformat()
                     
             # Send only changed records

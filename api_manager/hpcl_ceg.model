@@ -1678,7 +1678,7 @@ Model HostCancelledTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
-    compartment_number optional unique_field str
+    compartment_number optional unique_field int
     entry_time optional unique_field datetime
     exit_time optional unique_field datetime
     remarks optional str
@@ -1722,7 +1722,7 @@ Model HostLocalLoadedTts {
     sap_id optional unique_field str
     location_name optional str
     zone optional str
-    compartment_number optional unique_field str
+    compartment_number optional unique_field int
     alert_created optional bool
 
     Config=> {
