@@ -693,6 +693,11 @@ class SendNotification:
             self.update_alert["assigned_user_roles"].split(',') if self.update_alert["assigned_user_roles"] else []
         )
 
+        if self.params.get("messagetype") in ["escalation","escalate"]:
+            self.update_alert["action_msg"] = "Escalated to " + ",".join(self.update_alert["last_escalated_to"])
+        else:
+            self.update_alert["action_msg"] = "Mail sent to " + ",".join(self.update_alert["last_escalated_to"])
+
         # Fetch alert data from DB and ensure it's a dictionary
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
