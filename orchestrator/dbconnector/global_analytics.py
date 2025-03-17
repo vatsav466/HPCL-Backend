@@ -5126,11 +5126,13 @@ class GlobalAnalytics:
                     )
 
                 result = {}
+                total_alert_count = grouped.select(pl.sum("total")).item()
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()
 
                     result.setdefault(category, {}).setdefault(str(row["created_date"]), {}).setdefault(row["alert_type"], {
-                        "details": []
+                        "details": [],
+                        "total": 0
                     })
 
                     detail_item = {}
@@ -5162,6 +5164,8 @@ class GlobalAnalytics:
                         
                     detail_item["count"] = row["total"]
                     result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
+                    # Update total count for this category, date, and alert_type
+                    result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
                 return {"status": True, "message": "success", "daily_data": result}
 
             else:
@@ -5192,11 +5196,13 @@ class GlobalAnalytics:
                     )
 
                 result = {}
+                total_alert_count = grouped.select(pl.sum("total")).item()
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()
 
                     result.setdefault(category, {}).setdefault(row["month_year"], {}).setdefault(row["alert_type"], {
-                        "details": []
+                        "details": [],
+                        "total": 0
                     })
 
                     detail_item = {}
@@ -5231,6 +5237,8 @@ class GlobalAnalytics:
                         
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
+                    # Update total count for this category, date, and alert_type
+                    result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
                 return {"status": True, "message": "success", "monthly_data": result}
         
         except Exception as e:
