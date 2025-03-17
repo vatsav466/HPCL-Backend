@@ -4919,10 +4919,8 @@ class HostManualBayAssignedSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
-    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(user_name, timestamp, sap_id, date, name="host_manual_bay_assigned_user_name_timestamp_sap_id_date"),)
+    __table_args__ = (UniqueConstraint(user_name, timestamp, sap_id, name="host_manual_bay_assigned_user_name_timestamp_sap_id"),)
 
 
 class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -4936,15 +4934,13 @@ class HostManualBayAssignedCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
-    date: typing.Optional[datetime.date] | None = None
-    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualBayAssignedSchema
-        upsert_keys = ['user_name', 'timestamp', 'sap_id', 'date']
+        upsert_keys = ['user_name', 'timestamp', 'sap_id']
 
 
 class HostManualBayAssigned(urdhva_base.postgresmodel.PostgresModel):
@@ -4958,15 +4954,13 @@ class HostManualBayAssigned(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
-    date: typing.Optional[datetime.date] | None = None
-    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostManualBayAssignedSchema
-        upsert_keys = ['user_name', 'timestamp', 'sap_id', 'date']
+        upsert_keys = ['user_name', 'timestamp', 'sap_id']
 
 
 class HostManualBayAssignedGetResp(pydantic.BaseModel):
@@ -5213,10 +5207,8 @@ class HostMFMFactorSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
-    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(mfm_number, stock_code, sap_id, date, name="host_mfm_factor_mfm_number_stock_code_sap_id_date"),)
+    __table_args__ = (UniqueConstraint(mfm_number, stock_code, sap_id, name="host_mfm_factor_mfm_number_stock_code_sap_id"),)
 
 
 class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5235,15 +5227,13 @@ class HostMFMFactorCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
-    date: typing.Optional[datetime.date] | None = None
-    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'stock_code', 'sap_id', 'date']
+        upsert_keys = ['mfm_number', 'stock_code', 'sap_id']
 
 
 class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
@@ -5262,15 +5252,13 @@ class HostMFMFactor(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
-    date: typing.Optional[datetime.date] | None = None
-    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostMFMFactorSchema
-        upsert_keys = ['mfm_number', 'stock_code', 'sap_id', 'date']
+        upsert_keys = ['mfm_number', 'stock_code', 'sap_id']
 
 
 class HostMFMFactorGetResp(pydantic.BaseModel):
@@ -5289,10 +5277,8 @@ class MasterStatusSchema(UrdhvaPostgresBase):
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     alert_created: Mapped[typing.Optional[bool]] = mapped_column("alert_created", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
-    date: Mapped[typing.Optional[datetime.date]] = mapped_column("date", DATE, index=False, nullable=True, default=None, primary_key=False, unique=False)
-    date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(status, location_code, sap_id, date, name="master_status_status_location_code_sap_id_date"),)
+    __table_args__ = (UniqueConstraint(status, location_code, sap_id, name="master_status_status_location_code_sap_id"),)
 
 
 class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5305,15 +5291,13 @@ class MasterStatusCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
-    date: typing.Optional[datetime.date] | None = None
-    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = ['status', 'location_code', 'sap_id', 'date']
+        upsert_keys = ['status', 'location_code', 'sap_id']
 
 
 class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
@@ -5326,15 +5310,13 @@ class MasterStatus(urdhva_base.postgresmodel.PostgresModel):
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     alert_created: typing.Optional[bool] = pydantic.Field(False, )
-    date: typing.Optional[datetime.date] | None = None
-    date_time: typing.Optional[datetime.datetime] | None = None
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = MasterStatusSchema
-        upsert_keys = ['status', 'location_code', 'sap_id', 'date']
+        upsert_keys = ['status', 'location_code', 'sap_id']
 
 
 class MasterStatusGetResp(pydantic.BaseModel):

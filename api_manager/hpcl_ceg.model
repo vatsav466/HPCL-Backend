@@ -1773,8 +1773,6 @@ Model HostManualBayAssigned {
     location_name optional str
     zone optional str
     alert_created optional bool
-    date optional unique_field date
-    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1853,8 +1851,6 @@ Model HostMFMFactor {
     location_name optional str
     zone optional str
     alert_created optional bool
-    date optional unique_field date
-    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
@@ -1869,8 +1865,6 @@ Model MasterStatus {
     location_name optional str
     zone optional str
     alert_created optional bool
-    date optional unique_field date
-    date_time optional datetime
 
     Config=> {
         access_key_mapping=''
