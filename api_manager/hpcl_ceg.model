@@ -1809,6 +1809,7 @@ Model HostUnauthorisedFlow {
     alert_created optional bool
     date optional unique_field date
     date_time optional datetime
+    nettotalizer optional unique_field float
 
     Config=> {
         access_key_mapping=''

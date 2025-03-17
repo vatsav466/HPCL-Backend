@@ -426,6 +426,126 @@ class DataMonitor:
         self.previous_data = {}  # Initialize as an empty dictionary
         self.table_queries = table_queries  # Use the global table_queries
 
+    # async def compare_and_send(self, current_data):
+    #     """
+    #     Compare current data with previous data and send only changed records to RabbitMQ.
+    #     """
+    #     try:
+    #         # Check if current_data is None or empty
+    #         if not current_data:
+    #             print("Warning: No data received to compare. Skipping comparison.")
+    #             return
+                
+    #         changed_data = {}  # To store only changed records per table
+
+    #         for table_name, records in current_data.items():
+    #             if not isinstance(records, list):  # Ensure records are lists
+    #                 print(f"Warning: Expected list for table {table_name}, but got {type(records)}")
+    #                 continue
+                
+    #             # Get previous records (if any) for the same table
+    #             previous_records = self.previous_data.get(table_name, [])
+
+    #             # Find new records (in current_data but not in previous_data)
+    #             new_records = [record for record in records if record not in previous_records]
+
+    #             if new_records:
+    #                 changed_data[table_name] = new_records  # Store only changed records
+                    
+    #         # Add timestamp to specific table records if needed
+    #         tables = [
+    #             "HOST_MANUALFANPRINTED",
+    #             "HOST_SICKTTS",
+    #             "HOST_CANCELLEDTTS",
+    #             "HOST_LOCALLOADEDTTS",
+    #             "HOST_BAYREASSIGNMENT",
+    #             "HOST_OVERLOADEDTTS",
+    #             "HOST_UNAUTHORIZEDFLOW"
+    #         ]
+
+    #         current_date = datetime.datetime.today().date()
+    #         current_datetime = datetime.datetime.now().isoformat()
+
+    #         for table in tables:
+    #             if table in changed_data:
+    #                 for record in changed_data[table]:
+    #                     record["date"] = current_date
+    #                     record["date_time"] = current_datetime
+                    
+    #         # Send only changed records
+    #         if changed_data:
+    #             await RabbitMQProducer().send_to_rabbitmq(changed_data)
+    #             print(f"Sent changed data to RabbitMQ for tables: {list(changed_data.keys())}")
+    #         else:
+    #             print("No changes detected. Nothing to send.")
+            
+    #         # Update previous_data with the current data
+    #         self.previous_data = current_data.copy()
+
+    #     except Exception as e:
+    #         print(traceback.format_exc())
+    #         print(f"Error in compare_and_send: {e}")
+
+    # async def fetch_data(self):
+    #     """
+    #     Fetch data asynchronously from Oracle tables.
+    #     """
+    #     try:
+    #         # Create a dictionary to store tasks
+    #         tasks = {}
+    #         results = {}
+            
+    #         # Create tasks for each table
+    #         for table in self.table_names:
+    #             if table == "HOST_UNAUTHORIZEDFLOW":
+    #                 # Special case for this table
+    #                 query = f"SELECT t.*, TO_CHAR(t.timestamp, 'YYYY-MM-DD') AS timestamp FROM {table} t"
+    #                 tasks[table] = self.oracle.get_data(table_name=table, query=query)
+    #             elif table in self.table_queries and self.table_queries[table]:
+    #                 # Use custom query if defined
+    #                 tasks[table] = self.oracle.get_data(table_name=table, query=self.table_queries[table])
+    #             else:
+    #                 # Default case - just get all data from the table
+    #                 tasks[table] = self.oracle.get_data(table_name=table)
+            
+    #         # Execute all tasks in parallel
+    #         for table_name, task in tasks.items():
+    #             try:
+    #                 result = await task
+    #                 results[table_name] = result
+    #             except Exception as e:
+    #                 print(f"Error fetching data for table {table_name}: {e}")
+    #                 results[table_name] = None
+
+    #         print(f"Number of results: {len(results)}")
+
+    #         processed_results = {}
+
+    #         for table_name, result in results.items():
+    #             # Skip tables with errors or no data
+    #             if result is None:
+    #                 continue
+                    
+    #             if isinstance(result, dict):  # Handle error messages
+    #                 print(f"Error in {table_name}:", result.get("message", "Unknown error"))
+    #                 continue
+                
+    #             if isinstance(result, pl.DataFrame) and result.shape[0] > 0:  # Skip empty DataFrames
+    #                 try:
+    #                     records = result.to_dicts()
+                        
+    #                     # Add sap_id to each record
+    #                     for record in records:
+    #                         record["sap_id"] = sap_id
+                        
+    #                     processed_results[table_name] = records
+    #                     print(f"Processed {len(records)} records for {table_name}")
+    #                 except Exception as e:
+    #                     print(f"Error processing data for table {table_name}: {e}")
+            
+    #         print(f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}")
+    #         return processed_results
+
     async def compare_and_send(self, current_data):
         """
         Compare current data with previous data and send only changed records to RabbitMQ.
@@ -437,6 +557,13 @@ class DataMonitor:
                 return
                 
             changed_data = {}  # To store only changed records per table
+
+            # Special handling for HOST_UNAUTHORIZEDFLOW to calculate nettotalizer
+            if "HOST_UNAUTHORIZEDFLOW" in current_data and current_data["HOST_UNAUTHORIZEDFLOW"]:
+                current_data["HOST_UNAUTHORIZEDFLOW"] = self._calculate_nettotalizer(
+                    current_data["HOST_UNAUTHORIZEDFLOW"],
+                    self.previous_data.get("HOST_UNAUTHORIZEDFLOW", [])
+                )
 
             for table_name, records in current_data.items():
                 if not isinstance(records, list):  # Ensure records are lists
@@ -453,10 +580,24 @@ class DataMonitor:
                     changed_data[table_name] = new_records  # Store only changed records
                     
             # Add timestamp to specific table records if needed
-            if "HOST_MANUALFANPRINTED" in changed_data:
-                for record in changed_data["HOST_MANUALFANPRINTED"]:
-                    record["date"] = datetime.date.today()
-                    record["date_time"] = datetime.datetime.now().isoformat()
+            tables = [
+                "HOST_MANUALFANPRINTED",
+                "HOST_SICKTTS",
+                "HOST_CANCELLEDTTS",
+                "HOST_LOCALLOADEDTTS",
+                "HOST_BAYREASSIGNMENT",
+                "HOST_OVERLOADEDTTS",
+                "HOST_UNAUTHORIZEDFLOW"
+            ]
+
+            current_date = datetime.datetime.today().date()
+            current_datetime = datetime.datetime.now().isoformat()
+
+            for table in tables:
+                if table in changed_data:
+                    for record in changed_data[table]:
+                        record["date"] = current_date
+                        record["date_time"] = current_datetime
                     
             # Send only changed records
             if changed_data:
@@ -472,6 +613,61 @@ class DataMonitor:
             print(traceback.format_exc())
             print(f"Error in compare_and_send: {e}")
 
+    def _calculate_nettotalizer(self, current_records, previous_records):
+        """
+        Calculate nettotalizer for HOST_UNAUTHORIZEDFLOW records by comparing
+        current records with previous records.
+        """
+        try:
+            # Create a dictionary of previous records indexed by bcu_number
+            prev_bcu_data = {}
+            for record in previous_records:
+                bcu_number = record.get("bcu_number")
+                if bcu_number:
+                    # Store the highest totalizer value for each bcu_number
+                    if bcu_number not in prev_bcu_data or float(record.get("net_totalizer", 0)) > float(prev_bcu_data[bcu_number].get("net_totalizer", 0)):
+                        prev_bcu_data[bcu_number] = record
+            
+            # Group current records by bcu_number
+            bcu_groups = {}
+            for record in current_records:
+                bcu_number = record.get("bcu_number")
+                if bcu_number not in bcu_groups:
+                    bcu_groups[bcu_number] = []
+                bcu_groups[bcu_number].append(record)
+            
+            # Sort each group by timestamp and calculate nettotalizer
+            for bcu_number, group in bcu_groups.items():
+                # Sort by timestamp
+                sorted_group = sorted(group, key=lambda x: x.get("timestamp", ""))
+                
+                # Get the previous totalizer value for this bcu_number
+                prev_totalizer = None
+                if bcu_number in prev_bcu_data:
+                    prev_totalizer = float(prev_bcu_data[bcu_number].get("net_totalizer", 0))
+                
+                # Calculate nettotalizer for each record
+                for i, record in enumerate(sorted_group):
+                    current_totalizer = float(record.get("net_totalizer", 0))
+                    
+                    if prev_totalizer is None:
+                        # No previous record found for this bcu_number
+                        record["nettotalizer"] = 0
+                    else:
+                        # Calculate difference from previous totalizer
+                        net = current_totalizer - prev_totalizer
+                        record["nettotalizer"] = max(0, net)  # Ensure non-negative value
+                    
+                    # Update prev_totalizer for next record
+                    prev_totalizer = current_totalizer
+            
+            # Flatten the groups back to a single list
+            return [record for group in bcu_groups.values() for record in group]
+        except Exception as e:
+            print(f"Error calculating nettotalizer: {e}")
+            print(traceback.format_exc())
+            return current_records
+
     async def fetch_data(self):
         """
         Fetch data asynchronously from Oracle tables.
@@ -485,7 +681,11 @@ class DataMonitor:
             for table in self.table_names:
                 if table == "HOST_UNAUTHORIZEDFLOW":
                     # Special case for this table
-                    query = f"SELECT t.*, TO_CHAR(t.timestamp, 'YYYY-MM-DD') AS timestamp FROM {table} t"
+                    query = f"""
+                        SELECT t.*, TO_CHAR(t.timestamp, 'YYYY-MM-DD') AS timestamp_date
+                        FROM {table} t
+                        ORDER BY t.bcu_number, t.timestamp
+                    """
                     tasks[table] = self.oracle.get_data(table_name=table, query=query)
                 elif table in self.table_queries and self.table_queries[table]:
                     # Use custom query if defined
@@ -528,10 +728,11 @@ class DataMonitor:
                         print(f"Processed {len(records)} records for {table_name}")
                     except Exception as e:
                         print(f"Error processing data for table {table_name}: {e}")
+                        print(traceback.format_exc())
             
             print(f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}")
             return processed_results
-            
+
         except Exception as e:
             print(traceback.format_exc())
             print(f"Error in fetch_data: {e}")

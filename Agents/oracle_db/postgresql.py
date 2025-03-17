@@ -68,8 +68,8 @@ class Postgresql:
             return False  # No data, no alert needed
         
         # Get the auto fan count and calculate the 5% tolerance
-        auto_fan_count = data['auto_fan_count'].iloc[-1]  # Get the latest record
-        auto_fan_with_tolerance = auto_fan_count * 0.05  # Add 5% tolerance
+        total_fan_count = data['total_count'].iloc[-1]  # Get the latest record
+        total_fan_with_tolerance = total_fan_count * 0.05  # Add 5% tolerance
         
         # Get the manual fan count
         manual_fan_count = data['manual_fan_count'].iloc[-1]
@@ -77,33 +77,22 @@ class Postgresql:
         # If manual fan count is greater than auto fan count + tolerance, 
         if manual_fan_count == 0:
             return False, "Manual FAN Count is Zero", "No manual FAN was printed"
-
-        # then create an actionable alert (return False)
-        if manual_fan_count > auto_fan_with_tolerance:
-            return (False, 
-                    "Manual FAN printed more than 5% of total TT loaded", 
-                    f"{manual_fan_count} is greater than {auto_fan_with_tolerance} with 5%"
-                ) # Don't close the alert - it's actionable
-        
-        # Otherwise, create a normal alert and close it
-        elif manual_fan_count < auto_fan_with_tolerance:
+        if manual_fan_count > total_fan_with_tolerance:
             return (True, 
-                    "Manual FAN printed less than 5% of total TT loaded", 
-                    f"{manual_fan_count} is less than {auto_fan_with_tolerance} with 5%"
-                )  # Close the alert - it's not actionable
-        return False
+                        "Manual FAN printed more than 5% of total TT loaded", 
+                        f"{manual_fan_count} is less than {total_fan_with_tolerance} with 5%"
+                    )
+        elif manual_fan_count < total_fan_with_tolerance:
+            return (True, 
+                        "Manual FAN printed less than 5% of total TT loaded", 
+                        f"{manual_fan_count} is less than {total_fan_with_tolerance} with 5%"
+                    )
 
 
-    async def cal_unauthorized_flow(self, record):
-        net_total = record.get("net_totalizer", 0)
-        if net_total > 0 and net_total < 5:
-            # return "close alert bool, interlock name"
-            return True, "Unauthorized flow_BCU less than 5"
-        elif net_total >= 5:
-            # return "close alert bool, interlock name"
-            return False, "Unauthorized flow_BCU"
-        # return "close alert bool, interlock name"
-        return True, "Unauthorized flow_BCU less than 5"
+    async def cal_unauthorized_flow(self, total_net):
+        if total_net > 5:
+            return True, "Unauthorized flow_BCU"
+        return False, ""
 
     async def create_cancel_tt_report(self, data):
         to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
@@ -212,42 +201,56 @@ class Postgresql:
         to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
         query = f"""select * from "{table_db_name}" where alert_created = false"""
         if table_db_name == 'host_manual_fan_printed':
-            query = f"""select * from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count !=0"""
+            query = f"""select * from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count !=0 order by date_time asc"""
         resp = await model.get_aggr_data(query)
         
         if table_db_name == 'host_manual_fan_printed':
-            is_close_alert = False
-            interlock_name = config['interlock_name'].get(table_name)
-            severity = config['severity'].get(table_name, "Medium")
-            sop_id = config['sop_id'].get(table_name)
-            device_msg = ""
+            to_day = urdhva_base.utilities.get_present_time().strftime("%H")
+            if int(to_day) == 19:
+                is_close_alert = False
+                interlock_name = config['interlock_name'].get(table_name)
+                severity = config['severity'].get(table_name, "Medium")
+                sop_id = config['sop_id'].get(table_name)
+                device_msg = ""
 
-            result = await self.cal_host_manual_fan_printed(resp.get("data", []))
+                result = await self.cal_host_manual_fan_printed(resp.get("data", []))
 
-            if isinstance(result, tuple) and len(result) == 3:
-                is_close_alert, interlock_name, device_msg = result
-            else:
-                is_close_alert = result  # If it only returns a boolean, assign it
-                interlock_name, device_msg = "Unknown", "Unknown"
+                if isinstance(result, tuple) and len(result) == 3:
+                    is_close_alert, interlock_name, device_msg = result
 
-            alert_data = {
-                'bu': 'TAS',
-                'sop_id': sop_id,
-                'sap_id': data[0].get('sap_id'),
-                'interlock_name': interlock_name,
-                'severity': severity,
-                'alert_id': str(uuid.uuid1()),
-                'device_name': data[0].get('bcu_number'),
-                'device_type': 'Gantry',
-                'vehicle_number': data[0].get('truck_number', ''),
-                'device_msg': device_msg
-            }
+                alert_data = {
+                    'bu': 'TAS',
+                    'sop_id': sop_id,
+                    'sap_id': data[0].get('sap_id'),
+                    'interlock_name': interlock_name,
+                    'severity': severity,
+                    'alert_id': str(uuid.uuid1()),
+                    'device_name': data[0].get('bcu_number'),
+                    'device_type': 'Gantry',
+                    'vehicle_number': data[0].get('truck_number', ''),
+                    'device_msg': device_msg
+                }
 
-            success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-            print("msg :", msg)
-            if is_close_alert:
-                await self.close_created_alert(alert_data=alert_data)
-            return {"status": "Table created and alerts processed"}
+                success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                print("msg :", msg)
+                if is_close_alert:
+                    await self.close_created_alert(alert_data=alert_data)
+                return {"status": "Table created and alerts processed"}
+
+        if table_db_name == 'host_unauthorised_flow':
+            unauthorised_records = resp.get("data", [])
+            # Compute the total sum of all net_totalizer values
+            total_net = sum(float(record.get("net_totalizer", 0)) for record in unauthorised_records if float(record.get("net_totalizer", 0)) != 0)
+            # Extract unique BCU numbers
+            bcu_numbers = sorted(set(record.get("bcu_number", "") for record in unauthorised_records))
+
+            # Check if unauthorized flow should be triggered based on total_net
+            is_close_alert, interlock_name = await self.cal_unauthorized_flow(total_net)
+
+            # Construct device message
+            device_msg = f"BCU Numbers: {', '.join(bcu_numbers)}, Total Net Totalizer: {total_net}"
+
+            # Do something with is_close_alert, interlock_name, device_msg
 
          # Process each record to create and close alerts
         if resp.get("data", []):
@@ -261,10 +264,6 @@ class Postgresql:
                     device_msg = ""
                     if interlock_name == 'Cancel TT Reported':
                         device_msg = str(record.get("compartment_number", ""))
-                    
-                    if table_db_name == 'host_unauthorised_flow':
-                        is_close_alert, interlock_name = await self.cal_unauthorized_flow(record)
-                        device_msg = f"BCU Number: {record.get('bcu_number', '')}, Net Totalizer: {record.get('net_totalizer', '')}"
 
                     # Extract necessary fields from the record
                     alert_data = {
@@ -279,8 +278,6 @@ class Postgresql:
                         'vehicle_number': record.get('truck_number', ''),
                         'device_msg': device_msg
                     }
-
-                    
 
                     # Create Alert
                     if interlock_name == 'Cancel TT Reported':
