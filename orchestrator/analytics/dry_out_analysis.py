@@ -675,8 +675,21 @@ async def _get_ims_day_wise_report(report_date: str):
     stats_resp = stats_resp.drop_duplicates(subset=["LOCN_CODE", "INDENT_NO", "DEALER_CODE", "PROD"], keep='first')
     return stats_resp.to_dict(orient='records')
 
+async def get_custom_timestamp():
+    now = datetime.datetime.now()
+    # If minutes are less than 10, take the previous hour
+    if now.minute < 10:
+        adjusted_time = now - datetime.timedelta(hours=1)
+    else:
+        adjusted_time = now
+    # Format as YYMMDD-HH00
+    timestamp = adjusted_time.strftime("%y%m%d-%H00")
+
+    return timestamp
+
 async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     dry_out_in_days = "', '".join(x for x in dry_out_in_days)
+    date_time = await get_custom_timestamp()
     query = f"""WITH CombinedData AS (
                     SELECT 
                         ir."LOCN_CODE",
@@ -699,28 +712,25 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         ip."JDE_TRUCK_NO",
                         tse."LOADED_ON",
                         ROW_NUMBER() OVER (
-                            PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
-                                         COALESCE(ir."INDENT_NO"::TEXT, ''), 
-                                         COALESCE(ir."DEALER_CODE"::TEXT, ''), 
-                                         COALESCE(ip."PROD"::TEXT, '') 
-                            ORDER BY tse."LOADED_ON" ASC
+                            PARTITION BY ir."LOCN_CODE", ir."INDENT_NO", ir."DEALER_CODE", ip."PROD"
+                            ORDER BY tse."LOADED_ON" ASC NULLS LAST
                         ) AS rn
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST" ir
                     LEFT JOIN 
-                        "IMS_SAP"."INDENT_PRODUCTS" ip
+                        (select * from "IMS_SAP"."INDENT_PRODUCTS" where substr(run_id, 1, 6) = '{date_time[:6]}') as ip
                     ON 
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
                         AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
                     LEFT JOIN 
-                        "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+                        (select * from "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" where substr(run_id, 1, 6) = '{date_time[:6]}') as tse 
                     ON 
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
                         AND tse."CARD_STATUS" = 'O'
                         AND tse."LOADED_ON" >= ir."PROD_REQD_DT"
-                        AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+                        AND tse."LOADED_ON" BETWEEN ir."PROD_REQD_DT" AND (ir."PROD_REQD_DT" + INTERVAL '1 day')
                 ),
                 SalesData AS (
                     SELECT 
@@ -738,7 +748,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         avgsales_7days
                     
                     FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
-                    WHERE run_id = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMMDD-HH00')
+                    WHERE run_id = '{date_time}'
                 )
                 SELECT 
                     a.zone as "ZONE",
@@ -766,7 +776,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     cd."LOADED_ON",
                     sd.avgsales_7days as "AVGSALES_7DAYS"
                 FROM 
-                    (SELECT * 
+                    (SELECT sap_id, indent_no, product_code, zone, region, sales_area, location_name, terminal_plant_id, indent_status, dry_out_in_days
                      FROM alerts 
                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
                      AND indent_status NOT IN ('Cancelled', 'Completed')
@@ -1204,3 +1214,89 @@ async def dry_out_diff():
     resp = resp[resp['_merge'] != 'both']
     resp.to_csv("/tmp/dryout_difference.csv", index=False)
     return resp
+
+async def dry_out_report(dry_out_in_days='1'):
+    alerts_query = f"""
+            SELECT sap_id, indent_no, product_code, zone, region, sales_area, 
+                   location_name, terminal_plant_id, indent_status, dry_out_in_days
+            FROM alerts 
+            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+            AND indent_status NOT IN ('Cancelled', 'Completed')
+            AND dry_out_in_days = '{dry_out_in_days}';
+            """
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    alerts_resp = await function(
+        query=alerts_query
+    )
+    alerts_resp = pd.DataFrame(alerts_resp)
+
+    query_combined = f"""
+                    SELECT ir."LOCN_CODE", ir."INDENT_NO", ir."PROD_REQD_DT", ir."DEALER_CODE", 
+                           ir."TRUCK_REGNO", ip."PROD" AS "PRODUCT_CODE", ip."QTY",
+                           tse."LOADED_ON"
+                    FROM (select * from "IMS_SAP"."INDENT_REQUEST" where substr(run_id, 1, 6) = '250317') ir
+                    LEFT JOIN (select * from "IMS_SAP"."INDENT_PRODUCTS" where substr(run_id, 1, 6) = '250317') ip
+                        ON ir."LOCN_CODE" = ip."LOCN_CODE"
+                        AND ir."DEALER_CODE" = ip."DEALER_CODE"
+                        AND ir."INDENT_NO" = ip."INDENT_NO"
+                        AND substr(ip.run_id, 1, 6) = %s
+                    LEFT JOIN (select * from "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" where substr(run_id, 1, 6) = '250317') tse
+                        ON ir."LOCN_CODE" = tse."LOCN_CODE"
+                        AND ir."TRUCK_REGNO" = tse."TRUCK_REGNO"
+                        AND tse."CARD_STATUS" = 'O'
+                        AND substr(tse.run_id, 1, 6) = %s;
+                    """
+
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    combined_resp = await function(
+        query=query_combined
+    )
+    combined_resp = pd.DataFrame(combined_resp)
+
+    query_sales = """
+                    SELECT rosapcode, 
+                           CASE item_name
+                               WHEN 'HSD' THEN '2812000'
+                               WHEN 'MS' THEN '2811000'
+                               WHEN 'TURBO' THEN '3912000'
+                               WHEN 'E20' THEN '2822000'
+                               WHEN 'POWER 95' THEN '3672000'
+                               WHEN 'POWER 99' THEN '2816000'
+                               WHEN 'POWER 100' THEN '3373000'
+                           END AS item_name_code,
+                           avgsales_7days
+                    FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
+                    WHERE run_id = '250317';
+                    """
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    sales_resp = await function(
+        query=query_sales
+    )
+    sales_resp = pd.DataFrame(sales_resp)
+
+    final_df = alerts_resp.merge(
+        combined_resp,
+        left_on=['sap_id', 'indent_no', 'product_code'],
+        right_on=['DEALER_CODE', 'INDENT_NO', 'PRODUCT_CODE'],
+        how='left'
+    ).merge(
+        sales_resp,
+        left_on=['sap_id', 'product_code'],
+        right_on=['rosapcode', 'item_name_code'],
+        how='left'
+    )
+    final_df = final_df.sort_values(by="LOADED_ON", ascending=True).groupby("INDENT_NO").first().reset_index()
+    print(final_df)
+    return final_df.to_dict(orient="records")

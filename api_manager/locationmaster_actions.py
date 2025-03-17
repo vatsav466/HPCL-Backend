@@ -10,6 +10,7 @@ import polars as pl
 import urdhva_base.redispool
 from fastapi.responses import FileResponse
 import orchestrator.alerting.alert_helper as alert_helper
+import orchestrator.analytics.sod_location_stats as sod_location_stats
 import orchestrator.masterdata.location_master_upload as location_master_upload
 
 router = fastapi.APIRouter(prefix='/locationmaster')
@@ -224,3 +225,9 @@ async def locationmaster_update_location_master(request: fastapi.Request, data: 
             "error": str(e),
             "traceback": error_trace
         }
+
+
+# Action get_sod_engineering_stats
+@router.post('/get_sod_engineering_stats', tags=['LocationMaster'])
+async def locationmaster_get_sod_engineering_stats(data: Locationmaster_Get_Sod_Engineering_StatsParams):
+    return await sod_location_stats.generate_sod_engineering_location_stats(data.sap_id)
