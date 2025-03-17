@@ -1,3 +1,5 @@
+import datetime
+
 import urdhva_base
 import re
 import json
@@ -61,7 +63,7 @@ def generate_group_by_conditions(filters, cross_filters, cumulative=False, drill
         group_by_filter.append('"month_name"')
     if "fiscal_year" not in group_by_filter:
         group_by_filter.append("fiscal_year")
-    #if isinstance(resp_level,list):
+    # if isinstance(resp_level,list):
     #    for x in resp_level:
     #        group_by_filter.append(x)
     if resp_level == 'sbu_level':
@@ -122,7 +124,6 @@ def get_date_filters(filters, resp_type="months"):
             fiscal_year_pre = condition['value']
         elif condition["key"] == "month_name" or condition["key"] == '"month_name"':
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
-            #filters.append({"key": "month_name", "cond": "one-off", "value": condition["value"].split(",")})
     discard_filters = ['YTM', 'DATE', 'month_name', 'ind_sbu_cumulative', 'ind_analytics','table_graph', 'fiscal_year',
                        'company_name', 'table', 'table_month', 'inc', 'OMC', 'A', 'H', 'C', 'cogroup']
     filters = [condition for condition in filters if condition['key'].strip('"') not in discard_filters]
@@ -187,7 +188,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         else:
                 group_items = [Base_Filters[Base_Filters.index(drill_state) + 1].strip('"')]
     if '"ind_sbu_cumulative"' in [x['key'] for x in filters]:
-        months_list = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'] 
+        months_list = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']
         req_month = [x['value'] for x in filters if x['key'] =='"month_name"'][0]
         req_index = months_list.index(req_month.strip('"'))
         cumulative_months = months_list[:req_index+1] 
@@ -980,11 +981,20 @@ async def get_category_wise_cumulative_data(filters):
     :param filters:
     :return:
     """
+    months_list = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']
+    present_month = datetime.datetime.now().strftime('%b').upper()
+    months_list = months_list[:months_list.index(present_month)]
     filters, fiscal_year_pre, fiscal_year_last, months = get_date_filters(filters)
+    if not months:
+        months = months_list
     where_conditions = []
-    filters.append({"key": "\"fiscal_year\"", "cond": "one-off", "value": ["2023-2024", "2024-2025"]})
+    fiscal_years = ["2023-2024", "2024-2025"]
+    filters.append({"key": "\"fiscal_year\"", "cond": "one-off", "value": fiscal_years})
     for filter_cond in filters:
         filter_cond['key'] = filter_cond['key'].strip('"')
+    if months:
+        filters.append({'key': 'month_name', 'cond': 'one-off', 'value': months})
+
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
         where_conditions = [clause]
@@ -1014,59 +1024,61 @@ async def get_category_wise_cumulative_data(filters):
 
     # Compute growth percentage
     growth_dict = {}
-    if len(fiscal_years) > 1:
-        for category in result_dict[fiscal_years[0]].keys():
-            growth_dict[category] = {}
-            for company in result_dict[fiscal_years[0]][category].keys():
-                val_prev = float(result_dict[fiscal_years[0]].get(category, {}).get(company,0))
-                val_curr = float(result_dict[fiscal_years[1]].get(category, {}).get(company, 0))
-
-                if val_prev != 0:
-                    growth_percentage = ((val_curr - val_prev) / val_prev) * 100
-                else:
-                    growth_percentage = 0
-
-                growth_dict[category][company] = round(growth_percentage, 2)
 
     for key, details in result_dict.items():
         tuned_data = {}
-        print("details", details)
         for co in details:
+            total = sum(list(details[co].values()))
             if co == "MPSU":
                 tuned_data[co] = [
-                    {"category": c, "value": v, "percentage": round((v / sum(list(details[co].values()))) * 100, 2),
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2),
                      "subData": [{"category": c, "value": v,
-                                  "percentage": round((v / sum(list(details[co].values()))) * 100, 2)}]} for c, v in
+                                  "percentage": round((v / total) * 100, 2)}]} for c, v in
                     details[co].items()]
             elif co == "PSU":
-                mpsu = [{"category": c, "value": v, "percentage": round((v / sum(list(details[co].values()))) * 100, 2),
+                mpsu = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2),
                          "subData": [{"category": c, "value": v,
-                                      "percentage": round((v / sum(list(details[co].values()))) * 100, 2)}]} for c, v in
+                                      "percentage": round((v / total) * 100, 2)}]} for c, v in
                         details[co].items() if c in OMC['MPSU']]
-                other_psu = [{"category": c, "value": v} for c, v in details[co].items() if c in OMC['OtherPSU']]
+                other_psu = [
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2)} for
+                    c, v in details[co].items() if c in OMC['OtherPSU']]
                 mpsu.append({"category": "OtherPSU", "value": sum([r['value'] for r in other_psu]),
+                             "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2),
                              "subData": other_psu})
                 tuned_data[co] = mpsu
             elif co == "PSU+PVT":
-                mpsu = [{"category": c, "value": v, "percentage": round((v / sum(list(details[co].values()))) * 100, 2),
+                mpsu = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2),
                          "subData": [{"category": c, "value": v,
-                                      "percentage": round((v / sum(list(details[co].values()))) * 100, 2)}]} for c, v in
+                                      "percentage": round((v / total) * 100, 2)}]} for c, v in
                         details[co].items() if c in OMC['MPSU']]
                 other_psu = [
-                    {"category": c, "value": v, "percentage": round((v / sum(list(details[co].values()))) * 100, 2)} for
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2)} for
                     c, v in details[co].items() if c in OMC['OtherPSU']]
-                pvt = [{"category": c, "value": v, "percentage": round((v / sum(list(details[co].values()))) * 100, 2)}
+                pvt = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2)}
                        for c, v in details[co].items() if c in OMC['PVT']]
                 mpsu.append({"category": "OtherPSU", "value": sum([r['value'] for r in other_psu]),
+                             "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2),
                              "subData": other_psu})
-                mpsu.append({"category": "PVT", "value": sum([r['value'] for r in pvt]), "subData": pvt})
+                mpsu.append({"category": "PVT", "value": sum([r['value'] for r in pvt]),
+                             "percentage": round((sum([r['value'] for r in pvt]) / total) * 100, 2), "subData": pvt})
                 tuned_data[co] = mpsu
         result_dict[key] = tuned_data
+    for cogroup, details in result_dict[fiscal_years[-1]].items():
+        growth_dict[cogroup] = {}
+        cat_prev = {rec['category']: rec for rec in result_dict[fiscal_years[0]][cogroup]}
+        cat_pres = {rec['category']: rec for rec in result_dict[fiscal_years[1]][cogroup]}
+        for company, data in cat_pres.items():
+            if len(data['subData']) <= 1:
+                growth_dict[cogroup][company] = round(data['percentage'] - cat_prev[company]['percentage'], 1)
+            else:
+                cat_prev_sub = {rec['category']: rec for rec in cat_prev[company]['subData']}
+                cat_pres_sub = {rec['category']: rec for rec in data['subData']}
+                for co, dt in cat_pres_sub.items():
+                    growth_dict[cogroup][co] = round(dt['percentage'] - cat_prev_sub[co]['percentage'], 1)
 
     result_dict["growth_percentage"] = growth_dict
     return result_dict
-    # result = df.groupby('company_name').apply(lambda x: dict(zip(x['coname'], x['sales']))).to_dict()
-    # return result
 
 
 async def generate_omc_compare_data(filters, drill_state):
