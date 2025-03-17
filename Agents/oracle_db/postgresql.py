@@ -140,7 +140,7 @@ class Postgresql:
             alert_id = data['data'][0]['external_id']
         else:
             print(f"Alert not found for {alert_data['alert_id']}")
-            continue
+            return
         # alert_id = msg.get("alert_id") if isinstance(msg, dict) else None
         # Close Alert
         close_data = {
