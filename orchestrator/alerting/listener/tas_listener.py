@@ -9,7 +9,7 @@ from orchestrator.alerting.alert_manager import create_alert, close_alert
 def fix_additional_info(additional_info):
     for key, value in {"interlockName": "interlock_name", "BU": "bu", "sopid": "sop_id",
                        "plantlocationid": "sap_id", "deviceId": "device_id", "deviceType": "device_type",
-                       "deviceName": "device_name", "Sensor_Type":"sensor_type", "Sensor_Name":"sensor_name"}.items():
+                       "deviceName": "device_name", "Sensor_Type":"equipment_type", "Sensor_Name":"equipment_name"}.items():
         if key in additional_info:
             additional_info[value] = additional_info[key]
     return additional_info
@@ -26,8 +26,8 @@ async def tas_listener(rmsg):
             alertdata['severity'] = rmsg['severity']
             alertdata['alert_type'] = rmsg['details']['additionalInfo']['bu']
             alertdata['alert_id'] = rmsg['id']['id']
-            alertdata['equipment_type'] = rmsg['details']['additionalInfo']['sensor_type']
-            alertdata['equipment_name'] = rmsg['details']['additionalInfo']['sensor_name']
+            # alertdata['equipment_type'] = rmsg['details']['additionalInfo'].get('sensor_type', '')
+            # alertdata['equipment_name'] = rmsg['details']['additionalInfo'].get('sensor_name', '')
             custom_data = rmsg['details']['additionalInfo'].get("customData", {})
             
 
