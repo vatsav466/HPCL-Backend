@@ -192,7 +192,7 @@ class Postgresql:
 
         table_db_name = getattr(model, '__tablename__', table_name)
         if table_db_name == 'host_unauthorised_flow':
-            data = [x for x in data if x['net_totalizer'] > 0]
+            data = [x for x in data if x['nettotalizer'] > 0]
 
         # Upsert the data - Ensure `await` is used
         status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created'])  # Use upsert=True if needed
@@ -239,8 +239,8 @@ class Postgresql:
 
         if table_db_name == 'host_unauthorised_flow':
             unauthorised_records = resp.get("data", [])
-            # Compute the total sum of all net_totalizer values
-            total_net = sum(float(record.get("net_totalizer", 0)) for record in unauthorised_records if float(record.get("net_totalizer", 0)) != 0)
+            # Compute the total sum of all nettotalizer values
+            total_net = sum(float(record.get("nettotalizer", 0)) for record in unauthorised_records if float(record.get("nettotalizer", 0)) != 0)
             # Extract unique BCU numbers
             bcu_numbers = sorted(set(record.get("bcu_number", "") for record in unauthorised_records))
 
