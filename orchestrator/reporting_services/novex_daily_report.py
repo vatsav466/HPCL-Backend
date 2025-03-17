@@ -238,8 +238,7 @@ async def get_alert_data(alert_section):
 
 
 async def publish_daily_novex_status_email():
-    template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'masterdata',
-                                 'novex_daily_email.html')
+
     date = urdhva_base.utilities.get_present_time()
     status_data = {'today_date': date.strftime('%d-%B-%Y'),
                    'today_week': date.strftime('%A'),
@@ -257,17 +256,24 @@ async def publish_daily_novex_status_email():
     print("-" * 50)
     print("status_data :", json.dumps(status_data))
     print("-" * 50)
+    await send_notification(status_data)
 
+
+async def send_notification(notification_data):
+    template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'masterdata',
+                                 'novex_daily_email.html')
     with open(template_path, 'r') as f:
         template_data = jinja2.Template(f.read())
-    final_data = template_data.render(**status_data)
+    final_data = template_data.render(**notification_data)
+
     with open(f'/tmp/novex_daily_email.html', 'w') as f:
         f.write(final_data)
     # Send email
-    ins = notification_factory.get_notification_module("email")
+    ins = await notification_factory.get_notification_module("email")
     resp = await ins.publish_message(
         subject="Novex Daily Report",
-        recipients=["venualgofusiontech.com"],
+        recipients=["venu@algofusiontech.com", "varun@algofusiontech.com", "shrihari.b@algofusiontech.com",
+                    "sreedhar.maddipati@algofusiontech.com"],
         html_content=True,
         body=final_data,
         force_send=True
