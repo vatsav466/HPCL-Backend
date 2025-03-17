@@ -5238,7 +5238,7 @@ class GlobalAnalytics:
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
                     # Update total count for this category, date, and alert_type
-                    result[category][str(row["created_date"])][row["alert_type"]]["total"] += row["total"]
+                    result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
                 return {"status": True, "message": "success", "monthly_data": result}
         
         except Exception as e:
