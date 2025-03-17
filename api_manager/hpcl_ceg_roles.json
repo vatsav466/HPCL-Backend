@@ -3986,6 +3986,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "dryoutalertreport",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutAlertReport",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutalertreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "dryoutalertreport_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutAlertReport_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutalertreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dryoutalertreport_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutAlertReport_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutalertreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

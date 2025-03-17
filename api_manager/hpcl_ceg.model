@@ -1945,3 +1945,32 @@ Model CrisAlertHistory {
         access_key_mapping='location_id:sap_id'
     }
 }
+
+Model DryOutAlertReport {
+    zone optional str
+    region optional str
+    sales_area optional str
+    sap_id optional str
+    location_name optional str
+    terminal_plant_id optional str
+    indent_no optional str
+    product_code optional str
+    indent_status optional str
+    dry_out_in_days optional str
+    assigned_to_locn optional str
+    prod_reqd_dt optional str
+    truck_regno optional str
+    valid_indent optional str
+    send_to_jde_time optional str
+    delivery_date optional str
+    indent_hold_release_time optional str
+    indent_executable_time optional str
+    qty optional str
+    prod_allot_time optional str
+    sales_orderno optional str
+    invoice_no optional str
+    loaded_on optional str
+    avgsales_7days optional str
+    alert_id unique_field str
+    run_id index_field str
+}
