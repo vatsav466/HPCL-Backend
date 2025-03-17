@@ -65,7 +65,7 @@ class Postgresql:
         
         # Get the last record of the day (assuming data is sorted by timestamp)
         if data.empty:
-            return True  # No data, no alert needed
+            return False  # No data, no alert needed
         
         # Get the auto fan count and calculate the 5% tolerance
         auto_fan_count = data['auto_fan_count'].iloc[-1]  # Get the latest record
@@ -75,16 +75,27 @@ class Postgresql:
         manual_fan_count = data['manual_fan_count'].iloc[-1]
         
         # If manual fan count is greater than auto fan count + tolerance, 
+        if manual_fan_count == 0:
+            return False, "Manual FAN Count is Zero", "No manual FAN was printed"
+
         # then create an actionable alert (return False)
         if manual_fan_count > auto_fan_with_tolerance:
-            return False, "Manual FAN printed more than 5% of total TT loaded", f"{manual_fan_count} is greater than {auto_fan_with_tolerance} with 5%" # Don't close the alert - it's actionable
+            return (False, 
+                    "Manual FAN printed more than 5% of total TT loaded", 
+                    f"{manual_fan_count} is greater than {auto_fan_with_tolerance} with 5%"
+                ) # Don't close the alert - it's actionable
         
         # Otherwise, create a normal alert and close it
-        return True, "Manual FAN printed less than 5% of total TT loaded", f"{manual_fan_count} is less than {auto_fan_with_tolerance} with 5%"  # Close the alert - it's not actionable
+        elif manual_fan_count < auto_fan_with_tolerance:
+            return (True, 
+                    "Manual FAN printed less than 5% of total TT loaded", 
+                    f"{manual_fan_count} is less than {auto_fan_with_tolerance} with 5%"
+                )  # Close the alert - it's not actionable
+        return False
 
 
     async def cal_unauthorized_flow(self, record):
-        net_total = record.get("NET_TOTALIZER", 0)
+        net_total = record.get("net_totalizer", 0)
         if net_total > 0 and net_total < 5:
             # return "close alert bool, interlock name"
             return True, "Unauthorized flow_BCU less than 5"
@@ -192,7 +203,7 @@ class Postgresql:
 
         table_db_name = getattr(model, '__tablename__', table_name)
         if table_db_name == 'host_unauthorised_flow':
-            data = [x for x in data if x['NET_TOTALIZER'] > 0]
+            data = [x for x in data if x['net_totalizer'] > 0]
 
         # Upsert the data - Ensure `await` is used
         status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created'])  # Use upsert=True if needed
@@ -201,7 +212,7 @@ class Postgresql:
         to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
         query = f"""select * from "{table_db_name}" where alert_created = false"""
         if table_db_name == 'host_manual_fan_printed':
-            query = f"""select * from "{table_db_name}" where date::DATE = '{to_date}' """
+            query = f"""select * from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count !=0"""
         resp = await model.get_aggr_data(query)
         
         if table_db_name == 'host_manual_fan_printed':
@@ -211,7 +222,13 @@ class Postgresql:
             sop_id = config['sop_id'].get(table_name)
             device_msg = ""
 
-            is_close_alert, interlock_name, device_msg = await self.cal_host_manual_fan_printed(resp.get("data", []))
+            result = await self.cal_host_manual_fan_printed(resp.get("data", []))
+
+            if isinstance(result, tuple) and len(result) == 3:
+                is_close_alert, interlock_name, device_msg = result
+            else:
+                is_close_alert = result  # If it only returns a boolean, assign it
+                interlock_name, device_msg = "Unknown", "Unknown"
 
             alert_data = {
                 'bu': 'TAS',
