@@ -1121,9 +1121,9 @@ async def generate_omc_compare_data(filters, drill_state):
     # If ind_sbu_cumulative is true doing Cumulative upto given month else only for the given month
     if True in ind_sbu_cumulative or 'true' in ind_sbu_cumulative:
         req_month = [x['value'] for x in filters if x['key'] == '"month_name"'][0]
-        if len(req_month.split(",")) == 2:
+        if len(req_month.split(",")) >= 2:
             start_month = req_month.split(",")[0].strip()
-            end_month = req_month.split(",")[1].strip()
+            end_month = req_month.split(",")[-1].strip()
             months = months_list[months_list.index(start_month):months_list.index(end_month) + 1]
         else:
             req_index = months_list.index(req_month.strip())
