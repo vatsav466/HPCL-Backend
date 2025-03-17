@@ -1185,6 +1185,23 @@ async def generate_omc_compare_data(filters, drill_state):
     # Convert table to list format
     structured_data = [{f"{drill_state if drill_state else 'cumulative'}": key, **values} for key, values in table.items() if key]
 
+    cumulative_data = {"sbu_name": "Total", "History": {}, "Market Share": {}, "Growth": {}, "Sales": {},
+                       "Market Share History": {}}
+    for rec in structured_data:
+        if 'cumulative' in rec:
+            del rec['cumulative']
+            continue
+        if drill_state:
+            for key, value in rec.items():
+                if key not in ['History', 'Sales']:
+                    continue
+                for co, val in value.items():
+                    if co not in cumulative_data[key]:
+                        cumulative_data[key][co] = 0
+                    cumulative_data[key][co] += val
+    if drill_state:
+        structured_data = [cumulative_data] + structured_data
+
     # Calculating Market Share
     for entry in structured_data:
         total_sales = sum(entry['Sales'].values())
@@ -1204,9 +1221,11 @@ async def generate_omc_compare_data(filters, drill_state):
         for name in entry:
             if isinstance(entry[name], dict):
                 entry[name] = {key: value for key, value in entry[name].items() if key in required_companies}
+
     for rec in structured_data:
         if 'cumulative' in rec:
             del rec['cumulative']
+            continue
     return structured_data
 
 
