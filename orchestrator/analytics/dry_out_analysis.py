@@ -1306,6 +1306,7 @@ async def get_dryout_aging(conditions):
                 SELECT DISTINCT ON (sap_id) sap_id, created_at
                 FROM alerts
                 WHERE {conditions} AND progress_rate = '1'
+                ORDER BY sap_id, created_at ASC
             )
             SELECT 
                 COUNT(CASE WHEN created_at >= NOW() - INTERVAL '2 days' THEN 1 END) AS "less_than_2_days",
@@ -1322,4 +1323,4 @@ async def get_dryout_aging(conditions):
         query=query
     )
     print("resp: ", resp)
-    return resp
+    return resp[0] if resp else {}
