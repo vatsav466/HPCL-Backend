@@ -144,7 +144,7 @@ async def process_data(data):
 async def sync_users():
     connection = await get_db_connection()
     cursor = connection.cursor()
-    for bu in ["lpg", "sod"]:
+    for bu in ["lpg", "tas"]:
         query = getattr(users_config, f"{bu}_query", None)
         if not query:
             return
