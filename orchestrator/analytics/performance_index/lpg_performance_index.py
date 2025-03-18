@@ -1,5 +1,6 @@
-import urdhva_base.queryparams
+import urdhva_base
 import json
+import  re
 import pandas as pd
 import hpcl_ceg_model
 from utilities.helpers import map_device_category
@@ -23,9 +24,9 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         vts = await self.generate_performance_index_vts(location_id, zone)
         va = await self.generate_performance_index_va(location_id, zone)
         pi_index = {**lpg, **vts, **va}
-        overall_oi_score = sum([pi_index[f'{cat}_oi_score'] for cat in ['lpg', 'vts', 'va']])
+        overall_oi_score = round(sum([pi_index[f'{cat}_oi_score'] for cat in ['lpg', 'vts', 'va']]))
 
-        pi_index['overall_oi_score'] = overall_oi_score
+        pi_index['overall_oi_score'] = int(overall_oi_score)
         return pi_index
 
     async def generate_performance_index_va(self, location_id=None, zone=None):
