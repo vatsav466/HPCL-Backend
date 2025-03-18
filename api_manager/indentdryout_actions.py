@@ -648,6 +648,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     from_3_to_7_days = dry_out_aging.get("from_3_to_7_days", 0)
     from_8_to_15_days = dry_out_aging.get("from_8_to_15_days", 0)
     more_than_15_days = dry_out_aging.get("more_than_15_days", 0)
+    indent_not_raised_count = less_than_2_days + from_3_to_7_days + from_8_to_15_days + more_than_15_days
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
              for key, value in stats.items() if key <= len(top_x_axis)]
@@ -663,6 +664,9 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "EMUnLock",
             "value": 0, "serial": 18, "condition": "=", "group": "wip"
         }, {
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 23,
+            "condition": "=", "group": "indent"
+        }, {
             "section": "Closed Outlets", "value": 0, "serial": 20,
             "condition": "=", "group": "indent"
         }, {
@@ -675,6 +679,9 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Others", "value": 0, "serial": 23,
             "condition": "=", "group": "indent"
         }, {
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 23,
+            "condition": "=", "group": "dryout_analysis"
+        },{
             "section": "<2 Days", "value": less_than_2_days, "serial": 24,
             "condition": "=", "group": "dryout_analysis"
         }, {
@@ -687,6 +694,9 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "> 15 Days", "value": more_than_15_days, "serial": 27,
             "condition": "=", "group": "dryout_analysis"
         },{
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 23,
+            "condition": "=", "group": "tar_analysis"
+        }, {
             "section": "<2 Days Rs Cr", "value": 0, "serial": 28,
             "condition": "=", "group": "tar_analysis"
         }, {
