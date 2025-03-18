@@ -122,7 +122,8 @@ async def process_data(data):
     print("After dropping empty username :", len(data))
     for col in ["status", "is_ad_user"]:
         data[col] = True
-    data["username"] = data["employee_id"]
+    data["employee_id"] = data["username"]
+    data["manual_user"] = False
     for col in ["username", "sap_id", "employee_id"]:
         data[col] = data[col].fillna(0).astype(np.int64).astype(str)
     data['zone'] = data['zone'].map(users_config.zone_map)
