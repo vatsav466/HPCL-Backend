@@ -1387,3 +1387,52 @@ def get_db_connection(params):
         #database=database
     )
     return connection
+
+async def get_tar_analysis(condition):
+    query = (f"SELECT DISTINCT ON (rosapcode) "
+             f"rosapcode, "
+             f"exposure, "
+             f"CASE "
+             f"WHEN exposure < 100000000 THEN 1 "
+             f"WHEN exposure >= 100000000 AND exposure < 200000000 THEN 2 "
+             f"WHEN exposure >= 200000000 AND exposure < 500000000 THEN 3 "
+             f"ELSE 4 "
+             f"END AS category "
+             f"""FROM "HPCL_HOS".customer_balance;""")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    cust_resp = await function(
+        query=query
+    )
+    cust_resp = pd.DataFrame(cust_resp)
+    cust_resp['rosapcode'] = cust_resp['rosapcode'].astype(str)
+
+    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    resp = pd.DataFrame(resp)
+    resp['sap_id'] = resp['sap_id'].astype(str)
+
+    resp = pd.merge(
+        cust_resp.drop_duplicates(subset=['rosapcode']),
+        resp.drop_duplicates(subset=['sap_id']),
+        left_on=['rosapcode'], right_on=['sap_id'],
+        how='left', indicator=True
+    )
+
+    _dict = {
+        "less_1_cr": resp[(resp['_merge'] == 'both') & (resp['category'] == 1)],
+        "less_2_cr": resp[(resp['_merge'] == 'both') & (resp['category'] == 2)],
+        "less_5_cr": resp[(resp['_merge'] == 'both') & (resp['category'] == 3)],
+        "greater_5_cr": resp[(resp['_merge'] == 'both') & (resp['category'] == 4)]
+    }
+    return _dict

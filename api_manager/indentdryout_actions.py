@@ -666,7 +666,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "EMUnLock",
             "value": 0, "serial": 18, "condition": "=", "group": "wip"
         }, {
-            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 23,
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 19,
             "condition": "=", "group": "indent"
         }, {
             "section": "Closed Outlets", "value": 0, "serial": 20,
@@ -681,46 +681,46 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Others", "value": indent_not_raised_count - count_50_klm, "serial": 23,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 23,
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
             "condition": "=", "group": "dryout_analysis"
         },{
-            "section": "<2 Days", "value": less_than_2_days, "serial": 24,
+            "section": "<2 Days", "value": less_than_2_days, "serial": 25,
             "condition": "=", "group": "dryout_analysis"
         }, {
-            "section": "3 to 7 Days", "value": from_3_to_7_days, "serial": 25,
+            "section": "3 to 7 Days", "value": from_3_to_7_days, "serial": 26,
             "condition": "=", "group": "dryout_analysis"
         }, {
-            "section": "8 to 15 Days", "value": from_8_to_15_days, "serial": 26,
+            "section": "8 to 15 Days", "value": from_8_to_15_days, "serial": 27,
             "condition": "=", "group": "dryout_analysis"
         }, {
-            "section": "> 15 Days", "value": more_than_15_days, "serial": 27,
+            "section": "> 15 Days", "value": more_than_15_days, "serial": 28,
             "condition": "=", "group": "dryout_analysis"
         },{
-            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 23,
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 29,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "<2 Days Rs Cr", "value": 0, "serial": 28,
+            "section": "< 1 Rs Cr", "value": 0, "serial": 30,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "3 to 7 Days Rs Cr", "value": 0, "serial": 29,
+            "section": "1 to 2 Rs Cr", "value": 0, "serial": 31,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "8 to 15 Days Rs Cr", "value": 0, "serial": 30,
+            "section": "2 to 5 Rs Cr", "value": 0, "serial": 32,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "> 15 Days Rs Cr", "value": 0, "serial": 31,
+            "section": "> 5 Rs Cr", "value": 0, "serial": 33,
             "condition": "=", "group": "tar_analysis"
         },{
-            "section": "Dealer TT", "value": 0, "serial": 32,
+            "section": "Dealer TT", "value": 0, "serial": 34,
             "condition": "=", "group": "tt_pending"
         }, {
-            "section": "Transport TT", "value": 0, "serial": 33,
+            "section": "Transport TT", "value": 0, "serial": 35,
             "condition": "=", "group": "tt_pending"
         }, {
-            "section": "Dealer TT Return", "value": 0, "serial": 34,
+            "section": "Dealer TT Return", "value": 0, "serial": 36,
             "condition": "=", "group": "tt_pending"
         }, {
-            "section": "Transport TT Return", "value": 0, "serial": 35,
+            "section": "Transport TT Return", "value": 0, "serial": 37,
             "condition": "=", "group": "tt_pending"
         }])
     stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
