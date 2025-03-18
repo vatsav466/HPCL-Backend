@@ -40,6 +40,7 @@ class RabbitMQConsumer:
         
     async def process_message(self, body):
         """Process received RabbitMQ messages and store them in PostgreSQL asynchronously."""
+        print("body --> ", body)
         try:
             data = json.loads(body)  # Convert JSON string to dict
 
