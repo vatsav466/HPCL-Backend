@@ -121,7 +121,11 @@ def get_date_filters(filters, resp_type="months"):
             end_date_history = helpers.get_time_stamp_by_delta(end_date_history, with_month_start_day=False,
                                                                with_month_end_day=True)
         elif condition['key'] == '"fiscal_year"':
-            fiscal_year_pre = condition['value']
+            if "," in condition['value']:
+                fiscal_year_last = condition['value'].split(',')[-1]
+                fiscal_year_pre = condition['value'].split(',')[0]
+            else:
+                fiscal_year_pre = condition['value']
         elif condition["key"] == "month_name" or condition["key"] == '"month_name"':
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
     discard_filters = ['YTM', 'DATE', 'month_name', 'ind_sbu_cumulative', 'ind_analytics','table_graph', 'fiscal_year',
@@ -356,6 +360,15 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                     }
                 )
     else:
+        if '"table_graph"' in [x['key'] for x in filters]:
+            summary.to_csv('/tmp/summry_latest.csv',index = False)
+            #summary_py = summary[summary['fiscal_year'] == summary['fiscal_year'].unique().tolist()[0]]
+            
+            
+            #summary = summary[summary['fiscal_year'] == summary['fiscal_year'].unique().tolist()[-1]]
+            #summary.to_csv('/tmp/summry_latest1.csv',index = False)
+        
+        print("prefix_map",prefix_map)
         transformed_data = [
             {
                 f"{prefix_map[item['fiscal_year']]}_market_share": item["market_share"],
@@ -414,8 +427,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
         return {'message': 'Industry_Performance', 'status': True,
                 'data': {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
-    if resp_format == 'company_level' and (
-            resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format_org == 'company_level_heatmap':
+    if resp_format == 'company_level' and (resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format_org == 'company_level_heatmap':
         com_name = [x['value'] for x in filters if x['key'] == '"company_name"'][0]
         cols = [col for col in df.columns if
                 com_name in col or 'month_name' in col or 'sbu_name' in col or 'productname' in col]
@@ -451,8 +463,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         return {'message': 'Industry Cummulative company_level Data', 'data': list(output.values()), 'status': True,
                 'company': unique_companies}
 
-    if resp_format == 'company_level' and (
-            resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format == 'company_level':
+    if resp_format == 'company_level' and (resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format == 'company_level':
         months = df['month_name'].unique().tolist()
         company = [x['value'].strip('"') for x in filters if x['key'] == '"company_name"'][0].lower()
         for col in df.columns.tolist():
@@ -501,9 +512,51 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':list2,'company':unique_companies}
 
     if '"table_graph"' in [x['key'] for x in filters]:
+        df.to_csv('/tmp/df_graph.csv',index = False)
+        companies = [col.replace("actual_", "").replace("_share", "") for col in df.columns 
+             if col.startswith("actual_") and "market" not in col]
+
+        output_list = []
+
+        for company in companies:
+            actual_col = f"actual_{company}_share"
+            history_col = f"history_{company}_share"
+            
+            total_actual = df[actual_col].sum()
+            total_history = df[history_col].sum()
+
+            # Handle division by zero scenarios
+            if total_history == 0:
+                market_share = 100 if total_actual > 0 else None  # If actual > 0 & history = 0 -> 100%, else None
+            elif total_actual == 0:
+                market_share = -100  # If actual = 0 & history > 0 -> -100%
+            else:
+                market_share = round(((total_actual - total_history) / total_history) * 100, 1)
+            
+            entry = {
+                "company": company.upper(),
+                "market_share": market_share,
+                "tmt": int(total_actual)  # Total actual share
+            }
+            output_list.append(entry)
+        return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':output_list,'company':unique_companies}
+
+        companies = [col.replace("actual_", "").replace("_share", "") for col in df.columns if col.startswith("actual_")]
+        for company in companies:
+            actual_col = f"actual_{company}_share"
+            history_col = f"history_{company}_share"
+            growth_col = f"{company}_growth"
+            df[growth_col] = np.where(df[history_col] == 0,np.where(df[actual_col] > 0, 100, np.nan),np.where(df[actual_col] == 0, -100,round(((df[actual_col] - df[history_col]) / df[history_col]) * 100, 1)))
+            #df[growth_col] = round(((df[actual_col] - df[history_col]) / df[history_col]) * 100,1)
+            df.dropna(subset=[col for col in df.columns if 'growth' in col], how='all', inplace=True)
+
+        df.to_csv('/tmp/df_revised.csv',index = False)
         company_columns = [col for col in df.columns if col not in ['actual_market_share', 'month_name']]
         company_totals = df[company_columns].sum()
         total_market_share = df['actual_market_share'].sum()
+        
+        
+        '''
         # Construct output list
         output = [
             {
@@ -513,6 +566,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             }
             for company, share in company_totals.items()
         ]
+        '''
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':output,'company':unique_companies}
 
     if '"table_month"' in [x['key'] for x in filters]:
