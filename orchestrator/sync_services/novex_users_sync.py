@@ -64,12 +64,12 @@ async def clear_existing_user(bu):
                 password=creds["password"],
                 port=creds["port"]
             )
-    query = f""" DELETE FROM users WHERE bu={bu} and manual_user IS FALSE """
+    query = f""" DELETE FROM users WHERE '{bu}' = ANY(bu) and manual_user IS FALSE; """
     cursor = pg_conn.cursor()
     cursor.execute(query)
     pg_conn.commit()
     cursor.close()
-    pg_conn.close()    
+    pg_conn.close()
 
 
 async def insert_users(data):
@@ -151,8 +151,8 @@ async def sync_users():
         data = await combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
         data = await process_data(data)
         print(data)
-        # await clear_existing_user(bu)
-        # await insert_users(data.to_dict(orient="records"))
+        await clear_existing_user(bu)
+        await insert_users(data.to_dict(orient="records"))
 
 
 if __name__ == "__main__":
