@@ -602,6 +602,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    print("dryout_condition: ", conditions)
 
     stats_query = "select distinct sap_id, max(progress_rate) as present_stage " \
                   f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed') " \
@@ -642,7 +643,11 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         stats[rec['present_stage']] += 1
         if str(rec['sap_id']) in dealer_tt:
             dealer_tt_count['Dealer TT'] += 1
-
+    dry_out_aging = await dry_out_analysis.get_dryout_aging(conditions)
+    less_than_2_days = dry_out_aging.get("less_than_2_days", 0)
+    from_3_to_7_days = dry_out_aging.get("from_3_to_7_days", 0)
+    from_8_to_15_days = dry_out_aging.get("from_8_to_15_days", 0)
+    more_than_15_days = dry_out_aging.get("more_than_15_days", 0)
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
              for key, value in stats.items() if key <= len(top_x_axis)]
@@ -657,17 +662,55 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         }, {
             "section": "EMUnLock",
             "value": 0, "serial": 18, "condition": "=", "group": "wip"
+        }, {
+            "section": "Closed Outlets", "value": 0, "serial": 20,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "Nozzle Sales Not Started", "value": 0, "serial": 21,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "Low Volume(<50KLPM)", "value": 0, "serial": 22,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "Others", "value": 0, "serial": 23,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "<2 Days", "value": less_than_2_days, "serial": 24,
+            "condition": "=", "group": "dryout_analysis"
+        }, {
+            "section": "3 to 7 Days", "value": from_3_to_7_days, "serial": 25,
+            "condition": "=", "group": "dryout_analysis"
+        }, {
+            "section": "8 to 15 Days", "value": from_8_to_15_days, "serial": 26,
+            "condition": "=", "group": "dryout_analysis"
+        }, {
+            "section": "> 15 Days", "value": more_than_15_days, "serial": 27,
+            "condition": "=", "group": "dryout_analysis"
+        },{
+            "section": "<2 Days Rs Cr", "value": 0, "serial": 28,
+            "condition": "=", "group": "tar_analysis"
+        }, {
+            "section": "3 to 7 Days Rs Cr", "value": 0, "serial": 29,
+            "condition": "=", "group": "tar_analysis"
+        }, {
+            "section": "8 to 15 Days Rs Cr", "value": 0, "serial": 30,
+            "condition": "=", "group": "tar_analysis"
+        }, {
+            "section": "> 15 Days Rs Cr", "value": 0, "serial": 31,
+            "condition": "=", "group": "tar_analysis"
+        },{
+            "section": "Dealer TT", "value": 0, "serial": 32,
+            "condition": "=", "group": "tt_pending"
+        }, {
+            "section": "Transport TT", "value": 0, "serial": 33,
+            "condition": "=", "group": "tt_pending"
+        }, {
+            "section": "Dealer TT Return", "value": 0, "serial": 34,
+            "condition": "=", "group": "tt_pending"
+        }, {
+            "section": "Transport TT Return", "value": 0, "serial": 35,
+            "condition": "=", "group": "tt_pending"
         }])
-    # {
-    #     "section": "ATG Ack",
-    #     "value": 0, "serial": 19, "condition": "=", "group": "delivered"
-    # }, {
-    #     "section": "EMLock Unlock",
-    #     "value": 0, "serial": 20, "condition": "=", "group": "delivered"
-    # }, {
-    #     "section": "VTS Return",
-    #     "value": 0, "serial": 20, "condition": "=", "group": "delivered"
-    # }
     stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
