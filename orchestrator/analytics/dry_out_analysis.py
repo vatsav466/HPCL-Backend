@@ -1300,3 +1300,26 @@ async def dry_out_report(dry_out_in_days='1'):
     final_df = final_df.sort_values(by="LOADED_ON", ascending=True).groupby("INDENT_NO").first().reset_index()
     print(final_df)
     return final_df.to_dict(orient="records")
+
+async def get_dryout_aging(conditions):
+    query = f"""WITH distinct_alerts AS (
+                SELECT DISTINCT ON (sap_id) sap_id, created_at
+                FROM alerts
+                WHERE {conditions} AND progress_rate = '1'
+            )
+            SELECT 
+                COUNT(CASE WHEN created_at >= NOW() - INTERVAL '2 days' THEN 1 END) AS "less_than_2_days",
+                COUNT(CASE WHEN created_at >= NOW() - INTERVAL '7 days' AND created_at < NOW() - INTERVAL '2 days' THEN 1 END) AS "from_3_to_7_days",
+                COUNT(CASE WHEN created_at >= NOW() - INTERVAL '15 days' AND created_at < NOW() - INTERVAL '7 days' THEN 1 END) AS "from_8_to_15_days",
+                COUNT(CASE WHEN created_at < NOW() - INTERVAL '15 days' THEN 1 END) AS "more_than_15_days"
+            FROM distinct_alerts;"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    print("resp: ", resp)
+    return resp
