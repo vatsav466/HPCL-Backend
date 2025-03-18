@@ -1,9 +1,13 @@
+
 import urdhva_base
 import json
-import  re
+import re
+import datetime
+import requests
 import pandas as pd
 import hpcl_ceg_model
 from utilities.helpers import map_device_category
+import orchestrator.analytics.va_analysis as va_analysis
 from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.analytics.performance_index.performance_index_factory as performance_index_factory
 
@@ -30,6 +34,16 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         return pi_index
 
     async def generate_performance_index_va(self, location_id=None, zone=None):
+        resp = await va_analysis.get_ro_terminal_scores({'LocationType': 'LPG',
+                                                   'StartDate': datetime.datetime.now().strftime("%Y-%m-%d")})
+        if resp['status']:
+            va_score = sum([float(rec['OVERALL_SCORE'])
+                            if rec.get('OVERALL_SCORE') and
+                                                             (not location_id or location_id in rec['LOCATION_ID']) else 0
+                            for rec in resp['data']])
+            if not location_id:
+                va_score = va_score / len(resp['data'])
+            return {"va_oi_score": round(va_score, 2), "va_category_scores": {}}
         return {"va_oi_score": 10, "va_category_scores": {}}
 
     async def generate_performance_index_vts(self, location_id=None, zone=None):
