@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import hpcl_ceg_model
 from utilities.helpers import map_device_category
+from orchestrator.dbconnector.widget_actions import widget_actions
 import orchestrator.analytics.performance_index.performance_index_factory as performance_index_factory
 
 
@@ -16,26 +17,50 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         """Async method to load performance index rules for LPG."""
         self.rules_df = await self.load_performance_index()
 
-    async def get_all_alerts(self, location_id):
+    async def generate_performance_index(self, location_id=None, zone=None):
+        # Todo:- Need to generate OI score by location
+        lpg = await self.generate_performance_index_lpg(location_id, zone)
+        vts = await self.generate_performance_index_vts(location_id, zone)
+        va = await self.generate_performance_index_va(location_id, zone)
+        pi_index = {**lpg, **vts, **va}
+        overall_oi_score = sum([pi_index[f'{cat}_oi_score'] for cat in ['lpg', 'vts', 'va']])
+
+        pi_index['overall_oi_score'] = overall_oi_score
+        return pi_index
+
+    async def generate_performance_index_va(self, location_id=None, zone=None):
+        return {"va_oi_score": 10, "va_category_scores": {}}
+
+    async def generate_performance_index_vts(self, location_id=None, zone=None):
+        return {"vts_oi_score": 5, "vts_category_scores": {}}
+
+    async def get_all_alerts(self, location_id=None, zone=None):
         """Fetch all LPG alerts in an open state."""
         req_fields = ['interlock_name', 'created_at', 'sop_id']
         open_alerts = []
-        params = urdhva_base.queryparams.QueryParams(q=f"bu='{self.bu}' and sap_id='{location_id}' "
-                                                       f"and alert_status='Open'",
-                                                     limit=10000, fields=json.dumps(req_fields))
+        filters = [{"key": 'alert_status', "cond": "equals", "value": "Open"},
+                   {"key": 'bu', "cond": "equals", "value": self.bu},
+                   {"key": 'alert_section', "cond": "equals", "value": 'LPG'}]
+
+        if location_id:
+            filters.append({"key": 'sap_id', "cond": "equals", "value": location_id})
+        if zone:
+            filters.append({"key": 'zone', "cond": "equals", "value": zone})
+        clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
+        query = f" {','.join(req_fields)} from alerts where {clause} order by created_at desc"
+        print(query)
         skip = 0
         while True:
-            params.skip = skip
-            print("params --> ", params)
-            resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+            resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000, skip=skip)
             if resp['data']:
                 open_alerts.extend(resp['data'])
-            if resp['count'] < 10000:
+            if len(resp) < 10000:
                 break
             skip += 1
+        print(len(open_alerts))
         return open_alerts
 
-    async def generate_performance_index_lpg(self, location_id):
+    async def generate_performance_index_lpg(self, location_id, zone):
         """
         Generate the performance index for LPG based on alert data and dynamic rules from self.rules_df.
         """
@@ -43,24 +68,24 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         open_alerts = await self.get_all_alerts(location_id)
 
         if not open_alerts:
-            return {"oi_score": 0, "details": "No open alerts found"}
+            return {"oi_score": 85, "details": "No open alerts found"}
 
         alerts_df = pd.DataFrame(open_alerts)
 
         if 'interlock_name' not in alerts_df.columns:
-            return {"oi_score": 0, "details": "Invalid alert data format"}
+            return {"oi_score": 85, "details": "Invalid alert data format"}
 
         # Step 2: Fetch rules for LPG from self.rules_df
         lpg_rules = self.rules_df[self.rules_df['BU'] == 'LPG']
 
         if lpg_rules.empty:
-            return {"oi_score": 0, "details": "No LPG rules found"}
+            return {"oi_score": 85, "details": "No LPG rules found"}
 
         alerts_df['DeviceCategory'] = alerts_df['interlock_name'].map(map_device_category)
         total_devices = alerts_df['interlock_name'].nunique()
         print("total_devices --> ", total_devices)
         if total_devices == 0:
-            return {"oi_score": 0, "details": "No valid devices found"}
+            return {"oi_score": 85, "details": "No valid devices found"}
 
         alert_counts = alerts_df.groupby('DeviceCategory')['interlock_name'].nunique()
         print("alert_counts --> ", alert_counts)
