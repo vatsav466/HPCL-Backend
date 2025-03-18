@@ -76,6 +76,9 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         if 'interlock_name' not in alerts_df.columns:
             return {"lpg_oi_score": 85, "details": "Invalid alert data format"}
 
+        alerts_df = alerts_df[alerts_df['interlock_name'].isin(['O-Ring Leak Rejection',
+                                                                'Valve Leak Rejection', 'Check Scale Rejection'])]
+
         # Step 2: Fetch rules for LPG from self.rules_df
         lpg_rules = self.rules_df[self.rules_df['AlertSection'] == 'LPG']
 
@@ -119,6 +122,8 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
 
             # Determine score based on rejection percentage
             score = self.calculate_score(rejection_percentage, thresholds)
+            if score == 1 and open_alert_devices > 1:
+                score = 0.95
             print("rule score --> ", score)
 
             # Apply weightage
