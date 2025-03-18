@@ -7195,7 +7195,7 @@ class GlobalAnalytics:
                     AND a.interlock_name = 'MFM Data Changed'
                     AND DATE(a.created_at) = h.created_date) AS alert_count
                 FROM 
-                    host_data h
+                    mfmfactor h
                 ORDER BY 
                     h.created_date DESC, alert_count DESC
             """
