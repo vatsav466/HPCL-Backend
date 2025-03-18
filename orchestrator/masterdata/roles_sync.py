@@ -83,7 +83,11 @@ async def sync_user_roles():
                                                                                     "LPG Plant",
                                                                                     "Video Analytics"]}],
                                            "name": "SOD", "status": True},
-
+                    "Maintenance Officer LPG": {"allowed_pages": [{"menu_name": "LPG",
+                                                              "allowed_sub_menus": ["LPG Operations", "LPG Home",
+                                                                                    "LPG Plant",
+                                                                                    "Video Analytics"]}],
+                                           "name": "SOD", "status": True},
                     "Zonal HSE LPG": {"allowed_pages": [{"menu_name": "LPG",
                                                          "allowed_sub_menus": ["LPG Operations", "LPG Home",
                                                                                "LPG Plant",
