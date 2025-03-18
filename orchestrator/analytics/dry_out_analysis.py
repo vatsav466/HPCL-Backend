@@ -1438,7 +1438,7 @@ async def get_tar_analysis(condition):
     return _dict
 
 async def get_tt_counts(condition):
-    query = f"""select substr(dealer_code, 3, 8) as dealer_code from "IMP_SAP"."TRUCK_DETAILS" where dealer_code is not null"""
+    query = f"""select substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" where dealer_code is not null"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
