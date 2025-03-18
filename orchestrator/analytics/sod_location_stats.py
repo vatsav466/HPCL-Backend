@@ -16,6 +16,10 @@ async def generate_sod_engineering_location_stats(sap_id):
     # Hardcoded data for UI development purpose
     json_data = [{"id": "lrca", "name": "LRCA", "status": "standby"},
                  {"id": "lrcb", "name": "LRCB", "status": "online"},
+                 {"id": "safety_plc_a", "name": "PLC A", "status": "online"},
+                 {"id": "safety_plc_b", "name": "PLC B", "status": "standby"},
+                 {"id": "process_plc_a", "name": "PLC A", "status": "online"},
+                 {"id": "process_plc_b", "name": "PLC B", "status": "standby"},
                  {"id": "gantry_bcu", "name": "Gantry BCU ", "total": 34, "faulty": 1, "maintanance": 1},
                  {"id": "mfm", "name": "MFM", "total": 10, "faulty": 1, "maintanance": 0},
                  {"id": "primary_radar", "name": "Primary Radar", "total": 11, "faulty": 0, "maintanance": 0},
