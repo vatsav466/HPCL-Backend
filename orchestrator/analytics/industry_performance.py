@@ -752,6 +752,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
              cond["cond"] = 'one-off'
              cond["value"] = value
     where_conditions = []
+    where_conditions.extend(['"category" NOT IN (\'O\')'])
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters +filters)
     '''
     if '"ind_analytics"' in [x['key'] for x in filters]:
@@ -770,7 +771,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
         clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters + filters)
     '''
     if clause:
-        where_conditions = [clause]
+        where_conditions.extend([clause])
     group_keys = [key.strip('"') for key in group_by_filter]
     req_keys = f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
@@ -917,9 +918,10 @@ async def industry_performance_compare(filters, cross_filters, drill_state="", t
     filters.append({"key": "coname", "cond": "one-off",
                     "value": list(set(omc_companies + [cond_filter['key'].strip('"') for cond_filter in companies]))})
     where_conditions = []
+    where_conditions.extend(['"category" NOT IN (\'O\')'])
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
-        where_conditions = [clause]
+        where_conditions.extend([clause])
     query = generate_growth_query("industry_performance",
                                   list(set([cond_filter['key'].strip('"') for cond_filter in companies])),
                                   drop_company, growth_company,
@@ -988,6 +990,7 @@ async def get_category_wise_cumulative_data(filters):
     if not months:
         months = months_list
     where_conditions = []
+    where_conditions.extend(['"category" NOT IN (\'O\')'])
     fiscal_years = ["2023-2024", "2024-2025"]
     filters.append({"key": "\"fiscal_year\"", "cond": "one-off", "value": fiscal_years})
     for filter_cond in filters:
@@ -997,7 +1000,8 @@ async def get_category_wise_cumulative_data(filters):
 
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
-        where_conditions = [clause]
+        
+        where_conditions.extend([clause])
     group_by = ["coname", "company_name", "fiscal_year"]
     req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "coname", "company_name", "fiscal_year"]
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
@@ -1008,7 +1012,6 @@ async def get_category_wise_cumulative_data(filters):
     result_dict = {year: {} for year in fiscal_years}
     for year in fiscal_years:
         filtered_df = df[df["fiscal_year"] == year]
-        
         filtered_df_mpsu = filtered_df[filtered_df['coname'].isin(OMC['MPSU'])]
         filtered_df_mpsu['company_name'] = 'MPSU'
         filtered_df_psu = filtered_df[filtered_df['coname'].isin(OMC['MPSU']+OMC['OtherPSU'])]
@@ -1021,7 +1024,6 @@ async def get_category_wise_cumulative_data(filters):
             result_dict[year][category] = {
                 row["coname"]: row["sales"] for _, row in category_df.iterrows()
             }
-
     # Compute growth percentage
     growth_dict = {}
 
@@ -1134,6 +1136,7 @@ async def generate_omc_compare_data(filters, drill_state):
     if not months:
         months = months_
     where_conditions = []
+    where_conditions.extend(['"category" NOT IN (\'O\')'])
     filters = [cond_filter for cond_filter in filters if cond_filter['key'].strip('"') not in ["fiscal_year", 'month_name']]
     filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2023-2024", "2024-2025"]})
     for filter_cond in filters:
@@ -1159,7 +1162,7 @@ async def generate_omc_compare_data(filters, drill_state):
 
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
-        where_conditions = [clause]
+        where_conditions.extend([clause])
 
     group_by = ["coname", "fiscal_year"]
     req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "fiscal_year", "coname"]
@@ -1215,7 +1218,7 @@ async def generate_omc_compare_data(filters, drill_state):
             if entry['History'].get(company, 0):
                 entry['Growth'][company] = round((entry['Sales'].get(company, 0) -
                                                   entry['History'].get(company, 0)) /
-                                                 entry['History'].get(company, 0) * 100, 2)
+                                                 entry['History'].get(company, 0) * 100, 1)
             else:
                 entry['Growth'][company] = 100
         for name in entry:
