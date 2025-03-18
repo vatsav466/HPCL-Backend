@@ -6012,21 +6012,18 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with WHERE clause
-            query = f"""
-                SELECT 
-                    DATE(h.created_at) AS created_date,
-                    h.zone,
-                    h.location_name,
-                    h.sap_id,
-                    h.bcu_number,
-                    (SELECT COUNT(*) 
-                    FROM alerts a 
-                    WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'BCU Local Loading') AS alert_count,
-                    SUM(h.loaded_qty) AS total_loaded_qty
-                FROM 
-                    host_local_loaded_tts h
-                WHERE 1=1
+            query = """
+                WITH localloaded AS (
+                    SELECT 
+                        DATE(created_at) AS created_date,
+                        zone,
+                        location_name,
+                        sap_id,
+                        bcu_number,
+                        SUM(h.loaded_qty) AS total_loaded_qty
+                    FROM 
+                        host_local_loaded_tts
+                    WHERE 1=1
             """
             
             # Add zone filter if present
@@ -6043,10 +6040,25 @@ class GlobalAnalytics:
             
             # Complete the query with proper GROUP BY
             query += """
-                GROUP BY 
-                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, bcu_number
+                )
+                SELECT 
+                    h.created_date,
+                    h.zone,
+                    h.location_name,
+                    h.sap_id,
+                    h.bcu_number,
+                    (SELECT COUNT(*) 
+                    FROM alerts a 
+                    WHERE a.device_name = h.bcu_number 
+                    AND a.interlock_name = 'BCU Local Loading'
+                    AND DATE(a.created_at) = h.created_date) AS alert_count,
+                    total_loaded_qty
+                FROM 
+                    localloaded h
                 ORDER BY 
-                    created_date DESC, alert_count DESC
+                    h.created_date DESC, alert_count DESC
             """
             
             print("query --> ", query)
@@ -6162,23 +6174,20 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with WHERE clause
-            query = f"""
-                SELECT 
-                    DATE(h.created_at) AS created_date,
-                    h.zone,
-                    h.location_name,
-                    h.sap_id,
-                    h.bcu_number,
-                    (SELECT COUNT(*) 
-                    FROM alerts a 
-                    WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'Unauthorized flow_BCU') AS alert_count,
-                    CAST(SUM(h.net_totalizer) AS FLOAT) AS total_net_totalizer
-                FROM 
-                    host_unauthorised_flow h
-                WHERE 1=1
+            query = """
+                WITH unauthorized AS (
+                    SELECT 
+                        DATE(created_at) AS created_date,
+                        zone,
+                        location_name,
+                        sap_id,
+                        bcu_number,
+                        CAST(SUM(h.net_totalizer) AS FLOAT) AS total_net_totalizer
+                    FROM 
+                        host_unauthorised_flow
+                    WHERE 1=1
             """
-            
+
             # Add zone filter if present
             if zone_filter:
                 query += f" AND h.zone IN ('{zone_filter}')"
@@ -6193,10 +6202,25 @@ class GlobalAnalytics:
             
             # Complete the query with proper GROUP BY
             query += """
-                GROUP BY 
-                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, bcu_number
+                )
+                SELECT 
+                    h.created_date,
+                    h.zone,
+                    h.location_name,
+                    h.sap_id,
+                    h.bcu_number,
+                    (SELECT COUNT(*) 
+                    FROM alerts a 
+                    WHERE a.device_name = h.bcu_number 
+                    AND a.interlock_name = 'Unauthorized flow_BCU'
+                    AND DATE(a.created_at) = h.created_date) AS alert_count,
+                    total_net_totalizer
+                FROM 
+                    unauthorized h
                 ORDER BY 
-                    created_date DESC, alert_count DESC
+                    h.created_date DESC, alert_count DESC
             """
             
             print("query --> ", query)
@@ -6312,22 +6336,19 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with WHERE clause
-            query = f"""
-                SELECT 
-                    DATE(h.created_at) AS created_date,
-                    h.zone,
-                    h.location_name,
-                    h.sap_id,
-                    h.bcu_number,
-                    (SELECT COUNT(*) 
-                    FROM alerts a 
-                    WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'SickTT Reported') AS alert_count,
-                    SUM(h.required_qty) AS total_required_qty,
-                    SUM(h.loaded_qty) AS total_loaded_qty
-                FROM 
-                    host_sick_tts h
-                WHERE 1=1
+            query = """
+                WITH sicktts AS (
+                    SELECT 
+                        DATE(created_at) AS created_date,
+                        zone,
+                        location_name,
+                        sap_id,
+                        bcu_number,
+                        SUM(required_qty) AS total_required_qty,
+                        SUM(loaded_qty) AS total_loaded_qty
+                    FROM 
+                        host_sick_tts
+                    WHERE 1=1
             """
             
             # Add zone filter if present
@@ -6344,10 +6365,26 @@ class GlobalAnalytics:
             
             # Complete the query with proper GROUP BY
             query += """
-                GROUP BY 
-                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, bcu_number
+                )
+                SELECT 
+                    h.created_date,
+                    h.zone,
+                    h.location_name,
+                    h.sap_id,
+                    h.bcu_number,
+                    (SELECT COUNT(*) 
+                    FROM alerts a 
+                    WHERE a.device_name = h.bcu_number 
+                    AND a.interlock_name = 'SickTT Reported'
+                    AND DATE(a.created_at) = h.created_date) AS alert_count,
+                    h.total_required_qty,
+                    h.total_loaded_qty
+                FROM 
+                    sicktts h
                 ORDER BY 
-                    created_date DESC, alert_count DESC
+                    h.created_date DESC, alert_count DESC
             """
             
             print("query --> ", query)
@@ -6467,21 +6504,18 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with WHERE clause
-            query = f"""
-                SELECT 
-                    DATE(h.created_at) AS created_date,
-                    h.zone,
-                    h.location_name,
-                    h.sap_id,
-                    h.bcu_number,
-                    (SELECT COUNT(*) 
-                    FROM alerts a 
-                    WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'Cancel TT Reported') AS alert_count,
-                    SUM(h.required_qty) AS total_required_qty,
-                FROM 
-                    host_cancelled_tts h
-                WHERE 1=1
+            query = """
+                WITH cancelled_tts AS (
+                    SELECT 
+                        DATE(created_at) AS created_date,
+                        zone,
+                        location_name,
+                        sap_id,
+                        truck_number,
+                        SUM(h.required_qty) AS total_required_qty
+                    FROM 
+                        host_cancelled_tts
+                    WHERE 1=1
             """
             
             # Add zone filter if present
@@ -6498,10 +6532,23 @@ class GlobalAnalytics:
             
             # Complete the query with proper GROUP BY
             query += """
-                GROUP BY 
-                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
+                )
+                SELECT 
+                    k.created_date,
+                    k.zone,
+                    k.location_name,
+                    k.sap_id,
+                    k.truck_number,
+                    (SELECT COUNT(*) 
+                    FROM alerts a 
+                    WHERE a.vehicle_number = k.truck_number 
+                    AND a.interlock_name = 'Cancel TT Reported'
+                    AND DATE(a.created_at) = k.created_date) AS alert_count,
+                    k.total_required_qty
+                FROM 
+                    cancelled_tts k
                 ORDER BY 
-                    created_date DESC, alert_count DESC
+                    k.created_date DESC, alert_count DESC
             """
             
             print("query --> ", query)
@@ -6534,7 +6581,7 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "truck_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
@@ -6547,7 +6594,7 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        "bcu_number": row["bcu_number"],
+                        "truck_number": row["truck_number"],
                         "total_alerts": row["total_alerts"],
                         "total_required_qty": row["total_required_quantity"]
                     }
@@ -6572,7 +6619,7 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        "bcu_number": row["bcu_number"],
+                        "truck_number": row["truck_number"],
                         "total_alerts": row["total_alerts"],
                         "total_required_qty": row["total_required_quantity"]
                     }
@@ -6616,41 +6663,50 @@ class GlobalAnalytics:
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
             
-            # Construct base SQL Query with WHERE clause
-            query = f"""
-                SELECT 
-                    DATE(h.created_at) AS created_date,
-                    h.zone,
-                    h.location_name,
-                    h.sap_id,
-                    h.bcu_number,
-                    (SELECT COUNT(*) 
-                    FROM alerts a 
-                    WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'K - Factor Data Changed') AS alert_count
-                FROM 
-                    host_k_factor_changes h
-                WHERE 1=1
+            # Construct base SQL Query with CTE for better performance
+            query = """
+                WITH k_factor_data AS (
+                    SELECT 
+                        DATE(created_at) AS created_date,
+                        zone,
+                        location_name,
+                        sap_id,
+                        bcu_number
+                    FROM 
+                        host_k_factor_changes
+                    WHERE 1=1
             """
             
             # Add zone filter if present
             if zone_filter:
-                query += f" AND h.zone IN ('{zone_filter}')"
+                query += f" AND zone IN ('{zone_filter}')"
             
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND h.sap_id IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(h.created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
-            # Complete the query with proper GROUP BY
+            # Complete the CTE and main query
             query += """
-                GROUP BY 
-                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
+                )
+                SELECT 
+                    k.created_date,
+                    k.zone,
+                    k.location_name,
+                    k.sap_id,
+                    k.bcu_number,
+                    (SELECT COUNT(*) 
+                    FROM alerts a 
+                    WHERE a.device_name = k.bcu_number 
+                    AND a.interlock_name = 'K - Factor Data Changed'
+                    AND DATE(a.created_at) = k.created_date) AS alert_count
+                FROM 
+                    k_factor_data k
                 ORDER BY 
-                    created_date DESC, alert_count DESC
+                    k.created_date DESC, alert_count DESC
             """
             
             print("query --> ", query)
@@ -6761,40 +6817,52 @@ class GlobalAnalytics:
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
             
-            # Construct base SQL Query with WHERE clause
-            query = f"""
-                SELECT 
-                    DATE(h.created_at) AS created_date,
-                    h.zone,
-                    h.location_name,
-                    h.sap_id,
-                    (SELECT COUNT(*) 
-                    FROM alerts a 
-                    WHERE a.interlock_name = 'Manual FAN printed more 5% of total TT loaded') AS alert_count,
-                    SUM(h.manual_fan_count) as total_manual_fan_count
-                FROM 
-                    host_manual_fan_printed h
-                WHERE 1=1
+            # Construct base SQL Query using CTE for better performance and readability
+            query = """
+                WITH manual_fan_data AS (
+                    SELECT 
+                        DATE(created_at) AS created_date,
+                        zone,
+                        location_name,
+                        sap_id,
+                        SUM(manual_fan_count) AS total_manual_fan_count
+                    FROM 
+                        host_manual_fan_printed
+                    WHERE 1=1
             """
             
             # Add zone filter if present
             if zone_filter:
-                query += f" AND h.zone IN ('{zone_filter}')"
+                query += f" AND zone IN ('{zone_filter}')"
             
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND h.sap_id IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(h.created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
-            # Complete the query with proper GROUP BY
+            # Complete the CTE with GROUP BY
             query += """
-                GROUP BY 
-                    DATE(h.created_at), h.zone, h.location_name, h.sap_id
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id
+                )
+                SELECT 
+                    m.created_date,
+                    m.zone,
+                    m.location_name,
+                    m.sap_id,
+                    (SELECT COUNT(*) 
+                    FROM alerts a 
+                    WHERE a.interlock_name = 'Manual FAN printed more 5% of total TT loaded'
+                    AND DATE(a.created_at) = m.created_date
+                    AND a.location_name = m.location_name) AS alert_count,
+                    m.total_manual_fan_count
+                FROM 
+                    manual_fan_data m
                 ORDER BY 
-                    created_date DESC, alert_count DESC
+                    m.created_date DESC, alert_count DESC
             """
             
             print("query --> ", query)
@@ -6907,10 +6975,42 @@ class GlobalAnalytics:
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
             
-            # Construct base SQL Query with WHERE clause
-            query = f"""
+            # Construct base SQL Query with Common Table Expression (CTE)
+            query = """
+                WITH host_data AS (
+                    SELECT 
+                        DATE(created_at) AS created_date,
+                        zone,
+                        location_name,
+                        sap_id,
+                        bcu_number,
+                        SUM(required_qty) AS total_required_qty,
+                        SUM(loaded_qty) AS total_loaded_qty,
+                        SUM(loaded_qty - required_qty) AS qty_difference
+                    FROM 
+                        host_over_loaded_tts
+                    WHERE 1=1
+            """
+            
+            # Add zone filter if present
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
+            
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND sap_id IN ('{plant_filter}')"
+            
+            # Add date filter directly to SQL if applied
+            if date_filter_applied and start_date and end_date:
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+            
+            # Complete the CTE with GROUP BY
+            query += """
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, bcu_number
+                )
                 SELECT 
-                    DATE(h.created_at) AS created_date,
+                    h.created_date,
                     h.zone,
                     h.location_name,
                     h.sap_id,
@@ -6918,32 +7018,15 @@ class GlobalAnalytics:
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'TT Overloaded') AS alert_count,
-                    SUM(h.required_qty) AS total_required_qty,
-                    SUM(h.loaded_qty) AS total_loaded_qty
+                    AND a.interlock_name = 'TT Overloaded'
+                    AND DATE(a.created_at) = h.created_date) AS alert_count,
+                    h.total_required_qty,
+                    h.total_loaded_qty,
+                    h.qty_difference
                 FROM 
-                    host_over_loaded_tts h
-                WHERE 1=1
-            """
-            
-            # Add zone filter if present
-            if zone_filter:
-                query += f" AND h.zone IN ('{zone_filter}')"
-            
-            # Add plant/location filter if present
-            if plant_filter:
-                query += f" AND h.sap_id IN ('{plant_filter}')"
-            
-            # Add date filter directly to SQL if applied
-            if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(h.created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
-            
-            # Complete the query with proper GROUP BY
-            query += """
-                GROUP BY 
-                    DATE(h.created_at), h.zone, h.location_name, h.sap_id, h.bcu_number
+                    host_data h
                 ORDER BY 
-                    created_date DESC, alert_count DESC
+                    h.created_date DESC, alert_count DESC
             """
             
             print("query --> ", query)
@@ -6980,7 +7063,8 @@ class GlobalAnalytics:
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity"),
-                    pl.sum("total_loaded_qty").alias("total_loaded_quantity")
+                    pl.sum("total_loaded_qty").alias("total_loaded_quantity"),
+                    pl.sum("qty_difference").alias("total_quantity_difference")
                 )
 
                 result = {}
@@ -6993,7 +7077,8 @@ class GlobalAnalytics:
                         "bcu_number": row["bcu_number"],
                         "total_alerts": row["total_alerts"],
                         "total_required_qty": row["total_required_quantity"],
-                        "total_loaded_qty": row["total_loaded_quantity"]
+                        "total_loaded_qty": row["total_loaded_quantity"],
+                        "total_quantity_difference": row["total_quantity_difference"]
                     }
                     result.setdefault(created_date, []).append(entry)
                 return {"status": True, "message": "success", "daily_data": result}
@@ -7007,7 +7092,8 @@ class GlobalAnalytics:
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity"),
-                    pl.sum("total_loaded_qty").alias("total_loaded_quantity")
+                    pl.sum("total_loaded_qty").alias("total_loaded_quantity"),
+                    pl.sum("qty_difference").alias("total_quantity_difference")
                 )
 
                 result = {}
@@ -7020,7 +7106,8 @@ class GlobalAnalytics:
                         "bcu_number": row["bcu_number"],
                         "total_alerts": row["total_alerts"],
                         "total_required_qty": row["total_required_quantity"],
-                        "total_loaded_qty": row["total_loaded_quantity"]
+                        "total_loaded_qty": row["total_loaded_quantity"],
+                        "total_quantity_difference": row["total_quantity_difference"]
                     }
                     result.setdefault(month, []).append(entry)
                 return {"status": True, "message": "success", "monthly_data": result}
