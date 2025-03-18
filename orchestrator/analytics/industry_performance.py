@@ -425,8 +425,31 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     if resp_format == 'company_level' and time_grain == 'Monthly' and '"inc"' in [x['key'] for x in filters]:
         cols_to_cumsum = [col for col in df.columns if col != 'month_name']
         df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
+        """
+        below code is for line graph combining all opsu as pus companies and all pvt companies as pvt in the result
+        """
+        required_companies = [x['value'] for x in filters if x['key'].strip('"') == 'company_name'][0].split(",")
+        base_companies = ['HPCL','BPCL','IOCL']
+        selected_columns = [col for col in df.columns if any(comp.lower() in col for comp in base_companies)]
+        if required_companies:
+            for company in ['HPCL','BPCL','IOCL']:
+                required_companies.remove(company)
+        
+        actual_columns = [f"actual_{company.lower()}_share" for company in required_companies if f"actual_{company.lower()}_share" in df.columns]
+        history_columns = [f"history_{company.lower()}_share" for company in required_companies if f"history_{company.lower()}_share" in df.columns]  
+        if len(required_companies) ==6:   
+            df["actual_psu_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            df["history_psu_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            new_df = df[selected_columns + ["actual_psu_share", "history_psu_share"]]
+        if len(required_companies) >6:   
+            #df["actual_pvt_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            #df["history_pvt_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            df["actual_pvt_share"] = df[actual_columns].sum(axis=1)
+            df["history_pvt_share"] = df[history_columns].sum(axis=1)
+            new_df = df[selected_columns + ["actual_pvt_share", "history_pvt_share"]]
+
         return {'message': 'Industry_Performance', 'status': True,
-                'data': {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
+                'data': {key: value.to_dict() for key, value in new_df.to_dict(orient='series').items()}}
     if resp_format == 'company_level' and (resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format_org == 'company_level_heatmap':
         com_name = [x['value'] for x in filters if x['key'] == '"company_name"'][0]
         cols = [col for col in df.columns if
@@ -1099,7 +1122,7 @@ async def get_category_wise_cumulative_data(filters):
                 other_psu = [
                     {"category": c, "value": v, "percentage": round((v / total) * 100, 2)} for
                     c, v in details[co].items() if c in OMC['OtherPSU']]
-                mpsu.append({"category": "OtherPSU", "value": sum([r['value'] for r in other_psu]),
+                mpsu.append({"category": "Other PSU", "value": sum([r['value'] for r in other_psu]),
                              "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2),
                              "subData": other_psu})
                 tuned_data[co] = mpsu
@@ -1113,7 +1136,7 @@ async def get_category_wise_cumulative_data(filters):
                     c, v in details[co].items() if c in OMC['OtherPSU']]
                 pvt = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2)}
                        for c, v in details[co].items() if c in OMC['PVT']]
-                mpsu.append({"category": "OtherPSU", "value": sum([r['value'] for r in other_psu]),
+                mpsu.append({"category": "Other PSU", "value": sum([r['value'] for r in other_psu]),
                              "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2),
                              "subData": other_psu})
                 mpsu.append({"category": "PVT", "value": sum([r['value'] for r in pvt]),
