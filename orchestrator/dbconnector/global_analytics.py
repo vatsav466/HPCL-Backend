@@ -6020,7 +6020,7 @@ class GlobalAnalytics:
                         location_name,
                         sap_id,
                         bcu_number,
-                        SUM(h.loaded_qty) AS total_loaded_qty
+                        SUM(loaded_qty) AS total_loaded_qty
                     FROM 
                         host_local_loaded_tts
                     WHERE 1=1
@@ -6182,7 +6182,7 @@ class GlobalAnalytics:
                         location_name,
                         sap_id,
                         bcu_number,
-                        CAST(SUM(h.net_totalizer) AS FLOAT) AS total_net_totalizer
+                        CAST(SUM(net_totalizer) AS FLOAT) AS total_net_totalizer
                     FROM 
                         host_unauthorised_flow
                     WHERE 1=1
@@ -6512,7 +6512,7 @@ class GlobalAnalytics:
                         location_name,
                         sap_id,
                         truck_number,
-                        SUM(h.required_qty) AS total_required_qty
+                        SUM(srequired_qty) AS total_required_qty
                     FROM 
                         host_cancelled_tts
                     WHERE 1=1
@@ -6532,6 +6532,8 @@ class GlobalAnalytics:
             
             # Complete the query with proper GROUP BY
             query += """
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, truck_number
                 )
                 SELECT 
                     k.created_date,
