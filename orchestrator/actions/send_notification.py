@@ -673,31 +673,28 @@ class SendNotification:
         })
         print("self.update_alert ---> ", self.update_alert)
 
-        if self.params.get("escalationlevel_inmail"):
+        if self.params.get("messagetype") in ["escalation", "escalate"]:
             if self.alert_data.get("alert_section","") in ["VTS"]:
                 self.update_alert["last_escalated_to"] = (await self._role_configuration_rolemailto()).split(",")
             elif self.alert_data.get("alert_section", "") in ["VA","LPG"]:
                 self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
+            self.update_alert["action_msg"] = "Escalated to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_escalated_to"])
         else:
             if self.alert_data.get("alert_section","") in ["VTS"]:
                 self.update_alert["last_notified_to"] = (await self._role_configuration_rolemailto()).split(",")
             elif self.alert_data.get("alert_section", "") in ["VA", "LPG"]:
-                self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
+                self.update_alert["last_notified_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
+            self.update_alert["action_msg"] = "Mail sent to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_notified_to"])
 
         # Convert assigned_user_roles to a list
         self.update_alert["assigned_user_roles"] = (
             self.update_alert["assigned_user_roles"].split(',') if self.update_alert["assigned_user_roles"] else []
         )
-
-        if self.params.get("messagetype") in ["escalation", "escalate"]:
-            self.update_alert["action_msg"] = "Escalated to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_escalated_to"])
-        else:
-            self.update_alert["action_msg"] = "Mail sent to " + ", ".join(f"'{roles_name}'" for roles_name in self.update_alert["last_escalated_to"])
-
+        
         # Fetch alert data from DB and ensure it's a dictionary
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
