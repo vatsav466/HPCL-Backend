@@ -28,7 +28,7 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         vts = await self.generate_performance_index_vts(location_id, zone)
         va = await self.generate_performance_index_va(location_id, zone)
         pi_index = {**lpg, **vts, **va}
-        overall_oi_score = round(sum([pi_index[f'{cat}_oi_score'] for cat in ['lpg', 'vts', 'va']]))
+        overall_oi_score = round(sum([pi_index[f'{cat}_oi_score'] for cat in ['lpg', 'vts', 'va']]), 2)
 
         pi_index['overall_oi_score'] = int(overall_oi_score)
         return pi_index
@@ -83,7 +83,7 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         open_alerts = await self.get_all_alerts(location_id, zone)
 
         if not open_alerts:
-            return {"oi_score": 85, "details": "No open alerts found"}
+            return {"lpg_oi_score": 85, "details": "No open alerts found"}
 
         alerts_df = pd.DataFrame(open_alerts)
 

@@ -55,7 +55,7 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
         dry_out = await self.generate_performance_index_dry_out(location_id, zone)
         pi_index = {**tas, **vts, **va, **em_lock, **dry_out}
         print(pi_index)
-        overall_oi_score = round(sum([pi_index[f'{cat}_oi_score'] for cat in ['tas', 'vts', 'va', 'em_lock', 'dry_out']]))
+        overall_oi_score = round(sum([pi_index[f'{cat}_oi_score'] for cat in ['tas', 'vts', 'va', 'em_lock', 'dry_out']]), 2)
 
         pi_index['overall_oi_score'] = int(overall_oi_score)
         return pi_index
