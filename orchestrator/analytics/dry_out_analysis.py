@@ -1328,11 +1328,11 @@ async def get_dryout_aging(conditions):
     return resp[0] if resp else {}
 
 async def get_ro_count_less_50(condition):
-    query = (f"SELECT SUBSTRING(CUST_CD, 3) AS CUST_CD, SUM(QTY_KL) AS Total_Net_Weight"
-             f"FROM PS.EDW_PRIMARY_SALES_FACT"
-             f"WHERE"
-             f"AND INVOICE_DT >= CURDATE() - INTERVAL 30 DAY"
-             f"GROUP BY CUST_CD"
+    query = (f"SELECT SUBSTRING(CUST_CD, 3) AS CUST_CD, SUM(QTY_KL) AS Total_Net_Weight "
+             f"FROM PS.EDW_PRIMARY_SALES_FACT "
+             f"WHERE "
+             f"INVOICE_DT >= CURDATE() - INTERVAL 30 DAY "
+             f"GROUP BY CUST_CD "
              f"HAVING Total_Net_Weight < 50;")
     creds = credential_loader.get_credentials('TIBCO')
     params = {
@@ -1351,7 +1351,7 @@ async def get_ro_count_less_50(condition):
     data = pd.DataFrame.from_records(data, columns=columns)
     data['CUST_CD'] = data['CUST_CD'].astype(str)
 
-    query = f"select distinct sap_id from alerts where {condition} and progress_rate = '1' order by created_at asc"
+    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'

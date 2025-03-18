@@ -649,6 +649,8 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     from_8_to_15_days = dry_out_aging.get("from_8_to_15_days", 0)
     more_than_15_days = dry_out_aging.get("more_than_15_days", 0)
     indent_not_raised_count = less_than_2_days + from_3_to_7_days + from_8_to_15_days + more_than_15_days
+    count_50_klm = await dry_out_analysis.get_ro_count_less_50(conditions)
+
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
              for key, value in stats.items() if key <= len(top_x_axis)]
@@ -673,10 +675,10 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Nozzle Sales Not Started", "value": 0, "serial": 21,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Low Volume(<50KLPM)", "value": 0, "serial": 22,
+            "section": "Low Volume(<50KLPM)", "value": count_50_klm, "serial": 22,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Others", "value": 0, "serial": 23,
+            "section": "Others", "value": indent_not_raised_count - count_50_klm, "serial": 23,
             "condition": "=", "group": "indent"
         }, {
             "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 23,
