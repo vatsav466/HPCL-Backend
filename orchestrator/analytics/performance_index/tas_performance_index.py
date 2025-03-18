@@ -89,7 +89,7 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
 
         if 'interlock_name' not in alerts_df.columns:
             print("Invalid alert data format. Columns:", alerts_df.columns)
-            return {"oi_score": 0, "details": "Invalid alert data format"}
+            return {"oi_score": 65, "tas_category_scores": {}}
 
         # Map interlock_name to DeviceCategory
         alerts_df['DeviceCategory'] = alerts_df['interlock_name'].map(map_device_category)
@@ -105,7 +105,7 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
         # Check if self.rules_df is loaded
         if self.rules_df is None:
             print("Error: self.rules_df is not initialized!")
-            return {"tas_oi_score": 65, "details": "Performance index rules not loaded"}
+            return {"tas_oi_score": 65, "tas_category_scores": {}}
 
         print("Rules DataFrame:\n", self.rules_df)
 
@@ -122,18 +122,25 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
 
             if len(weightage) == 0:
                 print(f"Warning: No weightage found for category '{category}', setting to 0")
-                weightage = 0
+                continue
             else:
                 weightage = weightage[0]
 
-            oi_score = round(((total_devices - open_alert_devices) / total_devices) * weightage, 2) if total_devices > 0 else 0
+            oi_score = round(((total_devices - open_alert_devices) / total_devices) * weightage, 2) \
+                if total_devices > 0 else weightage
             print(f"OI Score for {category}: {oi_score}")
 
             oi_scores[category] = {"oi_score": float(oi_score), "weightage": int(weightage)}
             total_oi_score += oi_score
-
-        print("Final OI Scores:", oi_scores)
-        print("Total OI Score:", total_oi_score)
+        self.rules_df['DeviceCategory'].fillna('', inplace=True)
+        self.rules_df = self.rules_df[self.rules_df['DeviceCategory'] != '']
+        for category in self.rules_df['DeviceCategory'].unique():
+            if category not in oi_scores:
+                weightage = self.rules_df.loc[self.rules_df['DeviceCategory'] == category, 'Weightage'].values[0]
+                oi_scores[category] = {"oi_score": float(weightage), "weightage": int(weightage)}
+                total_oi_score += float(weightage)
+        # print("Final OI Scores:", oi_scores)
+        # print("Total OI Score:", total_oi_score)
 
         return {"tas_oi_score": round(float(total_oi_score), 2), "tas_category_scores": oi_scores}
 
