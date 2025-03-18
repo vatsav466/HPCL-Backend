@@ -5238,6 +5238,7 @@ class TagsDataSchema(UrdhvaPostgresBase):
     name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     count: Mapped[typing.Optional[str]] = mapped_column("count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_count: Mapped[typing.Optional[str]] = mapped_column("device_count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -5251,6 +5252,7 @@ class TagsDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
     name: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
     count: typing.Optional[str] = pydantic.Field("", **{})
+    device_count: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     system: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] = pydantic.Field("", **{})
@@ -5272,6 +5274,7 @@ class TagsData(urdhva_base.postgresmodel.PostgresModel):
     name: typing.Optional[str] = pydantic.Field("", **{})
     device_type: typing.Optional[str] = pydantic.Field("", **{})
     count: typing.Optional[str] = pydantic.Field("", **{})
+    device_count: typing.Optional[str] = pydantic.Field("", **{})
     zone: typing.Optional[str] = pydantic.Field("", **{})
     system: typing.Optional[str] = pydantic.Field("", **{})
     equipment_name: typing.Optional[str] = pydantic.Field("", **{})
@@ -5301,6 +5304,78 @@ class Tagsdata_Things_Board_Device_DataParams(pydantic.BaseModel):
 
 
 class Tagsdata_Get_Tags_DataParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class ArchitectureDataSchema(UrdhvaPostgresBase):
+    __tablename__ = 'architecture_data'
+    
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    name: Mapped[typing.Optional[str]] = mapped_column("name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    device_type: Mapped[typing.Optional[str]] = mapped_column("device_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    count: Mapped[typing.Optional[str]] = mapped_column("count", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+
+class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'architecture_data'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    count: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    system: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = ArchitectureDataSchema
+        upsert_keys = []
+
+
+class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'architecture_data'
+    
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    name: typing.Optional[str] = pydantic.Field("", **{})
+    device_type: typing.Optional[str] = pydantic.Field("", **{})
+    count: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    system: typing.Optional[str] = pydantic.Field("", **{})
+    equipment_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = ArchitectureDataSchema
+        upsert_keys = []
+
+
+class ArchitectureDataGetResp(pydantic.BaseModel):
+    data: typing.List[ArchitectureData]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Architecturedata_Architecture_DetailsParams(pydantic.BaseModel):
+    pass
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Architecturedata_Architecture_DataParams(pydantic.BaseModel):
     pass
 
     class Config:

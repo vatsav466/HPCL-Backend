@@ -1077,6 +1077,31 @@ async def delete(id: str):
     return await TagsData.delete(id)
 
 
+@router.post('/architecturedata', response_model=ArchitectureData, tags=['ArchitectureData'])
+async def create(inputObj: ArchitectureDataCreate):
+    return await inputObj.create()
+
+
+@router.put('/architecturedata', response_model=ArchitectureData, tags=['ArchitectureData'])
+async def update(inputObj: ArchitectureData):
+    return await inputObj.modify()
+
+
+@router.get('/architecturedata/{id}', response_model=ArchitectureData, tags=['ArchitectureData'])
+async def get(id: str):
+    return await ArchitectureData.get(id, skip_secrets=True)
+
+
+@router.get('/architecturedata', response_model=ArchitectureDataGetResp, tags=['ArchitectureData'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await ArchitectureData.get_all(params, skip_secrets=True)
+
+
+@router.delete('/architecturedata/{id}', tags=['ArchitectureData'])
+async def delete(id: str):
+    return await ArchitectureData.delete(id)
+
+
 @router.post('/performanceindex', response_model=PerformanceIndex, tags=['PerformanceIndex'])
 async def create(inputObj: PerformanceIndexCreate):
     return await inputObj.create()
