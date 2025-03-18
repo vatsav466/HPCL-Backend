@@ -447,7 +447,9 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             df["actual_pvt_share"] = df[actual_columns].sum(axis=1)
             df["history_pvt_share"] = df[history_columns].sum(axis=1)
             new_df = df[selected_columns + ["actual_pvt_share", "history_pvt_share"]]
-
+        if len(required_companies) <=3:
+            return {'message': 'Industry_Performance', 'status': True,
+                'data': {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
         return {'message': 'Industry_Performance', 'status': True,
                 'data': {key: value.to_dict() for key, value in new_df.to_dict(orient='series').items()}}
     if resp_format == 'company_level' and (resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format_org == 'company_level_heatmap':
