@@ -122,7 +122,7 @@ async def host_cancelled_tts(file_name):
 
 async def host_bay_reassignment(file_name):
     col = ["CREATED_DATE", "LOAD_NUMBER", "FAN_NUMBER", "TRUCK_NUMBER", "CUSTOMER_NAME", 
-           "COMPARTMENT_NUMBER", "PRODUCT_NAME", "REQUIRED_QTY", "ASSIGNED_BAY", "LOADED_OTY", 
+           "COMPARTMENT_NUMBER", "PRODUCT_NAME", "REQUIRED_QTY", "ASSIGNED_BAY", "LOADED_QTY", 
            "REASSIGNED_BAY", "REASSIGN_LOADED_QTY", "BAY_REASSIGNMENT_TIME", "REMARKS", 
            "sap_id", "date", "date_time"]
     df = pd.read_csv(file_name, header=None, names=col)

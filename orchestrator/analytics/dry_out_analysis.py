@@ -1430,9 +1430,43 @@ async def get_tar_analysis(condition):
     )
 
     _dict = {
-        "less_1_cr": resp[(resp['_merge'] == 'both') & (resp['category'] == 1)],
-        "less_2_cr": resp[(resp['_merge'] == 'both') & (resp['category'] == 2)],
-        "less_5_cr": resp[(resp['_merge'] == 'both') & (resp['category'] == 3)],
-        "greater_5_cr": resp[(resp['_merge'] == 'both') & (resp['category'] == 4)]
+        "less_1_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 1)]),
+        "less_2_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 2)]),
+        "less_5_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 3)]),
+        "greater_5_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 4)])
     }
     return _dict
+
+async def get_tt_counts(condition):
+    query = f"""select substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" where dealer_code is not null"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dealer_tt_resp = await function(
+        query=query
+    )
+    dealer_tt_resp = pd.DataFrame(dealer_tt_resp)
+    dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].astype(str)
+
+    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    resp = pd.DataFrame(resp)
+    resp['sap_id'] = resp['sap_id'].astype(str)
+
+    resp = pd.merge(
+        dealer_tt_resp.drop_duplicates(subset=['dealer_code']),
+        resp.drop_duplicates(subset=['sap_id']),
+        left_on=['dealer_code'], right_on=['sap_id'],
+        how='left', indicator=True
+    )
+
+    return len(resp[resp['_merge'] == 'both'])

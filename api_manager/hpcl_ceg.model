@@ -1740,21 +1740,21 @@ Model HostLocalLoadedTts {
 Model HostBayReAssignment {
     created_date optional datetime
     load_number optional unique_field int
-    fan_number optional str
+    fan_number optional int
     truck_number optional unique_field str
     customer_name optional unique_field str
     compartment_number optional unique_field int
     product_name optional unique_field str
     required_qty optional unique_field int
     loaded_qty optional unique_field int
-    reassigned_bay optional str
+    reassigned_bay optional int
     bay_reassignment_time optional datetime
     remarks optional str
     sap_id optional unique_field str
     location_name optional str
     zone optional str
-    assigned_bay optional unique_field str
-    reassign_loaded_qty optional unique_field str
+    assigned_bay optional unique_field int
+    reassign_loaded_qty optional unique_field int
     alert_created optional bool
     date optional unique_field date
     date_time optional datetime
