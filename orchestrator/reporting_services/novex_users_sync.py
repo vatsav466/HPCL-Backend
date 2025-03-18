@@ -87,6 +87,7 @@ async def insert_users(data):
         print("Users :", user)
         hpcl_ceg_model.UsersCreate(**user)
         await hpcl_ceg_model.UsersCreate(**user).create()
+        count += 1
 
 
 async def combine_roles(data, _id, role_name):
@@ -113,7 +114,7 @@ async def combine_roles(data, _id, role_name):
 async def process_data(data):
     novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
                        "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
-                       "state", "zone", "sales_area", "escalation_level", "is_ad_user", "status"]
+                       "state", "zone", "sales_area", "is_ad_user", "status","manual_user"]
     data.rename(columns={"EMPLOYEE_NUMBER": "username", "EMPLOYEE_NAME": "first_name",
                                 "EMP_EMAIL": "email", "PLANT_CODE": "sap_id", "PLANT_DESC": "region",
                                 "Zone": "zone", "ROLE_NAME": "system_role"}, inplace=True)
@@ -122,8 +123,10 @@ async def process_data(data):
     print("After dropping empty username :", len(data))
     for col in ["status", "is_ad_user"]:
         data[col] = True
-    for col in ["username", "sap_id"]:
-        data[col] = data[col].fillna(0).astype(np.int64)
+    data["employee_id"] = data["username"]
+    data["manual_user"] = False
+    for col in ["username", "sap_id", "employee_id"]:
+        data[col] = data[col].fillna(0).astype(np.int64).astype(str)
     data['zone'] = data['zone'].map(users_config.zone_map)
     data['last_name'] = data['first_name'].fillna("").apply(lambda x: x.split(" ")[-1] if " " in x else "")
     data['first_name'] = data['first_name'].fillna("").apply(lambda x: x.rstrip(x.split(" ")[-1]) if " " in x else x)
@@ -141,7 +144,7 @@ async def process_data(data):
 async def sync_users():
     connection = await get_db_connection()
     cursor = connection.cursor()
-    for bu in ["lpg"]:
+    for bu in ["lpg", "tas"]:
         query = getattr(users_config, f"{bu}_query", None)
         if not query:
             return

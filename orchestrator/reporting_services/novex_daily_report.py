@@ -43,18 +43,118 @@ def get_growth_percentage(current, hist):
         return 0
 
 
+def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
+    # Getting top and least performing zones
+    if not by_sbu:
+        resp_actual = {f"{rec['SBU_Name']}_{rec[req_key]}": float(rec['ACTUAL_TMT_SALES']) for rec in actual}
+        resp_target = {f"{rec['SBU_Name']}_{rec[req_key]}": float(rec['TARGET_TMT_SALES']) for rec in target}
+        # Calculate percentage achieved
+        percentage_achieved = {}
+        for key in resp_target:
+            actual_value = resp_actual.get(key, 0)  # Get actual value, default to 0 if missing
+            target_value = resp_target[key]
+            if target_value == 0:
+                percentage_achieved[key] = 'N/A'  # Avoid division by zero
+            else:
+                percentage_achieved[key] = (actual_value / target_value) * 100
+        sorted_zones = sorted(percentage_achieved.items(), key=lambda x: x[1], reverse=True)
+
+        return sorted_zones
+    sbu_level_data = {}
+    resp_actual = {}
+    resp_target = {}
+    for rec in actual:
+        sbu = rec['SBU_Name']
+        zone = rec[req_key]
+        value = rec['ACTUAL_TMT_SALES']
+        if sbu not in resp_actual:
+            resp_actual[sbu] = {}
+        resp_actual[sbu][zone] = value
+
+    for rec in target:
+        sbu = rec['SBU_Name']
+        zone = rec[req_key]
+        value = rec['TARGET_TMT_SALES']
+        if sbu not in resp_target:
+            resp_target[sbu] = {}
+        resp_target[sbu][zone] = value
+
+    # Calculate percentage achieved
+    for sbu in resp_target:
+        percentage_achieved = {}
+        for zone in resp_target[sbu]:
+            actual_value = resp_actual.get(sbu, {}).get(zone, 0)  # Get actual value, default to 0 if missing
+            target_value = resp_target.get(sbu, {}).get(zone, 0)  # Get actual value, default to 0 if missing
+            if target_value == 0:
+                percentage_achieved[zone] = 'N/A'  # Avoid division by zero
+            else:
+                percentage_achieved[zone] = (actual_value / target_value) * 100
+        sorted_zones = sorted(percentage_achieved.items(), key=lambda x: x[1], reverse=True)
+        sbu_level_data[sbu] = sorted_zones
+    return sbu_level_data
+
+
+async def get_m60_sales_data():
+    pres_year = f"FY {fiscal_year.FiscalYear.current().start.strftime('%Y')}-{fiscal_year.FiscalYear.current().end.strftime('%Y')}"
+
+    target = f"""select ROUND(SUM("TARGET_QTY_TMT")::numeric,2) 
+    AS "TARGET_TMT_SALES", "Zone_Name","SBU_Name" from "M60_LEVEL_METADATA" 
+    where fiscal_year='{pres_year}' AND "Zone_Name" not in ('-', '')  
+    group by "Zone_Name","SBU_Name" """
+
+    actual = f""" select ROUND(SUM("NETWEIGHT_TMT")::numeric,2) 
+    AS "ACTUAL_TMT_SALES", "Zone_Name","SBU_Name" from "MOM_DAY_LEVEL_DATA" 
+    where "FISCALYEAR"='{pres_year}' AND "Zone_Name" not in ('-', '') group by "Zone_Name","SBU_Name" """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp_target = await function(query=target)
+    resp_actual = await function(query=actual)
+    global_zones = get_zones_by_performance(resp_actual, resp_target)
+
+    # By Region
+    target = f"""select ROUND(SUM("TARGET_QTY_TMT")::numeric,2) 
+        AS "TARGET_TMT_SALES", "Region_Name","SBU_Name" from "M60_LEVEL_METADATA" 
+        where fiscal_year='{pres_year}' AND "Region_Name" not in ('-', '') group by "Region_Name","SBU_Name" """
+
+    actual = f""" select ROUND(SUM("NETWEIGHT_TMT")::numeric,2) 
+        AS "ACTUAL_TMT_SALES", "Region_Name","SBU_Name" from "MOM_DAY_LEVEL_DATA" 
+        where "FISCALYEAR"='{pres_year}' AND "Region_Name" not in ('-', '') group by "Region_Name","SBU_Name" """
+
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp_target = await function(query=target)
+    resp_actual = await function(query=actual)
+    sbu_level_zones = get_zones_by_performance(resp_actual, resp_target, by_sbu=True, req_key='Region_Name')
+
+    return global_zones, sbu_level_zones
+
+
 async def fetch_sales_data():
     sales_data = {}
     # Filter for YTD
     filters = {"filters": [actual, history, cumulative, ytd, target], "cross_filters": [],
-               "drill_state": ""}
+               "drill_state": "", "time_grain": ""}
     resp = await m60_performance.m60_performance(**filters)
     sales_data['current_sales'] = round(float(resp['data']['data']['ACTUAL_TMT_SALES'][0]), 1)
-    sales_data['pro_rate_sales'] = round(float(resp['data']['data']['TARGET_TMT_SALES'][0]), 1)
+    sales_data['history_sales'] = round(float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0]), 1)
+    sales_data['pro_rate_sales_target'] = round(float(resp['data']['data']['TARGET_TMT_SALES'][0]), 1)
 
     # Filter for yesterday's data
     yesterday_date = helpers.get_time_stamp_by_delta(datetime.datetime.now(datetime.timezone.utc), days=1,
                                                      with_month_start_day=False, date_time_format="%Y-%m-%d")
+
+    global_zones, sbu_level_regions = await get_m60_sales_data()
+    sales_data['performing_zone'] = f"{global_zones[0][0]} ({round(global_zones[0][1], 1)})"
+    sales_data['least_performing_zone'] = f"{global_zones[-1][0]} ({round(global_zones[-1][1], 1)})"
+
+    for sbu, details in sbu_level_regions.items():
+        print(f"SBU {sbu}", "  ", f"{details}")
+        sales_data[f"top_{sbu.lower()}"] = f"{details[0][0]} ({round(details[0][1], 1)})"
+        sales_data[f"bottom_{sbu.lower()}"] = f"{details[-1][0]} ({round(details[-1][1], 1)})"
+
     filters = {"filters": [actual, history, cumulative,
                            {"key": "\"DATE\"", "cond": "equals", "value": f"{yesterday_date},{yesterday_date}"}],
                "cross_filters": [], "drill_state": ""}
@@ -64,6 +164,10 @@ async def fetch_sales_data():
     sales_data['yesterday_growth_loss'] = round(yesterday_act - yesterday_hist, 1)
     # ((CY sales-PY sales)/PY sales)*100
     sales_data['yesterday_growth_loss_percentage'] = get_growth_percentage(yesterday_act, yesterday_hist)
+
+    sales_data['total_growth_loss'] = round(float(sales_data['current_sales']) - float(sales_data['history_sales']))
+    sales_data['total_growth_loss_percentage'] = get_growth_percentage(float(sales_data['current_sales']),
+                                                                       float(sales_data['history_sales']))
     final_data = {"sales_data": sales_data}
 
     sbu_mapping = {'': '', "Retail": 'retail', 'LPG': 'lpg', 'I&C': 'i_c', 'Lubes': 'lubes', 'Aviation': 'aviation',
@@ -260,8 +364,8 @@ async def publish_daily_novex_status_email():
 
 
 async def send_notification(notification_data):
-    template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'masterdata',
-                                 'novex_daily_email.html')
+    template_path = os.path.join(os.path.dirname(hpcl_ceg_model.__file__), '..', 'orchestrator', 'reporting_services',
+                                 'templates', 'novex_daily_email.html')
     with open(template_path, 'r') as f:
         template_data = jinja2.Template(f.read())
     final_data = template_data.render(**notification_data)
@@ -273,7 +377,7 @@ async def send_notification(notification_data):
     resp = await ins.publish_message(
         subject="Novex Daily Report",
         recipients=["venu@algofusiontech.com", "varun@algofusiontech.com", "shrihari.b@algofusiontech.com",
-                    "sreedhar.maddipati@algofusiontech.com"],
+                    "sreedhar.maddipati@algofusiontech.com", "ajay.samudra@hpcl.in", "cvmallinath@hpcl.in"],
         html_content=True,
         body=final_data,
         force_send=True
