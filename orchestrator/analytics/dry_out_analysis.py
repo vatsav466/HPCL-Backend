@@ -5,9 +5,11 @@ import pandas as pd
 import polars as pl
 import hpcl_ceg_model
 import charts_actions
+import mysql.connector
 import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
+import orchestrator.dbconnector.credential_loader as credential_loader
 from orchestrator.dbconnector.widget_actions.lpg_plant_queries import today
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
@@ -1324,3 +1326,64 @@ async def get_dryout_aging(conditions):
     )
     print("resp: ", resp)
     return resp[0] if resp else {}
+
+async def get_ro_count_less_50(condition):
+    query = (f"SELECT SUBSTRING(CUST_CD, 3) AS CUST_CD, SUM(QTY_KL) AS Total_Net_Weight"
+             f"FROM PS.EDW_PRIMARY_SALES_FACT"
+             f"WHERE"
+             f"AND INVOICE_DT >= CURDATE() - INTERVAL 30 DAY"
+             f"GROUP BY CUST_CD"
+             f"HAVING Total_Net_Weight < 50;")
+    creds = credential_loader.get_credentials('TIBCO')
+    params = {
+        "host": creds['host'],
+        "database": creds['database'],
+        "user": creds['user'],
+        "password": creds['password'],
+        "port": creds['port'],
+        "connection_type": "mssql"
+    }
+    conn = get_db_connection(params)
+    cursor = conn.cursor()
+    cursor.execute(query)
+    data = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    data = pd.DataFrame.from_records(data, columns=columns)
+    data['CUST_CD'] = data['CUST_CD'].astype(str)
+
+    query = f"select distinct sap_id from alerts where {condition} and progress_rate = '1' order by created_at asc"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    resp = pd.DataFrame(resp)
+    resp['sap_id'] = resp['sap_id'].astype(str)
+
+    resp = pd.merge(
+        data.drop_duplicates(subset=['CUST_CD']),
+        resp.drop_duplicates(subset=['sap_id']),
+        left_on=['CUST_CD'], right_on=['sap_id'],
+        how='left', indicator=True
+    )
+    return len(resp[resp['_merge'] == 'both'])
+
+def get_db_connection(params):
+    """
+    Establish a database connection
+    Args:
+        connection_string (str): Database connection string
+    Returns:
+        pyodbc connection
+    """
+    connection = mysql.connector.connect(
+        host=params['host'],
+        user=params['user'],
+        passwd=params["password"],
+        port=params["port"]
+        #database=database
+    )
+    return connection
