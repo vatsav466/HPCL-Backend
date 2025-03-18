@@ -7117,3 +7117,162 @@ class GlobalAnalytics:
         except Exception as e:
             print(traceback.format_exc())
             return {"status": False, "message": f"Error: {str(e)}", "data": {}}
+    
+
+    @staticmethod
+    async def mfmkfactor(filters, cross_filters, drill_state):
+        try:
+            # Initialize date flag
+            date = False
+            if "date" in drill_state:
+                date = True
+            print("date --> ", date)
+            
+            # Check if zone or plant filters are present
+            zone_filter = ''
+            plant_filter = ''
+            if filters:
+                for filter in filters:
+                    if "zone" in filter.key:
+                        zone_filter = filter.value
+                    if "plant" in filter.key:
+                        plant_filter = filter.value
+            
+            # Initialize date filter variables
+            date_filter_applied = False
+            start_date = None
+            end_date = None
+            
+            # Process cross filters for date
+            if cross_filters:
+                for filter in cross_filters:
+                    if "DATE" in filter.key:
+                        date_parts = filter.value.split(',')
+                        start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                        end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                        date_filter_applied = True
+            
+            # Construct base SQL Query with Common Table Expression (CTE)
+            query = """
+                WITH mfmfactor AS (
+                    SELECT 
+                        DATE(created_at) AS created_date,
+                        zone,
+                        location_name,
+                        sap_id,
+                        bcu_number
+                    FROM 
+                        host_mfm_factor
+                    WHERE 1=1
+            """
+            
+            # Add zone filter if present
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
+            
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND sap_id IN ('{plant_filter}')"
+            
+            # Add date filter directly to SQL if applied
+            if date_filter_applied and start_date and end_date:
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+            
+            # Complete the CTE with GROUP BY
+            query += """
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, bcu_number
+                )
+                SELECT 
+                    h.created_date,
+                    h.zone,
+                    h.location_name,
+                    h.sap_id,
+                    h.bcu_number,
+                    (SELECT COUNT(*) 
+                    FROM alerts a 
+                    WHERE a.device_name = h.bcu_number 
+                    AND a.interlock_name = 'MFM Data Changed'
+                    AND DATE(a.created_at) = h.created_date) AS alert_count
+                FROM 
+                    host_data h
+                ORDER BY 
+                    h.created_date DESC, alert_count DESC
+            """
+            
+            print("query --> ", query)
+            
+            # Execute query
+            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+
+            try:
+                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+                resp = await function(query=query)
+            except Exception as e:
+                return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
+
+            if not resp:
+                return {"status": False, "message": "Data Not found", "data": {}}
+
+            # Convert response to Polars DataFrame
+            resp_df = pl.DataFrame(resp)
+            if resp_df.is_empty():
+                    return {"status": True, "data": {}}
+
+            resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
+
+            # Date filtering if not applied in SQL - default to last 30 days
+            if not date_filter_applied:
+                last_30_days = datetime.now() - timedelta(days=30)
+                resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
+
+            # Generate appropriate result format based on date flag
+            if date:
+                # Daily Data Aggregation
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number"]
+                grouped = resp_df.group_by(group_cols).agg(
+                    pl.sum("alert_count").alias("total_alerts")
+                )
+
+                result = {}
+                for row in grouped.iter_rows(named=True):
+                    created_date = str(row["created_date"])
+                    entry = {
+                        "zone": row["zone"],
+                        "sap_id": row["sap_id"],
+                        "location_name": row["location_name"],
+                        "bcu_number": row["bcu_number"],
+                        "total_alerts": row["total_alerts"]
+                    }
+                    result.setdefault(created_date, []).append(entry)
+                return {"status": True, "message": "success", "daily_data": result}
+            else:
+                # Monthly Data Aggregation
+                resp_df = resp_df.with_columns(
+                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
+                )
+
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                grouped = resp_df.group_by(group_cols).agg(
+                    pl.sum("alert_count").alias("total_alerts")
+                )
+
+                result = {}
+                for row in grouped.iter_rows(named=True):
+                    month = row["month_year"]
+                    entry = {
+                        "zone": row["zone"],
+                        "sap_id": row["sap_id"],
+                        "location_name": row["location_name"],
+                        "bcu_number": row["bcu_number"],
+                        "total_alerts": row["total_alerts"]
+                    }
+                    result.setdefault(month, []).append(entry)
+                return {"status": True, "message": "success", "monthly_data": result}
+
+        except Exception as e:
+            print(traceback.format_exc())
+            return {"status": False, "message": f"Error: {str(e)}", "data": {}}
+    
+    
