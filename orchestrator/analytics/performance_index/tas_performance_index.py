@@ -82,14 +82,14 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
 
         if not open_alerts:
             print("No open alerts found!")
-            return {"oi_score": 65, "tas_category_scores": {}}
+            return {"tas_oi_score": 65, "tas_category_scores": {}}
 
         alerts_df = pd.DataFrame(open_alerts)
         print("Alerts DataFrame:\n", alerts_df)
 
         if 'interlock_name' not in alerts_df.columns:
             print("Invalid alert data format. Columns:", alerts_df.columns)
-            return {"oi_score": 65, "tas_category_scores": {}}
+            return {"tas_oi_score": 65, "tas_category_scores": {}}
 
         # Map interlock_name to DeviceCategory
         alerts_df['DeviceCategory'] = alerts_df['interlock_name'].map(map_device_category)
