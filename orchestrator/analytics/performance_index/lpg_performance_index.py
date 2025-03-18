@@ -65,7 +65,7 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         Generate the performance index for LPG based on alert data and dynamic rules from self.rules_df.
         """
         # Step 1: Fetch all open alerts
-        open_alerts = await self.get_all_alerts(location_id)
+        open_alerts = await self.get_all_alerts(location_id, zone)
 
         if not open_alerts:
             return {"oi_score": 85, "details": "No open alerts found"}
@@ -76,7 +76,7 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
             return {"lpg_oi_score": 85, "details": "Invalid alert data format"}
 
         # Step 2: Fetch rules for LPG from self.rules_df
-        lpg_rules = self.rules_df[self.rules_df['BU'] == 'LPG']
+        lpg_rules = self.rules_df[self.rules_df['AlertSection'] == 'LPG']
 
         if lpg_rules.empty:
             return {"lpg_oi_score": 85, "details": "No LPG rules found"}
@@ -95,6 +95,7 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         total_oi_score = 0
 
         for _, rule in lpg_rules.iterrows():
+            print("*" * 20)
             print("rule --> ", rule)
             category = rule['DeviceCategory']
             print("rule category --> ", category)
@@ -102,6 +103,8 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
             print("rule weightage --> ", weightage)
 
             if category not in alert_counts:
+                oi_scores[category] = {"oi_score": float(weightage), "weightage": int(weightage)}
+                total_oi_score += float(weightage)
                 continue  # Skip if no alerts exist for this category
 
             open_alert_devices = alert_counts[category]
@@ -122,8 +125,9 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
             print("rule weighted_score --> ", weighted_score)
             oi_scores[category] = {"oi_score": float(weighted_score), "weightage": int(weightage)}
             total_oi_score += weighted_score
+            print("*" * 20)
 
-        return {"lpg_oi_score": round(total_oi_score, 2), "lpg_category_scores": oi_scores}
+        return {"lpg_oi_score": (round(total_oi_score, 2) * 85) / 100, "lpg_category_scores": oi_scores}
 
     # Helper function to extract threshold ranges from the rules
     def extract_thresholds(self, rejection_rules):
