@@ -5148,7 +5148,7 @@ class GlobalAnalytics:
                     })
 
 
-                     detail_item = {}
+                    detail_item = {}
 
                     if zone_filter or plant_filter:
                         # For zone or plant filters, include sap_id and other details
@@ -5193,7 +5193,7 @@ class GlobalAnalytics:
         except Exception as e:
             print(traceback.format_exc())
             print(e)
-            
+
     
     @staticmethod
     async def tas_maintenance_fault(filters, cross_filters, drill_state):
