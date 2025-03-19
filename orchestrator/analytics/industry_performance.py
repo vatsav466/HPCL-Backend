@@ -567,7 +567,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             entry = {
                 "company": company.upper(),
                 "market_share": market_share,
-                "tmt": int(total_actual)  # Total actual share
+                "tmt": int(total_history)  # Total actual share
             }
             output_list.append(entry)
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':output_list,'company':unique_companies}
@@ -1157,12 +1157,24 @@ async def get_category_wise_cumulative_data(filters):
         cat_pres = {rec['category']: rec for rec in result_dict[fiscal_years[1]][cogroup]}
         for company, data in cat_pres.items():
             if len(data['subData']) <= 1:
-                growth_dict[cogroup][company] = round(data['percentage'] - cat_prev[company]['percentage'], 1)
+                growth_dict[cogroup][company] = round(data['percentage'] - cat_prev[company]['percentage'], 2)
+                #growth_dict[cogroup][company] = round(((data['percentage'] - cat_prev[company]['percentage']) / cat_prev[company]['percentage']) * 100, 1) if cat_prev[company]['percentage'] != 0 else 100  # If previous value is 0, assume 100% growth
+
             else:
                 cat_prev_sub = {rec['category']: rec for rec in cat_prev[company]['subData']}
                 cat_pres_sub = {rec['category']: rec for rec in data['subData']}
                 for co, dt in cat_pres_sub.items():
-                    growth_dict[cogroup][co] = round(dt['percentage'] - cat_prev_sub[co]['percentage'], 1)
+                    growth_dict[cogroup][co] = round(dt['percentage'] - cat_prev_sub[co]['percentage'], 2)
+                    
+                    '''
+                    if cat_prev_sub[co]['percentage'] != 0:
+                        growth_dict[cogroup][co] = round(
+                            ((dt['percentage'] - cat_prev_sub[co]['percentage']) / cat_prev_sub[co]['percentage']) * 100, 1
+                        )
+                    else:
+                        growth_dict[cogroup][co] = 100 if dt['percentage'] != 0 else None  # Avoid ZeroDivisionError
+                    '''
+
     '''
     growth_dict = {
     category: {company: value for company, value in data.items() if value != 0.0 and value != -0.0}
@@ -1308,9 +1320,7 @@ async def generate_omc_compare_data(filters, drill_state):
                 round((entry['History'].get(company, 0) / total_history_sales * 100), 2))
         for company in entry['Sales']:
             if entry['History'].get(company, 0):
-                entry['Growth'][company] = round((entry['Sales'].get(company, 0) -
-                                                  entry['History'].get(company, 0)) /
-                                                 entry['History'].get(company, 0) * 100, 1)
+                entry['Growth'][company] = round(((entry['Sales'].get(company, 0) -entry['History'].get(company, 0)) /entry['History'].get(company, 0)) * 100, 1)
             else:
                 entry['Growth'][company] = 100
         for name in entry:
