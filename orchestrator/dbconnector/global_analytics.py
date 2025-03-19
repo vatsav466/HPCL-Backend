@@ -4923,79 +4923,13 @@ class GlobalAnalytics:
         :param drill_state: The drill down state
         :return: A dictionary containing the status, message and the alert ageing data
         """
-        # alert_status = drill_state
-        # daterange = None
-
-        # if cross_filters:
-        #     for filter in cross_filters:
-        #         if "DATE" in filter.key:
-        #             date_values = filter.value.split(',')
-
-        #             if len(date_values) == 1:
-        #                 # Single date case
-        #                 daterange = f"= '{date_values[0]}'"
-        #             else:
-        #                 # Date range case
-        #                 daterange = f"BETWEEN '{date_values[0]}' AND '{date_values[-1]}'"
-        
-        # if daterange:
-        #     query = f""" 
-        #         SELECT 
-        #             DATE(created_at) AS created_date,
-        #             alert_category, 
-        #             interlock_name,
-        #             COUNT(*) AS alert_count
-        #         FROM alerts
-        #         WHERE 
-        #             alert_section = 'TAS' 
-        #             AND created_at::DATE {daterange} 
-        #             AND alert_status = '{alert_status}'
-        #             AND alert_category IS NOT NULL 
-        #             AND alert_category = 'Gantry'
-        #         GROUP BY created_date, alert_category, interlock_name
-        #         ORDER BY created_date DESC, alert_count DESC;
-        #     """
-        # else:
-        #     query = f""" 
-        #         SELECT 
-        #             DATE(created_at) AS created_date,
-        #             alert_category, 
-        #             interlock_name,
-        #             COUNT(*) AS alert_count
-        #         FROM alerts
-        #         WHERE 
-        #             alert_section = 'TAS' 
-        #             AND created_at::DATE >=  CURRENT_DATE - INTERVAL '7 days'
-        #             AND alert_status = '{alert_status}'
-        #             AND alert_category IS NOT NULL 
-        #             AND alert_category = 'Gantry'
-        #         GROUP BY created_date, alert_category, interlock_name
-        #         ORDER BY created_date DESC, alert_count DESC;
-        #     """
-
-        # # Execute query
-        # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-        # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        # function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        
-        # resp = await function(query=query)
-        # print("resp :", resp)
-        # resp = pl.DataFrame(resp)
-        
-        # if resp.is_empty():
-        #     return []
-
-        # # Convert the result into a dictionary {interlock_name: cumulative_count}
-        # result = {row["interlock_name"]: row["alert_count"] for row in resp.iter_rows(named=True)}
-
-        # return result
         try:
             # Initialize date flag
             date = False
             if "date" in drill_state:
                 date = True
             print("date --> ", date)
-            
+
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
@@ -5009,7 +4943,7 @@ class GlobalAnalytics:
             date_filter_applied = False
             start_date = None
             end_date = None
-            
+
             # Process cross filters for date
             if cross_filters:
                 for filter in cross_filters:
@@ -5018,10 +4952,10 @@ class GlobalAnalytics:
                         start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
-            
-            normal_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], 
-                                "equipment_name": item.get("equipment_name", item["interlock_name"])} 
-                                for item in category_mapping.Normal}            
+
+            normal_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"],
+                                "equipment_name": item.get("equipment_name", item["interlock_name"])}
+                                for item in category_mapping.Normal}
             # Construct base SQL Query
             query = f"""
                 SELECT
@@ -5030,26 +4964,28 @@ class GlobalAnalytics:
                     zone,
                     interlock_name,
                     location_name,
+                    device_name,
                     COUNT(*) AS alert_count
                 FROM alerts
                 WHERE bu = 'TAS' AND alert_section = 'TAS'
             """
-            
+
             # Add zone filter if present
             if zone_filter:
                 query += f" AND zone IN ('{zone_filter}')"
-            
+
             # Add plant/location filter if present
             if plant_filter:
                 query += f" AND sap_id IN ('{plant_filter}')"
-            
+
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN ('{start_date.strftime('%Y-%m-%d')}') AND ('{end_date.strftime('%Y-%m-%d')}')"
+
             
             # Complete the query
             query += """
-                GROUP BY created_date, zone, interlock_name, sap_id, location_name
+                GROUP BY created_date, zone, interlock_name, sap_id, location_name, device_name
                 ORDER BY created_date DESC, alert_count DESC;
             """
 
@@ -5070,14 +5006,14 @@ class GlobalAnalytics:
             resp_df = pl.DataFrame(resp)
             if resp_df.is_empty():
                 return {"status": True, "data": {}}
-            
+
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
             resp_df = resp_df.filter(pl.col("interlock_name").is_in(list(normal_interlocks.keys())))
 
             # Filter for interlocks where equipment_name is "Loading Point" AND alert_category is "Gantry"
             filtered_interlocks = [
-                interlock_name for interlock_name, details in normal_interlocks.items() 
-                if (details.get("equipment_name") == "Loading Point" and 
+                interlock_name for interlock_name, details in normal_interlocks.items()
+                if (details.get("equipment_name") == "Loading Point" and
                     details.get("alert_category") == "Gantry")
             ]
 
@@ -5092,6 +5028,24 @@ class GlobalAnalytics:
                 pl.lit("Normal").alias("alert_type")
             ])
             resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
+            # Extract the middle part of device_name
+            def extract_middle_part(device_name):
+                if isinstance(device_name, str) and '_' in device_name and '-' in device_name:
+                    try:
+                        # Split by _ and get the second part
+                        second_part = device_name.split('_')[1]
+                        # Get the first two parts of the split by -
+                        parts = second_part.split('-')
+                        if len(parts) >= 2:
+                            return f"{parts[0]}-{parts[1]}"
+                    except:
+                        pass
+                return ""
+
+            # Apply the function using map_elements
+            resp_df = resp_df.with_columns([
+                pl.col("device_name").map_elements(lambda x: extract_middle_part(x)).alias("device_name")
+            ])
             resp_df.write_csv("/tmp/normal_alerts_data.csv")
 
             # Apply date filtering at DataFrame level if not already applied in SQL
@@ -5099,29 +5053,20 @@ class GlobalAnalytics:
                 # If 'date' is true but no date filter applied, filter last 30 days
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
-            
+
             # Handle daily data
             if date:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["sap_id", "zone", "location_name", "interlock_name", "created_date", "alert_category", "alert_type"]
-                    
-                    # if zone_filter:
-                    #     group_cols.append("zone")
-                    
-                    # if plant_filter:
-                    #     group_cols.append("location_name")
-                    
-                    # if zone_filter or plant_filter:
-                    #     group_cols.extend(["sap_id"])
-                        
+                    group_cols = ["sap_id", "zone", "location_name", "interlock_name", "created_date", "alert_category", "alert_type", "device_name"]
+
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
                     )
                 else:
                     # Group by interlock level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "interlock_name", "created_date", "alert_category", "alert_type"]).agg(
+                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "created_date", "alert_category", "alert_type", "device_name"]).agg(
                         pl.sum("alert_count").alias("total")
                     )
 
@@ -5136,32 +5081,38 @@ class GlobalAnalytics:
                     })
 
                     detail_item = {}
-                    
+
                     if zone_filter or plant_filter:
                         # For zone or plant filters, include sap_id and other details
                         if "zone" in row:
                             detail_item["zone"] = row["zone"]
-                        
+
                         if "location_name" in row:
                             detail_item["location_name"] = row["location_name"]
-                        
+
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
-                        
-                        if "interlock_name" in row:
-                            detail_item["interlock_name"] = row["interlock_name"]
+
+                        # if "interlock_name" in row:
+                        #     detail_item["interlock_name"] = row["interlock_name"]
+
+                        if "device_name" in row:
+                            detail_item["bcu_number"] = row["device_name"]
                     else:
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
-                        
+
                         if "zone" in row:
                             detail_item["zone"] = row["zone"]
-                        
+
                         if "location_name" in row:
                             detail_item["location_name"] = row["location_name"]
+
+                        if "device_name" in row:
+                            detail_item["bcu_number"] = row["device_name"]
                         # For interlock level, only include the interlock name
-                        detail_item["interlock_name"] = row["interlock_name"]
-                        
+                        # detail_item["interlock_name"] = row["interlock_name"]
+                                                
                     detail_item["count"] = row["total"]
                     result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
                     # Update total count for this category, date, and alert_type
@@ -5171,27 +5122,18 @@ class GlobalAnalytics:
             else:
                 # Monthly aggregation
                 resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
-                
+
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["sap_id", "zone", "location_name", "interlock_name", "month_year", "alert_category", "alert_type"]
-                    
-                    # if zone_filter:
-                    #     group_cols.append("zone")
-                    
-                    # if plant_filter:
-                    #     group_cols.append("location_name")
-                    
-                    # if zone_filter or plant_filter:
-                    #     group_cols.extend(["sap_id"])
-                        
+                    group_cols = ["sap_id", "zone", "location_name", "month_year", "alert_category", "alert_type", "device_name"]
+
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
                     )
                 else:
                     # Group by interlock level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "interlock_name", "month_year", "alert_category", "alert_type"]).agg(
+                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "month_year", "alert_category", "alert_type", "device_name"]).agg(
                         pl.sum("alert_count").alias("total")
                     )
 
@@ -5205,46 +5147,53 @@ class GlobalAnalytics:
                         "total": 0
                     })
 
-                    detail_item = {}
-                    
+
+                     detail_item = {}
+
                     if zone_filter or plant_filter:
                         # For zone or plant filters, include sap_id and other details
                         if "zone" in row:
                             detail_item["zone"] = row["zone"]
-                        
+
                         if "location_name" in row:
                             detail_item["location_name"] = row["location_name"]
-                        
+
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
-                        
+
                         if "sop_id" in row:
                             detail_item["sop_id"] = row["sop_id"]
-                        
-                        if "interlock_name" in row:
-                            detail_item["interlock_name"] = row["interlock_name"]
+
+                        # if "interlock_name" in row:
+                        #     detail_item["interlock_name"] = row["interlock_name"]
+
+                        if "device_name" in row:
+                            detail_item["bcu_number"] = row["device_name"]
                     else:
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
-                        
+
                         if "zone" in row:
                             detail_item["zone"] = row["zone"]
-                        
+
                         if "location_name" in row:
                             detail_item["location_name"] = row["location_name"]
+
+                        if "device_name" in row:
+                            detail_item["bcu_number"] = row["device_name"]
                         # For interlock level, only include the interlock name
-                        detail_item["interlock_name"] = row["interlock_name"]
-                        
+                        # detail_item["interlock_name"] = row["interlock_name"]
+
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
                     # Update total count for this category, date, and alert_type
                     result[category][row["month_year"]][row["alert_type"]]["total"] += row["total"]
                 return {"status": True, "message": "success", "monthly_data": result}
-        
+
         except Exception as e:
             print(traceback.format_exc())
             print(e)
-    
+            
     
     @staticmethod
     async def tas_maintenance_fault(filters, cross_filters, drill_state):
