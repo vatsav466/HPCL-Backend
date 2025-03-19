@@ -5093,8 +5093,8 @@ class GlobalAnalytics:
                         if "sap_id" in row:
                             detail_item["sap_id"] = row["sap_id"]
 
-                        # if "interlock_name" in row:
-                        #     detail_item["interlock_name"] = row["interlock_name"]
+                        if "interlock_name" in row:
+                            detail_item["interlock_name"] = row["interlock_name"]
 
                         if "device_name" in row:
                             detail_item["bcu_number"] = row["device_name"]
@@ -5111,7 +5111,7 @@ class GlobalAnalytics:
                         if "device_name" in row:
                             detail_item["bcu_number"] = row["device_name"]
                         # For interlock level, only include the interlock name
-                        # detail_item["interlock_name"] = row["interlock_name"]
+                        detail_item["interlock_name"] = row["interlock_name"]
                                                 
                     detail_item["count"] = row["total"]
                     result[category][str(row["created_date"])][row["alert_type"]]["details"].append(detail_item)
@@ -5164,8 +5164,8 @@ class GlobalAnalytics:
                         if "sop_id" in row:
                             detail_item["sop_id"] = row["sop_id"]
 
-                        # if "interlock_name" in row:
-                        #     detail_item["interlock_name"] = row["interlock_name"]
+                        if "interlock_name" in row:
+                            detail_item["interlock_name"] = row["interlock_name"]
 
                         if "device_name" in row:
                             detail_item["bcu_number"] = row["device_name"]
@@ -5182,7 +5182,7 @@ class GlobalAnalytics:
                         if "device_name" in row:
                             detail_item["bcu_number"] = row["device_name"]
                         # For interlock level, only include the interlock name
-                        # detail_item["interlock_name"] = row["interlock_name"]
+                        detail_item["interlock_name"] = row["interlock_name"]
 
                     detail_item["count"] = row["total"]
                     result[category][row["month_year"]][row["alert_type"]]["details"].append(detail_item)
