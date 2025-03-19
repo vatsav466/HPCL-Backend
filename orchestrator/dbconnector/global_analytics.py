@@ -6028,15 +6028,15 @@ class GlobalAnalytics:
             
             # Add zone filter if present
             if zone_filter:
-                query += f" AND h.zone IN ('{zone_filter}')"
+                query += f" AND zone IN ('{zone_filter}')"
             
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND h.sap_id IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(h.created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the query with proper GROUP BY
             query += """
@@ -6190,15 +6190,15 @@ class GlobalAnalytics:
 
             # Add zone filter if present
             if zone_filter:
-                query += f" AND h.zone IN ('{zone_filter}')"
+                query += f" AND zone IN ('{zone_filter}')"
             
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND h.sap_id IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(h.created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the query with proper GROUP BY
             query += """
@@ -6353,15 +6353,15 @@ class GlobalAnalytics:
             
             # Add zone filter if present
             if zone_filter:
-                query += f" AND h.zone IN ('{zone_filter}')"
+                query += f" AND zone IN ('{zone_filter}')"
             
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND h.sap_id IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(h.created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the query with proper GROUP BY
             query += """
@@ -6520,15 +6520,15 @@ class GlobalAnalytics:
             
             # Add zone filter if present
             if zone_filter:
-                query += f" AND h.zone IN ('{zone_filter}')"
+                query += f" AND zone IN ('{zone_filter}')"
             
             # Add plant/location filter if present
             if plant_filter:
-                query += f" AND h.sap_id IN ('{plant_filter}')"
+                query += f" AND sap_id IN ('{plant_filter}')"
             
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
-                query += f" AND DATE(h.created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the query with proper GROUP BY
             query += """
@@ -6608,7 +6608,7 @@ class GlobalAnalytics:
                     pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
                 )
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "truck_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
@@ -7388,7 +7388,7 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "reassigned_bay"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -7400,7 +7400,7 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        "bcu_number": row["bcu_number"],
+                        "reassigned_bay": row["reassigned_bay"],
                         "total_alerts": row["total_alerts"]
                     }
                     result.setdefault(created_date, []).append(entry)
@@ -7411,7 +7411,7 @@ class GlobalAnalytics:
                     pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
                 )
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -7423,7 +7423,7 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        "bcu_number": row["bcu_number"],
+                        "reassigned_bay": row["reassigned_bay"],
                         "total_alerts": row["total_alerts"]
                     }
                     result.setdefault(month, []).append(entry)
