@@ -438,7 +438,12 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         
         actual_columns = [f"actual_{company.lower()}_share" for company in required_companies if f"actual_{company.lower()}_share" in df.columns]
         history_columns = [f"history_{company.lower()}_share" for company in required_companies if f"history_{company.lower()}_share" in df.columns]  
-        if len(required_companies) ==6:   
+        if len(required_companies) == 6:
+            for company in required_companies:
+                if f"actual_{company.lower()}_share" not in df:
+                    df[f"actual_{company.lower()}_share"] = 0
+                if f"history_{company.lower()}_share" not in df:
+                    df[f"history_{company.lower()}_share"] = 0
             df["actual_psu_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
             df["history_psu_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
             new_df = df[selected_columns + ["actual_psu_share", "history_psu_share"]]
