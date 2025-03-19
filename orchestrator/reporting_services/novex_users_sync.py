@@ -134,9 +134,17 @@ async def process_data(data):
         if col in data.columns:
             data[col] = data[col].fillna("").astype(str)
             data[col] = '["' + data[col] + '"]'
-    for _role in ["Zonal", "Regional", "HQO"]:
+    
+    for _role in ["Zonal", "Zone"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["zone", "region"]] = ""
+        data.loc[mask, ["sap_id", "region"]] = '[]'
+    for _role in ["Regional", "Region"]:
+        mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
+        data.loc[mask, ["sap_id"]] = '[]'
+    for _role in ["HQO"]:
+        mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
+        data.loc[mask, ["sap_id", "zone", "region"]] = '[]'
+    
     for col in novex_model_col:
         if not col in data.columns:
             data[col] = ""
