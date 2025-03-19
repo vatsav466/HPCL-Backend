@@ -83,8 +83,14 @@ def load_bu_asset_master(file_path, bu, location_id, location_name, force_delete
 
         # Process each row
         for _, row in df.iterrows():
-            device_name = str(row.iloc[2]).strip()
-            if not device_name:
+            # Extract values safely
+            values = [str(row.iloc[2]).strip(), str(row.iloc[1]).strip()]  # iloc[2] (location2), iloc[1] (location1)
+
+            # Join non-empty values with '@'
+            device_name = "@".join(filter(None, values))
+
+            # Skip empty device names
+            if not device_name or device_name.lower() == "nan":
                 continue
 
             sensors = []
@@ -291,9 +297,9 @@ class ThingsBoardInterface:
             str: The ID of the created or updated device.
             None: If device creation or association fails.
         """
-        device_name_with_location = f"{device_name}"  
+        #device_name_with_location = f"{device_name}"  
         bu_id = self.get_bu(bu)
-        print(f"Creating device for {device_name_with_location}")
+        print(f"Creating device for {device_name}")
 
         device_scope = {
             "location_id": f"{location_id}",
@@ -303,7 +309,7 @@ class ThingsBoardInterface:
             "bu_id": f"{bu_id}",
             "SAPID": f"{location_id}",
             "BU": bu,
-            device_name_with_location: 1
+            device_name: 1
         }
 
         if "sensors" in device:
@@ -315,21 +321,21 @@ class ThingsBoardInterface:
                 device_scope[sensor_name] = normal_value
 
         device_data = self.api_handler("GET", "/api/tenant/deviceInfos", {},
-                                       {"textSearch": device_name_with_location, "pageSize": 100, "page": 0,
+                                       {"textSearch": device_name, "pageSize": 100, "page": 0,
                                         "sortProperty": "createdTime", "sortOrder": "DESC"})
 
         if device_data and device_data.get("data"):
             for record in device_data["data"]:
-                if record["name"] == device_name_with_location:
+                if record["name"] == device_name:
                     self.api_handler("POST", f"/api/plugins/telemetry/DEVICE/{record['id']['id']}/SERVER_SCOPE",
                                      {}, device_scope)
                     return record['id']['id']
 
         data = {
-            "additionalInfo": {**device_scope, "deviceType": device_type, "deviceName": device_name_with_location,
+            "additionalInfo": {**device_scope, "deviceType": device_type, "deviceName": device_name,
                                'sap_id': location_id},
-            "name": device_name_with_location,
-            "label": device_name_with_location,
+            "name": device_name,
+            "label": device_name,
             "type": device_type,
             "customerId": {"entityType": "CUSTOMER", "id": bu_id}
         }
@@ -341,7 +347,7 @@ class ThingsBoardInterface:
                                            {**device_scope, "deviceType": device_type})
             if tele_device:
                 data = {
-                    "additionalInfo": {**device_scope, "deviceType": device_type, "deviceName": device_name_with_location,
+                    "additionalInfo": {**device_scope, "deviceType": device_type, "deviceName": device_name,
                                        'sap_id': location_id},
                     "customerId": {
                         "entityType": "CUSTOMER",
@@ -384,18 +390,18 @@ class ThingsBoardInterface:
 
         for device in bu_device_data["data"]:
             # Append @location_id to the device name
-            device_name_with_location = f"{device['device_name']}@{location_name}"
-            print("device --> ", device_name_with_location)
+            device_name = f"{device['device_name']}"
+            print("device --> ", device_name)
 
             # Update the device name in the data
-            device["device_name"] = device_name_with_location
+            device["device_name"] = device_name
 
             # Create the device using the updated name
             device_id = self.create_device(
                 bu_device_data['bu'],
                 bu_device_data['location_id'],
                 bu_device_data['location_name'],
-                device_name_with_location,  # Use the updated name here
+                device_name,  # Use the updated name here
                 device["device_type"],
                 device
             )
