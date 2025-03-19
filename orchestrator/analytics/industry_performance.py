@@ -1163,11 +1163,12 @@ async def get_category_wise_cumulative_data(filters):
                 cat_pres_sub = {rec['category']: rec for rec in data['subData']}
                 for co, dt in cat_pres_sub.items():
                     growth_dict[cogroup][co] = round(dt['percentage'] - cat_prev_sub[co]['percentage'], 1)
-
+    '''
     growth_dict = {
     category: {company: value for company, value in data.items() if value != 0.0 and value != -0.0}
     for category, data in growth_dict.items()
 }
+    '''
     result_dict["growth_percentage"] = growth_dict
     return result_dict
 
