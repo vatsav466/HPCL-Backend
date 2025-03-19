@@ -399,7 +399,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             print("target_data",target_data)
             print("filters",filters)
             #if '"C"'   in [x['key'] for x in filters] and '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and len(org_cross_filters) == 0:
-            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0) and '"C"'   in [x['key'] for x in filters]:
+            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0) and '"C"'   in [x['key'] for x in filters] and time_grain !="Monthly":
                 
                 print("start_date",start_date)
                 print("end_date",end_date)
@@ -609,7 +609,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 final_resp = {key: value.to_dict() for key, value in merged_df.to_dict(orient='series').items()}
             else:
                 final_resp, hist_growth_details, tgt_growth_details = generate_stacked_data(drill_state, merged_df,
-                                                                                            resp_format)
+                                                                                            resp_format, month_column='month_name')
         measure_unit = 'TMT'
         """'if 'Zone_Name' in [x['key'] for x in cross_filters] or 'Region_Name' in [x['key'] for x in cross_filters] or 'SalesArea_Name' in [x['key'] for x in cross_filters]:
             measure_unit = 'MT'
