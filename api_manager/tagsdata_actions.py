@@ -31,8 +31,8 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         df = pl.DataFrame(df)
         # BASEPATH = os.path.join(os.path.dirname(utilities.helpers.__file__)
 
-        base_path = "/Users/manohar/Documents/GitHub/dnc_backend_v2/api_manager/tagsdata_actions.py"  # Update with actual path
-        mapping_base_path = '/Users/manohar/Documents/GitHub/dnc_backend_v2/utilities'
+        base_path = "/opt/ceg/algo/api_manager/tagsdata_actions.py"  # Update with actual path
+        mapping_base_path = '/opt/ceg/algo/utilities'
         mapping_df = pl.read_csv(os.path.join(mapping_base_path, 'DashboardAssetMapping.csv'))
         mapping_df = mapping_df.with_columns(mapping_df["Device Type"].fill_null(strategy="forward"))
 
