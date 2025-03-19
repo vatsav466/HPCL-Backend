@@ -429,11 +429,12 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         below code is for line graph combining all opsu as pus companies and all pvt companies as pvt in the result
         """
         required_companies = [x['value'] for x in filters if x['key'].strip('"') == 'company_name'][0].split(",")
-        base_companies = ['HPCL','BPCL','IOCL']
+        base_companies = ['HPCL', 'BPCL', 'IOCL']
         selected_columns = [col for col in df.columns if any(comp.lower() in col for comp in base_companies)]
         if required_companies:
-            for company in ['HPCL','BPCL','IOCL']:
-                required_companies.remove(company)
+            for company in base_companies:
+                if company in required_companies:
+                    required_companies.remove(company)
         
         actual_columns = [f"actual_{company.lower()}_share" for company in required_companies if f"actual_{company.lower()}_share" in df.columns]
         history_columns = [f"history_{company.lower()}_share" for company in required_companies if f"history_{company.lower()}_share" in df.columns]  
@@ -441,9 +442,9 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             df["actual_psu_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
             df["history_psu_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
             new_df = df[selected_columns + ["actual_psu_share", "history_psu_share"]]
-        if len(required_companies) >6:   
-            #df["actual_pvt_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
-            #df["history_pvt_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+        if len(required_companies) > 6:
+            # df["actual_pvt_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            # df["history_pvt_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
             df["actual_pvt_share"] = df[actual_columns].sum(axis=1)
             df["history_pvt_share"] = df[history_columns].sum(axis=1)
             new_df = df[selected_columns + ["actual_pvt_share", "history_pvt_share"]]
