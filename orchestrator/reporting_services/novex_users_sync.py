@@ -9,8 +9,8 @@ import pandas as pd
 import polars as pl
 import numpy as np
 import mysql.connector
+import users_config
 sys.path.append("/opt/ceg/algo")
-import utilities.users_config as users_config
 import api_manager.hpcl_ceg_model as hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
 
@@ -82,7 +82,7 @@ async def insert_users(data):
                 item[key] = ast.literal_eval(item[key])
     count = 1
     for user in data:
-        print("-*"*10)
+        print("-"*30)
         print(f"Inserting {count} / {total_record}")
         print("Users :", user)
         hpcl_ceg_model.UsersCreate(**user)
@@ -160,7 +160,7 @@ async def sync_users():
         if not query:
             return
         data = await fetch_data(cursor, query)
-        role_master = pd.read_csv("/opt/ceg/algo/novex_role_master.csv")
+        role_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/novex_role_master.csv")
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
         data = await combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
         data["bu"] = bu.upper()
