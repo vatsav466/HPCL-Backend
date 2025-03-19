@@ -382,13 +382,13 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if '"C"' not in [x['key'] for x in filters]:
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
-        elif '"C"'  in [x['key'] for x in filters] and '"YTD"'  in [x['key'] for x in filters] and '"T"'  in [x['key'] for x in filters] and (len(org_cross_filters) == 0 or(len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"') ):
-            print("cross_filters",cross_filters)
+        elif '"C"' in [x['key'] for x in filters] and '"YTD"' in [x['key'] for x in filters] and '"T"' in [x['key'] for x in filters] and (len(org_cross_filters) == 0 or(len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"') ):
+            print("cross_filters", cross_filters)
             group_keys.append('month_name')
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         
-        elif '"C"'  in [x['key'] for x in filters] and '"YTD"' not in [x['key'] for x in filters] and '"T"'  in [x['key'] for x in filters]  and (len(org_cross_filters) == 0 or(len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"') ):
+        elif '"C"' in [x['key'] for x in filters] and '"YTD"' not in [x['key'] for x in filters] and '"T"' in [x['key'] for x in filters]  and (len(org_cross_filters) == 0 or(len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"') ):
             group_keys.append('month_name')
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
@@ -399,7 +399,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             print("target_data",target_data)
             print("filters",filters)
             #if '"C"'   in [x['key'] for x in filters] and '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and len(org_cross_filters) == 0:
-            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0) and '"C"'   in [x['key'] for x in filters] and time_grain !="Monthly":
+            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0) and '"C"'   in [x['key'] for x in filters]:
                 
                 print("start_date",start_date)
                 print("end_date",end_date)
@@ -418,10 +418,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     sample_data['TARGET_TMT_SALES'] = target_data['TARGET_TMT_SALES'].sum()
                 if not sample_data.empty:
                     target_data = sample_data
-                print("target_data after conversion",target_data)
-            elif  '"C"' not   in [x['key'] for x in filters]:
+                print("target_data after conversion", target_data)
+            elif '"C"' not in [x['key'] for x in filters]:
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
-            elif  '"C"'    in [x['key'] for x in filters] and len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"':
+            elif '"C"' in [x['key'] for x in filters] and len(org_cross_filters) == 1 and org_cross_filters[0]['key'] == '"sbu_wise"':
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
                 target_data = pd.DataFrame(target_data)
@@ -645,7 +645,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             #                   else x for x in growth_details if isinstance(x, dict) and 'title' in x])
             hist_xaxis.extend(
                 ['_'.join(x['title'].split('_')[:2]) for x in hist_growth_details if 'hist' in x['title'].lower()])
-            if len(hist_xaxis)>0:
+            if len(hist_xaxis) > 1:
                 di = final_resp[0]
                 li = merged_df['month_name'].unique().tolist()
                 req_index = li.index(hist_xaxis[1].split('_')[0])
@@ -660,9 +660,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 li = li[:req_index]
                 req_str = '('+li[0]+'-'+li[-1]+')'
                 tgt_xaxis[0] = tgt_xaxis[0]+req_str
-                # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower()
+                # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower() else x['title'].split()[0] if 'tgt' in x['title'].lower()
                 #               else x for x in growth_details if isinstance(x, dict) and 'title' in x])
-                # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower()  else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
+                # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower() else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
             # xAxis.extend(['YTD'])
             if len(tgt_xaxis) > 0:
                 return {"status": True, "message": "Success",
