@@ -256,7 +256,37 @@ class Postgresql:
             # Construct device message
             device_msg = f"BCU Numbers: {', '.join(bcu_numbers)}, Total Net Totalizer: {total_net}"
 
-            # Do something with is_close_alert, interlock_name, device_msg
+            # Create and close the alert if needed
+            if unauthorised_records:
+                # Use the first record for necessary data
+                first_record = unauthorised_records[0]
+                alert_data = {
+                    'bu': 'TAS',
+                    'sop_id': config['sop_id'].get(table_name),
+                    'sap_id': first_record.get('sap_id'),
+                    'interlock_name': interlock_name,
+                    'severity': config['severity'].get(table_name, "Medium"),
+                    'alert_id': str(uuid.uuid1()),
+                    'device_name': ', '.join(bcu_numbers),  # Since we're dealing with multiple BCUs
+                    'device_type': 'Gantry',
+                    'vehicle_number': '',  # This might need to be populated appropriately
+                    'device_msg': device_msg
+                }
+                
+                # Create Alert
+                success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                print("msg :", msg)
+                
+                # Close alert if needed
+                if success and is_close_alert:
+                    await self.close_created_alert(alert_data=alert_data)
+                    
+                # Update all records as alert_created = true
+                for record in unauthorised_records:
+                    query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
+                    await model.update_by_query(query)
+                    
+                return {"status": "Unauthorized flow alerts processed"}
 
          # Process each record to create and close alerts
         if resp.get("data", []):
@@ -292,9 +322,10 @@ class Postgresql:
                     else:
                         success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
                         print("msg :", msg)
+                        is_close_alert = True
                         if not success:
                             print(f"Failed to create alert: {msg}")
-                            continue
+                            return {"status": False, "message": f"Failed {e}", "data": []}
                     
                     # Set alert_created = true for alert created record
                     query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
@@ -306,7 +337,7 @@ class Postgresql:
 
                 except Exception as e:
                     print(f"Error : {str(e)}")
-                    continue
+                    return {"status": False, "message": f"Failed {e}", "data": []}
 
             return {"status": "Table created and alerts processed"}
         else:
