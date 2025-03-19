@@ -58,6 +58,7 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
         overall_oi_score = round(sum([pi_index[f'{cat}_oi_score'] for cat in ['tas', 'vts', 'va', 'em_lock', 'dry_out']]), 2)
 
         pi_index['overall_oi_score'] = int(overall_oi_score)
+        pi_index['tas_category_scores']['Video Analytics'] = {'oi_score': va['va_oi_score'], 'weightage': 10}
         return pi_index
 
     async def generate_performance_index_va(self, location_id=None, zone=None):
