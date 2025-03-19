@@ -766,7 +766,7 @@ class LPGCDCMSActions:
                 })
             del resp["Age"]
             for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
-                resp[col] = resp[col]/10000
+                resp[col] = resp[col]/1000
                 resp[col] = resp[col].fillna(0).astype(np.float64).round(2)
             return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
