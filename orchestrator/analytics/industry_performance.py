@@ -858,7 +858,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     if clause:
         where_conditions.extend([clause])
     group_keys = [key.strip('"') for key in group_by_filter]
-    req_keys = f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """
+    req_keys = f"""ROUND(SUM("netweight_tmt")/1000::numeric,0) AS "sales" """
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
                                        "", "", group_by_filter + ["coname"], "")
     return calculate_market_share(pd.DataFrame(resp_data), group_keys, fiscal_year_pre, fiscal_year_last,
@@ -1088,7 +1088,7 @@ async def get_category_wise_cumulative_data(filters):
         
         where_conditions.extend([clause])
     group_by = ["coname", "company_name", "fiscal_year"]
-    req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "coname", "company_name", "fiscal_year"]
+    req_keys = [f"""ROUND(SUM("netweight_tmt")/1000::numeric,0) AS "sales" """, "coname", "company_name", "fiscal_year"]
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
                                        group_by, "")
     df = pd.DataFrame(resp_data)
@@ -1255,7 +1255,7 @@ async def generate_omc_compare_data(filters, drill_state):
         where_conditions.extend([clause])
 
     group_by = ["coname", "fiscal_year"]
-    req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "fiscal_year", "coname"]
+    req_keys = [f"""ROUND(SUM("netweight_tmt")/1000::numeric,0) AS "sales" """, "fiscal_year", "coname"]
     if drill_state and drill_state not in group_by:
         group_by.append(drill_state)
         req_keys.append(drill_state)
