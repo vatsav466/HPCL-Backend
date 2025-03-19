@@ -2156,7 +2156,7 @@ class LpgOperationsSummarySchema(UrdhvaPostgresBase):
     process_date: Mapped[datetime.datetime] = mapped_column("process_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     bu: Mapped[str] = mapped_column("bu", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    site_region: Mapped[str] = mapped_column("site_region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     site_area: Mapped[str] = mapped_column("site_area", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
 
@@ -2188,7 +2188,7 @@ class LpgOperationsSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     process_date: datetime.datetime
     bu: str
     sap_id: str
-    site_region: str
+    region: str
     site_area: str
 
     class Config:
@@ -2197,7 +2197,7 @@ class LpgOperationsSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgOperationsSummarySchema
         upsert_keys = []
-        access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone']
+        access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone', 'region:region']
 
 
 class LpgOperationsSummary(urdhva_base.postgresmodel.PostgresModel):
@@ -2228,7 +2228,7 @@ class LpgOperationsSummary(urdhva_base.postgresmodel.PostgresModel):
     process_date: typing.Optional[datetime.datetime] | None = None
     bu: typing.Optional[str] | None = None
     sap_id: typing.Optional[str] | None = None
-    site_region: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
     site_area: typing.Optional[str] | None = None
 
     class Config:
@@ -2237,7 +2237,7 @@ class LpgOperationsSummary(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgOperationsSummarySchema
         upsert_keys = []
-        access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone']
+        access_key_mapping = ['sap_id:sap_id', 'short_name:plant', 'zone:zone', 'region:region']
 
 
 class LpgOperationsSummaryGetResp(pydantic.BaseModel):
