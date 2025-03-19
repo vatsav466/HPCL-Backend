@@ -900,7 +900,7 @@ class LPGCDCMSActions:
                 _index = "DistributorName"
             for col in ["PMUY", "NPMUY"]:
                 if col in grouped_resp.columns:
-                    grouped_resp[col] = grouped_resp[col]/100000
+                    grouped_resp[col] = grouped_resp[col]/1000
                     grouped_resp[col] = grouped_resp[col].round(2)
             grouped_resp = grouped_resp.assign(Total=grouped_resp["PMUY"] + grouped_resp["NPMUY"]
                                                ).sort_values(by="Total", ascending=False).drop(columns=["Total"])
