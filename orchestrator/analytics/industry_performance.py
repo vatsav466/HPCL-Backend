@@ -1217,8 +1217,9 @@ async def generate_omc_compare_data(filters, drill_state):
             end_month = req_month.split(",")[-1].strip()
             months = months_list[months_list.index(start_month):months_list.index(end_month) + 1]
         else:
-            req_index = months_list.index(req_month.strip())
-            months = months_list[:req_index + 1]
+            if req_month and req_month in months_list:
+                req_index = months_list.index(req_month.strip())
+                months = months_list[:req_index + 1]
 
     # Getting all filters
     filters, fiscal_year_pre, fiscal_year_last, months_ = get_date_filters(filters)
