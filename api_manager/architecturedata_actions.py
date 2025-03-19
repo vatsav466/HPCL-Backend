@@ -10,10 +10,11 @@ import utilities.connection_mapping as connection_mapping
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.analog_data_mapping import Maintenance, Fault
+import urdhva_base.queryparams
 
 router = fastapi.APIRouter(prefix='/architecturedata')
 
-BASE_JSON_PATH = "/Users/manohar/Documents/GitHub/dnc_backend_v2/things_board/device_data/"
+BASE_JSON_PATH = "/opt/ceg/algo/dnc_backend_v2/things_board/device_data/"
 
 @router.post('/architecture_details', tags=['ArchitectureData'])
 async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
@@ -103,6 +104,10 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
 
             # Convert counts to final records
             for dev_type, count in location_counts.items():
+                if dev_type in ["Tank Maintenance","Fire Pump"]:
+                    continue
+                elif dev_type == "Loading Point":
+                     dev_type = "Gantry BCU" 
                 final_records.append({
                     "sap_id": sap_id,
                     "name": location_name,
@@ -123,10 +128,6 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": f"Error: {str(e)}"}
-
-import pandas as pd
-import json
-import urdhva_base.queryparams
 
 @router.post('/architecture_data', tags=['ArchitectureData'])
 async def architecturedata_architecture_data(data: Architecturedata_Architecture_DataParams):
@@ -155,10 +156,12 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
         # Convert to DataFrame if data exists
         if res:
             df = pd.DataFrame(res)  # Convert list of dictionaries to DataFrame
-
+            
+            # Convert 'count' to integer (handle any invalid data gracefully)
+            df['count'] = pd.to_numeric(df['count'], errors='coerce').fillna(0).astype(int)
             # Select only required columns
             df = df[['sap_id', 'name', 'count', 'device_type', 'zone']]
-
+ 
             # Convert DataFrame to list of dictionaries
             return {"status": True, "message": "Success", "data": df.to_dict(orient='records')}
 
@@ -169,3 +172,15 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
 
 
   
+
+
+# Action architecture_details
+@router.post('/architecture_details', tags=['ArchitectureData'])
+async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
+    ...
+
+
+# Action architecture_data
+@router.post('/architecture_data', tags=['ArchitectureData'])
+async def architecturedata_architecture_data(data: Architecturedata_Architecture_DataParams):
+    ...
