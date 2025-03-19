@@ -24,16 +24,20 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         Returns:
         """
         print("EmLock alert_data -->", alert_data)
+        logger.info(f"EmLock interlock data: {alert_data}")
         status, loc_dt = await alert_helper.get_location_details(bu=alert_data['location_type'], sap_id=alert_data['location_id'])
         if status:
             alert_data['location_data'] = loc_dt
+        else:
+            logger.info(f"Error in finding location {alert_data['location_id']} "
+                        f"for bu {alert_data['location_type']} - {loc_dt}")
 
         emlock_interlock_details = emlock_mapping.emlock_vehicle_mapping[alert_data['location_type']]
 
         interlock_details = utilities.interlock_mapping.get_interlock_name(
             alert_data['location_type'],
             emlock_interlock_details[alert_data['exception_type']]['interlock_name'])
-        logger.info(f"va interlock data: {interlock_details}")
+        logger.info(f"EmLock interlock data: {interlock_details}")
 
         exception_msg = (f"Vehicle Number - {alert_data['truck_number']} \n Violation Type - {alert_data['exception_type']} \n"
                          f"Terminal Code - {alert_data['terminal_code']} \n"
