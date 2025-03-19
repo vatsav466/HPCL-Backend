@@ -6512,7 +6512,7 @@ class GlobalAnalytics:
                         location_name,
                         sap_id,
                         truck_number,
-                        SUM(srequired_qty) AS total_required_qty
+                        SUM(required_qty) AS total_required_qty
                     FROM 
                         host_cancelled_tts
                     WHERE 1=1
