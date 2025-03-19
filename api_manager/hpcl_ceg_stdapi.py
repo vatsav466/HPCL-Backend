@@ -1125,3 +1125,38 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/performanceindex/{id}', tags=['PerformanceIndex'])
 async def delete(id: str):
     return await PerformanceIndex.delete(id)
+
+
+@router.get('/crisalerthistory/{id}', response_model=CrisAlertHistory, tags=['CrisAlertHistory'])
+async def get(id: str):
+    return await CrisAlertHistory.get(id, skip_secrets=True)
+
+
+@router.get('/crisalerthistory', response_model=CrisAlertHistoryGetResp, tags=['CrisAlertHistory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await CrisAlertHistory.get_all(params, skip_secrets=True)
+
+
+@router.post('/dryoutalertreport', response_model=DryOutAlertReport, tags=['DryOutAlertReport'])
+async def create(inputObj: DryOutAlertReportCreate):
+    return await inputObj.create()
+
+
+@router.put('/dryoutalertreport', response_model=DryOutAlertReport, tags=['DryOutAlertReport'])
+async def update(inputObj: DryOutAlertReport):
+    return await inputObj.modify()
+
+
+@router.get('/dryoutalertreport/{id}', response_model=DryOutAlertReport, tags=['DryOutAlertReport'])
+async def get(id: str):
+    return await DryOutAlertReport.get(id, skip_secrets=True)
+
+
+@router.get('/dryoutalertreport', response_model=DryOutAlertReportGetResp, tags=['DryOutAlertReport'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await DryOutAlertReport.get_all(params, skip_secrets=True)
+
+
+@router.delete('/dryoutalertreport/{id}', tags=['DryOutAlertReport'])
+async def delete(id: str):
+    return await DryOutAlertReport.delete(id)

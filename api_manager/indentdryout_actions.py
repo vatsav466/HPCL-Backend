@@ -602,6 +602,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    print("dryout_condition: ", conditions)
 
     stats_query = "select distinct sap_id, max(progress_rate) as present_stage " \
                   f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed') " \
@@ -642,6 +643,15 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         stats[rec['present_stage']] += 1
         if str(rec['sap_id']) in dealer_tt:
             dealer_tt_count['Dealer TT'] += 1
+    dry_out_aging = await dry_out_analysis.get_dryout_aging(conditions)
+    less_than_2_days = dry_out_aging.get("less_than_2_days", 0)
+    from_3_to_7_days = dry_out_aging.get("from_3_to_7_days", 0)
+    from_8_to_15_days = dry_out_aging.get("from_8_to_15_days", 0)
+    more_than_15_days = dry_out_aging.get("more_than_15_days", 0)
+    indent_not_raised_count = less_than_2_days + from_3_to_7_days + from_8_to_15_days + more_than_15_days
+    count_50_klm = await dry_out_analysis.get_ro_count_less_50(conditions)
+    tar_analysis = await dry_out_analysis.get_tar_analysis(conditions)
+    dealer_truck_count = await dry_out_analysis.get_tt_counts(conditions)
 
     stats = [{"section": top_x_axis[key - 1]['name'], "value": value, "serial": key, "condition": "=",
               "group": top_x_axis[key - 1]['group']}
@@ -657,17 +667,64 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         }, {
             "section": "EMUnLock",
             "value": 0, "serial": 18, "condition": "=", "group": "wip"
+        }, {
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 19,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "Closed Outlets", "value": 0, "serial": 20,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "Nozzle Sales Not Started", "value": 0, "serial": 21,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "Low Volume(<50KLPM)", "value": count_50_klm, "serial": 22,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "Others", "value": indent_not_raised_count - count_50_klm, "serial": 23,
+            "condition": "=", "group": "indent"
+        }, {
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
+            "condition": "=", "group": "dryout_analysis"
+        },{
+            "section": "<2 Days", "value": less_than_2_days, "serial": 25,
+            "condition": "=", "group": "dryout_analysis"
+        }, {
+            "section": "3 to 7 Days", "value": from_3_to_7_days, "serial": 26,
+            "condition": "=", "group": "dryout_analysis"
+        }, {
+            "section": "8 to 15 Days", "value": from_8_to_15_days, "serial": 27,
+            "condition": "=", "group": "dryout_analysis"
+        }, {
+            "section": "> 15 Days", "value": more_than_15_days, "serial": 28,
+            "condition": "=", "group": "dryout_analysis"
+        },{
+            "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 29,
+            "condition": "=", "group": "tar_analysis"
+        }, {
+            "section": "< 1 Rs Cr", "value": tar_analysis.get("less_1_cr", 0), "serial": 30,
+            "condition": "=", "group": "tar_analysis"
+        }, {
+            "section": "1 to 2 Rs Cr", "value": tar_analysis.get("less_2_cr", 0), "serial": 31,
+            "condition": "=", "group": "tar_analysis"
+        }, {
+            "section": "2 to 5 Rs Cr", "value": tar_analysis.get("less_5_cr", 0), "serial": 32,
+            "condition": "=", "group": "tar_analysis"
+        }, {
+            "section": "> 5 Rs Cr", "value": tar_analysis.get("greater_5_cr", 0), "serial": 33,
+            "condition": "=", "group": "tar_analysis"
+        },{
+            "section": "Dealer TT", "value": dealer_truck_count, "serial": 34,
+            "condition": "=", "group": "tt_pending"
+        }, {
+            "section": "Transport TT", "value": indent_not_raised_count - dealer_truck_count, "serial": 35,
+            "condition": "=", "group": "tt_pending"
+        }, {
+            "section": "Dealer TT Return", "value": 0, "serial": 36,
+            "condition": "=", "group": "tt_pending"
+        }, {
+            "section": "Transport TT Return", "value": 0, "serial": 37,
+            "condition": "=", "group": "tt_pending"
         }])
-    # {
-    #     "section": "ATG Ack",
-    #     "value": 0, "serial": 19, "condition": "=", "group": "delivered"
-    # }, {
-    #     "section": "EMLock Unlock",
-    #     "value": 0, "serial": 20, "condition": "=", "group": "delivered"
-    # }, {
-    #     "section": "VTS Return",
-    #     "value": 0, "serial": 20, "condition": "=", "group": "delivered"
-    # }
     stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
                   for x in connection_mapping.truck_details])
     stats.extend([{"section": x, "value": 0, "serial": 0, "condition": "=", "group": "dryout_aging"}
@@ -708,7 +765,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "value": 0,
             "serial": 17, "condition": "=", "group": "carry_fwd_indent"
         }])
-    ro_not_in_ims_count = await dry_out_analysis.ro_not_in_ims()
+    # ro_not_in_ims_count = await dry_out_analysis.ro_not_in_ims()
     # atg_ack = await dry_out_analysis.get_atg_ack(sap_id="", product_code="")
     atg_ack = await dry_out_analysis.get_atg_ack_count(dry_out_in_days=str(dry_out_in_days_query))
     # stats.append({"section": "RO Not In IMS", "value": len(ro_not_in_ims_count), "serial": 18, "condition": "=", "group": "ro_not_in_ims"})

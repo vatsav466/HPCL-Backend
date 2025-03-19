@@ -11,17 +11,25 @@ router = fastapi.APIRouter(prefix='/performanceindex')
 @router.post('/get_pi_score', tags=['PerformanceIndex'])
 async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParams):
     if data.bu == "TAS":
+        # Create TASPerformanceIndex instance and initialize it
         tas_pi = tas_performance_index.TASPerformanceIndex()
         await tas_pi.initialize()  # Load rules_df asynchronously
-        tas_resp = await tas_pi.generate_performance_index_tas(data.sap_id)
-        return {"tas_performance": tas_resp}
 
+        # Generate TAS performance index
+        tas_resp = await tas_pi.generate_performance_index(data.sap_id)
+        return tas_resp
     elif data.bu == "LPG":
+        # Create LPGPerformanceIndex instance and initialize it
         lpg_pi = lpg_performance_index.LPGPerformanceIndex()
         await lpg_pi.initialize()  # Load rules_df asynchronously
-        lpg_resp = await lpg_pi.generate_performance_index_lpg(data.sap_id)
-        return {"lpg_performance": lpg_resp}
 
+        # Generate LPG performance index
+        lpg_resp = await lpg_pi.generate_performance_index(data.sap_id)
+        return lpg_resp
+    elif data.bu == "RO":
+        return {}
+    else:
+        return {}
 
 
 # Action get_pi_score_by_category

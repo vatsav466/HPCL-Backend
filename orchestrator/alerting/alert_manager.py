@@ -167,10 +167,14 @@ async def close_emlock_alert(alert_data, input_data):
         meta_data['fanNumber'] = input_data.get("fan_number")
     if alert_data['violation_type'] == 'InvoiceNotGenerated':
         meta_data['loadNumber'] = input_data.get("load_number")
-        meta_data['invoiceNumber'] = input_data.get("invoice_number")
         meta_data['tripType'] = input_data.get("trip_type")
-        meta_data['ro_code'] = alert_data['dealer_id']
-        meta_data['terminal_code'] = alert_data['servicing_plant_id']
+        meta_data['destinations'] = [
+            {
+                "invoiceNumber": input_data.get("invoice_number"),
+                "roCode": alert_data['dealer_id'],
+                "terminalCode": alert_data['servicing_plant_id']
+            }
+        ]
 
     params = {
         "emlockExceptionId": alert_data['external_id'],
@@ -184,6 +188,7 @@ async def close_emlock_alert(alert_data, input_data):
         "metaData": json.dumps(meta_data)
     }
     print("Params EMLock: ", params)
+    await emlock_analysis.close_emlock_alert(alert_data=params)
 
 
 async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved_time=False):

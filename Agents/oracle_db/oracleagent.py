@@ -1,42 +1,42 @@
 import sys
 import json
-import base64
+import datetime  # Add missing import
 import typing
 import asyncio
-import datetime
 import cx_Oracle
 import traceback
 import pandas as pd
 import polars as pl
-import pyarrow as pa
 from rabbitmq_producer import RabbitMQProducer
-from sshtunnel import SSHTunnelForwarder
-import time
 
 # Set stdout encoding to UTF-8 to handle non-ASCII characters
 sys.stdout.reconfigure(encoding='utf-8')
 
 dtype_map = {
-            'String': 'VARCHAR2(255)',
-            'Int64': 'NUMBER',
-            'Int32': 'NUMBER',
-            'Boolean': 'NUMBER(1)',
-            'Float64': 'NUMBER',
-            'Float32': 'NUMBER',
-            'Object': 'VARCHAR2(4000)',
-            'Datetime': 'DATE',
-            'Utf8': 'NVARCHAR2(255)',
-            "Datetime(time_unit='us', time_zone=None)": 'DATE'
-        }
+    'String': 'VARCHAR2(255)',
+    'Int64': 'NUMBER',
+    'Int32': 'NUMBER',
+    'Boolean': 'NUMBER(1)',
+    'Float64': 'NUMBER',
+    'Float32': 'NUMBER',
+    'Object': 'VARCHAR2(4000)',
+    'Datetime': 'DATE',
+    'Utf8': 'NVARCHAR2(255)',
+    "Datetime(time_unit='us', time_zone=None)": 'DATE'
+}
 
-# Load config file
 with open("config.json", "r", encoding="utf-8") as config_file:
     config = json.load(config_file)
 
-# Extract Oracle credentials and table configs
+# Extract configuration
 oracle_config = config["oracle"]
 table_names = config["oracle_tables"]
-sap_id = config["sap_id"]
+sap_id = config.get("sap_id", "")  # Safely get sap_id with default
+
+# Define table_queries - this was missing
+table_queries = {}  # Define empty dict or specific queries as needed
+# Example: table_queries = {"HOST_UNAUTHORIZEDFLOW": "SELECT * FROM HOST_UNAUTHORIZEDFLOW"}
+
 
 class BaseAction:
     def __init__(self, params: typing.Dict, sleep_duration=30):
@@ -46,6 +46,8 @@ class BaseAction:
 
 
 class Oracle(BaseAction):
+    # Oracle class implementation unchanged...
+    # [Oracle class code remains the same]
     def __init__(self, params: typing.Dict):
         super().__init__(params)
 
@@ -345,31 +347,13 @@ class Oracle(BaseAction):
                 print(f"Warning: Encoding issue when saving {table_name}.csv - trying alternate encoding")
                 final_df.to_csv(f"{table_name}.csv", mode='a', index=False, header=False, encoding='utf-8-sig')
                 
-            # Convert DataFrame to Polars, ensuring correct data types
-            # try:
-            #     return pl.from_pandas(final_df, use_pyarrow=True)
-            # except Exception as e:
-            #     print("Error converting DataFrame with PyArrow:", e)
-
-            # Convert columns manually if PyArrow fails
-            for col in final_df.columns:
-                if pd.api.types.is_integer_dtype(final_df[col]):
-                    final_df[col] = final_df[col].astype("int64")  # Convert nullable int to standard int
-                elif pd.api.types.is_float_dtype(final_df[col]):
-                    final_df[col] = final_df[col].astype("float64")
-                elif pd.api.types.is_object_dtype(final_df[col]):
-                    final_df[col] = final_df[col].astype("string")
-
             return pl.from_pandas(final_df)
-
-        except Exception as e:
-            print(f"Error fetching data for {table_name}: {e}")
-            return None
-
         except cx_Oracle.Error as err:
-            print(err)
+            print(f"Oracle Error for table {table_name}: {err}")
             traceback.print_exc(file=sys.stdout)
-            return pl.DataFrame()
+            return {
+                "status": False, "message": f"Not able to fetch data {err}", "data": []
+            }
 
     async def get_distinct_values(self, schema_name, table_name, column_name, where_clause=None, debug=False, **kwargs):
         """
@@ -434,270 +418,385 @@ class Oracle(BaseAction):
             raise err
 
 
-
-
-import time
-import asyncio
-import traceback
-import sys
-import polars as pl  # Assuming data is fetched as polars DataFrame
-
 class DataMonitor:
-    def __init__(self, oracle, table_configs, sleep_duration=10):
+    def __init__(self, oracle, table_names, sleep_duration=300):
         self.oracle = oracle
-        self.table_configs = table_configs
-        self.table_names = list(table_configs.keys())
+        self.table_names = table_names
         self.sleep_duration = sleep_duration
-        self.previous_data = {}  
-        self.last_full_dump_time = {}  
-        self.last_send_time = {}  
-        self.accumulated_changes = {}  
-        self.last_sent_record = {}  
+        self.previous_data = {}  # Initialize as an empty dictionary
+        self.table_queries = table_queries  # Use the global table_queries
 
-        current_time = time.time()
-        for table in table_configs:
-            self.last_full_dump_time[table] = current_time - table_configs[table].get("max_full_dump", 3000) + 10
-            self.last_send_time[table] = current_time
-            self.accumulated_changes[table] = []  
-            self.last_sent_record[table] = None  
-
-    async def incremental_check(self, table_name, current_records, check_columns):
-        """Check for incremental changes in monitored columns."""
-        try:
-            if not current_records:
-                print(f"No data found for table {table_name}")
-                return []
-            
-            if table_name not in self.previous_data:
-                return current_records  # First-time, send all data
-
-            previous_records = self.previous_data[table_name]
-            if not previous_records:
-                return current_records  # First-time, send all data
-
-            # Create a mapping of previous records using key fields
-            previous_dict = {self._create_record_key(record, check_columns): record for record in previous_records}
-
-            changed_records = []
-            for current in current_records:
-                key_fields = self._create_record_key(current, check_columns)
-
-                if key_fields not in previous_dict:
-                    changed_records.append(current)
-                    continue
-
-                previous = previous_dict[key_fields]
+    # async def compare_and_send(self, current_data):
+    #     """
+    #     Compare current data with previous data and send only changed records to RabbitMQ.
+    #     """
+    #     try:
+    #         # Check if current_data is None or empty
+    #         if not current_data:
+    #             print("Warning: No data received to compare. Skipping comparison.")
+    #             return
                 
-                # Special case for HOST_UNAUTHORIZEDFLOW
-                if table_name == "HOST_UNAUTHORIZEDFLOW":
-                    # Find timestamp column (assuming it's named 'timestamp', 'created_at', or similar)
-                    timestamp_col = next((col for col in current.keys() if 'time' in col.lower() or 'date' in col.lower()), None)
+    #         changed_data = {}  # To store only changed records per table
+
+    #         for table_name, records in current_data.items():
+    #             if not isinstance(records, list):  # Ensure records are lists
+    #                 print(f"Warning: Expected list for table {table_name}, but got {type(records)}")
+    #                 continue
+                
+    #             # Get previous records (if any) for the same table
+    #             previous_records = self.previous_data.get(table_name, [])
+
+    #             # Find new records (in current_data but not in previous_data)
+    #             new_records = [record for record in records if record not in previous_records]
+
+    #             if new_records:
+    #                 changed_data[table_name] = new_records  # Store only changed records
                     
-                    # Create copies of records without timestamp
-                    current_without_timestamp = {k: v for k, v in current.items() if k != timestamp_col}
-                    previous_without_timestamp = {k: v for k, v in previous.items() if k != timestamp_col}
+    #         # Add timestamp to specific table records if needed
+    #         tables = [
+    #             "HOST_MANUALFANPRINTED",
+    #             "HOST_SICKTTS",
+    #             "HOST_CANCELLEDTTS",
+    #             "HOST_LOCALLOADEDTTS",
+    #             "HOST_BAYREASSIGNMENT",
+    #             "HOST_OVERLOADEDTTS",
+    #             "HOST_UNAUTHORIZEDFLOW"
+    #         ]
+
+    #         current_date = datetime.datetime.today().date()
+    #         current_datetime = datetime.datetime.now().isoformat()
+
+    #         for table in tables:
+    #             if table in changed_data:
+    #                 for record in changed_data[table]:
+    #                     record["date"] = current_date
+    #                     record["date_time"] = current_datetime
                     
-                    # Check if any non-timestamp data has changed
-                    has_data_change = False
-                    for col in current_without_timestamp:
-                        if col in previous_without_timestamp and self.is_significant_change(current_without_timestamp[col], previous_without_timestamp[col]):
-                            has_data_change = True
-                            break
+    #         # Send only changed records
+    #         if changed_data:
+    #             await RabbitMQProducer().send_to_rabbitmq(changed_data)
+    #             print(f"Sent changed data to RabbitMQ for tables: {list(changed_data.keys())}")
+    #         else:
+    #             print("No changes detected. Nothing to send.")
+            
+    #         # Update previous_data with the current data
+    #         self.previous_data = current_data.copy()
+
+    #     except Exception as e:
+    #         print(traceback.format_exc())
+    #         print(f"Error in compare_and_send: {e}")
+
+    # async def fetch_data(self):
+    #     """
+    #     Fetch data asynchronously from Oracle tables.
+    #     """
+    #     try:
+    #         # Create a dictionary to store tasks
+    #         tasks = {}
+    #         results = {}
+            
+    #         # Create tasks for each table
+    #         for table in self.table_names:
+    #             if table == "HOST_UNAUTHORIZEDFLOW":
+    #                 # Special case for this table
+    #                 query = f"SELECT t.*, TO_CHAR(t.timestamp, 'YYYY-MM-DD') AS timestamp FROM {table} t"
+    #                 tasks[table] = self.oracle.get_data(table_name=table, query=query)
+    #             elif table in self.table_queries and self.table_queries[table]:
+    #                 # Use custom query if defined
+    #                 tasks[table] = self.oracle.get_data(table_name=table, query=self.table_queries[table])
+    #             else:
+    #                 # Default case - just get all data from the table
+    #                 tasks[table] = self.oracle.get_data(table_name=table)
+            
+    #         # Execute all tasks in parallel
+    #         for table_name, task in tasks.items():
+    #             try:
+    #                 result = await task
+    #                 results[table_name] = result
+    #             except Exception as e:
+    #                 print(f"Error fetching data for table {table_name}: {e}")
+    #                 results[table_name] = None
+
+    #         print(f"Number of results: {len(results)}")
+
+    #         processed_results = {}
+
+    #         for table_name, result in results.items():
+    #             # Skip tables with errors or no data
+    #             if result is None:
+    #                 continue
                     
-                    if has_data_change:
-                        changed_records.append(current)
-                else:
-                    has_change = False
-                    # Regular check for other tables
-                    for col in current.keys():
-                        if col in current and col in previous and self.is_significant_change(current[col], previous[col]):
-                            has_change = True
-                            break
-                    if has_change:
-                        changed_records.append(current)
-
-            return changed_records
-        except Exception as e:
-            print(f"Error in incremental_check for {table_name}: {e}")
-            traceback.print_exc()
-            return []
-
-    async def default_check(self, table_name, current_records):
-        """Check for new records in non-incremental tables."""
-        try:
-            if not current_records:
-                return []
-
-            if table_name not in self.previous_data:
-                return current_records
-
-            previous_records = self.previous_data[table_name]
-            if not previous_records:
-                return current_records
-
-            previous_dict = {self._create_record_key(record): record for record in previous_records}
-            return [record for record in current_records if self._create_record_key(record) not in previous_dict]
-
-        except Exception as e:
-            print(f"Error in default_check for {table_name}: {e}")
-            traceback.print_exc()
-            return []
-
-    async def fetch_data(self):
-        """Fetch data asynchronously from Oracle tables."""
-        all_data = {}
-
-        try:
-            tasks = [self.oracle.get_data(table_name=table) for table in self.table_names]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            for table_name, result in zip(self.table_names, results):
-                try:
-                    if isinstance(result, Exception):
-                        print(f"Error fetching data for {table_name}: {str(result)}")
-                        all_data[table_name] = []
-                        continue
-
-                    if isinstance(result, dict) and "message" in result:
-                        print(f"Error fetching data for {table_name}: {result.get('message')}")
-                        all_data[table_name] = []
-                        continue
-
-                    if isinstance(result, pl.DataFrame) and result.shape[0] > 0:
-                        result = result.with_columns(pl.lit(sap_id).alias("sap_id"))
-                        # if table_name == "HOST_MANUALFANPRINTED":
-                        #     result = result.with_columns(pl.lit(datetime.datetime.now()).alias("date"))
-                        all_data[table_name] = result.to_dicts()
-                    else:
-                        all_data[table_name] = []
-
-                except Exception as e:
-                    print(f"Error processing data for {table_name}: {e}")
-                    traceback.print_exc()
-                    all_data[table_name] = []
-
-            return all_data
-        except Exception as e:
-            print(f"Error in fetch_data: {e}")
-            traceback.print_exc()
-            return {}
+    #             if isinstance(result, dict):  # Handle error messages
+    #                 print(f"Error in {table_name}:", result.get("message", "Unknown error"))
+    #                 continue
+                
+    #             if isinstance(result, pl.DataFrame) and result.shape[0] > 0:  # Skip empty DataFrames
+    #                 try:
+    #                     records = result.to_dicts()
+                        
+    #                     # Add sap_id to each record
+    #                     for record in records:
+    #                         record["sap_id"] = sap_id
+                        
+    #                     processed_results[table_name] = records
+    #                     print(f"Processed {len(records)} records for {table_name}")
+    #                 except Exception as e:
+    #                     print(f"Error processing data for table {table_name}: {e}")
+            
+    #         print(f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}")
+    #         return processed_results
 
     async def compare_and_send(self, current_data):
-        """Compare current data with previous data and send only changes."""
+        """
+        Compare current data with previous data and send only changed records to RabbitMQ.
+        """
         try:
+            # Check if current_data is None or empty
             if not current_data:
+                print("Warning: No data received to compare. Skipping comparison.")
                 return
+                
+            changed_data = {}  # To store only changed records per table
 
-            current_time = time.time()
-            changed_data = {}
+            # Special handling for HOST_UNAUTHORIZEDFLOW to calculate nettotalizer
+            if "HOST_UNAUTHORIZEDFLOW" in current_data and current_data["HOST_UNAUTHORIZEDFLOW"]:
+                current_data["HOST_UNAUTHORIZEDFLOW"] = self._calculate_nettotalizer(
+                    current_data["HOST_UNAUTHORIZEDFLOW"],
+                    self.previous_data.get("HOST_UNAUTHORIZEDFLOW", [])
+                )
 
             for table_name, records in current_data.items():
-                config = self.table_configs.get(table_name, {})
-                interval = config.get("interval", 60)
-                max_full_dump = config.get("max_full_dump", 3000)
-                last_send = self.last_send_time.get(table_name, 0)
-                last_full_dump = self.last_full_dump_time.get(table_name, 0)
-                incremental = config.get("incremental", False)
-
-                if max_full_dump > 0 and (current_time - last_full_dump) >= max_full_dump:
-                    changed_data[table_name] = records
-                    self.last_full_dump_time[table_name] = current_time
-                    self.last_send_time[table_name] = current_time
-                    self.accumulated_changes[table_name] = []
-                    self.last_sent_record[table_name] = None
+                if not isinstance(records, list):  # Ensure records are lists
+                    print(f"Warning: Expected list for table {table_name}, but got {type(records)}")
                     continue
+                
+                # Get previous records (if any) for the same table
+                previous_records = self.previous_data.get(table_name, [])
 
-                if incremental:
-                    check_columns = config.get("increment_check", [])
-                    new_records = await self.incremental_check(table_name, records, check_columns)
+                # Find new records (in current_data but not in previous_data)
+                new_records = [record for record in records if record not in previous_records]
 
-                    if self.last_sent_record.get(table_name) is not None:
-                        new_records = [r for r in new_records if not self._records_equal(r, self.last_sent_record[table_name])]
+                if new_records:
+                    changed_data[table_name] = new_records  # Store only changed records
+                    
+            # Add timestamp to specific table records if needed
+            tables = [
+                "HOST_MANUALFANPRINTED",
+                "HOST_SICKTTS",
+                "HOST_CANCELLEDTTS",
+                "HOST_LOCALLOADEDTTS",
+                "HOST_BAYREASSIGNMENT",
+                "HOST_OVERLOADEDTTS",
+                "HOST_UNAUTHORIZEDFLOW"
+            ]
 
-                    if new_records and (current_time - last_send) >= interval:
-                        # changed_data[table_name] = [new_records[0]]
-                        # self.last_sent_record[table_name] = new_records[0]
-                        changed_data[table_name] = new_records  # Send all changed records
-                        self.last_sent_record[table_name] = new_records[-1] if new_records else None
-                        self.last_send_time[table_name] = current_time
+            current_date = datetime.datetime.today().date()
+            current_datetime = datetime.datetime.now().isoformat()
 
-                else:
-                    new_records = await self.default_check(table_name, records)
-                    if new_records:
-                        self.accumulated_changes.setdefault(table_name, []).extend(new_records)
-
-                        if (current_time - last_send) >= interval and self.accumulated_changes.get(table_name):
-                            changed_data[table_name] = self.accumulated_changes[table_name]
-                            self.accumulated_changes[table_name] = []
-                            self.last_send_time[table_name] = current_time
-            if "HOST_MANUALFANPRINTED" in changed_data:
-                for record in changed_data["HOST_MANUALFANPRINTED"]:
-                    record["date"] = datetime.datetime.now().isoformat()
+            for table in tables:
+                if table in changed_data:
+                    for record in changed_data[table]:
+                        record["date"] = current_date
+                        record["date_time"] = current_datetime
+                    
+            # Send only changed records
             if changed_data:
                 RabbitMQProducer().send_to_rabbitmq(changed_data)
-
-            for table_name, records in current_data.items():
-                if records:
-                    self.previous_data[table_name] = records
+                print(f"Sent changed data to RabbitMQ for tables: {list(changed_data.keys())}")
+            else:
+                print("No changes detected. Nothing to send.")
+            
+            # Update previous_data with the current data
+            self.previous_data = current_data.copy()
 
         except Exception as e:
+            print(traceback.format_exc())
             print(f"Error in compare_and_send: {e}")
-            traceback.print_exc()
 
-    def _create_record_key(self, record, exclude_columns=None):
-        """Create a hashable key from a record dictionary."""
-        if exclude_columns is None:
-            exclude_columns = []
-        return tuple(sorted((k, str(v)) for k, v in record.items() if k not in exclude_columns))
+    def _calculate_nettotalizer(self, current_records, previous_records):
+        """
+        Calculate end_totalizer for HOST_UNAUTHORIZEDFLOW records by comparing
+        current records with previous records.
+        """
+        try:
+            # Create a dictionary of previous records indexed by BCU_NUMBER
+            prev_bcu_data = {}
+            for record in previous_records:
+                bcu_number = f"{record.get('BCU_NUMBER', '')}_{record.get('METER_NUMBER', '')}"
+                if bcu_number:
+                    # Store the record with the highest END_TOTALIZER for each BCU_NUMBER
+                    if (bcu_number not in prev_bcu_data or 
+                        float(record.get("END_TOTALIZER", 0)) > float(prev_bcu_data[bcu_number].get("END_TOTALIZER", 0))):
+                        prev_bcu_data[bcu_number] = record
 
-    def is_significant_change(self, value1, value2):
-        """Strict comparison for numbers, ensuring even small changes are detected."""
-        if isinstance(value1, (int, float)) and isinstance(value2, (int, float)):
-            return abs(value1 - value2) > 1e-6
-        return value1 != value2  
+            # Group current records by BCU_NUMBER
+            bcu_groups = {}
+            for record in current_records:
+                bcu_number = f"{record.get('BCU_NUMBER', '')}_{record.get('METER_NUMBER', '')}"
+                if bcu_number:
+                    bcu_groups.setdefault(bcu_number, []).append(record)
 
-    def _records_equal(self, record1, record2):
-        """Compare two records for equality."""
-        if record1 is None or record2 is None:
-            return record1 is record2
-        if set(record1.keys()) != set(record2.keys()):
-            return False
-        for key in record1:
-            if self.is_significant_change(record1[key], record2[key]):
-                return False
-        return True
+            # Sort each group by timestamp and calculate end_totalizer
+            for bcu_number, group in bcu_groups.items():
+                # Sort the group by TIMESTAMP
+                sorted_group = sorted(group, key=lambda x: x.get("TIMESTAMP", ""))
+
+                # Get the previous END_TOTALIZER value for this BCU_NUMBER
+                prev_end_totalizer = float(prev_bcu_data.get(bcu_number, {}).get("END_TOTALIZER", 0))
+
+                # Calculate end_totalizer for each record
+                for record in sorted_group:
+                    curr_net_totalizer = float(record.get("NET_TOTALIZER", 0))
+                    curr_end_totalizer = float(record.get("END_TOTALIZER", 0))  # Ensure default value
+                    
+                    if prev_end_totalizer is None:
+                        # No previous record found for this BCU_NUMBER
+                        record["nettotalizer"] = curr_net_totalizer
+                    else:
+                        print("*" * 100)
+                        print("into else")
+                        print("curr_end_totalizer --> ", curr_end_totalizer)
+                        print("prev_end_totalizer --> ", prev_end_totalizer)
+                        print("*" * 100)
+                        # Use the difference from previous END_TOTALIZER
+                        record["nettotalizer"] = max(0, curr_end_totalizer - prev_end_totalizer) if prev_end_totalizer else 0
+
+                    # Update previous values for next iteration
+                    prev_end_totalizer = curr_end_totalizer
+
+            # Flatten the groups back to a single list
+            return [record for group in bcu_groups.values() for record in group]
+
+        except Exception as e:
+            print(f"Error calculating end_totalizer: {e}")
+            print(traceback.format_exc())
+            return current_records
+
+    async def fetch_data(self):
+        """
+        Fetch data asynchronously from Oracle tables.
+        """
+        try:
+            # Create a dictionary to store tasks
+            tasks = {}
+            results = {}
+            
+            # Create tasks for each table
+            for table in self.table_names:
+                if table == "HOST_UNAUTHORIZEDFLOW":
+                    # Special case for this table
+                    query = f"""
+                        SELECT t.*, TO_CHAR(t.timestamp, 'YYYY-MM-DD') AS timestamp
+                        FROM {table} t
+                        ORDER BY t.bcu_number, t.timestamp
+                    """
+                    tasks[table] = self.oracle.get_data(table_name=table, query=query)
+                elif table in self.table_queries and self.table_queries[table]:
+                    # Use custom query if defined
+                    tasks[table] = self.oracle.get_data(table_name=table, query=self.table_queries[table])
+                else:
+                    # Default case - just get all data from the table
+                    tasks[table] = self.oracle.get_data(table_name=table)
+            
+            # Execute all tasks in parallel
+            for table_name, task in tasks.items():
+                try:
+                    result = await task
+                    results[table_name] = result
+                except Exception as e:
+                    print(f"Error fetching data for table {table_name}: {e}")
+                    results[table_name] = None
+
+            print(f"Number of results: {len(results)}")
+
+            processed_results = {}
+
+            for table_name, result in results.items():
+                # Skip tables with errors or no data
+                if result is None:
+                    continue
+                    
+                if isinstance(result, dict):  # Handle error messages
+                    print(f"Error in {table_name}:", result.get("message", "Unknown error"))
+                    continue
+                
+                if isinstance(result, pl.DataFrame) and result.shape[0] > 0:  # Skip empty DataFrames
+                    try:
+                        records = result.to_dicts()
+                        
+                        # Add sap_id to each record
+                        for record in records:
+                            record["sap_id"] = sap_id
+                        
+                        processed_results[table_name] = records
+                        print(f"Processed {len(records)} records for {table_name}")
+                    except Exception as e:
+                        print(f"Error processing data for table {table_name}: {e}")
+                        print(traceback.format_exc())
+            
+            print(f"Processed data for {len(processed_results)} tables: {list(processed_results.keys())}")
+            return processed_results
+
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error in fetch_data: {e}")
+            return {}  # Return empty dict on error
 
     async def run(self):
-        while True:
-            try:
+        """
+        Periodically check Oracle DB for data changes
+        """
+        try:
+            # Test the Oracle connection first
+            connection_test = await self.oracle.test_connection()
+            if not connection_test["status"]:
+                print(f"ERROR: Cannot connect to Oracle database: {connection_test['message']}")
+                print("Please check your Oracle credentials and connection settings.")
+                return
+                
+            print("Starting data monitoring...")
+            while True:
+                print(f"Fetching data (checking every {self.sleep_duration} seconds)")
                 current_data = await self.fetch_data()
+                
+                # Only compare if we have data
                 if current_data:
                     await self.compare_and_send(current_data)
+                else:
+                    print("No data fetched, skipping comparison")
+                    
                 await asyncio.sleep(self.sleep_duration)
-            except Exception as e:
-                print(f"Error in run loop: {e}")
-                traceback.print_exc()
-                await asyncio.sleep(30)
-
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error in run: {e}")
+            # Restart the monitoring after a delay
+            print("Restarting monitoring in 30 seconds...")
+            await asyncio.sleep(300)
+            await self.run()
 
 async def main():
-    try:
-        oracle = Oracle(oracle_config)  # Initialize Oracle connection using your existing class
-        
-        # Test connection
-        connection_test = await oracle.test_connection()
-        if connection_test.get("status", False):
-            print("Successfully connected to Oracle database")
-        else:
-            print(f"Failed to connect to Oracle: {connection_test.get('message', 'Unknown error')}")
-            return
-        
-        # Initialize and run monitor
-        monitor = DataMonitor(oracle, table_names, sleep_duration=10)
-        await monitor.run()
-        
-    except Exception as e:
-        print(f"Fatal error in main: {e}")
-        traceback.print_exc(file=sys.stdout)
+    # Test Oracle connection before starting monitoring
+    oracle = Oracle(oracle_config)
+    
+    print("Testing Oracle connection...")
+    connection_result = await oracle.test_connection()
+    if not connection_result["status"]:
+        print(f"ERROR: Could not connect to Oracle: {connection_result['message']}")
+        print("Check your connection details in config.json and try again.")
+        return
+
+    print("Oracle connection successful!")
+    
+    # Initialize the monitor
+    monitor = DataMonitor(oracle, table_names, sleep_duration=300)
+    
+    # Print configuration info
+    print(f"Configured to monitor {len(table_names)} tables:")
+    for i, table in enumerate(table_names):
+        print(f"  {i+1}. {table}")
+    
+    # Start monitoring
+    await monitor.run()
+
 if __name__ == "__main__":
     asyncio.run(main())

@@ -102,7 +102,14 @@ lpg_dashboard_actions = [
     'tas_maintenance_fault_dropdown',
     'tas_normal_count',
     'tas_analog_count',
-    'local_loaded'
+    'local_loaded',
+    'unauthorised_flow',
+    'sick_tts',
+    'cancelled_tts',
+    'kfactor',
+    'manualfanprinted',
+    'overloaded_tts',
+    'mfmkfactor'
 ]
 
 # Todo:- import all widget action modules here
@@ -207,7 +214,14 @@ widget_mapping = {
     'tas_maintenance_fault_dropdown': {},
     'tas_normal_count': {},
     'tas_analog_count': {},
-    'local_loaded': {}
+    'local_loaded': {},
+    'unauthorised_flow': {},
+    'sick_tts': {},
+    'cancelled_tts': {},
+    'kfactor': {},
+    'manualfanprinted': {},
+    'overloaded_tts': {},
+    'mfmkfactor': {}
 }
 
 

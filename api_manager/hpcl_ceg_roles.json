@@ -219,6 +219,9 @@
                 },
                 {
                     "name": "update_location_master"
+                },
+                {
+                    "name": "get_sod_engineering_stats"
                 }
             ]
         },
@@ -234,6 +237,9 @@
             "scopes": [
                 {
                     "name": "read"
+                },
+                {
+                    "name": "get_sod_engineering_stats"
                 }
             ]
         },
@@ -276,6 +282,9 @@
                 },
                 {
                     "name": "update_location_master"
+                },
+                {
+                    "name": "get_sod_engineering_stats"
                 }
             ]
         },
@@ -3989,6 +3998,132 @@
                     "name": "get_pi_score_by_category"
                 }
             ]
+        },
+        {
+            "name": "crisalerthistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "CrisAlertHistory",
+            "attributes": {},
+            "uris": [
+                "/api/crisalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "crisalerthistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "CrisAlertHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/crisalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "crisalerthistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "CrisAlertHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/crisalerthistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "dryoutalertreport",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutAlertReport",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutalertreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "dryoutalertreport_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutAlertReport_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutalertreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dryoutalertreport_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutAlertReport_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutalertreport/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
@@ -4122,6 +4257,10 @@
         {
             "name": "update_location_master",
             "displayName": "update_location_master"
+        },
+        {
+            "name": "get_sod_engineering_stats",
+            "displayName": "get_sod_engineering_stats"
         },
         {
             "name": "upload_role_master",

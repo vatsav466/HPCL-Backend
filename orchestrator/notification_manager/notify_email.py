@@ -63,15 +63,15 @@ class NotifyEMail(NotificationManager):
         Example Data
         for plain email
         ---------------------------------------------------------------------------------------------------------
-        args = {'to_emails': ['user@email.com'], 'subject': 'test email', 'body': 'test body'}
+        args = {'recipients': ['user@email.com'], 'subject': 'test email', 'body': 'test body'}
         ---------------------------------------------------------------------------------------------------------
         for attachments
         ---------------------------------------------------------------------------------------------------------
-        args = {'to_emails': ['user@email.com'], 'subject': 'test email', 'body': 'test body', 'attachments': [...]}
+        args = {'recipients': ['user@email.com'], 'subject': 'test email', 'body': 'test body', 'attachments': [...]}
         ---------------------------------------------------------------------------------------------------------
         for html content
         ---------------------------------------------------------------------------------------------------------
-        args = {'to_emails': ['user@email.com'], 'subject': 'test email', 'body': '<HTML Body>', 'html_content': True}
+        args = {'recipients': ['user@email.com'], 'subject': 'test email', 'body': '<HTML Body>', 'html_content': True}
         ---------------------------------------------------------------------------------------------------------
         """
         if not kwargs.get("force_send", False):

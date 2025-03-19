@@ -92,6 +92,7 @@
         "TRUCK_NUMBER": "truck_number",
         "CREATED_DATE": "created_date",
         "CUSTOMER_NAME": "customer_name",
+        "COMPONENT_NUMBER": "compartment_number",
         "COMPARTMENT_NUMBER": "compartment_number",
         "PRODUCT_NAME": "product_name",
         "REQUIRED_QTY": "required_qty",
@@ -138,6 +139,63 @@
         "REASSIGN_LOADED_QTY": "reassign_loaded_qty",
         "STATUS": "status",
         "LOCATION_CODE": "location_code",
-        "ACTIVE_SERVER_NAME": "active_server_name"
+        "ACTIVE_SERVER_NAME": "active_server_name",
+        "ENTRY_TIME": "entry_time",
+        "EXIT_TIME": "exit_time"
+    },
+
+    "alert_logic": {
+        "HostManualFanPrinted": {
+            "name": "Manual FAN printed more than 5% of total TT loaded",
+            "severity": "Medium",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 5,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": "",
+                    "is_close_alert": true
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 5,
+                    "assign_role": "TAS Officer SOD",
+                    "escalation_role": "Location In-Charge SOD",
+                    "escalation_time": "PT15M",
+                    "is_close_alert": false
+                }
+            } 
+        },
+
+        "HostUnauthorisedFlow": {
+            "name": "Unauthorized flow_BCU",
+            "severity": "Medium",
+            "escalations": {
+                "level - 1": {
+                    "condition": "<",
+                    "value": 5,
+                    "assign_role": "",
+                    "escalation_role": "",
+                    "escalation_time": "",
+                    "is_close_alert": true
+                },
+                "level - 2": {
+                    "condition": "<>",
+                    "value": 5,
+                    "assign_role": "TAS Officer SOD",
+                    "escalation_role": "Location In-Charge SOD",
+                    "escalation_time": "PT15M",
+                    "is_close_alert": false
+                }
+            } 
+        },
+
+        "HostCancelledTts": {
+            "name": "Cancel TT Reported",
+            "severity": "Medium",
+            "escalations": {
+            } 
+        }
     }
 }

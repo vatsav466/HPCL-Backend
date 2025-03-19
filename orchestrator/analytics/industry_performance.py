@@ -1,3 +1,5 @@
+import datetime
+
 import urdhva_base
 import re
 import json
@@ -61,7 +63,7 @@ def generate_group_by_conditions(filters, cross_filters, cumulative=False, drill
         group_by_filter.append('"month_name"')
     if "fiscal_year" not in group_by_filter:
         group_by_filter.append("fiscal_year")
-    #if isinstance(resp_level,list):
+    # if isinstance(resp_level,list):
     #    for x in resp_level:
     #        group_by_filter.append(x)
     if resp_level == 'sbu_level':
@@ -119,10 +121,13 @@ def get_date_filters(filters, resp_type="months"):
             end_date_history = helpers.get_time_stamp_by_delta(end_date_history, with_month_start_day=False,
                                                                with_month_end_day=True)
         elif condition['key'] == '"fiscal_year"':
-            fiscal_year_pre = condition['value']
+            if "," in condition['value']:
+                fiscal_year_last = condition['value'].split(',')[-1]
+                fiscal_year_pre = condition['value'].split(',')[0]
+            else:
+                fiscal_year_pre = condition['value']
         elif condition["key"] == "month_name" or condition["key"] == '"month_name"':
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
-            #filters.append({"key": "month_name", "cond": "one-off", "value": condition["value"].split(",")})
     discard_filters = ['YTM', 'DATE', 'month_name', 'ind_sbu_cumulative', 'ind_analytics','table_graph', 'fiscal_year',
                        'company_name', 'table', 'table_month', 'inc', 'OMC', 'A', 'H', 'C', 'cogroup']
     filters = [condition for condition in filters if condition['key'].strip('"') not in discard_filters]
@@ -187,7 +192,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         else:
                 group_items = [Base_Filters[Base_Filters.index(drill_state) + 1].strip('"')]
     if '"ind_sbu_cumulative"' in [x['key'] for x in filters]:
-        months_list = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR'] 
+        months_list = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']
         req_month = [x['value'] for x in filters if x['key'] =='"month_name"'][0]
         req_index = months_list.index(req_month.strip('"'))
         cumulative_months = months_list[:req_index+1] 
@@ -355,6 +360,15 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                     }
                 )
     else:
+        if '"table_graph"' in [x['key'] for x in filters]:
+            summary.to_csv('/tmp/summry_latest.csv',index = False)
+            #summary_py = summary[summary['fiscal_year'] == summary['fiscal_year'].unique().tolist()[0]]
+            
+            
+            #summary = summary[summary['fiscal_year'] == summary['fiscal_year'].unique().tolist()[-1]]
+            #summary.to_csv('/tmp/summry_latest1.csv',index = False)
+        
+        print("prefix_map",prefix_map)
         transformed_data = [
             {
                 f"{prefix_map[item['fiscal_year']]}_market_share": item["market_share"],
@@ -411,10 +425,34 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
     if resp_format == 'company_level' and time_grain == 'Monthly' and '"inc"' in [x['key'] for x in filters]:
         cols_to_cumsum = [col for col in df.columns if col != 'month_name']
         df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
-        return {'message': 'Industry_Performance', 'status': True,
+        """
+        below code is for line graph combining all opsu as pus companies and all pvt companies as pvt in the result
+        """
+        required_companies = [x['value'] for x in filters if x['key'].strip('"') == 'company_name'][0].split(",")
+        base_companies = ['HPCL','BPCL','IOCL']
+        selected_columns = [col for col in df.columns if any(comp.lower() in col for comp in base_companies)]
+        if required_companies:
+            for company in ['HPCL','BPCL','IOCL']:
+                required_companies.remove(company)
+        
+        actual_columns = [f"actual_{company.lower()}_share" for company in required_companies if f"actual_{company.lower()}_share" in df.columns]
+        history_columns = [f"history_{company.lower()}_share" for company in required_companies if f"history_{company.lower()}_share" in df.columns]  
+        if len(required_companies) ==6:   
+            df["actual_psu_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            df["history_psu_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            new_df = df[selected_columns + ["actual_psu_share", "history_psu_share"]]
+        if len(required_companies) >6:   
+            #df["actual_pvt_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            #df["history_pvt_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
+            df["actual_pvt_share"] = df[actual_columns].sum(axis=1)
+            df["history_pvt_share"] = df[history_columns].sum(axis=1)
+            new_df = df[selected_columns + ["actual_pvt_share", "history_pvt_share"]]
+        if len(required_companies) <=3:
+            return {'message': 'Industry_Performance', 'status': True,
                 'data': {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
-    if resp_format == 'company_level' and (
-            resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format_org == 'company_level_heatmap':
+        return {'message': 'Industry_Performance', 'status': True,
+                'data': {key: value.to_dict() for key, value in new_df.to_dict(orient='series').items()}}
+    if resp_format == 'company_level' and (resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format_org == 'company_level_heatmap':
         com_name = [x['value'] for x in filters if x['key'] == '"company_name"'][0]
         cols = [col for col in df.columns if
                 com_name in col or 'month_name' in col or 'sbu_name' in col or 'productname' in col]
@@ -450,8 +488,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         return {'message': 'Industry Cummulative company_level Data', 'data': list(output.values()), 'status': True,
                 'company': unique_companies}
 
-    if resp_format == 'company_level' and (
-            resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format == 'company_level':
+    if resp_format == 'company_level' and (resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format == 'company_level':
         months = df['month_name'].unique().tolist()
         company = [x['value'].strip('"') for x in filters if x['key'] == '"company_name"'][0].lower()
         for col in df.columns.tolist():
@@ -500,9 +537,51 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':list2,'company':unique_companies}
 
     if '"table_graph"' in [x['key'] for x in filters]:
+        df.to_csv('/tmp/df_graph.csv',index = False)
+        companies = [col.replace("actual_", "").replace("_share", "") for col in df.columns 
+             if col.startswith("actual_") and "market" not in col]
+
+        output_list = []
+
+        for company in companies:
+            actual_col = f"actual_{company}_share"
+            history_col = f"history_{company}_share"
+            
+            total_actual = df[actual_col].sum()
+            total_history = df[history_col].sum()
+
+            # Handle division by zero scenarios
+            if total_history == 0:
+                market_share = 100 if total_actual > 0 else None  # If actual > 0 & history = 0 -> 100%, else None
+            elif total_actual == 0:
+                market_share = -100  # If actual = 0 & history > 0 -> -100%
+            else:
+                market_share = round(((total_actual - total_history) / total_history) * 100, 1)
+            
+            entry = {
+                "company": company.upper(),
+                "market_share": market_share,
+                "tmt": int(total_actual)  # Total actual share
+            }
+            output_list.append(entry)
+        return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':output_list,'company':unique_companies}
+
+        companies = [col.replace("actual_", "").replace("_share", "") for col in df.columns if col.startswith("actual_")]
+        for company in companies:
+            actual_col = f"actual_{company}_share"
+            history_col = f"history_{company}_share"
+            growth_col = f"{company}_growth"
+            df[growth_col] = np.where(df[history_col] == 0,np.where(df[actual_col] > 0, 100, np.nan),np.where(df[actual_col] == 0, -100,round(((df[actual_col] - df[history_col]) / df[history_col]) * 100, 1)))
+            #df[growth_col] = round(((df[actual_col] - df[history_col]) / df[history_col]) * 100,1)
+            df.dropna(subset=[col for col in df.columns if 'growth' in col], how='all', inplace=True)
+
+        df.to_csv('/tmp/df_revised.csv',index = False)
         company_columns = [col for col in df.columns if col not in ['actual_market_share', 'month_name']]
         company_totals = df[company_columns].sum()
         total_market_share = df['actual_market_share'].sum()
+        
+        
+        '''
         # Construct output list
         output = [
             {
@@ -512,6 +591,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             }
             for company, share in company_totals.items()
         ]
+        '''
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':output,'company':unique_companies}
 
     if '"table_month"' in [x['key'] for x in filters]:
@@ -751,6 +831,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
              cond["cond"] = 'one-off'
              cond["value"] = value
     where_conditions = []
+    where_conditions.extend(['"category" NOT IN (\'O\')'])
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters +filters)
     '''
     if '"ind_analytics"' in [x['key'] for x in filters]:
@@ -769,7 +850,7 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
         clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters + filters)
     '''
     if clause:
-        where_conditions = [clause]
+        where_conditions.extend([clause])
     group_keys = [key.strip('"') for key in group_by_filter]
     req_keys = f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """
     resp_data = await m60.collect_data([req_keys], 'industry_performance', where_conditions,
@@ -916,9 +997,10 @@ async def industry_performance_compare(filters, cross_filters, drill_state="", t
     filters.append({"key": "coname", "cond": "one-off",
                     "value": list(set(omc_companies + [cond_filter['key'].strip('"') for cond_filter in companies]))})
     where_conditions = []
+    where_conditions.extend(['"category" NOT IN (\'O\')'])
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
-        where_conditions = [clause]
+        where_conditions.extend([clause])
     query = generate_growth_query("industry_performance",
                                   list(set([cond_filter['key'].strip('"') for cond_filter in companies])),
                                   drop_company, growth_company,
@@ -980,21 +1062,108 @@ async def get_category_wise_cumulative_data(filters):
     :param filters:
     :return:
     """
+    months_list = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR']
+    present_month = datetime.datetime.now().strftime('%b').upper()
+    months_list = months_list[:months_list.index(present_month)]
     filters, fiscal_year_pre, fiscal_year_last, months = get_date_filters(filters)
+    if not months:
+        months = months_list
     where_conditions = []
-    filters.append({"key": "\"fiscal_year\"", "cond": "equals", "value": "2024-2025"})
+    where_conditions.extend(['"category" NOT IN (\'O\')'])
+    fiscal_years = ["2023-2024", "2024-2025"]
+    filters.append({"key": "\"fiscal_year\"", "cond": "one-off", "value": fiscal_years})
     for filter_cond in filters:
         filter_cond['key'] = filter_cond['key'].strip('"')
+    if months:
+        filters.append({'key': 'month_name', 'cond': 'one-off', 'value': months})
+
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
-        where_conditions = [clause]
-    group_by = ["coname", "company_name"]
-    req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "coname", "company_name"]
+        
+        where_conditions.extend([clause])
+    group_by = ["coname", "company_name", "fiscal_year"]
+    req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "coname", "company_name", "fiscal_year"]
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
                                        group_by, "")
     df = pd.DataFrame(resp_data)
-    result = df.groupby('company_name').apply(lambda x: dict(zip(x['coname'], x['sales']))).to_dict()
-    return result
+    df["sales"] = df["sales"].astype(str).apply(float)
+    fiscal_years = sorted(df["fiscal_year"].unique())
+    result_dict = {year: {} for year in fiscal_years}
+    for year in fiscal_years:
+        filtered_df = df[df["fiscal_year"] == year]
+        filtered_df_mpsu = filtered_df[filtered_df['coname'].isin(OMC['MPSU'])]
+        filtered_df_mpsu['company_name'] = 'MPSU'
+        filtered_df_psu = filtered_df[filtered_df['coname'].isin(OMC['MPSU']+OMC['OtherPSU'])]
+        filtered_df_psu['company_name'] = 'PSU'
+        filtered_df_pvt = filtered_df[filtered_df['coname'].isin(OMC['PSU']+OMC['PVT'])]
+        filtered_df_pvt['company_name'] = 'PSU+PVT'
+        filtered_df = pd.concat([filtered_df_mpsu, filtered_df_psu, filtered_df_pvt])
+        for category in filtered_df["company_name"].unique():
+            category_df = filtered_df[filtered_df["company_name"] == category]
+            result_dict[year][category] = {
+                row["coname"]: row["sales"] for _, row in category_df.iterrows()
+            }
+    # Compute growth percentage
+    growth_dict = {}
+
+    for key, details in result_dict.items():
+        tuned_data = {}
+        for co in details:
+            total = sum(list(details[co].values()))
+            if co == "MPSU":
+                tuned_data[co] = [
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2),
+                     "subData": [{"category": c, "value": v,
+                                  "percentage": round((v / total) * 100, 2)}]} for c, v in
+                    details[co].items()]
+            elif co == "PSU":
+                mpsu = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2),
+                         "subData": [{"category": c, "value": v,
+                                      "percentage": round((v / total) * 100, 2)}]} for c, v in
+                        details[co].items() if c in OMC['MPSU']]
+                other_psu = [
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2)} for
+                    c, v in details[co].items() if c in OMC['OtherPSU']]
+                mpsu.append({"category": "Other PSU", "value": sum([r['value'] for r in other_psu]),
+                             "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2),
+                             "subData": other_psu})
+                tuned_data[co] = mpsu
+            elif co == "PSU+PVT":
+                mpsu = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2),
+                         "subData": [{"category": c, "value": v,
+                                      "percentage": round((v / total) * 100, 2)}]} for c, v in
+                        details[co].items() if c in OMC['MPSU']]
+                other_psu = [
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2)} for
+                    c, v in details[co].items() if c in OMC['OtherPSU']]
+                pvt = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2)}
+                       for c, v in details[co].items() if c in OMC['PVT']]
+                mpsu.append({"category": "Other PSU", "value": sum([r['value'] for r in other_psu]),
+                             "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2),
+                             "subData": other_psu})
+                mpsu.append({"category": "PVT", "value": sum([r['value'] for r in pvt]),
+                             "percentage": round((sum([r['value'] for r in pvt]) / total) * 100, 2), "subData": pvt})
+                tuned_data[co] = mpsu
+        result_dict[key] = tuned_data
+    for cogroup, details in result_dict[fiscal_years[-1]].items():
+        growth_dict[cogroup] = {}
+        cat_prev = {rec['category']: rec for rec in result_dict[fiscal_years[0]][cogroup]}
+        cat_pres = {rec['category']: rec for rec in result_dict[fiscal_years[1]][cogroup]}
+        for company, data in cat_pres.items():
+            if len(data['subData']) <= 1:
+                growth_dict[cogroup][company] = round(data['percentage'] - cat_prev[company]['percentage'], 1)
+            else:
+                cat_prev_sub = {rec['category']: rec for rec in cat_prev[company]['subData']}
+                cat_pres_sub = {rec['category']: rec for rec in data['subData']}
+                for co, dt in cat_pres_sub.items():
+                    growth_dict[cogroup][co] = round(dt['percentage'] - cat_prev_sub[co]['percentage'], 1)
+
+    growth_dict = {
+    category: {company: value for company, value in data.items() if value != 0.0 and value != -0.0}
+    for category, data in growth_dict.items()
+}
+    result_dict["growth_percentage"] = growth_dict
+    return result_dict
 
 
 async def generate_omc_compare_data(filters, drill_state):
@@ -1009,29 +1178,37 @@ async def generate_omc_compare_data(filters, drill_state):
     ind_sbu_cumulative = [x['value'] for x in filters if 'ind_sbu_cumulative' in x['key'].lower()]
 
     # Fetching all selected Company groups
-    selected_co = [x['value'] for x in filters if x['key'].strip() == 'cogroup']
+    selected_co = [x['value'].strip() for x in filters if x['key'].strip('"') == 'cogroup']
+
+    # Fetching all selected companies which will send for display
+    required_companies = list(set([[rec.strip() for rec in x['value'].split(',')]
+                                   for x in filters if x['key'].strip('"') == 'coname'][0]))
+
     # If no group selected then considering only MPSU
-    if not selected_co:
+    if not selected_co and not required_companies:
         selected_co = ["MPSU"]
 
     # Companies required for market share
     market_share_companies = []
     for co in selected_co:
         market_share_companies.extend(OMC.get(co, []))
-        
-    # Fetching all selected companies which will send for display
-    required_companies = [x['value'].split(',') for x in filters if x['key'].strip('"') == 'coname'][0]
+
+    market_share_companies = list(set(market_share_companies))
+
+    if not market_share_companies and required_companies:
+        market_share_companies = required_companies.copy()
+
     if not required_companies:
-        required_companies = market_share_companies
+        required_companies = market_share_companies.copy()
 
     # Discarding extra filters
     filters = [x for x in filters if x['key'].strip('"') not in ['cogroup', 'coname', 'ind_sbu_cumulative']]
     # If ind_sbu_cumulative is true doing Cumulative upto given month else only for the given month
     if True in ind_sbu_cumulative or 'true' in ind_sbu_cumulative:
         req_month = [x['value'] for x in filters if x['key'] == '"month_name"'][0]
-        if len(req_month.split(",")) == 2:
+        if len(req_month.split(",")) >= 2:
             start_month = req_month.split(",")[0].strip()
-            end_month = req_month.split(",")[1].strip()
+            end_month = req_month.split(",")[-1].strip()
             months = months_list[months_list.index(start_month):months_list.index(end_month) + 1]
         else:
             req_index = months_list.index(req_month.strip())
@@ -1042,6 +1219,7 @@ async def generate_omc_compare_data(filters, drill_state):
     if not months:
         months = months_
     where_conditions = []
+    where_conditions.extend(['"category" NOT IN (\'O\')'])
     filters = [cond_filter for cond_filter in filters if cond_filter['key'].strip('"') not in ["fiscal_year", 'month_name']]
     filters.append({"key": "\"fiscal_year\"", "cond": "in", "value": ["2023-2024", "2024-2025"]})
     for filter_cond in filters:
@@ -1067,11 +1245,11 @@ async def generate_omc_compare_data(filters, drill_state):
 
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
-        where_conditions = [clause]
+        where_conditions.extend([clause])
 
     group_by = ["coname", "fiscal_year"]
     req_keys = [f"""ROUND(SUM("netweight_tmt")::numeric,0) AS "sales" """, "fiscal_year", "coname"]
-    if drill_state not in group_by:
+    if drill_state and drill_state not in group_by:
         group_by.append(drill_state)
         req_keys.append(drill_state)
     resp_data = await m60.collect_data(req_keys, 'industry_performance', where_conditions, "", "",
@@ -1081,7 +1259,7 @@ async def generate_omc_compare_data(filters, drill_state):
                                  "Market Share History": {}})
 
     for entry in resp_data:
-        drill_key = entry[drill_state]
+        drill_key = entry[drill_state] if drill_state else "cumulative"
         company = entry["coname"]
         sales = float(entry["sales"])  # Convert Decimal to int
 
@@ -1091,26 +1269,49 @@ async def generate_omc_compare_data(filters, drill_state):
             table[drill_key]["History"][company] = sales
 
     # Convert table to list format
-    structured_data = [{f"{drill_state}": key, **values} for key, values in table.items() if key]
+    structured_data = [{f"{drill_state if drill_state else 'cumulative'}": key, **values} for key, values in table.items() if key]
+
+    cumulative_data = {"sbu_name": "Total", "History": {}, "Market Share": {}, "Growth": {}, "Sales": {},
+                       "Market Share History": {}}
+    for rec in structured_data:
+        if 'cumulative' in rec:
+            del rec['cumulative']
+            continue
+        if drill_state:
+            for key, value in rec.items():
+                if key not in ['History', 'Sales']:
+                    continue
+                for co, val in value.items():
+                    if co not in cumulative_data[key]:
+                        cumulative_data[key][co] = 0
+                    cumulative_data[key][co] += val
+    if drill_state:
+        structured_data = [cumulative_data] + structured_data
 
     # Calculating Market Share
     for entry in structured_data:
         total_sales = sum(entry['Sales'].values())
+        total_history_sales = sum(entry['History'].values())
         for company in entry['Sales']:
-            entry['Market Share'][company] = round(entry['Sales'].get(company, 0) / total_sales * 100, 2)
+            entry['Market Share'][company] = round((entry['Sales'].get(company, 0) / total_sales) * 100, 2)
         for company in entry['History']:
-            entry['Market Share History'][company] = round(entry['History'].get(company, 0) / total_sales * 100, 2)
+            entry['Market Share History'][company] = (
+                round((entry['History'].get(company, 0) / total_history_sales * 100), 2))
         for company in entry['Sales']:
             if entry['History'].get(company, 0):
                 entry['Growth'][company] = round((entry['Sales'].get(company, 0) -
                                                   entry['History'].get(company, 0)) /
-                                                 entry['History'].get(company, 0) * 100, 2)
+                                                 entry['History'].get(company, 0) * 100, 1)
             else:
                 entry['Growth'][company] = 100
         for name in entry:
             if isinstance(entry[name], dict):
                 entry[name] = {key: value for key, value in entry[name].items() if key in required_companies}
 
+    for rec in structured_data:
+        if 'cumulative' in rec:
+            del rec['cumulative']
+            continue
     return structured_data
 
 
@@ -1129,3 +1330,4 @@ async def generate_industry_recommendations():
     # Generating auto recommendations
     # Compare HPCL last year vs this year lower by state, district, product
     ...
+

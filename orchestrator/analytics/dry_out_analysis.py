@@ -5,9 +5,11 @@ import pandas as pd
 import polars as pl
 import hpcl_ceg_model
 import charts_actions
+import mysql.connector
 import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
+import orchestrator.dbconnector.credential_loader as credential_loader
 from orchestrator.dbconnector.widget_actions.lpg_plant_queries import today
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
@@ -675,8 +677,21 @@ async def _get_ims_day_wise_report(report_date: str):
     stats_resp = stats_resp.drop_duplicates(subset=["LOCN_CODE", "INDENT_NO", "DEALER_CODE", "PROD"], keep='first')
     return stats_resp.to_dict(orient='records')
 
+async def get_custom_timestamp():
+    now = datetime.datetime.now()
+    # If minutes are less than 10, take the previous hour
+    if now.minute < 10:
+        adjusted_time = now - datetime.timedelta(hours=1)
+    else:
+        adjusted_time = now
+    # Format as YYMMDD-HH00
+    timestamp = adjusted_time.strftime("%y%m%d-%H00")
+
+    return timestamp
+
 async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     dry_out_in_days = "', '".join(x for x in dry_out_in_days)
+    date_time = await get_custom_timestamp()
     query = f"""WITH CombinedData AS (
                     SELECT 
                         ir."LOCN_CODE",
@@ -699,28 +714,25 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         ip."JDE_TRUCK_NO",
                         tse."LOADED_ON",
                         ROW_NUMBER() OVER (
-                            PARTITION BY COALESCE(ir."LOCN_CODE"::TEXT, ''), 
-                                         COALESCE(ir."INDENT_NO"::TEXT, ''), 
-                                         COALESCE(ir."DEALER_CODE"::TEXT, ''), 
-                                         COALESCE(ip."PROD"::TEXT, '') 
-                            ORDER BY tse."LOADED_ON" ASC
+                            PARTITION BY ir."LOCN_CODE", ir."INDENT_NO", ir."DEALER_CODE", ip."PROD"
+                            ORDER BY tse."LOADED_ON" ASC NULLS LAST
                         ) AS rn
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST" ir
                     LEFT JOIN 
-                        "IMS_SAP"."INDENT_PRODUCTS" ip
+                        (select * from "IMS_SAP"."INDENT_PRODUCTS" where substr(run_id, 1, 6) = '{date_time[:6]}') as ip
                     ON 
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(ip."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."DEALER_CODE"::TEXT, '') = COALESCE(ip."DEALER_CODE"::TEXT, '')
                         AND COALESCE(ir."INDENT_NO"::TEXT, '') = COALESCE(ip."INDENT_NO"::TEXT, '')
                     LEFT JOIN 
-                        "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" tse
+                        (select * from "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" where substr(run_id, 1, 6) = '{date_time[:6]}') as tse 
                     ON 
                         COALESCE(ir."LOCN_CODE"::TEXT, '') = COALESCE(tse."LOCN_CODE"::TEXT, '')
                         AND COALESCE(ir."TRUCK_REGNO"::TEXT, '') = COALESCE(tse."TRUCK_REGNO"::TEXT, '')
                         AND tse."CARD_STATUS" = 'O'
                         AND tse."LOADED_ON" >= ir."PROD_REQD_DT"
-                        AND tse."LOADED_ON" <= ir."PROD_REQD_DT" + INTERVAL '1 day'
+                        AND tse."LOADED_ON" BETWEEN ir."PROD_REQD_DT" AND (ir."PROD_REQD_DT" + INTERVAL '1 day')
                 ),
                 SalesData AS (
                     SELECT 
@@ -738,7 +750,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                         avgsales_7days
                     
                     FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
-                    WHERE run_id = TO_CHAR(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata', 'YYMMDD-HH00')
+                    WHERE run_id = '{date_time}'
                 )
                 SELECT 
                     a.zone as "ZONE",
@@ -766,7 +778,7 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
                     cd."LOADED_ON",
                     sd.avgsales_7days as "AVGSALES_7DAYS"
                 FROM 
-                    (SELECT * 
+                    (SELECT sap_id, indent_no, product_code, zone, region, sales_area, location_name, terminal_plant_id, indent_status, dry_out_in_days
                      FROM alerts 
                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
                      AND indent_status NOT IN ('Cancelled', 'Completed')
@@ -1174,7 +1186,7 @@ async def dry_out_diff():
         query=cris_query
     )
 
-    novex_query = (f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days"
+    novex_query = (f"select bu, sap_id, sop_id, id, product_code, indent_no, dealer_id, workflow_instance_id, workflow_datetime, dry_out_in_days, "
                    f"mark_as_false from alerts where interlock_name = 'Dry Out Each Indent Wise MainFlow' and alert_status != 'Close'")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
@@ -1204,3 +1216,257 @@ async def dry_out_diff():
     resp = resp[resp['_merge'] != 'both']
     resp.to_csv("/tmp/dryout_difference.csv", index=False)
     return resp
+
+async def dry_out_report(dry_out_in_days='1'):
+    alerts_query = f"""
+            SELECT sap_id, indent_no, product_code, zone, region, sales_area, 
+                   location_name, terminal_plant_id, indent_status, dry_out_in_days
+            FROM alerts 
+            WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow'
+            AND indent_status NOT IN ('Cancelled', 'Completed')
+            AND dry_out_in_days = '{dry_out_in_days}';
+            """
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    alerts_resp = await function(
+        query=alerts_query
+    )
+    alerts_resp = pd.DataFrame(alerts_resp)
+
+    query_combined = f"""
+                    SELECT ir."LOCN_CODE", ir."INDENT_NO", ir."PROD_REQD_DT", ir."DEALER_CODE", 
+                           ir."TRUCK_REGNO", ip."PROD" AS "PRODUCT_CODE", ip."QTY",
+                           tse."LOADED_ON"
+                    FROM (select * from "IMS_SAP"."INDENT_REQUEST" where substr(run_id, 1, 6) = '250317') ir
+                    LEFT JOIN (select * from "IMS_SAP"."INDENT_PRODUCTS" where substr(run_id, 1, 6) = '250317') ip
+                        ON ir."LOCN_CODE" = ip."LOCN_CODE"
+                        AND ir."DEALER_CODE" = ip."DEALER_CODE"
+                        AND ir."INDENT_NO" = ip."INDENT_NO"
+                        AND substr(ip.run_id, 1, 6) = %s
+                    LEFT JOIN (select * from "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" where substr(run_id, 1, 6) = '250317') tse
+                        ON ir."LOCN_CODE" = tse."LOCN_CODE"
+                        AND ir."TRUCK_REGNO" = tse."TRUCK_REGNO"
+                        AND tse."CARD_STATUS" = 'O'
+                        AND substr(tse.run_id, 1, 6) = %s;
+                    """
+
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    combined_resp = await function(
+        query=query_combined
+    )
+    combined_resp = pd.DataFrame(combined_resp)
+
+    query_sales = """
+                    SELECT rosapcode, 
+                           CASE item_name
+                               WHEN 'HSD' THEN '2812000'
+                               WHEN 'MS' THEN '2811000'
+                               WHEN 'TURBO' THEN '3912000'
+                               WHEN 'E20' THEN '2822000'
+                               WHEN 'POWER 95' THEN '3672000'
+                               WHEN 'POWER 99' THEN '2816000'
+                               WHEN 'POWER 100' THEN '3373000'
+                           END AS item_name_code,
+                           avgsales_7days
+                    FROM "HPCL_HOS"."sch_inventory_forecast_dashboard"
+                    WHERE run_id = '250317';
+                    """
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    sales_resp = await function(
+        query=query_sales
+    )
+    sales_resp = pd.DataFrame(sales_resp)
+
+    final_df = alerts_resp.merge(
+        combined_resp,
+        left_on=['sap_id', 'indent_no', 'product_code'],
+        right_on=['DEALER_CODE', 'INDENT_NO', 'PRODUCT_CODE'],
+        how='left'
+    ).merge(
+        sales_resp,
+        left_on=['sap_id', 'product_code'],
+        right_on=['rosapcode', 'item_name_code'],
+        how='left'
+    )
+    final_df = final_df.sort_values(by="LOADED_ON", ascending=True).groupby("INDENT_NO").first().reset_index()
+    print(final_df)
+    return final_df.to_dict(orient="records")
+
+async def get_dryout_aging(conditions):
+    query = f"""WITH distinct_alerts AS (
+                SELECT DISTINCT ON (sap_id) sap_id, created_at
+                FROM alerts
+                WHERE {conditions} AND progress_rate = '1'
+                ORDER BY sap_id, created_at ASC
+            )
+            SELECT 
+                COUNT(CASE WHEN created_at >= NOW() - INTERVAL '2 days' THEN 1 END) AS "less_than_2_days",
+                COUNT(CASE WHEN created_at >= NOW() - INTERVAL '7 days' AND created_at < NOW() - INTERVAL '2 days' THEN 1 END) AS "from_3_to_7_days",
+                COUNT(CASE WHEN created_at >= NOW() - INTERVAL '15 days' AND created_at < NOW() - INTERVAL '7 days' THEN 1 END) AS "from_8_to_15_days",
+                COUNT(CASE WHEN created_at < NOW() - INTERVAL '15 days' THEN 1 END) AS "more_than_15_days"
+            FROM distinct_alerts;"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    print("resp: ", resp)
+    return resp[0] if resp else {}
+
+async def get_ro_count_less_50(condition):
+    query = (f"SELECT SUBSTRING(CUST_CD, 3) AS CUST_CD, SUM(QTY_KL) AS Total_Net_Weight "
+             f"FROM PS.EDW_PRIMARY_SALES_FACT "
+             f"WHERE "
+             f"INVOICE_DT >= CURDATE() - INTERVAL 30 DAY "
+             f"GROUP BY CUST_CD "
+             f"HAVING Total_Net_Weight < 50;")
+    creds = credential_loader.get_credentials('TIBCO')
+    params = {
+        "host": creds['host'],
+        "database": creds['database'],
+        "user": creds['user'],
+        "password": creds['password'],
+        "port": creds['port'],
+        "connection_type": "mssql"
+    }
+    conn = get_db_connection(params)
+    cursor = conn.cursor()
+    cursor.execute(query)
+    data = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    data = pd.DataFrame.from_records(data, columns=columns)
+    data['CUST_CD'] = data['CUST_CD'].astype(str)
+
+    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    resp = pd.DataFrame(resp)
+    resp['sap_id'] = resp['sap_id'].astype(str)
+
+    resp = pd.merge(
+        data.drop_duplicates(subset=['CUST_CD']),
+        resp.drop_duplicates(subset=['sap_id']),
+        left_on=['CUST_CD'], right_on=['sap_id'],
+        how='left', indicator=True
+    )
+    return len(resp[resp['_merge'] == 'both'])
+
+def get_db_connection(params):
+    """
+    Establish a database connection
+    Args:
+        connection_string (str): Database connection string
+    Returns:
+        pyodbc connection
+    """
+    connection = mysql.connector.connect(
+        host=params['host'],
+        user=params['user'],
+        passwd=params["password"],
+        port=params["port"]
+        #database=database
+    )
+    return connection
+
+async def get_tar_analysis(condition):
+    query = (f"SELECT DISTINCT ON (rosapcode) "
+             f"rosapcode, "
+             f"exposure, "
+             f"CASE "
+             f"WHEN exposure < 100000000 THEN 1 "
+             f"WHEN exposure >= 100000000 AND exposure < 200000000 THEN 2 "
+             f"WHEN exposure >= 200000000 AND exposure < 500000000 THEN 3 "
+             f"ELSE 4 "
+             f"END AS category "
+             f"""FROM "HPCL_HOS".customer_balance;""")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "cris", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    cust_resp = await function(
+        query=query
+    )
+    cust_resp = pd.DataFrame(cust_resp)
+    cust_resp['rosapcode'] = cust_resp['rosapcode'].astype(str)
+
+    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    resp = pd.DataFrame(resp)
+    resp['sap_id'] = resp['sap_id'].astype(str)
+
+    resp = pd.merge(
+        cust_resp.drop_duplicates(subset=['rosapcode']),
+        resp.drop_duplicates(subset=['sap_id']),
+        left_on=['rosapcode'], right_on=['sap_id'],
+        how='left', indicator=True
+    )
+
+    _dict = {
+        "less_1_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 1)]),
+        "less_2_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 2)]),
+        "less_5_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 3)]),
+        "greater_5_cr": len(resp[(resp['_merge'] == 'both') & (resp['category'] == 4)])
+    }
+    return _dict
+
+async def get_tt_counts(condition):
+    query = f"""select substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" where dealer_code is not null"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    dealer_tt_resp = await function(
+        query=query
+    )
+    dealer_tt_resp = pd.DataFrame(dealer_tt_resp)
+    dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].astype(str)
+
+    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    resp = pd.DataFrame(resp)
+    resp['sap_id'] = resp['sap_id'].astype(str)
+
+    resp = pd.merge(
+        dealer_tt_resp.drop_duplicates(subset=['dealer_code']),
+        resp.drop_duplicates(subset=['sap_id']),
+        left_on=['dealer_code'], right_on=['sap_id'],
+        how='left', indicator=True
+    )
+
+    return len(resp[resp['_merge'] == 'both'])
