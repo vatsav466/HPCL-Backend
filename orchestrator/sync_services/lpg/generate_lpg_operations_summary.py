@@ -1098,13 +1098,13 @@ def generate_summary():
                             data[col] = data[col].fillna(0).astype(np.float64)
                         except Exception as e:
                             print(f"- Could Not Convert {col} to Float -")
-                    insertToDB(data, "LPG_OPERATIONS_SUMMARY_DATA")
+                    # insertToDB(data, "LPG_OPERATIONS_SUMMARY_DATA")
                     
                     for col in data.columns:
                         data.rename(columns={col: col.replace(".","_")}, inplace=True)
                     data["sap_id"] = plant["erp_id"]
-                    data["SiteRegion"] = plant["SiteRegion"]
-                    data['SiteArea'] = plant["SiteArea"]
+                    data["region"] = plant["SiteRegion"]
+                    data['site_area'] = plant["SiteArea"]
                     data["bu"] = "LPG"
                     if "filling_heads" in data.columns:
                         data["filling_heads"] = data["filling_heads"].astype(str).str.replace(".0","") + "H"

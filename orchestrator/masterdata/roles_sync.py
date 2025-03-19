@@ -305,6 +305,54 @@ async def sync_user_roles():
                         "name": "SOD",
                         "status": True
                     },
+                    "HQO Head LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Operations",
+                                    "LPG Home",
+                                    "LPG Plant",                    
+                                    "Video Analytics",
+                                    "LPG Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "HQO Sale General Manager": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Operations",
+                                    "LPG Home",
+                                    "LPG Plant",
+                                    "Video Analytics",
+                                    "LPG Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "HQO Operations LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Operations",
+                                    "LPG Home",
+                                    "LPG Plant",
+                                    "Video Analytics",
+                                    "LPG Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
                     "HQO HSE LPG": {
                         "allowed_pages": [
                             {
@@ -329,7 +377,8 @@ async def sync_user_roles():
                                     "LPG Operations",
                                     "LPG Home",
                                     "LPG Plant",
-                                    "Video Analytics"
+                                    "Video Analytics",
+                                    "LPG Analytics"
                                 ]
                             }
                         ],
