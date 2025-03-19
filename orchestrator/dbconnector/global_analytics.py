@@ -6693,6 +6693,8 @@ class GlobalAnalytics:
             
             # Complete the CTE and main query
             query += """
+                    GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, bcu_number
                 )
                 SELECT 
                     k.created_date,
@@ -7317,7 +7319,7 @@ class GlobalAnalytics:
                         zone,
                         location_name,
                         sap_id,
-                        bcu_number
+                        reassigned_bay
                     FROM 
                         host_bay_re_assignment
                     WHERE 1=1
@@ -7337,17 +7339,18 @@ class GlobalAnalytics:
             
             # Complete the CTE and main query
             query += """
+                GROUP BY 
+                        DATE(created_at), zone, location_name, sap_id, reassigned_bay
                 )
                 SELECT 
                     k.created_date,
                     k.zone,
                     k.location_name,
                     k.sap_id,
-                    k.bcu_number,
+                    k.reassigned_bay,
                     (SELECT COUNT(*) 
                     FROM alerts a 
-                    WHERE a.device_name = k.bcu_number 
-                    AND a.interlock_name = 'Bay reasignment'
+                    WHERE a.interlock_name = 'Bay reasignment'
                     AND DATE(a.created_at) = k.created_date) AS alert_count
                 FROM 
                     bay_reassignment k
