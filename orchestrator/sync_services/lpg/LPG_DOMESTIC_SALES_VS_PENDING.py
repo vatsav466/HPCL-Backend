@@ -1313,6 +1313,134 @@ def get_new_connection_data():
     insertToDB(data, "lpg_cdcms_nc_data", indexing_col=("ZOName", "MonthYear"))
     print(data)
     
+    
+def get_dbc_enrollment():
+    creds = credential_loader.get_credentials('APP_DB')
+    params={
+            "host": creds["host"],
+            "database": creds["database"],
+            "user": creds["user"],
+            "password": creds["password"],
+            "port": creds["port"]
+            }
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    query = """ SELECT dm.JDEDistributorCode,
+                    CASE WHEN CM.NatureCode NOT IN ('16') THEN 'PMUY' ELSE 'NPMUY' END AS ConsumerType,
+                    FORMAT(csi.SVDate, 'yyyy-MM') MMYYYY,FORMAT(csi.SVDate, 'MMM-yyyy') MonthYear,COUNT(1) AS DBCIssuedCount
+                FROM DCMS.tblConsumerMaster CM WITH(NOLOCK)
+                    INNER JOIN DCMS.tblConsumerSVInfo CSI WITH(NOLOCK)
+                    ON CM.UniqueconsumerId = CSI.UniqueconsumerId
+                    INNER JOIN DCMS.tblDistributorMaster dm WITH(NOLOCK)
+                    ON dm.DistributorId = cm.DistributorID
+                WHERE SVTypeCode ='SVADDL'
+                    AND CM.NatureCode NOT IN (3,4,10)
+                    AND CSI.SVDate >='2023-04-01'
+                    AND CSI.SVDate <GETDATE()
+                GROUP BY  dm.JDEDistributorCode,CASE WHEN CM.NatureCode NOT IN ('16') THEN 'PMUY' ELSE 'NPMUY' END,
+                    FORMAT(csi.SVDate, 'yyyy-MM') ,FORMAT(csi.SVDate, 'MMM-yyyy') """
+    data = fetch_data(cursor, query, getData=True)
+    data = data.with_columns(System_Idx=pl.lit(""))
+    data = data.with_columns(pl.col('System_Idx').map_elements(lambda x: str(uuid.uuid4().hex)))
+
+    tblDistributorMaster = """ SELECT * FROM DCMs.tblDistributorMaster; """
+    tblDistributorMaster = fetch_data(cursor, tblDistributorMaster, getData=True)
+
+    tblDistributorMaster = tblDistributorMaster.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
+    data = data.with_columns(pl.col("JDEDistributorCode").fill_null(0).cast(pl.Int64).alias("JDEDistributorCode"))
+    # Getting SACode
+    data = _merge_data(
+        left_df=data,
+        right_df=tblDistributorMaster.select(["JDEDistributorCode", "DistributorName", "SACode", "StateCode", "DistrictCode", "TalukaCode", "CityCode"]),
+        left_on=["JDEDistributorCode"],
+        right_on=["JDEDistributorCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblSAMaster = """ SELECT * FROM DCMs.tblSAMaster; """
+    tblSAMaster = fetch_data(cursor, tblSAMaster, getData=True)
+
+    # Getting SAName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblSAMaster.select(["SACode", "ROCode", "SAName"]),
+        left_on=["SACode"],
+        right_on=["SACode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblROMaster =  """ SELECT * FROM DCMs.tblROMaster; """
+    tblROMaster = fetch_data(cursor, tblROMaster, getData=True)
+
+    # Getting ROName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblROMaster.select(["ROCode", "ZOCode", "ROName"]),
+        left_on=["ROCode"],
+        right_on=["ROCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    tblZOMaster =  """ SELECT * FROM DCMs.tblZOMaster; """
+    tblZOMaster = fetch_data(cursor, tblZOMaster, getData=True)
+
+    # Getting ZOName
+    data = _merge_data(
+        left_df=data,
+        right_df=tblZOMaster.select(["ZOCode", "ZOName"]),
+        left_on=["ZOCode"],
+        right_on=["ZOCode"],
+        how="left",
+        suffixes="_y",
+        indicator=False
+    )
+
+    zoneMap = {
+            "LPG - NORTH WEST ZONE": "NWZ",
+            "LPG - NORTH ZONE": "NZ",
+            "LPG - WEST ZONE": "WZ",
+            "LPG - SOUTH CENTRAL ZONE": "SCZ",
+            "LPG - SOUTH ZONE": "SZ",
+            "LPG - NORTH CENTRAL ZONE": "NCZ",
+            "LPG - EAST ZONE": "EZ"
+            }
+
+    data = data.unique("System_Idx")
+    month_order = {'Apr': 0, 'May': 1, 'Jun': 2, 'Jul': 3, 'Aug': 4, 'Sep': 5,
+                   'Oct': 6, 'Nov': 7, 'Dec': 8, 'Jan': 9, 'Feb': 10, 'Mar': 11}
+    data = data.with_columns(pl.col("ZOName").str.strip_chars().replace(zoneMap).alias("ZOName"))
+    data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
+
+    data = data.with_columns(pl.col("MonthYear").str.split("-").list.get(0).alias("Month"))
+    data = data.with_columns(pl.col("MonthYear").str.split("-").list.get(1).alias("Year"))
+    data = data.with_columns(pl.col("Month").replace(month_order).alias("month_number"))
+
+    data = calculate_financial_year(data)
+
+    for col in data.columns:
+        if col.endswith("_y"):
+            data = data.drop(col)
+
+    # trunc_query = """ TRUNCATE lpg_cdcms_dbc_enrollment_data; """
+    # fetch_data(cursor, trunc_query, getData=False, params=params)
+    insertToDB(data, "lpg_cdcms_dbc_enrollment_data", indexing_col=("ZOName", "MonthYear"))
+    print(data)
+    
 
 def get_consumer_statistics():
     creds = credential_loader.get_credentials('APP_DB')
