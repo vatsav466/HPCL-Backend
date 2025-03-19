@@ -84,12 +84,12 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         open_alerts = await self.get_all_alerts(location_id, zone)
 
         if not open_alerts:
-            return {"lpg_oi_score": 85, "details": "No open alerts found"}
+            return {"lpg_oi_score": 85, "lpg_category_scores": {}}
 
         alerts_df = pd.DataFrame(open_alerts)
 
         if 'interlock_name' not in alerts_df.columns:
-            return {"lpg_oi_score": 85, "details": "Invalid alert data format"}
+            return {"lpg_oi_score": 85, "lpg_category_scores": {}}
 
         alerts_df = alerts_df[alerts_df['interlock_name'].isin(['O-Ring Leak Rejection',
                                                                 'Valve Leak Rejection', 'Check Scale Rejection'])]
@@ -98,13 +98,13 @@ class LPGPerformanceIndex(performance_index_factory.PerformanceIndex):
         lpg_rules = self.rules_df[self.rules_df['AlertSection'] == 'LPG']
 
         if lpg_rules.empty:
-            return {"lpg_oi_score": 85, "details": "No LPG rules found"}
+            return {"lpg_oi_score": 85, "lpg_category_scores": {}}
 
         alerts_df['DeviceCategory'] = alerts_df['interlock_name'].map(map_device_category)
         total_devices = alerts_df['interlock_name'].nunique()
         print("total_devices --> ", total_devices)
         if total_devices == 0:
-            return {"lpg_oi_score": 85, "details": "No valid devices found"}
+            return {"lpg_oi_score": 85, "lpg_category_scores": {}}
 
         alert_counts = alerts_df.groupby('DeviceCategory')['interlock_name'].nunique()
         print("alert_counts --> ", alert_counts)
