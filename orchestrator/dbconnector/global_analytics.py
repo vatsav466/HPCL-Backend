@@ -5066,7 +5066,7 @@ class GlobalAnalytics:
                     )
                 else:
                     # Group by interlock level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "created_date", "alert_category", "alert_type", "device_name"]).agg(
+                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "interlock_name", "created_date", "alert_category", "alert_type", "device_name"]).agg(
                         pl.sum("alert_count").alias("total")
                     )
 
@@ -5126,14 +5126,14 @@ class GlobalAnalytics:
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["sap_id", "zone", "location_name", "month_year", "alert_category", "alert_type", "device_name"]
+                    group_cols = ["sap_id", "zone", "location_name", "interlock_name", "month_year", "alert_category", "alert_type", "device_name"]
 
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
                     )
                 else:
                     # Group by interlock level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "month_year", "alert_category", "alert_type", "device_name"]).agg(
+                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "interlock_name", "month_year", "alert_category", "alert_type", "device_name"]).agg(
                         pl.sum("alert_count").alias("total")
                     )
 
