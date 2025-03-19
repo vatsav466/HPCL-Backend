@@ -604,7 +604,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     print("dryout_condition: ", conditions)
 
-    stats_query = "select distinct sap_id, max(progress_rate) as present_stage " \
+    stats_query = "select distinct sap_id, min(progress_rate) as present_stage " \
                   f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed') " \
                   f"group by sap_id"
     stats_resp = await function(
