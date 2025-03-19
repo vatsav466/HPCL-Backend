@@ -1877,6 +1877,7 @@ Model TagsData {
     name optional str
     device_type optional str
     count optional str
+    device_count optional str
     zone optional str
     system optional str
     equipment_name optional str
@@ -1889,9 +1890,27 @@ Model TagsData {
     Action=> get_tags_data {
     }
 
+
     Config=> {
         access_key_mapping=''
         search_fields='sap_id,name,device_type,zone,system'
+    }
+}
+
+Model ArchitectureData{
+    sap_id optional str
+    name optional str
+    device_type optional str
+    count optional str
+    zone optional str
+    system optional str
+    equipment_name optional str
+
+    Action=> architecture_details {
+
+    }
+    Action=> architecture_data {
+
     }
 }
 

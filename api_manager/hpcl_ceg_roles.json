@@ -3844,6 +3844,81 @@
             ]
         },
         {
+            "name": "architecturedata",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "ArchitectureData",
+            "attributes": {},
+            "uris": [
+                "/api/architecturedata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "architecture_details"
+                },
+                {
+                    "name": "architecture_data"
+                }
+            ]
+        },
+        {
+            "name": "architecturedata_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "ArchitectureData_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/architecturedata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "architecturedata_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "ArchitectureData_admin",
+            "attributes": {},
+            "uris": [
+                "/api/architecturedata/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "architecture_details"
+                },
+                {
+                    "name": "architecture_data"
+                }
+            ]
+        },
+        {
             "name": "performanceindex",
             "type": "all",
             "ownerManagedAccess": false,
@@ -4406,6 +4481,14 @@
         {
             "name": "get_tags_data",
             "displayName": "get_tags_data"
+        },
+        {
+            "name": "architecture_details",
+            "displayName": "architecture_details"
+        },
+        {
+            "name": "architecture_data",
+            "displayName": "architecture_data"
         },
         {
             "name": "get_pi_score",
