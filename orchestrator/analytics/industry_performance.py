@@ -1209,10 +1209,11 @@ async def generate_omc_compare_data(filters, drill_state):
         required_companies = market_share_companies.copy()
 
     # Discarding extra filters
-    filters = [x for x in filters if x['key'].strip('"') not in ['cogroup', 'coname', 'ind_sbu_cumulative']]
+    filters = [x for x in filters if x['key'].strip('"') not in ['cogroup', 'coname', 'ind_sbu_cumulative'] and x['value']]
     # If ind_sbu_cumulative is true doing Cumulative upto given month else only for the given month
     if True in ind_sbu_cumulative or 'true' in ind_sbu_cumulative:
-        req_month = [x['value'] for x in filters if x['key'] == '"month_name"'][0]
+        req_month = [x['value'] for x in filters if x['key'] == '"month_name"']
+        req_month = req_month[0] if req_month else ""
         if len(req_month.split(",")) >= 2:
             start_month = req_month.split(",")[0].strip()
             end_month = req_month.split(",")[-1].strip()
