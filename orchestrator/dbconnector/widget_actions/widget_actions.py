@@ -109,7 +109,8 @@ lpg_dashboard_actions = [
     'kfactor',
     'manualfanprinted',
     'overloaded_tts',
-    'mfmkfactor'
+    'mfmkfactor',
+    'bay_reassignment'
 ]
 
 # Todo:- import all widget action modules here
@@ -221,7 +222,8 @@ widget_mapping = {
     'kfactor': {},
     'manualfanprinted': {},
     'overloaded_tts': {},
-    'mfmkfactor': {}
+    'mfmkfactor': {},
+    'bay_reassignment': {}
 }
 
 
