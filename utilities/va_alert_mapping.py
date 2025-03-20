@@ -298,14 +298,14 @@ VA_Alert_Mapping = {
                     "condition": "<>",
                     "value": 25,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
+                    "escalation_role": "HQO Operations SOD",
                     "escalation_time": "PT6H"
                 }
             }
@@ -326,14 +326,14 @@ VA_Alert_Mapping = {
                     "condition": "<>",
                     "value": 2,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT30S"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 2,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
+                    "escalation_role": "HQO Operations SOD",
                     "escalation_time": "PT30S"
                 }
             }
@@ -348,21 +348,21 @@ VA_Alert_Mapping = {
                     "value": 10,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -376,21 +376,21 @@ VA_Alert_Mapping = {
                     "value": 10,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -404,21 +404,21 @@ VA_Alert_Mapping = {
                     "value": 10,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -432,21 +432,21 @@ VA_Alert_Mapping = {
                     "value": 10,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -460,20 +460,20 @@ VA_Alert_Mapping = {
                     "value": 10,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
+                    "escalation_role": "HQO Operations SOD",
                     "escalation_time": "PT6H"
                 }
             }
@@ -488,21 +488,21 @@ VA_Alert_Mapping = {
                     "value": 10,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 25,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 25,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -516,21 +516,21 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -544,21 +544,21 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -572,21 +572,21 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -600,21 +600,21 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -628,21 +628,21 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -656,21 +656,21 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -684,21 +684,21 @@ VA_Alert_Mapping = {
                     "value": 25,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 50,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 50,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -712,21 +712,21 @@ VA_Alert_Mapping = {
                     "value": 35,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 60,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 60,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -740,21 +740,21 @@ VA_Alert_Mapping = {
                     "value": 35,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 60,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 60,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -768,21 +768,21 @@ VA_Alert_Mapping = {
                     "value": 35,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 60,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 60,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3H"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -796,21 +796,21 @@ VA_Alert_Mapping = {
                     "value": 2,
                     "assign_role": "Safety Officer SOD",
                     "escalation_role": "Location In-Charge SOD",
-                    "escalation_time": "PT2M"
+                    "escalation_time": "PT1H"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 20,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
-                    "escalation_time": "PT3M"
+                    "escalation_role": "Zonal Operations Head SOD",
+                    "escalation_time": "PT1H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 20,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
-                    "escalation_time": "PT3M"
+                    "escalation_role": "HQO Operations SOD",
+                    "escalation_time": "PT1H"
                 }
             }
         },
@@ -830,14 +830,14 @@ VA_Alert_Mapping = {
                     "condition": "<>",
                     "value": 100,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 100,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
+                    "escalation_role": "HQO Operations SOD",
                     "escalation_time": "PT6H"
                 }
             }
@@ -858,14 +858,14 @@ VA_Alert_Mapping = {
                     "condition": "<>",
                     "value": 100,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 100,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
+                    "escalation_role": "HQO Operations SOD",
                     "escalation_time": "PT6H"
                 }
             }
@@ -886,14 +886,14 @@ VA_Alert_Mapping = {
                     "condition": "<>",
                     "value": 100,
                     "assign_role": "Zonal HSE SOD",
-                    "escalation_role": "Zonal Operation SOD",
+                    "escalation_role": "Zonal Operations Head SOD",
                     "escalation_time": "PT6H"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 100,
                     "assign_role": "HQO HSE SOD",
-                    "escalation_role": "HQO Operation SOD",
+                    "escalation_role": "HQO Operations SOD",
                     "escalation_time": "PT6H"
                 }
             }
@@ -1244,8 +1244,8 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 0,
-                    "assign_role": "Maintenanace Officer LPG",
-                    "escalation_role": "Maintenanace Officer LPG",
+                    "assign_role": "Maintenance Officer LPG",
+                    "escalation_role": "Maintenance Officer LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 2": {
@@ -1279,8 +1279,8 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 0,
-                    "assign_role": "Maintenanace Officer LPG",
-                    "escalation_role": "Maintenanace Officer LPG",
+                    "assign_role": "Maintenance Officer LPG",
+                    "escalation_role": "Maintenance Officer LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 2": {
@@ -1314,8 +1314,8 @@ VA_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 0,
-                    "assign_role": "Maintenanace Officer LPG",
-                    "escalation_role": "Maintenanace Officer LPG",
+                    "assign_role": "Maintenance Officer LPG",
+                    "escalation_role": "Maintenance Officer LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 2": {
