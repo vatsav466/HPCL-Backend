@@ -161,6 +161,7 @@ async def sync_users():
             return
         data = await fetch_data(cursor, query)
         role_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/novex_role_master.csv")
+        role_master = role_master[role_master["bu"] == str(bu).upper()]
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
         data = await combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
         data["bu"] = bu.upper()

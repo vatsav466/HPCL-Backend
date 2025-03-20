@@ -23,3 +23,4 @@ sl_no,novex_role,tibco_role,bu
 22,HQO General Manager SOD,IL_GM_SOD,TAS
 23,Zonal SOD,IL_DGM_SODZONE,TAS
 24,HQO Head SOD,IL_ED_SOD,TAS
+25,HQO SOD,IL_DGM_SODNFP,TAS
