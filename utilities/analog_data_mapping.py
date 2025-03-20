@@ -76,7 +76,7 @@ Normal = [
     {"sop_id": "SOP028", "interlock_name": "Additive Overdose Alarm_BCU", "alert_category": "Gantry", "equipment_name": "Loading Point"},
     {"sop_id": "SOP028", "interlock_name": "Additive Underdose Alarm_BCU", "alert_category": "Gantry", "equipment_name": "Loading Point"},
     {"sop_id": "SOP028", "interlock_name": "BCU Loading Status", "alert_category": "Gantry", "equipment_name": "Loading Point"},
-    {"sop_id": "SOP029", "interlock_name": "Tank leakage alarm", "alert_category": "Process", "equipment_name": "Tank leakage"},
+    {"sop_id": "SOP029", "interlock_name": "Tank leakage alarm", "alert_category": "Process", "equipment_name": "Tank Leakage"},
     {"sop_id": "SOP030", "interlock_name": "Manual - bay assignment of more 5% of total TT loaded", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP030", "interlock_name": "Manual FAN printed more 5% of total TT loaded", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP031", "interlock_name": "Min 5% Manual Cross-check records", "alert_category": "Gantry", "equipment_name": "BCU"},
