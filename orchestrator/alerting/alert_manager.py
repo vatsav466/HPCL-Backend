@@ -125,10 +125,10 @@ async def close_vts_alert(alert_data, input_data):
     approved_datetime = await get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
     params = {
             "TT_No": alert_data['vehicle_number'],
-            "UnBlockedBy": rpt.get("email", "NOVEX_USER"),
+            "UnBlockedBy": rpt.get("employee_id", "NOVEX_USER"),
             "UnBlockedDateTime": un_block_datetime,
             "UnBlockedRemarks": await get_approved_remarks(alert_data, is_approved=False),
-            "ApprovedBy": rpt.get("email", "NOVEX_USER"),
+            "ApprovedBy": rpt.get("employee_id", "NOVEX_USER"),
             "ApprovedDateTime": approved_datetime,
             "ApprovedRemarks": await get_approved_remarks(alert_data, is_approved=True),
             "BlockStartDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
