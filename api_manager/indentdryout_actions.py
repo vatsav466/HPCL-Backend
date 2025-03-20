@@ -671,16 +671,16 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 19,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Closed Outlets", "value": 0, "serial": 20,
+            "section": "Nozzle Sales Not Started", "value": 0, "serial": 21,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Nozzle Sales Not Started", "value": 0, "serial": 21,
+            "section": "Closed Outlets", "value": 0, "serial": 20,
             "condition": "=", "group": "indent"
         }, {
             "section": "Low Volume(<50KLPM)", "value": count_50_klm, "serial": 22,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Others", "value": indent_not_raised_count - count_50_klm, "serial": 23,
+            "section": "Volume(>50KLPM)", "value": indent_not_raised_count - count_50_klm, "serial": 23,
             "condition": "=", "group": "indent"
         }, {
             "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 24,
@@ -714,16 +714,16 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "condition": "=", "group": "tar_analysis"
         },{
             "section": "Dealer TT", "value": dealer_truck_count, "serial": 34,
-            "condition": "=", "group": "tt_pending"
+            "condition": "=", "group": "tt_available"
         }, {
             "section": "Transport TT", "value": indent_not_raised_count - dealer_truck_count, "serial": 35,
-            "condition": "=", "group": "tt_pending"
+            "condition": "=", "group": "tt_available"
         }, {
             "section": "Dealer TT Return", "value": 0, "serial": 36,
-            "condition": "=", "group": "tt_pending"
+            "condition": "=", "group": "tt_available"
         }, {
             "section": "Transport TT Return", "value": 0, "serial": 37,
-            "condition": "=", "group": "tt_pending"
+            "condition": "=", "group": "tt_available"
         }])
     stats.extend([{"section": x, "value": dealer_tt_count.get(x, 0), "serial": 0, "condition": "=", "group": "truck_details"}
                   for x in connection_mapping.truck_details])
