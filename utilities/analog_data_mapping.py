@@ -10,7 +10,7 @@ Maintenance = [
     {"sop_id": "SOP013", "interlock_name": "JockeyPump_Under Maintenance", "alert_category": "Safety", "equipment_name": "Jockey Pump"},
     {"sop_id": "SOP013", "interlock_name": "HydrantPT_Under Maintenance", "alert_category": "Safety", "equipment_name": "PT Hydrant"},
     {"sop_id": "SOP014", "interlock_name": "HCD_Under Maintenance", "alert_category": "Safety", "equipment_name": "HCD"},
-    {"sop_id": "SOP035", "interlock_name": "Gantry Permissive_Override", "alert_category": "Gantry", "equipment_name": "BCU"},
+    {"sop_id": "SOP035", "interlock_name": "Gantry Permissive_Override", "alert_category": "Gantry", "equipment_name": "Gantry Override"},
 ]
 
 Fault = [
@@ -41,6 +41,7 @@ Normal = [
     {"sop_id": "SOP02A", "interlock_name": "All Tanks in Dormant Mode", "alert_category": "Process", "equipment_name": "ESD"},
     {"sop_id": "SOP02A", "interlock_name": "All TLF Product Pumps Stopped", "alert_category": "Process", "equipment_name": "ESD"},
     {"sop_id": "SOP02A", "interlock_name": "TLF Gantry Permissive Power Off", "alert_category": "Process", "equipment_name": "ESD"},
+
     {"sop_id": "SOP02A", "interlock_name": "Barrier Gate opened", "alert_category": "Process", "equipment_name": "Barrier Gate"},
     {"sop_id": "SOP003", "interlock_name": "Proof Test_VFT_Failed", "alert_category": "Safety", "equipment_name": "VFT"},
     {"sop_id": "SOP003", "interlock_name": "Proof Test_Secondary Radar Guage_Failed", "alert_category": "Safety", "equipment_name": "Secondary Radar"},
@@ -56,13 +57,13 @@ Normal = [
     {"sop_id": "SOP021", "interlock_name": "ProcessPLC_Communication fail", "alert_category": "Process", "equipment_name": "PLC"},
     {"sop_id": "SOP022", "interlock_name": "LRC Master Switchover required in 30 days", "alert_category": "Process", "equipment_name": "LRC Switchover"},
     {"sop_id": "SOP023", "interlock_name": "Hooter Activated at control room", "alert_category": "Safety", "equipment_name": "Fire Pump"},
-    {"sop_id": "SOP023", "interlock_name": "All TLF Product Pumps Stopped", "alert_category": "Process", "equipment_name": "Fire Engine"},
+    {"sop_id": "SOP023", "interlock_name": "All TLF Product Pumps Stopped", "alert_category": "Process", "equipment_name": "Fire Pump"},
     {"sop_id": "SOP023", "interlock_name": "TLF Header Line MOV Close", "alert_category": "Process", "equipment_name": "Fire Pump"},
     {"sop_id": "SOP023", "interlock_name": "Gantry Permissive Off", "alert_category": "Process", "equipment_name": "Fire Pump"},
     {"sop_id": "SOP023", "interlock_name": "All BCU Permissive Fail Status", "alert_category": "Gantry", "equipment_name": "Fire Pump"},
     {"sop_id": "SOP024", "interlock_name": "Day End totaliser Mismatch", "alert_category": "Gantry", "equipment_name": "Loading Point"},
     {"sop_id": "SOP025", "interlock_name": "BCU Local loading", "alert_category": "Gantry", "equipment_name": "BCU"},
-    {"sop_id": "SOP025", "interlock_name": "BCU permissive fail status", "alert_category": "Gantry", "equipment_name": "BCU"},
+    {"sop_id": "SOP025", "interlock_name": "BCU permissive fail status", "alert_category": "Gantry", "equipment_name": "Loading Point"},
     {"sop_id": "SOP026", "interlock_name": "BCU vs MFM totalizer mismatch alarm", "alert_category": "Gantry", "equipment_name": "Loading Point"},
     {"sop_id": "SOP027", "interlock_name": "K Factor Change_BCU", "alert_category": "Gantry", "equipment_name": "Loading Point"},
     {"sop_id": "SOP027", "interlock_name": "K Factor Change_MFM", "alert_category": "Gantry", "equipment_name": "Loading Point"},

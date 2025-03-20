@@ -31,7 +31,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
         df = pl.DataFrame(df)
         # BASEPATH = os.path.join(os.path.dirname(utilities.helpers.__file__)
 
-        base_path = "/opt/ceg/algo/api_manager/tagsdata_actions.py"  # Update with actual path
+        base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
         mapping_base_path = '/opt/ceg/algo/utilities'
         mapping_df = pl.read_csv(os.path.join(mapping_base_path, 'DashboardAssetMapping.csv'))
         mapping_df = mapping_df.with_columns(mapping_df["Device Type"].fill_null(strategy="forward"))
@@ -196,16 +196,10 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         # Convert count to integer
         res = res.with_columns(pl.col("count").cast(pl.Int64, strict=False))
         # Aggregate count based on device_type and system, keeping sap_id and location_name
-        res = res.group_by(["device_type", "system", "name"]).agg([
+        res = res.group_by(["system", "name"]).agg([
             pl.col("count").sum().alias("total_count"),           # pl.col("sap_id").list() 
             pl.col("sap_id").first()  # Keep first sap_id (change to list() if needed)
             # pl.col("name").first()  # Keep first location_name
         ])
 
         return {"status": True, "message": "Success", "data": res.to_dicts()}
-
-
-# Action things_board_device_data
-@router.post('/things_board_device_data', tags=['TagsData'])
-async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
-    ...

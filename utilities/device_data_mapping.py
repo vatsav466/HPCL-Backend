@@ -63,7 +63,10 @@ device_mapping = [
                                   "FIRE PUMP FAIL TO START STANDBY": "Safety",
                                   "FIRE PUMP TRIPPED FAULT": "Safety",
                                   "FIRE PUMP LLOP ALARM": "Safety",
-                                  "FIRE PUMP HWT ALARM": "Safety" 
+                                  "FIRE PUMP HWT ALARM": "Safety",
+                                  "TLF Gantry Permissive Power Off": "Process",
+                                  "All TLF Product Pumps Stopped": "Process",
+                                  "TLF Header Line MOV Close": "Process" 
                                 }
                     },
                     {
@@ -127,21 +130,24 @@ device_mapping = [
                         "device_type": "Loading Point",
                         "sensor_name": 
                                  {
-                                    "All ROSOVs Closed": "Safety",
-                                    "Barrier Gate Opened": "Process",
-                                    "TLF Gantry Permissive Power Off": "Process",
-                                    "All TLF Product Pumps Stopped": "Process",
-                                    "All Tanks in Dormant Mode": "Process",
-                                    "All DBBVs Closed": "Process",
-                                    "ESD Command to Process PLC": "Safety",
-                                    "Siren Activated": "Process",
-                                    "ESD Hooter Activated in Control Room": "Safety",
-                                    "Power ESD Activation After 120 Sec": "Safety",
-                                    "TTL Dispatch in Dormant Mode": "Process"
+                                  "LP Earthing STATUS": "Process",
+                                  "NO FLOW STATUS OF MAIN": "Gantry",
+                                  "LOW FLOW STATUS OF MAIN": "Gantry",
+                                  "HIGH FLOW STATUS OF MAIN": "Gantry",
+                                  "UNAUTHORISE FLOW STATUS OF MAIN": "Gantry",
+                                  "METER OVERRUN STATUS OF MAIN": "Gantry",
+                                  "BLEND OVERDOSE STATUS OF MAIN": "Gantry",
+                                  "BLEND UNDERDOSE STATUS OF MAIN": "Gantry",
+                                  "ADD OVERDOSE STATUS OF MAIN": "Gantry",
+                                  "ADD UNDERDOSE STATUS OF MAIN": "Gantry",
+                                  "BCU LOADING STATUS": "Gantry",
+                                  "K-FACTOR CHANGE STATUS": "Gantry",
+                                  "BCU VS MFM TOTALIZER MISMATCH": "Gantry",
+                                  "DAY START TOTALIZER MISMATCH": "Gantry"
                                  }
                     },
                     {
-                        "device_type": "ESD Effect",
+                        "device_type": "ESD",
                         "sensor_name": 
                                  {
                                    "All ROSOVs Closed": "Safety",
@@ -156,15 +162,6 @@ device_mapping = [
                                    "Power ESD Activation After 120 Sec": "Safety",
                                    "TTL Dispatch in Dormant Mode": "Process"
 
-                                 }
-                    },
-                    {
-                        "device_type": "Fire Effect",
-                        "sensor_name": 
-                                 {
-                                   "TLF Gantry Permissive Power Off": "Process",
-                                   "All TLF Product Pumps Stopped": "Process",
-                                   "TLF Header Line MOV Close": "Process" 
                                  }
                     },
                     {
@@ -200,13 +197,6 @@ device_mapping = [
                         "sensor_name":
                                  {
                                       "Air Compressor": "Safety"
-                                 }
-                    },
-                    {
-                        "device_type": "BCU",
-                        "sensor_name":
-                                 {
-                                      "BCU": "Safety"
                                  }
                     }
                   ]
