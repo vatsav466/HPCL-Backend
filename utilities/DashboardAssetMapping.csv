@@ -1,5 +1,5 @@
 Device Type,Equipments(sensor_type),Equipments(sensor_name),InterlockName,
-Tank,Primary Gauge HIGH,Primary Gauge HIGH,"Primary Radar Guage_H alarm
+Tank,Primary Radar,Primary Gauge HIGH,"Primary Radar Guage_H alarm
 Primary Radar Guage_HH alarm",2
 ,VFT,LEVEL SWITCH,"HHH alarm from VFT
 Proof Test_VFT_Failed
@@ -58,8 +58,8 @@ Blend overdose Alarm_BCU
 Low Flow alarm_BCU
 Day End totaliser Mismatch
 Earthing Failure Alarm",14
-PLC,PLC A is Master,PLC A IS MASTER,SafetyPLC_Communication fail,1
-,PLC B is Master,PLC B IS MASTER,ProcessPLC_Communication fail,1
+PLC,PLC,PLC A IS MASTER,SafetyPLC_Communication fail,1
+,PLC,PLC B IS MASTER,ProcessPLC_Communication fail,1
 Pump,Pump,Pump,All TLF Product Pumps Stopped,1
 UPS,UPS,UPS,"UPS_Fail
 UPS_Lowbattery",2
