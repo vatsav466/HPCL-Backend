@@ -141,7 +141,7 @@ class LpgRejections:
 
 
     async def get_current_pt_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 00:00:00"
         today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_pt_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
