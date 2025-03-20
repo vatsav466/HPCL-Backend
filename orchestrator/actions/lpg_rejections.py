@@ -35,7 +35,7 @@ class LpgRejections:
         return ["alert_id", "interlock_name", "bu", "interlock_id", "sap_id"]
 
     async def get_current_cs_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 00:00:00"
         today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_cs_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -46,8 +46,8 @@ class LpgRejections:
                     FROM 
                         "{table}"
                     WHERE
-                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
-                        
+                        process_date='{yesterday}' GROUP BY sap_id, plant, zone"""
+        # process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -86,7 +86,7 @@ class LpgRejections:
 
 
     async def get_current_gd_rejections(self):
-        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 05:00:00"
+        yesterday = (datetime.datetime.now() - relativedelta(days=1)).strftime("%Y-%m-%d") + " 00:00:00"
         today = datetime.datetime.now().strftime("%Y-%m-%d") + " 05:00:00"
         table = f"lpg_gd_rejections"
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
@@ -98,7 +98,8 @@ class LpgRejections:
                     FROM
                         "{table}"
                     WHERE
-                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
+                        process_date='{yesterday}' GROUP BY sap_id, plant, zone"""
+        # process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
@@ -152,7 +153,8 @@ class LpgRejections:
                     FROM
                         "{table}"
                     WHERE
-                        process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
+                        process_date='{yesterday}' GROUP BY sap_id, plant, zone"""
+        # process_date BETWEEN '{yesterday}' AND '{today}' GROUP BY sap_id, plant, zone"""
         rejections = await function(query=query)
         rejections = pl.DataFrame(rejections)
         rejections = rejections.with_columns(((pl.col("totalsortout")/pl.col("total"))*100).alias("rejection"))
