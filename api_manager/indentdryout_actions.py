@@ -671,10 +671,10 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 19,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Nozzle Sales Not Started", "value": 0, "serial": 21,
+            "section": "Nozzle Sales Not Started", "value": 0, "serial": 20,
             "condition": "=", "group": "indent"
         }, {
-            "section": "Closed Outlets", "value": 0, "serial": 20,
+            "section": "Closed Outlets", "value": 0, "serial": 21,
             "condition": "=", "group": "indent"
         }, {
             "section": "Low Volume(<50KLPM)", "value": count_50_klm, "serial": 22,
