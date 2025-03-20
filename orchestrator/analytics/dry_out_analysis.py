@@ -1438,7 +1438,7 @@ async def get_tar_analysis(condition):
     return _dict
 
 async def get_tt_counts(condition):
-    query = f"""select substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" where dealer_code is not null"""
+    query = f"""select truck_regnno, substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" """
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1448,9 +1448,54 @@ async def get_tt_counts(condition):
         query=query
     )
     dealer_tt_resp = pd.DataFrame(dealer_tt_resp)
+    dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].fillna("")
     dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].astype(str)
 
-    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    # query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    # resp = pd.DataFrame(resp)
+    # resp['sap_id'] = resp['sap_id'].astype(str)
+
+    query = f"""WITH LatestR3 AS (
+                SELECT 
+                    "TRUCK_REGNO", 
+                    MAX("LOADED_ON") AS last_r3_time
+                FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP"
+                WHERE 
+                    "CARD_STATUS" = 'O'
+                    AND "LOADED_ON"::DATE = CURRENT_DATE
+                GROUP BY "TRUCK_REGNO"
+            ),
+            FilteredR1 AS (
+                SELECT 
+                    "TRUCK_REGNO",
+                    "CARD_STATUS",
+                    "LOADED_ON",
+                    ROW_NUMBER() OVER (
+                        PARTITION BY "TRUCK_REGNO"
+                        ORDER BY "LOADED_ON" DESC
+                    ) AS rn
+                FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts
+                WHERE 
+                    ts."CARD_STATUS" = 'R'
+                    AND ts."LOADED_ON"::DATE = CURRENT_DATE
+                    AND EXISTS (
+                        SELECT 1 
+                        FROM LatestR3 r3 
+                        WHERE ts."TRUCK_REGNO" = r3."TRUCK_REGNO"
+                          AND ts."LOADED_ON" > r3.last_r3_time
+                    )
+            )
+            SELECT "TRUCK_REGNO", "CARD_STATUS", "LOADED_ON"
+            FROM FilteredR1
+            WHERE rn = 1;"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1460,13 +1505,16 @@ async def get_tt_counts(condition):
         query=query
     )
     resp = pd.DataFrame(resp)
-    resp['sap_id'] = resp['sap_id'].astype(str)
 
     resp = pd.merge(
-        dealer_tt_resp.drop_duplicates(subset=['dealer_code']),
-        resp.drop_duplicates(subset=['sap_id']),
-        left_on=['dealer_code'], right_on=['sap_id'],
+        dealer_tt_resp.drop_duplicates(subset=['truck_regnno']),
+        resp.drop_duplicates(subset=['TRUCK_REGNO']),
+        left_on=['truck_regnno'], right_on=['TRUCK_REGNO'],
         how='left', indicator=True
     )
+    _dict = {
+        "dealer_tt": len(resp[(resp['_merge'] == 'both') & (resp['dealer_code'] != '')]),
+        "transport_tt": len(resp[(resp['_merge'] == 'both') & (resp['dealer_code'] == '')])
+    }
 
-    return len(resp[resp['_merge'] == 'both'])
+    return _dict
