@@ -119,6 +119,7 @@ class AlertFactory:
                                                         'origin_altid': alert_data.get('origin_altid',''),
                                                         'mark_as_false': alert_data.get('mark_as_false', False),
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
+                                                        'tt_load_number': alert_data.get('tt_load_number', ''),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()
