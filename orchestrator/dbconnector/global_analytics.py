@@ -6473,15 +6473,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
-            truck_number = ''
+            load_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
-                    if "truck_number" in filter.key:
-                        truck_number = filter.value
+                    if "load_number" in filter.key:
+                        load_number = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -6506,6 +6506,7 @@ class GlobalAnalytics:
                         location_name,
                         sap_id,
                         truck_number,
+                        load_number,
                         SUM(required_qty) AS total_required_qty
                     FROM 
                         host_cancelled_tts
@@ -6527,7 +6528,7 @@ class GlobalAnalytics:
             # Complete the query with proper GROUP BY
             query += """
                     GROUP BY 
-                        DATE(created_at), zone, location_name, sap_id, truck_number
+                        DATE(created_at), zone, location_name, sap_id, truck_number, load_number
                 )
                 SELECT 
                     k.created_date,
@@ -6535,9 +6536,11 @@ class GlobalAnalytics:
                     k.location_name,
                     k.sap_id,
                     k.truck_number,
+                    k.load_number,
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.vehicle_number = k.truck_number 
+                    AND a.tt_load_number = k.load_number 
                     AND a.interlock_name = 'Cancel TT Reported'
                     AND DATE(a.created_at) = k.created_date) AS alert_count,
                     k.total_required_qty
@@ -6574,12 +6577,12 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
-            if truck_number:
-                resp_df = resp_df.filter(pl.col("truck_number") == truck_number)
+            if load_number:
+                resp_df = resp_df.filter(pl.col("load_number") == load_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "truck_number"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
@@ -6593,6 +6596,7 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "truck_number": row["truck_number"],
+                        "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
                         "total_required_qty": row["total_required_quantity"]
                     }
@@ -6604,7 +6608,7 @@ class GlobalAnalytics:
                     pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
                 )
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "truck_number"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
@@ -6618,6 +6622,7 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "truck_number": row["truck_number"],
+                        "load_number": row["load_number"],
                         "total_alerts": row["total_alerts"],
                         "total_required_qty": row["total_required_quantity"]
                     }
