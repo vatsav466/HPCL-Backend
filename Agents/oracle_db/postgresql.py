@@ -93,7 +93,7 @@ class Postgresql:
     async def cal_unauthorized_flow(self, total_net):
         if total_net > 5:
             return True, "Unauthorized flow_BCU"
-        return True, "Unauthorized flow_BCU"
+        return None, None
 
     async def create_cancel_tt_report(self, data):
         to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
@@ -203,7 +203,7 @@ class Postgresql:
         if table_db_name == 'host_manual_fan_printed':
             # Filter out zero manual_fan_count records for regular processing
             data = [x for x in data if x['manual_fan_count'] != 0]
-            
+            print("data --> ", data)
             # Only if no non-zero records and it's end of day (18:00), include a zero record if available
             to_day = urdhva_base.utilities.get_present_time().strftime("%H")
             if int(to_day) == 18 and not any(x['manual_fan_count'] != 0 for x in data):
@@ -220,7 +220,7 @@ class Postgresql:
                         # Sort by date_time and get the latest
                         zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
                         data.append(zero_records[0])  # Add the latest zero record
-
+            print("data for manual fan printed --> ", data)
         status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created'])  # Use upsert=True if needed
         
         # Get only alert not created records
@@ -332,7 +332,7 @@ class Postgresql:
             device_msg = f"BCU Numbers: {', '.join(bcu_numbers)}, Total Net Totalizer: {total_net}"
 
             # Create and close the alert if needed
-            if unauthorised_records:
+            if unauthorised_records and is_close_alert:
                 # Use the first record for necessary data
                 first_record = unauthorised_records[0]
                 alert_data = {
