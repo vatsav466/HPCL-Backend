@@ -1,4 +1,5 @@
 import urdhva_base
+import os
 import json
 import datetime
 import pandas as pd
@@ -9,8 +10,13 @@ import mysql.connector
 import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
+from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
+from orchestrator.dbconnector.widget_actions import widget_actions
+from api_manager.charts_actions import charts_connection_vault_routing
 import orchestrator.dbconnector.credential_loader as credential_loader
 from orchestrator.dbconnector.widget_actions.lpg_plant_queries import today
+from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
 req_keys = {
@@ -1438,7 +1444,7 @@ async def get_tar_analysis(condition):
     return _dict
 
 async def get_tt_counts(condition):
-    query = f"""select substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" where dealer_code is not null"""
+    query = f"""select truck_regnno, substr(dealer_code, 3, 8) as dealer_code from "IMS_SAP"."TRUCK_DETAILS" """
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1448,9 +1454,54 @@ async def get_tt_counts(condition):
         query=query
     )
     dealer_tt_resp = pd.DataFrame(dealer_tt_resp)
+    dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].fillna("")
     dealer_tt_resp['dealer_code'] = dealer_tt_resp['dealer_code'].astype(str)
 
-    query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    # query = f"select distinct on (sap_id) sap_id, created_at from alerts where {condition} and progress_rate = '1' order by sap_id, created_at asc"
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+    #     "hpcl_ceg", "1")
+    # dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    # function = await charts_actions.charts_connection_vault_routing(
+    #     dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    # resp = await function(
+    #     query=query
+    # )
+    # resp = pd.DataFrame(resp)
+    # resp['sap_id'] = resp['sap_id'].astype(str)
+
+    query = f"""WITH LatestR3 AS (
+                SELECT 
+                    "TRUCK_REGNO", 
+                    MAX("LOADED_ON") AS last_r3_time
+                FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP"
+                WHERE 
+                    "CARD_STATUS" = 'O'
+                    AND "LOADED_ON"::DATE = CURRENT_DATE
+                GROUP BY "TRUCK_REGNO"
+            ),
+            FilteredR1 AS (
+                SELECT 
+                    "TRUCK_REGNO",
+                    "CARD_STATUS",
+                    "LOADED_ON",
+                    ROW_NUMBER() OVER (
+                        PARTITION BY "TRUCK_REGNO"
+                        ORDER BY "LOADED_ON" DESC
+                    ) AS rn
+                FROM "IMS_SAP"."TRUCK_SWIPE_ENTRY_SAP" ts
+                WHERE 
+                    ts."CARD_STATUS" = 'R'
+                    AND ts."LOADED_ON"::DATE = CURRENT_DATE
+                    AND EXISTS (
+                        SELECT 1 
+                        FROM LatestR3 r3 
+                        WHERE ts."TRUCK_REGNO" = r3."TRUCK_REGNO"
+                          AND ts."LOADED_ON" > r3.last_r3_time
+                    )
+            )
+            SELECT "TRUCK_REGNO", "CARD_STATUS", "LOADED_ON"
+            FROM FilteredR1
+            WHERE rn = 1;"""
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1460,13 +1511,82 @@ async def get_tt_counts(condition):
         query=query
     )
     resp = pd.DataFrame(resp)
-    resp['sap_id'] = resp['sap_id'].astype(str)
+    if resp.empty:
+        resp = pd.DataFrame({"TRUCK_REGNO": []})
+    if dealer_tt_resp.empty:
+        dealer_tt_resp = pd.DataFrame({"truck_regnno": [], "dealer_code": []})
 
     resp = pd.merge(
-        dealer_tt_resp.drop_duplicates(subset=['dealer_code']),
-        resp.drop_duplicates(subset=['sap_id']),
-        left_on=['dealer_code'], right_on=['sap_id'],
+        dealer_tt_resp.drop_duplicates(subset=['truck_regnno']),
+        resp.drop_duplicates(subset=['TRUCK_REGNO']),
+        left_on=['truck_regnno'], right_on=['TRUCK_REGNO'],
         how='left', indicator=True
     )
+    _dict = {
+        "dealer_tt": len(resp[(resp['_merge'] == 'both') & (resp['dealer_code'] != '')]),
+        "transport_tt": len(resp[(resp['_merge'] == 'both') & (resp['dealer_code'] == '')])
+    }
 
-    return len(resp[resp['_merge'] == 'both'])
+    return _dict
+
+
+async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    # Removing extra keys like all/_empty/* to mak sure all results appear in api response
+    # Filtering cross filters
+    base_path = os.path.join(os.path.dirname(helpers.__file__), '..', 'orchestrator', 'masterdata')
+    cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
+                                                                            and cross_filter.get("value") and
+                                                                            cross_filter["value"].lower() in ['*',
+                                                                                                              '_empty',
+                                                                                                              'all'])]
+    # Filtering filters
+    filters = [filter_cond for filter_cond in filters
+               if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
+                       filter_cond["value"].lower() in ['*', '_empty', 'all'])]
+    sales_area_df = pd.read_csv(f"{base_path}/Retail_SalesArea_mapping.csv").astype(str)
+    region_df = pd.read_csv(f"{base_path}/Retail_Region_mapping.csv").astype(str)
+    region_df['JDE_RO_CD'] = region_df['JDE_RO_CD'].apply(lambda x: x[0]+'0'+x[1:])
+    drill_order = ["zone", "salesarea", "site_name"]
+
+    cross_filters = cross_filters + filters
+    for cond in cross_filters:
+        cond['key'] = cond['key'].strip('"')
+        if cond['key'] == 'region':
+            df = region_df[region_df['JDE_RO_NM'] == cond['value']]
+            cond['value'] = list(df['JDE_RO_CD'].values)
+            cond['cond'] = 'one-off'
+        elif cond['key'] == 'salesarea':
+            df = sales_area_df[sales_area_df['ORG_RO_NM'] == cond['value']]
+            cond['value'] = list(df['ORG_SA_CD'].values)
+            cond['cond'] = 'one-off'
+
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
+    group_by_key = "zone" if not drill_state else drill_order[drill_order.index(drill_state)+1]
+    query = f''' select SUM(exposure) as amount, {group_by_key} from "HPCL_HOS".customer_balance '''
+    if clause:
+        if isinstance(clause, str):
+            clause = [clause]
+        query += f' where {" AND ".join(clause)}'
+    if group_by_key:
+        query += f" GROUP BY {group_by_key}"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("cris", "2")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    if not resp:
+        return []
+    df = pd.DataFrame(resp)
+    df = df[df['amount'] != 0]
+    if 'region' in df.columns:
+        df = df.merge(region_df, how='left', left_on='region', right_on='JDE_RO_CD')
+        df = df[['amount', 'JDE_RO_NM']]
+        df = df.rename(columns={'JDE_RO_NM': 'region'})
+        df = df.groupby("region", as_index=False).sum()
+    if 'salesarea' in df.columns:
+        df = df.merge(sales_area_df, how='left', left_on='salesarea', right_on='ORG_SA_CD')
+        df = df[['amount', 'ORG_RO_NM']]
+        df = df.rename(columns={'ORG_RO_NM': 'salesarea'})
+        df = df.groupby("salesarea", as_index=False).sum()
+    if not df.empty:
+        df['amount'] = df['amount'].astype(int)
+    return df.to_dict(orient='records')

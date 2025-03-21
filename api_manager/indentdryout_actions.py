@@ -713,10 +713,10 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "> 5 Rs Cr", "value": tar_analysis.get("greater_5_cr", 0), "serial": 33,
             "condition": "=", "group": "tar_analysis"
         },{
-            "section": "Dealer TT", "value": dealer_truck_count, "serial": 34,
+            "section": "Dealer TT", "value": dealer_truck_count.get("dealer_tt", 0), "serial": 34,
             "condition": "=", "group": "tt_available"
         }, {
-            "section": "Transport TT", "value": indent_not_raised_count - dealer_truck_count, "serial": 35,
+            "section": "Transport TT", "value": dealer_truck_count.get("transport_tt", 0), "serial": 35,
             "condition": "=", "group": "tt_available"
         }, {
             "section": "Dealer TT Return", "value": 0, "serial": 36,

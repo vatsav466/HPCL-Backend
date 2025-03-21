@@ -16,6 +16,7 @@ import utilities.helpers as helpers
 import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
 from orchestrator.analytics import m60_performance
+from orchestrator.analytics import dry_out_analysis
 from orchestrator.analytics import industry_performance
 import utilities.connection_mapping as connection_mapping
 from orchestrator.dbconnector.widget_actions import widget_actions
@@ -983,6 +984,27 @@ class GlobalAnalytics:
         )
 
         return resp
+
+    @staticmethod
+    async def retail_tar(filters, cross_filters, drill_state, time_grain='', resp_format='',resp_level = ''):
+        """
+        Fetches the retail tar data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the sales performance data.
+            :param resp_format:
+            :param filters:
+            :param drill_state:
+            :param cross_filters:
+            :param time_grain:
+        """
+        return await dry_out_analysis.retail_tar([rec.dict() for rec in filters],
+                                                     [rec.dict() for rec in cross_filters], drill_state, time_grain,
+                                                     resp_format)
 
     @staticmethod
     async def m60_performance(filters, cross_filters, drill_state, time_grain='', resp_format='',resp_level = ''):
@@ -4933,12 +4955,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             # Initialize date filter variables
             date_filter_applied = False
             start_date = None
@@ -5054,6 +5079,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("device_name") == bcu_number)
             # Handle daily data
             if date:
                 # Determine grouping level based on filters
@@ -5939,12 +5966,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -6037,6 +6067,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
@@ -6101,12 +6133,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -6193,7 +6228,9 @@ class GlobalAnalytics:
                     return {"status": True, "data": {}}
 
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
-
+            
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Date filtering if not applied in SQL - default to last 30 days
             if not date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
@@ -6263,12 +6300,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -6363,6 +6403,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
@@ -6431,12 +6473,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            truck_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "truck_number" in filter.key:
+                        truck_number = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -6529,6 +6574,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            if truck_number:
+                resp_df = resp_df.filter(pl.col("truck_number") == truck_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
@@ -6593,12 +6640,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -6689,6 +6739,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
@@ -6907,12 +6959,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -7009,6 +7064,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
@@ -7082,12 +7139,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -7178,6 +7238,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
