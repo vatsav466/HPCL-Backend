@@ -1,4 +1,5 @@
 import urdhva_base
+import os
 import json
 import datetime
 import pandas as pd
@@ -1528,6 +1529,7 @@ async def get_tt_counts(condition):
 async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     # Removing extra keys like all/_empty/* to mak sure all results appear in api response
     # Filtering cross filters
+    base_path = os.path.join(os.path.dirname(helpers.__file__), '..', 'orchestrator', 'masterdata')
     cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
                                                                             and cross_filter.get("value") and
                                                                             cross_filter["value"].lower() in ['*',
@@ -1537,13 +1539,24 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
     filters = [filter_cond for filter_cond in filters
                if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
                        filter_cond["value"].lower() in ['*', '_empty', 'all'])]
+    sales_area_df = pd.read_csv(f"{base_path}/Retail_SalesArea_mapping.csv").astype(str)
+    region_df = pd.read_csv(f"{base_path}/Retail_Region_mapping.csv").astype(str)
+    region_df['JDE_RO_CD'] = region_df['JDE_RO_CD'].apply(lambda x: x[0]+'0'+x[1:])
+    drill_order = ["zone", "region", "salesarea", "site_name"]
 
-    drill_order = ["zone", "region", "salesarea", "rosapcode"]
-
-    for cond in cross_filters + filters:
+    cross_filters = cross_filters + filters
+    for cond in cross_filters:
         cond['key'] = cond['key'].strip('"')
+        if cond['key'] == 'region':
+            df = region_df[region_df['JDE_RO_NM'] == cond['value']]
+            cond['value'] = list(df['JDE_RO_CD'].values)
+            cond['cond'] = 'one-off'
+        elif cond['key'] == 'salesarea':
+            df = sales_area_df[sales_area_df['ORG_SA_CD'] == cond['value']]
+            cond['value'] = list(df['ORG_SA_CD'].values)
+            cond['cond'] = 'one-off'
 
-    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters + filters)
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters)
     group_by_key = "zone" if not drill_state else drill_order[drill_order.index(drill_state)+1]
     query = f''' select SUM(exposure) as amount, {group_by_key} from "HPCL_HOS".customer_balance '''
     if clause:
@@ -1556,4 +1569,20 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
-    return [rec for rec in resp if rec.get('amount')]
+    if not resp:
+        return []
+    df = pd.DataFrame(resp)
+    df = df[df['amount'] != 0]
+    if 'region' in df.columns:
+        df = df.merge(region_df, how='left', left_on='region', right_on='JDE_RO_CD')
+        df = df[['amount', 'JDE_RO_NM']]
+        df = df.rename(columns={'JDE_RO_NM': 'region'})
+        df = df.groupby("region", as_index=False).sum()
+    if 'salesarea' in df.columns:
+        df = df.merge(sales_area_df, how='left', left_on='salesarea', right_on='ORG_SA_CD')
+        df = df[['amount', 'ORG_RO_NM']]
+        df = df.rename(columns={'ORG_RO_NM': 'salesarea'})
+        df = df.groupby("salesarea", as_index=False).sum()
+    if not df.empty:
+        df['amount'] = df['amount'].astype(int)
+    return df.to_dict(orient='records')
