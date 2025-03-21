@@ -95,28 +95,28 @@ class Postgresql:
             return True, "Unauthorized flow_BCU"
         return None, None
 
-    # async def create_cancel_tt_report(self, data):
-    #     to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
-    #     query = f"""select id from alerts where interlock_name = 'Cancel TT Reported' and vehicle_number = '{data["vehicle_number"]}' """ \
-    #             f"""and created_at::DATE = '{to_date}'"""
-    #     resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
-    #     if resp.get("data", []):
-    #         alert_data = await hpcl_ceg_model.Alerts.get(resp.get("data", [])[0]["id"])
-    #         if not isinstance(alert_data, dict):
-    #             alert_data = alert_data.__dict__
-    #         data['alert_id'] = alert_data['external_id']
-    #         action_msg = f"Truck Number: {data['vehicle_number']} \n Compartment Number: {data['device_msg']}"
-    #         input_data = {
-    #             "action_type": "Cancelled",
-    #             "action_msg": action_msg
-    #         }
-    #         await alert_manager.AlertAction().update_alert_history(
-    #                     input_data=input_data, alert_data=alert_data
-    #                 )
-    #         return True, "Success", data
+    async def create_cancel_tt_report(self, data):
+        to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
+        query = f"""select id from alerts where interlock_name = 'Cancel TT Reported' and vehicle_number = '{data["vehicle_number"]}' """ \
+                f"""and created_at::DATE = '{to_date}'"""
+        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+        if resp.get("data", []):
+            alert_data = await hpcl_ceg_model.Alerts.get(resp.get("data", [])[0]["id"])
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+            data['alert_id'] = alert_data['external_id']
+            action_msg = f"Truck Number: {data['vehicle_number']} \n Compartment Number: {data['device_msg']}"
+            input_data = {
+                "action_type": "Cancelled",
+                "action_msg": action_msg
+            }
+            await alert_manager.AlertAction().update_alert_history(
+                        input_data=input_data, alert_data=alert_data
+                    )
+            return True, "Success", data
         
-    #     status, msg = await alert_factory.AlertFactory.create_alert(data)
-    #     return status, msg, data
+        status, msg = await alert_factory.AlertFactory.create_alert(data)
+        return status, msg, data
     
     async def close_created_alert(self, alert_data):
         # Extract alert_id from response (assuming response contains alert_id)
@@ -391,16 +391,16 @@ class Postgresql:
                     }
 
                     # Create Alert
-                    # if interlock_name == 'Cancel TT Reported':
-                    #     is_close_alert = True
-                    #     success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
-                    # else:
-                    success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                    print("msg :", msg)
-                    is_close_alert = True
-                    if not success:
-                        print(f"Failed to create alert: {msg}")
-                        return {"status": False, "message": f"Failed {e}", "data": []}
+                    if interlock_name == 'Cancel TT Reported':
+                        is_close_alert = True
+                        success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
+                    else:
+                        success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                        print("msg :", msg)
+                        is_close_alert = True
+                        if not success:
+                            print(f"Failed to create alert: {msg}")
+                            return {"status": False, "message": f"Failed {e}", "data": []}
                     
                     # Set alert_created = true for alert created record
                     query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
