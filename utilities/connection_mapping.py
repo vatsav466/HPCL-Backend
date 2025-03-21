@@ -382,7 +382,7 @@ alert_action = {
                 },
                 "Reject": {
                     "name": "Rejected",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
                 }
             },
@@ -548,7 +548,7 @@ alert_action = {
                 },
                 "Reject": {
                     "name": "Rejected",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
                 }
             },
@@ -699,7 +699,7 @@ alert_action = {
                 },
                 "Reject": {
                     "name": "Rejected",
-                    "close_alert": False,
+                    "close_alert": True,
                     "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
                 }
             },

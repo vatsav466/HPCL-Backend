@@ -1,3 +1,4 @@
+import pandas as pd
 import urdhva_base
 import typing
 import requests
@@ -161,7 +162,7 @@ async def post_unblocked_tt(input_data: dict) -> typing.List[typing.Any]:
             "ApprovedRemarks": "",
             "BlockStartDate": "",
             "BlockEndDate": "",
-            "WaivedOff": False,
+            "WaivedOff": 0/1, # 0 to false (when tt accept violation), 1 - true to go one level instance back if tt provides violation is wrong
             "AlertID": "",
             "DocLink": {
                 "DocPaths": ["https://example.com/doc1.pdf"]
@@ -176,7 +177,7 @@ async def post_unblocked_tt(input_data: dict) -> typing.List[typing.Any]:
     session = requests.Session()
     session.auth = (creds['user'], creds['password'])
     try:
-        response = session.post(url, params=input_data, headers=default_headers)
+        response = session.post(url, json=input_data, headers=default_headers)
         if response.status_code // 100 == 2:
             return response.json()
         return response.json()
@@ -202,7 +203,7 @@ async def post_blocked_tt(input_data: dict) -> typing.List[typing.Any]:
     session = requests.Session()
     session.auth = (creds['user'], creds['password'])
     try:
-        response = session.post(url, params=input_data, headers=default_headers)
+        response = session.post(url, json=input_data, headers=default_headers)
         if response.status_code // 100 == 2:
             return response.json()
         return response.json()
@@ -238,3 +239,26 @@ async def update_alert_id_to_vts_history(alert_id: str, vts_alert_id: list[str])
         query = (f"""update vts_alert_history set alert_id='{alert_id}' """
                  f"""where id in ('{vts_alert_id}')""")
         await hpcl_ceg_model.VtsAlertHistory.update_by_query(query)
+
+async def insert_violation_count(file_name):
+    df = pd.read_excel(file_name, header=4)
+    df1 = pd.read_excel(file_name, sheet_name="Trip Deatils", header=4)
+
+    df = df[[
+        "TT Number", "Device Removed Loaded Trip", "Route Deviation Loaded Trip",
+        "Speed Violation Loaded Trip", "Stoppage Violation Loaded Trip",
+        "Power Disconnected Loaded Trip", "Night Driving Loaded Trip",
+        "Route Deviation  & Stoppage Loaded Trip"
+    ]]
+
+    df1 = df1[["TT Number", "Actual Trip Start Location"]]
+    df1 = df1.drop_duplicates()
+    df = pd.merge(
+        df, df1, on=["TT Number"], how='left'
+    )
+
+    print(df[df['_merge'] != 'both'])
+
+    df = df.to_dict(orient="records")
+    for record in df:
+        ...
