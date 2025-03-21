@@ -1542,7 +1542,7 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
     sales_area_df = pd.read_csv(f"{base_path}/Retail_SalesArea_mapping.csv").astype(str)
     region_df = pd.read_csv(f"{base_path}/Retail_Region_mapping.csv").astype(str)
     region_df['JDE_RO_CD'] = region_df['JDE_RO_CD'].apply(lambda x: x[0]+'0'+x[1:])
-    drill_order = ["zone", "region", "salesarea", "site_name"]
+    drill_order = ["zone", "salesarea", "site_name"]
 
     cross_filters = cross_filters + filters
     for cond in cross_filters:
@@ -1552,7 +1552,7 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
             cond['value'] = list(df['JDE_RO_CD'].values)
             cond['cond'] = 'one-off'
         elif cond['key'] == 'salesarea':
-            df = sales_area_df[sales_area_df['ORG_SA_CD'] == cond['value']]
+            df = sales_area_df[sales_area_df['ORG_RO_NM'] == cond['value']]
             cond['value'] = list(df['ORG_SA_CD'].values)
             cond['cond'] = 'one-off'
 
