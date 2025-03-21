@@ -125,14 +125,14 @@ async def close_vts_alert(alert_data, input_data):
     approved_datetime = await get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
     params = {
             "TT_No": alert_data['vehicle_number'],
-            "UnBlockedBy": rpt.get("email", "NOVEX_USER"),
+            "UnBlockedBy": rpt.get("employee_id", "NOVEX_USER"),
             "UnBlockedDateTime": un_block_datetime,
             "UnBlockedRemarks": await get_approved_remarks(alert_data, is_approved=False),
-            "ApprovedBy": rpt.get("email", "NOVEX_USER"),
+            "ApprovedBy": rpt.get("employee_id", "NOVEX_USER"),
             "ApprovedDateTime": approved_datetime,
             "ApprovedRemarks": await get_approved_remarks(alert_data, is_approved=True),
-            "BlockStartDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
-            "BlockEndDate": str(alert_data['vehicle_blocked_start_date'].isoformat()),
+            "BlockStartDate": str(alert_data['vehicle_blocked_start_date'].isoformat()),
+            "BlockEndDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
             "WaivedOff": False,
             "AlertID": alert_data['id'],
             "DocLink": {
@@ -204,7 +204,7 @@ async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved
                 if alert_history['action_type'] == 'Approved':
                     return alert_history['action_msg']
         else:
-            if alert_history['action_type'] not in ['Created', 'Approved', 'VTS']:
+            if alert_history['action_type'] not in ['Created', 'Approved', 'VTS', 'Active', 'Notified', 'Resolved']:
                 return alert_history['action_msg']
     return ""
 

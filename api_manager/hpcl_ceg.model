@@ -991,8 +991,8 @@ Model LpgOperationsSummary {
     process_date datetime
     bu str
     sap_id str
-    SiteRegion str
-    SiteArea str
+    region str
+    site_area str
 
     Action=> get_productions_rate {        
         dimension str
@@ -1009,7 +1009,7 @@ Model LpgOperationsSummary {
         bottom optional int
     }
     Config=> {
-        access_key_mapping='sap_id:sap_id,short_name:plant,zone:zone'
+        access_key_mapping='sap_id:sap_id,short_name:plant,zone:zone,region:region'
     }
 }
 

@@ -280,27 +280,34 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer",
+                              "Zonal HSE LPG", "Maintenanace Officer LPG", "HQO HSE LPG"]
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer",
+                              "Zonal HSE LPG", "Maintenanace Officer LPG", "HQO HSE LPG"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD",
+                              "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator",
+                              "HQO Operations Team", "HQO HSSE Team", "Zonal Operations Head LPG", "HQO LPG"]
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer",
+                              "Zonal HSE LPG", "Maintenanace Officer LPG", "HQO HSE LPG"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD",
+                              "Zonal HSE LPG", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator",
+                              "HQO Operations Team", "HQO HSSE Team", "Zonal Operations Head LPG", "HQO LPG"]
                 }
             },
             "category": {
@@ -439,27 +446,32 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer",
+                              "Zonal HSE LPG", "Maintenanace Officer LPG", "HQO HSE LPG"]
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer",
+                              "Zonal HSE LPG", "Maintenanace Officer LPG", "HQO HSE LPG"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", ]
+                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG",
+                              "HQO Operations Team", "HQO HSSE Team", "Zonal Operations Head LPG", "HQO LPG"]
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer",
+                              "Zonal HSE LPG", "Maintenanace Officer LPG", "HQO HSE LPG"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", ]
+                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal HSE LPG",
+                              "Zonal Operations Head LPG", "HQO LPG"]
                 }
             },
             "category": {

@@ -82,9 +82,8 @@ async def insert_users(data):
                 item[key] = ast.literal_eval(item[key])
     count = 1
     for user in data:
-        print("-"*30)
-        print(f"Inserting {count} / {total_record}")
-        print("Users :", user)
+        sys.stdout.write(f"\rInserting {count} / {total_record}   ")
+        sys.stdout.flush()
         hpcl_ceg_model.UsersCreate(**user)
         await hpcl_ceg_model.UsersCreate(**user).create()
         count += 1
@@ -156,16 +155,23 @@ async def sync_users():
     connection = await get_db_connection()
     cursor = connection.cursor()
     for bu in ["lpg", "tas"]:
+        role_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/novex_role_master.csv")
+        role_master = role_master[role_master["bu"] == str(bu).upper()]
+        role_master = role_master.drop_duplicates("tibco_role")
         query = getattr(users_config, f"{bu}_query", None)
         if not query:
             return
-        data = await fetch_data(cursor, query)
-        role_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/novex_role_master.csv")
+        roles = role_master['tibco_role'].unique().tolist()
+        if roles:
+            roles_condition = "ZR.ROLE_NAME IN ({})".format(', '.join([f"'{role}'" for role in roles]))
+            query += f" AND {roles_condition}"
+        data = await fetch_data(cursor, query)  
+        print("Length of Data Before Merge:", len(data))
         data = pd.merge(data, role_master[['novex_role', 'tibco_role']], left_on='ROLE_NAME', right_on='tibco_role', how='left')
+        print("Length of Data After Merge:", len(data))
         data = await combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
         data["bu"] = bu.upper()
         data = await process_data(data)
-        print(data)
         await clear_existing_user(bu)
         await insert_users(data.to_dict(orient="records"))
 

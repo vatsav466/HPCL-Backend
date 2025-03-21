@@ -78,12 +78,12 @@ class Postgresql:
         # If manual fan count is greater than auto fan count + tolerance, 
         if manual_fan_count == 0:
             return False, "Manual FAN Count is Zero", "No manual FAN was printed"
-        if manual_fan_count > total_fan_with_tolerance:
+        if manual_fan_count != 0 and manual_fan_count > total_fan_with_tolerance:
             return (True, 
                         "Manual FAN printed more than 5% of total TT loaded", 
                         f"{manual_fan_count} is less than {total_fan_with_tolerance} with 5%"
                     )
-        elif manual_fan_count < total_fan_with_tolerance:
+        elif manual_fan_count != 0 and manual_fan_count < total_fan_with_tolerance:
             return (True, 
                         "Manual FAN printed less than 5% of total TT loaded", 
                         f"{manual_fan_count} is less than {total_fan_with_tolerance} with 5%"
@@ -93,30 +93,30 @@ class Postgresql:
     async def cal_unauthorized_flow(self, total_net):
         if total_net > 5:
             return True, "Unauthorized flow_BCU"
-        return False, ""
+        return None, None
 
-    async def create_cancel_tt_report(self, data):
-        to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
-        query = f"""select id from alerts where interlock_name = 'Cancel TT Reported' and vehicle_number = '{data["vehicle_number"]}' """ \
-                f"""and created_at::DATE = '{to_date}'"""
-        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
-        if resp.get("data", []):
-            alert_data = await hpcl_ceg_model.Alerts.get(resp.get("data", [])[0]["id"])
-            if not isinstance(alert_data, dict):
-                alert_data = alert_data.__dict__
-            data['alert_id'] = alert_data['external_id']
-            action_msg = f"Truck Number: {data['vehicle_number']} \n Compartment Number: {data['device_msg']}"
-            input_data = {
-                "action_type": "Cancelled",
-                "action_msg": action_msg
-            }
-            await alert_manager.AlertAction().update_alert_history(
-                        input_data=input_data, alert_data=alert_data
-                    )
-            return True, "Success", data
+    # async def create_cancel_tt_report(self, data):
+    #     to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
+    #     query = f"""select id from alerts where interlock_name = 'Cancel TT Reported' and vehicle_number = '{data["vehicle_number"]}' """ \
+    #             f"""and created_at::DATE = '{to_date}'"""
+    #     resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+    #     if resp.get("data", []):
+    #         alert_data = await hpcl_ceg_model.Alerts.get(resp.get("data", [])[0]["id"])
+    #         if not isinstance(alert_data, dict):
+    #             alert_data = alert_data.__dict__
+    #         data['alert_id'] = alert_data['external_id']
+    #         action_msg = f"Truck Number: {data['vehicle_number']} \n Compartment Number: {data['device_msg']}"
+    #         input_data = {
+    #             "action_type": "Cancelled",
+    #             "action_msg": action_msg
+    #         }
+    #         await alert_manager.AlertAction().update_alert_history(
+    #                     input_data=input_data, alert_data=alert_data
+    #                 )
+    #         return True, "Success", data
         
-        status, msg = await alert_factory.AlertFactory.create_alert(data)
-        return status, msg, data
+    #     status, msg = await alert_factory.AlertFactory.create_alert(data)
+    #     return status, msg, data
     
     async def close_created_alert(self, alert_data):
         # Extract alert_id from response (assuming response contains alert_id)
@@ -199,8 +199,28 @@ class Postgresql:
         table_db_name = getattr(model, '__tablename__', table_name)
         if table_db_name == 'host_unauthorised_flow':
             data = [x for x in data if x['nettotalizer'] > 0]
-
-        # Upsert the data - Ensure `await` is used
+        
+        if table_db_name == 'host_manual_fan_printed':
+            # Filter out zero manual_fan_count records for regular processing
+            data = [x for x in data if x['manual_fan_count'] > 0]
+            print("data --> ", data)
+            # Only if no non-zero records and it's end of day (18:00), include a zero record if available
+            to_day = urdhva_base.utilities.get_present_time().strftime("%H")
+            if int(to_day) == 18 and not any(x['manual_fan_count'] != 0 for x in data):
+                # Check if we have any non-zero records for today in the database
+                to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
+                check_query = f"""select count(*) from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count != 0"""
+                check_resp = await model.get_aggr_data(check_query)
+                
+                # If no non-zero records exist for today, find a zero record to include
+                if check_resp.get("data") and check_resp.get("data")[0].get("count", 0) == 0:
+                    # Find the latest zero record from original data
+                    zero_records = [x for x in sample_records.to_dicts() if x['manual_fan_count'] == 0]
+                    if zero_records:
+                        # Sort by date_time and get the latest
+                        zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
+                        data.append(zero_records[0])  # Add the latest zero record
+            print("data for manual fan printed --> ", data)
         status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created'])  # Use upsert=True if needed
         
         # Get only alert not created records
@@ -210,38 +230,93 @@ class Postgresql:
             query = f"""select * from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count !=0 order by date_time asc"""
         resp = await model.get_aggr_data(query)
         
+        # if table_db_name == 'host_manual_fan_printed':
+        #     to_day = urdhva_base.utilities.get_present_time().strftime("%H")
+        #     # if int(to_day) == 19:
+        #     is_close_alert = False
+        #     interlock_name = config['interlock_name'].get(table_name)
+        #     severity = config['severity'].get(table_name, "Medium")
+        #     sop_id = config['sop_id'].get(table_name)
+        #     device_msg = ""
+
+        #     result = await self.cal_host_manual_fan_printed(resp.get("data", []))
+
+        #     if isinstance(result, tuple) and len(result) == 3:
+        #         is_close_alert, interlock_name, device_msg = result
+
+        #     alert_data = {
+        #         'bu': 'TAS',
+        #         'sop_id': sop_id,
+        #         'sap_id': data[0].get('sap_id'),
+        #         'interlock_name': interlock_name,
+        #         'severity': severity,
+        #         'alert_id': str(uuid.uuid1()),
+        #         'device_name': data[0].get('bcu_number'),
+        #         'device_type': 'Gantry',
+        #         'vehicle_number': data[0].get('truck_number', ''),
+        #         'device_msg': device_msg
+        #     }
+
+        #     success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+        #     print("msg :", msg)
+        #     if is_close_alert:
+        #         await self.close_created_alert(alert_data=alert_data)
+        #     # Set alert_created = true for alert created record
+        #     query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
+        #     await model.update_by_query(query)
+        #     return {"status": "Table created and alerts processed"}
+
         if table_db_name == 'host_manual_fan_printed':
-            to_day = urdhva_base.utilities.get_present_time().strftime("%H")
-            if int(to_day) == 19:
-                is_close_alert = False
-                interlock_name = config['interlock_name'].get(table_name)
-                severity = config['severity'].get(table_name, "Medium")
-                sop_id = config['sop_id'].get(table_name)
-                device_msg = ""
+            to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
+            #if int(to_day) == 19:
+            # Only get records with non-zero manual_fan_count for alert processing
+            query = f"""select * from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count != 0 and alert_created = false order by date_time asc"""
+            resp = await model.get_aggr_data(query)
+            
+            if resp.get("data", []):
+                # Process alerts for non-zero records
+                for record in resp.get("data", []):
+                    is_close_alert = False
+                    interlock_name = config['interlock_name'].get(table_name)
+                    severity = config['severity'].get(table_name, "Medium")
+                    sop_id = config['sop_id'].get(table_name)
+                    device_msg = ""
 
-                result = await self.cal_host_manual_fan_printed(resp.get("data", []))
+                    # Calculate alert status
+                    result = await self.cal_host_manual_fan_printed([record])
+                    
+                    if isinstance(result, tuple) and len(result) == 3:
+                        is_close_alert, interlock_name, device_msg = result
 
-                if isinstance(result, tuple) and len(result) == 3:
-                    is_close_alert, interlock_name, device_msg = result
+                    # Prepare alert data
+                    alert_data = {
+                        'bu': 'TAS',
+                        'sop_id': sop_id,
+                        'sap_id': record.get('sap_id'),
+                        'interlock_name': interlock_name,
+                        'severity': severity,
+                        'alert_id': str(uuid.uuid1()),
+                        'device_name': record.get('bcu_number'),
+                        'device_type': 'Gantry',
+                        'vehicle_number': record.get('truck_number', ''),
+                        'device_msg': device_msg
+                    }
 
-                alert_data = {
-                    'bu': 'TAS',
-                    'sop_id': sop_id,
-                    'sap_id': data[0].get('sap_id'),
-                    'interlock_name': interlock_name,
-                    'severity': severity,
-                    'alert_id': str(uuid.uuid1()),
-                    'device_name': data[0].get('bcu_number'),
-                    'device_type': 'Gantry',
-                    'vehicle_number': data[0].get('truck_number', ''),
-                    'device_msg': device_msg
-                }
-
-                success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                print("msg :", msg)
-                if is_close_alert:
-                    await self.close_created_alert(alert_data=alert_data)
-                return {"status": "Table created and alerts processed"}
+                    # Create alert for non-zero records
+                    success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                    print("Alert created msg:", msg)
+                    
+                    # Close alert if needed
+                    if is_close_alert:
+                        await self.close_created_alert(alert_data=alert_data)
+                        
+                    # Mark record as processed
+                    query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
+                    await model.update_by_query(query)
+                    
+                return {"status": "Table updated and alerts processed for non-zero records"}
+            else:
+                return {"status": "No non-zero records to process for alerts"}
 
         if table_db_name == 'host_unauthorised_flow':
             unauthorised_records = resp.get("data", [])
@@ -257,7 +332,7 @@ class Postgresql:
             device_msg = f"BCU Numbers: {', '.join(bcu_numbers)}, Total Net Totalizer: {total_net}"
 
             # Create and close the alert if needed
-            if unauthorised_records:
+            if unauthorised_records and is_close_alert:
                 # Use the first record for necessary data
                 first_record = unauthorised_records[0]
                 alert_data = {
@@ -299,7 +374,7 @@ class Postgresql:
                     sop_id = config['sop_id'].get(table_name)
                     device_msg = ""
                     if interlock_name == 'Cancel TT Reported':
-                        device_msg = str(record.get("compartment_number", ""))
+                        device_msg = f"{record.get('truck_number', '')}, {record.get('compartment_number', '')}".strip()
 
                     # Extract necessary fields from the record
                     alert_data = {
@@ -316,16 +391,16 @@ class Postgresql:
                     }
 
                     # Create Alert
-                    if interlock_name == 'Cancel TT Reported':
-                        is_close_alert = True
-                        success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
-                    else:
-                        success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                        print("msg :", msg)
-                        is_close_alert = True
-                        if not success:
-                            print(f"Failed to create alert: {msg}")
-                            return {"status": False, "message": f"Failed {e}", "data": []}
+                    # if interlock_name == 'Cancel TT Reported':
+                    #     is_close_alert = True
+                    #     success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
+                    # else:
+                    success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                    print("msg :", msg)
+                    is_close_alert = True
+                    if not success:
+                        print(f"Failed to create alert: {msg}")
+                        return {"status": False, "message": f"Failed {e}", "data": []}
                     
                     # Set alert_created = true for alert created record
                     query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
