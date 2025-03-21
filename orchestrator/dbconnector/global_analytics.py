@@ -4955,12 +4955,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             # Initialize date filter variables
             date_filter_applied = False
             start_date = None
@@ -5076,6 +5079,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("device_name") == bcu_number)
             # Handle daily data
             if date:
                 # Determine grouping level based on filters
