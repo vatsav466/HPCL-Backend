@@ -9,8 +9,13 @@ import mysql.connector
 import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
+from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
+from orchestrator.dbconnector.widget_actions import widget_actions
+from api_manager.charts_actions import charts_connection_vault_routing
 import orchestrator.dbconnector.credential_loader as credential_loader
 from orchestrator.dbconnector.widget_actions.lpg_plant_queries import today
+from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
+
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
 req_keys = {
@@ -1518,3 +1523,37 @@ async def get_tt_counts(condition):
     }
 
     return _dict
+
+
+async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    # Removing extra keys like all/_empty/* to mak sure all results appear in api response
+    # Filtering cross filters
+    cross_filters = [cross_filter for cross_filter in cross_filters if not (cross_filter.get("cond") in ['=', 'equals']
+                                                                            and cross_filter.get("value") and
+                                                                            cross_filter["value"].lower() in ['*',
+                                                                                                              '_empty',
+                                                                                                              'all'])]
+
+    # Filtering filters
+    filters = [filter_cond for filter_cond in filters
+               if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
+                       filter_cond["value"].lower() in ['*', '_empty', 'all'])]
+
+    drill_order = ["zone", "region", "salesarea", "rosapcode"]
+
+    for cond in cross_filters + filters:
+        cond['key'] = cond['key'].strip('"')
+
+    clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters + filters)
+    group_by_key = "zone" if not drill_state else drill_order[drill_order.index(drill_state)+1]
+    query = f''' select SUM(exposure) as amount, {group_by_key} from "HPCL_HOS".customer_balance '''
+    if clause:
+        query += f' where {" AND ".join(clause)}'
+    if group_by_key:
+        query += f" GROUP BY {group_by_key}"
+    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get("cris", "2")
+    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    return [rec for rec in resp['data'] if rec.get('amount')]
+

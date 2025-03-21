@@ -10,7 +10,7 @@ class NotificationManager:
         """
         pass
 
-    def publish_message(self, **kwargs):
+    async def publish_message(self, **kwargs):
         """
         Function to publish message(SMS/Email/Whatsapp Message)
         :param kwargs:

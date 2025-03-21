@@ -49,6 +49,7 @@ lpg_dashboard_actions = [
     'cumulative_sales_pmuy_npmuy',
     'location_wise_distribution',
     'm60_performance',
+    'retail_tar',
     'yearly_sales_performance',
     'overall_safety_check_pending',
     'total_suvidha',
@@ -159,6 +160,7 @@ widget_mapping = {
     'overall_ctc_statistics': {},
     'location_wise_distribution': {},
     'm60_performance': {},
+    'retail_tar': {},
     'yearly_sales_performance': {},
     'overall_safety_check_pending': {},
     'tibco_lubes_production': {'module_name': '', 'func_name': ''},
@@ -272,7 +274,7 @@ class WidgetActions:
             # Execute the function asynchronously
             if func_name in ['present_previous_month_sales_by_product']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state, limit=limit, time_grain=time_grain)
-            elif func_name in ['m60_performance', 'industry_performance']:
+            elif func_name in ['m60_performance', 'industry_performance', 'retail_tar']:
                 res = await func(filters=filters, cross_filters=cross_filters, drill_state=drill_state,
                                  time_grain=time_grain, resp_format=resp_format,resp_level=resp_level)
             else:
