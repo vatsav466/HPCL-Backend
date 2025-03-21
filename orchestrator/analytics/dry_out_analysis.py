@@ -1533,7 +1533,6 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
                                                                             cross_filter["value"].lower() in ['*',
                                                                                                               '_empty',
                                                                                                               'all'])]
-
     # Filtering filters
     filters = [filter_cond for filter_cond in filters
                if not (filter_cond.get("cond") in ['=', 'equals'] and filter_cond.get("value") and
@@ -1548,6 +1547,8 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
     group_by_key = "zone" if not drill_state else drill_order[drill_order.index(drill_state)+1]
     query = f''' select SUM(exposure) as amount, {group_by_key} from "HPCL_HOS".customer_balance '''
     if clause:
+        if isinstance(clause, str):
+            clause = [clause]
         query += f' where {" AND ".join(clause)}'
     if group_by_key:
         query += f" GROUP BY {group_by_key}"
@@ -1555,5 +1556,4 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     resp = await function(query=query)
-    return [rec for rec in resp['data'] if rec.get('amount')]
-
+    return [rec for rec in resp if rec.get('amount')]
