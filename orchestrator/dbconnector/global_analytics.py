@@ -6575,7 +6575,7 @@ class GlobalAnalytics:
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
             if truck_number:
-                resp_df = resp_df.filter(pl.col("truck_number") = truck_number)
+                resp_df = resp_df.filter(pl.col("truck_number") == truck_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
