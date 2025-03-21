@@ -4,7 +4,24 @@ import json
 import asyncio
 import traceback
 from orchestrator.alerting.alert_manager import create_alert, close_alert
+import os
 
+def load_device_data(sap_id):
+    try:
+        data_path = f"/opt/ceg/algo/things_board/device_data/{sap_id}.json"
+        with open(data_path, 'r') as file:
+            return json.load(file)
+    except Exception as e:
+        print(f"Error loading device data for SAP ID {sap_id}: {e}")
+        return None
+
+def get_sensor_id(device_name, equipment_type, device_data):
+    for device in device_data.get("data", []):
+        if device.get("device_name") == device_name:
+            for sensor in device.get("sensors", []):
+                if sensor.get("sensor_type") == equipment_type:
+                    return sensor.get("sensor_id")
+    return None
 
 def fix_additional_info(additional_info):
     for key, value in {"interlockName": "interlock_name", "BU": "bu", "sopid": "sop_id",
@@ -12,6 +29,18 @@ def fix_additional_info(additional_info):
                        "deviceName": "device_name", "Sensor_Type":"equipment_type", "Sensor_Name":"equipment_name"}.items():
         if key in additional_info:
             additional_info[value] = additional_info[key]
+    
+    sap_id = additional_info.get("sap_id")
+    device_name = additional_info.get("device_name")
+    equipment_type = additional_info.get("equipment_type")
+
+    if sap_id and device_name and equipment_type:
+        device_data = load_device_data(sap_id)
+        if device_data:
+            sensor_id = get_sensor_id( device_name, equipment_type, device_data)
+            if sensor_id:
+                additional_info["sensor_id"] = sensor_id
+                additional_info["device_name"] = f"{sensor_id}_{device_name}"    
     return additional_info
 
 
