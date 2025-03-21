@@ -133,16 +133,15 @@ async def close_vts_alert(alert_data, input_data):
             "ApprovedRemarks": await get_approved_remarks(alert_data, is_approved=True),
             "BlockStartDate": str(alert_data['vehicle_blocked_start_date'].isoformat()),
             "BlockEndDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
-            "WaivedOff": False,
+            "WaivedOff": 0,
             "AlertID": alert_data['id'],
             "DocLink": {
                 "DocPaths": input_data["doc_link"] if input_data['doc_link'] else []
             }
         }
     print("Un block tt params: ", params)
-    return True, "Success"
-    # return await vts_analysis.post_unblocked_tt(params)
-
+    # return True, "Success"
+    return await vts_analysis.post_unblocked_tt(params)
 
 async def close_emlock_alert(alert_data, input_data):
     """
