@@ -93,7 +93,7 @@ class Postgresql:
     async def cal_unauthorized_flow(self, total_net):
         if total_net > 5:
             return True, "Unauthorized flow_BCU"
-        return False, ""
+        return True, "Unauthorized flow_BCU"
 
     async def create_cancel_tt_report(self, data):
         to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
