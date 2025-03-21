@@ -183,7 +183,8 @@ async def close_emlock_alert(alert_data, input_data):
         "exceptionType": alert_data['violation_type'],
         "status": "1" if input_data['action_type'] == 'Approved' else "2",
         "acknowledgedUser": rpt.get("employee_id", ""),
-        "acknowledgedTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        # "acknowledgedTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "acknowledgedTime": urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S"),
         "remarks": input_data['action_msg'],
         "metaData": json.dumps(meta_data)
     }
