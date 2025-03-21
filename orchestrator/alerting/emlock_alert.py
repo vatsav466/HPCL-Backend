@@ -31,6 +31,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         else:
             logger.info(f"Error in finding location {alert_data['location_id']} "
                         f"for bu {alert_data['location_type']} - {loc_dt}")
+            loc_dt = {"name": ""}
 
         emlock_interlock_details = emlock_mapping.emlock_vehicle_mapping[alert_data['location_type']]
 
