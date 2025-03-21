@@ -121,7 +121,7 @@ async def close_vts_alert(alert_data, input_data):
         alert_data = alert_data.__dict__
     if not input_data.get("doc_link", ""):
         input_data["doc_link"] = await get_doc_link_from_alert_history(alert_data)
-    un_block_datetime = str(alert_data['vehicle_blocked_end_date'].isoformat()) if input_data.get("is_autoblock", False) else str(urdhva_base.utilities.get_present_time().isoformat())
+    un_block_datetime = str(alert_data['vehicle_blocked_end_date'].strftime("%Y-%m-%d %H:%M:%S")) if input_data.get("is_autoblock", False) else str(urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S"))
     approved_datetime = await get_approved_remarks(alert_data, is_approved=False, get_approved_time=True)
     params = {
             "TT_No": alert_data['vehicle_number'],
@@ -131,10 +131,10 @@ async def close_vts_alert(alert_data, input_data):
             "ApprovedBy": rpt.get("employee_id", "NOVEX_USER"),
             "ApprovedDateTime": approved_datetime,
             "ApprovedRemarks": await get_approved_remarks(alert_data, is_approved=True),
-            "BlockStartDate": str(alert_data['vehicle_blocked_start_date'].isoformat()),
-            "BlockEndDate": str(alert_data['vehicle_blocked_end_date'].isoformat()),
+            "BlockStartDate": str(alert_data['vehicle_blocked_start_date'].strftime("%Y-%m-%d %H:%M:%S")),
+            "BlockEndDate": str(alert_data['vehicle_blocked_end_date'].strftime("%Y-%m-%d %H:%M:%S")),
             "WaivedOff": 0,
-            "AlertID": alert_data['id'],
+            "AlertID": str(alert_data['id']),
             "DocLink": {
                 "DocPaths": input_data["doc_link"] if input_data['doc_link'] else []
             }
@@ -196,8 +196,13 @@ async def get_approved_remarks(alert_data: dict, is_approved=False, get_approved
         for alert_history in alert_data.get("alert_history", []):
             if alert_history.get('is_approved', False):
                 if alert_history['action_type'] == 'Approved':
-                    return alert_history['processed_time']
-        return ""
+                    try:
+                        _date = datetime.datetime.strptime(
+                            alert_history['processed_time'], "%Y-%m-%dT%H:%M:%S.%f").strftime("%Y-%m-%d %H:%M:%S")
+                        return _date
+                    except Exception as e:
+                        return str(urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S"))
+        return str(urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d %H:%M:%S"))
     for alert_history in alert_data.get("alert_history", []):
         if is_approved:
             if alert_history.get('is_approved', False):
