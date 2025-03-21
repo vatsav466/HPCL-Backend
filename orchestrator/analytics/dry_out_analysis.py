@@ -1511,6 +1511,10 @@ async def get_tt_counts(condition):
         query=query
     )
     resp = pd.DataFrame(resp)
+    if resp.empty:
+        resp = pd.DataFrame({"TRUCK_REGNO": []})
+    if dealer_tt_resp.empty:
+        dealer_tt_resp = pd.DataFrame({"truck_regnno": [], "dealer_code": []})
 
     resp = pd.merge(
         dealer_tt_resp.drop_duplicates(subset=['truck_regnno']),
