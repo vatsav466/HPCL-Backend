@@ -583,6 +583,9 @@ Model Alerts {
     clear_count optional bool
     maintenance_time optional str
 
+    //tas keys
+    tt_load_number optional str
+
     // Marking Alert
     is_flagged_false optional bool
     rca optional str
