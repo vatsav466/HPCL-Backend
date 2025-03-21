@@ -756,6 +756,7 @@ class LPGCDCMSActions:
             #                             resp[col]
             #                         )
             #                     )
+            
             resp["Age"] = "Ageing"
             resp = resp.groupby(["Age"], as_index=False).agg({
                     "pending_1_3_days": "sum",
@@ -765,7 +766,7 @@ class LPGCDCMSActions:
                 })
             del resp["Age"]
             for col in ["pending_1_3_days", "pending_4_7_days", "pending_8_15_days", "pending_beyond_15_days"]:
-                resp[col] = resp[col]/100000
+                resp[col] = resp[col]/1000
                 resp[col] = resp[col].fillna(0).astype(np.float64).round(2)
             return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
 
@@ -899,7 +900,7 @@ class LPGCDCMSActions:
                 _index = "DistributorName"
             for col in ["PMUY", "NPMUY"]:
                 if col in grouped_resp.columns:
-                    grouped_resp[col] = grouped_resp[col]/100000
+                    grouped_resp[col] = grouped_resp[col]/1000
                     grouped_resp[col] = grouped_resp[col].round(2)
             grouped_resp = grouped_resp.assign(Total=grouped_resp["PMUY"] + grouped_resp["NPMUY"]
                                                ).sort_values(by="Total", ascending=False).drop(columns=["Total"])
