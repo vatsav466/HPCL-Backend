@@ -6540,6 +6540,7 @@ class GlobalAnalytics:
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.vehicle_number = k.truck_number 
+                    AND a.tt_load_number = k.load_number 
                     AND a.interlock_name = 'Cancel TT Reported'
                     AND DATE(a.created_at) = k.created_date) AS alert_count,
                     k.total_required_qty
