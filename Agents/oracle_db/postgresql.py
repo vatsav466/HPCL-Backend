@@ -105,7 +105,7 @@ class Postgresql:
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
             data['alert_id'] = alert_data['external_id']
-            action_msg = f"Truck Number: {data['vehicle_number']} \n Compartment Number: {data['device_msg']}"
+            action_msg = f"Load Number: {data['load_number']} with Truck Number: {data['vehicle_number']} and Compartment Number: {data['device_msg']}"
             input_data = {
                 "action_type": "Cancelled",
                 "action_msg": action_msg
@@ -374,7 +374,7 @@ class Postgresql:
                     sop_id = config['sop_id'].get(table_name)
                     device_msg = ""
                     if interlock_name == 'Cancel TT Reported':
-                        device_msg = f"{record.get('truck_number', '')}, {record.get('compartment_number', '')}".strip()
+                        device_msg = f"{record.get('compartment_number', '')}".strip()
 
                     # Extract necessary fields from the record
                     alert_data = {
@@ -386,7 +386,7 @@ class Postgresql:
                         'alert_id': str(uuid.uuid1()),
                         'device_name': record.get('bcu_number'),
                         'device_type': 'Gantry',
-                        'vehicle_number': record.get('truck_number', ''),
+                        'vehicle_number': f"{record.get('truck_number', '')},{record.get('load_number', '')}".strip(),
                         'device_msg': device_msg
                     }
 
