@@ -92,6 +92,7 @@ class AlertFactory:
                                                         'device_msg': alert_data.get('message', ''),
                                                         'equipment_type': alert_data.get('equipment_type',''),
                                                         'equipment_name': alert_data.get('equipment_name',''),
+                                                        'sensor_id': alert_data.get('sensor_id', ''),
                                                         'alert_message': alert_data.get('alert_message',''),
                                                         'last_sms_to': [], 'last_mailed_to': [],
                                                         'last_escalated_to': [],
@@ -178,7 +179,7 @@ class AlertFactory:
                 # Convert alert_data to a dictionary
                 alert_data_dict = alert_data.dict() if hasattr(alert_data, 'dict') else alert_data.__dict__
 
-                # Modify the alert with the updated data
+                # Modify the alert with the updated data             
                 alert_update = await hpcl_ceg_model.Alerts(**alert_data_dict).modify()
 
                 payload["variables"]["interlock_id"] = {"value": interlock['id'], "type": "String"}
@@ -205,7 +206,7 @@ class AlertFactory:
                     # print("Data Pushed to VTS Vendor", resp)
 
                 if alert_data_dict.get("alert_section") in ["VA"] and alert_data_dict.get("bu") in ["RO"]:
-                    return True, "alert created"
+                    return True, "alert created" 
                 await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
                 await redis_ins.hset("alert_camunda_url", str(alert_resp['id']), camunda_url)
             else:
