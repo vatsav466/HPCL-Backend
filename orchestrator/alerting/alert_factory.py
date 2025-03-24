@@ -305,6 +305,7 @@ class AlertFactory:
                 print("Interlock and Alert updated successfully.")
 
             else:
+                print("alert_data: ", alert_data)
                 il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
                 if not isinstance(il_data, dict):
                     il_data = il_data.__dict__
