@@ -93,11 +93,11 @@ class Postgresql:
     async def cal_unauthorized_flow(self, total_net):
         if total_net > 5:
             return True, "Unauthorized flow_BCU"
-        return False, ""
+        return None, None
 
     async def create_cancel_tt_report(self, data):
         to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
-        query = f"""select id from alerts where interlock_name = 'Cancel TT Reported' and vehicle_number = '{data["vehicle_number"]}' """ \
+        query = f"""select id from alerts where interlock_name = 'Cancel TT Reported' and vehicle_number = '{data["vehicle_number"]}' and load_number = '{data["load_number"]}' """ \
                 f"""and created_at::DATE = '{to_date}'"""
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         if resp.get("data", []):
@@ -105,7 +105,7 @@ class Postgresql:
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
             data['alert_id'] = alert_data['external_id']
-            action_msg = f"Truck Number: {data['vehicle_number']} \n Compartment Number: {data['device_msg']}"
+            action_msg = f"Load Number: {data['load_number']} with Truck Number: {data['vehicle_number']} and Compartment Number: {data['device_msg']}"
             input_data = {
                 "action_type": "Cancelled",
                 "action_msg": action_msg
@@ -202,8 +202,8 @@ class Postgresql:
         
         if table_db_name == 'host_manual_fan_printed':
             # Filter out zero manual_fan_count records for regular processing
-            data = [x for x in data if x['manual_fan_count'] != 0]
-            
+            data = [x for x in data if x['manual_fan_count'] > 0]
+            print("data --> ", data)
             # Only if no non-zero records and it's end of day (18:00), include a zero record if available
             to_day = urdhva_base.utilities.get_present_time().strftime("%H")
             if int(to_day) == 18 and not any(x['manual_fan_count'] != 0 for x in data):
@@ -220,7 +220,7 @@ class Postgresql:
                         # Sort by date_time and get the latest
                         zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
                         data.append(zero_records[0])  # Add the latest zero record
-
+            print("data for manual fan printed --> ", data)
         status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created'])  # Use upsert=True if needed
         
         # Get only alert not created records
@@ -332,7 +332,7 @@ class Postgresql:
             device_msg = f"BCU Numbers: {', '.join(bcu_numbers)}, Total Net Totalizer: {total_net}"
 
             # Create and close the alert if needed
-            if unauthorised_records:
+            if unauthorised_records and is_close_alert:
                 # Use the first record for necessary data
                 first_record = unauthorised_records[0]
                 alert_data = {
@@ -374,7 +374,7 @@ class Postgresql:
                     sop_id = config['sop_id'].get(table_name)
                     device_msg = ""
                     if interlock_name == 'Cancel TT Reported':
-                        device_msg = str(record.get("compartment_number", ""))
+                        device_msg = f"For Compartment_Number: {record.get('compartment_number', '')}".strip()
 
                     # Extract necessary fields from the record
                     alert_data = {
@@ -387,6 +387,7 @@ class Postgresql:
                         'device_name': record.get('bcu_number'),
                         'device_type': 'Gantry',
                         'vehicle_number': record.get('truck_number', ''),
+                        'tt_load_number': f'{record.get('load_number', '')}',
                         'device_msg': device_msg
                     }
 

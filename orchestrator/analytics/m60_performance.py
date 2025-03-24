@@ -18,6 +18,8 @@ HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', '
 # Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
 Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"',
                 '"month_name"']
+#Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+#                '"month_name"']
 APG_Filters = ['"cumulative_level"', '"ProductName"',
                 '"month_name"']
 # Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"'"ProductName"'', '"ProductName"']
@@ -175,6 +177,10 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    resp_level = ''
+    if resp_format == 'summary':
+        resp_level = 'summary'
+        resp_format = ''
     # Removing extra keys like all/_empty/* to mak sure all results appear in api response
     # Filtering cross filters
     org_cross_filters = cross_filters.copy()
@@ -215,9 +221,18 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         '"month_name"', '"ProductName"']
         Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
                         '"ProductName"', '"month_name"']
+        
+        Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+                         '"month_name"']
+        if resp_level == "summary" or resp_format =='heat_map':
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+                        '"ProductName"', '"month_name"']
     else:
         Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
                         '"ProductName"']
+        Base_Filters = ['"month_name"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"']
+        if resp_level == "summary" or resp_format =='heat_map':
+            Base_Filters = ['"month_name"', '"SBU_Name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"']
     # Fetching all group by filters, return should be a list always
     group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters, cumulative, drill_state, time_grain)
     # Assigning empty variables
@@ -399,7 +414,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             print("target_data",target_data)
             print("filters",filters)
             #if '"C"'   in [x['key'] for x in filters] and '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and len(org_cross_filters) == 0:
-            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0) and '"C"'   in [x['key'] for x in filters]:
+            if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0) and '"C"'   in [x['key'] for x in filters] and time_grain !='Monthly':
                 
                 print("start_date",start_date)
                 print("end_date",end_date)
@@ -652,7 +667,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 li_req = li[:req_index]
                 req_str = '('+li_req[0]+'-'+li_req[-1]+')'
                 hist_xaxis[0] = hist_xaxis[0]+req_str
-                
             if '"T"' in [x['key'] for x in filters]:
                 tgt_xaxis.extend(
                     ['_'.join(x['title'].split('_')[:2]) for x in tgt_growth_details if 'tgt' in x['title'].lower()])
@@ -780,14 +794,16 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
 
             cumulative_data = {}
             if drill_state.strip('"') == 'SBU_Name':
-                cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[
-                    sum_cols].sum()
+                #cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[sum_cols].sum()
+                if resp_format == "heat_map":
+                    cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[sum_cols].sum()
+                else:
+                    cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('ProductName', as_index=False)[sum_cols].sum()
             if drill_state.strip('"') == 'Zone_Name':
-                cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Region_Name', as_index=False)[
-                    sum_cols].sum()
+                #cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Region_Name', as_index=False)[sum_cols].sum()
+                cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Region_Name', as_index=False)[sum_cols].sum()
             if drill_state.strip('"') == 'Region_Name':
-                cumulative_data = \
-                df[df['month_name'].isin(cumulative_months)].groupby('SalesArea_Name', as_index=False)[sum_cols].sum()
+                cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('SalesArea_Name', as_index=False)[sum_cols].sum()
             cumulative_data['month_name'] = 'Cum'
             non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
             df = pd.concat([cumulative_data, non_cumulative_data])
