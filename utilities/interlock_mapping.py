@@ -190,7 +190,10 @@ tas_interlock_mapping = [
                          {"sop_id": "SOP057", "interlock_name": "TT outside Terminal Radius", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
                          {"sop_id": "SOP058", "interlock_name": "Swipe Out Count Limit Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
                          {"sop_id": "SOP059", "interlock_name": "Invoice Not Generated", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
-                         {"sop_id": "SOP060", "interlock_name": "Shipment Number Not Generated", "model": "EMLock", "workflow_name": "TAS EMLOCK"}]
+                         {"sop_id": "SOP060", "interlock_name": "Shipment Number Not Generated", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
+                         {"sop_id": "SOP061", "interlock_name": "TT outside RO radius", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
+                         {"sop_id": "SOP062", "interlock_name": "Pre Decantation Request Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"},
+                         {"sop_id": "SOP063", "interlock_name": "Post Decantation Request Exceed", "model": "EMLock", "workflow_name": "TAS EMLOCK"}]
 
 # Interlock name and sop mapping for RO Alerts
 ro_interlock_mapping = [{"sop_id": "SOP001", "interlock_name": "VTS RouteDeviation FirstTime", "model": "VTS", "workflow_name": "Ro_Vts_Deviation_FirstTime_90days"},

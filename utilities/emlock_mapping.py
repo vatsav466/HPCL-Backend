@@ -92,7 +92,7 @@ emlock_vehicle_mapping = {
         },
         "TToutsideRoRadius": {
             "interlock_name": "TT outside RO radius",
-            "sop_id": "SOP020",
+            "sop_id": "SOP061",
             "severity": "HIGH",
             "period": "weekly",
             "escalations": {
@@ -107,7 +107,7 @@ emlock_vehicle_mapping = {
         },
         "PreDecantationRequestExceeded": {
             "interlock_name": "Pre Decantation Request Exceed",
-            "sop_id": "SOP021",
+            "sop_id": "SOP062",
             "severity": "HIGH",
             "period": "weekly",
             "escalations": {
@@ -122,7 +122,7 @@ emlock_vehicle_mapping = {
         },
         "PostDecantationRequestExceeded": {
             "interlock_name": "Post Decantation Request Exceed",
-            "sop_id": "SOP022",
+            "sop_id": "SOP063",
             "severity": "HIGH",
             "period": "weekly",
             "escalations": {
