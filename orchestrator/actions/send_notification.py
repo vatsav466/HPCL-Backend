@@ -12,6 +12,7 @@ import hpcl_ceg_enum
 from collections import defaultdict
 import utilities.va_alert_mapping as va_alert_mapping
 import utilities.role_configuration as role_configuration
+import utilities.emlock_mapping as emlock_mapping
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
     TemplateMapping
@@ -144,7 +145,7 @@ class SendNotification:
         roles_list = ""
         if self.alert_data.get("alert_section","") in ["VTS"]:
             roles_list = (await self._role_configuration_rolemailto() or "")
-        elif self.alert_data.get("alert_section","") in ["VA","LPG"]:
+        elif self.alert_data.get("alert_section","") in ["VA","LPG","EMLock"]:
             roles_list = await self._get_va_roles_list()
         else:
             roles_list = self.params.get("rolemailto", "")
@@ -658,7 +659,7 @@ class SendNotification:
         self.update_alert = getattr(self, "update_alert", {}) or {}
 
         assigning_roles = ""
-        if self.alert_data.get("alert_section","") in ["VTS","VA","LPG"]:
+        if self.alert_data.get("alert_section","") in ["VTS","VA","LPG","EMLock"]:
             assigning_roles = (await self._role_configuration_mqofrole() or "")
         else:
             assigning_roles = self.params.get("mqofrole", "")
@@ -676,7 +677,7 @@ class SendNotification:
         if self.params.get("messagetype") in ["escalation", "escalate"]:
             if self.alert_data.get("alert_section","") in ["VTS"]:
                 self.update_alert["last_escalated_to"] = (await self._role_configuration_rolemailto()).split(",")
-            elif self.alert_data.get("alert_section", "") in ["VA","LPG"]:
+            elif self.alert_data.get("alert_section", "") in ["VA","LPG","EMLock"]:
                 self.update_alert["last_escalated_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_escalated_to"] = self.params.get("rolemailto", "").split(",")
@@ -684,7 +685,7 @@ class SendNotification:
         else:
             if self.alert_data.get("alert_section","") in ["VTS"]:
                 self.update_alert["last_notified_to"] = (await self._role_configuration_rolemailto()).split(",")
-            elif self.alert_data.get("alert_section", "") in ["VA", "LPG"]:
+            elif self.alert_data.get("alert_section", "") in ["VA", "LPG", "EMLock"]:
                 self.update_alert["last_notified_to"] = (await self._get_va_roles_list()).split(",")
             else:
                 self.update_alert["last_notified_to"] = self.params.get("rolemailto", "").split(",")
@@ -815,6 +816,16 @@ class SendNotification:
                         return va_mapping['assign_role']
                     if mqof == "1":
                         return va_mapping['escalation_role']
+                    
+        elif self.alert_data.get("alert_section","") in ["EMLock"]:
+            if self.params.get("va_level", "level - 1") in ['', None]:
+                self.params["va_level"] = "level - 1"
+            
+            emlock_mappings = emlock_mapping.emlock_vehicle_mapping[self.alert_data.get("bu", "")]
+            if mqof and mqof in ["0"]:
+                emlock_mappings = emlock_mappings[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
+                if mqof == "0":
+                    return emlock_mappings['assign_role']
         return mqof
 
     async def _get_va_roles_list(self):
@@ -822,7 +833,12 @@ class SendNotification:
         if self.params.get("va_level", "level - 1") in ['', None]:
             self.params["va_level"] = "level - 1"
 
-        va_mapping = va_alert_mapping.VA_Alert_Mapping[self.alert_data.get("bu", "")]
+        if self.alert_data.get("alert_section") in ["VA"]:
+            va_mapping = va_alert_mapping.VA_Alert_Mapping[self.alert_data.get("bu", "")]
+
+        if self.alert_data.get("alert_section") in ["EMLock"]:
+            va_mapping = emlock_mapping.emlock_vehicle_mapping[self.alert_data.get("bu", "")]
+
         if self.alert_data['violation_type'] in va_mapping.keys():
             va_mapping = va_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
             if mailto == "0":
