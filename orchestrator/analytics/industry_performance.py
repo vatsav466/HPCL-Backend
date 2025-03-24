@@ -122,8 +122,8 @@ def get_date_filters(filters, resp_type="months"):
                                                                with_month_end_day=True)
         elif condition['key'] == '"fiscal_year"':
             if "," in condition['value']:
-                fiscal_year_last = condition['value'].split(',')[-1]
-                fiscal_year_pre = condition['value'].split(',')[0]
+                fiscal_year_last = condition['value'].split(',')[0]
+                fiscal_year_pre = condition['value'].split(',')[-1]
             else:
                 fiscal_year_pre = condition['value']
         elif condition["key"] == "month_name" or condition["key"] == '"month_name"':
