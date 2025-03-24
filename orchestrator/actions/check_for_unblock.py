@@ -2,6 +2,7 @@ import urdhva_base
 import datetime
 import traceback
 import hpcl_ceg_model
+import utilities.emlock_mapping as emlock_mapping
 import utilities.va_alert_mapping as va_alert_mapping
 import utilities.role_configuration as role_configuration
 
@@ -48,6 +49,22 @@ class CheckForUnblock:
             if alert_data.get("alert_section", "") == "VA":
                 va_mapping = va_alert_mapping.VA_Alert_Mapping[alert_data.get("bu","")][alert_data['violation_type']]['escalations'][params.get("va_level", "level - 1")]
                 totalWaitTime = va_mapping['escalation_time']
+            if alert_data.get("alert_section", "") in ["EMLock"]:
+                #emlock_mappings = emlock_mapping.emlock_vehicle_mapping[alert_data.get("bu","")][alert_data['violation_type']]['escalations'][params.get("va_level", "level - 1")]
+                #totalWaitTime = emlock_mappings['escalation_time']
+                now = datetime.datetime.now(datetime.timezone.utc)
+                # Define IST offset
+                ist_offset = datetime.timedelta(hours=5, minutes=30)
+                # Convert the current UTC time to IST
+                now_ist = now + ist_offset
+                # Calculate today's target time (1 AM IST)
+                target_time_ist = now_ist.replace(hour=1, minute=0, second=0, microsecond=0)
+                # If the current IST time is already past the target time, move the target to the next day
+                target_time_ist += datetime.timedelta(days=1)
+                # Calculate the time difference in minutes
+                time_difference = target_time_ist - now_ist
+                minutes = int(time_difference.total_seconds() // 60)
+                totalWaitTime = "PT" + str(minutes) + "M"
             return True, {"waitTime": totalWaitTime}
 
         except Exception as e:
