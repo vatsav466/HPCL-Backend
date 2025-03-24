@@ -308,7 +308,8 @@ async def emlock_alert_closer(alert_data, input_data):
     close_alert_data['bu'] = alert_data['bu']
     close_alert_data['alert_id'] = alert_data['id']
     close_alert_data['interlock_id'] = alert_data['interlock_id']
-    await close_alert(close_alert_data)
+    close_resp = await close_alert(close_alert_data)
+    print("close_resp: ", close_resp)
     resp = await close_emlock_alert(alert_data, input_data)
 
 async def _is_close_alert(input_data):
@@ -380,6 +381,7 @@ class AlertAction:
 
             status, func = await _is_close_alert(input_data)
             if status and func:
+                print("func: ", func)
                 await eval(func)(alert_data=alert_data, input_data=input_data)
             # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
             # if input_data.get("alert_section", "") == 'VA':

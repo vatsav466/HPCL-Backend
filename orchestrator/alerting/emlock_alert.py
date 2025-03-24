@@ -152,7 +152,7 @@ class EMLockAlertManager(alert_factory.AlertFactory):
         """
         try:
             logger.info(f"Alert data received to close alert: {alert_data}")
-            return cls.close_alert(alert_data)
+            return await cls.close_alert(alert_data)
 
         except Exception as e:
             raise Exception(status_code=500, detail="Error closing alert.") from e
