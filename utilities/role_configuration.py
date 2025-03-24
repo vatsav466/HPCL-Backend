@@ -124,12 +124,12 @@ role_Mapping={
             "VTS RouteDeviation SecondTime": {
                 "rolemailto": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD",
+                    "2": "Location In-Charge SOD,Zonal HSE SOD"
                 },
                 "mqof": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -139,12 +139,12 @@ role_Mapping={
             "Unauthorized Stoppage SecondTime": {
                 "rolemailto": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD",
+                    "2": "Location In-Charge SOD,Zonal HSE SOD"
                 },
                 "mqof": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -154,12 +154,12 @@ role_Mapping={
             "VTS PowerDisconnect SecondTime": {
                 "rolemailto": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD",
+                    "2": "Location In-Charge SOD,Zonal HSE SOD"
                 },
                 "mqof": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -169,12 +169,12 @@ role_Mapping={
             "VTS Device Tampering SecondTime": {
                 "rolemailto": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD",
+                    "2": "Location In-Charge SOD,Zonal HSE SOD"
                 },
                 "mqof": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -184,12 +184,12 @@ role_Mapping={
             "VTS Offline SecondTime": {
                 "rolemailto": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD",
+                    "2": "Location In-Charge SOD,Zonal HSE SOD"
                 },
                 "mqof": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -199,12 +199,12 @@ role_Mapping={
             "Night Driving SecondTime": {
                 "rolemailto": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD",
+                    "2": "Location In-Charge SOD,Zonal HSE SOD"
                 },
                 "mqof": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD"
                 },
                 "block_time": {
                     "0": "P90D",
@@ -214,12 +214,12 @@ role_Mapping={
             "Speed Violation SecondTime": {
                 "rolemailto": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD",
+                    "2": "Location In-Charge SOD,Zonal HSE SOD"
                 },
                 "mqof": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD"
                 },
                 "block_time": {
                     "0": "P90D",
@@ -229,12 +229,12 @@ role_Mapping={
             "NoHalt Zone SecondTime": {
                 "rolemailto": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD",
-                    "2": "Location In-Charge SOD,Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD",
+                    "2": "Location In-Charge SOD,Zonal HSE SOD"
                 },
                 "mqof": {
                     "0": "Location In-Charge SOD",
-                    "1": "Zonal Safety Officer SOD"
+                    "1": "Zonal HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -243,13 +243,13 @@ role_Mapping={
             },
             "VTS RouteDeviation ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head",
-                    "2": "Zonal Safety Officer SOD,Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD",
+                    "2": "Zonal HSE SOD,Zonal Operations Head SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -258,13 +258,13 @@ role_Mapping={
             },
             "Unauthorized Stoppage ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head",
-                    "2": "Zonal Safety Officer SOD,Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD",
+                    "2": "Zonal HSE SOD,Zonal Operations Head SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -273,13 +273,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head",
-                    "2": "Zonal Safety Officer SOD,Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD",
+                    "2": "Zonal HSE SOD,Zonal Operations Head SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -288,13 +288,13 @@ role_Mapping={
             },
             "VTS Device Tampering ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head",
-                    "2": "Zonal Safety Officer SOD,Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD",
+                    "2": "Zonal HSE SOD,Zonal Operations Head SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -303,13 +303,13 @@ role_Mapping={
             },
             "VTS Offline ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head",
-                    "2": "Zonal Safety Officer SOD,Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD",
+                    "2": "Zonal HSE SOD,Zonal Operations Head SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -318,13 +318,13 @@ role_Mapping={
             },
             "Night Driving ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head",
-                    "2": "Zonal Safety Officer SOD,Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD",
+                    "2": "Zonal HSE SOD,Zonal Operations Head SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -333,13 +333,13 @@ role_Mapping={
             },
             "Speed Violation ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head",
-                    "2": "Zonal Safety Officer SOD,Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD",
+                    "2": "Zonal HSE SOD,Zonal Operations Head SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -348,13 +348,13 @@ role_Mapping={
             },
             "NoHalt Zone ThirdTime": {
                 "rolemailto": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head",
-                    "2": "Zonal Safety Officer SOD,Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD",
+                    "2": "Zonal HSE SOD,Zonal Operations Head SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Safety Officer SOD",
-                    "1": "Zonal Operations Head"
+                    "0": "Zonal HSE SOD",
+                    "1": "Zonal Operations Head SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -363,13 +363,13 @@ role_Mapping={
             },
             "VTS RouteDeviation FourthTime": {
                 "rolemailto": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team",
-                    "2": "Zonal Operations Head,HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD",
+                    "2": "Zonal Operations Head SOD,HQO HSE SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -378,13 +378,13 @@ role_Mapping={
             },
             "Unauthorized Stoppage FourthTime": {
                 "rolemailto": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team",
-                    "2": "Zonal Operations Head,HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD",
+                    "2": "Zonal Operations Head SOD,HQO HSE SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -393,13 +393,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect FourthTime": {
                 "rolemailto": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team",
-                    "2": "Zonal Operations Head,HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD",
+                    "2": "Zonal Operations Head SOD,HQO HSE SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -408,13 +408,13 @@ role_Mapping={
             },
             "VTS Device Tampering FourthTime": {
                 "rolemailto": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team",
-                    "2": "Zonal Operations Head,HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD",
+                    "2": "Zonal Operations Head SOD,HQO HSE SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -423,13 +423,13 @@ role_Mapping={
             },
             "VTS Offline FourthTime": {
                 "rolemailto": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team",
-                    "2": "Zonal Operations Head,HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD",
+                    "2": "Zonal Operations Head SOD,HQO HSE SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -438,13 +438,13 @@ role_Mapping={
             },
             "Night Driving FourthTime": {
                 "rolemailto": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team",
-                    "2": "Zonal Operations Head,HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD",
+                    "2": "Zonal Operations Head SOD,HQO HSE SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -453,13 +453,13 @@ role_Mapping={
             },
             "Speed Violation FourthTime": {
                 "rolemailto": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team",
-                    "2": "Zonal Operations Head,HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD",
+                    "2": "Zonal Operations Head SOD,HQO HSE SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -468,13 +468,13 @@ role_Mapping={
             },
             "NoHalt Zone FourthTime": {
                 "rolemailto": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team",
-                    "2": "Zonal Operations Head,HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD",
+                    "2": "Zonal Operations Head SOD,HQO HSE SOD"
                 },
                 "mqof": {
-                    "0": "Zonal Operations Head",
-                    "1": "HQO HSSE Team"
+                    "0": "Zonal Operations Head SOD",
+                    "1": "HQO HSE SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -483,13 +483,13 @@ role_Mapping={
             },
             "VTS RouteDeviation FifthTime": {
                 "rolemailto": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO HSSE Team,HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO HSE SOD,HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -498,13 +498,13 @@ role_Mapping={
             },
             "Unauthorized Stoppage FifthTime": {
                 "rolemailto": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO HSSE Team,HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO HSE SOD,HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -513,13 +513,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect FifthTime": {
                 "rolemailto": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO HSSE Team,HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO HSE SOD,HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -528,13 +528,13 @@ role_Mapping={
             },
             "VTS Device Tampering FifthTime": {
                 "rolemailto": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO HSSE Team,HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO HSE SOD,HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -543,13 +543,13 @@ role_Mapping={
             },
             "VTS Offline FifthTime": {
                 "rolemailto": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO HSSE Team,HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO HSE SOD,HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -558,13 +558,13 @@ role_Mapping={
             },
             "Night Driving FifthTime": {
                 "rolemailto": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO HSSE Team,HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO HSE SOD,HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -573,13 +573,13 @@ role_Mapping={
             },
             "Speed Violation FifthTime": {
                 "rolemailto": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO HSSE Team,HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO HSE SOD,HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -588,13 +588,13 @@ role_Mapping={
             },
             "NoHalt Zone FifthTime": {
                 "rolemailto": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO HSSE Team,HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO HSE SOD,HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO HSSE Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO HSE SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -603,13 +603,13 @@ role_Mapping={
             },
             "VTS RouteDeviation SixthTime": {
                 "rolemailto": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -618,13 +618,13 @@ role_Mapping={
             },
             "Unauthorized Stoppage SixthTime": {
                 "rolemailto": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -633,13 +633,13 @@ role_Mapping={
             },
             "VTS PowerDisconnect SixthTime": {
                 "rolemailto": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -648,13 +648,13 @@ role_Mapping={
             },
             "VTS Device Tampering SixthTime": {
                 "rolemailto": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -663,13 +663,13 @@ role_Mapping={
             },
             "VTS Offline SixthTime": {
                 "rolemailto": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -678,13 +678,13 @@ role_Mapping={
             },
             "Night Driving SixthTime": {
                 "rolemailto": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -693,13 +693,13 @@ role_Mapping={
             },
             "Speed Violation SixthTime": {
                 "rolemailto": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
@@ -708,13 +708,13 @@ role_Mapping={
             },
             "NoHalt Zone SixthTime": {
                 "rolemailto": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team",
-                    "2": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD",
+                    "2": "HQO Operations SOD"
                 },
                 "mqof": {
-                    "0": "HQO Operations Team",
-                    "1": "HQO Operations Team"
+                    "0": "HQO Operations SOD",
+                    "1": "HQO Operations SOD"
                 },
                 "block_time": {
                     "0": "P730D",
