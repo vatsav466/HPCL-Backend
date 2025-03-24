@@ -137,6 +137,7 @@ def insertToDB(data, table_name, indexing_col=()):
                   }
 
     print('Data Types :', data.dtypes)
+    data = data.rename({'FISCAL_YEAR':'fiscal_year'})
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
         dty = dtype_dict.get(str(dty))
@@ -179,7 +180,7 @@ def insertToDB(data, table_name, indexing_col=()):
     data = data.with_columns(
     pl.col("month_name").map_elements(lambda x: x[:3] if len(x) >= 3 else x).alias("month_name")
 )
-    data = data.rename({'FISCAL_YEAR':'fiscal_year'})
+    #data = data.rename({'FISCAL_YEAR':'fiscal_year'})
     sql = f"""SELECT * FROM "{table_name}" LIMIT 1"""
     cur.execute(sql)
     column_names = [desc[0] for desc in cur.description]
