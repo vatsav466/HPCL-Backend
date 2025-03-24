@@ -804,7 +804,7 @@ class SendNotification:
                 print("mqof----------->",rolemapping["mqof"].get(mqof,""))
                 return rolemapping["mqof"].get(mqof,"")
             
-        if self.alert_data.get("alert_section","") in ["VA","LPG"]:
+        elif self.alert_data.get("alert_section","") in ["VA","LPG"]:
             if self.params.get("va_level", "level - 1") in ['', None]:
                 self.params["va_level"] = "level - 1"
 
@@ -817,7 +817,7 @@ class SendNotification:
                     if mqof == "1":
                         return va_mapping['escalation_role']
                     
-        if self.alert_data.get("alert_section","") in ["EMLock"]:
+        elif self.alert_data.get("alert_section","") in ["EMLock"]:
             if self.params.get("va_level", "level - 1") in ['', None]:
                 self.params["va_level"] = "level - 1"
             
