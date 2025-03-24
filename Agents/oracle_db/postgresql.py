@@ -97,7 +97,7 @@ class Postgresql:
 
     async def create_cancel_tt_report(self, data):
         to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
-        query = f"""select id from alerts where interlock_name = 'Cancel TT Reported' and vehicle_number = '{data["vehicle_number"]}' and load_number = '{data["load_number"]}' """ \
+        query = f"""select id from alerts where interlock_name = 'Cancel TT Reported' and vehicle_number = '{data["vehicle_number"]}' and tt_load_number = '{data["tt_load_number"]}' """ \
                 f"""and created_at::DATE = '{to_date}'"""
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         if resp.get("data", []):
@@ -105,7 +105,7 @@ class Postgresql:
             if not isinstance(alert_data, dict):
                 alert_data = alert_data.__dict__
             data['alert_id'] = alert_data['external_id']
-            action_msg = f"Load Number: {data['load_number']} with Truck Number: {data['vehicle_number']} and Compartment Number: {data['device_msg']}"
+            action_msg = f"Load Number: {data['tt_load_number']} with Truck Number: {data['vehicle_number']} and Compartment Number: {data['device_msg']}"
             input_data = {
                 "action_type": "Cancelled",
                 "action_msg": action_msg
@@ -387,7 +387,7 @@ class Postgresql:
                         'device_name': record.get('bcu_number'),
                         'device_type': 'Gantry',
                         'vehicle_number': record.get('truck_number', ''),
-                        'tt_load_number': f'{record.get('load_number', '')}',
+                        'tt_load_number': record.get('load_number', ''),
                         'device_msg': device_msg
                     }
 
