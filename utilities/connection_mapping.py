@@ -290,7 +290,7 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-charge SOD", "Zonal Operations Head SOD", "HQO Operations SOD"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Operations Head SOD", "HQO Operations SOD"]
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
@@ -300,7 +300,7 @@ alert_action = {
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-charge SOD", "Zonal Operations Head SOD", "HQO Operations SOD"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal Operations Head SOD", "HQO Operations SOD"]
                 }
             },
             "category": {
@@ -328,31 +328,31 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Location In-charge SOD", "Zonal HSE SOD",
+                    "roles": ["Admin", "Safety Officer SOD", "Location In-Charge SOD", "Zonal HSE SOD",
                               "Zonal Operations Head SOD", "HQO HSE SOD", "HQO Operations SOD"]
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Location In-charge SOD", "Zonal HSE SOD",
+                    "roles": ["Admin", "Safety Officer SOD", "Location In-Charge SOD", "Zonal HSE SOD",
                               "Zonal Operations Head SOD", "HQO HSE SOD", "HQO Operations SOD"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-charge SOD", "Zonal HSE SOD", "Zonal Operations Head SOD",
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal HSE SOD", "Zonal Operations Head SOD",
                               "HQO HSE SOD", "HQO Operations SOD"]
                 },
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Location In-charge SOD", "Zonal HSE SOD",
+                    "roles": ["Admin", "Safety Officer SOD", "Location In-Charge SOD", "Zonal HSE SOD",
                               "Zonal Operations Head SOD", "HQO HSE SOD", "HQO Operations SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-charge SOD", "Zonal HSE SOD", "Zonal Operations Head SOD",
+                    "roles": ["Admin", "Location In-Charge SOD", "Zonal HSE SOD", "Zonal Operations Head SOD",
                               "HQO HSE SOD", "HQO Operations SOD"]
                 }
             },
