@@ -45,11 +45,11 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
         logger.error(f"Invalid data structure: data.data is not a list or is empty")
         return {"status": False, "message": "Invalid data", "data": []}
     for entry in enriched_data:
-        entry['occurrence_date'] = datetime.datetime.strptime(entry['occurrence_date'], "%Y-%m-%d %H:%M:%S").isoformat()
-        if entry['closure_date']:
-            entry['closure_date'] = datetime.datetime.strptime(entry['closure_date'], "%Y-%m-%d %H:%M:%S").isoformat()
+        entry['occurrence_date'] = datetime.datetime.strptime(entry['occurrence_date'], "%Y%m%d%H%M%S").isoformat()
+        if entry.get("closure_date", ""):
+            entry['closure_date'] = datetime.datetime.strptime(entry['closure_date'], "%Y%m%d%H%M%S").isoformat()
         await hpcl_ceg_model.CrisAlertHistoryCreate(**entry).create(upsert=True)
-        if not entry['closure_date']:
+        if not entry.get("closure_date", ""):
             camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
                                                         alert_section="RO")
             await alert_manager.create_alert({**entry, "alert_type": "RO"}, camunda_url=camunda_url)
