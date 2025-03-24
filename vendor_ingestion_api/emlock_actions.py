@@ -43,6 +43,7 @@ async def emlock_ingest_data(data: Emlock_Ingest_DataParams):
             logger.error(f"Invalid data structure: data.data is not a list or is empty")
             return {"status": False, "message": "Invalid data", "data": []}
         for entry in enriched_data:
+            entry['location_type'] = 'TAS'
             await hpcl_ceg_model.EmLockAlertHistoryCreate(**entry).create()
             camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
                                                         alert_section="EMLock")

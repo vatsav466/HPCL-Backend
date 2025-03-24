@@ -310,7 +310,7 @@ async def emlock_alert_closer(alert_data, input_data):
     close_alert_data['interlock_id'] = alert_data['interlock_id']
     close_resp = await close_alert(close_alert_data)
     print("close_resp: ", close_resp)
-    # resp = await close_emlock_alert(alert_data, input_data)
+    resp = await close_emlock_alert(alert_data, input_data)
 
 async def _is_close_alert(input_data):
     """
