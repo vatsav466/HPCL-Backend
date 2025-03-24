@@ -5586,7 +5586,7 @@ class CrisAlertHistorySchema(UrdhvaPostgresBase):
     occurrence_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("occurrence_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     closure_date: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closure_date", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    products: Mapped[typing.Optional[typing.Any]] = mapped_column("products", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    products: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("products", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(alarm_id, name="cris_alert_history_alarm_id"),)
 
@@ -5611,7 +5611,7 @@ class CrisAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     occurrence_date: typing.Optional[datetime.datetime] | None = None
     closure_date: typing.Optional[datetime.datetime] | None = None
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
-    products: typing.Optional[productsDetailsCreate] | None = None
+    products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -5642,7 +5642,7 @@ class CrisAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     occurrence_date: typing.Optional[datetime.datetime] | None = None
     closure_date: typing.Optional[datetime.datetime] | None = None
     indent_no: typing.Optional[str] = pydantic.Field("", **{})
-    products: typing.Optional[productsDetailsCreate] | None = None
+    products: typing.Optional[typing.List[productsDetailsCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
