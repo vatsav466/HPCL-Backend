@@ -6864,7 +6864,7 @@ class GlobalAnalytics:
                     m.sap_id,
                     (SELECT COUNT(*) 
                     FROM alerts a 
-                    WHERE a.interlock_name = 'Manual FAN printed more 5% of total TT loaded'
+                    WHERE a.interlock_name in ('Manual FAN printed more than 5% of total TT loaded', 'Manual FAN printed less than 5% of total TT loaded')
                     AND DATE(a.created_at) = m.created_date
                     AND a.location_name = m.location_name) AS alert_count,
                     m.total_manual_fan_count
@@ -7369,7 +7369,7 @@ class GlobalAnalytics:
                     k.truck_number,
                     (SELECT COUNT(*) 
                     FROM alerts a 
-                    WHERE a.interlock_name = 'Bay reasignment'
+                    WHERE a.interlock_name = 'Bay reassignment'
                     AND a.vehicle_number = k.truck_number
                     AND a.tt_load_number = k.load_number::VARCHAR
                     AND DATE(a.created_at) = k.created_date) AS alert_count
