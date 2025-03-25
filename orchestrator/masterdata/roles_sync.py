@@ -144,6 +144,18 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VA",
+                                "allowed_sub_menus": [
+                                    "SOD Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -157,6 +169,18 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Terminal Home",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VA",
+                                "allowed_sub_menus": [
+                                    "SOD Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
                                 ]
                             }
                         ],
