@@ -431,8 +431,6 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             getCumulative = True
         cols_to_cumsum = [col for col in df.columns if col != 'month_name']
         
-
-        
         if not getCumulative:
             df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
         
@@ -458,7 +456,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                     df[f"history_{company.lower()}_share"] = 0
             df["actual_psu_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
             df["history_psu_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
-            new_df = df[selected_columns + ["actual_psu_share", "history_psu_share"]]
+            new_df = df[selected_columns + ["month_name","actual_psu_share", "history_psu_share"]]
         if len(required_companies) > 6:
             
             #oth_psu = [x.lower() for x in OMC['OtherPSU']]
@@ -476,7 +474,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             df["actual_pvt_share"] = df[actual_pvt_columns].sum(axis=1)
             df["history_pvt_share"] = df[history_pvt_columns].sum(axis=1)
             
-            new_df = df[selected_columns + ["actual_psu_share","history_psu_share","actual_pvt_share", "history_pvt_share"]]           
+            new_df = df[selected_columns + ["month_name","actual_psu_share","history_psu_share","actual_pvt_share", "history_pvt_share"]]           
         print("dfcolumns",df.columns)
         if len(required_companies) <=3:
             li = df.columns.tolist()
