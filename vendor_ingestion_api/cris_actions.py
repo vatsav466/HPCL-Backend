@@ -39,8 +39,6 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
                 'location_id': data.location_id,
                 'ro_code': data.ro_code,
                 'location_type': data.location_type,
-                'bu': data.location_type,
-                'sap_id': data.ro_code
             }
             for entry in data.data
         ]
@@ -48,16 +46,20 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
         logger.error(f"Invalid data structure: data.data is not a list or is empty")
         return {"status": False, "message": "Invalid data", "data": []}
     for entry in enriched_data:
-        interlock_data = cris_alert_mapping.Cris_Alert_Mapping[entry['bu']][entry['interlock_type']]
-        entry['alert_id'] = entry['alarm_id']
-        entry['interlock_name'] = interlock_data['name']
-        entry['sop_id'] = interlock_data['sop_id']
         entry['occurrence_date'] = datetime.datetime.strptime(entry['occurrence_date'], "%Y%m%d%H%M%S")
         if entry.get("closure_date", ""):
             entry['closure_date'] = datetime.datetime.strptime(entry['closure_date'], "%Y%m%d%H%M%S")
         if not entry.get("closure_date", ""):
             entry['closure_date'] = None
         await hpcl_ceg_model.CrisAlertHistory.bulk_update([entry], upsert=True)
+
+        interlock_data = cris_alert_mapping.Cris_Alert_Mapping[entry['bu']][entry['interlock_type']]
+        entry['alert_id'] = entry['alarm_id']
+        entry['interlock_name'] = interlock_data['name']
+        entry['sop_id'] = interlock_data['sop_id']
+        entry['bu'] = entry['location_type']
+        entry['sap_id'] = entry['ro_code']
+        entry['violation_type'] = entry['interlock_type']
         if not entry.get("closure_date", ""):
             camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
                                                         alert_section="RO")
@@ -67,6 +69,12 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
                      f"and violation_type = '{entry["interlock_type"]}' and alert_status != 'Close'")
             alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
             alert_data = alert_data.get("data", [])
-            await alert_manager.close_alert(alert_data=alert_data)
+            if alert_data:
+                alert_data = alert_data[0]
+                alert_data['alert_type'] = alert_data['bu']
+                alert_data['alert_id'] = alert_data['id']
+                await alert_manager.close_alert(alert_data=alert_data)
+            else:
+                print(f"Alert Not Found Query: {query}")
 
     return True, "Success"
