@@ -17,6 +17,7 @@ async def sync_user_roles():
                             }
                         ],
                         "name": "SOD",
+                        "status": True
                     },
                     "Zonal Operations LPG": {
                         "allowed_pages": [
