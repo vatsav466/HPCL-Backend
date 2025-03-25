@@ -12,8 +12,6 @@ import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
-
-from orchestrator.analytics.vts_analysis import default_headers
 from orchestrator.dbconnector.widget_actions import widget_actions
 from api_manager.charts_actions import charts_connection_vault_routing
 import orchestrator.dbconnector.credential_loader as credential_loader
