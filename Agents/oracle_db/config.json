@@ -52,12 +52,12 @@
       "HostCancelledTts":"Cancel TT Reported",
       "HostManualFanPrinted":"Manual FAN printed more 5% of total TT loaded",
       "HostOverLoadedTts":"TT Overloaded",
-      "HostKFactorChanges":"K - Factor Data Changed",
+      "HostKFactorChanges":"BCU K- Factor Change",
       "HostLocalLoadedTts":"BCU Local Loading",
-      "HostBayReAssignment":"Bay reasignment",
+      "HostBayReAssignment":"Bay reassignment",
       "HostManualBayAssigned":"Manual - bay assignment of more then 5% of total TT loaded",
       "HostSickTts":"SickTT Reported",
-      "HostMFMFactor": "MFM Data Changed"
+      "HostMFMFactor": "MFM factor Change"
 
     },
 
