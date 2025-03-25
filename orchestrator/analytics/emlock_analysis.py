@@ -91,10 +91,11 @@ async def close_alerts_by_vendor():
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     alerts = await function(query=query)
     alert_mapping = {x['external_id']: x['id'] for x in alerts}
-    url = ""
+    creds = credential_loader.get_credentials("EM_LOCK")
+    url = f"http://{creds['host']}:{creds['port']}/api/exceptionStatusCheck"
     headers = await get_emlock_headers()
-    response = requests.get(
-        url=url, params={"emlockExceptionIds": list(alert_mapping.keys())}, headers=headers
+    response = requests.post(
+        url=url, json={"emlockExceptionIds": list(alert_mapping.keys())}, headers=headers
     )
     response = response.json()
     for status in response:

@@ -2,6 +2,7 @@ import urdhva_base
 import os
 import json
 import datetime
+import requests
 import pandas as pd
 import polars as pl
 import hpcl_ceg_model
@@ -11,6 +12,8 @@ import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
+
+from orchestrator.analytics.vts_analysis import default_headers
 from orchestrator.dbconnector.widget_actions import widget_actions
 from api_manager.charts_actions import charts_connection_vault_routing
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -1589,3 +1592,30 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
     if not df.empty:
         df['amount'] = df['amount'].astype(int)
     return df.to_dict(orient='records')
+
+async def interlock_disable(params: dict):
+    """
+
+    Args:
+        params: {
+            "rocode": "",
+            "reqno": "",
+            "interlocktype": "",
+            "device": "",
+            "deviceid": "",
+            "disablehrs": ""
+        }
+
+    Returns:
+
+    """
+    url = "https://crisuat.hpcl.co.in/HOSApp/dashboard/api/getinterlockreqdtls"
+    default_headers = {"Content-Type": "application/json"}
+    try:
+        response = requests.get(url, params=params, headers=default_headers)
+        if response.status_code // 100 == 2:
+            return response.json()
+        return response.json()
+    except Exception as e:
+        print(f"Error while disabling interlock {e}")
+        return {"status": False, "message": "Failed to post cris API"}
