@@ -7366,7 +7366,7 @@ class GlobalAnalytics:
                     k.sap_id,
                     k.reassigned_bay,
                     k.load_number,
-                    k.truck_number
+                    k.truck_number,
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.interlock_name = 'Bay reasignment'
