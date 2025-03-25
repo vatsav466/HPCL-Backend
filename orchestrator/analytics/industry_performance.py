@@ -26,6 +26,8 @@ OMC = {
 }
 OMC["PSU"] = OMC["OtherPSU"] + OMC["MPSU"]
 OMC["PSU+PVT"] = OMC["PSU"] + OMC["PVT"]
+fy_months =  ['apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec', 'jan', 'feb', 'mar']
+
 
 # Define keyword mapping for key extraction
 KEYWORDS = {'sbu_name': ['SBU', 'BUSINESS UNIT'],
@@ -129,7 +131,7 @@ def get_date_filters(filters, resp_type="months"):
         elif condition["key"] == "month_name" or condition["key"] == '"month_name"':
             months = [mnt_name.strip() for mnt_name in condition["value"].split(",")]
     discard_filters = ['YTM', 'DATE', 'month_name', 'ind_sbu_cumulative', 'ind_analytics','table_graph', 'fiscal_year',
-                       'company_name', 'table', 'table_month', 'inc', 'OMC', 'A', 'H', 'C', 'cogroup']
+                       'company_name', 'table', 'table_month','cumulative', 'inc', 'OMC', 'A', 'H', 'C', 'cogroup']
     filters = [condition for condition in filters if condition['key'].strip('"') not in discard_filters]
     if not months:
         months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%b').tolist()
@@ -601,6 +603,16 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':output,'company':unique_companies}
 
     if '"table_month"' in [x['key'] for x in filters]:
+        getCumulative = False
+        if '"cumulative"' in [x['key'] for x in filters]:
+            getCumulative = True
+            req_month = [x['value'] for x in filters if x['key'] == '"table_month"'][0]
+            print("req_month")
+            if req_month:
+                if req_month.lower() =='apr':
+                    months_list = ['Apr']
+                else:
+                    months_list = fy_months[:fy_months.index(req_month.lower())]
         req_month = [x['value'] for x in filters if x['key'] == '"table_month"'][0]
         if req_month:
             for col in df.columns.tolist():
@@ -621,13 +633,25 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                 # Compute market volume excluding the current company
                 market_volume = df_filtered[[col for col in df_filtered.columns if col.startswith("actual_") and col == "actual_market_share"]].sum().sum()
                 historical_market_volume = df_filtered[[col for col in df_filtered.columns if col.startswith("history_") and col == "history_market_share"]].sum().sum()
-                cumulative_market_volume = df[[col for col in df.columns if col.startswith("actual_") and col == "actual_market_share"]].sum().sum()
-                cumulative_historical_market_volume = df[[col for col in df.columns if col.startswith("history_") and col == "history_market_share"]].sum().sum()
+                if not getCumulative:
+                    cumulative_market_volume = df[[col for col in df.columns if col.startswith("actual_") and col == "actual_market_share"]].sum().sum()
+                    cumulative_historical_market_volume = df[[col for col in df.columns if col.startswith("history_") and col == "history_market_share"]].sum().sum()
+                else:
+                    cumulative_market_volume = df[df['month_name'].isin(months_list)][[col for col in df.columns if col.startswith("actual_") 
+                                                                                   and col == "actual_market_share"]].sum().sum()
+                    cumulative_historical_market_volume = df[df['month_name'].isin(months_list)][[col for col in df.columns if col.startswith("history_") 
+                                                                                   and col == "history_market_share"]].sum().sum()
+                
+                
                 # market_share_change = historical_volume - actual_volume
                 market_share_change = ((actual_volume - historical_volume) / historical_volume * 100) if historical_volume else 0
-                
-                cumulative_actual = df[f"actual_{company}_share"].sum()
-                cumulative_historical = df[f"history_{company}_share"].sum()
+                if not getCumulative:
+                    cumulative_actual = df[f"actual_{company}_share"].sum()
+                    cumulative_historical = df[f"history_{company}_share"].sum()
+                    
+                else:
+                    cumulative_actual = df[df['month_name'].str.lower().isin(months_list)][f"actual_{company}_share"].sum()
+                    cumulative_historical = df[df['month_name'].str.lower().isin(months_list)][f"history_{company}_share"].sum()
                 # cumulative_market_share_change = cumulative_historical - cumulative_actual
                 cumulative_market_share_change = ((cumulative_actual - cumulative_historical) / cumulative_historical * 100) if cumulative_historical else 0
                 output.append({
@@ -638,8 +662,8 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                             "historical": round(historical_volume, 2)
                         },
                         "marketShare": {
-                            "actual": round((actual_volume / market_volume) * 100, 2) if market_volume else 0,
-                            "historical": round((historical_volume / historical_market_volume) * 100, 2) if historical_market_volume else 0,
+                            "actual": round((actual_volume / market_volume) * 100, 2) if market_volume > 0 else 0,
+                            "historical": round((historical_volume / historical_market_volume) * 100, 2) if historical_market_volume > 0 else 0,
                             "change": round(market_share_change, 2)
                         }
                     },
@@ -648,13 +672,30 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                             "actual": round(cumulative_actual, 2),
                             "historical": round(cumulative_historical, 2)
                         },
+                        
+                        "marketShare": {
+                        "actual": round((cumulative_actual / cumulative_market_volume) * 100, 2) if cumulative_market_volume > 0 else 0,
+                        "historical": round((cumulative_historical / cumulative_historical_market_volume) * 100, 2) if cumulative_historical_market_volume > 0 else None,
+                        "change": round(cumulative_market_share_change, 2)
+                    }
+
+                    }
+                })
+                #below lines are before adding the cumulative button for the table in industry
+                '''
+                        "marketShare": {
+                            "actual": round((actual_volume / market_volume) * 100, 2) if market_volume else 0,
+                            "historical": round((historical_volume / historical_market_volume) * 100, 2) if historical_market_volume else 0,
+                            "change": round(market_share_change, 2)
+                        }
+                '''
+                '''
                         "marketShare": {
                             "actual": round((cumulative_actual / cumulative_market_volume )* 100, 2) if cumulative_historical else 0,
                             "historical": round((cumulative_historical / cumulative_historical_market_volume) * 100, 2) if "history_market_share" in df.columns else None,
                             "change": round(cumulative_market_share_change, 2)
                         }
-                    }
-                })
+                '''
             for each in output:
                 for each_ele in each:
                     if each[each_ele] is None:
