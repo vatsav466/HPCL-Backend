@@ -70,6 +70,7 @@ class LpgRejections:
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
             self.params["alert_type"] = 'LPG'
+            self.params["alert_section"] = 'LPG'
             self.params["bu"] = 'LPG'
             self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
@@ -122,6 +123,7 @@ class LpgRejections:
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
             self.params["alert_type"] = 'LPG'
+            self.params["alert_section"] = 'LPG'
             self.params["bu"] = 'LPG'
             self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
@@ -177,6 +179,7 @@ class LpgRejections:
             self.params["sap_id"] = data["sap_id"]
             self.params["sapid"] = data["sap_id"]
             self.params["alert_type"] = 'LPG'
+            self.params["alert_section"] = 'LPG'
             self.params["bu"] = 'LPG'
             self.params["BU"] = 'LPG'
             self.params["location_name"] = data["plant"]
