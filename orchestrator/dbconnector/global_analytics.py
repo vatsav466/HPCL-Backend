@@ -7334,7 +7334,9 @@ class GlobalAnalytics:
                         zone,
                         location_name,
                         sap_id,
-                        reassigned_bay
+                        reassigned_bay,
+                        load_number,
+                        truck_number
                     FROM 
                         host_bay_re_assignment
                     WHERE 1=1
@@ -7355,7 +7357,7 @@ class GlobalAnalytics:
             # Complete the CTE and main query
             query += """
                 GROUP BY 
-                        DATE(created_at), zone, location_name, sap_id, reassigned_bay
+                        DATE(created_at), zone, location_name, sap_id, reassigned_bay, load_number, truck_number
                 )
                 SELECT 
                     k.created_date,
@@ -7366,6 +7368,8 @@ class GlobalAnalytics:
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.interlock_name = 'Bay reasignment'
+                    AND a.vehicle_number = k.truck_number
+                    AND a.tt_load_number = k.load_number
                     AND DATE(a.created_at) = k.created_date) AS alert_count
                 FROM 
                     bay_reassignment k

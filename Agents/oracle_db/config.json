@@ -59,7 +59,7 @@
       "HostSickTts":"SickTT Reported",
       "HostMFMFactor": "MFM Data Changed"
 
-    } ,
+    },
 
     "severity": {
         "HostUnauthorisedFlow":"Medium",

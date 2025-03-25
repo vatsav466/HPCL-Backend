@@ -118,6 +118,29 @@ class Postgresql:
         status, msg = await alert_factory.AlertFactory.create_alert(data)
         return status, msg, data
     
+    async def create_bay_reasignment_report(self, data):
+        to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
+        query = f"""select id from alerts where interlock_name = 'Bay reassignment' and vehicle_number = '{data["vehicle_number"]}' and tt_load_number = '{data["tt_load_number"]}' """ \
+                f"""and created_at::DATE = '{to_date}'"""
+        resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+        if resp.get("data", []):
+            alert_data = await hpcl_ceg_model.Alerts.get(resp.get("data", [])[0]["id"])
+            if not isinstance(alert_data, dict):
+                alert_data = alert_data.__dict__
+            data['alert_id'] = alert_data['external_id']
+            action_msg = f"Truck Number: {data['vehicle_number']} and Compartment Number: {data['device_msg']}"
+            input_data = {
+                "action_type": "Bay ReAssigned",
+                "action_msg": action_msg
+            }
+            await alert_manager.AlertAction().update_alert_history(
+                        input_data=input_data, alert_data=alert_data
+                    )
+            return True, "Success", data
+        
+        status, msg = await alert_factory.AlertFactory.create_alert(data)
+        return status, msg, data
+    
     async def close_created_alert(self, alert_data):
         # Extract alert_id from response (assuming response contains alert_id)
         query = (f"""external_id='{alert_data["alert_id"]}'""")
@@ -391,6 +414,9 @@ class Postgresql:
                     device_msg = ""
                     if interlock_name == 'Cancel TT Reported':
                         device_msg = f"For Compartment_Number: {record.get('compartment_number', '')}".strip()
+                    
+                    if interlock_name == 'Bay reasignment':
+                        device_msg = f"For Load Number: {record.get('load_number', '')} the ReAssigned Bay: {record.get('reassigned_bay', '')}".strip()
 
                     # Extract necessary fields from the record
                     alert_data = {
@@ -411,6 +437,9 @@ class Postgresql:
                     if interlock_name == 'Cancel TT Reported':
                         is_close_alert = True
                         success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
+                    elif interlock_name == 'Bay reasignment':
+                        is_close_alert = True
+                        success, msg, alert_data = await self.create_bay_reasignment_report(alert_data)
                     else:
                         success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
                         print("msg :", msg)
