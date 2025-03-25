@@ -188,6 +188,19 @@ class Postgresql:
                 
                 if "bay_reassignment_time" in record and isinstance(record["bay_reassignment_time"], str):
                     record["bay_reassignment_time"] = pd.to_datetime(record["bay_reassignment_time"])
+                
+                if "current_k_factor" in record:
+                    try:
+                        record["current_k_factor"] = round(float(record["current_k_factor"]), 2) if record["current_k_factor"] else None
+                    except (ValueError, TypeError):
+                        record["current_k_factor"] = None  # Handle invalid values
+
+                if "current_meter_factor" in record:
+                    try:
+                        record["current_meter_factor"] = round(float(record["current_meter_factor"]), 2) if record["current_meter_factor"] else None
+                    except (ValueError, TypeError):
+                        record["current_meter_factor"] = None  # Handle invalid values
+
         print("sample_records --> ", sample_records)
         if not isinstance(sample_records, pl.DataFrame):
             sample_records = pl.DataFrame(sample_records)
