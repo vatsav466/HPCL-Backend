@@ -1610,7 +1610,7 @@ async def interlock_disable(params: dict):
     url = "https://crisuat.hpcl.co.in/HOSApp/dashboard/api/getinterlockreqdtls"
     default_headers = {"Content-Type": "application/json"}
     try:
-        response = requests.get(url, params=params, headers=default_headers)
+        response = requests.post(url, json=params, headers=default_headers)
         if response.status_code // 100 == 2:
             return response.json()
         return response.json()
