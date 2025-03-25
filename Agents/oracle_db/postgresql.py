@@ -120,7 +120,7 @@ class Postgresql:
     
     async def create_bay_reasignment_report(self, data):
         to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
-        query = f"""select id from alerts where interlock_name = 'Bay reassignment' and vehicle_number = '{data["vehicle_number"]}' and tt_load_number = '{data["tt_load_number"]}'""" \
+        query = f"""select id from alerts where interlock_name = 'Bay reassignment' and vehicle_number = '{data["vehicle_number"]}' and tt_load_number = '{data["tt_load_number"]}' """ \
                 f"""and created_at::DATE = '{to_date}'"""
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         if resp.get("data", []):
@@ -130,7 +130,7 @@ class Postgresql:
             data['alert_id'] = alert_data['external_id']
             action_msg = f"Truck Number: {data['vehicle_number']} and Compartment Number: {data['device_msg']}"
             input_data = {
-                "action_type": "Bay ReAssigned",
+                "action_type": "BayReAssigned",
                 "action_msg": action_msg
             }
             await alert_manager.AlertAction().update_alert_history(
@@ -437,7 +437,7 @@ class Postgresql:
                     if interlock_name == 'Cancel TT Reported':
                         is_close_alert = True
                         success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
-                    elif interlock_name == 'Bay reassignment':
+                    if interlock_name == 'Bay reassignment':
                         is_close_alert = True
                         success, msg, alert_data = await self.create_bay_reasignment_report(alert_data)
                     else:

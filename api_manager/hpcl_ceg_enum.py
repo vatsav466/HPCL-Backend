@@ -127,6 +127,7 @@ class AlertActionType(str, enum.Enum):
     UnBlocked = 'UnBlocked'
     Request = 'Request'
     Interrupt = 'Interrupt'
+    BayReAssigned = 'BayReAssigned'
 
 
 

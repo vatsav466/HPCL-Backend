@@ -87,6 +87,7 @@ Enum AlertActionType str {
     UnBlocked='UnBlocked'
     Request='Request'
     Interrupt='Interrupt'
+    BayReAssigned='BayReAssigned'
 }
 
 Enum IndentStatus str {
