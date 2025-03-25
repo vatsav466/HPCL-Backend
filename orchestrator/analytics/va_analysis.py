@@ -214,16 +214,12 @@ async def get_lpg_levels(bu: str, violation_type: str, sap_id: str):
     lpg_mapping = lpg_role_configuration.lpg_role_mapping
     if bu in lpg_mapping.keys() and violation_type in lpg_mapping[bu].keys():
         lpg_mapping = lpg_mapping[bu][violation_type]
-        print("lpg_mapping: ", lpg_mapping)
         lpg_alert_count = await get_lpg_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
-        print("va_alert_count: ", lpg_alert_count)
+        print("lpg_alert_count: ", lpg_alert_count)
         for key, value in lpg_mapping['escalations'].items():
             if lpg_alert_count== int(value['value']):
-                return "level - 1"
-            if lpg_alert_count == int(value['value']):
-                return "level - 2"
-            if lpg_alert_count == int(value['value']):
-                return "level - 3"
-            if lpg_alert_count >= int(value['value']):
-                return "level - 4"        
+                print("-"*10)
+                print("Escalation Level :", key)
+                print("-"*10)
+                return key
     return ""
