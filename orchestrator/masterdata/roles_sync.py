@@ -16,12 +16,6 @@ async def sync_user_roles():
                                 ]
                             },
                             {
-                                "menu_name": "VA",
-                                "allowed_sub_menus": [
-                                    "SOD Video Analytics"
-                                ]
-                            },
-                            {
                                 "menu_name": "VTS",
                                 "allowed_sub_menus": [
                                     "VTS Home"
@@ -39,12 +33,6 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Terminal Home",
                                     "Video Analytics"
-                                ]
-                            },
-                            {
-                                "menu_name": "VA",
-                                "allowed_sub_menus": [
-                                    "SOD Video Analytics"
                                 ]
                             },
                             {
@@ -68,12 +56,6 @@ async def sync_user_roles():
                                 ]
                             },
                             {
-                                "menu_name": "VA",
-                                "allowed_sub_menus": [
-                                    "SOD Video Analytics"
-                                ]
-                            },
-                            {
                                 "menu_name": "VTS",
                                 "allowed_sub_menus": [
                                     "VTS Home"
@@ -91,12 +73,6 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Terminal Home",
                                     "Video Analytics"
-                                ]
-                            },
-                            {
-                                "menu_name": "VA",
-                                "allowed_sub_menus": [
-                                    "SOD Video Analytics"
                                 ]
                             },
                             {
@@ -120,12 +96,6 @@ async def sync_user_roles():
                                 ]
                             },
                             {
-                                "menu_name": "VA",
-                                "allowed_sub_menus": [
-                                    "SOD Video Analytics"
-                                ]
-                            },
-                            {
                                 "menu_name": "VTS",
                                 "allowed_sub_menus": [
                                     "VTS Home"
@@ -143,12 +113,6 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Terminal Home",
                                     "Video Analytics"
-                                ]
-                            },
-                            {
-                                "menu_name": "VA",
-                                "allowed_sub_menus": [
-                                    "SOD Video Analytics"
                                 ]
                             },
                             {
@@ -172,12 +136,6 @@ async def sync_user_roles():
                                 ]
                             },
                             {
-                                "menu_name": "VA",
-                                "allowed_sub_menus": [
-                                    "SOD Video Analytics"
-                                ]
-                            },
-                            {
                                 "menu_name": "VTS",
                                 "allowed_sub_menus": [
                                     "VTS Home"
@@ -196,6 +154,12 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -209,6 +173,12 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Terminal Home",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
                                 ]
                             }
                         ],
@@ -224,6 +194,12 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -237,6 +213,12 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Terminal Home",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
                                 ]
                             }
                         ],
@@ -252,6 +234,12 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -266,6 +254,12 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -279,6 +273,12 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Terminal Home",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
                                 ]
                             }
                         ],
@@ -295,6 +295,12 @@ async def sync_user_roles():
                                     "Dashboard",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -308,6 +314,12 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Terminal Home",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
                                 ]
                             }
                         ],
@@ -324,6 +336,12 @@ async def sync_user_roles():
                                     "Terminal Automation",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -338,6 +356,12 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Terminal Automation",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
                                 ]
                             }
                         ],
@@ -365,6 +389,12 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -380,6 +410,12 @@ async def sync_user_roles():
                                     "Terminal Automation",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
@@ -394,6 +430,12 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Terminal Automation",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
                                 ]
                             }
                         ],
@@ -412,9 +454,9 @@ async def sync_user_roles():
                                 ]
                             },
                             {
-                                "menu_name": "Supply Chain",
+                                "menu_name": "VTS",
                                 "allowed_sub_menus": [
-                                    "Supply Chain Home"
+                                    "VTS Home"
                                 ]
                             }
                         ],
@@ -432,7 +474,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "Sales Officer LPG": {
@@ -450,7 +492,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "Location In-Charge LPG": {
@@ -464,7 +506,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "Maintenanace Officer LPG": {
@@ -492,7 +534,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "Planning Officer LPG": {
@@ -506,7 +548,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "Regional Manager LPG": {
@@ -521,7 +563,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "Zonal HSE LPG": {
@@ -609,7 +651,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "HQO Head LPG": {
@@ -624,7 +666,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "Zonal Head LPG": {
@@ -639,7 +681,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "HQO Sale General Manager": {
@@ -654,7 +696,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "HQO HSE LPG": {
@@ -669,7 +711,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "HQO Operations LPG": {
@@ -684,7 +726,7 @@ async def sync_user_roles():
                                 ]
                             }
                         ],
-                        "name": "SOD",
+                        "name": "LPG",
                         "status": True
                     },
                     "Sales Performance": {
