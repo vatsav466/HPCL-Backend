@@ -14,12 +14,170 @@ async def sync_user_roles():
                                     "Terminal Home",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "VA",
+                                "allowed_sub_menus": [
+                                    "SOD Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Maintenance Officer SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VA",
+                                "allowed_sub_menus": [
+                                    "SOD Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Plant In-Charge SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VA",
+                                "allowed_sub_menus": [
+                                    "SOD Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Planning Officer SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VA",
+                                "allowed_sub_menus": [
+                                    "SOD Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
                             }
                         ],
                         "name": "SOD",
                         "status": True
                     },
                     "Safety Officer SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VA",
+                                "allowed_sub_menus": [
+                                    "SOD Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Zonal Chief Manager SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Zonal Executive Officer SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Zonal Manager SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Zonal Operations Head SOD": {
                         "allowed_pages": [
                             {
                                 "menu_name": "SOD Terminal",
@@ -89,6 +247,20 @@ async def sync_user_roles():
                         "name": "SOD",
                         "status": True
                     },
+                    "Zonal Transport Officer SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
                     "Zonal Head LEVEL SOD": {
                         "allowed_pages": [
                             {
@@ -125,13 +297,23 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "Supply Chain",
                                     "Terminal Home",
+                                    "Terminal Automation",
                                     "Video Analytics"
                                 ]
-                            },
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "HQO Supply Officer SOD": {
+                        "allowed_pages": [
                             {
-                                "menu_name": "Supply Chain",
+                                "menu_name": "SOD Terminal",
                                 "allowed_sub_menus": [
-                                    "Supply Chain Home"
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Terminal Automation",
+                                    "Video Analytics"
                                 ]
                             }
                         ],
@@ -150,13 +332,59 @@ async def sync_user_roles():
                         "name": "SOD",
                         "status": True
                     },
+                    "Distribution Manager SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "HQO General Manager SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Terminal Automation",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "HQO Manager SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Terminal Automation",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
                     "HQO Head SOD": {
                         "allowed_pages": [
                             {
                                 "menu_name": "SOD Terminal",
                                 "allowed_sub_menus": [
                                     "Supply Chain",
-                                    "Terminal Home""Video Analytics"
+                                    "Terminal Home",
+                                    "Terminal Automation",
+                                    "Video Analytics"
                                 ]
                             },
                             {
@@ -175,9 +403,26 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
                                     "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Sales Officer LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "Sales Performance",
+                                "allowed_sub_menus": [
+                                    "Performance"
                                 ]
                             }
                         ],
@@ -190,7 +435,6 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
                                     "Video Analytics"
                                 ]
@@ -205,7 +449,6 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
                                     "Video Analytics"
                                 ]
@@ -220,7 +463,20 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
+                                    "LPG Plant",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Planning Officer LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Operations",
                                     "LPG Plant",
                                     "Video Analytics"
                                 ]
@@ -235,8 +491,8 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
+                                    "LPG Analytics",
                                     "Video Analytics"
                                 ]
                             }
@@ -250,8 +506,38 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
+                                    "LPG Analytics",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "LPG",
+                        "status": True
+                    },
+                    "Zonal Officer LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Operations",
+                                    "LPG Plant",
+                                    "LPG Analytics",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "LPG",
+                        "status": True
+                    },
+                    "Zonal Operations Chief Manager LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Operations",
+                                    "LPG Plant",
+                                    "LPG Analytics",
                                     "Video Analytics"
                                 ]
                             }
@@ -265,7 +551,6 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
                                     "Video Analytics"
                                 ]
@@ -280,7 +565,6 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
                                     "Video Analytics"
                                 ]
@@ -295,8 +579,7 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
-                                    "LPG Plant",                    
+                                    "LPG Plant",
                                     "Video Analytics",
                                     "LPG Analytics"
                                 ]
@@ -311,8 +594,22 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
-                                    "LPG Plant",                    
+                                    "LPG Plant",
+                                    "Video Analytics",
+                                    "LPG Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Zonal Head LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Operations",
+                                    "LPG Plant",
                                     "Video Analytics",
                                     "LPG Analytics"
                                 ]
@@ -327,23 +624,6 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
-                                    "LPG Plant",
-                                    "Video Analytics",
-                                    "LPG Analytics"
-                                ]
-                            }
-                        ],
-                        "name": "SOD",
-                        "status": True
-                    },
-                    "HQO Operations LPG": {
-                        "allowed_pages": [
-                            {
-                                "menu_name": "LPG",
-                                "allowed_sub_menus": [
-                                    "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
                                     "Video Analytics",
                                     "LPG Analytics"
@@ -359,7 +639,6 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
                                     "Video Analytics",
                                     "LPG Analytics"
@@ -375,7 +654,6 @@ async def sync_user_roles():
                                 "menu_name": "LPG",
                                 "allowed_sub_menus": [
                                     "LPG Operations",
-                                    "LPG Home",
                                     "LPG Plant",
                                     "Video Analytics",
                                     "LPG Analytics"
@@ -400,7 +678,9 @@ async def sync_user_roles():
                         "status": True
                     },
                     "Admin": {
-                        "allowed_pages": [],
+                        "allowed_pages": [
+                            
+                        ],
                         "status": True
                     }
                 }
