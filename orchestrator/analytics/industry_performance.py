@@ -480,6 +480,7 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         print("dfcolumns",df.columns)
         if len(required_companies) <=3:
             li = df.columns.tolist()
+            #line_axis will give the name of distint company categories that will come in response
             line_axis = [x.split('_')[1] for x in li if 'market' not in x and 'actual' not in x  and 'name' not in x]
             return {'message': 'Industry_Performance_LineGraph', 'status': True,
                 'data': {key: value.to_dict() for key, value in df.to_dict(orient='series').items()},'axis':line_axis}
