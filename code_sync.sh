@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "Code Sync Started"
+# apt-get install libsasl2-dev python-dev-is-python3 libldap2-dev libssl-dev -y
 InstallDir=`pwd`
 CodeDir='/opt/ceg/algo'
 for folder in UrdhvaBase api_manager ceg_role_master_api orchestrator utilities vendor_ingestion_api authenticator cache_gateway
@@ -32,6 +33,11 @@ fi
 
 mkdir -p /var/log/ceg_sys_logs/ | true
 mkdir -p /var/log/ceg_logs/ | true
+
+cd $CodeDir/api_manager
+echo "Creating DB Tables if not available"
+/opt/ceg/venv/bin/python -c 'import urdhva_base;import hpcl_ceg_model;import asyncio;print(asyncio.run(urdhva_base.postgresmodel.create_tables()))'
+
 
 echo "Starting TTL Cache Service"
 systemctl start ceg_ttl_cache.service
@@ -69,7 +75,8 @@ done
 
 systemctl start nginx
 
+# Creating all pending tables
+
 # systemctl start dry_out_cammunda_processor@{camunda_dryout_01,camunda_dryout_02,camunda_dryout_03,camunda_dryout_04,camunda_dryout_05,camunda_dryout_06,camunda_dryout_07,camunda_dryout_08,camunda_dryout_09,camunda_dryout_10}.service
 # systemctl start dryout_manager@{camunda_dryout_01,camunda_dryout_02,camunda_dryout_03,camunda_dryout_04,camunda_dryout_05,camunda_dryout_06,camunda_dryout_07,camunda_dryout_08,camunda_dryout_09,camunda_dryout_10}.service
-#  apt-get install libsasl2-dev python-dev-is-python3 libldap2-dev libssl-dev
 echo "Code Sync Completed"

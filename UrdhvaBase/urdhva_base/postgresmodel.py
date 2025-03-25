@@ -432,7 +432,7 @@ class BasePostgresModel(pydantic.BaseModel):
             return True, "Success"
         return False, "Fail"
 
-    async def create(self, entity_id=None, upsert=False, upsert_skip_keys = []):
+    async def create(self, entity_id=None, upsert=False, upsert_skip_keys=[]):
         """
 
         :param entity_id:
@@ -447,7 +447,7 @@ class BasePostgresModel(pydantic.BaseModel):
         else:
             upsert_skip_keys = list(set(upsert_skip_keys + ["id", "entity_id", "created_at", "updated_at"]))
 
-        await manager.create_all()
+        # await manager.create_all()
         session = await manager.get_session()
         try:
             if not upsert:
@@ -517,7 +517,7 @@ class BasePostgresModel(pydantic.BaseModel):
         else:
             upsert_skip_keys = list(set(upsert_skip_keys + ["id", "entity_id", "created_at", "updated_at"]))
 
-        await manager.create_all()
+        # await manager.create_all()
         session = await manager.get_session()
         try:
             if not upsert:
