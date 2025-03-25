@@ -125,15 +125,23 @@ def fetch_data(query, getData=False, params=None, internal=False):
     print("query -->", query)
     print("-" * 50)
     print("Running Query ...")
-    cursor.execute(query)
     if getData:
-        data = cursor.fetchall()
-        print('Total Records :', len(data))
-        columns = [column[0] for column in cursor.description]
-        data = pd.DataFrame.from_records(data, columns=columns)
-        data = pl.from_pandas(data)
-        return data
+        try:
+            cursor.execute(query)
+            data = cursor.fetchall()
+            print('Total Records :', len(data))
+            columns = [column[0] for column in cursor.description]
+            data = pd.DataFrame.from_records(data, columns=columns)
+            data = pl.from_pandas(data)
+            return data
+        except Exception as e:
+            print("-"*25)
+            print("-- Exception Getting the Data --")
+            print("traceback :", traceback.format_exc())
+            print("-"*25)
+            return pl.DataFrame()
     else:
+        cursor.execute(query)
         resp = cursor.fetchone()[0]
         return resp
 
