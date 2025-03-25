@@ -55,7 +55,10 @@ class AlertFactory:
             sop_id = alert_data.get('sop_id', '')
             sap_id = alert_data['sap_id']
             interlock_name = alert_data.get('interlock_name', '')
-            status, location_data = await alert_helper.get_location_details(bu, sap_id)
+            location_data = alert_data.get("location_data", {})
+            if not location_data:
+                status, location_data = await alert_helper.get_location_details(bu, sap_id)
+
             # print("location_data --> ", location_data)
             # if not status:
             #     return False, location_data
