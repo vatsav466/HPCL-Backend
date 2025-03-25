@@ -7,6 +7,7 @@ import polars as pl
 import charts_actions
 import dashboard_studio_model
 import utilities.va_alert_mapping as va_alert_mapping
+import utilities.lpg_role_configuration as lpg_role_configuration
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 
@@ -162,9 +163,9 @@ async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
     return 0
 
 async def get_lpg_alerts_count(bu: str, violation_type: str, sap_id: str):
-    va_mapping = va_alert_mapping.VA_Alert_Mapping
-    if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
-        va_mapping = va_mapping[bu][violation_type]
+    lpg_mapping = lpg_role_configuration.lpg_role_mapping
+    if bu in lpg_mapping.keys() and violation_type in lpg_mapping[bu].keys():
+        lpg_mapping = lpg_mapping[bu][violation_type]
         count=1
         date=f"CURRENT_DATE - INTERVAL '{count} day'"
         while True:
@@ -210,14 +211,13 @@ async def get_va_levels(bu: str, violation_type: str, sap_id: str):
     return ""
 
 async def get_lpg_levels(bu: str, violation_type: str, sap_id: str):
-    va_mapping = va_alert_mapping.VA_Alert_Mapping
-    if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
-        va_mapping = va_mapping[bu][violation_type]
-        print("va_mapping: ", va_mapping)
+    lpg_mapping = lpg_role_configuration.lpg_role_mapping
+    if bu in lpg_mapping.keys() and violation_type in lpg_mapping[bu].keys():
+        lpg_mapping = lpg_mapping[bu][violation_type]
+        print("lpg_mapping: ", lpg_mapping)
         lpg_alert_count = await get_lpg_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
         print("va_alert_count: ", lpg_alert_count)
-        previous_count = 0
-        for key, value in va_mapping['escalations'].items():
+        for key, value in lpg_mapping['escalations'].items():
             if lpg_alert_count== int(value['value']):
                 return "level - 1"
             if lpg_alert_count == int(value['value']):
