@@ -174,12 +174,12 @@ async def get_lpg_alerts_count(bu: str, violation_type: str, sap_id: str):
                     f"alert_section = 'LPG' and "
                     f"violation_type = '{violation_type}' and "
                     f"sap_id = '{sap_id}' and "
-                    f"created_at::DATE='{date}'")
+                    f"created_at::DATE={date}")
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            resp = await function(query=query)
             print("Query: ", query)
+            resp = await function(query=query)            
             print(resp)
             if not resp:
                 return count-1
