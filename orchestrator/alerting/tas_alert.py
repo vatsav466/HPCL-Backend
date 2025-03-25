@@ -37,7 +37,7 @@ class TASAlertManager(alert_factory.AlertFactory):
         try:
             logger.info(f"alert_data received to create alert {alert_data}")
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], sap_id=alert_data['sap_id'])
+            status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], location_id=alert_data['sap_id'])
             #status, loc_dt = await alert_helper.get_location_details(bu=alert_data['bu'], sap_id=alert_data['sap_id'])
             if status:
                 alert_data['location_data'] = loc_dt
