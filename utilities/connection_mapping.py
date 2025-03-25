@@ -400,22 +400,22 @@ alert_action = {
                 "Justify": {
                     "name": "Justification",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin"]
                 },
                 "Accept & Close": {
                     "name": "AcceptClose",
                     "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "Maintenanace Officer LPG", "TAS Officer", "Zonal TAS Officer"]
+                    "roles": ["Admin", "Maintenanace Officer LPG", "Location In-Charge LPG", "Zonal Operations Head LPG", "HQO LPG"]
                 },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG", "HQO LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal HSE LPG", "Zonal Operations Head LPG", "HQO LPG", "HQO HSE LPG", "HQO Operations LPG"]
+                    "roles": ["Admin"]
                 }
             },
             "category": {
