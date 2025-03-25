@@ -13,6 +13,7 @@ from collections import defaultdict
 import utilities.va_alert_mapping as va_alert_mapping
 import utilities.role_configuration as role_configuration
 import utilities.emlock_mapping as emlock_mapping
+import utilities.lpg_role_configuration as lpg_role_configuration
 from utilities.interlock_template_mapping import (
     InterlockTemplateMapping,
     TemplateMapping
@@ -804,7 +805,7 @@ class SendNotification:
                 print("mqof----------->",rolemapping["mqof"].get(mqof,""))
                 return rolemapping["mqof"].get(mqof,"")
             
-        elif self.alert_data.get("alert_section","") in ["VA","LPG"]:
+        elif self.alert_data.get("alert_section","") in ["VA"]:
             if self.params.get("va_level", "level - 1") in ['', None]:
                 self.params["va_level"] = "level - 1"
 
@@ -826,6 +827,18 @@ class SendNotification:
                 emlock_mappings = emlock_mappings[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
                 if mqof == "0":
                     return emlock_mappings['assign_role']
+        
+        elif self.alert_data.get("alert_section","") in ["LPG"]:
+            if self.params.get("va_level", "level - 1") in ['', None]:
+                self.params["va_level"] = "level - 1"
+            lpg_mapping = lpg_role_configuration.lpg_role_mapping[self.alert_data.get("bu", "")]
+            if self.alert_data['violation_type'] in lpg_mapping.keys():
+                if mqof and mqof in ["0","1","2"]:
+                    lpg_mapping = lpg_mapping[self.alert_data['violation_type']]['escalations'][self.params.get("va_level", "level - 1")]
+                    if mqof == "0":
+                        return lpg_mapping['assign_role']
+                    if mqof == "1":
+                        return lpg_mapping['escalation_role']
         return mqof
 
     async def _get_va_roles_list(self):
@@ -835,6 +848,9 @@ class SendNotification:
 
         if self.alert_data.get("alert_section") in ["VA"]:
             va_mapping = va_alert_mapping.VA_Alert_Mapping[self.alert_data.get("bu", "")]
+        
+        if self.alert_data.get("alert_section") in ["LPG"]:
+            va_mapping = lpg_role_configuration.lpg_role_mapping[self.alert_data.get("bu", "")]
 
         if self.alert_data.get("alert_section") in ["EMLock"]:
             va_mapping = emlock_mapping.emlock_vehicle_mapping[self.alert_data.get("bu", "")]
