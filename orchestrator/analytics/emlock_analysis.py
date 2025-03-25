@@ -5,6 +5,7 @@ import datetime
 import charts_actions
 import hpcl_ceg_model
 import dashboard_studio_model
+from more_itertools import batched
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -83,35 +84,36 @@ async def close_alerts_by_schedule():
 
 async def close_alerts_by_vendor():
     query = (f"select id, external_id from alerts where alert_section = 'EMLock' and alert_status != 'Close' and "
-             f"created_at between date_trunc('day', now()) and now() - interval '30 minutes'")
+             f"created_at BETWEEN NOW() - INTERVAL '30 minutes' AND NOW();")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
     alerts = await function(query=query)
-    alert_mapping = {x['external_id']: x['id'] for x in alerts}
+    alert_mapping = {str(x['external_id']): str(x['id']) for x in alerts}
     creds = credential_loader.get_credentials("EM_LOCK")
     url = f"http://{creds['host']}:{creds['port']}/api/exceptionStatusCheck"
     headers = await get_emlock_headers()
-    response = requests.post(
-        url=url, json={"emlockExceptionIds": list(alert_mapping.keys())}, headers=headers
-    )
-    response = response.json()
-    for status in response:
-        if status['status'] == 'INACTIVE':
-            alert_data = await hpcl_ceg_model.Alerts.get(alert_mapping.get("emlockExceptionId"))
-            if not isinstance(alert_data, dict):
-                alert_data = alert_data.__dict__
-            alert_data['alert_id'] = alert_data['id']
-            input_data = {
-                "action_type": "Message",
-                "action_msg": "SYSTEM Auto Closed Response From Vendor"
-            }
-            # Updating Alert History
-            await alert_manager.AlertAction().update_alert_history(input_data, alert_data)
+    for batch in batched(list(alert_mapping.keys()), 1000):
+        response = requests.post(
+            url=url, json={"emlockExceptionIds": list(batch)}, headers=headers
+        )
+        response = response.json()
+        response = response.get("data", {}).get("exceptionStatus", [])
+        for status in response:
+            if status['emlockExceptionStatus'] == 'INACTIVE':
+                alert_data = await hpcl_ceg_model.Alerts.get(alert_mapping.get(str(status["emlockExceptionId"])))
+                if not isinstance(alert_data, dict):
+                    alert_data = alert_data.__dict__
+                alert_data['alert_id'] = alert_data['id']
+                input_data = {
+                    "action_type": "Message",
+                    "action_msg": "SYSTEM Auto Closed Response From Vendor"
+                }
+                # Updating Alert History
+                await alert_manager.AlertAction().update_alert_history(input_data, alert_data)
 
-            # Closing Alert Data.
-            await alert_factory.AlertFactory().close_alert(alert_data)
-            break
+                # Closing Alert Data.
+                await alert_factory.AlertFactory().close_alert(alert_data)
     return {"status": True, "message": "Alerts Closed"}
