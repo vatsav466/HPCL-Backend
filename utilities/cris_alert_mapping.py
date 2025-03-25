@@ -1,7 +1,8 @@
 Cris_Alert_Mapping = {
     "RO": {
-        "Product Low Level": {
+        "Low Product": {
             "name": "Product Low Level",
+            "sop_id": "SOP294",
             "severity": "Critical",
             "period": "weekly",
             "escalations": {
@@ -30,6 +31,7 @@ Cris_Alert_Mapping = {
         },
         "High Water Level": {
             "name": "High Water Level",
+            "sop_id": "SOP295",
             "severity": "Critical",
             "period": "weekly",
             "escalations": {
@@ -58,6 +60,7 @@ Cris_Alert_Mapping = {
         },
         "TT Receipt": {
             "name": "TT Receipt",
+            "sop_id": "SOP296",
             "severity": "Critical",
             "period": "weekly",
             "escalations": {
@@ -86,6 +89,7 @@ Cris_Alert_Mapping = {
         },
         "Decantation": {
             "name": "Decantation",
+            "sop_id": "SOP297",
             "severity": "Critical",
             "period": "weekly",
             "escalations": {
@@ -114,6 +118,7 @@ Cris_Alert_Mapping = {
         },
         "NANF": {
             "name": "NANF",
+            "sop_id": "SOP298",
             "severity": "High",
             "period": "weekly",
             "escalations": {
@@ -142,6 +147,7 @@ Cris_Alert_Mapping = {
         },
         "No Pump Test": {
             "name": "No Pump Test",
+            "sop_id": "SOP299",
             "severity": "High",
             "period": "weekly",
             "escalations": {

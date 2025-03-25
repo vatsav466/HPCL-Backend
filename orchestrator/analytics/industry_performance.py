@@ -425,10 +425,18 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         df["month_name"] = pd.Categorical(df["month_name"], categories=[m.upper() for m in m60.months], ordered=True)
         df = df.sort_values('month_name').reset_index(drop=True)
     if resp_format == 'company_level' and time_grain == 'Monthly' and '"inc"' in [x['key'] for x in filters]:
+
+        getCumulative = False
+        if '"cumulative"' in [x['key'] for x in filters]:
+            getCumulative = True
         cols_to_cumsum = [col for col in df.columns if col != 'month_name']
-        df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
+        
+        if not getCumulative:
+            df[cols_to_cumsum] = df[cols_to_cumsum].cumsum()
+        
+        
         """
-        below code is for line graph combining all opsu as pus companies and all pvt companies as pvt in the result
+        below code is for line graph combining all opsu as psu companies and all pvt companies as pvt in the result
         """
         required_companies = [x['value'] for x in filters if x['key'].strip('"') == 'company_name'][0].split(",")
         base_companies = ['HPCL', 'BPCL', 'IOCL']
@@ -448,18 +456,36 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                     df[f"history_{company.lower()}_share"] = 0
             df["actual_psu_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
             df["history_psu_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
-            new_df = df[selected_columns + ["actual_psu_share", "history_psu_share"]]
+            new_df = df[selected_columns + ["month_name","actual_psu_share", "history_psu_share"]]
         if len(required_companies) > 6:
+            
+            #oth_psu = [x.lower() for x in OMC['OtherPSU']]
+            actual_opsu_columns = [f"actual_{company.lower()}_share" for company in required_companies if f"actual_{company.lower()}_share" in df.columns and company in OMC['OtherPSU']]
+            history_opsu_columns = [f"history_{company.lower()}_share" for company in required_companies if f"history_{company.lower()}_share" in df.columns and company in OMC['OtherPSU']]  
+            actual_pvt_columns = [f"actual_{company.lower()}_share" for company in required_companies if f"actual_{company.lower()}_share" in df.columns and company in OMC['PVT']]
+            history_pvt_columns = [f"history_{company.lower()}_share" for company in required_companies if f"history_{company.lower()}_share" in df.columns and company in OMC['PVT']]  
+            
             # df["actual_pvt_share"] = df[[f"actual_{company.lower()}_share" for company in required_companies]].sum(axis=1)
             # df["history_pvt_share"] = df[[f"history_{company.lower()}_share" for company in required_companies]].sum(axis=1)
-            df["actual_pvt_share"] = df[actual_columns].sum(axis=1)
-            df["history_pvt_share"] = df[history_columns].sum(axis=1)
-            new_df = df[selected_columns + ["actual_pvt_share", "history_pvt_share"]]
+            
+            
+            df["actual_psu_share"] = df[actual_opsu_columns].sum(axis=1)
+            df["history_psu_share"] = df[history_opsu_columns].sum(axis=1)
+            df["actual_pvt_share"] = df[actual_pvt_columns].sum(axis=1)
+            df["history_pvt_share"] = df[history_pvt_columns].sum(axis=1)
+            
+            new_df = df[selected_columns + ["month_name","actual_psu_share","history_psu_share","actual_pvt_share", "history_pvt_share"]]           
+        print("dfcolumns",df.columns)
         if len(required_companies) <=3:
-            return {'message': 'Industry_Performance', 'status': True,
-                'data': {key: value.to_dict() for key, value in df.to_dict(orient='series').items()}}
-        return {'message': 'Industry_Performance', 'status': True,
-                'data': {key: value.to_dict() for key, value in new_df.to_dict(orient='series').items()}}
+            li = df.columns.tolist()
+            #line_axis will give the name of distint company categories that will come in response
+            line_axis = [x.split('_')[1] for x in li if 'market' not in x and 'actual' not in x  and 'name' not in x]
+            return {'message': 'Industry_Performance_LineGraph', 'status': True,
+                'data': {key: value.to_dict() for key, value in df.to_dict(orient='series').items()},'axis':line_axis}
+        li = new_df.columns.tolist()
+        line_axis = [x.split('_')[1] for x in li if 'market' not in x and 'actual' not in x  and 'name' not in x]
+        return {'message': 'Industry_Performance_LineGraph', 'status': True,
+                'data': {key: value.to_dict() for key, value in new_df.to_dict(orient='series').items()},'axis':line_axis}
     if resp_format == 'company_level' and (resp_level == 'sbu_level' or resp_level == 'product_level') and resp_format_org == 'company_level_heatmap':
         com_name = [x['value'] for x in filters if x['key'] == '"company_name"'][0]
         cols = [col for col in df.columns if
