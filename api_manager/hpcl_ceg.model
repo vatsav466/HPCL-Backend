@@ -1962,7 +1962,7 @@ Model CrisAlertHistory {
     occurrence_date optional datetime
     closure_date optional datetime
     indent_no optional str
-    products optional productsDetails
+    products optional list productsDetails
 
     Config=> {
         crud_operations='read'
