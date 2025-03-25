@@ -7365,11 +7365,13 @@ class GlobalAnalytics:
                     k.location_name,
                     k.sap_id,
                     k.reassigned_bay,
+                    k.load_number,
+                    k.truck_number
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.interlock_name = 'Bay reasignment'
                     AND a.vehicle_number = k.truck_number
-                    AND a.tt_load_number = k.load_number
+                    AND a.tt_load_number = k.load_number::VARCHAR
                     AND DATE(a.created_at) = k.created_date) AS alert_count
                 FROM 
                     bay_reassignment k
@@ -7407,7 +7409,7 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "reassigned_bay"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -7420,6 +7422,8 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "reassigned_bay": row["reassigned_bay"],
+                        "load_number": row["load_number"],
+                        "truck_number": row["truck_number"],
                         "total_alerts": row["total_alerts"]
                     }
                     result.setdefault(created_date, []).append(entry)
@@ -7430,7 +7434,7 @@ class GlobalAnalytics:
                     pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
                 )
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -7443,6 +7447,8 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "reassigned_bay": row["reassigned_bay"],
+                        "load_number": row["load_number"],
+                        "truck_number": row["truck_number"],
                         "total_alerts": row["total_alerts"]
                     }
                     result.setdefault(month, []).append(entry)
