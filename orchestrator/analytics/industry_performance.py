@@ -633,10 +633,9 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
         if '"cumulative"' in [x['key'] for x in filters]:
             getCumulative = True
             req_month = [x['value'] for x in filters if x['key'] == '"table_month"'][0]
-            print("req_month")
             if req_month:
                 if req_month.lower() =='apr':
-                    months_list = ['Apr']
+                    months_list = ['apr']
                 else:
                     months_list = fy_months[:fy_months.index(req_month.lower())+1]
                     
@@ -664,9 +663,10 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                     cumulative_market_volume = df[[col for col in df.columns if col.startswith("actual_") and col == "actual_market_share"]].sum().sum()
                     cumulative_historical_market_volume = df[[col for col in df.columns if col.startswith("history_") and col == "history_market_share"]].sum().sum()
                 else:
-                    cumulative_market_volume = df[df['month_name'].isin(months_list)][[col for col in df.columns if col.startswith("actual_") 
+                    
+                    cumulative_market_volume = df[df['month_name'].str.lower().isin(months_list)][[col for col in df.columns if col.startswith("actual_") 
                                                                                    and col == "actual_market_share"]].sum().sum()
-                    cumulative_historical_market_volume = df[df['month_name'].isin(months_list)][[col for col in df.columns if col.startswith("history_") 
+                    cumulative_historical_market_volume = df[df['month_name'].str.lower().isin(months_list)][[col for col in df.columns if col.startswith("history_") 
                                                                                    and col == "history_market_share"]].sum().sum()
                 # market_share_change = historical_volume - actual_volume
                 market_share_change = ((actual_volume - historical_volume) / historical_volume * 100) if historical_volume else 0
