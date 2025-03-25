@@ -11,6 +11,7 @@ import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.vts_analysis as vts_analysis
+import cache_gateway.cache_api_actions as cache_api_actions
 
 logger = urdhva_base.logger.Logger.getInstance('alert_factory_log')
 
@@ -57,7 +58,10 @@ class AlertFactory:
             interlock_name = alert_data.get('interlock_name', '')
             location_data = alert_data.get("location_data", {})
             if not location_data:
-                status, location_data = await alert_helper.get_location_details(bu, sap_id)
+                if urdhva_base.ctx.exists():
+                    _, location_data = await alert_helper.get_location_details(bu, sap_id)
+                else:
+                    _, location_data = await cache_api_actions.get_location_data(bu=bu, location_id=sap_id)
 
             # print("location_data --> ", location_data)
             # if not status:
