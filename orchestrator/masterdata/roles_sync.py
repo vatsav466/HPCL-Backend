@@ -5,6 +5,35 @@ import hpcl_ceg_model
 
 async def sync_user_roles():
     role_mapping = {
+                    "Zonal Operations SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "Zonal Operations LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Operations",
+                                    "LPG Plant",
+                                    "LPG Analytics",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "LPG",
+                        "status": True
+                    },
                     "Location In-Charge SOD": {
                         "allowed_pages": [
                             {
@@ -265,6 +294,26 @@ async def sync_user_roles():
                         "name": "SOD",
                         "status": True
                     },
+                    "Zonal HSE SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
                     "Zonal Transport Officer SOD": {
                         "allowed_pages": [
                             {
@@ -327,6 +376,27 @@ async def sync_user_roles():
                         "status": True
                     },
                     "HQO SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Terminal Automation",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "HQO HSE SOD": {
                         "allowed_pages": [
                             {
                                 "menu_name": "SOD Terminal",
