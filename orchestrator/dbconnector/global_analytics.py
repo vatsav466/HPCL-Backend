@@ -5039,7 +5039,7 @@ class GlobalAnalytics:
             filtered_interlocks = [
                 interlock_name for interlock_name, details in normal_interlocks.items()
                 if (details.get("equipment_name") == "Loading Point" and
-                    details.get("alert_category") == "Gantry")
+                    details.get("alert_category") == "Gantry" or details.get("alert_category") == "Process")
             ]
 
             # Filter to keep only the interlocks that match both criteria
