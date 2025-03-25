@@ -415,7 +415,7 @@ alert_action = {
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin"]
+                    "roles": ["Admin", "Maintenanace Officer LPG", "Location In-Charge LPG", "Zonal Operations Head LPG", "HQO LPG"]
                 }
             },
             "category": {
