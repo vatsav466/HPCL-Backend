@@ -34,6 +34,27 @@ async def sync_user_roles():
                         "name": "LPG",
                         "status": True
                     },
+                    "HQO Operation SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Terminal Automation",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
                     "Location In-Charge SOD": {
                         "allowed_pages": [
                             {
@@ -513,6 +534,27 @@ async def sync_user_roles():
                         "status": True
                     },
                     "HQO Head SOD": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "SOD Terminal",
+                                "allowed_sub_menus": [
+                                    "Supply Chain",
+                                    "Terminal Home",
+                                    "Terminal Automation",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "VTS",
+                                "allowed_sub_menus": [
+                                    "VTS Home"
+                                ]
+                            }
+                        ],
+                        "name": "SOD",
+                        "status": True
+                    },
+                    "HQO Operations SOD": {
                         "allowed_pages": [
                             {
                                 "menu_name": "SOD Terminal",
