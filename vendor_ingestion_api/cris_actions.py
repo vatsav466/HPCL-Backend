@@ -5,6 +5,7 @@ import fastapi
 import datetime
 import hpcl_ceg_model
 import utilities.helpers as helpers
+import utilities.cris_alert_mapping as cris_alert_mapping
 import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/cris')
@@ -38,6 +39,8 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
                 'location_id': data.location_id,
                 'ro_code': data.ro_code,
                 'location_type': data.location_type,
+                'bu': data.location_type,
+                'sap_id': data.ro_code
             }
             for entry in data.data
         ]
@@ -45,10 +48,16 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
         logger.error(f"Invalid data structure: data.data is not a list or is empty")
         return {"status": False, "message": "Invalid data", "data": []}
     for entry in enriched_data:
-        entry['occurrence_date'] = datetime.datetime.strptime(entry['occurrence_date'], "%Y%m%d%H%M%S").isoformat()
+        interlock_data = cris_alert_mapping.Cris_Alert_Mapping[entry['bu']][entry['interlock_type']]
+        entry['alert_id'] = entry['alarm_id']
+        entry['interlock_name'] = interlock_data['name']
+        entry['sop_id'] = interlock_data['sop_id']
+        entry['occurrence_date'] = datetime.datetime.strptime(entry['occurrence_date'], "%Y%m%d%H%M%S")
         if entry.get("closure_date", ""):
-            entry['closure_date'] = datetime.datetime.strptime(entry['closure_date'], "%Y%m%d%H%M%S").isoformat()
-        await hpcl_ceg_model.CrisAlertHistoryCreate(**entry).create(upsert=True)
+            entry['closure_date'] = datetime.datetime.strptime(entry['closure_date'], "%Y%m%d%H%M%S")
+        if not entry.get("closure_date", ""):
+            entry['closure_date'] = None
+        await hpcl_ceg_model.CrisAlertHistory.bulk_update([entry], upsert=True)
         if not entry.get("closure_date", ""):
             camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
                                                         alert_section="RO")
