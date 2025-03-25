@@ -134,31 +134,34 @@ def pad_digits(number, padding_count=8):
 async def get_alert_unique_id(bu, sap_id, sop_id=None, device_id=None):
     """
     Generate a unique ID for an alert based on the business unit and SOP ID.
+
     Parameters:
     bu (str): Business unit identifier.
     sap_id (str): SAP ID / LocationId.
     sop_id (str): SOP ID.
-    device_id (str): SOP ID.
+    device_id (str): Device ID.
 
     Returns:
     str: Unique ID.
     """
     MAX_RETRIES = 5
     RETRY_DELAY = 2
+
+    redis_ins = await urdhva_base.redispool.get_redis_connection()  # Use a persistent Redis connection
+
     for attempt in range(MAX_RETRIES):
         try:
-            redis_ins = await urdhva_base.redispool.get_redis_connection()
             redis_key = [f"{bu.upper()}", f"{sap_id.upper()}", f"{sop_id.upper()}"]
             if device_id:
                 redis_key.append(f"_{str(device_id).upper()}")
+
             number = await redis_ins.incr("_".join(redis_key))
             redis_key.append(f"{pad_digits(number, 8)}")
             return "_".join(redis_key)
         except Exception as e:
-            redis_ins.close()
-            print("Error In getting location details: ", e)
-        if attempt < MAX_RETRIES - 1:
-            time.sleep(RETRY_DELAY * (2 ** attempt))
-        else:
-            return ""
+            print(f"Error in getting unique ID (Attempt {attempt + 1}): {e}")
+            if attempt < MAX_RETRIES - 1:
+                await asyncio.sleep(RETRY_DELAY * (2 ** attempt))  # Exponential backoff
+            else:
+                return ""
     return ""
