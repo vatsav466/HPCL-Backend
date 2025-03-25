@@ -239,7 +239,7 @@ def validate_camunda_settings_rule(camunda_settings, location_id, bu):
     return False
 
 
-async def get_camunda_url(bu, sap_id, alert_section):
+async def get_camunda_url(bu, sap_id, alert_section, location_data={}):
     """
     Logic to decide serving camunda url for given bu and sap_id
     :param bu:
@@ -254,12 +254,15 @@ async def get_camunda_url(bu, sap_id, alert_section):
     if not camunda_config or bu not in camunda_config:
         return default_url
 
-    status, location_data = await get_location_details(bu, sap_id)
-    if not status:
-        return default_url
+    # status, location_data = await get_location_details(bu, sap_id)
+    # if not status:
+    #     return default_url
 
+    if not location_data:
+        location_data = {'sap_id': sap_id}
     # Fields to check in settings
-    match_keys = ['sap_id', 'sales_area', 'region', 'zone']
+    match_keys = ['sap_id']
+    #, 'sales_area', 'region', 'zone']
 
     # Checking ones having alert section
     for settings in camunda_config[bu]:

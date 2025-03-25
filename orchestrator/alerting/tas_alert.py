@@ -6,6 +6,7 @@ import traceback
 import hpcl_ceg_model
 import utilities.helpers as helpers
 import orchestrator.alerting.alert_helper as alert_helper
+import cache_gateway.cache_api_actions as cache_api_actions
 import orchestrator.alerting.alert_factory as alert_factory
 
 logger = urdhva_base.logger.Logger.getInstance("tas_alert_processing")
@@ -36,7 +37,8 @@ class TASAlertManager(alert_factory.AlertFactory):
         try:
             logger.info(f"alert_data received to create alert {alert_data}")
             # Retrieve necessary fields from the alert_data
-            status, loc_dt = await alert_helper.get_location_details(bu=alert_data['bu'], sap_id=alert_data['sap_id'])
+            status, loc_dt = await cache_api_actions.get_location_data(bu=alert_data['bu'], sap_id=alert_data['sap_id'])
+            #status, loc_dt = await alert_helper.get_location_details(bu=alert_data['bu'], sap_id=alert_data['sap_id'])
             if status:
                 alert_data['location_data'] = loc_dt
             else:
@@ -61,7 +63,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                                                           f"created for device {device_data}",
                                             "action_type": "InterlockCreated"}]
             camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
-                                                        alert_section="TAS")
+                                                        alert_section="TAS", location_data=loc_dt)
             return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
