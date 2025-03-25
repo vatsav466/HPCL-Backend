@@ -120,7 +120,7 @@ class Postgresql:
     
     async def create_bay_reasignment_report(self, data):
         to_date = urdhva_base.utilities.get_present_time(True).strftime("%Y-%m-%d")
-        query = f"""select id from alerts where interlock_name = 'Bay reassignment' and vehicle_number = '{data["vehicle_number"]}' and tt_load_number = '{data["tt_load_number"]}' """ \
+        query = f"""select id from alerts where interlock_name = 'Bay reassignment' and vehicle_number = '{data["vehicle_number"]}' and tt_load_number = '{data["tt_load_number"]}'""" \
                 f"""and created_at::DATE = '{to_date}'"""
         resp = await hpcl_ceg_model.Alerts.get_aggr_data(query)
         if resp.get("data", []):
