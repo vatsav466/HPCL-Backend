@@ -295,7 +295,7 @@ alert_action = {
                 "FalseAlert": {
                     "name": "FalseAlert",
                     "close_alert": True,
-                    "roles": ["Admin", "Safety Officer SOD"," Zonal HSE SOD", "HQO HSE SOD"]
+                    "roles": ["Admin", "Safety Officer SOD","Zonal HSE SOD", "HQO HSE SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
