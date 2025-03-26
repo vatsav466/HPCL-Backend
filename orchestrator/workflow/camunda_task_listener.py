@@ -15,8 +15,7 @@ task_count = {
     'TAS': 21,
     'VTS': 15,
     'VA': 15,
-    'LPG': 10,
-    'RO': 20
+    'LPG': 10
 }
 
 
@@ -89,12 +88,6 @@ def get_camunda_urls(task_type):
                                 for rec in cfg['TAS'] if rec.get('alert_section') == 'LPG'])
         else:
             config_data.append({"url": urdhva_base.settings.camunda_url, "listener_name": "lpg_workflow_consumer"})
-    elif task_type == 'RO':
-        if cfg.get('RO'):
-            config_data.extend([{"url": rec['url'], "listener_name": 'ro_workflow_consumer'}
-                                for rec in cfg['RO'] if rec.get('alert_section') == 'RO'])
-        else:
-            config_data.append({"url": urdhva_base.settings.camunda_url, "listener_name": "ro_workflow_consumer"})
     elif task_type == 'VA':
         urls = set()
         for bu, rules in cfg.items():
