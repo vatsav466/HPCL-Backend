@@ -106,7 +106,7 @@ class AlertFactory:
                                                         'last_notified_to': [], 'assigned_to': '',
                                                         'assigned_to_role': '',
                                                         'assigned_users': [],
-                                                        'assigned_user_roles': ["Location In-Charge SOD"] if alert_data.get("alert_section", bu) == 'EMLock' else [],
+                                                        'assigned_user_roles': ["Planning Officer SOD"] if alert_data.get("alert_section", bu) == 'EMLock' else [],
                                                         'indent_status': hpcl_ceg_enum.IndentStatus.Pending,
                                                         'dealer_id': str(alert_data.get('dealer_id', '')),
                                                         'product_code': str(alert_data.get('product_code', '')),
