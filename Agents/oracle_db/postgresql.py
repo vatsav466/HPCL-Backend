@@ -437,7 +437,7 @@ class Postgresql:
                     if interlock_name == 'Cancel TT Reported':
                         is_close_alert = True
                         success, msg, alert_data = await self.create_cancel_tt_report(alert_data)
-                    if interlock_name == 'Bay reassignment':
+                    elif interlock_name == 'Bay reassignment':
                         is_close_alert = True
                         success, msg, alert_data = await self.create_bay_reasignment_report(alert_data)
                     else:
