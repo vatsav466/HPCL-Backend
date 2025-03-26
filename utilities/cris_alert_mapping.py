@@ -4,7 +4,7 @@ Cris_Alert_Mapping = {
             "name": "Product Low Level",
             "sop_id": "SOP294",
             "severity": "Critical",
-            "period": "weekly",
+            "period": "monthly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
@@ -39,7 +39,7 @@ Cris_Alert_Mapping = {
             "name": "High Water Level",
             "sop_id": "SOP295",
             "severity": "Critical",
-            "period": "weekly",
+            "period": "monthly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
@@ -74,7 +74,7 @@ Cris_Alert_Mapping = {
             "name": "TT Receipt",
             "sop_id": "SOP296",
             "severity": "Critical",
-            "period": "weekly",
+            "period": "monthly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
@@ -109,7 +109,7 @@ Cris_Alert_Mapping = {
             "name": "Decantation",
             "sop_id": "SOP297",
             "severity": "Critical",
-            "period": "weekly",
+            "period": "monthly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
@@ -144,7 +144,7 @@ Cris_Alert_Mapping = {
             "name": "NANF",
             "sop_id": "SOP298",
             "severity": "High",
-            "period": "weekly",
+            "period": "monthly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
@@ -179,7 +179,7 @@ Cris_Alert_Mapping = {
             "name": "No Pump Test",
             "sop_id": "SOP299",
             "severity": "High",
-            "period": "weekly",
+            "period": "monthly",
             "escalations": {
                 "level - 1": {
                     "condition": "<",
