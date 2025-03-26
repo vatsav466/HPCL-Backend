@@ -563,37 +563,23 @@ alert_action = {
             "alert_section": "RO",
             "close_alert_func": "",
             "actions": {
-                "Justify": {
-                    "name": "Justification",
-                    "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
-                },
-                "Accept & Close": {
-                    "name": "AcceptClose",
-                    "close_alert": False,
-                    "roles": ["Admin", "Safety Officer SOD", "Safety Officer LPG", "TAS Officer", "Zonal TAS Officer"]
-                },
                 "Approve": {
                     "name": "Approved",
-                    "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                    "close_alert": False,
+                    "roles": ["Admin", "Sales Officer RO", "Regional Manager RO", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                    "roles": ["Admin", "Sales Officer RO", "Regional Manager RO", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
                 }
             },
             "category": {
-                "Safety": "Safety",
-                "Security": "Security",
-                "Operations": "Operations",
-                "FalseAlert": "FalseAlert",
-                "InvalidAlert": "InvalidAlert",
-                "Quality": "Quality",
                 "Other": "Other"
             },
-            "rca_reason": []
+            "rca_reason": [
+                "Other"
+            ]
         },
         "VA": {
             "alert_section": "VA",
