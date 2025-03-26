@@ -6726,7 +6726,7 @@ class GlobalAnalytics:
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.device_name = k.bcu_number 
-                    AND a.interlock_name = 'K - Factor Data Changed'
+                    AND a.interlock_name = 'BCU K- Factor Change'
                     AND DATE(a.created_at) = k.created_date) AS alert_count
                 FROM 
                     k_factor_data k

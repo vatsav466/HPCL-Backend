@@ -125,7 +125,7 @@
         "METER_NUMBER": "meter_number",
         "NET_TOTALIZER": "net_totalizer",
         "BLEND_NAME": "blend_name",
-        "PRESET_NUMBER": "preset_number",
+        "PRESET_NUMBER": "bcu_number",
         "MFM_NUMBER": "mfm_number",
         "ASSOCIATED_DEVICE_NUMBER": "bcu_number",
         "STOCK_CODE": "stock_code",
