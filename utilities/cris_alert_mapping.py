@@ -9,24 +9,27 @@ Cris_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 3,
-                    "assign_role": "Sales Officer RO",
-                    "escalation_role": "Regional Manager RO",
+                    "0": "Sales Officer RO",
                     "escalation_time": "PT6H",
                     "disabling_hrs": "6"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 5,
-                    "assign_role": "Regional Manager RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                    # 0 Assign Role
+                    "1": "Regional Manager RO",                                 # 1 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",               # 3 Notification
                     "escalation_time": "PT6H",
                     "disabling_hrs": "6"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 5,
-                    "assign_role": "Zonal Head RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                        # 0 Assign Role 
+                    "1": "Regional Manager RO",                                     # 1 Assign Role
+                    "2": "Zonal Head RO",                                           # 2 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",                   # 3 Notification
+                    "4": "Sales Officer RO, Regional Manager RO, Zonal Head RO",    # 4 Notification
                     "escalation_time": "PT12H",
                     "disabling_hrs": "12"
                 }
@@ -41,24 +44,27 @@ Cris_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 3,
-                    "assign_role": "Sales Officer RO",
-                    "escalation_role": "Regional Manager RO",
+                    "0": "Sales Officer RO",
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 6,
-                    "assign_role": "Regional Manager RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                    # 0 Assign Role
+                    "1": "Regional Manager RO",                                 # 1 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",               # 3 Notification
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 6,
-                    "assign_role": "Zonal Head RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                        # 0 Assign Role 
+                    "1": "Regional Manager RO",                                     # 1 Assign Role
+                    "2": "Zonal Head RO",                                           # 2 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",                   # 3 Notification
+                    "4": "Sales Officer RO, Regional Manager RO, Zonal Head RO",    # 4 Notification
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 }
@@ -73,24 +79,27 @@ Cris_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 2,
-                    "assign_role": "Sales Officer RO",
-                    "escalation_role": "Regional Manager RO",
+                    "0": "Sales Officer RO",
                     "escalation_time": "P1D",
                     "disabling_hrs": "24"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 6,
-                    "assign_role": "Regional Manager RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                    # 0 Assign Role
+                    "1": "Regional Manager RO",                                 # 1 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",               # 3 Notification
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 6,
-                    "assign_role": "Zonal Head RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                        # 0 Assign Role 
+                    "1": "Regional Manager RO",                                     # 1 Assign Role
+                    "2": "Zonal Head RO",                                           # 2 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",                   # 3 Notification
+                    "4": "Sales Officer RO, Regional Manager RO, Zonal Head RO",    # 4 Notification
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 }
@@ -105,24 +114,27 @@ Cris_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 3,
-                    "assign_role": "Sales Officer RO",
-                    "escalation_role": "Regional Manager RO",
+                    "0": "Sales Officer RO",
                     "escalation_time": "P1D",
                     "disabling_hrs": "24"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 7,
-                    "assign_role": "Regional Manager RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                    # 0 Assign Role
+                    "1": "Regional Manager RO",                                 # 1 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",               # 3 Notification
                     "escalation_time": "P1D",
                     "disabling_hrs": "24"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 7,
-                    "assign_role": "Zonal Head RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                        # 0 Assign Role 
+                    "1": "Regional Manager RO",                                     # 1 Assign Role
+                    "2": "Zonal Head RO",                                           # 2 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",                   # 3 Notification
+                    "4": "Sales Officer RO, Regional Manager RO, Zonal Head RO",    # 4 Notification
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 }
@@ -137,24 +149,27 @@ Cris_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 2,
-                    "assign_role": "Sales Officer RO",
-                    "escalation_role": "Regional Manager RO",
+                    "0": "Sales Officer RO",
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 5,
-                    "assign_role": "Regional Manager RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                    # 0 Assign Role
+                    "1": "Regional Manager RO",                                 # 1 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",               # 3 Notification
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 5,
-                    "assign_role": "Zonal Head RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                        # 0 Assign Role 
+                    "1": "Regional Manager RO",                                     # 1 Assign Role
+                    "2": "Zonal Head RO",                                           # 2 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",                   # 3 Notification
+                    "4": "Sales Officer RO, Regional Manager RO, Zonal Head RO",    # 4 Notification
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 }
@@ -169,24 +184,27 @@ Cris_Alert_Mapping = {
                 "level - 1": {
                     "condition": "<",
                     "value": 3,
-                    "assign_role": "Sales Officer RO",
-                    "escalation_role": "Regional Manager RO",
+                    "0": "Sales Officer RO",
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 },
                 "level - 2": {
                     "condition": "<>",
                     "value": 7,
-                    "assign_role": "Regional Manager RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                    # 0 Assign Role
+                    "1": "Regional Manager RO",                                 # 1 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",               # 3 Notification
                     "escalation_time": "P2D",
                     "disabling_hrs": "48"
                 },
                 "level - 3": {
                     "condition": ">",
                     "value": 7,
-                    "assign_role": "Zonal Head RO",
-                    "escalation_role": "Zonal Head RO",
+                    "0": "Sales Officer RO",                                        # 0 Assign Role 
+                    "1": "Regional Manager RO",                                     # 1 Assign Role
+                    "2": "Zonal Head RO",                                           # 2 Assign Role
+                    "3": "Sales Officer RO, Regional Manager RO",                   # 3 Notification
+                    "4": "Sales Officer RO, Regional Manager RO, Zonal Head RO",    # 4 Notification
                     "escalation_time": "P6D",
                     "disabling_hrs": "144"
                 }
