@@ -79,7 +79,6 @@ async def close_alerts_by_schedule():
 
         # Closing Alert Data.
         await alert_factory.AlertFactory().close_alert(alert_data)
-        break
     return {"status": True, "message": "Alerts Closed"}
 
 async def close_alerts_by_vendor():
