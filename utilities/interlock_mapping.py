@@ -142,6 +142,7 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP023", "interlock_name": "Gantry Permissive Off", "workflow_name": "FIRE CRITICAL DATA"},
                         {"sop_id": "SOP023", "interlock_name": "All BCU Permissive Fail Status", "workflow_name": "FIRE CRITICAL DATA"},
                         {"sop_id": "SOP024", "interlock_name": "Day End totaliser Mismatch", "workflow_name": "TOTALISER MISMATCH"},
+                        {"sop_id": "SOP025", "interlock_name": "BCU Local Loading", "workflow_name": ""},
                         {"sop_id": "SOP026", "interlock_name": "BCU vs MFM totalizer mismatch alarm", "workflow_name": "K Factor Change"},
                         {"sop_id": "SOP027", "interlock_name": "K Factor Change_BCU", "workflow_name": "K Factor Change"},
                         {"sop_id": "SOP027", "interlock_name": "K Factor Change_MFM", "workflow_name": "K Factor Change"},

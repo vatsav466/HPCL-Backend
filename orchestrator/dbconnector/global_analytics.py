@@ -5036,10 +5036,28 @@ class GlobalAnalytics:
             resp_df = resp_df.filter(pl.col("interlock_name").is_in(list(normal_interlocks.keys())))
 
             # Filter for interlocks where equipment_name is "Loading Point" AND alert_category is "Gantry"
+            # filtered_interlocks = [
+            #     interlock_name for interlock_name, details in normal_interlocks.items()
+            #     if (details.get("equipment_name") in ["Loading Point", "BCU"] and 
+            #         details.get("alert_category") in ["Gantry", "Process"])
+            # ]
+
+            required_bcu_interlocks = {
+                "SickTT Reported",
+                "BCU K- Factor Change",
+                "BCU Local Loading",
+                "Unauthorized flow_BCU",
+                "TT Overloaded",
+                "MFM factor Change",
+            }
+
+            # Filter interlocks for BCU and Loading Point
             filtered_interlocks = [
                 interlock_name for interlock_name, details in normal_interlocks.items()
-                if (details.get("equipment_name") in ["Loading Point", "BCU"] and 
-                    details.get("alert_category") in ["Gantry", "Process"])
+                if (
+                    (details.get("equipment_name") == "BCU" and interlock_name in required_bcu_interlocks and details.get("alert_category") in ["Gantry", "Process"]) or
+                    (details.get("equipment_name") == "Loading Point" and details.get("alert_category") in ["Gantry", "Process"])
+                )
             ]
 
             # Filter to keep only the interlocks that match both criteria
