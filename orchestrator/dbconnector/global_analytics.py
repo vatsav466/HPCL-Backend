@@ -6604,7 +6604,10 @@ class GlobalAnalytics:
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
                 )
-
+                graph_data = {
+                    "total_alerts": resp_df.select(pl.sum("alert_count")).item(),
+                    "total_required_qty": resp_df.select(pl.sum("total_required_qty")).item()
+                }
                 result = {}
                 for row in grouped.iter_rows(named=True):
                     created_date = str(row["created_date"])
@@ -6618,7 +6621,7 @@ class GlobalAnalytics:
                         "total_required_qty": row["total_required_quantity"]
                     }
                     result.setdefault(created_date, []).append(entry)
-                return {"status": True, "message": "success", "daily_data": result}
+                return {"status": True, "message": "success", "daily_data": result, "graph_data": graph_data}
             else:
                 # Monthly Data Aggregation
                 resp_df = resp_df.with_columns(
@@ -6630,6 +6633,11 @@ class GlobalAnalytics:
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
                 )
+
+                graph_data = {
+                    "total_alerts": resp_df.select(pl.sum("alert_count")).item(),
+                    "total_required_qty": resp_df.select(pl.sum("total_required_qty")).item()
+                }
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
@@ -6644,7 +6652,7 @@ class GlobalAnalytics:
                         "total_required_qty": row["total_required_quantity"]
                     }
                     result.setdefault(month, []).append(entry)
-                return {"status": True, "message": "success", "monthly_data": result}
+                return {"status": True, "message": "success", "monthly_data": result, "graph_data": graph_data}
 
         except Exception as e:
             print(traceback.format_exc())
