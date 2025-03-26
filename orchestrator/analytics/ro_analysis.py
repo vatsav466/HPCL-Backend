@@ -1,8 +1,8 @@
 import urdhva_base
 import requests
-import va_analysis
 import charts_actions
 import dashboard_studio_model
+import orchestrator.analytics.va_analysis as va_analysis
 import utilities.cris_alert_mapping as cris_alert_mapping
 
 
