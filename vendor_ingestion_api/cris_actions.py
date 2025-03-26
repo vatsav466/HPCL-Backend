@@ -5,6 +5,7 @@ import fastapi
 import datetime
 import hpcl_ceg_model
 import utilities.helpers as helpers
+import orchestrator.analytics.ro_analysis as ro_analysis
 import utilities.cris_alert_mapping as cris_alert_mapping
 import orchestrator.alerting.alert_manager as alert_manager
 
@@ -54,16 +55,20 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
         await hpcl_ceg_model.CrisAlertHistory.bulk_update([entry], upsert=True)
 
         entry['alert_id'] = entry['alarm_id']
-        entry['bu'] = entry['location_type']
+        entry['bu'] = 'RO'
         entry['sap_id'] = entry['ro_code']
         entry['violation_type'] = entry['interlock_type']
         interlock_data = cris_alert_mapping.Cris_Alert_Mapping[entry['bu']][entry['interlock_type']]
         entry['interlock_name'] = interlock_data['name']
         entry['sop_id'] = interlock_data['sop_id']
+        entry['alert_section'] = 'RO'
         if not entry.get("closure_date", ""):
-            camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
-                                                        alert_section="RO")
-            await alert_manager.create_alert({**entry, "alert_type": "RO"}, camunda_url=camunda_url)
+            if not await ro_analysis.check_alert_exists(entry['alarm_id']):
+                camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
+                                                            alert_section="RO")
+                await alert_manager.create_alert({**entry, "alert_type": "RO"}, camunda_url=camunda_url)
+            else:
+                print(f"Alert already exists {entry}")
         else:
             query = (f"""select * from alerts where external_id = '{entry["alarm_id"]}'"""
                      f"and violation_type = '{entry["interlock_type"]}' and alert_status != 'Close'")

@@ -40,7 +40,7 @@ async def get_ro_alerts_count(bu: str, violation_type: str, sap_id: str):
         start_date, end_date = await va_analysis.get_period_datetime(ro_mapping['period'])
         query = (f"""select count(*) as "count" from alerts """
                  f"where bu = '{bu}' and "
-                 f"alert_section = 'VA' and "
+                 f"alert_section = 'RO' and "
                  f"violation_type = '{violation_type}' and "
                  f"sap_id = '{sap_id}' and "
                  f"created_at BETWEEN TO_DATE('{start_date}', 'YYYY-MM-DD') AND TO_DATE('{end_date}', 'YYYY-MM-DD')")
@@ -74,3 +74,16 @@ async def get_ro_levels(bu: str, violation_type: str, sap_id: str):
                     return "level - 3"
             previous_count = value['value']
     return ""
+
+async def check_alert_exists(alert_id):
+    query = f"select alert_id from alerts where external_id = '{alert_id}'"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(query=query)
+    print("Query: ", query)
+    print("resp: ", resp)
+    if resp:
+        return True
+    return False
