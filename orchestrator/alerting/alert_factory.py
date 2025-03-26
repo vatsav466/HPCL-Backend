@@ -8,6 +8,7 @@ import urdhva_base.redispool
 import utilities.helpers as helpers
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.analytics.va_analysis as va_analysis
+import orchestrator.analytics.ro_analysis as ro_analysis
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.vts_analysis as vts_analysis
@@ -136,6 +137,10 @@ class AlertFactory:
             if alert_data.get("alert_section",'') in ["VA"]:
                 if alert_data.get("alert_section",'') == "VA":
                     alert_level = await va_analysis.get_va_levels(
+                        bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
+                    )
+                if alert_data.get("alert_section",'') == "RO":
+                    alert_level = await ro_analysis.get_ro_levels(
                         bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
                     )
                 if alert_data.get("bu","") in ["TAS"]:

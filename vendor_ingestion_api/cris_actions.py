@@ -53,13 +53,13 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
             entry['closure_date'] = None
         await hpcl_ceg_model.CrisAlertHistory.bulk_update([entry], upsert=True)
 
-        interlock_data = cris_alert_mapping.Cris_Alert_Mapping[entry['bu']][entry['interlock_type']]
         entry['alert_id'] = entry['alarm_id']
-        entry['interlock_name'] = interlock_data['name']
-        entry['sop_id'] = interlock_data['sop_id']
         entry['bu'] = entry['location_type']
         entry['sap_id'] = entry['ro_code']
         entry['violation_type'] = entry['interlock_type']
+        interlock_data = cris_alert_mapping.Cris_Alert_Mapping[entry['bu']][entry['interlock_type']]
+        entry['interlock_name'] = interlock_data['name']
+        entry['sop_id'] = interlock_data['sop_id']
         if not entry.get("closure_date", ""):
             camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
                                                         alert_section="RO")
