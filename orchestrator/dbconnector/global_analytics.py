@@ -3695,10 +3695,14 @@ class GlobalAnalytics:
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
-                return {"status": True, "message": "success", "data": []}
+                return {"status": True, "message": "success", "data": []}            
             resp = resp.groupby(["zone"], as_index=False).agg({
-                        "Productions": "sum"
+                        "14_kg": "sum",
+                        "19_kg": "sum"
                     })
+            resp = resp.with_columns(
+                (pl.col("14_kg").fill_null(0).cast(pl.Float64) + pl.col("19_kg").fill_null(0).cast(pl.Float64)
+                 ).alias("Productions"))
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
@@ -3785,9 +3789,9 @@ class GlobalAnalytics:
                 handled_cylinder_query_ += ' WHERE '
                 handled_cylinder_query_ += ' AND '.join(conditions)
             if not daterange:
-                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\') '
             elif daterange:
-                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
@@ -3797,13 +3801,13 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
             handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
             if not "where" in handled_cylinder_query_.lower() and not daterange:
-                handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             elif not "where" in handled_cylinder_query_.lower() and daterange:
-                handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             elif not daterange:
-                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'            
+                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             elif daterange:
-                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
             print("handled_cylinder_query_ :", handled_cylinder_query_)
             resp = await function(query=handled_cylinder_query_)
