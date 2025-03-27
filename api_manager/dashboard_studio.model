@@ -122,6 +122,7 @@ Model WidgetFilters internal {
     key str regex="^[a-zA-Z0-9_.\-=\" ]+$"
     cond str
     value optional str // regex="^([a-zA-Z0-9,\[\]\{\}\(\)&><#_.\-=\" ]+|)$"
+    val optional str // regex="^([a-zA-Z0-9,\[\]\{\}\(\)&><#_.\-=\" ]+|)$"
 }
 
 Model Charts {

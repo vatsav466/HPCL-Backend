@@ -46,9 +46,11 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
                 "tankage": {"total": 0, "not_in_ops": 0, "op_tankage": 0, "stock_percentage": 0},
                 "avg_sales": {"dom": 0, "non_dom": 0, "bulk": 0}, "days_cover": 0, "in_transit": 0}
 
-    zones = [cond['value'] for cond in filters if cond['key'].strip('"') == 'zone_name']
-    plants = [cond['value'] for cond in filters if cond['key'].strip('"') == 'sap_id']
-    filters = [cond for cond in filters if cond['key'].strip('"') not in ['zone_name', 'sap_id']]
+    zones = [cond['value'] if cond['value'] else cond.get('val') for cond in filters
+             if cond['key'].strip('"') == 'zone_name' and (cond['value'] or cond.get('val'))]
+    plants = [cond['value'] if cond['value'] else cond.get('val') for cond
+              in filters if cond['key'].strip('"') == 'plant_name' and( cond['value'] or cond.get('val'))]
+    filters = [cond for cond in filters if cond['key'].strip('"') not in ['zone_name', 'sap_id', 'plant_name']]
     if not plants and zones:
         in_clause_raw = ", ".join(f"'{value}'" for value in zones)
         query = f"""select sap_id from location_master where bu='LPG' and zone in ({in_clause_raw})"""
@@ -79,7 +81,8 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     lpg_data['current_inventory'] = round((float(opening_stock) + float(sum(list(receipt_stock.values()))) - avg_sales))
     lpg_data['days_cover'] = round(float(lpg_data['current_inventory']) / avg_sales) if avg_sales else 0
     lpg_data['tankage']['total'] = tank_capacity
-    lpg_data['tankage']['stock_percentage'] = round(tank_capacity / (lpg_data['current_inventory'] * 100))
+    lpg_data['tankage']['stock_percentage'] = round(tank_capacity / (lpg_data['current_inventory'] * 100)) \
+        if lpg_data['current_inventory'] else 0
 
     for key in lpg_data:
         if isinstance(lpg_data[key], dict):
