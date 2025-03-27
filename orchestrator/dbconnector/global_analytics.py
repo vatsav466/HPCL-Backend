@@ -7262,7 +7262,7 @@ class GlobalAnalytics:
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'MFM Data Changed'
+                    AND a.interlock_name = 'MFM factor Change'
                     AND DATE(a.created_at) = h.created_date) AS alert_count
                 FROM 
                     mfmfactor h
