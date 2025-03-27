@@ -17,6 +17,7 @@ import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
 from orchestrator.analytics import m60_performance
 from orchestrator.analytics import dry_out_analysis
+from orchestrator.analytics import lpg_plant_analysis
 from orchestrator.analytics import industry_performance
 import utilities.connection_mapping as connection_mapping
 from orchestrator.dbconnector.widget_actions import widget_actions
@@ -26,6 +27,7 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
 import utilities.analog_data_mapping as category_mapping
+
 
 async def filter_data(df, _filters):
     try:
@@ -1026,6 +1028,29 @@ class GlobalAnalytics:
         return await m60_performance.m60_performance([rec.dict() for rec in filters],
                                                      [rec.dict() for rec in cross_filters], drill_state, time_grain,
                                                      resp_format)
+
+    # lpg_analysis
+    @staticmethod
+    async def lpg_plant_analysis(filters, cross_filters, drill_state, time_grain='', resp_format='', resp_level=''):
+        """
+        Fetches the lpg plant data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the sales performance data.
+            :param resp_format:
+            :param filters:
+            :param drill_state:
+            :param cross_filters:
+            :param time_grain:
+        """
+        return await lpg_plant_analysis.lpg_plant_analysis([rec.dict() for rec in filters],
+                                                     [rec.dict() for rec in cross_filters], drill_state, time_grain,
+                                                     resp_format)
+
     @staticmethod
     async def industry_performance(filters, cross_filters, drill_state, time_grain='', resp_format='',resp_level=''):
         """
