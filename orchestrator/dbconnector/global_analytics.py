@@ -3731,9 +3731,9 @@ class GlobalAnalytics:
                         "14_kg": "sum",
                         "19_kg": "sum"
                     })
-                    resp["14_kg"] = resp["14_kg"] * 14.2
-                    resp["19_kg"] = resp["19_kg"] * 19
-                    resp["Productions"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)) / 1000
+                    grouped_resp["14_kg"] = grouped_resp["14_kg"] * 14.2
+                    grouped_resp["19_kg"] = grouped_resp["19_kg"] * 19
+                    grouped_resp["Productions"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64)) / 1000
                     grouped_resp["Productions"] = grouped_resp["Productions"].fillna(0.0).round(2)
                 if grouped_resp is not None:
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
