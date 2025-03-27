@@ -3728,8 +3728,12 @@ class GlobalAnalytics:
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
                     grouped_resp = resp.groupby(["zone","name"], as_index=False).agg({
-                        "Productions": "sum"
+                        "14_kg": "sum",
+                        "19_kg": "sum"
                     })
+                    resp["14_kg"] = resp["14_kg"] * 14.2
+                    resp["19_kg"] = resp["19_kg"] * 19
+                    resp["Productions"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)) / 1000
                     grouped_resp["Productions"] = grouped_resp["Productions"].fillna(0.0).round(2)
                 if grouped_resp is not None:
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
