@@ -3700,9 +3700,8 @@ class GlobalAnalytics:
                         "14_kg": "sum",
                         "19_kg": "sum"
                     })
-            resp = resp.with_columns(
-                (pl.col("14_kg").fill_null(0).cast(pl.Float64) + pl.col("19_kg").fill_null(0).cast(pl.Float64)
-                 ).alias("Productions"))
+            resp["Productions"] = resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)
+            
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
