@@ -95,17 +95,19 @@ def fetch_data(query, getData=False, params=None):
                 )
             cursor = pg_conn.cursor()
         except Exception as e:
+            print("-"*10)
             print("Exception :", str(e))
+            print("-"*10)
             return pl.DataFrame()
         
     print("-" * 50)
-    print("query -->", query)
-    print("-" * 50)
-    print("Running Query ...")
+    print("Running Below Query ...")
+    print(query)    
     cursor.execute(query)
     if getData:
         data = cursor.fetchall()
         print('Total Records :', len(data))
+        print("-" * 50)
         columns = [column[0] for column in cursor.description]
         data = pd.DataFrame.from_records(data, columns=columns)
         data = pl.from_pandas(data)
@@ -130,6 +132,7 @@ def get_data(params):
             }
     plant_check = fetch_data(query, getData=True, params=app_db_params)
     if params['PlantName'].lower() not in plant_check["short_name"]:
+        print("-- Inserting data for first time --")
         first_insertion = True
     
     query = f""" SELECT MAX(process_date) FROM "lpg_operations_summary" WHERE "short_name"='{params['PlantName'].lower()}'; """    
@@ -155,10 +158,8 @@ if __name__=="__main__":
         plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")        
         for plant in plants.iter_rows(named=True):
             try:
-                # if plant["PlantName"].lower() == 'indore':
-                #     continue
-                print("plant :", plant["PlantName"])
-                print("-"*50)
+                print("-*"*40)
+                print("Plant ---->", plant["PlantName"])
                 print(f"Fetching for {plant['PlantName']}")
                 params={
                 "PlantName": plant["PlantName"],
@@ -175,6 +176,7 @@ if __name__=="__main__":
                     print("Traceback :", traceback.format_exc())
                     continue
                 else:
+                    print("Traceback :", traceback.format_exc())
                     raise Exception(e)
         print("*"*50)
         print("-- Data Insertion to lpg_operations_data completed --")
