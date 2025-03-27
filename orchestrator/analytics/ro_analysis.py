@@ -1,6 +1,10 @@
+import datetime
+
 import urdhva_base
+import json
 import requests
 import charts_actions
+import hpcl_ceg_model
 import dashboard_studio_model
 import orchestrator.analytics.va_analysis as va_analysis
 import utilities.cris_alert_mapping as cris_alert_mapping
@@ -22,12 +26,27 @@ async def interlock_disable(params: dict):
     Returns:
 
     """
+    alert_id = ""
+    if 'alert_id' in params.keys():
+        alert_id = params['alert_id']
+        del params['alert_id']
     url = "https://crisuat.hpcl.co.in/HOSApp/dashboard/api/getinterlockreqdtls"
     default_headers = {"Content-Type": "application/json"}
     try:
         response = requests.post(url, json=params, headers=default_headers)
-        if response.status_code // 100 == 2:
-            return response.json()
+        audit_data = {
+            "method": "POST",
+            "url": url,
+            "payload": params,
+            "alert_id": alert_id,
+            "request_no": params['reqno'],
+            "response": str(response.status_code),
+            "response_msg": json.dumps(response.json()),
+            "request_datetime": urdhva_base.utilities.get_present_time().isoformat(),
+            "api_ack": None,
+            "api_ack_datetime": None
+        }
+        await api_audit_log(audit_data=audit_data)
         return response.json()
     except Exception as e:
         print(f"Error while disabling interlock {e}")
@@ -87,3 +106,14 @@ async def check_alert_exists(alert_id):
     if resp:
         return True
     return False
+
+async def api_audit_log(audit_data):
+    """
+
+    Args:
+        audit_data:
+
+    Returns:
+
+    """
+    return await hpcl_ceg_model.VendorApiAuditCreate(**audit_data).create()
