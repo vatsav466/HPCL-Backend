@@ -1375,14 +1375,14 @@ ORDER BY
     'lpg_operations_current_month_productivity': f''' SELECT 
                                                         ROUND(AVG("productivity.normal.productivity")) AS "Total Productivity"
                                                     FROM 
-                                                        "LPG_OPERATIONS_SUMMARY_DATA"
+                                                        "lpg_operations_summary"
                                                     WHERE 
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
 
     'lpg_operations_current_month_productions': '''SELECT
                                                         ROUND(CAST(SUM("productivity.normal.production") AS NUMERIC) / 1000, 0) AS "Total Production"
                                                     FROM
-                                                        "LPG_OPERATIONS_SUMMARY_DATA"
+                                                        "lpg_operations_summary"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);''',
 
@@ -2561,14 +2561,14 @@ ORDER BY
     'lpg_operations_connected_plants': f''' SELECT 
                                         COUNT(DISTINCT "short_name") AS short_name_count
                                     FROM 
-                                        "LPG_OPERATIONS_SUMMARY_DATA"
+                                        "lpg_operations_summary"
                                     HAVING 
                                         COUNT(DISTINCT "short_name") > 0 ''',
                                     
     'lpg_operations_total_plants': f''' SELECT 
                                     COUNT(DISTINCT "short_name") AS short_name_count
                                 FROM 
-                                    "LPG_OPERATIONS_SUMMARY_DATA"
+                                    "lpg_operations_summary"
                                 HAVING 
                                     COUNT(DISTINCT "short_name") > 0 ''',
     
