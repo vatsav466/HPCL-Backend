@@ -6598,16 +6598,26 @@ class GlobalAnalytics:
                 resp_df = resp_df.filter(pl.col("load_number") == load_number)
             # Generate appropriate result format based on date flag
             if date:
+                graph_data = {}
+        
+                # Group by date and calculate total alerts and required quantity
+                daily_summary = resp_df.group_by("created_date").agg([
+                    pl.sum("alert_count").alias("total_alerts"),
+                    pl.sum("total_required_qty").alias("total_required_qty")
+                ])
+                
+                # Convert daily summary to dictionary
+                for row in daily_summary.iter_rows(named=True):
+                    graph_data[str(row["created_date"])] = {
+                        "total_alerts": row["total_alerts"],
+                        "total_required_qty": row["total_required_qty"]
+                    }
                 # Daily Data Aggregation
                 group_cols = ["created_date", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
                 )
-                graph_data = {
-                    "total_alerts": resp_df.select(pl.sum("alert_count")).item(),
-                    "total_required_qty": resp_df.select(pl.sum("total_required_qty")).item()
-                }
                 result = {}
                 for row in grouped.iter_rows(named=True):
                     created_date = str(row["created_date"])
@@ -6623,21 +6633,30 @@ class GlobalAnalytics:
                     result.setdefault(created_date, []).append(entry)
                 return {"status": True, "message": "success", "daily_data": result, "graph_data": graph_data}
             else:
+                graph_data = {}
                 # Monthly Data Aggregation
                 resp_df = resp_df.with_columns(
                     pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
                 )
+
+                # Group by month and calculate total alerts and required quantity
+                monthly_summary = resp_df.group_by("month_year").agg([
+                    pl.sum("alert_count").alias("total_alerts"),
+                    pl.sum("total_required_qty").alias("total_required_qty")
+                ])
+                
+                # Convert monthly summary to dictionary
+                for row in monthly_summary.iter_rows(named=True):
+                    graph_data[row["month_year"]] = {
+                        "total_alerts": row["total_alerts"],
+                        "total_required_qty": row["total_required_qty"]
+                    }
 
                 group_cols = ["month_year", "zone", "sap_id", "location_name", "truck_number", "load_number"]
                 grouped = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity")
                 )
-
-                graph_data = {
-                    "total_alerts": resp_df.select(pl.sum("alert_count")).item(),
-                    "total_required_qty": resp_df.select(pl.sum("total_required_qty")).item()
-                }
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
