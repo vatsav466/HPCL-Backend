@@ -860,6 +860,20 @@ async def sync_user_roles():
                             
                         ],
                         "status": True
+                    },
+                    "Sales Officer RO": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "Retail Outlet",
+                                "allowed_sub_menus": [
+                                    "RO Home",
+                                    "Supply Chain",
+                                    "Video Analytics"
+                                ]
+                            }
+                        ],
+                        "name": "RO",
+                        "status": True
                     }
                 }
     await hpcl_ceg_model.Roles.bulk_update([{"name": key, "status": True, "allowed_pages": value["allowed_pages"]}
