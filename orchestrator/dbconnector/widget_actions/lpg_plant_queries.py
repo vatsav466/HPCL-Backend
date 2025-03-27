@@ -1120,6 +1120,7 @@ LIMIT 10000;''',
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
                                                 ''',
+                                                
     'lpg_operations_connected_plants': f''' SELECT DISTINCT("short_name") FROM "lpg_operations_summary" order by "short_name"; ''',
     
     'lpg_operations_notconnected_plants': ''' SELECT DISTINCT m."short_name"
@@ -1370,21 +1371,7 @@ ORDER BY
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
-                                        "ZOName" IS NOT NULL ''',
-
-    'lpg_operations_current_month_productivity': f''' SELECT 
-                                                        ROUND(AVG("productivity.normal.productivity")) AS "Total Productivity"
-                                                    FROM 
-                                                        "lpg_operations_summary"
-                                                    WHERE 
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
-
-    'lpg_operations_current_month_productions': '''SELECT
-                                                        ROUND(CAST(SUM("productivity.normal.production") AS NUMERIC) / 1000, 0) AS "Total Production"
-                                                    FROM
-                                                        "lpg_operations_summary"
-                                                    WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);''',
+                                        "ZOName" IS NOT NULL ''',        
 
     'lpg_operations_current_month_cylinder_filled': ''' SELECT
                                                             ROUND(SUM("cylfilled"::numeric)/100000, 2) AS "Cylinders_Filled"
