@@ -63,6 +63,7 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     receipt_stock = await fetch_receipt_stock_transfer(plants)
 
     lpg_data['stock'] = round(opening_stock)
+    lpg_data['receipt_stock'] = round(float(sum(list(receipt_stock.values()))))
     # Updating sales data
     for key, value in hpcl_sales.items():
         lpg_data['avg_sales'][key] += value
@@ -74,10 +75,9 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     lpg_data['omc_sales'].update(omc_sales)
     lpg_data['stock_transfers'].update(stock_transfer)
 
-    lpg_data['current_inventory'] = round((float(opening_stock) + float(sum(list(receipt_stock.values()))) -
-                                           float(sum(list(lpg_data['avg_sales'].values())))))
-    lpg_data['days_cover'] = round(float(lpg_data['current_inventory']) /
-                                          float(sum(list(lpg_data['avg_sales'].values()))))
+    avg_sales = float(sum(list(lpg_data['avg_sales'].values())))
+    lpg_data['current_inventory'] = round((float(opening_stock) + float(sum(list(receipt_stock.values()))) - avg_sales))
+    lpg_data['days_cover'] = round(float(lpg_data['current_inventory']) / avg_sales) if avg_sales else 0
     lpg_data['tankage']['total'] = tank_capacity
     lpg_data['tankage']['stock_percentage'] = round(tank_capacity / (lpg_data['current_inventory'] * 100))
 
@@ -112,13 +112,14 @@ group by  ZM.plant,ZM.MATERIAL_NUMBER
     hpcl_sales = {"dom": 0, "non_dom": 0, "bulk": 0}
     resp = await fetch_from_tibco(query_hpcl_sales)
     df = pd.DataFrame(resp)
-    for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
-        if rec['MATERIAL_NUMBER'] in material_code_domestic:
-            hpcl_sales['dom'] += float(rec['Average_Sales'])
-        elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
-            hpcl_sales['non_dom'] += float(rec['Average_Sales'])
-        elif rec['MATERIAL_NUMBER'] in material_code_bulk:
-            hpcl_sales['bulk'] += float(rec['Average_Sales'])
+    if not df.empty:
+        for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
+            if rec['MATERIAL_NUMBER'] in material_code_domestic:
+                hpcl_sales['dom'] += float(rec['Average_Sales'])
+            elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
+                hpcl_sales['non_dom'] += float(rec['Average_Sales'])
+            elif rec['MATERIAL_NUMBER'] in material_code_bulk:
+                hpcl_sales['bulk'] += float(rec['Average_Sales'])
     return hpcl_sales
 
 
@@ -145,13 +146,14 @@ group by  ZM.plant,ZM.MATERIAL_NUMBER
     omc_sales = {"dom": 0, "non_dom": 0, "bulk": 0}
     resp = await fetch_from_tibco(query_omc_sales)
     df = pd.DataFrame(resp)
-    for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
-        if rec['MATERIAL_NUMBER'] in material_code_domestic:
-            omc_sales['dom'] += float(rec['Average_Sales'])
-        elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
-            omc_sales['non_dom'] += float(rec['Average_Sales'])
-        elif rec['MATERIAL_NUMBER'] in material_code_bulk:
-            omc_sales['bulk'] += float(rec['Average_Sales'])
+    if not df.empty:
+        for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
+            if rec['MATERIAL_NUMBER'] in material_code_domestic:
+                omc_sales['dom'] += float(rec['Average_Sales'])
+            elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
+                omc_sales['non_dom'] += float(rec['Average_Sales'])
+            elif rec['MATERIAL_NUMBER'] in material_code_bulk:
+                omc_sales['bulk'] += float(rec['Average_Sales'])
     return omc_sales
 
 
@@ -161,7 +163,30 @@ async def fetch_stock_transfer(plants):
     :param plants:
     :return:
     """
-    return {"dom": 0, "non_dom": 0}
+    plant_cond = ''
+    if plants:
+        in_clause_raw = ", ".join(f"'{value}'" for value in plants)
+        plant_cond = f" AND ZM.plant in ({in_clause_raw})"
+    query = f"""SELECT ZM.MATERIAL_NUMBER,ZM.plant as Locationcode, sum(quantity)/(1000 * 7) AS Average_Sales 
+from  CONN_ENT.ZMMCI_MATDOC_V1_STG ZM
+LEFT JOIN CONN_ENT.ZSDCV_CUST_SA_STG ZS ON ZM.GOODS_RECIPIENT = ZS.CUSTOMER
+WHERE ZM.MVT_TYPE_INVENTORY_MANAGEMENT in ('641') AND ZM.GOODS_RECIPIENT LIKE 'P%' AND ZS.SALES_ORG='2000'
+AND ZM.MATERIAL_NUMBER in ('0949036', '0949109', '0948064', '0948450', '0949000', '0948042', '0948149')
+AND DATE_FORMAT( ZM.POSTING_DATE_IN_THE_DOCUMENT,'%Y-%m-%d') between date_sub(CURRENT_DATE,interval 7 day) 
+and date_sub(CURRENT_DATE,interval 1 day) {plant_cond}
+group by  ZM.plant,ZM.MATERIAL_NUMBER"""
+    resp = await fetch_from_tibco(query)
+    df = pd.DataFrame(resp)
+    receipt_stock = {"dom": 0, "non_dom": 0, "bulk": 0}
+    if not df.empty:
+        for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
+            if rec['MATERIAL_NUMBER'] in material_code_domestic:
+                receipt_stock['dom'] += float(rec['Average_Sales'])
+            elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
+                receipt_stock['non_dom'] += float(rec['Average_Sales'])
+            elif rec['MATERIAL_NUMBER'] in material_code_bulk:
+                receipt_stock['bulk'] += float(rec['Average_Sales'])
+    return receipt_stock
 
 
 async def fetch_receipt_stock_transfer(plants):
@@ -184,14 +209,15 @@ and date_sub(CURRENT_DATE,interval 1 day) {plant_cond}
 group by  ZM.plant,ZM.MATERIAL_NUMBER"""
     resp = await fetch_from_tibco(query)
     df = pd.DataFrame(resp)
-    for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
-        receipt_stock = {"dom": 0, "non_dom": 0, "bulk": 0}
-        if rec['MATERIAL_NUMBER'] in material_code_domestic:
-            receipt_stock['dom'] += float(rec['Average_Sales'])
-        elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
-            receipt_stock['non_dom'] += float(rec['Average_Sales'])
-        elif rec['MATERIAL_NUMBER'] in material_code_bulk:
-            receipt_stock['bulk'] += float(rec['Average_Sales'])
+    receipt_stock = {"dom": 0, "non_dom": 0, "bulk": 0}
+    if not df.empty:
+        for rec in df.groupby('MATERIAL_NUMBER', as_index=False).sum().to_dict(orient='records'):
+            if rec['MATERIAL_NUMBER'] in material_code_domestic:
+                receipt_stock['dom'] += float(rec['Average_Sales'])
+            elif rec['MATERIAL_NUMBER'] in material_code_non_domestic:
+                receipt_stock['non_dom'] += float(rec['Average_Sales'])
+            elif rec['MATERIAL_NUMBER'] in material_code_bulk:
+                receipt_stock['bulk'] += float(rec['Average_Sales'])
     return receipt_stock
 
 
