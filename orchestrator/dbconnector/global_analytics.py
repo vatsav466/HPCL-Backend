@@ -5082,22 +5082,56 @@ class GlobalAnalytics:
             ])
             resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
             # Extract the middle part of device_name
-            def extract_middle_part(device_name):
-                if isinstance(device_name, str) and '_' in device_name and '-' in device_name:
-                    try:
-                        # Split by _ and get the second part
-                        second_part = device_name.split('_')[1]
-                        # Get the first two parts of the split by -
-                        parts = second_part.split('-')
-                        if len(parts) >= 2:
-                            return f"{parts[0]}-{parts[1]}"
-                    except:
-                        pass
-                return ""
+            # def extract_middle_part(device_name):
+            #     if isinstance(device_name, str) and '_' in device_name and '-' in device_name:
+            #         try:
+            #             # Split by _ and get the second part
+            #             second_part = device_name.split('_')[1]
+            #             # Get the first two parts of the split by -
+            #             parts = second_part.split('-')
+            #             if len(parts) >= 2:
+            #                 return f"{parts[0]}-{parts[1]}"
+            #         except:
+            #             pass
+            #     return ""
 
-            # Apply the function using map_elements
+            # # Apply the function using map_elements
+            # resp_df = resp_df.with_columns([
+            #     pl.col("device_name").map_elements(lambda x: extract_middle_part(x)).alias("device_name")
+            # ])
+            def extract_or_use_device_name(device_name):
+                """
+                Handle device name extraction with fallback to original name
+                
+                Args:
+                    device_name (str): Original device name
+                
+                Returns:
+                    str: Extracted middle part or original device name
+                """
+                # If not a string or doesn't meet extraction criteria, return as is
+                if not isinstance(device_name, str) or '_' not in device_name or '-' not in device_name:
+                    return device_name
+                
+                try:
+                    # Split by _ and get the second part
+                    second_part = device_name.split('_')[1]
+                    
+                    # Get the first two parts of the split by -
+                    parts = second_part.split('-')
+                    
+                    # Return extracted part if at least two parts exist
+                    if len(parts) >= 2:
+                        return f"{parts[0]}-{parts[1]}"
+                except Exception:
+                    pass
+                
+                # Fallback to original device name if extraction fails
+                return device_name
+
+            # Apply the function with a more robust approach
             resp_df = resp_df.with_columns([
-                pl.col("device_name").map_elements(lambda x: extract_middle_part(x)).alias("device_name")
+                pl.col("device_name").map_elements(extract_or_use_device_name).alias("device_name")
             ])
             resp_df.write_csv("/tmp/normal_alerts_data.csv")
 
@@ -7262,7 +7296,7 @@ class GlobalAnalytics:
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'MFM Data Changed'
+                    AND a.interlock_name = 'MFM factor Change'
                     AND DATE(a.created_at) = h.created_date) AS alert_count
                 FROM 
                     mfmfactor h

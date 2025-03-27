@@ -62,7 +62,7 @@ Normal = [
     {"sop_id": "SOP023", "interlock_name": "Gantry Permissive Off", "alert_category": "Process", "equipment_name": "Fire Pump"},
     {"sop_id": "SOP023", "interlock_name": "All BCU Permissive Fail Status", "alert_category": "Gantry", "equipment_name": "Fire Pump"},
     {"sop_id": "SOP024", "interlock_name": "Day End totaliser Mismatch", "alert_category": "Gantry", "equipment_name": "Loading Point"},
-    {"sop_id": "SOP025", "interlock_name": "BCU Local loading", "alert_category": "Gantry", "equipment_name": "BCU"},
+    {"sop_id": "SOP025", "interlock_name": "BCU Local Loading", "alert_category": "Gantry", "equipment_name": "BCU"},
     {"sop_id": "SOP025", "interlock_name": "BCU permissive fail status", "alert_category": "Gantry", "equipment_name": "Loading Point"},
     {"sop_id": "SOP026", "interlock_name": "BCU vs MFM totalizer mismatch alarm", "alert_category": "Gantry", "equipment_name": "Loading Point"},
     {"sop_id": "SOP027", "interlock_name": "K Factor Change_BCU", "alert_category": "Gantry", "equipment_name": "Loading Point"},

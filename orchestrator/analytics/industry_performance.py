@@ -1147,7 +1147,14 @@ async def get_category_wise_cumulative_data(filters):
         filter_cond['key'] = filter_cond['key'].strip('"')
     if months:
         filters.append({'key': 'month_name', 'cond': 'one-off', 'value': months})
-
+     # Modifying filters to handle list conditions
+    for cond in filters:
+        cond['key'] = cond['key'].strip('"')
+        if isinstance(cond["value"], str):
+            value = [mnt_name.strip() for mnt_name in cond["value"].split(",")]
+            if len(value) > 1:
+                cond["cond"] = 'one-off'
+                cond["value"] = value
     clause = await widget_actions.WidgetActions.generate_filter_clause(filters)
     if clause:
         

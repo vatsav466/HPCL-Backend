@@ -240,27 +240,78 @@ class Postgresql:
             data = [x for x in data if x['nettotalizer'] > 0]
         
         if table_db_name == 'host_manual_fan_printed':
-            # Filter out zero manual_fan_count records for regular processing
-            data = [x for x in data if x['manual_fan_count'] > 0]
-            print("data --> ", data)
-            # Only if no non-zero records and it's end of day (18:00), include a zero record if available
-            to_day = urdhva_base.utilities.get_present_time().strftime("%H")
-            if int(to_day) == 18 and not any(x['manual_fan_count'] != 0 for x in data):
-                # Check if we have any non-zero records for today in the database
-                to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
-                check_query = f"""select count(*) from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count != 0"""
-                check_resp = await model.get_aggr_data(check_query)
+            # Get unique SAP IDs from the input data
+            unique_sap_ids = list(set(x['sap_id'] for x in data))
+            
+            # Prepare a list to store final data to be processed
+            final_processed_data = []
+
+            # Process each unique SAP ID separately
+            for specific_sap_id in unique_sap_ids:
+                # Filter data for this specific SAP ID
+                sap_id_data = [x for x in data if x['sap_id'] == specific_sap_id]
                 
-                # If no non-zero records exist for today, find a zero record to include
-                if check_resp.get("data") and check_resp.get("data")[0].get("count", 0) == 0:
-                    # Find the latest zero record from original data
-                    zero_records = [x for x in sample_records.to_dicts() if x['manual_fan_count'] == 0]
-                    if zero_records:
-                        # Sort by date_time and get the latest
-                        zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
-                        data.append(zero_records[0])  # Add the latest zero record
+                # Filter out zero manual_fan_count records for regular processing
+                non_zero_records = [x for x in sap_id_data if x['manual_fan_count'] > 0]
+                
+                # If no non-zero records, handle end of day scenario
+                to_day = urdhva_base.utilities.get_present_time().strftime("%H")
+                if int(to_day) == 18 and not non_zero_records:
+                    # Check if we have any non-zero records for today for this specific SAP ID
+                    to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
+                    check_query = f"""
+                        select count(*) 
+                        from "{table_db_name}" 
+                        where date::DATE = '{to_date}' 
+                        and sap_id = '{specific_sap_id}' 
+                        and manual_fan_count != 0
+                    """
+                    check_resp = await model.get_aggr_data(check_query)
+                    
+                    # If no non-zero records exist, find a zero record
+                    if check_resp.get("data") and check_resp.get("data")[0].get("count", 0) == 0:
+                        # Find the latest zero record from original data for this SAP ID
+                        zero_records = [
+                            x for x in sample_records.to_dicts() 
+                            if x['manual_fan_count'] == 0 and x['sap_id'] == specific_sap_id
+                        ]
+                        
+                        if zero_records:
+                            # Sort by date_time and get the latest
+                            zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
+                            final_processed_data.append(zero_records[0])
+                else:
+                    # Add non-zero records for this SAP ID
+                    final_processed_data.extend(non_zero_records)
+
+            # Update data to be the final processed data
+            data = final_processed_data
+
+            # Rest of your existing code remains the same
             print("data for manual fan printed --> ", data)
-        status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created'])  # Use upsert=True if needed
+        status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created']) 
+        
+        #     # Filter out zero manual_fan_count records for regular processing
+        #     data = [x for x in data if x['manual_fan_count'] > 0]
+        #     print("data --> ", data)
+        #     # Only if no non-zero records and it's end of day (18:00), include a zero record if available
+        #     to_day = urdhva_base.utilities.get_present_time().strftime("%H")
+        #     if int(to_day) == 18 and not any(x['manual_fan_count'] != 0 for x in data):
+        #         # Check if we have any non-zero records for today in the database
+        #         to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
+        #         check_query = f"""select count(*) from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count != 0"""
+        #         check_resp = await model.get_aggr_data(check_query)
+                
+        #         # If no non-zero records exist for today, find a zero record to include
+        #         if check_resp.get("data") and check_resp.get("data")[0].get("count", 0) == 0:
+        #             # Find the latest zero record from original data
+        #             zero_records = [x for x in sample_records.to_dicts() if x['manual_fan_count'] == 0]
+        #             if zero_records:
+        #                 # Sort by date_time and get the latest
+        #                 zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
+        #                 data.append(zero_records[0])  # Add the latest zero record
+        #     print("data for manual fan printed --> ", data)
+        # status, msg = await model.bulk_update(data, upsert=True, upsert_skip_keys=['alert_created'])  # Use upsert=True if needed
         
         # Get only alert not created records
         to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
@@ -268,42 +319,6 @@ class Postgresql:
         if table_db_name == 'host_manual_fan_printed':
             query = f"""select * from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count !=0 order by date_time asc"""
         resp = await model.get_aggr_data(query)
-        
-        # if table_db_name == 'host_manual_fan_printed':
-        #     to_day = urdhva_base.utilities.get_present_time().strftime("%H")
-        #     # if int(to_day) == 19:
-        #     is_close_alert = False
-        #     interlock_name = config['interlock_name'].get(table_name)
-        #     severity = config['severity'].get(table_name, "Medium")
-        #     sop_id = config['sop_id'].get(table_name)
-        #     device_msg = ""
-
-        #     result = await self.cal_host_manual_fan_printed(resp.get("data", []))
-
-        #     if isinstance(result, tuple) and len(result) == 3:
-        #         is_close_alert, interlock_name, device_msg = result
-
-        #     alert_data = {
-        #         'bu': 'TAS',
-        #         'sop_id': sop_id,
-        #         'sap_id': data[0].get('sap_id'),
-        #         'interlock_name': interlock_name,
-        #         'severity': severity,
-        #         'alert_id': str(uuid.uuid1()),
-        #         'device_name': data[0].get('bcu_number'),
-        #         'device_type': 'Gantry',
-        #         'vehicle_number': data[0].get('truck_number', ''),
-        #         'device_msg': device_msg
-        #     }
-
-        #     success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-        #     print("msg :", msg)
-        #     if is_close_alert:
-        #         await self.close_created_alert(alert_data=alert_data)
-        #     # Set alert_created = true for alert created record
-        #     query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
-        #     await model.update_by_query(query)
-        #     return {"status": "Table created and alerts processed"}
 
         if table_db_name == 'host_manual_fan_printed':
             to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
