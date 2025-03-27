@@ -1038,12 +1038,13 @@ LIMIT 10000;''',
                                 FROM "lpg_operations_summary" ''',
     
     'lpg_operations_daywise_production': f'''  
-                                SELECT 
+                            SELECT 
                                 "zone",
                                 "site_area" AS "plant",
-                                SUM("productivity_normal_production") / 1000 AS "sum_production", 
+                                SUM(bottling_14_2kg) AS "14_kg",
+                                SUM(bottling_19kg) AS "19_kg",
                                 DATE("process_date") AS "process_date"
-                                FROM "lpg_operations_summary" ''',
+                            FROM "lpg_operations_summary" ''',
     
     'lpg_cdcms_daywise_subsidy_failure_statistics': f'''
                                 SELECT
@@ -1102,13 +1103,15 @@ LIMIT 10000;''',
                                     "lpg_cdcms_subsidy_exception_statistics" ''',
     
     'lpg_operations_current_month_production': f'''
-                                                    SELECT
-                                                        ROUND(SUM("productivity_normal_production"::numeric)/1000, 2) AS "current_month_production"
-                                                    FROM
-                                                        "lpg_operations_summary"
-                                                    WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
+                                                    SELECT 
+                                                        ROUND(
+                                                            (SUM(bottling_14_2kg) * 14.2 + SUM(bottling_19kg) * 19)::NUMERIC / 1000, 
+                                                            2
+                                                        ) AS current_month_production
+                                                    FROM lpg_operations_summary
+                                                    WHERE DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE);   
                                                 ''',
+                                                
     'lpg_operations_current_month_productivity': f'''
                                                     SELECT
                                                         ROUND(AVG("productivity_normal_productivity"::numeric), 2) AS "current_month_productivity"
