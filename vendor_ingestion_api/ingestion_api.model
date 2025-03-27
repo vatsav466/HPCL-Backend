@@ -178,6 +178,11 @@ Model CRIS crud_disable {
         data optional list crisData
     }
 
+    Action=> api_ack {
+        req_no str
+        applied_on str
+    }
+
 }
 
 Model IMS crud_disable {

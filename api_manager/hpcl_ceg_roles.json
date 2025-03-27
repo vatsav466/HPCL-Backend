@@ -4124,6 +4124,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "vendorapiaudit",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VendorApiAudit",
+            "attributes": {},
+            "uris": [
+                "/api/vendorapiaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vendorapiaudit_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VendorApiAudit_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vendorapiaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vendorapiaudit_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VendorApiAudit_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vendorapiaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

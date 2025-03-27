@@ -5772,3 +5772,70 @@ class DryOutAlertReportGetResp(pydantic.BaseModel):
     data: typing.List[DryOutAlertReport]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class VendorApiAuditSchema(UrdhvaPostgresBase):
+    __tablename__ = 'vendor_api_audit'
+    
+    method: Mapped[str] = mapped_column("method", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    url: Mapped[str] = mapped_column("url", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    payload: Mapped[typing.Optional[dict]] = mapped_column("payload", JSONB, index=False, nullable=True, default=pydantic.Field(default_factory=dict), primary_key=False, unique=False)
+    alert_id: Mapped[str] = mapped_column("alert_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    request_no: Mapped[typing.Optional[str]] = mapped_column("request_no", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    response: Mapped[str] = mapped_column("response", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    response_msg: Mapped[typing.Optional[str]] = mapped_column("response_msg", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    request_datetime: Mapped[datetime.datetime] = mapped_column("request_datetime", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    api_ack: Mapped[typing.Optional[str]] = mapped_column("api_ack", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    api_ack_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("api_ack_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(alert_id, name="vendor_api_audit_alert_id"),)
+
+
+class VendorApiAuditCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'vendor_api_audit'
+    
+    method: str
+    url: str
+    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    alert_id: str
+    request_no: typing.Optional[str] = pydantic.Field("", **{})
+    response: str
+    response_msg: typing.Optional[str] = pydantic.Field("", **{})
+    request_datetime: datetime.datetime
+    api_ack: typing.Optional[str] = pydantic.Field("", **{})
+    api_ack_datetime: typing.Optional[datetime.datetime] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VendorApiAuditSchema
+        upsert_keys = ['alert_id']
+
+
+class VendorApiAudit(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'vendor_api_audit'
+    
+    method: typing.Optional[str] | None = None
+    url: typing.Optional[str] | None = None
+    payload: typing.Optional[dict] = pydantic.Field(pydantic.Field(default_factory=dict), )
+    alert_id: typing.Optional[str] | None = None
+    request_no: typing.Optional[str] = pydantic.Field("", **{})
+    response: typing.Optional[str] | None = None
+    response_msg: typing.Optional[str] = pydantic.Field("", **{})
+    request_datetime: typing.Optional[datetime.datetime] | None = None
+    api_ack: typing.Optional[str] = pydantic.Field("", **{})
+    api_ack_datetime: typing.Optional[datetime.datetime] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VendorApiAuditSchema
+        upsert_keys = ['alert_id']
+
+
+class VendorApiAuditGetResp(pydantic.BaseModel):
+    data: typing.List[VendorApiAudit]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)

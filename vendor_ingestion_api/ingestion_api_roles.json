@@ -183,6 +183,9 @@
                 },
                 {
                     "name": "ingest_data"
+                },
+                {
+                    "name": "api_ack"
                 }
             ]
         },
@@ -225,6 +228,9 @@
                 },
                 {
                     "name": "ingest_data"
+                },
+                {
+                    "name": "api_ack"
                 }
             ]
         },
@@ -538,6 +544,10 @@
         {
             "name": "ingest_data",
             "displayName": "ingest_data"
+        },
+        {
+            "name": "api_ack",
+            "displayName": "api_ack"
         },
         {
             "name": "ingest_data",
