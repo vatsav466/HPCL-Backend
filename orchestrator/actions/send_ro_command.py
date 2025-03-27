@@ -27,7 +27,8 @@ class SendRoCommand:
             "interlocktype": alert_data['violation_type'],
             "device": alert_data['device_name'],
             "deviceid": alert_data['device_id'],
-            "disablehrs": interlock_data['disabling_hrs']
+            "disablehrs": interlock_data['disabling_hrs'],
+            "alert_id": str(alert_data['id'])
         }
         resp = await ro_analysis.interlock_disable(interlock_disable)
         print(f"Ro interlock disable resp: {resp}")
