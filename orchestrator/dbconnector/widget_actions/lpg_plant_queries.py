@@ -1005,7 +1005,9 @@ LIMIT 10000;''',
                             "zone",
                             "name",
                             "site_area" AS "plant",
-                            sum("productivity_normal_production")/1000 as "Productions"
+                            sum("productivity_normal_production")/1000 as "Productions",
+                            SUM(bottling_14_2kg) AS "14_kg",
+                            SUM(bottling_19kg) AS "19_kg"
                         from 
                             "lpg_operations_summary" ''',
     
