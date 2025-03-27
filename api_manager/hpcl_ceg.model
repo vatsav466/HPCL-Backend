@@ -1999,3 +1999,16 @@ Model DryOutAlertReport {
     alert_id unique_field str
     run_id index_field str
 }
+
+Model VendorApiAudit {
+    method str
+    url str
+    payload optional dict
+    alert_id unique_field index_field str
+    request_no optional index_field str
+    response str
+    response_msg optional str
+    request_datetime datetime
+    api_ack optional str
+    api_ack_datetime optional datetime
+}

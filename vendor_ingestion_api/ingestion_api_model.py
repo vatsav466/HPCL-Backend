@@ -198,6 +198,15 @@ class Cris_Ingest_DataParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Cris_Api_AckParams(pydantic.BaseModel):
+    req_no: str
+    applied_on: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class Ims_Ingest_DataParams(pydantic.BaseModel):
     vendor_id: str
     location_id: str
