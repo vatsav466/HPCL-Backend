@@ -15,7 +15,8 @@ task_count = {
     'TAS': 21,
     'VTS': 15,
     'VA': 15,
-    'LPG': 10
+    'LPG': 10,
+    'RO': 20
 }
 
 
@@ -108,6 +109,16 @@ def get_camunda_urls(task_type):
             config_data.extend([{"url": url, "listener_name": 'vts_workflow_consumer'} for url in list(urls)])
         else:
             config_data.append({"url": urdhva_base.settings.camunda_url, "listener_name": "vts_workflow_consumer"})
+    elif task_type == 'RO':
+        urls = set()
+        for bu, rules in cfg.items():
+            for rule in rules:
+                if rule.get('alert_section') == 'RO':
+                    urls.add(rule['url'])
+        if urls:
+            config_data.extend([{"url": url, "listener_name": 'ro_workflow_consumer'} for url in list(urls)])
+        else:
+            config_data.append({"url": urdhva_base.settings.camunda_url, "listener_name": "ro_workflow_consumer"})
     else:
         logger.error("Invalid task type")
     return config_data

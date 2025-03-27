@@ -3,6 +3,7 @@ import json
 import math
 import requests
 import datetime
+import calendar
 import polars as pl
 import charts_actions
 import dashboard_studio_model
@@ -139,6 +140,12 @@ async def get_period_datetime(period: str):
         start_datetime = datetime.datetime.combine(start_of_week, datetime.datetime.min.time())
         end_datetime = datetime.datetime.combine(end_of_week, datetime.datetime.max.time())
         return start_datetime, end_datetime
+    if period == 'monthly':
+        today = datetime.datetime.now()
+        start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        last_day = calendar.monthrange(today.year, today.month)[1]
+        end_of_month = today.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
+        return start_of_month, end_of_month
 
 async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping

@@ -8,6 +8,7 @@ import urdhva_base.redispool
 import utilities.helpers as helpers
 import utilities.interlock_mapping as interlock_mapping
 import orchestrator.analytics.va_analysis as va_analysis
+import orchestrator.analytics.ro_analysis as ro_analysis
 import orchestrator.alerting.alert_helper as alert_helper
 from orchestrator.workflow.workflow_process import Camunda
 import orchestrator.analytics.vts_analysis as vts_analysis
@@ -145,6 +146,11 @@ class AlertFactory:
             elif alert_data.get("alert_section",'') in ["LPG"] and alert_data.get("interlock_name","") in ["Valve Leak Rejection","Check Scale Rejection","O-Ring Leak Rejection"]:
                 alert_level = await va_analysis.get_lpg_levels(
                     bu=base_data['bu'], violation_type=alert_data.get('violation_type',''), sap_id=str(base_data['sap_id'])
+                )
+            elif alert_data.get("alert_section", '') == "RO":
+                alert_level = await ro_analysis.get_ro_levels(
+                    bu=base_data['bu'], violation_type=alert_data.get('violation_type', ''),
+                    sap_id=str(base_data['sap_id'])
                 )
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
