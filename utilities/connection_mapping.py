@@ -566,12 +566,12 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": False,
-                    "roles": ["Admin", "Sales Officer RO", "Regional Manager RO", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                    "roles": ["Admin", "Sales Officer RO", "Regional Manager RO", "Zonal Head RO"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": False,
-                    "roles": ["Admin", "Sales Officer RO", "Regional Manager RO", "Location In-Charge SOD", "Location In-Charge LPG", "Zonal Safety Officer SOD", "Zonal Operations Head", "Zonal SOD Head", "HQO TAS Coordinator", "HQO Operations Team", "HQO HSSE Team"]
+                    "roles": ["Admin", "Sales Officer RO", "Regional Manager RO", "Zonal Head RO"]
                 }
             },
             "category": {
