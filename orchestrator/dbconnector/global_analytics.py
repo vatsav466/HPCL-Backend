@@ -3700,7 +3700,9 @@ class GlobalAnalytics:
                         "14_kg": "sum",
                         "19_kg": "sum"
                     })
-            resp["Productions"] = resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)
+            resp["14_kg"] = resp["14_kg"] * 14.2
+            resp["19_kg"] = resp["19_kg"] * 19
+            resp["Productions"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)) / 1000
             
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
