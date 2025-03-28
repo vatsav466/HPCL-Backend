@@ -1399,9 +1399,9 @@ async def get_tar_analysis(condition):
              f"rosapcode, "
              f"exposure, "
              f"CASE "
-             f"WHEN exposure < 100000000 THEN 1 "
-             f"WHEN exposure >= 100000000 AND exposure < 200000000 THEN 2 "
-             f"WHEN exposure >= 200000000 AND exposure < 500000000 THEN 3 "
+             f"WHEN exposure < 0 THEN 1 "
+             f"WHEN exposure >= 0 AND exposure <= 5000000 THEN 2 "
+             f"WHEN exposure > 5000000 AND exposure <= 7500000 THEN 3 "
              f"ELSE 4 "
              f"END AS category "
              f"""FROM "HPCL_HOS".customer_balance;""")
