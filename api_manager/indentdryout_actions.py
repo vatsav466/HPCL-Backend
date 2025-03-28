@@ -892,13 +892,19 @@ async def indentdryout_get_dryout_report(data: Indentdryout_Get_Dryout_ReportPar
 # Action generate_dryout_group_data
 @router.post('/generate_dryout_group_data', tags=['IndentDryOut'])
 async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dryout_Group_DataParams):
-    carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
-    carry_fwd_data = pd.DataFrame(carry_fwd_data)
-    carry_fwd_data.rename(columns={
-        "sap_id": "DEALER_CODE", "terminal_plant_id": "LOCN_ID", "indent_no": "INDENT_NO",
-        "prod_reqd_dt": "PROD_REQD_DT", "reported_date": "REPORTED_DATE",
-        "dry_out_in_days": "DRY_OUT_IN_DAYS", "category": "CATEGORY"
-    }, inplace=True)
-    del carry_fwd_data['dried_out']
-    print("carry_fwd_data: ", carry_fwd_data)
-    return carry_fwd_data.to_dict(orient="records")
+    if data.action == 'carry_fwd_indent':
+        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        carry_fwd_data = pd.DataFrame(carry_fwd_data)
+        carry_fwd_data.rename(columns={
+            "sap_id": "DEALER_CODE", "terminal_plant_id": "LOCN_ID", "indent_no": "INDENT_NO",
+            "prod_reqd_dt": "PROD_REQD_DT", "reported_date": "REPORTED_DATE",
+            "dry_out_in_days": "DRY_OUT_IN_DAYS", "category": "CATEGORY", "indent_status": "INDENT_STATUS"
+        }, inplace=True)
+        del carry_fwd_data['dried_out']
+        print("carry_fwd_data: ", carry_fwd_data)
+        return carry_fwd_data.to_dict(orient="records")
+
+    if data.action == 'dryout_analysis':
+        return await dry_out_analysis.get_dryout_aging_data()
+
+    return {}
