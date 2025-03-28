@@ -1114,7 +1114,7 @@ LIMIT 10000;''',
                                                 
     'lpg_operations_current_month_productivity': f'''
                                                     SELECT
-                                                        ROUND(AVG("productivity_normal_productivity"::numeric), 2) AS "current_month_productivity"
+                                                        ROUND(AVG("productivity_normal_productivity"::numeric), 2) AS "Total Productivity"
                                                     FROM
                                                         "lpg_operations_summary"
                                                     WHERE
