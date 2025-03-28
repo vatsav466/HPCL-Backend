@@ -143,6 +143,9 @@ async def process_data(data):
     for _role in ["HQO"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
         data.loc[mask, ["sap_id", "zone", "region"]] = '[]'
+    for _role in ["Planning", "Safety", "Maintenance", "Plant"]:
+        mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
+        data.loc[mask, ["sap_id", "zone", "region"]] = '[]'
     
     for col in novex_model_col:
         if not col in data.columns:
