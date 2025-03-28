@@ -15,30 +15,34 @@ class Tas_Analysis:
                      f"and device_name='{record['device_name']}'")
             tas_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query),
                                                            resp_type='plain')
-            print("tas_data--->",tas_data["data"])
+            print("query-->",query)
             deleting_ids=[]
             closed_ids=[]
             count=0
             tas_data = list(reversed(tas_data['data']))
-            for rec in range(len(tas_data)):
-                if not closed_ids and count==(len(tas_data)-1):
+            for rec in tas_data:
+                #print("rec--->",rec)
+                if not closed_ids and count == len(tas_data) - 1:
+                    if rec["alert_status"]=="Close":
+                        closed_ids.append(rec["unique_id"])
                     continue
                 elif rec["alert_status"]=="Close":
                     closed_ids.append(rec["unique_id"])
                 elif rec["alert_status"]=="Open":
                     deleting_ids.append(rec["unique_id"])
                 count+=1
-            print(len(deleting_ids))
+            print("deleting_ids--->",deleting_ids)
+            print("closed_ids--->",closed_ids)
             deleting_ids = ", ".join(f"'{id}'" for id in deleting_ids)
-            query = (f"""delete from alerts """
-                     f"where id in ({deleting_ids}) "
-                     f"alert_section = 'TAS'")
-            print("Query: ", query)
-            '''dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
-            dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-            function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            print("Query: ", query)
-            #resp = await function(query=query)'''
+            if deleting_ids:
+                query = (f"""delete from alerts """
+                        f"where unique_id in ({deleting_ids}) and "
+                        f"alert_section = 'TAS'")
+                print("Query: ", query)
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
+                dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+                function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+                resp = await function(query=query)
 
     async def duplicates_removal(self):
         try:
