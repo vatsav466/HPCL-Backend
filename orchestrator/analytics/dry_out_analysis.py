@@ -1614,7 +1614,7 @@ async def get_dryout_aging_data():
     print("resp: ", resp)
     resp.rename(columns={
         "sap_id": "DEALER_CODE", "location_name": "LOCATION_NAME", "zone": "ZONE",
-        "indent_status": "INDENT_STATUS", "product_code": "PRODUCT_CODE",
+        "indent_status": "INDENT_STATUS", "product_code": "PRODUCT_CODE", "age_category": "AGE_CATEGORY",
         "terminal_plant_id": "TERMINAL_PLANT_ID", "dry_out_in_days": "DRY_OUT_IN_DAYS"
     }, inplace=True)
     del resp['created_at']
