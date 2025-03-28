@@ -2,6 +2,8 @@ import urdhva_base
 import pandas as pd
 import hpcl_ceg_model
 import mysql.connector
+import urdhva_base.utilities
+import utilities.helpers as helpers
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 # Material Codes for Domestic and Non-Domestic Sales
@@ -76,6 +78,7 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     lpg_data['hpcl_sales'].update(hpcl_sales)
     lpg_data['omc_sales'].update(omc_sales)
     lpg_data['stock_transfers'].update(stock_transfer)
+    lpg_data['in_transit'] = round(await fetch_intransit_stock_transfer(plants))
 
     avg_sales = float(sum(list(lpg_data['avg_sales'].values())))
     lpg_data['current_inventory'] = round((float(opening_stock) + float(sum(list(receipt_stock.values()))) - avg_sales))
@@ -221,6 +224,30 @@ group by  ZM.plant,ZM.MATERIAL_NUMBER"""
                 receipt_stock['non_dom'] += float(rec['Average_Sales'])
             elif rec['MATERIAL_NUMBER'] in material_code_bulk:
                 receipt_stock['bulk'] += float(rec['Average_Sales'])
+    return receipt_stock
+
+
+async def fetch_intransit_stock_transfer(plants):
+    """
+    For fetching Intransit Stock data
+    :param plants:
+    :return:
+    """
+    plant_cond = ''
+    if plants:
+        in_clause_raw = ", ".join(f"'{value}'" for value in plants)
+        plant_cond = f" AND ZM.plant in ({in_clause_raw})"
+    current_date = helpers.get_time_stamp_by_delta(urdhva_base.utilities.get_present_time(), days=1,
+                                                    with_month_start_day=False, date_time_format='%Y%m%d')
+    query = f"""SELECT ZM.plant as Locationcode, sum(quantity)/(1000 * 7) AS Average_Sales 
+from  CONN_ENT.ZMMCI_MATDOC_V1_STG ZM
+LEFT JOIN CONN_ENT.ZSDCV_CUST_SA_STG ZS ON ZM.GOODS_RECIPIENT = ZS.CUSTOMER
+WHERE ZM.MVT_TYPE_INVENTORY_MANAGEMENT in ('101') AND 
+ZM.MATERIAL_NUMBER in ('0949000')
+AND ZM.POSTING_DATE_IN_THE_DOCUMENT={current_date} {plant_cond}
+group by  ZM.plant"""
+    resp = await fetch_from_tibco(query)
+    receipt_stock = sum([float(rec['Average_Sales']) for rec in resp])
     return receipt_stock
 
 
