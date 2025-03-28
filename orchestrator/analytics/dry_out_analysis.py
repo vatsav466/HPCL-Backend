@@ -497,6 +497,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                         "indent_no", 
                         "terminal_plant_id",
                         dry_out_in_days, 
+                        "indent_status"
                         TRUE AS dried_out
                     FROM 
                         "alerts"
@@ -511,7 +512,8 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                         i.prod_reqd_dt,
                         NOW() AT TIME ZONE 'Asia/Kolkata' AS reported_date,
                         a.dry_out_in_days, 
-                        a.dried_out
+                        a.dried_out,
+                        a.indent_status
                     FROM 
                         INDENT_DATA i
                     LEFT JOIN 
@@ -528,7 +530,8 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     cd.reported_date, 
                     cd.dry_out_in_days, 
                     cd.dried_out, 
-                    d."CATEGORY1" AS category
+                    d."CATEGORY1" AS category,
+                    cd.indent_status
                 FROM 
                     COMBINED_DATA cd
                 LEFT JOIN 

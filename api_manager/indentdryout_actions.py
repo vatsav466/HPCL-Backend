@@ -894,5 +894,11 @@ async def indentdryout_get_dryout_report(data: Indentdryout_Get_Dryout_ReportPar
 async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dryout_Group_DataParams):
     carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
     carry_fwd_data = pd.DataFrame(carry_fwd_data)
+    carry_fwd_data.rename({
+        "sap_id": "DEALER_CODE", "terminal_plant_id": "LOCN_ID", "indent_no": "INDENT_NO",
+        "prod_reqd_dt": "PROD_REQD_DT", "reported_date": "REPORTED_DATE",
+        "dry_out_in_days": "DRY_OUT_IN_DAYS", "category": "CATEGORY"
+    }, inplace=True)
+    del carry_fwd_data['dried_out']
     print("carry_fwd_data: ", carry_fwd_data)
     return carry_fwd_data.to_dict(orient="records")
