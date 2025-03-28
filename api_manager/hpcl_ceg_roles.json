@@ -1341,6 +1341,9 @@
                 },
                 {
                     "name": "get_dryout_report"
+                },
+                {
+                    "name": "generate_dryout_group_data"
                 }
             ]
         },
@@ -1473,6 +1476,9 @@
                 },
                 {
                     "name": "get_dryout_report"
+                },
+                {
+                    "name": "generate_dryout_group_data"
                 }
             ]
         },
@@ -4492,6 +4498,10 @@
         {
             "name": "get_dryout_report",
             "displayName": "get_dryout_report"
+        },
+        {
+            "name": "generate_dryout_group_data",
+            "displayName": "generate_dryout_group_data"
         },
         {
             "name": "get_productions_rate",

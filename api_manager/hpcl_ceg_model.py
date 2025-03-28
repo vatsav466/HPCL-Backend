@@ -2134,6 +2134,14 @@ class Indentdryout_Get_Dryout_ReportParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Indentdryout_Generate_Dryout_Group_DataParams(pydantic.BaseModel):
+    action: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class LpgOperationsSummarySchema(UrdhvaPostgresBase):
     __tablename__ = 'lpg_operations_summary'
     

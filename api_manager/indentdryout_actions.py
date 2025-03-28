@@ -887,3 +887,12 @@ async def indentdryout_get_dryout_report(data: Indentdryout_Get_Dryout_ReportPar
         dry_out_in_days=data.dry_out_in_days
     )
     return {"status": True, "message": "Success", "data": dry_out_data}
+
+
+# Action generate_dryout_group_data
+@router.post('/generate_dryout_group_data', tags=['IndentDryOut'])
+async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dryout_Group_DataParams):
+    carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+    carry_fwd_data = pd.DataFrame(carry_fwd_data)
+    print("carry_fwd_data: ", carry_fwd_data)
+    return carry_fwd_data.to_dict(orient="records")
