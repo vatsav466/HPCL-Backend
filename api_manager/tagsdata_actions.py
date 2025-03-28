@@ -2,9 +2,8 @@ from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import json
 import fastapi
-import json
 import traceback
-import polars as pl
+import pandas as pd
 import os
 from collections import defaultdict
 import utilities.connection_mapping as connection_mapping
@@ -14,366 +13,228 @@ from utilities.device_data_mapping import device_mapping
 from utilities.analog_data_mapping import Maintenance, Fault
 
 router = fastapi.APIRouter(prefix='/tagsdata')
-# Create a dictionary for quick lookup
-device_mapping_dict = {device["device_type"]: device["sensor_name"] for device in device_mapping}
+
+BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data/"
 
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
-    # try:
-    #     # Setup connection parameters
-    #     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    #     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        
-    #     # Query location_master to get bu, sap_id, zone, and name
-    #     lpg_query = "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
-    #     df = await function(query=lpg_query)
-    #     df = pl.DataFrame(df)
-    #     # BASEPATH = os.path.join(os.path.dirname(utilities.helpers.__file__)
-
-    #     base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
-    #     mapping_base_path = '/opt/ceg/algo/utilities'
-    #     mapping_df = pl.read_csv(os.path.join(mapping_base_path, 'DashboardAssetMapping.csv'))
-    #     mapping_df = mapping_df.with_columns(mapping_df["Device Type"].fill_null(strategy="forward"))
-
-    #     async def process_device_data(sap_id, zone, name):
-    #         file_path = os.path.join(base_path, f"{sap_id}.json")
-    #         if not os.path.exists(file_path):
-    #             return pl.DataFrame()
-            
-    #         try:
-    #             with open(file_path, 'r') as file:
-    #                 json_data = json.load(file)
-    #                 devices = json_data.get('data', [])
-    #         except Exception as e:
-    #             print(f"Error reading {file_path}: {e}")
-    #             return pl.DataFrame()
-            
-    #         rows = []
-    #         for device in devices:
-    #             device_type = device.get('device_type', '')
-    #             equipment_name = device.get('device_name', '')
-    #             sensors = device.get('sensors', [])
-    #             #
-    #             # # getting the equipment names according to the device type
-    #             # equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)[
-    #             #     "Equipments(sensor_name)"].to_list()
-    #             equipment_names = mapping_df.filter(pl.col('Device Type') == device_type)["Equipments(sensor_name)"].to_list()
-    #             system_counts = defaultdict(int)
-    #             system_total_count = defaultdict(int)  # for total count
-    #             system_m_f_count = defaultdict(int)  # for maintainance_fault count
-                
-    #             for sensor in sensors:
-    #                 sensor_name = sensor.get('sensor_name', '').strip()
-    #                 print("sensor_name: ", sensor_name)
-    #                 # looping every equipment to check whether it is present in sensor name
-    #                 for equipment in equipment_names:
-    #                     if equipment and equipment.strip().lower() in sensor_name.lower():
-    #                         print("matched equipment name: ", equipment)
-    #                         sensor_type = mapping_df.filter(
-    #                             (pl.col('Device Type') == device_type) & (
-    #                                     pl.col('Equipments(sensor_name)') == equipment)
-    #                         )["Equipments(sensor_type)"].item()
-    #                         system = device_mapping_dict.get(device_type, {}).get(sensor_type)
-    #                         print("sensor_type: ", sensor_type)
-    #                         # exit()
-    #                         if system:
-    #                             system_total_count[system] += 1
-    #                             for maintanence in Maintenance:
-    #                                 print("maintanence: ", maintanence)
-    #                                 if maintanence.get('equipment_name') and maintanence['equipment_name'] == sensor_type:
-    #                                     interlockName = maintanence['interlock_name']
-    #                                     print("interlockName: ", interlockName)
-    #                                     params = urdhva_base.queryparams.QueryParams(limit=10000,
-    #                                                                                  q=f"interlock_name='{interlockName}'")
-    #                                     total = await Alerts.count(params)
-    #                                     print("total: ", total)
-    #                                     system_m_f_count[system] += total
-    #                             for fault in Fault:
-    #                                 print("fault: ", fault)
-    #                                 if fault.get('equipment_name') and fault['equipment_name'] == sensor_type:
-    #                                     interlockName = fault['interlock_name']
-    #                                     print("interlockName: ", interlockName)
-    #                                     params = urdhva_base.queryparams.QueryParams(limit=10000,
-    #                                                                                  q=f"interlock_name='{interlockName}'")
-    #                                     total = await Alerts.count(params)
-    #                                     print("total: ", total)
-    #                                     system_m_f_count[system] += total
-    #             # taking keys to merge the above declared two dicts
-    #             all_keys = set(system_total_count.keys()).union(system_m_f_count.keys())
-    #             # declaring varibale to store the merged dict
-    #             merged_dict = {}
-    #             # merging the two dict, and adding the value in the list
-    #             for key in all_keys:
-    #                 merged_dict[key] = [
-    #                     value for value in (system_total_count.get(key, 0), system_m_f_count.get(key, 0))
-    #                 ]
-    #             for system, count in merged_dict.items():
-    #                 rows.append({
-    #                     'sap_id': sap_id,
-    #                     'zone': zone,
-    #                     'name': name,
-    #                     'equipment_name': equipment_name,
-    #                     'device_type': device_type,
-    #                     'system': system,
-    #                     'count': str(count[0]),  # Convert count to string, first value for total count
-    #                     'mf_count': str(count[1])  # second value for mf count
-    #                 })
-
-    #         return pl.DataFrame(rows) if rows else pl.DataFrame()
-        
-    #     result_frames = []
-    #     for row in df.iter_rows(named=True):
-    #         sap_id = row['sap_id']
-    #         zone = row['zone']
-    #         name = row['name']
-    #         device_df = await process_device_data(sap_id, zone, name)
-    #         if not device_df.is_empty():
-    #             result_frames.append(device_df)
-        
-    #     if result_frames:
-    #         final_df = pl.concat(result_frames)
-    #     else:
-    #         final_df = pl.DataFrame(schema={
-    #             'sap_id': pl.Utf8,
-    #             'zone': pl.Utf8,
-    #             'name': pl.Utf8,
-    #             'equipment_name': pl.Utf8,
-    #             'device_type': pl.Utf8,
-    #             'system': pl.Utf8,
-    #             'count': pl.Utf8,  # Ensure count is a string
-    #             'mf_count': pl.Utf8
-    #         })
-        
-    #     # Convert all records before inserting
-    #     final_records = final_df.to_dicts()
-        
-    #     # Ensure count is stored as string
-    #     final_records = [{**record, 'count': str(record['count'])} for record in final_records]
-
-    #     # Ensure data is not empty before inserting
-    #     if not final_records:
-    #         return {"status": False, "message": "No data to insert"}
-
-    #     print("Final Records:", final_records)  # Debugging step
-    #     # file_path = 'final_records.json'  # Specify your desired file path here
-
-    #     # # Writing the data to a file in JSON format
-    #     # with open(file_path, 'w') as f:
-    #     #     json.dump(final_records, f)  
-    #     # Insert/update records
-    #     await TagsData.bulk_update(final_records, upsert=False)
-
-    #     return {"status": True, "message": "Data inserted successfully", "data": final_records}
-
-    # except Exception as e:
-    #     print(traceback.format_exc())
-    #     return {"status": False, "message": f"Error: {e}"}
-
     try:
-        # Setup connection parameters
+        # Setup connection
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-        function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        
-        # Query location_master to get bu, sap_id, zone, and name
-        lpg_query = "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
-        df = await function(query=lpg_query)
-        df = pl.DataFrame(df)
-        
-        base_path = "/opt/ceg/algo/things_board/device_data"  # Update with actual path
-        mapping_base_path = '/opt/ceg/algo/utilities'
-        mapping_df = pl.read_csv(os.path.join(mapping_base_path, 'DashboardAssetMapping.csv'))
-        mapping_df = mapping_df.with_columns(mapping_df["Device Type"].fill_null(strategy="forward"))
-        
-        # Transform device_mapping list into a dictionary for easier lookup
-        device_mapping_dict = {}
-        for device in device_mapping:
-            device_type = device["device_type"]
-            device_mapping_dict[device_type] = {}
-            for sensor_name, system in device["sensor_name"].items():
-                device_mapping_dict[device_type][sensor_name] = system
+        execute_query = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
 
-        async def process_device_data(sap_id, zone, name):
-            file_path = os.path.join(base_path, f"{sap_id}.json")
-            if not os.path.exists(file_path):
-                return pl.DataFrame()
-            
+        # Fetch TAS BU locations
+        location_query = "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
+        location_df = await execute_query(query=location_query)
+        location_df = pd.DataFrame(location_df)
+
+        if location_df.empty:
+            return {"status": False, "message": "No TAS locations found."}
+
+        final_records = []
+
+        # Enhanced device_type_mapping: (keyword, mapped_device_type, system_lookup_key)
+        device_type_mapping = {
+            "Tank": [
+                ("Primary Gauge Level", "Primary Level", "Primary Gauge Level"),
+                ("LEVEL SWITCH PROOF OK", "VFT", "LEVEL SWITCH PROOF OK"),
+                ("RADAR HHH", "Radar", "RADAR HHH"),
+                ("ROSOV OPEN", "ROSOV", "ROSOV OPEN STATUS IL1"),
+                ("MOV", "MOV", "MOV STATUS IL1"),
+                ("RIMSEAL FIRE", "RIMSEAL", "RIMSEAL FIRE ALARM")
+            ],
+            "OI": [
+                ("Fire", "Fire Engine", "Fire Engine"),
+                ("Jockey", "Jockey Pump", "Jockey Pump"),
+                ("Pt", "PT", "Farthest Point Pt"),
+                ("PT", "PT", "Nearest Point PT")
+            ]
+        }
+
+        # Build system mapping from device_mapping (case-insensitive)
+        system_mapping = defaultdict(lambda: defaultdict(str))
+        for device in device_mapping:
+            device_type = device["device_type"].lower()
+            for sensor_name, system in device["sensor_name"].items():
+                normalized_sensor = sensor_name.strip().lower()
+                system_mapping[device_type][normalized_sensor] = system
+
+        # Create mapping from equipment_name to device_type from Maintenance and Fault
+        equipment_to_device_type = {}
+        
+        # Process Maintenance data
+        for item in Maintenance:
+            equipments = item["equipment_name"].split(',')
+            for equipment in equipments:
+                equipment = equipment.strip()
+                if equipment not in equipment_to_device_type:
+                    equipment_to_device_type[equipment] = []
+                if item["interlock_name"] not in equipment_to_device_type[equipment]:
+                    equipment_to_device_type[equipment].append(item["interlock_name"])
+        
+        # Process Fault data
+        for item in Fault:
+            equipments = item["equipment_name"].split(',')
+            for equipment in equipments:
+                equipment = equipment.strip()
+                if equipment not in equipment_to_device_type:
+                    equipment_to_device_type[equipment] = []
+                if item["interlock_name"] not in equipment_to_device_type[equipment]:
+                    equipment_to_device_type[equipment].append(item["interlock_name"])
+
+        # Process each location
+        for _, row in location_df.iterrows():
+            sap_id = str(row['sap_id'])
+            location_name = str(row['name'])
+            zone = str(row['zone'])
+
+            json_path = os.path.join(BASE_JSON_PATH, f"{sap_id}.json")
+            if not os.path.exists(json_path):
+                print(f"Skipping {sap_id}: File not found.")
+                continue
+
             try:
-                with open(file_path, 'r') as file:
-                    json_data = json.load(file)
-                    devices = json_data.get('data', [])
-            except Exception as e:
-                print(f"Error reading {file_path}: {e}")
-                return pl.DataFrame()
-            
-            rows = []
+                with open(json_path, 'r') as file:
+                    devices = json.load(file).get('data', [])
+            except json.JSONDecodeError:
+                print(f"Invalid JSON for {sap_id}.")
+                continue
+
+            location_counts = defaultdict(lambda: defaultdict(lambda: {'count': 0, 'mf_count': 0}))
+
             for device in devices:
-                device_type = device.get('device_type', '')
-                equipment_name = device.get('device_name', '')
+                raw_device_type = str(device.get('device_type', 'Unknown')).strip().lower()
                 sensors = device.get('sensors', [])
-                
-                # Skip devices that don't have a matching entry in our mapping
-                if device_type not in device_mapping_dict:
-                    print(f"Device type not found in mapping: {device_type}")
-                    continue
-                    
-                system_total_count = defaultdict(int)  # for total count
-                system_m_f_count = defaultdict(int)    # for maintenance_fault count
-                
+
                 for sensor in sensors:
-                    sensor_name = sensor.get('sensor_name', '').strip()
-                    print(f"Processing sensor: {sensor_name} for device type: {device_type}")
-                    
-                    # Try direct match with sensor name
-                    system = device_mapping_dict.get(device_type, {}).get(sensor_name)
-                    
-                    # If no direct match, try partial match
-                    if system is None:
-                        for mapping_sensor, mapping_system in device_mapping_dict.get(device_type, {}).items():
-                            if mapping_sensor.lower() in sensor_name.lower():
-                                system = mapping_system
-                                print(f"Found partial match: {mapping_sensor} in {sensor_name}")
+                    sensor_tag = str(sensor.get('sensor_tag', '')).strip()
+                    if not sensor_tag:
+                        continue
+
+                    sensor_name = str(sensor.get('sensor_name', '')).strip()
+                    if not sensor_name:
+                        continue
+
+                    mapped_device_type = None
+                    system = "Unknown"
+                    normalized_sensor = sensor_name.lower()
+
+                    # Handle Tank devices
+                    if raw_device_type == "tank":
+                        for keyword, mapped, lookup_key in device_type_mapping["Tank"]:
+                            if keyword.lower() in normalized_sensor:
+                                mapped_device_type = mapped
+                                # Use predefined lookup key for system
+                                system_key = lookup_key.strip().lower()
+                                system = system_mapping["tank"].get(system_key, "Unknown")
                                 break
+
+                    # Handle OI devices
+                    elif raw_device_type == "oi":
+                        for keyword, mapped, lookup_key in device_type_mapping["OI"]:
+                            if keyword.lower() in normalized_sensor:
+                                mapped_device_type = mapped
+                                # Use predefined lookup key for system
+                                system_key = lookup_key.strip().lower()
+                                system = system_mapping["oi"].get(system_key, "Unknown")
+                                break
+
+                    # Handle other devices
+                    else:
+                        system = system_mapping[raw_device_type].get(normalized_sensor, "Unknown")
+                        if system != "Unknown":
+                            mapped_device_type = device["device_type"].title()
+
+                    if mapped_device_type:
+                        location_counts[mapped_device_type][system]['count'] += 1
+
+            # Calculate mf_count for each device type
+            for dev_type in location_counts:
+                if dev_type in equipment_to_device_type:
+                    interlock_names = equipment_to_device_type[dev_type]
+                    total_mf_count = 0
                     
-                    if system:
-                        print(f"Found system: {system} for sensor: {sensor_name}")
-                        system_total_count[system] += 1
-                        
-                        # Check for maintenance alerts
-                        for maintenance in Maintenance:
-                            equipment_name_maintenance = maintenance.get('equipment_name')
-                            if not equipment_name_maintenance:
-                                continue
-                                
-                            # Try to match equipment name from maintenance with sensor name or device type
-                            if (equipment_name_maintenance.lower() in sensor_name.lower() or 
-                                equipment_name_maintenance.lower() == device_type.lower()):
-                                interlock_name = maintenance.get('interlock_name')
-                                print(f"Checking maintenance: {interlock_name}")
-                                params = urdhva_base.queryparams.QueryParams(limit=10000,
-                                                                            q=f"interlock_name='{interlock_name}'")
-                                total = await Alerts.count(params)
-                                print(f"Maintenance count for {interlock_name}: {total}")
-                                system_m_f_count[system] += total
-                        
-                        # Check for fault alerts
-                        for fault in Fault:
-                            equipment_name_fault = fault.get('equipment_name')
-                            if not equipment_name_fault:
-                                continue
-                                
-                            # Try to match equipment name from fault with sensor name or device type
-                            if (equipment_name_fault.lower() in sensor_name.lower() or 
-                                equipment_name_fault.lower() == device_type.lower()):
-                                interlock_name = fault.get('interlock_name')
-                                print(f"Checking fault: {interlock_name}")
-                                params = urdhva_base.queryparams.QueryParams(limit=10000,
-                                                                            q=f"interlock_name='{interlock_name}'")
-                                total = await Alerts.count(params)
-                                print(f"Fault count for {interlock_name}: {total}")
-                                system_m_f_count[system] += total
-                
-                # Taking keys to merge the above declared two dicts
-                all_keys = set(system_total_count.keys()).union(system_m_f_count.keys())
-                
-                # Add rows for each system found
-                for system in all_keys:
-                    total_count = system_total_count.get(system, 0)
-                    mf_count = system_m_f_count.get(system, 0)
+                    for interlock_name in interlock_names:
+                        params = urdhva_base.queryparams.QueryParams(
+                            limit=10000,
+                            q=f"interlock_name='{interlock_name}' AND alert_status='Open' AND sap_id='{sap_id}'"
+                        )
+                        count = await Alerts.count(params)
+                        total_mf_count += count
                     
-                    rows.append({
-                        'sap_id': sap_id,
-                        'zone': zone,
-                        'name': name,
-                        'equipment_name': equipment_name,
-                        'device_type': device_type,
-                        'system': system,
-                        'count': str(total_count),
-                        'mf_count': str(mf_count)
+                    # Distribute the mf_count across all systems for this device type
+                    system_count = len(location_counts[dev_type])
+                    if system_count > 0:
+                        avg_mf_count = total_mf_count / system_count
+                        for system in location_counts[dev_type]:
+                            location_counts[dev_type][system]['mf_count'] = round(avg_mf_count)
+
+            # Convert counts to final records
+            for dev_type, system_counts in location_counts.items():
+                if dev_type in ["Tank Maintenance","Fire Pump"]:
+                    continue
+                for sys, counts in system_counts.items():
+                    final_records.append({
+                        "sap_id": sap_id,
+                        "name": location_name,
+                        "zone": zone,
+                        "device_type": dev_type,
+                        "count": str(counts['count']),
+                        "system": sys,
+                        "mf_count": str(counts['mf_count'])
                     })
 
-            return pl.DataFrame(rows) if rows else pl.DataFrame()
-        
-        result_frames = []
-        for row in df.iter_rows(named=True):
-            sap_id = row['sap_id']
-            zone = row['zone']
-            name = row['name']
-            print(f"Processing location: {name} (SAP ID: {sap_id})")
-            device_df = await process_device_data(sap_id, zone, name)
-            if not device_df.is_empty():
-                result_frames.append(device_df)
-        
-        if result_frames:
-            final_df = pl.concat(result_frames)
-        else:
-            final_df = pl.DataFrame(schema={
-                'sap_id': pl.Utf8,
-                'zone': pl.Utf8,
-                'name': pl.Utf8,
-                'equipment_name': pl.Utf8,
-                'device_type': pl.Utf8,
-                'system': pl.Utf8,
-                'count': pl.Utf8,
-                'mf_count': pl.Utf8
-            })
-        
-        # Convert all records before inserting
-        final_records = final_df.to_dicts()
-        
-        # Ensure count is stored as string
-        final_records = [{**record, 'count': str(record['count'])} for record in final_records]
-
-        # Ensure data is not empty before inserting
-        if not final_records:
-            return {"status": False, "message": "No data to insert"}
-
-        print("Final Records:", final_records)  # Debugging step
-        
-        # Insert/update records
-        await TagsData.bulk_update(final_records, upsert=False)
-
-        return {"status": True, "message": "Data inserted successfully", "data": final_records}
+        # Update database
+        try:
+            await TagsData.bulk_update(final_records, upsert=False)
+            print(f"Updated {len(final_records)} records.")
+            return {"status": True, "message": "Data updated successfully."}
+        except Exception as e:
+            print(f"Database Error: {e}")
+            return {"status": False, "message": f"Database Error: {str(e)}"}
 
     except Exception as e:
         print(traceback.format_exc())
-        return {"status": False, "message": f"Error: {e}"}
+        return {"status": False, "message": f"Error: {str(e)}"}
 
-# Action get_tags_data
 @router.post('/get_tags_data', tags=['TagsData'])
 async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
-    resp = await TagsData.get_all(resp_type='plain')
-    print(resp)
-    res = resp.get("data", [])
-    limit = 10000
-    res = []
-    skip = 0
-    while True:
-        resp = await TagsData.get_all(urdhva_base.queryparams.QueryParams(limit=limit, skip=skip, 
-                                                                          sort=json.dumps({'created_at': 'DESC'})),
-                                    resp_type='plain')
-        res.extend(resp['data'])
-        if not resp['data'] or len(resp['data']) < limit:
-            break
-        skip += 1
-    res = resp.get("data", [])
-    if res:
-        res = pl.DataFrame(res)
+    try:
+        limit = 10000
+        skip = 0
+        res = []
 
-        # Split equipment_name safely
-        res = res.with_columns(
-            pl.col("equipment_name").str.split('@').alias("split_name")
-        ).with_columns(
-            pl.col("split_name").list.get(0).fill_null("").alias("equipment_name")
-        ).drop("split_name")  # Drop intermediate column
-        # Convert count to integer
-        res = res.with_columns(pl.col("count").cast(pl.Int64, strict=False))
-        # Aggregate count based on device_type and system, keeping sap_id and location_name
-        res = res.group_by(["system", "name"]).agg([
-            pl.col("count").sum().alias("total_count"),           # pl.col("sap_id").list() 
-            pl.col("sap_id").first()  # Keep first sap_id (change to list() if needed)
-            # pl.col("name").first()  # Keep first location_name
-        ])
+        # Fetch all data in chunks
+        while True:
+            resp = await TagsData.get_all(
+                urdhva_base.queryparams.QueryParams(
+                    limit=limit, 
+                    skip=skip, 
+                    sort=json.dumps({'created_at': 'DESC'})
+                ),
+                resp_type='plain'
+            )
+            if not resp['data']:
+                break
+            res.extend(resp['data'])
+            if len(resp['data']) < limit:
+                break
+            skip += limit  # Increase skip to fetch next batch
 
-        return {"status": True, "message": "Success", "data": res.to_dicts()}
+        # Convert to DataFrame if data exists
+        if res:
+            df = pd.DataFrame(res)  # Convert list of dictionaries to DataFrame
+            
+            # Convert 'count' to integer (handle any invalid data gracefully)
+            df['count'] = pd.to_numeric(df['count'], errors='coerce').fillna(0).astype(int)
+            # Select only required columns
+            df = df[['sap_id', 'name', 'device_type', 'zone', 'count','system','mf_count']]
+ 
+            # Convert DataFrame to list of dictionaries
+            return {"status": True, "message": "Success", "data": df.to_dict(orient='records')}
+
+        return {"status": False, "message": "No data found"}
+
+    except Exception as e:
+        return {"status": False, "message": f"Error: {str(e)}"}

@@ -1341,6 +1341,9 @@
                 },
                 {
                     "name": "get_dryout_report"
+                },
+                {
+                    "name": "generate_dryout_group_data"
                 }
             ]
         },
@@ -1473,6 +1476,9 @@
                 },
                 {
                     "name": "get_dryout_report"
+                },
+                {
+                    "name": "generate_dryout_group_data"
                 }
             ]
         },
@@ -4124,6 +4130,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "vendorapiaudit",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VendorApiAudit",
+            "attributes": {},
+            "uris": [
+                "/api/vendorapiaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vendorapiaudit_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VendorApiAudit_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vendorapiaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vendorapiaudit_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VendorApiAudit_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vendorapiaudit/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [
@@ -4429,6 +4498,10 @@
         {
             "name": "get_dryout_report",
             "displayName": "get_dryout_report"
+        },
+        {
+            "name": "generate_dryout_group_data",
+            "displayName": "generate_dryout_group_data"
         },
         {
             "name": "get_productions_rate",

@@ -1160,3 +1160,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/dryoutalertreport/{id}', tags=['DryOutAlertReport'])
 async def delete(id: str):
     return await DryOutAlertReport.delete(id)
+
+
+@router.post('/vendorapiaudit', response_model=VendorApiAudit, tags=['VendorApiAudit'])
+async def create(inputObj: VendorApiAuditCreate):
+    return await inputObj.create()
+
+
+@router.put('/vendorapiaudit', response_model=VendorApiAudit, tags=['VendorApiAudit'])
+async def update(inputObj: VendorApiAudit):
+    return await inputObj.modify()
+
+
+@router.get('/vendorapiaudit/{id}', response_model=VendorApiAudit, tags=['VendorApiAudit'])
+async def get(id: str):
+    return await VendorApiAudit.get(id, skip_secrets=True)
+
+
+@router.get('/vendorapiaudit', response_model=VendorApiAuditGetResp, tags=['VendorApiAudit'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await VendorApiAudit.get_all(params, skip_secrets=True)
+
+
+@router.delete('/vendorapiaudit/{id}', tags=['VendorApiAudit'])
+async def delete(id: str):
+    return await VendorApiAudit.delete(id)

@@ -7,12 +7,10 @@ device_mapping = [
                                   "Primary Gauge HIGH": "Process",
                                   "TANK LEAKAGE STATUS": "Process",
                                   "Primary Gauge HIGH HIGH": "Process",
-                                  "VFT": "Safety",
+                                  "LEVEL SWITCH": "Safety",
                                   "LEVEL SWITCH PROOF OK": "Safety",
                                   "LEVEL SWITCH PROOF FAILED": "Safety",
-                                  "RADAR PROOF TEST OK": "Safety",
-                                  "RADAR PROOF TEST NOT OK": "Safety",
-                                  "Seconary Radar": "Safety",
+                                  "RADAR HHH": "Safety",
                                   "RADAR PROOF OK": "Safety",
                                   "RADAR PROOF FAILED": "Safety",
                                   "ROSOV OPEN STATUS IL1": "Safety",
@@ -28,7 +26,7 @@ device_mapping = [
                                   "MOV STATUS OL": "Safety",
                                   "MOV STATUS RCL": "Safety",
                                   "RIMSEAL FIRE ALARM": "Safety",
-                                  "RimSeal": "Safety"
+                                  "RIMSEAL FAULT ALARM": "Safety"
                                 }
                     },
                     {
@@ -49,6 +47,14 @@ device_mapping = [
                                   "RIM SEAL MAINTENANCE STATUS": "Safety"
                                 }
                     },
+                    {
+                        "device_type":"Pump",
+                        "sensor_name":{
+                            "PUMP ON STATUS": "Process",
+                            "PUMP OFF STATUS": "Process",
+                            "PUMP LR STATUS": "Process"
+                        }
+                    },
                      {
                        "device_type": "Fire Pump", 
                        "sensor_name":
@@ -56,17 +62,19 @@ device_mapping = [
                                   "PUMP ON STATUS": "Safety",
                                   "PUMP OFF STATUS": "Safety",
                                   "PUMP LR STATUS": "Safety",
-                                  "FIRE PUMP MAINTENANCE (PT, Jocky, FE)": "Safety",
+                                  "FIRE PUMP MAINTENANCE": "Safety",
                                   "FIRE PUMP FAIL TO START 1": "Safety",
                                   "FIRE PUMP FAIL TO START 2": "Safety",
                                   "FIRE PUMP FAIL TO START 3": "Safety",
+                                  "FIRE PUMP FAIL TO START 4":"Safety",
+                                  "FIRE PUMP FAIL TO START 5":"Safety",
                                   "FIRE PUMP FAIL TO START STANDBY": "Safety",
+                                  "FIRE PUMP FAIL TO START STANDBY1": "Safety",
+                                  "FIRE PUMP FAIL TO START STANDBY2": "Safety",
                                   "FIRE PUMP TRIPPED FAULT": "Safety",
                                   "FIRE PUMP LLOP ALARM": "Safety",
                                   "FIRE PUMP HWT ALARM": "Safety",
-                                  "TLF Gantry Permissive Power Off": "Process",
-                                  "All TLF Product Pumps Stopped": "Process",
-                                  "TLF Header Line MOV Close": "Process" 
+                                 
                                 }
                     },
                     {
@@ -112,6 +120,20 @@ device_mapping = [
                                 }
                     },
                     {
+                        "device_type":"Barrier Gate",
+                        "sensor_name":{
+                            "BARRIER GATE OPEN STATUS": "Process",
+                            "BARRIER GATE CLOSE STATUS":"Process",
+                            "BARRIER GATE LR STATUS":"Process"
+                        }
+                    },
+                    {
+                       "device_type":"Hooter",
+                       "sensor_name": {
+                            "HOOTER STATUS":"Safety"
+                        }
+                    },
+                    {
                         "device_type": "ESD",
                         "sensor_name": 
                                  {
@@ -119,13 +141,7 @@ device_mapping = [
                                      "ESD MAINTENANCE STATUS": "Safety"
                                  }
                     },
-                    {
-                        "device_type": "Gantry Override",
-                        "sensor_name": 
-                                 {
-                                      "OVERRIDE STATUS": "Gantry"
-                                 }
-                    },
+                  
                     {
                         "device_type": "Loading Point",
                         "sensor_name": 
@@ -147,7 +163,14 @@ device_mapping = [
                                  }
                     },
                     {
-                        "device_type": "ESD",
+                        "device_type": "Gantry override",
+                        "sensor_name": 
+                                 {
+                                      "OVERRIDE STATUS": "Gantry"
+                                 }
+                    },
+                    {
+                        "device_type": "ESD Effect",
                         "sensor_name": 
                                  {
                                    "All ROSOVs Closed": "Safety",
@@ -165,32 +188,13 @@ device_mapping = [
                                  }
                     },
                     {
-                        "device_type": "LRC Switchover",
-                        "sensor_name": 
-                                 {
-                                      "LRC SWITCHOVER 30 DAYS STATUS": "Process"
-                                 }
-                    },
-                    {
-                        "device_type": "Fire Engine",
-                        "sensor_name":
-                                 {
-                                      "Fire Engine": "Safety"
-                                 }
-                    },
-                    {
-                        "device_type": "Jockey Pump",
-                        "sensor_name":
-                                 {
-                                      "Jockey Pump": "Safety"
-                                 }
-                    },
-                    {
-                        "device_type": "PT Hydrant",
-                        "sensor_name":
-                                 {
-                                      "PT Hydrant": "Safety"
-                                 }
+                        "device_type": "Fire Effect",
+                        "sensor_name":{
+                            "Cause":"Safety",
+                            "TLF Gantry Permissive Power Off":"Process",
+                            "All TLF Product Pumps Stopped":"Process",
+                            "TLF Header Line MOV Close":"Process"
+                        }
                     },
                     {
                         "device_type": "Air Compressor",
@@ -198,5 +202,23 @@ device_mapping = [
                                  {
                                       "Air Compressor": "Safety"
                                  }
-                    }
+                    },
+                    {
+                        "device_type": "LRC Switchover",
+                        "sensor_name": 
+                                 {
+                                      "LRC SWITCHOVER 30 DAYS STATUS": "Process"
+                                 }
+                    },
+                    {
+                        "device_type": "OI",
+                        "sensor_name":
+                                 {
+                                      "Fire Engine":"Safety",
+                                      "Jockey Pump":"Safety",
+                                      "Farthest Point Pt":"Safety",
+                                      "Nearest Point PT":"Safety"
+                                 }
+                    },
+                     
                   ]

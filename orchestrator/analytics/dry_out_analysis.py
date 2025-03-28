@@ -497,6 +497,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                         "indent_no", 
                         "terminal_plant_id",
                         dry_out_in_days, 
+                        "indent_status",
                         TRUE AS dried_out
                     FROM 
                         "alerts"
@@ -511,7 +512,8 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                         i.prod_reqd_dt,
                         NOW() AT TIME ZONE 'Asia/Kolkata' AS reported_date,
                         a.dry_out_in_days, 
-                        a.dried_out
+                        a.dried_out,
+                        a.indent_status
                     FROM 
                         INDENT_DATA i
                     LEFT JOIN 
@@ -528,7 +530,8 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     cd.reported_date, 
                     cd.dry_out_in_days, 
                     cd.dried_out, 
-                    d."CATEGORY1" AS category
+                    d."CATEGORY1" AS category,
+                    cd.indent_status
                 FROM 
                     COMBINED_DATA cd
                 LEFT JOIN 
@@ -1399,9 +1402,9 @@ async def get_tar_analysis(condition):
              f"rosapcode, "
              f"exposure, "
              f"CASE "
-             f"WHEN exposure < 100000000 THEN 1 "
-             f"WHEN exposure >= 100000000 AND exposure < 200000000 THEN 2 "
-             f"WHEN exposure >= 200000000 AND exposure < 500000000 THEN 3 "
+             f"WHEN exposure < 0 THEN 1 "
+             f"WHEN exposure >= 0 AND exposure <= 5000000 THEN 2 "
+             f"WHEN exposure > 5000000 AND exposure <= 7500000 THEN 3 "
              f"ELSE 4 "
              f"END AS category "
              f"""FROM "HPCL_HOS".customer_balance;""")

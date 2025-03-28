@@ -1005,7 +1005,9 @@ LIMIT 10000;''',
                             "zone",
                             "name",
                             "site_area" AS "plant",
-                            sum("productivity_normal_production")/1000 as "Productions"
+                            sum("productivity_normal_production")/1000 as "Productions",
+                            SUM(bottling_14_2kg) AS "14_kg",
+                            SUM(bottling_19kg) AS "19_kg"
                         from 
                             "lpg_operations_summary" ''',
     
@@ -1036,12 +1038,13 @@ LIMIT 10000;''',
                                 FROM "lpg_operations_summary" ''',
     
     'lpg_operations_daywise_production': f'''  
-                                SELECT 
+                            SELECT 
                                 "zone",
                                 "site_area" AS "plant",
-                                SUM("productivity_normal_production") / 1000 AS "sum_production", 
+                                SUM(bottling_14_2kg) AS "14_kg",
+                                SUM(bottling_19kg) AS "19_kg",
                                 DATE("process_date") AS "process_date"
-                                FROM "lpg_operations_summary" ''',
+                            FROM "lpg_operations_summary" ''',
     
     'lpg_cdcms_daywise_subsidy_failure_statistics': f'''
                                 SELECT
@@ -1100,21 +1103,24 @@ LIMIT 10000;''',
                                     "lpg_cdcms_subsidy_exception_statistics" ''',
     
     'lpg_operations_current_month_production': f'''
-                                                    SELECT
-                                                        ROUND(SUM("productivity_normal_production"::numeric)/1000, 2) AS "current_month_production"
-                                                    FROM
-                                                        "lpg_operations_summary"
-                                                    WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
+                                                    SELECT 
+                                                        ROUND(
+                                                            (SUM(bottling_14_2kg) * 14.2 + SUM(bottling_19kg) * 19)::NUMERIC / 1000, 
+                                                            2
+                                                        ) AS current_month_production
+                                                    FROM lpg_operations_summary
+                                                    WHERE DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE);   
                                                 ''',
+                                                
     'lpg_operations_current_month_productivity': f'''
                                                     SELECT
-                                                        ROUND(AVG("productivity_normal_productivity"::numeric), 2) AS "current_month_productivity"
+                                                        ROUND(AVG("productivity_normal_productivity"::numeric), 2) AS "Total Productivity"
                                                     FROM
                                                         "lpg_operations_summary"
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
                                                 ''',
+                                                
     'lpg_operations_connected_plants': f''' SELECT DISTINCT("short_name") FROM "lpg_operations_summary" order by "short_name"; ''',
     
     'lpg_operations_notconnected_plants': ''' SELECT DISTINCT m."short_name"
@@ -1365,21 +1371,7 @@ ORDER BY
                                     from
                                         "lpg_todays_cdcms_sales_summary"
                                     where
-                                        "ZOName" IS NOT NULL ''',
-
-    'lpg_operations_current_month_productivity': f''' SELECT 
-                                                        ROUND(AVG("productivity.normal.productivity")) AS "Total Productivity"
-                                                    FROM 
-                                                        "LPG_OPERATIONS_SUMMARY_DATA"
-                                                    WHERE 
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE); ''',
-
-    'lpg_operations_current_month_productions': '''SELECT
-                                                        ROUND(CAST(SUM("productivity.normal.production") AS NUMERIC) / 1000, 0) AS "Total Production"
-                                                    FROM
-                                                        "LPG_OPERATIONS_SUMMARY_DATA"
-                                                    WHERE
-                                                        DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);''',
+                                        "ZOName" IS NOT NULL ''',        
 
     'lpg_operations_current_month_cylinder_filled': ''' SELECT
                                                             ROUND(SUM("cylfilled"::numeric)/100000, 2) AS "Cylinders_Filled"
@@ -2556,14 +2548,14 @@ ORDER BY
     'lpg_operations_connected_plants': f''' SELECT 
                                         COUNT(DISTINCT "short_name") AS short_name_count
                                     FROM 
-                                        "LPG_OPERATIONS_SUMMARY_DATA"
+                                        "lpg_operations_summary"
                                     HAVING 
                                         COUNT(DISTINCT "short_name") > 0 ''',
                                     
     'lpg_operations_total_plants': f''' SELECT 
                                     COUNT(DISTINCT "short_name") AS short_name_count
                                 FROM 
-                                    "LPG_OPERATIONS_SUMMARY_DATA"
+                                    "lpg_operations_summary"
                                 HAVING 
                                     COUNT(DISTINCT "short_name") > 0 ''',
     

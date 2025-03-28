@@ -83,6 +83,8 @@ class AuthenticationManager:
                 return False, "Invalid Login Credentials"
         role_names = ", ".join(f"'{val}'" for val in user_info['novex_role'])
         role = await hpcl_ceg_model.Roles.get_aggr_data(f"select * from roles where name in ({role_names})")
+        if not role['data']:
+            return False, "Access Restricted"
         if role["data"]:
             allowed_roles = {}
             for role_data in role["data"]:

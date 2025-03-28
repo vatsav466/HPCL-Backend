@@ -39,6 +39,7 @@ hana-ml==2.22.24110601
 psycopg2-binary==2.9.10
 pymysql==1.1.1
 python-ldap==3.4.4
+more-itertools==10.6.0
 ###############################
 ##        DateBase End       ##
 ###############################

@@ -701,16 +701,16 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 29,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "< 1 Rs Cr", "value": tar_analysis.get("less_1_cr", 0), "serial": 30,
+            "section": "< 0 Rs", "value": tar_analysis.get("less_1_cr", 0), "serial": 30,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "1 to 2 Rs Cr", "value": tar_analysis.get("less_2_cr", 0), "serial": 31,
+            "section": "0 to 50 Rs Lakhs", "value": tar_analysis.get("less_2_cr", 0), "serial": 31,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "2 to 5 Rs Cr", "value": tar_analysis.get("less_5_cr", 0), "serial": 32,
+            "section": "50 to 75 Rs Lakhs", "value": tar_analysis.get("less_5_cr", 0), "serial": 32,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "> 5 Rs Cr", "value": tar_analysis.get("greater_5_cr", 0), "serial": 33,
+            "section": "> 1 Rs Cr", "value": tar_analysis.get("greater_5_cr", 0), "serial": 33,
             "condition": "=", "group": "tar_analysis"
         },{
             "section": "Dealer TT", "value": dealer_truck_count.get("dealer_tt", 0), "serial": 34,
@@ -887,3 +887,18 @@ async def indentdryout_get_dryout_report(data: Indentdryout_Get_Dryout_ReportPar
         dry_out_in_days=data.dry_out_in_days
     )
     return {"status": True, "message": "Success", "data": dry_out_data}
+
+
+# Action generate_dryout_group_data
+@router.post('/generate_dryout_group_data', tags=['IndentDryOut'])
+async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dryout_Group_DataParams):
+    carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+    carry_fwd_data = pd.DataFrame(carry_fwd_data)
+    carry_fwd_data.rename(columns={
+        "sap_id": "DEALER_CODE", "terminal_plant_id": "LOCN_ID", "indent_no": "INDENT_NO",
+        "prod_reqd_dt": "PROD_REQD_DT", "reported_date": "REPORTED_DATE",
+        "dry_out_in_days": "DRY_OUT_IN_DAYS", "category": "CATEGORY"
+    }, inplace=True)
+    del carry_fwd_data['dried_out']
+    print("carry_fwd_data: ", carry_fwd_data)
+    return carry_fwd_data.to_dict(orient="records")

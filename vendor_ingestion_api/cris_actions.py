@@ -83,3 +83,18 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
                 print(f"Alert Not Found Query: {query}")
 
     return True, "Success"
+
+
+# Action api_ack
+@router.post('/api_ack', tags=['CRIS'])
+async def cris_api_ack(data: Cris_Api_AckParams):
+    """
+
+    Args:
+        data:
+
+    Returns:
+
+    """
+    logger.info(f"Received CRIS API Ack {data.dict()}")
+    return True, {"msg": "Ok"}

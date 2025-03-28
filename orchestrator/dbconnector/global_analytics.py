@@ -17,6 +17,7 @@ import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
 from orchestrator.analytics import m60_performance
 from orchestrator.analytics import dry_out_analysis
+from orchestrator.analytics import lpg_plant_analysis
 from orchestrator.analytics import industry_performance
 import utilities.connection_mapping as connection_mapping
 from orchestrator.dbconnector.widget_actions import widget_actions
@@ -26,6 +27,7 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 import orchestrator.dbconnector.widget_actions.lpg_plant_queries as lpg_plant_queries
 from collections import defaultdict
 import utilities.analog_data_mapping as category_mapping
+
 
 async def filter_data(df, _filters):
     try:
@@ -1026,6 +1028,29 @@ class GlobalAnalytics:
         return await m60_performance.m60_performance([rec.dict() for rec in filters],
                                                      [rec.dict() for rec in cross_filters], drill_state, time_grain,
                                                      resp_format)
+
+    # lpg_analysis
+    @staticmethod
+    async def lpg_plant_analysis(filters, cross_filters, drill_state, time_grain='', resp_format='', resp_level=''):
+        """
+        Fetches the lpg plant data for the given filters and drill state.
+
+        Parameters:
+            filters (list): List of filter objects to apply to the query.
+            drill_state (dict): Current drill state for processing the query.
+
+        Returns:
+            dict: Contains the status, a success message, and the sales performance data.
+            :param resp_format:
+            :param filters:
+            :param drill_state:
+            :param cross_filters:
+            :param time_grain:
+        """
+        return await lpg_plant_analysis.lpg_plant_analysis([rec.dict() for rec in filters],
+                                                     [rec.dict() for rec in cross_filters], drill_state, time_grain,
+                                                     resp_format)
+
     @staticmethod
     async def industry_performance(filters, cross_filters, drill_state, time_grain='', resp_format='',resp_level=''):
         """
@@ -3695,10 +3720,15 @@ class GlobalAnalytics:
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
-                return {"status": True, "message": "success", "data": []}
+                return {"status": True, "message": "success", "data": []}            
             resp = resp.groupby(["zone"], as_index=False).agg({
-                        "Productions": "sum"
+                        "14_kg": "sum",
+                        "19_kg": "sum"
                     })
+            resp["14_kg"] = resp["14_kg"] * 14.2
+            resp["19_kg"] = resp["19_kg"] * 19
+            resp["Productions"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64)) / 1000
+            
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
@@ -3723,8 +3753,12 @@ class GlobalAnalytics:
                 filter_keys = [rec.key.strip('"') for rec in filters]
                 if "zone" in filter_keys and "name" not in filter_keys:
                     grouped_resp = resp.groupby(["zone","name"], as_index=False).agg({
-                        "Productions": "sum"
+                        "14_kg": "sum",
+                        "19_kg": "sum"
                     })
+                    grouped_resp["14_kg"] = grouped_resp["14_kg"] * 14.2
+                    grouped_resp["19_kg"] = grouped_resp["19_kg"] * 19
+                    grouped_resp["Productions"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64)) / 1000
                     grouped_resp["Productions"] = grouped_resp["Productions"].fillna(0.0).round(2)
                 if grouped_resp is not None:
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
@@ -3785,9 +3819,9 @@ class GlobalAnalytics:
                 handled_cylinder_query_ += ' WHERE '
                 handled_cylinder_query_ += ' AND '.join(conditions)
             if not daterange:
-                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\') '
             elif daterange:
-                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
@@ -3797,13 +3831,13 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
             handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
             if not "where" in handled_cylinder_query_.lower() and not daterange:
-                handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             elif not "where" in handled_cylinder_query_.lower() and daterange:
-                handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             elif not daterange:
-                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'            
+                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             elif daterange:
-                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
+                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
             handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
             print("handled_cylinder_query_ :", handled_cylinder_query_)
             resp = await function(query=handled_cylinder_query_)
@@ -4045,6 +4079,7 @@ class GlobalAnalytics:
             resp = pl.DataFrame(query_resp)
             resp = await filter_data(resp.to_pandas(), _filters)
             resp = pl.from_pandas(resp)
+            resp = resp.with_columns((pl.col("14_kg").fill_null(0).cast(pl.Float64) + pl.col("19_kg").fill_null(0).cast(pl.Float64)).round(2).alias("sum_production"))
             resp = resp.group_by(["process_date"]).agg([
                     pl.sum("sum_production").round(2).alias("sum_production"),
                 ])
@@ -5072,22 +5107,56 @@ class GlobalAnalytics:
             ])
             resp_df = resp_df.filter(pl.col("alert_category").is_not_null())
             # Extract the middle part of device_name
-            def extract_middle_part(device_name):
-                if isinstance(device_name, str) and '_' in device_name and '-' in device_name:
-                    try:
-                        # Split by _ and get the second part
-                        second_part = device_name.split('_')[1]
-                        # Get the first two parts of the split by -
-                        parts = second_part.split('-')
-                        if len(parts) >= 2:
-                            return f"{parts[0]}-{parts[1]}"
-                    except:
-                        pass
-                return ""
+            # def extract_middle_part(device_name):
+            #     if isinstance(device_name, str) and '_' in device_name and '-' in device_name:
+            #         try:
+            #             # Split by _ and get the second part
+            #             second_part = device_name.split('_')[1]
+            #             # Get the first two parts of the split by -
+            #             parts = second_part.split('-')
+            #             if len(parts) >= 2:
+            #                 return f"{parts[0]}-{parts[1]}"
+            #         except:
+            #             pass
+            #     return ""
 
-            # Apply the function using map_elements
+            # # Apply the function using map_elements
+            # resp_df = resp_df.with_columns([
+            #     pl.col("device_name").map_elements(lambda x: extract_middle_part(x)).alias("device_name")
+            # ])
+            def extract_or_use_device_name(device_name):
+                """
+                Handle device name extraction with fallback to original name
+                
+                Args:
+                    device_name (str): Original device name
+                
+                Returns:
+                    str: Extracted middle part or original device name
+                """
+                # If not a string or doesn't meet extraction criteria, return as is
+                if not isinstance(device_name, str) or '_' not in device_name or '-' not in device_name:
+                    return device_name
+                
+                try:
+                    # Split by _ and get the second part
+                    second_part = device_name.split('_')[1]
+                    
+                    # Get the first two parts of the split by -
+                    parts = second_part.split('-')
+                    
+                    # Return extracted part if at least two parts exist
+                    if len(parts) >= 2:
+                        return f"{parts[0]}-{parts[1]}"
+                except Exception:
+                    pass
+                
+                # Fallback to original device name if extraction fails
+                return device_name
+
+            # Apply the function with a more robust approach
             resp_df = resp_df.with_columns([
-                pl.col("device_name").map_elements(lambda x: extract_middle_part(x)).alias("device_name")
+                pl.col("device_name").map_elements(extract_or_use_device_name).alias("device_name")
             ])
             resp_df.write_csv("/tmp/normal_alerts_data.csv")
 
@@ -7252,7 +7321,7 @@ class GlobalAnalytics:
                     (SELECT COUNT(*) 
                     FROM alerts a 
                     WHERE a.device_name = h.bcu_number 
-                    AND a.interlock_name = 'MFM Data Changed'
+                    AND a.interlock_name = 'MFM factor Change'
                     AND DATE(a.created_at) = h.created_date) AS alert_count
                 FROM 
                     mfmfactor h
