@@ -964,7 +964,11 @@ Model IndentDryOut {
     Action=> get_dryout_report {
         dry_out_in_days list str
     }
-    
+
+    Action=> generate_dryout_group_data {
+        action str
+    }
+
      Config=> {
         access_key_mapping='bu,zone,region,sales_area,site_id:sap_id'
      }
