@@ -497,7 +497,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                         "indent_no", 
                         "terminal_plant_id",
                         dry_out_in_days, 
-                        "indent_status"
+                        "indent_status",
                         TRUE AS dried_out
                     FROM 
                         "alerts"
