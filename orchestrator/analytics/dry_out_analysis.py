@@ -219,7 +219,6 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
 
     return final_data
 
-
 async def get_filtered_location_data(bu, request_parameter, filters):
     """
     Fetch and filter location data for a given business unit (BU).
@@ -453,7 +452,6 @@ async def get_category_sync():
         conflict_columns=["DEALER_CODE"]
     )
 
-
 async def sync_carry_fwd_indent(insert_to_db: bool):
     conditions = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
     where_clause = []
@@ -558,7 +556,6 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
     for each_record in data.to_dict(orient="records"):
         await hpcl_ceg_model.CarryFwdIndentCreate(**each_record).create()
     return
-
 
 async def ro_not_in_ims():
     query = f"""SELECT DISTINCT a.rosapcode
@@ -829,7 +826,6 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     stats_resp = stats_resp.fillna("")
     return stats_resp.to_dict(orient='records')
 
-
 async def _get_on_hold_data(dry_out_in_days='1'):
     where_clause = {
         "a.interlock_name": ["Dry Out Each Indent Wise MainFlow"],
@@ -868,14 +864,12 @@ async def _get_on_hold_data(dry_out_in_days='1'):
     stats_resp = pd.DataFrame(stats_resp)
     return stats_resp.to_dict(orient='records')
 
-
 async def _get_pending_indents(dry_out_in_days='1'):
     where_clause = {
         "a.interlock_name": ["Dry Out Each Indent Wise MainFlow"],
         "a.progress_rate": ["3"],
         "a.dry_out_in_days": [dry_out_in_days]
     }
-
 
 async def constant_dryout_ros(days=7):
     now = datetime.datetime.now()
@@ -946,7 +940,6 @@ async def constant_dryout_ros(days=7):
     print(result.columns)
     return result.select(["rosapcode", "name"]).to_dicts()
 
-
 async def current_month_frequent_dryout_ros(data):
     datetime_condition = ""
     if data.start_date and data.end_date:
@@ -985,7 +978,6 @@ async def current_month_frequent_dryout_ros(data):
     )
 
     return dryout_resp
-
 
 async def current_month_frequent_drout_terminals(data):
     datetime_condition = ""
@@ -1532,7 +1524,6 @@ async def get_tt_counts(condition):
 
     return _dict
 
-
 async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     # Removing extra keys like all/_empty/* to mak sure all results appear in api response
     # Filtering cross filters
@@ -1593,3 +1584,38 @@ async def retail_tar(filters, cross_filters, drill_state="", time_grain="", resp
     if not df.empty:
         df['amount'] = df['amount'].astype(int)
     return df.to_dict(orient='records')
+
+async def get_dryout_aging_data():
+    query = f"""WITH distinct_alerts AS (
+                    SELECT DISTINCT ON (sap_id) sap_id, location_name, zone,
+                    indent_status, created_at, product_code, terminal_plant_id,
+                    dry_out_in_days
+                    FROM alerts
+                    WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND mark_as_false = true AND progress_rate = '1'
+                    ORDER BY sap_id, created_at ASC
+                )
+                SELECT *,
+                    CASE 
+                        WHEN created_at >= NOW() - INTERVAL '2 days' THEN '1 - 2 days'
+                        WHEN created_at >= NOW() - INTERVAL '7 days' AND created_at < NOW() - INTERVAL '2 days' THEN '3 - 7 days'
+                        WHEN created_at >= NOW() - INTERVAL '15 days' AND created_at < NOW() - INTERVAL '7 days' THEN '8 - 15 days'
+                        WHEN created_at < NOW() - INTERVAL '15 days' THEN 'More than 15 days'
+                    END AS age_category
+                FROM distinct_alerts;"""
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    resp = await function(
+        query=query
+    )
+    resp = pd.DataFrame(resp)
+    print("resp: ", resp)
+    resp.rename(columns={
+        "sap_id": "DEALER_CODE", "location_name": "LOCATION_NAME", "zone": "ZONE",
+        "indent_status": "INDENT_STATUS", "product_code": "PRODUCT_CODE",
+        "terminal_plant_id": "TERMINAL_PLANT_ID", "dry_out_in_days": "DRY_OUT_IN_DAYS"
+    }, inplace=True)
+    del resp['created_at']
+    return resp.to_dict(orient='records')
