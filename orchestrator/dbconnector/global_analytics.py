@@ -3629,6 +3629,7 @@ class GlobalAnalytics:
                 productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "site_area" '
             
+            print("productivity_zone_query_ :", productivity_zone_query_)
             resp = await function(query=productivity_zone_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
