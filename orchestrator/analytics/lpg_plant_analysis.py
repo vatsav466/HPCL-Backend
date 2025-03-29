@@ -55,6 +55,7 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     lpg_data = {"stock": 0, "current_inventory": 0,
                 "hpcl_sales": {"dom": 0, "non_dom": 0, "bulk": 0}, "omc_sales": {"dom": 0, "non_dom": 0, "bulk": 0},
                 "stock_transfers": {"dom": 0, "non_dom": 0, "bulk": 0},
+                "opening_stock": {"dom": 0, "non_dom": 0},
                 "tankage": {"total": 0, "not_in_ops": 0, "op_tankage": 0, "stock_percentage": 0},
                 "avg_sales": {"dom": 0, "non_dom": 0, "bulk": 0}, "days_cover": 0, "in_transit": 0}
 
@@ -74,7 +75,8 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     # Fetching required data from tibco
     hpcl_sales = await fetch_hpcl_sales(plants)
     omc_sales = await fetch_omc_sales(plants)
-    opening_stock, tank_capacity, operating_tankage = await fetch_opening_stock(plants)
+    opening_stock_dom, opening_stock_non_dom, operating_tankage = await fetch_opening_stock(plants)
+    opening_stock = opening_stock_dom + opening_stock_non_dom
     stock_transfer = await fetch_stock_transfer(plants)
     receipt_stock = await fetch_receipt_stock_transfer(plants)
 
@@ -88,6 +90,7 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     for key, value in stock_transfer.items():
         lpg_data['avg_sales'][key] += value
     dom_avg_sales, non_dom_avg_sales = await get_hpcl_average_sale(plants)
+    lpg_data['opening_stock'].update({"dom": dom_avg_sales, "non_dom": non_dom_avg_sales})
     lpg_data['avg_sales']['dom'] = dom_avg_sales
     lpg_data['avg_sales']['non_dom'] = non_dom_avg_sales
     lpg_data['hpcl_sales'].update(hpcl_sales)
@@ -98,9 +101,13 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     avg_sales = float(sum(list(lpg_data['avg_sales'].values())))
     lpg_data['current_inventory'] = round((float(opening_stock) + float(sum(list(receipt_stock.values()))) - avg_sales))
     lpg_data['days_cover'] = round(float(lpg_data['current_inventory']) / avg_sales) if avg_sales else 0
-    lpg_data['tankage']['total'] = tank_capacity
-    lpg_data['tankage']['stock_percentage'] = round(tank_capacity / (lpg_data['current_inventory'] * 100)) \
-        if lpg_data['current_inventory'] else 0
+    dom_days_cover = round(float((opening_stock_dom - dom_avg_sales) / dom_avg_sales)) if dom_avg_sales else 0
+    non_dom_days_cover = round(float((opening_stock_non_dom - non_dom_avg_sales) / non_dom_avg_sales)) \
+        if non_dom_avg_sales else 0
+    lpg_data['days_cover_stock'] = {"dom": dom_days_cover, "non_dom": non_dom_days_cover}
+    lpg_data['tankage']['total'] = 0
+    lpg_data['tankage']['op_tankage'] = operating_tankage
+    lpg_data['tankage']['stock_percentage'] = (opening_stock / operating_tankage) * 100
 
     for key in lpg_data:
         if isinstance(lpg_data[key], dict):
@@ -275,17 +282,15 @@ async def fetch_opening_stock(plants):
     plant_cond = ''
     if plants:
         in_clause_raw = ", ".join(f"'{value}'" for value in plants)
-        plant_cond = f" AND MAR.werks in ({in_clause_raw})"
+        plant_cond = f" AND plant in ({in_clause_raw})"
+    current_date = helpers.get_time_stamp_by_delta(urdhva_base.utilities.get_present_time(), days=1,
+                                                   with_month_start_day=False, date_time_format='%Y%m%d')
     # Opening Stock
-    query_open_stock = f"""
-select werks ,matnr,
-  sum(labst) / 1000 as Opening_Stock,
-  NVL(sum(TCAP.TANK_CAPACITY),0) / 1000 as Tank_Capacity
-  from CONN_ENT.ZISCV_NSDM_V_MARD_STG MAR 
-  inner join CONN_ENT.ZISCV_TANK_CAP_STG TCAP 
-  on MAR.werks = TCAP.plant and MAR.lgort = TCAP.storage_location 
-  where  MAR.matnr in ('0949036', '0949109', '0948064', '0948450', '0949000', '0948042', '0948149') {plant_cond}
-  group by werks ,matnr
+    query_open_stock = f"""select plant,valuation_type as val_type,sum(stock_quantity)/1000 QTY from 
+    CONN_ENT.ZMMCI_MATDOC_V1_STG WHERE POSTING_DATE_IN_THE_DOCUMENT between '20230601' and '{current_date}' and 
+    valuation_type in ('HPC_DOM', 'HPC_NDM') and plant like "2%" and 
+    (STORAGE_LOCATION <> '' and storage_location <> 'PINT') and MATERIAL_NUMBER ='0949000' {plant_cond} 
+    group by plant,valuation_type
 """
     tank_capacity_master_data = load_lpg_tank_capacity()
     if plants:
@@ -293,8 +298,10 @@ select werks ,matnr,
     operating_tankage = tank_capacity_master_data['OperatingTankage'].sum()
 
     resp = await fetch_from_tibco(query_open_stock)
-    return (sum([float(rec['Opening_Stock']) for rec in resp]), sum([float(rec['Tank_Capacity']) for rec in resp]),
-            operating_tankage)
+    df = pd.DataFrame(resp)
+    df = df[['val_type', 'QTY']]
+    dom, non_dom = df[df['val_type'] == 'HPC_DOM'].sum()['QTY'], df[df['val_type'] == 'HPC_NDM'].sum()['QTY']
+    return round(float(dom)), round(float(non_dom)), round(operating_tankage)
 
 
 async def get_hpcl_average_sale(plants):
