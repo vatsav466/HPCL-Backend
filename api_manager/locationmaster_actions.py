@@ -238,6 +238,4 @@ async def locationmaster_get_sod_engineering_stats(data: Locationmaster_Get_Sod_
 async def locationmaster_location_command_control(data: Locationmaster_Location_Command_ControlParams):
     if data.sap_id not in ['1128']:
         return False, "Location not onboarded"
-    if data.action not in ['gantry_shutdown']:
-        return False, "Command not allowed"
     return await tas_command_control.publish_command(data.sap_id, data.action, "1")
