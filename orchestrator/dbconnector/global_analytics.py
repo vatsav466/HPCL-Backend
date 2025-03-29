@@ -3397,12 +3397,12 @@ class GlobalAnalytics:
             financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
 
             if not "," in drill_state:
-                if "financial_year" in card_query.lower().split("where")[-1] and not "Month" in card_query.lower().split("where")[-1]:
+                if "financial_year" in card_query.lower().split("where")[-1] and not "month" in card_query.lower().split("where")[-1]:
                     card_query += f'\'{financial_year}\' '
-                if "financial_year" in card_query.lower().split("where")[-1] and "Month" in card_query.lower().split("where")[-1]:
+                if "financial_year" in card_query.lower().split("where")[-1] and "month" in card_query.lower().split("where")[-1]:
                     card_query += f'\'{current_month}\' '
             else:
-                if "financial_year" in drill_state or "Month" in drill_state:
+                if "financial_year" in drill_state or "month" in drill_state.lower():
                     financial_year_or_month = drill_state.split(",")[-1].split("=")[-1].replace("'","")
                     card_query += f'\'{financial_year_or_month}\' '
             print("card_query ---->", card_query)
