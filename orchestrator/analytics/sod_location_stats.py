@@ -50,8 +50,23 @@ async def generate_sod_engineering_location_stats(sap_id):
         # Convert count to numeric
         df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0).astype(int)
 
+        # Add hardcoded status entries
+        hardcoded_status = [
+            {"id": "lrca", "name": "LRCA", "status": "standby"},
+            {"id": "lrcb", "name": "LRCB", "status": "online"},
+            {"id": "safety_plc_a", "name": "PLC A", "status": "online"},
+            {"id": "safety_plc_b", "name": "PLC B", "status": "standby"},
+            {"id": "process_plc_a", "name": "PLC A", "status": "online"},
+            {"id": "process_plc_b", "name": "PLC B", "status": "standby"}
+        ]
+
         # Process each device type
         result = []
+        
+        # First add the hardcoded status entries
+        result.extend(hardcoded_status)
+        
+        # Then process the device types from the data
         for _, row in df.iterrows():
             device_name = row["device_type"]
             total = row["count"]
