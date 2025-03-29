@@ -17,6 +17,7 @@ def load_lpg_tank_capacity():
     """Loading tank operating capacity and daily average sales data from master sheet provided by HPCL"""
     file_path = f"{os.path.dirname(helpers.__file__)}/../orchestrator/masterdata/lpg_tank_capacity.xlsx"
     capacity_data = pd.read_excel(file_path)
+    capacity_data['LPGPlantCode'] = capacity_data['LPGPlantCode'].astype(str)
     # capacity_data = capacity_data[capacity_data['IsSelected'] == 'Y']
     return capacity_data
 
@@ -62,7 +63,7 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     if not zones:
         zones = ['SCZ', 'SZ']
     plants = [cond['value'] if cond['value'] else cond.get('val') for cond
-              in filters if cond['key'].strip('"') == 'plant_name' and( cond['value'] or cond.get('val'))]
+              in filters if cond['key'].strip('"') == 'plant_name' and (cond['value'] or cond.get('val'))]
     filters = [cond for cond in filters if cond['key'].strip('"') not in ['zone_name', 'sap_id', 'plant_name']]
     if not plants and zones:
         in_clause_raw = ", ".join(f"'{value}'" for value in zones)
@@ -86,7 +87,7 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
         lpg_data['avg_sales'][key] += value
     for key, value in stock_transfer.items():
         lpg_data['avg_sales'][key] += value
-    dom_avg_sales, non_dom_avg_sales = get_hpcl_average_sale(plants)
+    dom_avg_sales, non_dom_avg_sales = await get_hpcl_average_sale(plants)
     lpg_data['avg_sales']['dom'] = dom_avg_sales
     lpg_data['avg_sales']['non_dom'] = non_dom_avg_sales
     lpg_data['hpcl_sales'].update(hpcl_sales)

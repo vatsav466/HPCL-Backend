@@ -299,6 +299,11 @@ Model LocationMaster {
         sap_id str
     }
 
+    Action=> location_command_control {
+        sap_id str
+        action str
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,region,sales_area,sap_id'
