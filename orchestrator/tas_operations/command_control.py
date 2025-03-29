@@ -2,8 +2,14 @@ import urdhva_base
 import aio_pika
 import json
 
+command_mapping = {
+    "gantry_shutdown": "SmartLoad-Dual.BC-501A.PERMISSIVE_FROM_DNC"
+}
+
 
 async def publish_command(sap_id, command, value):
+    if not command_mapping.get(command):
+        return False, "Invalid inputs"
     connection = await aio_pika.connect_robust(
         host=urdhva_base.settings.rabbitmq_host,
         port=urdhva_base.settings.rabbitmq_port,
@@ -13,7 +19,7 @@ async def publish_command(sap_id, command, value):
     )
     message = {
         "command": "write",
-        "sensor_tag": command,
+        "sensor_tag": command_mapping.get(command, command),
         "value": f"{value}"
     }
     async with connection:
