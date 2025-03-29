@@ -3,7 +3,9 @@ import aio_pika
 import json
 
 command_mapping = {
-    "gantry_shutdown": "SmartLoad-Dual.BC-501A.PERMISSIVE_FROM_DNC"
+    "gantry_shutdown": {"tag": "SmartLoad-Dual.BC-501A.PERMISSIVE_FROM_DNC", "value": 1},
+    "gantry_start": {"tag": "SmartLoad-Dual.BC-501A.PERMISSIVE_FROM_DNC", "value": 0},
+
 }
 
 
@@ -19,8 +21,8 @@ async def publish_command(sap_id, command, value):
     )
     message = {
         "command": "write",
-        "sensor_tag": command_mapping.get(command, command),
-        "value": f"{value}"
+        "sensor_tag": command_mapping[command]['tag'],
+        "value": f"{command_mapping[command]['value']}"
     }
     async with connection:
         channel = await connection.channel()
