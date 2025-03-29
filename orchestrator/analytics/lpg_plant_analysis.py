@@ -1,4 +1,5 @@
 import urdhva_base
+import os
 import pandas as pd
 import hpcl_ceg_model
 import mysql.connector
@@ -10,6 +11,14 @@ import orchestrator.dbconnector.credential_loader as credential_loader
 material_code_domestic = ['0949036', '0949109']
 material_code_non_domestic = ['0948064', '0948450', '0948042', '0948149']
 material_code_bulk = ['0949000']
+
+
+def load_lpg_tank_capacity():
+    """Loading tank operating capacity and daily average sales data from master sheet provided by HPCL"""
+    file_path = f"{os.path.dirname(helpers.__file__)}/../orchestrator/masterdata/lpg_tank_capacity.xlsx"
+    capacity_data = pd.read_excel(file_path)
+    # capacity_data = capacity_data[capacity_data['IsSelected'] == 'Y']
+    return capacity_data
 
 
 async def fetch_from_tibco(query):
@@ -50,6 +59,8 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
 
     zones = [cond['value'] if cond['value'] else cond.get('val') for cond in filters
              if cond['key'].strip('"') == 'zone_name' and (cond['value'] or cond.get('val'))]
+    if not zones:
+        zones = ['SCZ', 'SZ']
     plants = [cond['value'] if cond['value'] else cond.get('val') for cond
               in filters if cond['key'].strip('"') == 'plant_name' and( cond['value'] or cond.get('val'))]
     filters = [cond for cond in filters if cond['key'].strip('"') not in ['zone_name', 'sap_id', 'plant_name']]
@@ -62,7 +73,7 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     # Fetching required data from tibco
     hpcl_sales = await fetch_hpcl_sales(plants)
     omc_sales = await fetch_omc_sales(plants)
-    opening_stock, tank_capacity = await fetch_opening_stock(plants)
+    opening_stock, tank_capacity, operating_tankage = await fetch_opening_stock(plants)
     stock_transfer = await fetch_stock_transfer(plants)
     receipt_stock = await fetch_receipt_stock_transfer(plants)
 
@@ -75,6 +86,9 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
         lpg_data['avg_sales'][key] += value
     for key, value in stock_transfer.items():
         lpg_data['avg_sales'][key] += value
+    dom_avg_sales, non_dom_avg_sales = get_hpcl_average_sale(plants)
+    lpg_data['avg_sales']['dom'] = dom_avg_sales
+    lpg_data['avg_sales']['non_dom'] = non_dom_avg_sales
     lpg_data['hpcl_sales'].update(hpcl_sales)
     lpg_data['omc_sales'].update(omc_sales)
     lpg_data['stock_transfers'].update(stock_transfer)
@@ -272,5 +286,25 @@ select werks ,matnr,
   where  MAR.matnr in ('0949036', '0949109', '0948064', '0948450', '0949000', '0948042', '0948149') {plant_cond}
   group by werks ,matnr
 """
+    tank_capacity_master_data = load_lpg_tank_capacity()
+    if plants:
+        tank_capacity_master_data = tank_capacity_master_data[tank_capacity_master_data['LPGPlantCode'].isin(plants)]
+    operating_tankage = tank_capacity_master_data['OperatingTankage'].sum()
+
     resp = await fetch_from_tibco(query_open_stock)
-    return sum([float(rec['Opening_Stock']) for rec in resp]), sum([float(rec['Tank_Capacity']) for rec in resp])
+    return (sum([float(rec['Opening_Stock']) for rec in resp]), sum([float(rec['Tank_Capacity']) for rec in resp]),
+            operating_tankage)
+
+
+async def get_hpcl_average_sale(plants):
+    """
+        For fetching average stock data for plants provided by HPCL
+        :param plants:
+        :return:
+    """
+    tank_capacity_master_data = load_lpg_tank_capacity()
+    if plants:
+        tank_capacity_master_data = tank_capacity_master_data[tank_capacity_master_data['LPGPlantCode'].isin(plants)]
+    dom, non_dom = (tank_capacity_master_data['DAILY_AVERAGE_SALES_DOM'].sum(),
+                    tank_capacity_master_data['DAILY_AVERAGE_SALES_NonDOM'].sum())
+    return dom, non_dom
