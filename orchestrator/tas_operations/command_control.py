@@ -10,6 +10,7 @@ command_mapping = {
 
 
 async def publish_command(sap_id, command, value):
+    return False, "Operation not allowed, Please contact support"
     if not command_mapping.get(command):
         return False, "Invalid inputs"
     connection = await aio_pika.connect_robust(
