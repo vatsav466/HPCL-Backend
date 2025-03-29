@@ -3381,11 +3381,30 @@ class GlobalAnalytics:
         
     @staticmethod
     async def card_chart(filters, cross_filters, drill_state):
-        try:
+        try:            
             Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
             Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             card_query = lpg_plant_queries.lpg_plant_query.get(drill_state)
+            
+            today = datetime.now()
+            current_month = datetime.now().strftime("%B") # format : January, February
+            if today.month < 4:
+                start_year = today.year - 1
+            else:
+                start_year = today.year
+            end_year = start_year + 1
+            financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
+
+            if not "," in drill_state:
+                if "financial_year" in card_query.lower().split("where")[-1]:
+                    card_query += f'\'{financial_year}\' '
+                if "financial_year" in card_query.lower().split("where")[-1] and "Month" in card_query.lower().split("where")[-1]:
+                    card_query += f'\'{current_month}\' '
+            else:
+                if "financial_year" in drill_state or "Month" in drill_state:
+                    financial_year_or_month = drill_state.split(",")[-1].split("=")[-1].replace("'","")
+                    card_query += f'\'{financial_year_or_month}\' '
             
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]

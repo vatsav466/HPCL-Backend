@@ -22,7 +22,8 @@ zone_map = {
     "NW": "NWZ",
     "COR": "COR",
     "ECZ": "ECZ",
-    "SWZ": "SWZ"
+    "SWZ": "SWZ",
+    "CEN": "CEN"
 }
 # lpg_query = f""" SELECT ZE.EMPLOYEE_NUMBER as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL, 
 #                     ZE.EMP_BU_CODE,ZE.PLANT_CODE,ZE.PLANT_DESC, ZR.ROLE_NAME as ROLE_NAME, ZR.LOCATION as LOCATION, EPL.ZZONE as zone
