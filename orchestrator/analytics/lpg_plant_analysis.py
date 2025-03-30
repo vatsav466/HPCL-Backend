@@ -73,8 +73,8 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
 
     zones = [cond['value'] if cond['value'] else cond.get('val') for cond in filters
              if cond['key'].strip('"') == 'zone_name' and (cond['value'] or cond.get('val'))]
-    if not zones:
-        zones = ['SCZ', 'SZ']
+    # if not zones:
+    #     zones = ['SCZ', 'SZ']
     plants = [cond['value'] if cond['value'] else cond.get('val') for cond
               in filters if cond['key'].strip('"') == 'plant_name' and (cond['value'] or cond.get('val'))]
     filters = [cond for cond in filters if cond['key'].strip('"') not in ['zone_name', 'sap_id', 'plant_name']]
@@ -116,10 +116,11 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     dom_days_cover = round(float((opening_stock_dom - dom_avg_sales) / dom_avg_sales)) if dom_avg_sales else 0
     non_dom_days_cover = round(float((opening_stock_non_dom - non_dom_avg_sales) / non_dom_avg_sales)) \
         if non_dom_avg_sales else 0
-    lpg_data['days_cover_stock'] = {"dom": dom_days_cover, "non_dom": non_dom_days_cover}
+    lpg_data['days_cover_stock'] = {"dom": dom_days_cover if dom_days_cover > 0 else 0,
+                                    "non_dom": non_dom_days_cover if non_dom_days_cover > 0 else 0}
     lpg_data['tankage']['total'] = 0
     lpg_data['tankage']['op_tankage'] = operating_tankage
-    lpg_data['tankage']['stock_percentage'] = (opening_stock / operating_tankage) * 100
+    lpg_data['tankage']['stock_percentage'] = (opening_stock / operating_tankage) * 100 if operating_tankage else 0
 
     for key in lpg_data:
         if isinstance(lpg_data[key], dict):
@@ -323,6 +324,25 @@ async def get_hpcl_average_sale(plants):
         :param plants:
         :return:
     """
+    plant_cond = ''
+    if plants:
+        in_clause_raw = ", ".join(f"'{value}'" for value in plants)
+        plant_cond = f" AND supply_loc in ({in_clause_raw})"
+    query_avg_sales = f"""select supply_loc,material_grp,sum(net_weight)/(1000*7) as QTY from CONN_ENT.ZSDCV_AY_INV3_STG 
+    where sales_org='2000' and  material_grp in ('002','003') 
+and DATE_FORMAT( invoice_date,'%Y%m%d') between date_sub(CURRENT_DATE,interval 7 day) 
+and DATE_FORMAT(date_sub(CURRENT_DATE,interval 1 day) ,'%Y%m%d')
+and distribution_channel in ('11','12','13','16') {plant_cond}
+group by supply_loc,material_grp
+    """
+    resp = await fetch_from_tibco(query_avg_sales)
+    df = pd.DataFrame(resp)
+    if df.empty:
+        return 0, 0
+    df['material_grp'] = df['material_grp'].astype(str)
+    df = df[['material_grp', 'QTY']]
+    dom, non_dom = df[df['material_grp'] == '002'].sum()['QTY'], df[df['material_grp'] == '003'].sum()['QTY']
+    return round(float(dom)), round(float(non_dom))
     tank_capacity_master_data = load_lpg_tank_capacity()
     if plants:
         tank_capacity_master_data = tank_capacity_master_data[tank_capacity_master_data['LPGPlantCode'].isin(plants)]
