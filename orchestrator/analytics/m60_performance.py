@@ -177,6 +177,12 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
+    '''
+    if 'fiscal_year' in [x['key'].strip('"') for x in filters]:
+        if 'YTD' in [x['key'].strip('"') for x in filters] or 'YTDPM' in [x['key'].strip('"') for x in filters]:
+            if len(cross_filters) == 1:
+                filters = [x for x in filters if x['key'].strip('"') != 'fiscal_year']
+    '''
     resp_level = ''
     if resp_format == 'summary':
         resp_level = 'summary'
@@ -284,6 +290,17 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             end_date = helpers.get_time_stamp_by_delta(end_date_, days=1, with_month_start_day=False,
                                                        date_time_format="%Y-%m-%d")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
+            todays_date = str(datetime.date.today())
+            
+            print("todays_date",todays_date)
+            if todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4':
+                start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+                end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+                start_date = start_date.replace(year=start_date.year - 1).strftime("%Y-%m-%d")
+                end_date = end_date.replace(year=end_date.year).strftime("%Y-%m-%d")
+                print("latest start",start_date)
+                print("latest end",end_date)
+                
             # For History
             start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
@@ -368,6 +385,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     if condition['key'].strip('"') == 'resp_format':
                         if condition['value'] != 'heat_map':
                             cross_filters.append(condition)
+                    if 'fiscal_year' in [x['key'].strip('"') for x in filters]:
+                        if 'YTD' in [x['key'].strip('"') for x in filters] or 'YTDPM' in [x['key'].strip('"') for x in filters]:
+                            continue
                     else:
                         cross_filters.append(condition)
 
