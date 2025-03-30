@@ -3381,11 +3381,35 @@ class GlobalAnalytics:
         
     @staticmethod
     async def card_chart(filters, cross_filters, drill_state):
-        try:
+        try:            
             Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
             Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-            card_query = lpg_plant_queries.lpg_plant_query.get(drill_state)
+            card_query = lpg_plant_queries.lpg_plant_query.get(drill_state.split(",")[0])
+            
+            today = datetime.now()
+            current_month = datetime.now().strftime("%B") # format : January, February
+            if today.month < 4:
+                start_year = today.year - 1
+            else:
+                start_year = today.year
+            end_year = start_year + 1
+            financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
+
+            if not "," in drill_state:
+                if "financial_year" in card_query.lower().split("where")[-1] and not "month" in card_query.lower().split("where")[-1]:
+                    card_query += f'\'{financial_year}\' '
+                if "financial_year" in card_query.lower().split("where")[-1] and "month" in card_query.lower().split("where")[-1]:
+                    card_query += f'\'{current_month}\' '
+            else:
+                if "financial_year" in drill_state or "month" in drill_state.lower():
+                    financial_year_or_month = drill_state.split(",")[-1].split("=")[-1].replace("'","")
+                    card_query += f'\'{financial_year_or_month}\' '
+            print("card_query ---->", card_query)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            card_query =  await widget_actions.WidgetActions.apply_filter_drilldown(card_query, access_filters, drill_state)
+            
             resp = await function(query=card_query)
             resp = pd.DataFrame(resp)
             return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
@@ -3624,6 +3648,7 @@ class GlobalAnalytics:
                 productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "site_area" '
             
+            print("productivity_zone_query_ :", productivity_zone_query_)
             resp = await function(query=productivity_zone_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
@@ -4303,8 +4328,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_month = datetime.now().strftime("%Y-%m")
-        current_month = current_month + "-01"
+        current_date = datetime.now().strftime("%Y-%m-%d")
 
         cs_resp_ = lpg_plant_queries.lpg_plant_query.get("cs_query")
         pt_resp_ = lpg_plant_queries.lpg_plant_query.get("pt_query")
@@ -4336,26 +4360,44 @@ class GlobalAnalytics:
                 if "process_date" in conditions:
                     common_filter = f''' AND "zone" IS NOT NULL '''                    
                 else:
-                    common_filter = f''' AND CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
+                    common_filter = f''' AND DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
             else:
                 cs_resp_ += 'WHERE '
                 pt_resp_ += ' WHERE '
                 gd_resp_ += ' WHERE '
-                common_filter = f''' CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
+                common_filter = f''' DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
+            
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
+            cs_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cs_resp_, access_filters, drill_state)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgPtRejections.get_clause_conditions(formated=True)]
+            pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgGdRejections.get_clause_conditions(formated=True)]
+            gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)            
 
             cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
             pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
             gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date","rejection_type"'
-        else:
+        else:            
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsRejections.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
+            cs_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cs_resp_, access_filters, drill_state)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgPtRejections.get_clause_conditions(formated=True)]
+            pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgGdRejections.get_clause_conditions(formated=True)]
+            gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)
+            
             cs_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(cs_resp_, access_filters, drill_state)
             pt_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(pt_resp_, access_filters, drill_state)
             gd_resp_ =  await widget_actions.WidgetActions.apply_filter_drilldown(gd_resp_, access_filters, drill_state)
             if not "where" in cs_resp_.lower():
-                common_filter = f''' WHERE CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
+                common_filter = f''' WHERE DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
             else:
-                common_filter = f''' AND CAST("process_date" AS DATE) >= '{current_month}' AND "zone" IS NOT NULL '''
+                common_filter = f''' AND DATE("process_date") = '{current_date}' AND "zone" IS NOT NULL '''
             cs_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
             pt_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'
             gd_resp_ += common_filter + ' GROUP BY "zone", "plant", "process_date"'

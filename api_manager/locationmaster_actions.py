@@ -11,6 +11,7 @@ import urdhva_base.redispool
 from fastapi.responses import FileResponse
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.analytics.sod_location_stats as sod_location_stats
+import orchestrator.tas_operations.command_control as tas_command_control
 import orchestrator.masterdata.location_master_upload as location_master_upload
 
 router = fastapi.APIRouter(prefix='/locationmaster')
@@ -182,7 +183,6 @@ async def locationmaster_upload_tags_data(upload_file: fastapi.UploadFile = fast
         return {"status": False, "message": f"An error occurred: {e}"}
     
 
-
 # Action update_location_master
 @router.post('/update_location_master', tags=['LocationMaster'])
 async def locationmaster_update_location_master(request: fastapi.Request, data: Locationmaster_Update_Location_MasterParams):
@@ -231,3 +231,11 @@ async def locationmaster_update_location_master(request: fastapi.Request, data: 
 @router.post('/get_sod_engineering_stats', tags=['LocationMaster'])
 async def locationmaster_get_sod_engineering_stats(data: Locationmaster_Get_Sod_Engineering_StatsParams):
     return await sod_location_stats.generate_sod_engineering_location_stats(data.sap_id)
+
+
+# Action location_command_control
+@router.post('/location_command_control', tags=['LocationMaster'])
+async def locationmaster_location_command_control(data: Locationmaster_Location_Command_ControlParams):
+    if data.sap_id not in ['1128']:
+        return False, "Location not onboarded"
+    return await tas_command_control.publish_command(data.sap_id, data.action, "1")
