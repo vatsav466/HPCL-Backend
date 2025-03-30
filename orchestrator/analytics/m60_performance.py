@@ -152,21 +152,33 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
             for key in [rec['key'] for rec in cross_filters]:
                 if key in Lubes_Filters and Lubes_Filters.index(key) > index:
                     index = Lubes_Filters.index(key)
-            group_by_filter = [Lubes_Filters[index + 1]]
+            if index>len(Lubes_Filters):
+                group_by_filter = [Lubes_Filters[index + 1]]
+            else:
+                group_by_filter = [Lubes_Filters[index-1]]
+            return group_by_filter
+            #group_by_filter = [Lubes_Filters[index + 1]]
         
         
         if ('Aviation' in [x['value'].strip('"') for x in cross_filters] or 'PETCHEM' in [x['value'].strip('"') for x in cross_filters] or 'GAS' in [x['value'].strip('"') for x in cross_filters]):
             for key in [rec['key'] for rec in cross_filters]:          
                 if key in APG_Filters and APG_Filters.index(key) > index:
                     index = APG_Filters.index(key)
-            group_by_filter = [APG_Filters[index + 1]]
-        
+            if index>len(APG_Filters):
+                group_by_filter = [APG_Filters[index + 1]]
+            else:
+                group_by_filter = [APG_Filters[index-1]]
+            return group_by_filter
         
         else:
             for key in [rec['key'] for rec in cross_filters]:
                 if key in Base_Filters and Base_Filters.index(key) > index:
                     index = Base_Filters.index(key)
             group_by_filter = [Base_Filters[index + 1]]
+            #if index>len(Base_Filters):
+            #    group_by_filter = [Base_Filters[index + 1]]
+            #else:
+            #    group_by_filter = [Base_Filters[index-1]]
     elif drill_state:
         if not drill_state.startswith('"'):
             drill_state = f'"{drill_state}"'
