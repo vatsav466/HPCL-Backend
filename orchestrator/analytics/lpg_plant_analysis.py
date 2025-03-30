@@ -90,7 +90,7 @@ async def lpg_plant_analysis(filters, cross_filters, drill_state="", time_grain=
     for key, value in stock_transfer.items():
         lpg_data['avg_sales'][key] += value
     dom_avg_sales, non_dom_avg_sales = await get_hpcl_average_sale(plants)
-    lpg_data['opening_stock'].update({"dom": dom_avg_sales, "non_dom": non_dom_avg_sales})
+    lpg_data['opening_stock'].update({"dom": opening_stock_dom, "non_dom": opening_stock_non_dom})
     lpg_data['avg_sales']['dom'] = dom_avg_sales
     lpg_data['avg_sales']['non_dom'] = non_dom_avg_sales
     lpg_data['hpcl_sales'].update(hpcl_sales)
