@@ -22,6 +22,18 @@ def load_lpg_tank_capacity():
     return capacity_data
 
 
+def load_opening_stock_from_csv(plants):
+    """Loading opening stock from csv file"""
+    file_path = f"{os.path.dirname(helpers.__file__)}/../orchestrator/masterdata/lpgintransit.csv"
+    df = pd.read_csv(file_path)
+    df['plant'] = df['plant'].astype(str)
+    if plants:
+        df = df[df['plant'].isin([f"{plant}" for plant in plants])]
+    df = df[['valuation_type', 'QTY']]
+    dom, non_dom = df[df['valuation_type'] == 'HPC_DOM'].sum()['QTY'], df[df['valuation_type'] == 'HPC_NDM'].sum()['QTY']
+    return round(float(dom)), round(float(non_dom))
+
+
 async def fetch_from_tibco(query):
     # For fetching data from Tibco, Using MYSQL interface
     creds = credential_loader.get_credentials('TIBCO')
@@ -289,19 +301,20 @@ async def fetch_opening_stock(plants):
     query_open_stock = f"""select plant,valuation_type as val_type,sum(stock_quantity)/1000 QTY from 
     CONN_ENT.ZMMCI_MATDOC_V1_STG WHERE POSTING_DATE_IN_THE_DOCUMENT between '20230601' and '{current_date}' and 
     valuation_type in ('HPC_DOM', 'HPC_NDM') and plant like "2%" and 
-    (STORAGE_LOCATION <> '' and storage_location <> 'PINT') and MATERIAL_NUMBER ='0949000' {plant_cond} 
+    (STORAGE_LOCATION <> '' and STORAGE_LOCATION <> 'PINT') and MATERIAL_NUMBER ='0949000' {plant_cond} 
     group by plant,valuation_type
 """
     tank_capacity_master_data = load_lpg_tank_capacity()
     if plants:
         tank_capacity_master_data = tank_capacity_master_data[tank_capacity_master_data['LPGPlantCode'].isin(plants)]
     operating_tankage = tank_capacity_master_data['OperatingTankage'].sum()
-
-    resp = await fetch_from_tibco(query_open_stock)
-    df = pd.DataFrame(resp)
-    df = df[['val_type', 'QTY']]
-    dom, non_dom = df[df['val_type'] == 'HPC_DOM'].sum()['QTY'], df[df['val_type'] == 'HPC_NDM'].sum()['QTY']
+    dom, non_dom = load_opening_stock_from_csv(plants)
     return round(float(dom)), round(float(non_dom)), round(operating_tankage)
+    # resp = await fetch_from_tibco(query_open_stock)
+    # df = pd.DataFrame(resp)
+    # df = df[['val_type', 'QTY']]
+    # dom, non_dom = df[df['val_type'] == 'HPC_DOM'].sum()['QTY'], df[df['val_type'] == 'HPC_NDM'].sum()['QTY']
+    # return round(float(dom)), round(float(non_dom)), round(operating_tankage)
 
 
 async def get_hpcl_average_sale(plants):
