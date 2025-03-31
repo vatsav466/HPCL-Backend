@@ -26,7 +26,7 @@ req_keys = {
 }
 
 
-async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False):
+async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False, location_onboard=False):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -121,7 +121,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
     if bu in ["TAS", "LPG"]:
         if bu == "TAS":
             print("bu_data: ", bu_data)
-            bu_data = bu_data[bu_data['location_onboard'] == True]
+            bu_data = bu_data[bu_data['location_onboard'] == location_onboard]
         for rec in bu_data.to_dict(orient='records'):
             skip_record = False
             if key_mapping:
