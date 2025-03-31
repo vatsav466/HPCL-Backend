@@ -119,9 +119,13 @@ class LPGCDCMSActions:
         financial_year = f"{start_year}-{end_year}"
         prev_financial_year = f"{prev_start_year}-{prev_end_year}"
         
+        _fy = None
         _filters = []
         if cross_filters:
             for filter in cross_filters:
+                if "financial_year" in f"{filter.key}":
+                    _fy = f"{filter.value}"
+                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -142,16 +146,30 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_sales_comparision_query_ += ' WHERE '
                 lpg_cdcms_sales_comparision_query_ += ' AND '.join(conditions)
-            lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+            if _fy:
+                start_year, end_year = _fy.split("-")
+                prev_financial_year = f"{int(start_year) - 1}-{start_year}"
+                lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(_fy)}\', \'{str(prev_financial_year)}\')'
+            else:
+                lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
             lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Quarter", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_sales_comparision_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_sales_comparision_query_, access_filters, drill_state)
-            if "where" not in lpg_cdcms_sales_comparision_query_.lower():   
+            if "where" not in lpg_cdcms_sales_comparision_query_.lower() and not _fy:   
                 lpg_cdcms_sales_comparision_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+            elif "where" not in lpg_cdcms_sales_comparision_query_.lower() and _fy:
+                start_year, end_year = _fy.split("-")
+                prev_financial_year = f"{int(start_year) - 1}-{start_year}"
+                lpg_cdcms_sales_comparision_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(_fy)}\', \'{str(prev_financial_year)}\')'
             else:
-                lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+                if _fy:
+                    start_year, end_year = _fy.split("-")
+                    prev_financial_year = f"{int(start_year) - 1}-{start_year}"
+                    lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(_fy)}\', \'{str(prev_financial_year)}\')'
+                else:
+                    lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
             lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Quarter", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
             resp = await function(query=lpg_cdcms_sales_comparision_query_)
             # Convert the response to a DataFrame for further processing
