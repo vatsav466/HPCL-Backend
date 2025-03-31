@@ -29,6 +29,7 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
     Returns:
     - dict: Status message indicating the success of the data submission.
     """
+    return True, "Success"
     logger.info(f"Received CRIS data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
 
     if isinstance(data.data, list) and len(data.data) > 0:
