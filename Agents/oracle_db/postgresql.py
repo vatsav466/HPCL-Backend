@@ -886,7 +886,15 @@ class Postgresql:
                                 current_total_count != latest_total_count):
                                 insert_record = True
 
-                            current_time_obj = datetime.fromisoformat(record.get('date_time'))
+                            current_time_raw = record.get('date_time')
+
+                            if isinstance(current_time_raw, str):
+                                current_time_obj = datetime.fromisoformat(current_time_raw)
+                            elif isinstance(current_time_raw, datetime):
+                                current_time_obj = current_time_raw  
+                            else:
+                                current_time_obj = None  # Handle missing or invalid data gracefully
+
                             
                             if latest_time and (current_time_obj - latest_time).total_seconds() > 3600:
                                 insert_record = True
