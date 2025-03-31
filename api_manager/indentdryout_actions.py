@@ -671,10 +671,10 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "Indent Not Raised", "value": indent_not_raised_count, "serial": 29,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "< 0 Rs", "value": tar_analysis.get("less_1_cr", 0), "serial": 30,
+            "section": "0 to 25 Rs Lakhs", "value": tar_analysis.get("less_1_cr", 0), "serial": 30,
             "condition": "=", "group": "tar_analysis"
         }, {
-            "section": "0 to 50 Rs Lakhs", "value": tar_analysis.get("less_2_cr", 0), "serial": 31,
+            "section": "25 to 50 Rs Lakhs", "value": tar_analysis.get("less_2_cr", 0), "serial": 31,
             "condition": "=", "group": "tar_analysis"
         }, {
             "section": "50 to 75 Rs Lakhs", "value": tar_analysis.get("less_5_cr", 0), "serial": 32,
