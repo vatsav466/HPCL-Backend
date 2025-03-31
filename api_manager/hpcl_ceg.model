@@ -1957,14 +1957,14 @@ Model PerformanceIndex {
     }
 }
 
-Model PerformanceScoreResults {
+Model PerformanceScoreResults internal {
     name str
     score float
     weightage float
     module str
 }
 
-Model PerformanceScoreCategory {
+Model PerformanceScoreCategory internal {
     name str
     score float
     weightage float

@@ -5587,98 +5587,18 @@ class Performanceindex_Get_Pi_Score_By_CategoryParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
-class PerformanceScoreResultsSchema(UrdhvaPostgresBase):
-    __tablename__ = 'performance_score_results'
-    
-    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    weightage: Mapped[float] = mapped_column("weightage", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    module: Mapped[str] = mapped_column("module", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-
-
-class PerformanceScoreResultsCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'performance_score_results'
-    
+class PerformanceScoreResultsCreate(pydantic.BaseModel):
     name: str
     score: float
     weightage: float
     module: str
 
-    class Config:
-        collection_name = 'data_flow'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        schema_class = PerformanceScoreResultsSchema
-        upsert_keys = []
 
-
-class PerformanceScoreResults(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'performance_score_results'
-    
-    name: typing.Optional[str] | None = None
-    score: typing.Optional[float] | None = None
-    weightage: typing.Optional[float] | None = None
-    module: typing.Optional[str] | None = None
-
-    class Config:
-        collection_name = 'data_flow'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        schema_class = PerformanceScoreResultsSchema
-        upsert_keys = []
-
-
-class PerformanceScoreResultsGetResp(pydantic.BaseModel):
-    data: typing.List[PerformanceScoreResults]
-    total: int = pydantic.Field(0)
-    count: int = pydantic.Field(0)
-
-
-class PerformanceScoreCategorySchema(UrdhvaPostgresBase):
-    __tablename__ = 'performance_score_category'
-    
-    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    weightage: Mapped[float] = mapped_column("weightage", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    results: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("results", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
-
-
-class PerformanceScoreCategoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
-    __tablename__ = 'performance_score_category'
-    
+class PerformanceScoreCategoryCreate(pydantic.BaseModel):
     name: str
     score: float
     weightage: float
-    results: typing.Optional[typing.List[PerformanceScoreResults]] | None = None
-
-    class Config:
-        collection_name = 'data_flow'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        schema_class = PerformanceScoreCategorySchema
-        upsert_keys = []
-
-
-class PerformanceScoreCategory(urdhva_base.postgresmodel.PostgresModel):
-    __tablename__ = 'performance_score_category'
-    
-    name: typing.Optional[str] | None = None
-    score: typing.Optional[float] | None = None
-    weightage: typing.Optional[float] | None = None
-    results: typing.Optional[typing.List[PerformanceScoreResults]] | None = None
-
-    class Config:
-        collection_name = 'data_flow'
-        if urdhva_base.settings.disable_api_extra_inputs:
-            extra = "forbid"  # Disallow extra fields
-        schema_class = PerformanceScoreCategorySchema
-        upsert_keys = []
-
-
-class PerformanceScoreCategoryGetResp(pydantic.BaseModel):
-    data: typing.List[PerformanceScoreCategory]
-    total: int = pydantic.Field(0)
-    count: int = pydantic.Field(0)
+    results: typing.Optional[typing.List[PerformanceScoreResultsCreate]] | None = None
 
 
 class PerformanceScoreSchema(UrdhvaPostgresBase):
@@ -5710,7 +5630,7 @@ class PerformanceScoreCreate(urdhva_base.postgresmodel.BasePostgresModel):
     score: float
     national_score: float
     rank: int
-    category: typing.Optional[typing.List[PerformanceScoreCategory]] | None = None
+    category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -5733,7 +5653,7 @@ class PerformanceScore(urdhva_base.postgresmodel.PostgresModel):
     score: typing.Optional[float] | None = None
     national_score: typing.Optional[float] | None = None
     rank: typing.Optional[int] | None = None
-    category: typing.Optional[typing.List[PerformanceScoreCategory]] | None = None
+    category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -5790,7 +5710,7 @@ class PerformanceScoreHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel)
     score: float
     national_score: float
     rank: int
-    category: typing.Optional[typing.List[PerformanceScoreCategory]] | None = None
+    category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -5813,7 +5733,7 @@ class PerformanceScoreHistory(urdhva_base.postgresmodel.PostgresModel):
     score: typing.Optional[float] | None = None
     national_score: typing.Optional[float] | None = None
     rank: typing.Optional[int] | None = None
-    category: typing.Optional[typing.List[PerformanceScoreCategory]] | None = None
+    category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
 
     class Config:
         collection_name = 'data_flow'

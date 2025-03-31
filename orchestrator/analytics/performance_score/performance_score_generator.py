@@ -24,12 +24,14 @@ async def fetch_va_score(bu):
 async def generate_performance_score(bu, location_id=None):
     """Generating Performance Score per location for the given BU"""
     locations = []
+    required_keys = ['sap_id', 'zone', 'region', 'name']
     if not location_id:
-        query = f"""SELECT sap_id, zone from location_master where bu='{bu}'"""
+        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}'"""
     else:
         location_id = [location_id] if isinstance(location_id, str) else location_id
         location_id = ", ".join(f"'{value}'" for value in location_id)
-        query = f"""SELECT sap_id, zone from location_master where bu='{bu}' and sap_id in ({location_id})"""
+        query = f"""SELECT {','.join(required_keys)} from location_master where bu='{bu}' and 
+        sap_id in ({location_id})"""
     limit = 1000
     skip = 0
 
@@ -47,22 +49,25 @@ async def generate_performance_score(bu, location_id=None):
     va_data = await fetch_va_score(bu)
     # generating performance score for every plant
     performance_score = {}
+    present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
     for location in locations:
         # Generating performance score for each location
         print(f"Generating performance score for {location['sap_id']}")
         await ins.configure_va(va_data.get(location['sap_id']))
         response, score = await ins.generate_performance_index(location['sap_id'])
-        performance_score[location['sap_id']] = {"sap_id": location['sap_id'], "score": score if score < 100 else 100,
-                                                 "results": response, "weightage": 100}
+        performance_score[location['sap_id']] = {"sap_id": location['sap_id'],
+                                                 "score": round(score if score < 100 else 100, 2),
+                                                 "category": list(response.values()), "weightage": 100,
+                                                 'timestamp': present_timestamp, "region": location["region"],
+                                                 'bu': 'LPG', "zone": location["zone"], "name": location["name"]}
+    # Generating rank and national average
     df = pd.DataFrame(list(performance_score.values()))
     df = df[['sap_id', 'score', 'weightage']]
     df['rank'] = df['score'].rank(method='dense', ascending=False).astype(int)
-    national_avg = df['score'].mean()
-    present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
+    national_avg = round(float(df['score'].mean()), 2)
     for sap_id, rec in performance_score.items():
-        rec['rank'] = df[df['sap_id'] == sap_id]['rank'].values[0]
-        rec['national_avg'] = national_avg
-        rec['timestamp'] = present_timestamp
+        performance_score[sap_id]['rank'] = int(df[df['sap_id'] == sap_id]['rank'].values[0])
+        performance_score[sap_id]['national_score'] = national_avg
     performance_score = list(performance_score.values())
     # Updating performance score to database
     await hpcl_ceg_model.PerformanceScore.bulk_update(performance_score.copy(), upsert=True)

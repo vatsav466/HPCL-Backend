@@ -1127,56 +1127,6 @@ async def delete(id: str):
     return await PerformanceIndex.delete(id)
 
 
-@router.post('/performancescoreresults', response_model=PerformanceScoreResults, tags=['PerformanceScoreResults'])
-async def create(inputObj: PerformanceScoreResultsCreate):
-    return await inputObj.create()
-
-
-@router.put('/performancescoreresults', response_model=PerformanceScoreResults, tags=['PerformanceScoreResults'])
-async def update(inputObj: PerformanceScoreResults):
-    return await inputObj.modify()
-
-
-@router.get('/performancescoreresults/{id}', response_model=PerformanceScoreResults, tags=['PerformanceScoreResults'])
-async def get(id: str):
-    return await PerformanceScoreResults.get(id, skip_secrets=True)
-
-
-@router.get('/performancescoreresults', response_model=PerformanceScoreResultsGetResp, tags=['PerformanceScoreResults'])
-async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
-    return await PerformanceScoreResults.get_all(params, skip_secrets=True)
-
-
-@router.delete('/performancescoreresults/{id}', tags=['PerformanceScoreResults'])
-async def delete(id: str):
-    return await PerformanceScoreResults.delete(id)
-
-
-@router.post('/performancescorecategory', response_model=PerformanceScoreCategory, tags=['PerformanceScoreCategory'])
-async def create(inputObj: PerformanceScoreCategoryCreate):
-    return await inputObj.create()
-
-
-@router.put('/performancescorecategory', response_model=PerformanceScoreCategory, tags=['PerformanceScoreCategory'])
-async def update(inputObj: PerformanceScoreCategory):
-    return await inputObj.modify()
-
-
-@router.get('/performancescorecategory/{id}', response_model=PerformanceScoreCategory, tags=['PerformanceScoreCategory'])
-async def get(id: str):
-    return await PerformanceScoreCategory.get(id, skip_secrets=True)
-
-
-@router.get('/performancescorecategory', response_model=PerformanceScoreCategoryGetResp, tags=['PerformanceScoreCategory'])
-async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
-    return await PerformanceScoreCategory.get_all(params, skip_secrets=True)
-
-
-@router.delete('/performancescorecategory/{id}', tags=['PerformanceScoreCategory'])
-async def delete(id: str):
-    return await PerformanceScoreCategory.delete(id)
-
-
 @router.get('/performancescore/{id}', response_model=PerformanceScore, tags=['PerformanceScore'])
 async def get(id: str):
     return await PerformanceScore.get(id, skip_secrets=True)
