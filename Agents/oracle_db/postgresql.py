@@ -906,6 +906,8 @@ class Postgresql:
                             filtered_data.append(record)
 
                 processed_data = filtered_data
+                for record in processed_data:
+                    record.pop("data_removed", None)  # Removes if exists
                 print(f"Processing {len(processed_data)} records for host_manual_fan_printed for SAP ID {sap_id}")
             status, msg = await model.bulk_update(processed_data, upsert=True, upsert_skip_keys=['alert_created'])
 
