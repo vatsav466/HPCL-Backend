@@ -5445,7 +5445,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -5770,7 +5770,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -5998,7 +5998,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -6181,7 +6181,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -6349,7 +6349,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -6519,7 +6519,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -6693,7 +6693,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -6888,7 +6888,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -6997,7 +6997,8 @@ class GlobalAnalytics:
                         zone,
                         location_name,
                         sap_id,
-                        SUM(manual_fan_count) AS total_manual_fan_count
+                        manual_fan_count AS total_manual_fan_count
+                        total_count AS total_count
                     FROM 
                         host_manual_fan_printed
                     WHERE 1=1
@@ -7027,10 +7028,11 @@ class GlobalAnalytics:
                     m.sap_id,
                     (SELECT COUNT(*) 
                     FROM alerts a 
-                    WHERE a.interlock_name in ('Manual FAN printed more than 5% of total TT loaded', 'Manual FAN printed less than 5% of total TT loaded')
+                    WHERE a.interlock_name in ('Manual FAN printed more than 5% of total TT loaded')
                     AND DATE(a.created_at) = m.created_date
                     AND a.location_name = m.location_name) AS alert_count,
-                    m.total_manual_fan_count
+                    m.total_manual_fan_count,
+                    m.total_count
                 FROM 
                     manual_fan_data m
                 ORDER BY 
@@ -7047,7 +7049,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -7070,11 +7072,8 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name"]
-                grouped = resp_df.group_by(group_cols).agg(
-                    pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_manual_fan_count").alias("manualfan_count")
-                )
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "total_manual_fan_count", "total_count"]
+                grouped = resp_df.group_by(group_cols).agg(pl.sum("alert_count").alias("total_alerts"))
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
@@ -7084,7 +7083,8 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "total_alerts": row["total_alerts"],
-                        "total_manual_fan_count": row["manualfan_count"]
+                        "total_manual_fan_count": row["manualfan_count"],
+                        "total_count": row["total_count"]
                     }
                     result.setdefault(created_date, []).append(entry)
                 return {"status": True, "message": "success", "daily_data": result}
@@ -7094,11 +7094,8 @@ class GlobalAnalytics:
                     pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
                 )
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name"]
-                grouped = resp_df.group_by(group_cols).agg(
-                    pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_manual_fan_count").alias("manualfan_count")
-                )
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "total_manual_fan_count", "total_count"]
+                grouped = resp_df.group_by(group_cols).agg(pl.sum("alert_count").alias("total_alerts"))
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
@@ -7108,7 +7105,8 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "total_alerts": row["total_alerts"],
-                        "total_manual_fan_count": row["manualfan_count"]
+                        "total_manual_fan_count": row["manualfan_count"],
+                        "total_count": row["total_count"],
                     }
                     result.setdefault(month, []).append(entry)
                 return {"status": True, "message": "success", "monthly_data": result}

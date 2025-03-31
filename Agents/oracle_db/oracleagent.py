@@ -601,7 +601,7 @@ class DataMonitor:
                     
             # Send only changed records
             if changed_data:
-                RabbitMQProducer().send_to_rabbitmq(changed_data)
+                await RabbitMQProducer().send_to_rabbitmq(changed_data)
                 print(f"Sent changed data to RabbitMQ for tables: {list(changed_data.keys())}")
             else:
                 print("No changes detected. Nothing to send.")

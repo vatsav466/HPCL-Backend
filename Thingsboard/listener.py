@@ -78,32 +78,38 @@ class TelemetryService:
 async def rabbitmq_listener(sap_id):
     """Handles RabbitMQ connection and message listening asynchronously."""
     queue_name = f"{RABBITMQ_PREFIX_QUEUE}{sap_id}"
-    try:
-        connection = await aio_pika.connect_robust(
-            host=RABBITMQ_HOST, virtualhost=RABBITMQ_VHOST,
-            login=RABBITMQ_USER, password=RABBITMQ_PASSWORD
-        )
-        async with connection:
-            channel = await connection.channel()
-            queue = await channel.declare_queue(queue_name, durable=True)
-            print(f"Listening for messages from queue: {queue_name}")
-            async for message in queue:
-                async with message.process():
-                    try:
-                        body = json.loads(message.body)
-                        print(f"Received message on {queue_name}: {body}")
-                        location_id = body.get("location_id")
-                        SITE_ID = location_id
-                        tags_data = body.get("tags_data", {})
-                        success = await TelemetryService.process_tags_data(location_id, tags_data, SITE_ID)
-                        if success:
-                            print(f"All tags processed successfully for {queue_name}.")
-                        else:
-                            print(f"Some tags failed to process for {queue_name}.")
-                    except Exception as e:
-                        print(f"Error processing message on {queue_name}: {str(e)}")
-    except Exception as e:
-        print(f"Unexpected error in listener for {queue_name}: {e}")
+    while True:
+        try:
+            connection = await aio_pika.connect_robust(
+                host=RABBITMQ_HOST, virtualhost=RABBITMQ_VHOST,
+                login=RABBITMQ_USER, password=RABBITMQ_PASSWORD,
+                heartbeat=60
+            )
+            async with connection:
+                channel = await connection.channel()
+                queue = await channel.declare_queue(queue_name, durable=True)
+                print(f"Listening for messages from queue: {queue_name}")
+                async for message in queue:
+                    async with message.process():
+                        try:
+                            body = json.loads(message.body)
+                            print(f"Received message on {queue_name}: {body}")
+                            location_id = body.get("location_id")
+                            SITE_ID = location_id
+                            tags_data = body.get("tags_data", {})
+                            success = await TelemetryService.process_tags_data(location_id, tags_data, SITE_ID)
+                            if success:
+                                print(f"All tags processed successfully for {queue_name}.")
+                            else:
+                                print(f"Some tags failed to process for {queue_name}.")
+                        except Exception as e:
+                            print(f"Error processing message on {queue_name}: {str(e)}")
+        except (aio_pika.exceptions.AMQPConnectionError, asyncio.TimeoutError) as e:
+            print(f"Connection lost for {queue_name}. Reconnecting in 5 seconds... Error: {e}")
+            await asyncio.sleep(5)
+        except Exception as e:
+            print(f"Unexpected error in listener for {queue_name}: {e}")
+            await asyncio.sleep(5)
 
 async def main():
     sap_ids = ["1999", "1128", "1919"]  # Add all the SAP IDs you want to listen for
