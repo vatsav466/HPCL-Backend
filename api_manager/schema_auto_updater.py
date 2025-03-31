@@ -82,6 +82,10 @@ async def add_column_to_table(table_name, column_name, column_schema):
             column_type = column_type_mapping.get(f"{column_schema['type']} {column_schema['sub_type']}",
                                                   column_schema['type'])
     nullable = 'NULL' if column_schema['nullable'] else 'NOT NULL'
+    if column_type == 'BOOLEAN' and not column_schema['nullable']:
+        nullable = 'NOT NULL DEFAULT FALSE'
+    elif column_type == 'VARCHAR' and not column_schema['nullable']:
+        nullable = "NOT NULL DEFAULT ''"
     alter_query = f'ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type} {nullable};'
 
     async with async_session() as connection:

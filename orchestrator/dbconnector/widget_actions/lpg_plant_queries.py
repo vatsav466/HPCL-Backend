@@ -911,7 +911,7 @@ LIMIT 10000;''',
                                     SUM("TotalSalesYesterday") AS "TotalSalesYesterday" ,
                                     SUM("Total_Pending") AS "Total_Pending"
                                 FROM
-                                    "lpg_cdcms_sales_summary" ''',
+                                    "lpg_cdcms_last_three_months_summary" ''',
     
     "lpg_cdcms_april_consumer_stats": f''' SELECT
                                                 "DistributorName", "SubCategory", "ZOName",
