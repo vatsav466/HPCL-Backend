@@ -245,12 +245,27 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         # Convert to DataFrame if data exists
         if res:
             df = pd.DataFrame(res)  # Convert list of dictionaries to DataFrame
+
+            print(df.columns)  # Debugging step to check column names
             
-            # Convert 'count' to integer (handle any invalid data gracefully)
+            # Convert 'count' to integer, handling errors
             df['count'] = pd.to_numeric(df['count'], errors='coerce').fillna(0).astype(int)
-            # Select only required columns
-            df = df[['sap_id', 'name', 'device_type', 'zone', 'count','system','mf_count']]
- 
+
+            # Ensure required columns exist
+            required_columns = ['sap_id', 'name', 'zone', 'system', 'count', 'mf_count']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                raise KeyError(f"Missing columns: {missing_columns}")
+
+            # Convert 'mf_count' to numeric (handling missing values)
+            df['mf_count'] = pd.to_numeric(df['mf_count'], errors='coerce').fillna(0).astype(int)
+
+            # Group by relevant columns and sum 'count' only
+            df = df.groupby(['system', 'sap_id', 'name', 'zone'], as_index=False).agg({
+                'count': 'sum',  # Summing 'count' only
+                'mf_count': 'sum'  # Keeping first value of 'mf_count'
+            })
+
             # Convert DataFrame to list of dictionaries
             return {"status": True, "message": "Success", "data": df.to_dict(orient='records')}
 
