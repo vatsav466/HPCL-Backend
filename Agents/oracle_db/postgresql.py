@@ -775,8 +775,7 @@ class Postgresql:
                     FROM "{table_db_name}" 
                     WHERE date::DATE = '{current_date}' 
                     AND sap_id = '{sap_id}' 
-                    ORDER BY date_time DESC 
-                    LIMIT 1
+                    ORDER BY date_time DESC
                 """
                 latest_record_resp = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
                 
