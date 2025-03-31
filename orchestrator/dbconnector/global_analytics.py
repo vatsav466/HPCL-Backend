@@ -3397,7 +3397,7 @@ class GlobalAnalytics:
             financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
 
             # Temporory. Need to remove
-            if "financial_year" in card_query.lower().split("where")[-1] and not "financial_year" in drill_state:
+            if "financial_year" in card_query.lower().split("where")[-1] and not "month" in card_query.lower().split("where")[-1] and not "financial_year" in drill_state:
                 card_query += f'\'2024-2025\' '
             else:            
                 if not "," in drill_state:
