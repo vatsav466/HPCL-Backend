@@ -303,15 +303,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                        date_time_format="%Y-%m-%d")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
             todays_date = str(datetime.date.today())
-            
-            print("todays_date",todays_date)
             if todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4':
                 start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
                 end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
                 start_date = start_date.replace(year=start_date.year - 1).strftime("%Y-%m-%d")
                 end_date = end_date.replace(year=end_date.year).strftime("%Y-%m-%d")
-                print("latest start",start_date)
-                print("latest end",end_date)
                 
             # For History
             start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
@@ -322,7 +318,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
         elif condition['key'].strip('"') == "FYC":
             condition = [x for x in filters if x['key'] == '"DATE"']
-            print("condition", condition)
             # Calculating start and end dates for YTD for both actual and history
             start_date, end_date = condition[0]['value'].split(",")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
@@ -332,7 +327,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             end_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.end.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
 
-            print("start_date", start_date)
         elif condition['key'].strip('"') == "YTDPM":
 
             # Calculating start and end dates for YTD for both actual and history
@@ -364,7 +358,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             ...
         else:
            if condition['key']  != '"C"':
-            print("condiution in else",condition)
             # Clearing if value was an empty string
             if not condition["value"]:
                 continue
@@ -430,7 +423,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         elif '"C"' in [x['key'] for x in filters] and '"YTD"' in [x['key'] for x in filters] and '"T"' in [x['key'] for x in filters] and (len(org_cross_filters) == 0 or(len(org_cross_filters)==1 and org_cross_filters[0]['key'] == '"sbu_wise"') ):
-            print("cross_filters", cross_filters)
             group_keys.append('month_name')
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
@@ -443,13 +435,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         if target_data:
-            print("target_data",target_data)
-            print("filters",filters)
             #if '"C"'   in [x['key'] for x in filters] and '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and len(org_cross_filters) == 0:
             if  '"YTD"'   in [x['key'] for x in filters] and '"T"'   in [x['key'] for x in filters] and (len(org_cross_filters) == 0) and '"C"'   in [x['key'] for x in filters] and time_grain !='Monthly':
                 
-                print("start_date",start_date)
-                print("end_date",end_date)
                 '''
                 if end_date:
                     end_month = fiscal_year.get_month_abbr(end_date)
@@ -457,7 +445,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
                 '''
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
-                print("target_data after conversion",target_data)
                 if "month_name" in target_data.columns.tolist():
                     del target_data['month_name']
                 if "TARGET_TMT_SALES" in target_data.columns.tolist():
@@ -465,7 +452,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     sample_data['TARGET_TMT_SALES'] = target_data['TARGET_TMT_SALES'].sum()
                 if not sample_data.empty:
                     target_data = sample_data
-                print("target_data after conversion", target_data)
             elif '"C"' not in [x['key'] for x in filters]:
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             elif '"C"' in [x['key'] for x in filters] and len(org_cross_filters) == 1 and org_cross_filters[0]['key'] == '"sbu_wise"':
@@ -559,8 +545,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     if not group_by_filter:
         result_df = pd.DataFrame()
         for col in merged_df.columns:
-            print("merged_columns",merged_df.columns)
-            print("col",col)
             if col not in "month_name":
                 result_df[col] = [merged_df[col].sum()]
         merged_df = result_df
