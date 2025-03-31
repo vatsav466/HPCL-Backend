@@ -264,11 +264,11 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
             df = df[~df['sap_id'].isin([1588, 1992, 1999])]
 
             # Apply filtering if 'zone' or 'plant' is provided
-            if 'zone' in df.columns and data.get("zone"):
-                df = df[df['zone'] == data.get("zone")]
+            if 'zone' in df.columns and data.zone:
+                df = df[df['zone'] == data.zone]
 
-            if 'sap_id' in df.columns and data.get("plant"):
-                df = df[df['sap_id'] == data.get("plant")]
+            if 'sap_id' in df.columns and data.plant:
+                df = df[df['sap_id'] == data.plant]
 
             # Group by relevant columns and sum 'count' only
             df = df.groupby(['system', 'sap_id', 'name', 'zone'], as_index=False).agg({
