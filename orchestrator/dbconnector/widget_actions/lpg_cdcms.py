@@ -986,11 +986,18 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _fy = None
         _filters = []
         if cross_filters:
             for filter in cross_filters:
+                if "financial_year" in f"{filter.key}":
+                    _fy = f"{filter.value}"
+                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        financial_year = await get_financial_year()
+        if _fy:
+            financial_year = _fy
+        else:
+            financial_year = await get_financial_year()
         cumulative_sales_pmuy_npmuy_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_current_financial_year_sales")
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
