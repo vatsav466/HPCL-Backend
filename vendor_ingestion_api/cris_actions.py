@@ -65,7 +65,7 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
         entry['sop_id'] = interlock_data['sop_id']
         entry['alert_section'] = 'RO'
         if not entry.get("closure_date", ""):
-            if not await ro_analysis.check_alert_exists(entry['alarm_id']):
+            if not await ro_analysis.check_alert_exists(entry['alarm_id'], entry['violation_type']):
                 camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
                                                             alert_section="RO")
                 await alert_manager.create_alert({**entry, "alert_type": "RO"}, camunda_url=camunda_url)
