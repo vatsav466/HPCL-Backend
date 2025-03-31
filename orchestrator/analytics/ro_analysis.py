@@ -130,7 +130,7 @@ async def get_process_instance_id(business_key, camunda_url):
             return process_instance_id
     return process_instance_id
 
-async def _close_camunda_workflow(alert_data, camunda_url):
+async def close_camunda_workflow(alert_data, camunda_url):
     # camunda_url = await helpers.get_alert_camunda_url(self.params['alert_id'], "error")
     MAX_RETRIES = 5
     RETRY_DELAY = 5
@@ -149,7 +149,7 @@ async def _close_camunda_workflow(alert_data, camunda_url):
                 response = requests.delete(url, headers=headers)
 
                 if response.status_code == 204:  # Success in Camunda
-                    print(f"{instance_id} Deleted successfully.")
+                    print(f"Workflow {instance_id} Deleted successfully. Alert ID {alert_data['id']}")
                     break
                 else:
                     print(

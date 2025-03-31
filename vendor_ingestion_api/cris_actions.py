@@ -82,6 +82,7 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
                 alert_data['alert_type'] = alert_data['bu']
                 alert_data['alert_id'] = alert_data['id']
                 await alert_manager.close_alert(alert_data=alert_data)
+                await ro_analysis.close_camunda_workflow(alert_data=alert_data, camunda_url=camunda_url)
             else:
                 print(f"Alert Not Found Query: {query}")
 
