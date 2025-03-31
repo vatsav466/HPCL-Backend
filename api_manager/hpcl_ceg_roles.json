@@ -2448,6 +2448,9 @@
                 },
                 {
                     "name": "generate_ai_industry_performance"
+                },
+                {
+                    "name": "list_ai_industry_performance_queries"
                 }
             ]
         },
@@ -2490,6 +2493,9 @@
                 },
                 {
                     "name": "generate_ai_industry_performance"
+                },
+                {
+                    "name": "list_ai_industry_performance_queries"
                 }
             ]
         },
@@ -4681,6 +4687,10 @@
         {
             "name": "generate_ai_industry_performance",
             "displayName": "generate_ai_industry_performance"
+        },
+        {
+            "name": "list_ai_industry_performance_queries",
+            "displayName": "list_ai_industry_performance_queries"
         },
         {
             "name": "upload_geo_master",

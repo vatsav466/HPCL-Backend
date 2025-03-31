@@ -3671,6 +3671,14 @@ class Industryperformance_Generate_Ai_Industry_PerformanceParams(pydantic.BaseMo
             extra = "forbid"  # Disallow extra fields
 
 
+class Industryperformance_List_Ai_Industry_Performance_QueriesParams(pydantic.BaseModel):
+    search_text: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class ConsumerPumpTankDeliverySchema(UrdhvaPostgresBase):
     __tablename__ = 'consumer_pump_tank_delivery'
     

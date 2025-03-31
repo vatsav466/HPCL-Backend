@@ -1425,6 +1425,10 @@ Model IndustryPerformance {
     Action=> generate_ai_industry_performance {
         user_prompt str
     }
+
+    Action=> list_ai_industry_performance_queries {
+        search_text str
+    }
     
     Config=> {
         access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'
