@@ -21,7 +21,7 @@ async def generate_sod_engineering_location_stats(sap_id):
         params = urdhva_base.queryparams.QueryParams()
         params.fields = []
         params.q = query
-        res = await hpcl_ceg_model.TagsData.get_all(params, resp_type="plain")
+        res = await hpcl_ceg_model.ArchitectureData.get_all(params, resp_type="plain")
         resp = res.get('data', '')
 
         if not resp:
