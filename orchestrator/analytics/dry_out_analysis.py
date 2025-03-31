@@ -20,13 +20,13 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
 req_keys = {
-    "TAS": ["zone", "sap_id", "name", "category"],
+    "TAS": ["zone", "sap_id", "name", "category", "location_onboard"],
     "LPG": ["zone", "sap_id", "name", "category"],
     "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"]
 }
 
 
-async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False):
+async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False, location_onboard=False):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -119,6 +119,9 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
     if zone:
         key_mapping["zone"] = zone
     if bu in ["TAS", "LPG"]:
+        if bu == "TAS":
+            print("bu_data: ", bu_data)
+            bu_data = bu_data[bu_data['location_onboard'] == location_onboard]
         for rec in bu_data.to_dict(orient='records'):
             skip_record = False
             if key_mapping:
