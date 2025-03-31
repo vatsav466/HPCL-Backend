@@ -127,6 +127,8 @@ class LPGCDCMSActions:
                     _fy = f"{filter.value}"
                     continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _fy:
+            financial_year = _fy
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -174,10 +176,12 @@ class LPGCDCMSActions:
             resp = await function(query=lpg_cdcms_sales_comparision_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            print("Length of resp :", len(resp))
             resp = await filter_data(resp, _filters)
+            print("Length of after filter resp :", len(resp))
             
             if resp.empty:
-                return {"status": True, "message": "success", "data": resp}
+                return {"status": True, "message": "success", "data": []}
             current_year = resp[resp['Financial_Year'] == financial_year].groupby('Quarter')['sales_volume'].sum().reset_index()
             previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Quarter')['sales_volume'].sum().reset_index()
             resp = pd.merge(current_year, previous_year, on='Quarter', how='outer', suffixes=('_current', '_previous'))
