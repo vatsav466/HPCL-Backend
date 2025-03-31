@@ -26,7 +26,7 @@ req_keys = {
 }
 
 
-async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False, location_onboard=False):
+async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -134,11 +134,6 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
                 if dry_out_dealers and rec["sap_id"] not in dry_out_plants:
                     continue
                 final_data["plant"][rec["sap_id"]] = {"name": rec["name"], "id": rec["sap_id"]}
-            if rec['location_onboard']:
-                if location_onboard and rec['location_onboard'] not in location_onboard:
-                    continue
-                final_data["plant"][rec["sap_id"]] = {"name": rec["sap_id"], "id": rec["sap_id"]}
-                final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
         bu_data_ro = [json.loads(helpers.normalize_string(rec)) for key, rec in location_data.items()
                       if helpers.normalize_string(key).startswith(f"RO_")]
         bu_data_ro = pd.DataFrame(bu_data_ro)
