@@ -27,25 +27,19 @@ async def generate_sod_engineering_location_stats(sap_id):
         if not resp:
             return {"status": False, "message": "No data found"}
 
-        # Convert Maintenance & Fault lists into dictionaries for easy lookup with distinct interlock names
+        # Convert Maintenance & Fault lists into dictionaries with unique interlocks
         maintenance_map = {}
         fault_map = {}
 
         for entry in Maintenance:
             for equip in entry["equipment_name"].split(","):
-                equip = equip.strip()
-                if equip not in maintenance_map:
-                    maintenance_map[equip] = set()
-                maintenance_map[equip].add(entry["interlock_name"])
+                maintenance_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])  # Use set()
 
         for entry in Fault:
             for equip in entry["equipment_name"].split(","):
-                equip = equip.strip()
-                if equip not in fault_map:
-                    fault_map[equip] = set()
-                fault_map[equip].add(entry["interlock_name"])
+                fault_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])  # Use set()
 
-        # Convert response to DataFrame for easier processing
+        # Convert response to DataFrame
         df = pd.DataFrame(resp)
 
         # Ensure required columns exist
@@ -57,7 +51,7 @@ async def generate_sod_engineering_location_stats(sap_id):
         # Convert count to numeric
         df["count"] = pd.to_numeric(df["count"], errors="coerce").fillna(0).astype(int)
 
-        # Add hardcoded status entries
+        # Hardcoded status entries
         hardcoded_status = [
             {"id": "lrca", "name": "LRCA", "status": "standby"},
             {"id": "lrcb", "name": "LRCB", "status": "online"},
@@ -70,7 +64,7 @@ async def generate_sod_engineering_location_stats(sap_id):
         # Process each device type
         result = []
 
-        # First add the hardcoded status entries
+        # First, add hardcoded status entries
         result.extend(hardcoded_status)
 
         # Then process the device types from the data
@@ -81,21 +75,13 @@ async def generate_sod_engineering_location_stats(sap_id):
             # Convert device name to lowercase & format id
             device_id = device_name.lower().replace(" ", "_")
 
-            # Get distinct maintenance interlocks for this device type
-            maintenance_interlocks = maintenance_map.get(device_name, set())
-            # Calculate total maintenance count
-            total_maintenance_count = 0
-            for interlock in maintenance_interlocks:
-                count = await get_alert_count_for_interlock(interlock)
-                total_maintenance_count += count
+            # Get unique maintenance interlocks for this device type
+            unique_maintenance_interlocks = maintenance_map.get(device_name, set())
+            total_maintenance_count = len(unique_maintenance_interlocks)  # Count unique interlocks
 
-            # Get distinct fault interlocks for this device type
-            fault_interlocks = fault_map.get(device_name, set())
-            # Calculate total fault count
-            total_fault_count = 0
-            for interlock in fault_interlocks:
-                count = await get_alert_count_for_interlock(interlock)
-                total_fault_count += count
+            # Get unique fault interlocks for this device type
+            unique_fault_interlocks = fault_map.get(device_name, set())
+            total_fault_count = len(unique_fault_interlocks)  # Count unique interlocks
 
             device_data = {
                 "id": device_id,
