@@ -771,8 +771,7 @@ class Postgresql:
                 is_eod = int(current_hour) == 18
                 
                 # Step 2: Get the latest record for this SAP ID from the database
-                check_query = f"""
-                    SELECT manual_fan_count 
+                check_query = f"""SELECT manual_fan_count 
                     FROM "{table_db_name}" 
                     WHERE date::DATE = '{current_date}' 
                     AND sap_id = '{sap_id}' 
