@@ -35,7 +35,7 @@ Cris_Alert_Mapping = {
                 }
             }
         },
-        "High Water Level": {
+        "High Water": {
             "name": "High Water Level",
             "sop_id": "SOP295",
             "severity": "Critical",
@@ -175,7 +175,7 @@ Cris_Alert_Mapping = {
                 }
             }
         },
-        "No Pump Test": {
+        "Pump Test": {
             "name": "No Pump Test",
             "sop_id": "SOP299",
             "severity": "High",
