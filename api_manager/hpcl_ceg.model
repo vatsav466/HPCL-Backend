@@ -1908,6 +1908,8 @@ Model TagsData {
     }
 
     Action=> get_tags_data {
+        plant optional str
+        zone optional str
     }
 
 

@@ -5436,7 +5436,8 @@ class Tagsdata_Things_Board_Device_DataParams(pydantic.BaseModel):
 
 
 class Tagsdata_Get_Tags_DataParams(pydantic.BaseModel):
-    pass
+    plant: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

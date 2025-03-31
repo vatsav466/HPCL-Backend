@@ -247,7 +247,7 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
             df = pd.DataFrame(res)  # Convert list of dictionaries to DataFrame
 
             print(df.columns)  # Debugging step to check column names
-            
+
             # Convert 'count' to integer, handling errors
             df['count'] = pd.to_numeric(df['count'], errors='coerce').fillna(0).astype(int)
 
@@ -260,10 +260,20 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
             # Convert 'mf_count' to numeric (handling missing values)
             df['mf_count'] = pd.to_numeric(df['mf_count'], errors='coerce').fillna(0).astype(int)
 
+            # **Exclude specific sap_id values**
+            df = df[~df['sap_id'].isin([1588, 1992, 1999])]
+
+            # Apply filtering if 'zone' or 'plant' is provided
+            if 'zone' in df.columns and data.get("zone"):
+                df = df[df['zone'] == data.get("zone")]
+
+            if 'sap_id' in df.columns and data.get("plant"):
+                df = df[df['sap_id'] == data.get("plant")]
+
             # Group by relevant columns and sum 'count' only
             df = df.groupby(['system', 'sap_id', 'name', 'zone'], as_index=False).agg({
                 'count': 'sum',  # Summing 'count' only
-                'mf_count': 'sum'  # Keeping first value of 'mf_count'
+                'mf_count': 'sum'  # Summing 'mf_count'
             })
 
             # Convert DataFrame to list of dictionaries
