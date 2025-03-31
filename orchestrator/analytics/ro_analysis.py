@@ -92,8 +92,9 @@ async def get_ro_levels(bu: str, violation_type: str, sap_id: str):
             previous_count = value['value']
     return ""
 
-async def check_alert_exists(alert_id, violation_type):
-    query = f"select external_id from alerts where external_id = '{alert_id}' and bu = 'RO' and violation_type = '{violation_type}'"
+async def check_alert_exists(alert_id, violation_type, sap_id):
+    query = (f"select external_id from alerts where external_id = '{alert_id}' and bu = 'RO' and "
+             f"violation_type = '{violation_type}' and sap_id = '{sap_id}'")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
