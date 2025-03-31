@@ -475,7 +475,6 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             df["history_pvt_share"] = df[history_pvt_columns].sum(axis=1)
             
             new_df = df[selected_columns + ["month_name","actual_psu_share","history_psu_share","actual_pvt_share", "history_pvt_share"]]           
-        print("dfcolumns",df.columns)
         if len(required_companies) <=3:
             li = df.columns.tolist()
             #line_axis will give the name of distint company categories that will come in response

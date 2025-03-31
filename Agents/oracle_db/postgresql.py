@@ -771,13 +771,11 @@ class Postgresql:
                 is_eod = int(current_hour) == 18
                 
                 # Step 2: Get the latest record for this SAP ID from the database
-                check_query = f"""
-                    SELECT manual_fan_count 
+                check_query = f"""SELECT manual_fan_count 
                     FROM "{table_db_name}" 
                     WHERE date::DATE = '{current_date}' 
                     AND sap_id = '{sap_id}' 
-                    ORDER BY date_time DESC 
-                    LIMIT 1
+                    ORDER BY date_time DESC
                 """
                 latest_record_resp = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
                 
@@ -799,8 +797,7 @@ class Postgresql:
                     # Case 2: EOD record with zero manual count (only if no non-zero records exist for the day)
                     elif is_eod:
                         # Check if we have any non-zero records for today
-                        zero_check_query = f"""
-                            SELECT COUNT(*) 
+                        zero_check_query = f"""SELECT COUNT(*) 
                             FROM "{table_db_name}" 
                             WHERE date::DATE = '{current_date}' 
                             AND sap_id = '{sap_id}' 
@@ -846,8 +843,7 @@ class Postgresql:
             # Alert processing logic
             if table_db_name == 'host_manual_fan_printed':
                 # Query to get only non-zero manual fan count records that need processing
-                query = f"""
-                    SELECT * FROM "{table_db_name}" 
+                query = f"""SELECT * FROM "{table_db_name}" 
                     WHERE date::DATE = '{to_date}' 
                     AND manual_fan_count > 0
                     AND sap_id = '{sap_id}' 
