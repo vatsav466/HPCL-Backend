@@ -1,7 +1,7 @@
 import json
-import pika
+import aio_pika
+import asyncio
 import traceback
-import pandas as pd
 
 class RabbitMQProducer:
     def __init__(self, config_path="config.json"):
@@ -17,33 +17,50 @@ class RabbitMQProducer:
         self.rabbitmq_password = config.get('conn_secret', '')
         self.queue_name = config.get('conn_channel', '')
         self.virtualhost = config.get('conn_vhost', 'hpcl_ceg')
+        self.connection = None  # Store connection instance
 
-    def send_to_rabbitmq(self, data):
+    async def connect(self):
+        """
+        Establish connection to RabbitMQ with automatic retry.
+        """
+        
+        while True:
+            try:
+                print(f"Connecting to RabbitMQ ({self.rabbitmq_host})...")
+                self.connection = await aio_pika.connect_robust(
+                    host=self.rabbitmq_host,
+                    port=self.rabbitmq_port,
+                    virtualhost=self.virtualhost,
+                    login=self.rabbitmq_user,
+                    password=self.rabbitmq_password,
+                    heartbeat=60
+                )
+                print("Connected to RabbitMQ!")
+                return
+            except Exception as e:
+                print(f"Connection failed: {e}. Retrying")
+                await asyncio.sleep(5)
+                
+
+    async def send_to_rabbitmq(self, data):
         """
         Send a list of dictionaries to RabbitMQ queue.
         """
-        print("Into send_to_rabbitmq", data)
         try:
-            print("Into try block")
-            credentials = pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password)
-            connection = pika.BlockingConnection(
-                pika.ConnectionParameters(
-                    host=self.rabbitmq_host,
-                    port=self.rabbitmq_port,
-                    virtual_host=self.virtualhost,
-                    credentials=credentials
+            if self.connection is None or self.connection.is_closed:
+                await self.connect()
+
+            async with self.connection.channel() as channel:
+                await channel.default_exchange.publish(
+                    aio_pika.Message(body=json.dumps(data, default=str).encode()),
+                    routing_key=self.queue_name
                 )
-            )
-            print("After connection")
-            channel = connection.channel()
-            channel.queue_declare(queue=self.queue_name, durable=True)
+                print(f"Message sent to RabbitMQ queue: {self.queue_name}")
 
-            # Convert list of dictionaries to JSON
-            message = json.dumps(data, default=str)  # Convert datetime objects to string
-
-            channel.basic_publish(exchange='', routing_key=self.queue_name, body=message)
-            connection.close()
-            print("Message sent to RabbitMQ successfully.")
         except Exception as ex:
             print(traceback.format_exc())
             print(f"Error sending data to RabbitMQ: {ex}")
+            await asyncio.sleep(5)  # Prevent infinite fast retries
+            await self.connect()  # Reconnect on failure
+
+
