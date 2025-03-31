@@ -78,12 +78,14 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 else:
                     score = 100
             score = (score * rule_weightage) / 100
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule_weightage, 'module': name})
+            pi_score.append({"name": rule['name'], "score": score, "weightage": rule_weightage,
+                             'module': rules.get('name', name)})
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
-        return {"name": name, "score": final_score, "weightage": rules['weightage'], "results": pi_score}
+        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'],
+                "results": pi_score}
 
     async def _compute_va_pi_score(self, name, rules, location_id):
         pi_score = []
@@ -128,12 +130,13 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                 score = round((sum(alert_score) * rules['weightage']) / 100, 2)
             else:
                 ...
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'], 'module': name})
+            pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
+                             'module': rules.get('name', name)})
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
-        return {"name": name, "score": final_score, "weightage": rules['weightage'], "results": pi_score}
+        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
 
     async def _compute_vts_pi_score(self, name, rules, location_id):
         pi_score = []
@@ -207,12 +210,13 @@ class LPGPerformanceScore(performance_score_factory.PerformanceIndex):
                         alert_score.append(rule_['weightage'])
                 print(alert_score, rules['weightage'])
             score = round((sum(alert_score) * rule['weightage']) / 100, 2)
-            pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'], 'module': name})
+            pi_score.append({"name": rule['name'], "score": score, "weightage": rule['weightage'],
+                             'module': rules.get('name', name)})
         final_score = sum([score['score'] for score in pi_score])
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
-        return {"name": name, "score": final_score, "weightage": rules['weightage'], "results": pi_score}
+        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
 
     async def _compute_production_pi_score(self, name, rules, location_id):
         score = 0
@@ -236,7 +240,7 @@ and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
             score = (((production_yesterday / production_avg) * 100) * rules['weightage']) / 100
         else:
            score = rules['weightage']
-        return {"name": rules['name'], "score": round(score, 2), "weightage": rules['weightage'],
+        return {"name": rules.get('name', name), "score": round(score, 2), "weightage": rules['weightage'],
                 "results": [{"name": rules['name'], "score": round(score, 2), "weightage": rules['weightage'],
                              'module': rules['name'], "msg": f"Last Week Production({production_avg}) is less than "
                                                              f"Yesterdays Production({production_yesterday})"}]}
@@ -263,12 +267,13 @@ and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
                             score = ((weightage - (float(percentage_rule['max']) - carousel_productivity) / diff_range) *
                                      weightage)
                         break
-            pi_score.append({"name": rule['name'], "score": score, "weightage": weightage, 'module': rules['name']})
+            pi_score.append({"name": rule['name'], "score": score, "weightage": weightage,
+                             'module': rules.get('name', name)})
         final_score = sum([score['score'] for score in pi_score]) / len(pi_score) if len(pi_score) else 0
         final_score = round((final_score * rules['weightage']) / 100, 2)
         for rec in pi_score:
             rec['score'] = round(rec['score'], 2)
-        return {"name": name, "score": final_score, "weightage": rules['weightage'], "results": pi_score}
+        return {"name": rules.get('name', name), "score": final_score, "weightage": rules['weightage'], "results": pi_score}
 
     async def _compute_break_down_pi_score(self, name, rules, location_id):
         file_path = f"{os.path.dirname(performance_score_factory.__file__)}/pi_masters/lpg_working_hours.xlsx"
@@ -298,5 +303,5 @@ and sap_id = '{location_id}' GROUP BY DATE(process_date) ORDER BY date DESC"""
         if not total_hours:
             total_hours = 16
         uptime = 100 - ((sum([value for _, value in break_down.items()]) / total_hours) * 100)
-        return {"name": name, "score": round((uptime * rules['weightage']) / 100, 2),
+        return {"name": rules.get('name', name), "score": round((uptime * rules['weightage']) / 100, 2),
                 "weightage": rules['weightage'], "results": []}

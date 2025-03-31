@@ -35,13 +35,7 @@ async def performanceindex_get_pi_score(data: Performanceindex_Get_Pi_ScoreParam
             lpg_category_scores[cat] = {'oi_score': round(sum([rec['score'] for rec in scores]) / len(scores), 2),
                                         'weightage': round(sum([rec['weightage'] for rec in scores]) / len(scores), 2)}
         lpg_resp = {'overall_oi_score': round(sum([rec['score'] for rec in score['data']]) / len(score['data']), 2),
-                    'lpg_category_scores': {}}
-        # Create LPGPerformanceIndex instance and initialize it
-        lpg_pi = lpg_performance_index.LPGPerformanceIndex()
-        await lpg_pi.initialize()  # Load rules_df asynchronously
-
-        # Generate LPG performance index
-        lpg_resp = await lpg_pi.generate_performance_index(data.sap_id)
+                    'lpg_category_scores': lpg_category_scores}
         return lpg_resp
     elif data.bu == "RO":
         return {}

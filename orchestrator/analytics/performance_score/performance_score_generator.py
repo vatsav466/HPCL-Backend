@@ -54,15 +54,16 @@ async def generate_performance_score(bu, location_id=None):
         # Generating performance score for each location
         print(f"Generating performance score for {location['sap_id']}")
         await ins.configure_va(va_data.get(location['sap_id']))
-        response, score = await ins.generate_performance_index(location['sap_id'])
+        response, _ = await ins.generate_performance_index(location['sap_id'])
+        score = sum([rec['score'] for rec in list(response.values())])
         performance_score[location['sap_id']] = {"sap_id": location['sap_id'],
                                                  "score": round(score if score < 100 else 100, 2),
-                                                 "category": list(response.values()), "weightage": 100,
+                                                 "category": list(response.values()),
                                                  'timestamp': present_timestamp, "region": location["region"],
                                                  'bu': 'LPG', "zone": location["zone"], "name": location["name"]}
     # Generating rank and national average
     df = pd.DataFrame(list(performance_score.values()))
-    df = df[['sap_id', 'score', 'weightage']]
+    df = df[['sap_id', 'score']]
     df['rank'] = df['score'].rank(method='dense', ascending=False).astype(int)
     national_avg = round(float(df['score'].mean()), 2)
     for sap_id, rec in performance_score.items():
