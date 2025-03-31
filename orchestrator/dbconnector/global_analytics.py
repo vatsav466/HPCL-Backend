@@ -6997,7 +6997,7 @@ class GlobalAnalytics:
                         zone,
                         location_name,
                         sap_id,
-                        manual_fan_count AS total_manual_fan_count
+                        manual_fan_count AS total_manual_fan_count,
                         total_count AS total_count
                     FROM 
                         host_manual_fan_printed
