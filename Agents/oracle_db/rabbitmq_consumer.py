@@ -1,6 +1,6 @@
 import urdhva_base
 import json
-import pika
+import aio_pika
 import asyncio
 import traceback
 import numpy as np
@@ -102,35 +102,44 @@ class RabbitMQConsumer:
             print(traceback.format_exc())
             print(e)
 
-    def consume_from_rabbitmq(self):
-        """Consume messages from RabbitMQ synchronously and process asynchronously."""
-        try:
-            credentials = pika.PlainCredentials(self.rabbitmq_user, self.rabbitmq_password)
-            connection = pika.BlockingConnection(
-                pika.ConnectionParameters(
+    
+    async def consume_from_rabbitmq(self):
+        """Consume messages from RabbitMQ asynchronously with auto-reconnect on failure."""
+        while True:  # Infinite loop to handle reconnections
+            try:
+                print("Connecting to RabbitMQ...")
+                connection = await aio_pika.connect_robust(
                     host=self.rabbitmq_host,
                     port=self.rabbitmq_port,
-                    virtual_host=self.virtualhost,
-                    credentials=credentials)
-            )
-            channel = connection.channel()
-            channel.queue_declare(queue=self.queue_name, durable=True)
+                    virtualhost=self.virtualhost,
+                    login=self.rabbitmq_user,
+                    password=self.rabbitmq_password,
+                    heartbeat=60
+                )
 
-            def callback(ch, method, properties, body):
-                """Handle incoming RabbitMQ messages."""
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(self.process_message(body))
+                async with connection:
+                    channel = await connection.channel()
+                    queue = await channel.declare_queue(self.queue_name, durable=True)
 
-            channel.basic_consume(queue=self.queue_name, on_message_callback=callback, auto_ack=True)
+                    print(f"Connected! Listening on queue: {self.queue_name}")
 
-            print("Waiting for messages. To exit, press CTRL+C")
-            channel.start_consuming()
+                    async with queue.iterator() as queue_iter:
+                        async for message in queue_iter:
+                            async with message.process():
+                                try:
+                                    body = message.body.decode()
+                                    await self.process_message(body)  # Process message asynchronously
+                                except Exception as e:
+                                    print(f"⚠ Error processing message: {e}")
 
-        except Exception as ex:
-            print(traceback.format_exc())
-            print(f"Error consuming data from RabbitMQ: {ex}")
+            except (aio_pika.exceptions.AMQPConnectionError, ConnectionError) as e:
+                print(f"Connection lost! Reconnecting in 5 seconds... Error: {e}")
+                await asyncio.sleep(5)  # Fixed 5-second retry delay
+
+            except Exception as e:
+                print(f"Unexpected error: {e}. Retrying in 5 seconds...")
+                await asyncio.sleep(5)  # Fixed 5-second retry delay
 
 if __name__ == "__main__":
     consumer = RabbitMQConsumer()
-    consumer.consume_from_rabbitmq()
+    asyncio.run(consumer.consume_from_rabbitmq())
