@@ -5059,9 +5059,7 @@ class GlobalAnalytics:
                                 "equipment_name": item.get("equipment_name", item["interlock_name"])}
                                 for item in category_mapping.Normal}
             # Construct base SQL Query
-            query = f"""
-                SELECT
-                    DATE(created_at) AS created_date,
+            query = f"""SELECT DATE(created_at) AS created_date,
                     sap_id,
                     zone,
                     interlock_name,
@@ -5414,9 +5412,7 @@ class GlobalAnalytics:
             # Apply date range filter
             date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
             # Construct SQL Query
-            query = f"""
-                SELECT
-                    DATE(created_at) AS created_date,
+            query = f"""SELECT DATE(created_at) AS created_date,
                     sap_id,
                     zone,
                     interlock_name,
@@ -5738,9 +5734,7 @@ class GlobalAnalytics:
             normal_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"])} for item in category_mapping.Normal}
             
             # Construct base SQL Query
-            query = f"""
-                SELECT
-                    DATE(created_at) AS created_date,
+            query = f"""SELECT DATE(created_at) AS created_date,
                     sap_id,
                     zone,
                     interlock_name,
@@ -5966,9 +5960,7 @@ class GlobalAnalytics:
                     interlock_filter = filter.value  # Assuming single or multiple values comma-separated
 
             # Base Query
-            query = """
-                SELECT DATE(created_at) AS created_date, interlock_name, sap_id, sop_id, COUNT(*) AS alert_count
-            """
+            query = """SELECT DATE(created_at) AS created_date, interlock_name, sap_id, sop_id, COUNT(*) AS alert_count"""
 
             # Conditionally include `zone` and `plant`
             if zone_filter:
@@ -6132,9 +6124,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with WHERE clause
-            query = """
-                WITH localloaded AS (
-                    SELECT 
+            query = """WITH localloaded AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -6302,9 +6292,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with WHERE clause
-            query = """
-                WITH unauthorized AS (
-                    SELECT 
+            query = """WITH unauthorized AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -6472,9 +6460,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with WHERE clause
-            query = """
-                WITH sicktts AS (
-                    SELECT 
+            query = """WITH sicktts AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -6648,9 +6634,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with WHERE clause
-            query = """
-                WITH cancelled_tts AS (
-                    SELECT 
+            query = """WITH cancelled_tts AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -6849,9 +6833,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with CTE for better performance
-            query = """
-                WITH k_factor_data AS (
-                    SELECT 
+            query = """WITH k_factor_data AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -7010,9 +6992,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query using CTE for better performance and readability
-            query = """
-                WITH manual_fan_data AS (
-                    SELECT 
+            query = """WITH manual_fan_data AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -7174,9 +7154,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with Common Table Expression (CTE)
-            query = """
-                WITH host_data AS (
-                    SELECT 
+            query = """WITH host_data AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -7357,9 +7335,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with Common Table Expression (CTE)
-            query = """
-                WITH mfmfactor AS (
-                    SELECT 
+            query = """WITH mfmfactor AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -7522,9 +7498,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
             
             # Construct base SQL Query with CTE for better performance
-            query = """
-                WITH bay_reassignment AS (
-                    SELECT 
+            query = """WITH bay_reassignment AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
