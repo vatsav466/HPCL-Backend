@@ -5092,12 +5092,15 @@ class GlobalAnalytics:
             """
 
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -5439,12 +5442,15 @@ class GlobalAnalytics:
             """
 
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -5763,12 +5769,15 @@ class GlobalAnalytics:
             """
 
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -5990,12 +5999,15 @@ class GlobalAnalytics:
             query += " ORDER BY created_date DESC, alert_count DESC;"
 
             # Execute Query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -6172,12 +6184,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -6339,12 +6354,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -6508,12 +6526,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -6681,12 +6702,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -6875,12 +6899,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -7033,12 +7060,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -7200,12 +7230,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -7374,12 +7407,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -7541,12 +7577,15 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             # Execute query
-            Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
+            # try:
+            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+            #     resp = await function(query=query)
             try:
-                function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-                resp = await function(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
