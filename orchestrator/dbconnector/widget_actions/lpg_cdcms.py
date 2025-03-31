@@ -458,6 +458,10 @@ class LPGCDCMSActions:
                         grouped_resp[each_float_col] = grouped_resp[each_float_col].fillna(0.0).round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
+        for each_float_col in ["Bookings", "Sales", "Pending"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col]/1000
+                resp[each_float_col] = resp[each_float_col].round(2)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
