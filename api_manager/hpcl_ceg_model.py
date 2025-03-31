@@ -3663,6 +3663,14 @@ class IndustryPerformanceGetResp(pydantic.BaseModel):
     count: int = pydantic.Field(0)
 
 
+class Industryperformance_Generate_Ai_Industry_PerformanceParams(pydantic.BaseModel):
+    user_prompt: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class ConsumerPumpTankDeliverySchema(UrdhvaPostgresBase):
     __tablename__ = 'consumer_pump_tank_delivery'
     

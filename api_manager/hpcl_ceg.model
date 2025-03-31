@@ -1394,7 +1394,6 @@ Model MomLevelFinalMetaData {
 
 }
 Model IndustryPerformance {
-
     prod1_1 optional str
     category optional str
     sbu_name optional str
@@ -1422,6 +1421,10 @@ Model IndustryPerformance {
     month_name optional str
     netweight_tmt optional float
     com_type optional str
+
+    Action=> generate_ai_industry_performance {
+        user_prompt str
+    }
     
     Config=> {
         access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'

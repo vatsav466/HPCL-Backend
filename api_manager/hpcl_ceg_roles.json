@@ -2445,6 +2445,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "generate_ai_industry_performance"
                 }
             ]
         },
@@ -2484,6 +2487,9 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "generate_ai_industry_performance"
                 }
             ]
         },
@@ -4671,6 +4677,10 @@
         {
             "name": "get_pt_rejections",
             "displayName": "get_pt_rejections"
+        },
+        {
+            "name": "generate_ai_industry_performance",
+            "displayName": "generate_ai_industry_performance"
         },
         {
             "name": "upload_geo_master",
