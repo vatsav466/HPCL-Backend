@@ -119,9 +119,6 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
     if zone:
         key_mapping["zone"] = zone
     if bu in ["TAS", "LPG"]:
-        if bu == "TAS":
-            print("bu_data: ", bu_data)
-            bu_data = bu_data[bu_data['location_onboard'] == location_onboard]
         for rec in bu_data.to_dict(orient='records'):
             skip_record = False
             if key_mapping:
