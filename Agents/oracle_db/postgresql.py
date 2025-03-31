@@ -710,6 +710,9 @@ class Postgresql:
                 # Add these checks to your existing function
                 if "created_date" in record and isinstance(record["created_date"], str):
                     record["created_date"] = pd.to_datetime(record["created_date"])
+                
+                if "date_time" in record and isinstance(record["date_time"], str):
+                    record["date_time"] = pd.to_datetime(record["date_time"])
 
                 if "cancelled_date" in record and isinstance(record["cancelled_date"], str):
                     record["cancelled_date"] = pd.to_datetime(record["cancelled_date"])
