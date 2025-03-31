@@ -1185,7 +1185,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     assigned_to: Mapped[typing.Optional[str]] = mapped_column("assigned_to", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     assigned_to_role: Mapped[typing.Optional[str]] = mapped_column("assigned_to_role", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     assigned_users: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_users", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    assigned_user_roles: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_user_roles", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_user_roles: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_user_roles", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)

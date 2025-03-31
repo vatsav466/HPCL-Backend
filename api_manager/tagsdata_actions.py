@@ -253,5 +253,3 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
 
     except Exception as e:
         return {"status": False, "message": f"Error: {str(e)}"}
-
-

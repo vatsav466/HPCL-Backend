@@ -222,6 +222,9 @@
                 },
                 {
                     "name": "get_sod_engineering_stats"
+                },
+                {
+                    "name": "location_command_control"
                 }
             ]
         },
@@ -285,6 +288,9 @@
                 },
                 {
                     "name": "get_sod_engineering_stats"
+                },
+                {
+                    "name": "location_command_control"
                 }
             ]
         },
@@ -4330,6 +4336,10 @@
         {
             "name": "get_sod_engineering_stats",
             "displayName": "get_sod_engineering_stats"
+        },
+        {
+            "name": "location_command_control",
+            "displayName": "location_command_control"
         },
         {
             "name": "upload_role_master",
