@@ -6999,7 +6999,6 @@ class GlobalAnalytics:
                         sap_id,
                         manual_fan_count AS total_manual_fan_count
                         total_count AS total_count
-                        
                     FROM 
                         host_manual_fan_printed
                     WHERE 1=1
@@ -7074,11 +7073,7 @@ class GlobalAnalytics:
             if date:
                 # Daily Data Aggregation
                 group_cols = ["created_date", "zone", "sap_id", "location_name", "total_manual_fan_count", "total_count"]
-                grouped = resp_df.group_by(group_cols)
-                # .agg(
-                #     pl.sum("alert_count").alias("total_alerts"),
-                #     pl.sum("total_manual_fan_count").alias("manualfan_count")
-                # )
+                grouped = resp_df.group_by(group_cols).agg(pl.sum("alert_count").alias("total_alerts"))
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
@@ -7087,7 +7082,7 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        # "total_alerts": row["total_alerts"],
+                        "total_alerts": row["total_alerts"],
                         "total_manual_fan_count": row["manualfan_count"],
                         "total_count": row["total_count"]
                     }
@@ -7100,11 +7095,7 @@ class GlobalAnalytics:
                 )
 
                 group_cols = ["month_year", "zone", "sap_id", "location_name", "total_manual_fan_count", "total_count"]
-                grouped = resp_df.group_by(group_cols)
-                # .agg(
-                #     pl.sum("alert_count").alias("total_alerts"),
-                #     pl.sum("total_manual_fan_count").alias("manualfan_count")
-                # )
+                grouped = resp_df.group_by(group_cols).agg(pl.sum("alert_count").alias("total_alerts"))
 
                 result = {}
                 for row in grouped.iter_rows(named=True):
@@ -7113,7 +7104,7 @@ class GlobalAnalytics:
                         "zone": row["zone"],
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
-                        # "total_alerts": row["total_alerts"],
+                        "total_alerts": row["total_alerts"],
                         "total_manual_fan_count": row["manualfan_count"],
                         "total_count": row["total_count"],
                     }
