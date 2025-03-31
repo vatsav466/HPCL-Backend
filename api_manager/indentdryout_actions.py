@@ -159,8 +159,6 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
     ]
     where_clause = ["interlock_name = 'Indent Dry Out'"]
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     for record in data.filters:
         # If filter was on Sales Area Getting all ro id's under that sales area
         # if record.key in ['sales_area', 'category']:
@@ -211,12 +209,10 @@ async def indentdryout_get_dried_out_plants(data: Indentdryout_Get_Dried_Out_Pla
             "else severity " \
             "end as dry_out_days " \
             f"from alerts where {conditions}"
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+    resp = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=10000)
+
     stats = {i+1: 0 for i, _ in enumerate(top_x_axis)}
-    for rec in resp:
+    for rec in resp['data']:
         if rec['present_stage'] == 0:
             rec['present_stage'] = 1
         if rec['present_stage'] not in stats:
@@ -362,12 +358,8 @@ async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantP
     ext_cond = await hpcl_ceg_model.LocationMaster.get_clause_conditions()
     query = (f"select DISTINCT terminal_plant_id FROM location_master where bu='RO' and "
              f"LOWER(sales_area) like '%{region.lower()}%' and terminal_plant_id!=''")
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
+
+    resp = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=10000)
     plant_id = [rec['terminal_plant_id'] for rec in resp if rec['terminal_plant_id']]
     cond = ""
     if len(plant_id) == 1:
@@ -375,11 +367,9 @@ async def indentdryout_get_distinct_plant(data: Indentdryout_Get_Distinct_PlantP
     else:
         cond = f"sap_id IN {tuple(plant_id)}"
     query = f"select name,sap_id from location_master where {cond}"
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    resp = await function(
-        query=query
-    )
-    map_data = {rec['sap_id']: rec['name'] for rec in resp}
+    resp = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=10000)
+
+    map_data = {rec['sap_id']: rec['name'] for rec in resp['data']}
     for key in plant_id:
         if key not in map_data:
             map_data[key] = key
@@ -455,11 +445,6 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     condition_1 = ' AND '.join(basic_condtion + ["dry_out_in_days = '1'"] + where_clause) if dry_out_in_days == '1' else ' AND '.join(basic_condtion + ["dry_out_in_days = '1'"])
     condition_2 = ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"] + where_clause) if dry_out_in_days == '2' else ' AND '.join(basic_condtion + ["dry_out_in_days = '2'"])
     condition_3 = ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"] + where_clause) if dry_out_in_days == '3' else ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"])
-    # print("condition_1: ", condition_1)
-    # print("condition_2: ", condition_2)
-    # print("condition_3: ", condition_3)
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
 
     condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow' AND indent_status NOT IN ('Cancelled', 'Completed')"
     ext_cond = await hpcl_ceg_model.Alerts.get_clause_conditions(extra_key_mapping={"sap_id": "terminal_plant_id"})
@@ -470,24 +455,17 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts  
     WHERE {condition} AND {condition_1} AND dry_out_in_days='1' GROUP BY dry_out_in_days
     """
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    print("stats_query: ", stats_query)
-    dry_out_data = await function(
-        query=stats_query
-    )
-    if dry_out_data:
-        dry_out = dry_out_data[0]["total_unique_count"]
+    dry_out_data = await hpcl_ceg_model.Alerts.get_aggr_data(stats_query)
+    if dry_out_data['data']:
+        dry_out = dry_out_data['data'][0]["total_unique_count"]
 
     # For Intra DryOut
     stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts
         WHERE {condition} AND {condition_2} AND dry_out_in_days='2' GROUP BY dry_out_in_days
         """
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    dry_out_data = await function(
-        query=stats_query
-    )
-    if dry_out_data:
-        intraday_dry_out = dry_out_data[0]["total_unique_count"]
+    dry_out_data = await hpcl_ceg_model.Alerts.get_aggr_data(stats_query)
+    if dry_out_data['data']:
+        intraday_dry_out = dry_out_data['data'][0]["total_unique_count"]
 
     # For Potential DryOut
     # stats_query = f"""SELECT COUNT(DISTINCT(sap_id)) as total_unique_count, dry_out_in_days FROM alerts
@@ -583,8 +561,6 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "mark_as_false = true"]
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
         extra_key_mapping={"sap_id": "terminal_plant_id"}))
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     dry_out_in_days_query = '1'
     for record in data.filters:
         if record.key == "progress_rate":
@@ -601,15 +577,11 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                 else:
                     where_clause.append(f"{record.key} in {tuple(record.value)}")
     conditions = ' AND '.join(where_clause)
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    print("dryout_condition: ", conditions)
 
     stats_query = "select distinct sap_id, min(progress_rate) as present_stage " \
                   f"from alerts where {conditions} and indent_status not in ('Cancelled', 'Completed') " \
                   f"group by sap_id"
-    stats_resp = await function(
-        query=stats_query
-    )
+    stats_resp = await hpcl_ceg_model.Alerts.get_aggr_data(stats_query, limit=10000)
     where_clause_conditions = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     where_clause_conditions.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
         extra_key_mapping={"sap_id": "terminal_plant_id"}))
@@ -623,11 +595,9 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
                             AND DATE(updated_at) = '{_date}'  -- Use TRUNC to ignore the time part
                             GROUP BY sap_id
                         ) AS subquery"""
-    delivered_count = await function(
-        query=delivered_query
-    )
+    delivered_count = await hpcl_ceg_model.Alerts.get_aggr_data(delivered_query, limit=10000)
     if delivered_count:
-        delivered_count = delivered_count[0].get("total_count", 0) if delivered_count[0].get("total_count") else 0
+        delivered_count = delivered_count['data'][0].get("total_count", 0) if delivered_count['data'][0].get("total_count") else 0
     else:
         delivered_count = 0
 
@@ -635,7 +605,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
 
     stats = {i + 1: 0 for i, _ in enumerate(top_x_axis)}
     dealer_tt_count = {x: 0 for x in connection_mapping.truck_details}
-    for rec in stats_resp:
+    for rec in stats_resp['data']:
         if rec['present_stage'] == 0:
             rec['present_stage'] = 1
         if rec['present_stage'] not in stats:
