@@ -828,7 +828,7 @@ class Postgresql:
                 # Step 1: Check the current time
                 current_time = urdhva_base.utilities.get_present_time()
                 current_date = current_time.strftime("%Y-%m-%d")
-                
+
                 # Step 2: Get the latest record for this SAP ID from the database
                 check_query = f"""SELECT manual_fan_count, auto_fan_count, total_count, date_time
                     FROM "{table_db_name}" 
@@ -837,15 +837,12 @@ class Postgresql:
                     ORDER BY date_time DESC
                 """
                 latest_record_resp = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
-                
+
                 # Step 3: Process the current data
                 filtered_data = []
-                
-                # Handle the case where no data is available in sap_id_data (data might have been removed)
+
                 if not sap_id_data:
-                    # If we have previous records, insert a record indicating data removal
                     if latest_record_resp.get("data"):
-                        # Create a "data removed" record based on the latest record
                         latest_record = latest_record_resp.get("data")[0]
                         removal_record = {
                             'manual_fan_count': 0,
@@ -856,7 +853,7 @@ class Postgresql:
                             'date_time': current_time.isoformat(),
                             'location_name': latest_record.get('location_name', 'UNKNOWN'),
                             'zone': latest_record.get('zone', 'UNKNOWN'),
-                            'data_removed': True  # Add a flag to indicate data was removed
+                            'data_removed': True  
                         }
                         filtered_data.append(removal_record)
                 else:
@@ -864,14 +861,9 @@ class Postgresql:
                         current_manual_count = record.get('manual_fan_count', 0)
                         current_auto_count = record.get('auto_fan_count', 0)
                         current_total_count = record.get('total_count', 0)
-                        
-                        # Ensure record has a data_removed flag (set to False)
                         record['data_removed'] = False
-                        
-                        # Determine if we should insert this record
                         insert_record = False
-                        
-                        # If no previous record exists, always insert
+
                         if not latest_record_resp.get("data"):
                             insert_record = True
                         else:
@@ -879,36 +871,34 @@ class Postgresql:
                             latest_manual_count = latest_record.get("manual_fan_count", 0)
                             latest_auto_count = latest_record.get("auto_fan_count", 0)
                             latest_total_count = latest_record.get("total_count", 0)
-                            latest_time = datetime.fromisoformat(latest_record.get("date_time"))
-                            
-                            # Case 1: Any of the counts changed
+
+                            # Safe extraction of `date_time`
+                            latest_time_raw = latest_record.get("date_time")
+                            if isinstance(latest_time_raw, str):
+                                latest_time = datetime.fromisoformat(latest_time_raw)
+                            elif isinstance(latest_time_raw, datetime):
+                                latest_time = latest_time_raw  
+                            else:
+                                latest_time = None  
+
                             if (current_manual_count != latest_manual_count or 
                                 current_auto_count != latest_auto_count or 
                                 current_total_count != latest_total_count):
                                 insert_record = True
-                            
-                            # Case 2: It's been more than 1 hour since last record (same data but insert periodically)
-                            # Convert the datetime strings to datetime objects
+
                             current_time_obj = datetime.fromisoformat(record.get('date_time'))
-                            time_diff = current_time_obj - latest_time
                             
-                            # If more than 1 hour has passed, insert record even if data is the same
-                            if time_diff.total_seconds() > 3600:  # 3600 seconds = 1 hour
+                            if latest_time and (current_time_obj - latest_time).total_seconds() > 3600:
                                 insert_record = True
-                            
-                            # Case 3: Previous record was marked as "data_removed"
+
                             if latest_record.get("data_removed", False):
                                 insert_record = True
-                        
+
                         if insert_record:
                             filtered_data.append(record)
-                
-                # After processing, update processed_data with our filtered results
+
                 processed_data = filtered_data
-                
-                # Add logging for debugging purposes
                 print(f"Processing {len(processed_data)} records for host_manual_fan_printed for SAP ID {sap_id}")
-            # Bulk update for this SAP ID's data
             status, msg = await model.bulk_update(processed_data, upsert=True, upsert_skip_keys=['alert_created'])
 
             # Alert processing logic remains the same, but with SAP ID specific filtering
