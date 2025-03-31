@@ -7019,7 +7019,7 @@ class GlobalAnalytics:
             # Complete the CTE with GROUP BY
             query += """
                     GROUP BY 
-                        DATE(created_at), zone, location_name, sap_id
+                        DATE(created_at), zone, location_name, sap_id, manual_fan_count, total_count
                 )
                 SELECT 
                     m.created_date,
