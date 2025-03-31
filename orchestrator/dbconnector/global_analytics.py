@@ -5097,7 +5097,7 @@ class GlobalAnalytics:
             #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
             #     resp = await function(query=query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
