@@ -291,6 +291,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     distributor_code: Mapped[typing.Optional[str]] = mapped_column("distributor_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     distributor_name: Mapped[typing.Optional[str]] = mapped_column("distributor_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     round_trip_distance: Mapped[typing.Optional[int]] = mapped_column("round_trip_distance", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    location_onboard: Mapped[typing.Optional[bool]] = mapped_column("location_onboard", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -333,6 +334,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     distributor_code: typing.Optional[str] = pydantic.Field("", **{})
     distributor_name: typing.Optional[str] = pydantic.Field("", **{})
     round_trip_distance: typing.Optional[int] = pydantic.Field(0, **{})
+    location_onboard: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -383,6 +385,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     distributor_code: typing.Optional[str] = pydantic.Field("", **{})
     distributor_name: typing.Optional[str] = pydantic.Field("", **{})
     round_trip_distance: typing.Optional[int] = pydantic.Field(0, **{})
+    location_onboard: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -2054,6 +2057,7 @@ class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
     plant: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     cat_a_dealers: typing.Optional[bool] = pydantic.Field(False, )
     dry_out_dealers: typing.Optional[bool] = pydantic.Field(False, )
+    location_onboard: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:

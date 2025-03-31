@@ -265,6 +265,8 @@ Model LocationMaster {
     // For getting what was the round trip time from Plant to Dealer Location and then to Plant
     // This field applicable for Outlets
     round_trip_distance optional int
+    //TAS
+    location_onboard optional bool
 
     Action=> upload_location_master {
     }
@@ -925,6 +927,7 @@ Model IndentDryOut {
         plant optional list str
         cat_a_dealers optional bool
         dry_out_dealers optional bool
+        location_onboard optional bool
     }
 
     Action=> create_dry_out_alert {
