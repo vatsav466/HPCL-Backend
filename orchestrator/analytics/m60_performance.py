@@ -20,8 +20,8 @@ Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name
                 '"month_name"']
 #Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
 #                '"month_name"']
-APG_Filters = ['"cumulative_level"', '"ProductName"',
-                '"month_name"']
+APG_Filters = ['"cumulative_level"', '"ProductName"','"month_name"']
+
 # Base_Filters = ['"SBU_Name"', '"month_name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"'"ProductName"'', '"ProductName"']
 # Lubes_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"']
 Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
@@ -138,6 +138,7 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
     :return:
     """
     if cumulative:
+        Lubes_Filters = ['"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',  '"month_name"']
         group_by_filter = ['"SBU_Name"'] if not cumulative else []
 
     else:
@@ -153,6 +154,8 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
                 if key in Lubes_Filters and Lubes_Filters.index(key) > index:
                     index = Lubes_Filters.index(key)
             if index>len(Lubes_Filters):
+                group_by_filter = [Lubes_Filters[index + 1]]
+            elif index<len(Lubes_Filters) and cumulative:
                 group_by_filter = [Lubes_Filters[index + 1]]
             else:
                 group_by_filter = [Lubes_Filters[index-1]]
@@ -242,6 +245,12 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         
         Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
                          '"month_name"']
+        Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+                         '"month_name"']
+        Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
+                         '"month_name"']
+        
+        
         if resp_level == "summary" or resp_format =='heat_map':
             Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
                         '"ProductName"', '"month_name"']
@@ -646,7 +655,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             measure_unit = 'MT'
         if sbuName_req =="GAS" :
             measure_unit = 'MT'"""
-
         if 'cumulative' not in final_resp and not drill_state:
             final_resp['cumulative'] = {}
         if isinstance(final_resp, dict) and len(final_resp.get('ACTUAL_TMT_SALES', [])) == 1 and not drill_state:
@@ -787,6 +795,10 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
             series_data = []
             for zone in df[other_columns[0]].unique():
                 zone_data = df[df[other_columns[0]] == zone].set_index(month_column)
+                print("zone_data",zone_data.dtypes)
+                for col in zone_data.columns:
+                    if zone_data[col].dtype == 'int64' or zone_data[col].dtype =='np.int64':
+                        zone_data[col] = zone_data[col].astype(object)
                 for column in numeric_cols:
                     # Creating series data
                     series_data.append({"name": f"{zone} {column.title()}", "stack": column.title(),
@@ -796,6 +808,8 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
         elif resp_format == 'heat_map' and month_column:
             # making Cumulative sum of data for n-3
             present_month = datetime.datetime.now().strftime('%b')
+            if present_month.lower() == 'apr':
+                present_month = 'Mar'
             # Filtering cumulative_months
             cumulative_months = []
             if months.index(present_month) > 2:
