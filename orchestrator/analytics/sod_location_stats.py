@@ -81,7 +81,7 @@ async def generate_sod_engineering_location_stats(sap_id):
             "Barrier Gate": "Barrier Gate",
             "Power ESD": "Power ESD",
             "Gantry BCU": "Gantry BCU"
-        }
+        } 
 
         result = []
         result.extend(hardcoded_status)
