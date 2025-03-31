@@ -1348,12 +1348,19 @@ ORDER BY
                                     WHERE 
                                         "ZOName" IS NOT NULL AND "Financial_Year"= ''',
     
+    # 'cdcms_current_month_sales':f'''select
+    #                                     ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+    #                                 from
+    #                                     "lpg_monthly_cdcms_sales_summary"
+    #                                 where
+    #                                     "ZOName" IS NOT NULL AND "Financial_Year"='{financial_year}' AND "Month"= ''',
+    
     'cdcms_current_month_sales':f'''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
-                                        "ZOName" IS NOT NULL AND "Financial_Year"='{financial_year}' AND "Month"= ''',
+                                        "ZOName" IS NOT NULL AND "Financial_Year"='2024-2025' AND "Month"= ''',
     
     'cdcms_current_week_sales': f''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
