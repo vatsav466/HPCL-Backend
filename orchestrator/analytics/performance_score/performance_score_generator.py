@@ -1,0 +1,80 @@
+import urdhva_base
+import asyncio
+import datetime
+import pandas as pd
+import hpcl_ceg_model
+from performance_score_lpg import LPGPerformanceScore
+import orchestrator.analytics.va_analysis as va_analysis
+
+
+def get_performance_score_instance(bu):
+    if bu == 'LPG':
+        return LPGPerformanceScore()
+    return None
+
+
+async def fetch_va_score(bu):
+    resp = await va_analysis.get_ro_terminal_scores({'LocationType': 'TAS',
+                                                     'StartDate': datetime.datetime.now().strftime("%Y-%m-%d")})
+    if resp['status']:
+        va_score = {rec['LOCATION_ID']: rec for rec in resp['data']}
+    return {}
+
+
+async def generate_performance_score(bu, location_id=None):
+    """Generating Performance Score per location for the given BU"""
+    locations = []
+    if not location_id:
+        query = f"""SELECT sap_id, zone from location_master where bu='{bu}'"""
+    else:
+        location_id = [location_id] if isinstance(location_id, str) else location_id
+        location_id = ", ".join(f"'{value}'" for value in location_id)
+        query = f"""SELECT sap_id, zone from location_master where bu='{bu}' and sap_id in ({location_id})"""
+    limit = 1000
+    skip = 0
+
+    # Listing all locations for the given BU
+    while True:
+        resp = await hpcl_ceg_model.LocationMaster.get_aggr_data(query, limit=limit, skip=skip)
+        locations.extend(resp['data'])
+        if len(resp['data']) < limit:
+            break
+        skip += 1
+
+    # Getting PI Score class instance
+    ins = get_performance_score_instance(bu)
+    await ins.initialize()
+    va_data = await fetch_va_score(bu)
+    # generating performance score for every plant
+    performance_score = {}
+    for location in locations:
+        # Generating performance score for each location
+        print(f"Generating performance score for {location['sap_id']}")
+        await ins.configure_va(va_data.get(location['sap_id']))
+        response, score = await ins.generate_performance_index(location['sap_id'])
+        performance_score[location['sap_id']] = {"sap_id": location['sap_id'], "score": score if score < 100 else 100,
+                                                 "results": response, "weightage": 100}
+    df = pd.DataFrame(list(performance_score.values()))
+    df = df[['sap_id', 'score', 'weightage']]
+    df['rank'] = df['score'].rank(method='dense', ascending=False).astype(int)
+    national_avg = df['score'].mean()
+    present_timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
+    for sap_id, rec in performance_score.items():
+        rec['rank'] = df[df['sap_id'] == sap_id]['rank'].values[0]
+        rec['national_avg'] = national_avg
+        rec['timestamp'] = present_timestamp
+    performance_score = list(performance_score.values())
+    # Updating performance score to database
+    await hpcl_ceg_model.PerformanceScore.bulk_update(performance_score.copy(), upsert=True)
+    await hpcl_ceg_model.PerformanceScoreHistory.bulk_update(performance_score, upsert=False)
+    return performance_score
+
+
+async def main():
+    supported_bus = ['LPG']
+    for bu in supported_bus:
+        await generate_performance_score(bu)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

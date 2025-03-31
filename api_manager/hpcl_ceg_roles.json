@@ -4012,6 +4012,267 @@
             ]
         },
         {
+            "name": "performancescoreresults",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreResults",
+            "attributes": {},
+            "uris": [
+                "/api/performancescoreresults/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "performancescoreresults_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreResults_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/performancescoreresults/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "performancescoreresults_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreResults_admin",
+            "attributes": {},
+            "uris": [
+                "/api/performancescoreresults/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "performancescorecategory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreCategory",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorecategory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "performancescorecategory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreCategory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorecategory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "performancescorecategory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreCategory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorecategory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "performancescore",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScore",
+            "attributes": {},
+            "uris": [
+                "/api/performancescore/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_pi_score"
+                }
+            ]
+        },
+        {
+            "name": "performancescore_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScore_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/performancescore/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_pi_score"
+                }
+            ]
+        },
+        {
+            "name": "performancescore_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScore_admin",
+            "attributes": {},
+            "uris": [
+                "/api/performancescore/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_pi_score"
+                }
+            ]
+        },
+        {
+            "name": "performancescorehistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreHistory",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorehistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "performancescorehistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorehistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "performancescorehistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorehistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "crisalerthistory",
             "type": "all",
             "ownerManagedAccess": false,
@@ -4580,6 +4841,10 @@
         {
             "name": "get_pi_score_by_category",
             "displayName": "get_pi_score_by_category"
+        },
+        {
+            "name": "get_pi_score",
+            "displayName": "get_pi_score"
         }
     ]
 }

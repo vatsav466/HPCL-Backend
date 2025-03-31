@@ -5587,6 +5587,249 @@ class Performanceindex_Get_Pi_Score_By_CategoryParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class PerformanceScoreResultsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'performance_score_results'
+    
+    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    weightage: Mapped[float] = mapped_column("weightage", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    module: Mapped[str] = mapped_column("module", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+
+
+class PerformanceScoreResultsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'performance_score_results'
+    
+    name: str
+    score: float
+    weightage: float
+    module: str
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreResultsSchema
+        upsert_keys = []
+
+
+class PerformanceScoreResults(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'performance_score_results'
+    
+    name: typing.Optional[str] | None = None
+    score: typing.Optional[float] | None = None
+    weightage: typing.Optional[float] | None = None
+    module: typing.Optional[str] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreResultsSchema
+        upsert_keys = []
+
+
+class PerformanceScoreResultsGetResp(pydantic.BaseModel):
+    data: typing.List[PerformanceScoreResults]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class PerformanceScoreCategorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'performance_score_category'
+    
+    name: Mapped[str] = mapped_column("name", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    weightage: Mapped[float] = mapped_column("weightage", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    results: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("results", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class PerformanceScoreCategoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'performance_score_category'
+    
+    name: str
+    score: float
+    weightage: float
+    results: typing.Optional[typing.List[PerformanceScoreResults]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreCategorySchema
+        upsert_keys = []
+
+
+class PerformanceScoreCategory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'performance_score_category'
+    
+    name: typing.Optional[str] | None = None
+    score: typing.Optional[float] | None = None
+    weightage: typing.Optional[float] | None = None
+    results: typing.Optional[typing.List[PerformanceScoreResults]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreCategorySchema
+        upsert_keys = []
+
+
+class PerformanceScoreCategoryGetResp(pydantic.BaseModel):
+    data: typing.List[PerformanceScoreCategory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class PerformanceScoreSchema(UrdhvaPostgresBase):
+    __tablename__ = 'performance_score'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    timestamp: Mapped[datetime.datetime] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    national_score: Mapped[float] = mapped_column("national_score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    rank: Mapped[int] = mapped_column("rank", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("category", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(sap_id, name="performance_score_sap_id"),)
+
+
+class PerformanceScoreCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'performance_score'
+    
+    bu: str
+    sap_id: str
+    timestamp: datetime.datetime
+    zone: str
+    region: str
+    name: str
+    score: float
+    national_score: float
+    rank: int
+    category: typing.Optional[typing.List[PerformanceScoreCategory]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreSchema
+        upsert_keys = ['sap_id']
+        access_key_mapping = ['location_id:sap_id']
+
+
+class PerformanceScore(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'performance_score'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    timestamp: typing.Optional[datetime.datetime] | None = None
+    zone: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
+    score: typing.Optional[float] | None = None
+    national_score: typing.Optional[float] | None = None
+    rank: typing.Optional[int] | None = None
+    category: typing.Optional[typing.List[PerformanceScoreCategory]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreSchema
+        upsert_keys = ['sap_id']
+        access_key_mapping = ['location_id:sap_id']
+
+
+class PerformanceScoreGetResp(pydantic.BaseModel):
+    data: typing.List[PerformanceScore]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Performancescore_Get_Pi_ScoreParams(pydantic.BaseModel):
+    bu: str
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    strategy: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class PerformanceScoreHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'performance_score_history'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    timestamp: Mapped[datetime.datetime] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    national_score: Mapped[float] = mapped_column("national_score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    rank: Mapped[int] = mapped_column("rank", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("category", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class PerformanceScoreHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'performance_score_history'
+    
+    bu: str
+    sap_id: str
+    timestamp: datetime.datetime
+    zone: str
+    region: str
+    name: str
+    score: float
+    national_score: float
+    rank: int
+    category: typing.Optional[typing.List[PerformanceScoreCategory]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class PerformanceScoreHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'performance_score_history'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    timestamp: typing.Optional[datetime.datetime] | None = None
+    zone: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
+    score: typing.Optional[float] | None = None
+    national_score: typing.Optional[float] | None = None
+    rank: typing.Optional[int] | None = None
+    category: typing.Optional[typing.List[PerformanceScoreCategory]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class PerformanceScoreHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[PerformanceScoreHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
 class CrisAlertHistorySchema(UrdhvaPostgresBase):
     __tablename__ = 'cris_alert_history'
     
