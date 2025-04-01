@@ -29,6 +29,7 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
     Returns:
     - dict: Status message indicating the success of the data submission.
     """
+    return True, "Success"
     logger.info(f"Received CRIS data ingestion for Location {data.location_id}({data.location_type}) {data.dict()}")
 
     if isinstance(data.data, list) and len(data.data) > 0:
@@ -47,6 +48,8 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
         logger.error(f"Invalid data structure: data.data is not a list or is empty")
         return {"status": False, "message": "Invalid data", "data": []}
     for entry in enriched_data:
+        if entry['severity'] == 'Normal':
+            entry['severity'] = 'Medium'
         entry['occurrence_date'] = datetime.datetime.strptime(entry['occurrence_date'], "%Y%m%d%H%M%S")
         if entry.get("closure_date", ""):
             entry['closure_date'] = datetime.datetime.strptime(entry['closure_date'], "%Y%m%d%H%M%S")
@@ -56,16 +59,16 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
 
         entry['alert_id'] = entry['alarm_id']
         entry['bu'] = 'RO'
-        entry['sap_id'] = entry['ro_code']
+        entry['sap_id'] = entry['location_id']
         entry['violation_type'] = entry['interlock_type']
         interlock_data = cris_alert_mapping.Cris_Alert_Mapping[entry['bu']][entry['interlock_type']]
         entry['interlock_name'] = interlock_data['name']
         entry['sop_id'] = interlock_data['sop_id']
         entry['alert_section'] = 'RO'
+        camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
+                                                    alert_section="RO")
         if not entry.get("closure_date", ""):
-            if not await ro_analysis.check_alert_exists(entry['alarm_id']):
-                camunda_url = await helpers.get_camunda_url(bu=entry['location_type'], sap_id=entry['location_id'],
-                                                            alert_section="RO")
+            if not await ro_analysis.check_alert_exists(entry['alarm_id'], entry['violation_type'], entry['sap_id']):
                 await alert_manager.create_alert({**entry, "alert_type": "RO"}, camunda_url=camunda_url)
             else:
                 print(f"Alert already exists {entry}")
@@ -79,6 +82,7 @@ async def cris_ingest_data(data: Cris_Ingest_DataParams):
                 alert_data['alert_type'] = alert_data['bu']
                 alert_data['alert_id'] = alert_data['id']
                 await alert_manager.close_alert(alert_data=alert_data)
+                await ro_analysis.close_camunda_workflow(alert_data=alert_data, camunda_url=camunda_url)
             else:
                 print(f"Alert Not Found Query: {query}")
 

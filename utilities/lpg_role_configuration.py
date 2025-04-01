@@ -8,8 +8,8 @@ lpg_role_mapping={
                 "level - 1": {
                     "condition": "<",
                     "value": 0,
-                    "assign_role": "Maintenanace Officer LPG",
-                    "escalation_role": "Maintenanace Officer LPG",
+                    "assign_role": "Maintenance Officer LPG",
+                    "escalation_role": "Maintenance Officer LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 2": {
@@ -43,8 +43,8 @@ lpg_role_mapping={
                 "level - 1": {
                     "condition": "<",
                     "value": 0,
-                    "assign_role": "Maintenanace Officer LPG",
-                    "escalation_role": "Maintenanace Officer LPG",
+                    "assign_role": "Maintenance Officer LPG",
+                    "escalation_role": "Maintenance Officer LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 2": {
@@ -78,8 +78,8 @@ lpg_role_mapping={
                 "level - 1": {
                     "condition": "<",
                     "value": 0,
-                    "assign_role": "Maintenanace Officer LPG",
-                    "escalation_role": "Maintenanace Officer LPG",
+                    "assign_role": "Maintenance Officer LPG",
+                    "escalation_role": "Maintenance Officer LPG",
                     "escalation_time": "PT24H"
                 },
                 "level - 2": {

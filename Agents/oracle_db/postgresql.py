@@ -538,37 +538,69 @@ class Postgresql:
         """Return the default schema."""
         return "public"
 
+    # async def cal_host_manual_fan_printed(self, data):
+    #     """
+    #     Calculate whether to create an actionable alert based on manual vs auto fan count comparison.
+    #     Returns True if we should close the alert, False if we should keep it open (actionable).
+    #     """
+    #     data = pd.DataFrame(data)
+        
+    #     # Get the last record of the day (assuming data is sorted by timestamp)
+    #     if data.empty:
+    #         return False  # No data, no alert needed
+        
+    #     # Get the auto fan count and calculate the 5% tolerance
+    #     total_fan_count = data['total_count'].iloc[-1]  # Get the latest record
+    #     total_fan_with_tolerance = total_fan_count * 0.05  # Add 5% tolerance
+        
+    #     # Get the manual fan count
+    #     manual_fan_count = data['manual_fan_count'].iloc[-1]
+        
+    #     # If manual fan count is greater than auto fan count + tolerance, 
+    #     if manual_fan_count == 0:
+    #         return False, "Manual FAN Count is Zero", "No manual FAN was printed"
+    #     if manual_fan_count != 0 and manual_fan_count > total_fan_with_tolerance:
+    #         return (True, 
+    #                     "Manual FAN printed more than 5% of total TT loaded", 
+    #                     f"{manual_fan_count} is less than {total_fan_with_tolerance} with 5%"
+    #                 )
+    #     elif manual_fan_count != 0 and manual_fan_count < total_fan_with_tolerance:
+    #         return (True, 
+    #                     "Manual FAN printed less than 5% of total TT loaded", 
+    #                     f"{manual_fan_count} is less than {total_fan_with_tolerance} with 5%"
+    #                 )
+
+
     async def cal_host_manual_fan_printed(self, data):
         """
         Calculate whether to create an actionable alert based on manual vs auto fan count comparison.
-        Returns True if we should close the alert, False if we should keep it open (actionable).
+        Returns True if we should create an alert, False if no alert is needed.
         """
         data = pd.DataFrame(data)
         
         # Get the last record of the day (assuming data is sorted by timestamp)
         if data.empty:
-            return False  # No data, no alert needed
+            return False, "No data", "No data available for analysis"
         
-        # Get the auto fan count and calculate the 5% tolerance
+        # Get the total fan count and manual fan count
         total_fan_count = data['total_count'].iloc[-1]  # Get the latest record
-        total_fan_with_tolerance = total_fan_count * 0.05  # Add 5% tolerance
-        
-        # Get the manual fan count
         manual_fan_count = data['manual_fan_count'].iloc[-1]
         
-        # If manual fan count is greater than auto fan count + tolerance, 
+        # If no manual fans printed, no alert needed
         if manual_fan_count == 0:
-            return False, "Manual FAN Count is Zero", "No manual FAN was printed"
-        if manual_fan_count != 0 and manual_fan_count > total_fan_with_tolerance:
-            return (True, 
-                        "Manual FAN printed more than 5% of total TT loaded", 
-                        f"{manual_fan_count} is less than {total_fan_with_tolerance} with 5%"
-                    )
-        elif manual_fan_count != 0 and manual_fan_count < total_fan_with_tolerance:
-            return (True, 
-                        "Manual FAN printed less than 5% of total TT loaded", 
-                        f"{manual_fan_count} is less than {total_fan_with_tolerance} with 5%"
-                    )
+            return False, "No alert needed", "No manual FAN was printed"
+        
+        # Calculate percentage of manual fans compared to total
+        if total_fan_count > 0:  # Avoid division by zero
+            manual_percentage = (manual_fan_count / total_fan_count) * 100
+        else:
+            return True, "Alert: Division by zero", "Total count is zero but manual count exists"
+        
+        # Create alert if manual percentage exceeds 5%
+        if manual_percentage > 5:
+            return True, "Alert: Manual FAN printed more than 5% of total", f"Manual percentage: {manual_percentage:.2f}% exceeds threshold of 5%"
+        else:
+            return False, "No alert needed", f"Manual percentage: {manual_percentage:.2f}% is within threshold of 5%"
 
 
     async def cal_unauthorized_flow(self, total_net):
@@ -678,6 +710,9 @@ class Postgresql:
                 # Add these checks to your existing function
                 if "created_date" in record and isinstance(record["created_date"], str):
                     record["created_date"] = pd.to_datetime(record["created_date"])
+                
+                if "date_time" in record and isinstance(record["date_time"], str):
+                    record["date_time"] = pd.to_datetime(record["date_time"])
 
                 if "cancelled_date" in record and isinstance(record["cancelled_date"], str):
                     record["cancelled_date"] = pd.to_datetime(record["cancelled_date"])
@@ -732,36 +767,148 @@ class Postgresql:
             if table_db_name == 'host_unauthorised_flow':
                 processed_data = [x for x in processed_data if x['nettotalizer'] > 0]
             
-            if table_db_name == 'host_manual_fan_printed':
-                # Filter out zero manual_fan_count records for regular processing
-                non_zero_records = [x for x in processed_data if x.get('manual_fan_count', 0) > 0]
+            # if table_db_name == 'host_manual_fan_printed':
+            #     # Step 1: Check if we need to process EOD record
+            #     current_hour = urdhva_base.utilities.get_present_time().strftime("%H")
+            #     current_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
+            #     is_eod = int(current_hour) == 18
                 
-                # Handle end of day scenario
-                to_day = urdhva_base.utilities.get_present_time().strftime("%H")
-                if int(to_day) == 18 and not non_zero_records:
-                    # Check if we have any non-zero records for today for this specific SAP ID
-                    to_date = urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")
-                    check_query = f"""select count(*) from "{table_db_name}" where date::DATE = '{to_date}' and sap_id = '{sap_id}' and manual_fan_count != 0"""
-                    check_resp = await model.get_aggr_data(check_query)
+            #     # Step 2: Get the latest record for this SAP ID from the database
+            #     check_query = f"""SELECT manual_fan_count 
+            #         FROM "{table_db_name}" 
+            #         WHERE date::DATE = '{current_date}' 
+            #         AND sap_id = '{sap_id}' 
+            #         ORDER BY date_time DESC
+            #     """
+            #     latest_record_resp = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
+                
+            #     # Step 3: Process the current data
+            #     filtered_data = []  # Use a different variable name here
+                
+            #     for record in sap_id_data:  # Use the original sap_id_data here
+            #         current_manual_count = record.get('manual_fan_count', 0)
                     
-                    # If no non-zero records exist, find a zero record
-                    if check_resp.get("data") and check_resp.get("data")[0].get("count", 0) == 0:
-                        # Find the latest zero record from original data for this SAP ID
-                        zero_records = [
-                            x for x in processed_data 
-                            if x.get('manual_fan_count', 0) == 0
-                        ]
+            #         # Determine if we should insert this record
+            #         insert_record = False
+                    
+            #         # Case 1: Record has non-zero manual count
+            #         if current_manual_count > 0:
+            #             # Check if manual count changed from the last record
+            #             if not latest_record_resp.get("data") or current_manual_count != latest_record_resp.get("data")[0].get("manual_fan_count"):
+            #                 insert_record = True
+                    
+            #         # Case 2: EOD record with zero manual count (only if no non-zero records exist for the day)
+            #         elif is_eod:
+            #             # Check if we have any non-zero records for today
+            #             zero_check_query = f"""SELECT COUNT(*) 
+            #                 FROM "{table_db_name}" 
+            #                 WHERE date::DATE = '{current_date}' 
+            #                 AND sap_id = '{sap_id}' 
+            #                 AND manual_fan_count > 0
+            #             """
+            #             zero_check_resp = await urdhva_base.BasePostgresModel.get_aggr_data(zero_check_query)
                         
-                        if zero_records:
-                            # Sort by date_time and get the latest
-                            zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
-                            processed_data = [zero_records[0]]
-                    else:
-                        processed_data = []
-                else:
-                    processed_data = non_zero_records
+            #             if zero_check_resp.get("data") and zero_check_resp.get("data")[0].get("count", 0) == 0:
+            #                 # No non-zero records for today, insert the last zero record
+            #                 # Find the latest zero record from original data
+            #                 zero_records = [x for x in sap_id_data if x.get('manual_fan_count', 0) == 0]
+            #                 if zero_records:
+            #                     # Sort by date_time and get the latest
+            #                     zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
+            #                     insert_record = True
+            #                     record = zero_records[0]  # Use the latest zero record
+                    
+            #         if insert_record:
+            #             filtered_data.append(record)
+                
+            #     # After processing, update processed_data with our filtered results
+            #     processed_data = filtered_data
 
-            # Bulk update for this SAP ID's data
+            if table_db_name == 'host_manual_fan_printed':
+                # Step 1: Check the current time
+                current_time = urdhva_base.utilities.get_present_time()
+                current_date = current_time.strftime("%Y-%m-%d")
+
+                # Step 2: Get the latest record for this SAP ID from the database
+                check_query = f"""SELECT manual_fan_count, auto_fan_count, total_count, date_time
+                    FROM "{table_db_name}" 
+                    WHERE date::DATE = '{current_date}' 
+                    AND sap_id = '{sap_id}' 
+                    ORDER BY date_time DESC
+                """
+                latest_record_resp = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
+
+                # Step 3: Process the current data
+                filtered_data = []
+
+                if not sap_id_data:
+                    if latest_record_resp.get("data"):
+                        latest_record = latest_record_resp.get("data")[0]
+                        removal_record = {
+                            'manual_fan_count': 0,
+                            'auto_fan_count': 0,
+                            'total_count': 0,
+                            'sap_id': sap_id,
+                            'date': current_date,
+                            'date_time': current_time.isoformat(),
+                            'location_name': latest_record.get('location_name', 'UNKNOWN'),
+                            'zone': latest_record.get('zone', 'UNKNOWN'),
+                            'data_removed': True  
+                        }
+                        filtered_data.append(removal_record)
+                else:
+                    for record in sap_id_data:
+                        current_manual_count = record.get('manual_fan_count', 0)
+                        current_auto_count = record.get('auto_fan_count', 0)
+                        current_total_count = record.get('total_count', 0)
+                        record['data_removed'] = False
+                        insert_record = False
+
+                        if not latest_record_resp.get("data"):
+                            insert_record = True
+                        else:
+                            latest_record = latest_record_resp.get("data")[0]
+                            latest_manual_count = latest_record.get("manual_fan_count", 0)
+                            latest_auto_count = latest_record.get("auto_fan_count", 0)
+                            latest_total_count = latest_record.get("total_count", 0)
+
+                            # Safe extraction of `date_time`
+                            latest_time_raw = latest_record.get("date_time")
+                            if isinstance(latest_time_raw, str):
+                                latest_time = datetime.fromisoformat(latest_time_raw)
+                            elif isinstance(latest_time_raw, datetime):
+                                latest_time = latest_time_raw  
+                            else:
+                                latest_time = None  
+
+                            if (current_manual_count != latest_manual_count or 
+                                current_auto_count != latest_auto_count or 
+                                current_total_count != latest_total_count):
+                                insert_record = True
+
+                            current_time_raw = record.get('date_time')
+
+                            if isinstance(current_time_raw, str):
+                                current_time_obj = datetime.fromisoformat(current_time_raw)
+                            elif isinstance(current_time_raw, datetime):
+                                current_time_obj = current_time_raw  
+                            else:
+                                current_time_obj = None  # Handle missing or invalid data gracefully
+
+                            
+                            if latest_time and (current_time_obj - latest_time).total_seconds() > 3600:
+                                insert_record = True
+
+                            if latest_record.get("data_removed", False):
+                                insert_record = True
+
+                        if insert_record:
+                            filtered_data.append(record)
+
+                processed_data = filtered_data
+                for record in processed_data:
+                    record.pop("data_removed", None)  # Removes if exists
+                print(f"Processing {len(processed_data)} records for host_manual_fan_printed for SAP ID {sap_id}")
             status, msg = await model.bulk_update(processed_data, upsert=True, upsert_skip_keys=['alert_created'])
 
             # Alert processing logic remains the same, but with SAP ID specific filtering
@@ -780,9 +927,19 @@ class Postgresql:
             resp = await model.get_aggr_data(query)
 
             # Existing alert processing logic for manual_fan_printed
+            # Alert processing logic
             if table_db_name == 'host_manual_fan_printed':
+                # Query to get only non-zero manual fan count records that need processing
+                query = f"""SELECT * FROM "{table_db_name}" 
+                    WHERE date::DATE = '{to_date}' 
+                    AND manual_fan_count > 0
+                    AND sap_id = '{sap_id}' 
+                    AND alert_created = false 
+                    ORDER BY date_time ASC
+                """
+                
+                # Process alerts for non-zero records
                 if resp.get("data", []):
-                    # Process alerts for non-zero records
                     for record in resp.get("data", []):
                         is_close_alert = False
                         interlock_name = config['interlock_name'].get(table_name)
@@ -795,7 +952,8 @@ class Postgresql:
                         
                         if isinstance(result, tuple) and len(result) == 3:
                             is_close_alert, interlock_name, device_msg = result
-
+                        
+                        print("device_msg --> ", device_msg)
                         # Prepare alert data
                         alert_data = {
                             'bu': 'TAS',
@@ -812,14 +970,13 @@ class Postgresql:
 
                         # Create alert for non-zero records
                         success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                        print("Alert created msg:", msg)
                         
                         # Close alert if needed
                         if is_close_alert:
                             await self.close_created_alert(alert_data=alert_data)
                             
                         # Mark record as processed
-                        query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
+                        query = f"UPDATE {table_db_name} SET alert_created = true WHERE id = {record['id']}"
                         await model.update_by_query(query)
                     
                     return {"status": "Table updated and alerts processed for non-zero records"}

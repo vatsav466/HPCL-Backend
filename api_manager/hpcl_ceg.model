@@ -265,6 +265,8 @@ Model LocationMaster {
     // For getting what was the round trip time from Plant to Dealer Location and then to Plant
     // This field applicable for Outlets
     round_trip_distance optional int
+    //TAS
+    location_onboard optional bool
 
     Action=> upload_location_master {
     }
@@ -297,6 +299,11 @@ Model LocationMaster {
 
     Action=> get_sod_engineering_stats {
         sap_id str
+    }
+
+    Action=> location_command_control {
+        sap_id str
+        action str
     }
 
     Config=> {
@@ -603,7 +610,7 @@ Model Alerts {
     assigned_to optional str                // User email for whom alert is assigned to
     assigned_to_role optional str           // User Role for whom alert is assigned to
     assigned_users optional list str        // User email for whom alert is assigned to
-    assigned_user_roles optional list str   // User Role for whom alert is assigned to
+    assigned_user_roles optional index_field list str   // User Role for whom alert is assigned to
 
     // Location Details
     district optional str
@@ -920,6 +927,7 @@ Model IndentDryOut {
         plant optional list str
         cat_a_dealers optional bool
         dry_out_dealers optional bool
+        location_onboard optional bool
     }
 
     Action=> create_dry_out_alert {
@@ -1386,7 +1394,6 @@ Model MomLevelFinalMetaData {
 
 }
 Model IndustryPerformance {
-
     prod1_1 optional str
     category optional str
     sbu_name optional str
@@ -1414,6 +1421,14 @@ Model IndustryPerformance {
     month_name optional str
     netweight_tmt optional float
     com_type optional str
+
+    Action=> generate_ai_industry_performance {
+        user_prompt str
+    }
+
+    Action=> list_ai_industry_performance_queries {
+        search_text str
+    }
     
     Config=> {
         access_key_mapping='ORGSBUNAME:bu,ORGZONENAME:zone,ORGSANAME:sales_area'
@@ -1897,6 +1912,8 @@ Model TagsData {
     }
 
     Action=> get_tags_data {
+        plant optional str
+        zone optional str
     }
 
 
@@ -1946,6 +1963,65 @@ Model PerformanceIndex {
         region optional str
         zone optional str
         sap_id optional str
+    }
+}
+
+Model PerformanceScoreResults internal {
+    name str
+    score float
+    weightage float
+    module str
+}
+
+Model PerformanceScoreCategory internal {
+    name str
+    score float
+    weightage float
+    results optional list PerformanceScoreResults
+}
+
+Model PerformanceScore {
+    bu index_field str
+    sap_id unique_field index_field str
+    timestamp datetime
+    zone index_field str
+    region index_field str
+    name index_field str
+    score float
+    national_score float
+    rank int
+    category optional list PerformanceScoreCategory
+
+    Action=> get_pi_score {
+        bu str
+        category optional str
+        region optional str
+        zone optional str
+        sap_id optional str
+        strategy str
+    }
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='location_id:sap_id'
+    }
+}
+
+Model PerformanceScoreHistory {
+    bu index_field str
+    sap_id index_field str
+    timestamp datetime
+    zone index_field str
+    region index_field str
+    name index_field str
+    score float
+    national_score float
+    rank int
+    category optional list PerformanceScoreCategory
+
+    Config=> {
+        crud_operations='read'
+        access_key_mapping='location_id:sap_id'
     }
 }
 

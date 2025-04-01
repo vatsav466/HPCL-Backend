@@ -14,7 +14,7 @@ import urdhva_base.queryparams
 
 router = fastapi.APIRouter(prefix='/architecturedata')
 
-BASE_JSON_PATH = "/opt/ceg/algo/dnc_backend_v2/things_board/device_data/"
+BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data/"
 
 @router.post('/architecture_details', tags=['ArchitectureData'])
 async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):

@@ -911,7 +911,7 @@ LIMIT 10000;''',
                                     SUM("TotalSalesYesterday") AS "TotalSalesYesterday" ,
                                     SUM("Total_Pending") AS "Total_Pending"
                                 FROM
-                                    "lpg_cdcms_sales_summary" ''',
+                                    "lpg_cdcms_last_three_months_summary" ''',
     
     "lpg_cdcms_april_consumer_stats": f''' SELECT
                                                 "DistributorName", "SubCategory", "ZOName",
@@ -1327,19 +1327,40 @@ ORDER BY
                         "lpg_gd_rejections"
                 ''',
                     
+    # 'cdcms_current_year_sales':f''' SELECT 
+    #                                     ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+    #                                 FROM 
+    #                                     "lpg_monthly_cdcms_sales_summary"
+    #                                 WHERE 
+    #                                     "Financial_Year"='{financial_year}' AND "ZOName" IS NOT NULL ''',
+    
+    # 'cdcms_current_month_sales':f'''select
+    #                                     ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+    #                                 from
+    #                                     "lpg_monthly_cdcms_sales_summary"
+    #                                 where
+    #                                     "Financial_Year"='{financial_year}' AND "Month"='{current_month}' AND "ZOName" IS NOT NULL ''',
+                                        
     'cdcms_current_year_sales':f''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     FROM 
                                         "lpg_monthly_cdcms_sales_summary"
                                     WHERE 
-                                        "Financial_Year"='{financial_year}' AND "ZOName" IS NOT NULL ''',
+                                        "ZOName" IS NOT NULL AND "Financial_Year"= ''',
+    
+    # 'cdcms_current_month_sales':f'''select
+    #                                     ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
+    #                                 from
+    #                                     "lpg_monthly_cdcms_sales_summary"
+    #                                 where
+    #                                     "ZOName" IS NOT NULL AND "Financial_Year"='{financial_year}' AND "Month"= ''',
     
     'cdcms_current_month_sales':f'''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
-                                        "Financial_Year"='{financial_year}' AND "Month"='{current_month}' AND "ZOName" IS NOT NULL ''',
+                                        "ZOName" IS NOT NULL AND "Financial_Year"='2024-2025' AND "Month"= ''',
     
     'cdcms_current_week_sales': f''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"

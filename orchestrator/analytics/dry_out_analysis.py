@@ -20,13 +20,13 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.connection_mapping import product_code_mapping, connection_mapping
 
 req_keys = {
-    "TAS": ["zone", "sap_id", "name", "category"],
+    "TAS": ["zone", "sap_id", "name", "category", "location_onboard"],
     "LPG": ["zone", "sap_id", "name", "category"],
     "RO": ["zone", 'region', "sales_area", "terminal_plant_id", "terminal_plant_name", "category", "sap_id", "name"]
 }
 
 
-async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False):
+async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_dealers=False, dry_out_dealers=False, location_onboard=False):
     """
     This function is used to get the location information for a given BU.
     It fetches the location master data from Redis and filters based on the BU provided.
@@ -816,13 +816,17 @@ async def _get_dry_out_ims_report(dry_out_in_days=['1']):
     stats_resp['DRY_OUT_IN_DAYS'] = stats_resp['DRY_OUT_IN_DAYS'].fillna("").astype(str)
     stats_resp.replace({"DRY_OUT_IN_DAYS": {"1": "DRY_OUT", "2": "INTRA_DAY_DRY_OUT"}}, inplace=True)
     stats_resp.replace({"VALID_INDENT": {"H": "ON_HOLD_RELEASED", "Y": "VALID_INDENT", "N": "ON_HOLD"}}, inplace=True)
-    stats_resp['PROD_REQD_DT'] = stats_resp['PROD_REQD_DT'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    stats_resp['SEND_TO_JDE_TIME'] = stats_resp['SEND_TO_JDE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    stats_resp['DELIVERY_DATE'] = stats_resp['DELIVERY_DATE'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    stats_resp['INDENT_HOLD_RELEASE_TIME'] = stats_resp['INDENT_HOLD_RELEASE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    stats_resp['INDENT_EXECUTABLE_TIME'] = stats_resp['INDENT_EXECUTABLE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    stats_resp['PROD_ALLOT_TIME'] = stats_resp['PROD_ALLOT_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
-    stats_resp['LOADED_ON'] = stats_resp['LOADED_ON'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    for column in ["PROD_REQD_DT", "SEND_TO_JDE_TIME", "DELIVERY_DATE", "INDENT_HOLD_RELEASE_TIME",
+                   "INDENT_EXECUTABLE_TIME", "PROD_ALLOT_TIME", "LOADED_ON"]:
+        if pd.api.types.is_datetime64_any_dtype(stats_resp[column]):
+            stats_resp[column] = stats_resp[column].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # stats_resp['PROD_REQD_DT'] = stats_resp['PROD_REQD_DT'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # stats_resp['SEND_TO_JDE_TIME'] = stats_resp['SEND_TO_JDE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # stats_resp['DELIVERY_DATE'] = stats_resp['DELIVERY_DATE'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # stats_resp['INDENT_HOLD_RELEASE_TIME'] = stats_resp['INDENT_HOLD_RELEASE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # stats_resp['INDENT_EXECUTABLE_TIME'] = stats_resp['INDENT_EXECUTABLE_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # stats_resp['PROD_ALLOT_TIME'] = stats_resp['PROD_ALLOT_TIME'].dt.strftime("%Y-%m-%d %H:%M:%S")
+    # stats_resp['LOADED_ON'] = stats_resp['LOADED_ON'].dt.strftime("%Y-%m-%d %H:%M:%S")
     stats_resp = stats_resp.fillna("")
     return stats_resp.to_dict(orient='records')
 
@@ -1394,8 +1398,8 @@ async def get_tar_analysis(condition):
              f"rosapcode, "
              f"exposure, "
              f"CASE "
-             f"WHEN exposure < 0 THEN 1 "
-             f"WHEN exposure >= 0 AND exposure <= 5000000 THEN 2 "
+             f"WHEN exposure >= 0 AND exposure <= 2500000 THEN 1 "
+             f"WHEN exposure > 2500000 AND exposure <= 5000000 THEN 2 "
              f"WHEN exposure > 5000000 AND exposure <= 7500000 THEN 3 "
              f"ELSE 4 "
              f"END AS category "
@@ -1614,7 +1618,7 @@ async def get_dryout_aging_data():
     print("resp: ", resp)
     resp.rename(columns={
         "sap_id": "DEALER_CODE", "location_name": "LOCATION_NAME", "zone": "ZONE",
-        "indent_status": "INDENT_STATUS", "product_code": "PRODUCT_CODE",
+        "indent_status": "INDENT_STATUS", "product_code": "PRODUCT_CODE", "age_category": "AGE_CATEGORY",
         "terminal_plant_id": "TERMINAL_PLANT_ID", "dry_out_in_days": "DRY_OUT_IN_DAYS"
     }, inplace=True)
     del resp['created_at']

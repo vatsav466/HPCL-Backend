@@ -1127,6 +1127,26 @@ async def delete(id: str):
     return await PerformanceIndex.delete(id)
 
 
+@router.get('/performancescore/{id}', response_model=PerformanceScore, tags=['PerformanceScore'])
+async def get(id: str):
+    return await PerformanceScore.get(id, skip_secrets=True)
+
+
+@router.get('/performancescore', response_model=PerformanceScoreGetResp, tags=['PerformanceScore'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PerformanceScore.get_all(params, skip_secrets=True)
+
+
+@router.get('/performancescorehistory/{id}', response_model=PerformanceScoreHistory, tags=['PerformanceScoreHistory'])
+async def get(id: str):
+    return await PerformanceScoreHistory.get(id, skip_secrets=True)
+
+
+@router.get('/performancescorehistory', response_model=PerformanceScoreHistoryGetResp, tags=['PerformanceScoreHistory'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await PerformanceScoreHistory.get_all(params, skip_secrets=True)
+
+
 @router.get('/crisalerthistory/{id}', response_model=CrisAlertHistory, tags=['CrisAlertHistory'])
 async def get(id: str):
     return await CrisAlertHistory.get(id, skip_secrets=True)

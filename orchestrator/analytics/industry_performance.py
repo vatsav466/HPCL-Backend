@@ -475,7 +475,6 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             df["history_pvt_share"] = df[history_pvt_columns].sum(axis=1)
             
             new_df = df[selected_columns + ["month_name","actual_psu_share","history_psu_share","actual_pvt_share", "history_pvt_share"]]           
-        print("dfcolumns",df.columns)
         if len(required_companies) <=3:
             li = df.columns.tolist()
             #line_axis will give the name of distint company categories that will come in response
@@ -866,6 +865,9 @@ async def industry_performance(filters, cross_filters, drill_state="", time_grai
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     filters, fiscal_year_pre, fiscal_year_last, months = get_date_filters(filters)
+    #Added for the purpose of FY2025-2026 Apr ist
+    fiscal_year_pre = '2024-2025'
+    fiscal_year_last = '2023-2024'
     if fiscal_year_pre and not fiscal_year_last:
         filters.append({"key": "fiscal_year", "cond": "equals", "value": fiscal_year_pre})
     elif not fiscal_year_pre and fiscal_year_last:
@@ -1322,11 +1324,18 @@ async def generate_omc_compare_data(filters, drill_state):
 
     filters.append({'key': 'coname', 'cond': 'one-off', 'value': market_share_companies})
 
-
     fiscal_year_pre = (f"{fiscal_year.FiscalYear.current().start.year}-"
                        f"{fiscal_year.FiscalYear.current().end.year}")
     fiscal_year_last = (f"{fiscal_year.FiscalYear.current().prev_fiscal_year.start.year}-"
                         f"{fiscal_year.FiscalYear.current().prev_fiscal_year.end.year}")
+    
+    
+    present_month = datetime.datetime.now().strftime('%b')
+    if present_month.lower() == 'apr':
+                fiscal_year_pre = fiscal_year_last
+                fiscal_year_last =str(int(fiscal_year_last.split('-')[0]) - 1 )+'-'+ str(int(fiscal_year_last.split('-')[0]))
+    print("fiscal_year_pre",fiscal_year_pre)
+    print("fiscal_year_last",fiscal_year_last)
     # Modifying filters to handle list conditions
     for cond in filters:
         cond['key'] = cond['key'].strip('"')
@@ -1355,7 +1364,6 @@ async def generate_omc_compare_data(filters, drill_state):
         drill_key = entry[drill_state] if drill_state else "cumulative"
         company = entry["coname"]
         sales = float(entry["sales"])  # Convert Decimal to int
-
         if entry["fiscal_year"] == fiscal_year_pre:
             table[drill_key]["Sales"][company] = sales
         elif entry["fiscal_year"] == fiscal_year_last:
@@ -1380,7 +1388,6 @@ async def generate_omc_compare_data(filters, drill_state):
                     cumulative_data[key][co] += val
     if drill_state:
         structured_data = [cumulative_data] + structured_data
-
     # Calculating Market Share
     for entry in structured_data:
         total_sales = sum(entry['Sales'].values())

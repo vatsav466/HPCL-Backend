@@ -14,7 +14,7 @@ from utilities.analog_data_mapping import Maintenance, Fault
 
 router = fastapi.APIRouter(prefix='/tagsdata')
 
-BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data/"
+BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data"
 
 @router.post('/things_board_device_data', tags=['TagsData'])
 async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
@@ -46,12 +46,15 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
             ],
             "OI": [
                 ("Fire", "Fire Engine", "Fire Engine"),
-                ("Jockey", "Jockey Pump", "Jockey Pump"),
+                ("Jockey Pump Run", "Jockey Pump", "Jockey Pump Run"),
                 ("Pt", "PT", "Farthest Point Pt"),
                 ("PT", "PT", "Nearest Point PT")
             ]
         }
-
+        # Initialize all counters
+        fire_engine_count = 0
+        pt_count = 0
+        jockey_pump_count = 0
         # Build system mapping from device_mapping (case-insensitive)
         system_mapping = defaultdict(lambda: defaultdict(str))
         for device in device_mapping:
@@ -129,16 +132,33 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                                 system_key = lookup_key.strip().lower()
                                 system = system_mapping["tank"].get(system_key, "Unknown")
                                 break
-
+                   
                     # Handle OI devices
                     elif raw_device_type == "oi":
+                        normalized_sensor = normalized_sensor.lower()
                         for keyword, mapped, lookup_key in device_type_mapping["OI"]:
-                            if keyword.lower() in normalized_sensor:
-                                mapped_device_type = mapped
-                                # Use predefined lookup key for system
-                                system_key = lookup_key.strip().lower()
-                                system = system_mapping["oi"].get(system_key, "Unknown")
-                                break
+                            lookup_key = lookup_key.strip().lower()
+
+                            if keyword == "Fire" and normalized_sensor.startswith(keyword.lower()):
+                                if normalized_sensor.startswith(keyword.lower()):
+                                    mapped_device_type = mapped
+                                    system_key = lookup_key
+                                    system = system_mapping["oi"].get(system_key, "Unknown")
+                                    break
+                                 # Check for PT (endswith ' pt' or ' pt')
+                            elif keyword in ["Pt", "PT"] and normalized_sensor.endswith(keyword.lower()):
+                                 if normalized_sensor.endswith(keyword.lower()):
+                                     mapped_device_type = mapped
+                                     system_key = lookup_key
+                                     system = system_mapping["oi"].get(system_key, "Unknown")
+                                     break
+                                    # Check for Jockey Pump Run (exact match or contains)
+                            elif keyword == "Jockey Pump Run" and "jockey pump run" in normalized_sensor:
+                                 if "jockey pump run" in normalized_sensor:
+                                     mapped_device_type = mapped
+                                     system_key = lookup_key
+                                     system = system_mapping["oi"].get(system_key, "Unknown")
+                                     break                   
 
                     # Handle other devices
                     else:
@@ -225,12 +245,37 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         # Convert to DataFrame if data exists
         if res:
             df = pd.DataFrame(res)  # Convert list of dictionaries to DataFrame
-            
-            # Convert 'count' to integer (handle any invalid data gracefully)
+
+            print(df.columns)  # Debugging step to check column names
+
+            # Convert 'count' to integer, handling errors
             df['count'] = pd.to_numeric(df['count'], errors='coerce').fillna(0).astype(int)
-            # Select only required columns
-            df = df[['sap_id', 'name', 'device_type', 'zone', 'count','system','mf_count']]
- 
+
+            # Ensure required columns exist
+            required_columns = ['sap_id', 'name', 'zone', 'system', 'count', 'mf_count']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                raise KeyError(f"Missing columns: {missing_columns}")
+
+            # Convert 'mf_count' to numeric (handling missing values)
+            df['mf_count'] = pd.to_numeric(df['mf_count'], errors='coerce').fillna(0).astype(int)
+
+            # **Exclude specific sap_id values**
+            df = df[~df['sap_id'].isin(['1588', '1992', '1999'])]
+
+            # Apply filtering if 'zone' or 'plant' is provided
+            if 'zone' in df.columns and data.zone:
+                df = df[df['zone'] == data.zone]
+
+            if 'sap_id' in df.columns and data.plant:
+                df = df[df['sap_id'] == data.plant]
+
+            # Group by relevant columns and sum 'count' only
+            df = df.groupby(['system', 'sap_id', 'name', 'zone'], as_index=False).agg({
+                'count': 'sum',  # Summing 'count' only
+                'mf_count': 'sum'  # Summing 'mf_count'
+            })
+
             # Convert DataFrame to list of dictionaries
             return {"status": True, "message": "Success", "data": df.to_dict(orient='records')}
 

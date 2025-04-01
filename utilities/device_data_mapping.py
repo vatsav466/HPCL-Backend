@@ -97,16 +97,16 @@ device_mapping = [
                                   "PLC B is Master": "Process",
                                   "PLC A FAIL SAFE": "Process",
                                   "PLC B FAIL SAFE": "Process",
-                                  "PLC A COMMUNICATION": "Process",
-                                  "PLC B COMMUNICATION": "Process"
+                                  "PLC A COOMUNCIATION": "Process",
+                                  "PLC A COOMUNCIATION": "Process"
                                 }
                     },
                     {
                         "device_type": "HCD",
                         "sensor_name":
                                  {
-                                   "HCD 40% ALARM": "Safety",
-                                   "HCD 20% ALARM": "Safety",
+                                   "HCD 40 % ALARM": "Safety",
+                                   "HCD 20 % ALARM": "Safety",
                                    "HCD FAULT": "Safety",
                                    "MISALIGNMENT FAULT": "Safety",
                                    "HCD MAINTENANCE": "Safety"
@@ -173,6 +173,7 @@ device_mapping = [
                         "device_type": "ESD Effect",
                         "sensor_name": 
                                  {
+                                  "Cause": "Safety",
                                    "All ROSOVs Closed": "Safety",
                                    "Barrier Gate Opened": "Process",
                                    "TLF Gantry Permissive Power Off": "Process",
@@ -184,7 +185,6 @@ device_mapping = [
                                    "ESD Hooter Activated in Control Room": "Safety",
                                    "Power ESD Activation After 120 Sec": "Safety",
                                    "TTL Dispatch in Dormant Mode": "Process"
-
                                  }
                     },
                     {

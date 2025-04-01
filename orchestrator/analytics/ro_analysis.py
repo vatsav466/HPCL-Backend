@@ -1,5 +1,6 @@
 import urdhva_base
 import json
+import time
 import requests
 import charts_actions
 import hpcl_ceg_model
@@ -92,8 +93,9 @@ async def get_ro_levels(bu: str, violation_type: str, sap_id: str):
             previous_count = value['value']
     return ""
 
-async def check_alert_exists(alert_id):
-    query = f"select external_id from alerts where external_id = '{alert_id}'"
+async def check_alert_exists(alert_id, violation_type, sap_id):
+    query = (f"select external_id from alerts where external_id = '{alert_id}' and bu = 'RO' and "
+             f"violation_type = '{violation_type}' and sap_id = '{sap_id}'")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_actions.charts_connection_vault_routing(
@@ -115,3 +117,52 @@ async def api_audit_log(audit_data):
 
     """
     return await hpcl_ceg_model.VendorApiAuditCreate(**audit_data).create()
+
+async def get_process_instance_id(business_key, camunda_url):
+    camunda_url = f"{camunda_url}/engine-rest/process-instance"
+    params = {"businessKey": business_key}
+    response = requests.get(camunda_url, params=params)
+    process_instance_id = ""
+    if response.status_code == 200:
+        instances = response.json()
+        if instances:
+            process_instance_id = instances[0]["id"]  # Get first instance ID
+            return process_instance_id
+    return process_instance_id
+
+async def close_camunda_workflow(alert_data, camunda_url):
+    # camunda_url = await helpers.get_alert_camunda_url(self.params['alert_id'], "error")
+    MAX_RETRIES = 5
+    RETRY_DELAY = 5
+    headers = {"Content-Type": "application/json"}
+    if camunda_url != 'error':
+        if not isinstance(alert_data, dict):
+            alert_data = alert_data.__dict__
+        # instance_id = alert_data.get("workflow_instance_id")
+        business_key = alert_data.get("unique_id")
+        instance_id = await get_process_instance_id(business_key, camunda_url)
+        if not instance_id:
+            instance_id = alert_data.get("workflow_instance_id")
+        url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.delete(url, headers=headers)
+
+                if response.status_code == 204:  # Success in Camunda
+                    print(f"Workflow {instance_id} Deleted successfully. Alert ID {alert_data['id']}")
+                    break
+                else:
+                    print(
+                        f"Error Deleting {instance_id} {camunda_url} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+
+            except requests.RequestException as e:
+                print(f"Request error for {camunda_url} {instance_id} (attempt {attempt + 1}): {e}")
+
+            # Retry logic with exponential backoff
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY * (2 ** attempt))
+            else:
+                print(f"Failed to Deleting {camunda_url} {instance_id} after {MAX_RETRIES} retries.")
+                return False
+        return True
+    return False

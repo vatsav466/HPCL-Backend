@@ -291,6 +291,7 @@ class LocationMasterSchema(UrdhvaPostgresBase):
     distributor_code: Mapped[typing.Optional[str]] = mapped_column("distributor_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     distributor_name: Mapped[typing.Optional[str]] = mapped_column("distributor_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     round_trip_distance: Mapped[typing.Optional[int]] = mapped_column("round_trip_distance", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    location_onboard: Mapped[typing.Optional[bool]] = mapped_column("location_onboard", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
 
 
 class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -333,6 +334,7 @@ class LocationMasterCreate(urdhva_base.postgresmodel.BasePostgresModel):
     distributor_code: typing.Optional[str] = pydantic.Field("", **{})
     distributor_name: typing.Optional[str] = pydantic.Field("", **{})
     round_trip_distance: typing.Optional[int] = pydantic.Field(0, **{})
+    location_onboard: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -383,6 +385,7 @@ class LocationMaster(urdhva_base.postgresmodel.PostgresModel):
     distributor_code: typing.Optional[str] = pydantic.Field("", **{})
     distributor_name: typing.Optional[str] = pydantic.Field("", **{})
     round_trip_distance: typing.Optional[int] = pydantic.Field(0, **{})
+    location_onboard: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         collection_name = 'data_flow'
@@ -458,6 +461,15 @@ class Locationmaster_Update_Location_MasterParams(pydantic.BaseModel):
 
 class Locationmaster_Get_Sod_Engineering_StatsParams(pydantic.BaseModel):
     sap_id: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Locationmaster_Location_Command_ControlParams(pydantic.BaseModel):
+    sap_id: str
+    action: str
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -1176,7 +1188,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     assigned_to: Mapped[typing.Optional[str]] = mapped_column("assigned_to", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     assigned_to_role: Mapped[typing.Optional[str]] = mapped_column("assigned_to_role", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     assigned_users: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_users", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    assigned_user_roles: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_user_roles", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    assigned_user_roles: Mapped[typing.Optional[typing.List[str]]] = mapped_column("assigned_user_roles", ARRAY(String), index=True, nullable=True, default="", primary_key=False, unique=False)
     district: Mapped[typing.Optional[str]] = mapped_column("district", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -2045,6 +2057,7 @@ class Indentdryout_Get_Distinct_Location_DetailsParams(pydantic.BaseModel):
     plant: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     cat_a_dealers: typing.Optional[bool] = pydantic.Field(False, )
     dry_out_dealers: typing.Optional[bool] = pydantic.Field(False, )
+    location_onboard: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -3648,6 +3661,22 @@ class IndustryPerformanceGetResp(pydantic.BaseModel):
     data: typing.List[IndustryPerformance]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class Industryperformance_Generate_Ai_Industry_PerformanceParams(pydantic.BaseModel):
+    user_prompt: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class Industryperformance_List_Ai_Industry_Performance_QueriesParams(pydantic.BaseModel):
+    search_text: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
 
 
 class ConsumerPumpTankDeliverySchema(UrdhvaPostgresBase):
@@ -5415,7 +5444,8 @@ class Tagsdata_Things_Board_Device_DataParams(pydantic.BaseModel):
 
 
 class Tagsdata_Get_Tags_DataParams(pydantic.BaseModel):
-    pass
+    plant: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
@@ -5572,6 +5602,169 @@ class Performanceindex_Get_Pi_Score_By_CategoryParams(pydantic.BaseModel):
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+class PerformanceScoreResultsCreate(pydantic.BaseModel):
+    name: str
+    score: float
+    weightage: float
+    module: str
+
+
+class PerformanceScoreCategoryCreate(pydantic.BaseModel):
+    name: str
+    score: float
+    weightage: float
+    results: typing.Optional[typing.List[PerformanceScoreResultsCreate]] | None = None
+
+
+class PerformanceScoreSchema(UrdhvaPostgresBase):
+    __tablename__ = 'performance_score'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    timestamp: Mapped[datetime.datetime] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    national_score: Mapped[float] = mapped_column("national_score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    rank: Mapped[int] = mapped_column("rank", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("category", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(sap_id, name="performance_score_sap_id"),)
+
+
+class PerformanceScoreCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'performance_score'
+    
+    bu: str
+    sap_id: str
+    timestamp: datetime.datetime
+    zone: str
+    region: str
+    name: str
+    score: float
+    national_score: float
+    rank: int
+    category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreSchema
+        upsert_keys = ['sap_id']
+        access_key_mapping = ['location_id:sap_id']
+
+
+class PerformanceScore(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'performance_score'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    timestamp: typing.Optional[datetime.datetime] | None = None
+    zone: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
+    score: typing.Optional[float] | None = None
+    national_score: typing.Optional[float] | None = None
+    rank: typing.Optional[int] | None = None
+    category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreSchema
+        upsert_keys = ['sap_id']
+        access_key_mapping = ['location_id:sap_id']
+
+
+class PerformanceScoreGetResp(pydantic.BaseModel):
+    data: typing.List[PerformanceScore]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
+
+
+class Performancescore_Get_Pi_ScoreParams(pydantic.BaseModel):
+    bu: str
+    category: typing.Optional[str] = pydantic.Field("", **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    strategy: str
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
+class PerformanceScoreHistorySchema(UrdhvaPostgresBase):
+    __tablename__ = 'performance_score_history'
+    
+    bu: Mapped[str] = mapped_column("bu", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    timestamp: Mapped[datetime.datetime] = mapped_column("timestamp", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
+    zone: Mapped[str] = mapped_column("zone", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    name: Mapped[str] = mapped_column("name", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    score: Mapped[float] = mapped_column("score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    national_score: Mapped[float] = mapped_column("national_score", Numeric, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    rank: Mapped[int] = mapped_column("rank", Integer, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    category: Mapped[typing.Optional[typing.List[typing.Any]]] = mapped_column("category", JSONB, index=False, nullable=True, default=None, primary_key=False, unique=False)
+
+
+class PerformanceScoreHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'performance_score_history'
+    
+    bu: str
+    sap_id: str
+    timestamp: datetime.datetime
+    zone: str
+    region: str
+    name: str
+    score: float
+    national_score: float
+    rank: int
+    category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class PerformanceScoreHistory(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'performance_score_history'
+    
+    bu: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    timestamp: typing.Optional[datetime.datetime] | None = None
+    zone: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
+    name: typing.Optional[str] | None = None
+    score: typing.Optional[float] | None = None
+    national_score: typing.Optional[float] | None = None
+    rank: typing.Optional[int] | None = None
+    category: typing.Optional[typing.List[PerformanceScoreCategoryCreate]] | None = None
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = PerformanceScoreHistorySchema
+        upsert_keys = []
+        access_key_mapping = ['location_id:sap_id']
+
+
+class PerformanceScoreHistoryGetResp(pydantic.BaseModel):
+    data: typing.List[PerformanceScoreHistory]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
 
 
 class CrisAlertHistorySchema(UrdhvaPostgresBase):

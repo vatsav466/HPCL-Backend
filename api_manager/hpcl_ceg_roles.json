@@ -222,6 +222,9 @@
                 },
                 {
                     "name": "get_sod_engineering_stats"
+                },
+                {
+                    "name": "location_command_control"
                 }
             ]
         },
@@ -285,6 +288,9 @@
                 },
                 {
                     "name": "get_sod_engineering_stats"
+                },
+                {
+                    "name": "location_command_control"
                 }
             ]
         },
@@ -2439,6 +2445,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "generate_ai_industry_performance"
+                },
+                {
+                    "name": "list_ai_industry_performance_queries"
                 }
             ]
         },
@@ -2478,6 +2490,12 @@
                 },
                 {
                     "name": "delete"
+                },
+                {
+                    "name": "generate_ai_industry_performance"
+                },
+                {
+                    "name": "list_ai_industry_performance_queries"
                 }
             ]
         },
@@ -4006,6 +4024,141 @@
             ]
         },
         {
+            "name": "performancescore",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScore",
+            "attributes": {},
+            "uris": [
+                "/api/performancescore/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_pi_score"
+                }
+            ]
+        },
+        {
+            "name": "performancescore_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScore_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/performancescore/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "get_pi_score"
+                }
+            ]
+        },
+        {
+            "name": "performancescore_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScore_admin",
+            "attributes": {},
+            "uris": [
+                "/api/performancescore/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "get_pi_score"
+                }
+            ]
+        },
+        {
+            "name": "performancescorehistory",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreHistory",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorehistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "performancescorehistory_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreHistory_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorehistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "performancescorehistory_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "PerformanceScoreHistory_admin",
+            "attributes": {},
+            "uris": [
+                "/api/performancescorehistory/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
             "name": "crisalerthistory",
             "type": "all",
             "ownerManagedAccess": false,
@@ -4332,6 +4485,10 @@
             "displayName": "get_sod_engineering_stats"
         },
         {
+            "name": "location_command_control",
+            "displayName": "location_command_control"
+        },
+        {
             "name": "upload_role_master",
             "displayName": "upload_role_master"
         },
@@ -4528,6 +4685,14 @@
             "displayName": "get_pt_rejections"
         },
         {
+            "name": "generate_ai_industry_performance",
+            "displayName": "generate_ai_industry_performance"
+        },
+        {
+            "name": "list_ai_industry_performance_queries",
+            "displayName": "list_ai_industry_performance_queries"
+        },
+        {
             "name": "upload_geo_master",
             "displayName": "upload_geo_master"
         },
@@ -4570,6 +4735,10 @@
         {
             "name": "get_pi_score_by_category",
             "displayName": "get_pi_score_by_category"
+        },
+        {
+            "name": "get_pi_score",
+            "displayName": "get_pi_score"
         }
     ]
 }

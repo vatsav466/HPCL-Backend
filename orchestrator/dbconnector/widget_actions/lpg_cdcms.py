@@ -53,8 +53,18 @@ async def get_financial_year():
     financial_year = f"{start_year}-{end_year}"
     return financial_year
 
+# Tempory Commented
+# async def days_since_financial_year_start():
+#     today = date.today()
+#     fy_start_year = today.year if today >= date(today.year, 4, 1) else today.year - 1
+#     fy_start_date = date(fy_start_year, 4, 1)
+#     days_elapsed = (today - fy_start_date).days
+#     return days_elapsed
+
 async def days_since_financial_year_start():
     today = date.today()
+    if today.month == 4 and today.day < 10:
+        today = today.replace(month=3, day=31)
     fy_start_year = today.year if today >= date(today.year, 4, 1) else today.year - 1
     fy_start_date = date(fy_start_year, 4, 1)
     days_elapsed = (today - fy_start_date).days
@@ -119,10 +129,16 @@ class LPGCDCMSActions:
         financial_year = f"{start_year}-{end_year}"
         prev_financial_year = f"{prev_start_year}-{prev_end_year}"
         
+        _fy = None
         _filters = []
         if cross_filters:
             for filter in cross_filters:
+                if "financial_year" in f"{filter.key}":
+                    _fy = f"{filter.value}"
+                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        if _fy:
+            financial_year = _fy
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
@@ -142,24 +158,40 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_sales_comparision_query_ += ' WHERE '
                 lpg_cdcms_sales_comparision_query_ += ' AND '.join(conditions)
-            lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+            if _fy:
+                start_year, end_year = _fy.split("-")
+                prev_financial_year = f"{int(start_year) - 1}-{start_year}"
+                lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(_fy)}\', \'{str(prev_financial_year)}\')'
+            else:
+                lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
             lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Quarter", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_sales_comparision_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_sales_comparision_query_, access_filters, drill_state)
-            if "where" not in lpg_cdcms_sales_comparision_query_.lower():   
+            if "where" not in lpg_cdcms_sales_comparision_query_.lower() and not _fy:   
                 lpg_cdcms_sales_comparision_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+            elif "where" not in lpg_cdcms_sales_comparision_query_.lower() and _fy:
+                start_year, end_year = _fy.split("-")
+                prev_financial_year = f"{int(start_year) - 1}-{start_year}"
+                lpg_cdcms_sales_comparision_query_ += f' WHERE "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(_fy)}\', \'{str(prev_financial_year)}\')'
             else:
-                lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
+                if _fy:
+                    start_year, end_year = _fy.split("-")
+                    prev_financial_year = f"{int(start_year) - 1}-{start_year}"
+                    lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(_fy)}\', \'{str(prev_financial_year)}\')'
+                else:
+                    lpg_cdcms_sales_comparision_query_ += f' AND "ZOName"  NOT IN (\'Null\') AND "Financial_Year" IN (\'{str(financial_year)}\', \'{str(prev_financial_year)}\')'
             lpg_cdcms_sales_comparision_query_ += ' GROUP BY "Month", "Month_Number", "Quarter", "Financial_Year", "ZOName", "ROName", "SAName", "ConsumerType", "CylType", "DistributorName"'
             resp = await function(query=lpg_cdcms_sales_comparision_query_)
             # Convert the response to a DataFrame for further processing
             resp = pd.DataFrame(resp)
+            print("Length of resp :", len(resp))
             resp = await filter_data(resp, _filters)
+            print("Length of after filter resp :", len(resp))
             
             if resp.empty:
-                return {"status": True, "message": "success", "data": resp}
+                return {"status": True, "message": "success", "data": []}
             current_year = resp[resp['Financial_Year'] == financial_year].groupby('Quarter')['sales_volume'].sum().reset_index()
             previous_year = resp[resp['Financial_Year'] == prev_financial_year].groupby('Quarter')['sales_volume'].sum().reset_index()
             resp = pd.merge(current_year, previous_year, on='Quarter', how='outer', suffixes=('_current', '_previous'))
@@ -458,6 +490,10 @@ class LPGCDCMSActions:
                         grouped_resp[each_float_col] = grouped_resp[each_float_col].fillna(0.0).round(2)
                 return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         # If no filters are applied, return the default response
+        for each_float_col in ["Bookings", "Sales", "Pending"]:
+            if each_float_col in resp.columns:
+                resp[each_float_col] = resp[each_float_col]/1000
+                resp[each_float_col] = resp[each_float_col].round(2)
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
@@ -960,11 +996,18 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+        _fy = None
         _filters = []
         if cross_filters:
             for filter in cross_filters:
+                if "financial_year" in f"{filter.key}":
+                    _fy = f"{filter.value}"
+                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
-        financial_year = await get_financial_year()
+        if _fy:
+            financial_year = _fy
+        else:
+            financial_year = await get_financial_year()
         cumulative_sales_pmuy_npmuy_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_current_financial_year_sales")
         if filters:
             filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
@@ -1145,6 +1188,8 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
+        # hard_code
+        financial_year = '2024-2025'
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -1226,6 +1271,8 @@ class LPGCDCMSActions:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         financial_year = await get_financial_year()
+        # hard_code
+        financial_year = '2024-2025'
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -2326,6 +2373,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_central_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_consumers")
         if filters:
             conditions = []
@@ -2431,6 +2481,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_central_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_transaction")
         if filters:
             conditions = []
@@ -2536,6 +2589,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_central_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_central_amount")
         if filters:
             conditions = []
@@ -2641,6 +2697,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_consumers")
         if filters:
             conditions = []
@@ -2746,6 +2805,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_consumers_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_consumers")
         if filters:
             conditions = []
@@ -2825,6 +2887,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_transaction")
         if filters:
             conditions = []
@@ -2930,6 +2995,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_transaction_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_transaction")
         if filters:
             conditions = []
@@ -3009,6 +3077,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_amount")
         if filters:
             conditions = []
@@ -3114,6 +3185,9 @@ class LPGCDCMSActions:
                 if "Financial_Year" in filter.key:
                     _fy = True
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        # hard_code
+        if not _fy:
+            financial_year = '2024-2025'
         lpg_cdcms_subsidy_state_amount_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_subsidy_state_amount")
         if filters:
             conditions = []
@@ -3304,6 +3378,8 @@ class LPGCDCMSActions:
         lpg_cdcms_pcc_sales = lpg_plant_queries.lpg_plant_query.get("lpg_cdcms_pcc_sales")
         
         financial_year = await get_financial_year()
+        # hard_code table to be replaced with lpg_consumers_summary_april
+        financial_year = '2024-2025'
         financial_start_date = financial_year.split("-")[0] + "-04-01"
         _filters = []
         if cross_filters:
@@ -3418,11 +3494,26 @@ class LPGCDCMSActions:
         days_in_fy_till_yesterday = await days_since_financial_year_start()
         pcc = pcc.with_columns(pl.lit("temp").alias("temp"))
         overall_num = pcc.group_by("temp").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"), (pl.col("avg_consumer_count").sum()).alias("avg_consumer_count"))
-        overall_num = overall_num.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        # overall_num = overall_num.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        overall_num = overall_num.with_columns(
+                                            pl.when(pl.col("avg_consumer_count") > 0)
+                                            .then(pl.col("TotalRefillSales")/pl.col("avg_consumer_count"))
+                                            .otherwise(0)  # or some other default value
+                                            .alias("pcc")
+                                        )
+        
+        
         overall_num = overall_num.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
         overall_num = overall_num.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
                 
-        pcc = pcc.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        # pcc = pcc.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        pcc = pcc.with_columns(
+                                pl.when(pl.col("avg_consumer_count") > 0)
+                                .then(pl.col("TotalRefillSales")/pl.col("avg_consumer_count"))
+                                .otherwise(0)  # or some other default value
+                                .alias("pcc")
+                            )
+        
         pcc = pcc.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
         pcc = pcc.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
         return {"status": True, "message": "success", "overal_number": overall_num["pcc_prorated"][-1],"data": pcc.to_dicts()}
