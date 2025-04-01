@@ -143,6 +143,7 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 
     else:
         group_by_filter = ['"month_name"'] if not cumulative else []
+        Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
 
     # group_by_filter = ['"month_name"'] if not cumulative else []
     # group_by_filter = ['"SBU_Name"'] if cumulative else []
@@ -257,7 +258,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     else:
         Base_Filters = ['"month_name"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"',
                         '"ProductName"']
-        Base_Filters = ['"month_name"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"']
+        #Base_Filters = ['"month_name"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"']
         if resp_level == "summary" or resp_format =='heat_map':
             Base_Filters = ['"month_name"', '"SBU_Name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"']
     # Fetching all group by filters, return should be a list always
@@ -273,6 +274,23 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                        with_month_start_day=False,
                                                        date_time_format=None).strftime("%Y%m%d")
 
+    todays_date = str(datetime.date.today())
+    if todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4':
+                start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+                end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+                start_date = start_date.replace(year=start_date.year - 1).strftime("%Y-%m-%d")
+                end_date = end_date.replace(year=end_date.year-1).strftime("%Y-%m-%d")
+                
+                start_date_history = datetime.datetime.strptime(start_date_history, "%Y%m%d")
+                start_date_history = start_date_history.replace(year=start_date_history.year - 1).strftime("%Y-%m-%d")
+                end_date_history = datetime.datetime.strptime(end_date_history, "%Y%m%d")
+                end_date_history = end_date_history.replace(year=end_date_history.year-1).strftime("%Y-%m-%d")
+    
+    print("updated start date",start_date)
+    print("updated  end date",end_date)
+    print("start_date_history",start_date_history)
+    print("end_date_history",end_date_history)
+            
     for index, _ in enumerate(cross_filters):
         cross_filters[index]['key'] = cross_filters[index]['key'].strip('"')
     cross_filters = [rec for rec in cross_filters if not (rec['key'] == 'month_name' and not rec['value'].strip('"'))]
@@ -325,6 +343,18 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                date_time_format=None)
             end_date_history = end_date_history.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+            if todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4':
+                end_date_history = datetime.datetime.strptime(end_date_history, "%Y%m%d")
+                end_date_history = end_date_history.replace(year=end_date_history.year).strftime("%Y-%m-%d")
+            
+                start_date_history = datetime.datetime.strptime(start_date_history, "%Y%m%d")
+                start_date_history = start_date_history.replace(year=start_date_history.year-1).strftime("%Y-%m-%d")
+                print("end_date_history YTD",end_date_history)
+                print("start_date_history YTD",start_date_history)
+                print("end_date",end_date)
+                print("start_date_history",start_date)
+                      
+            
         elif condition['key'].strip('"') == "FYC":
             condition = [x for x in filters if x['key'] == '"DATE"']
             # Calculating start and end dates for YTD for both actual and history
@@ -344,14 +374,29 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                        date_time_format="%Y-%m-%d")
             print("came into YTDPM")
             start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
+            todays_date = str(datetime.date.today())
+            if todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4':
+                start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
+                end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+                start_date = start_date.replace(year=start_date.year - 1).strftime("%Y-%m-%d")
+                end_date = end_date.replace(year=end_date.year).strftime("%Y-%m-%d")
             # For History
             start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
             end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=True,
                                                                date_time_format=None)
-
             end_date_history = end_date_history.strftime(
                 "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
+            
+            if todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4':
+                start_date_history = datetime.datetime.strptime(start_date_history, "%Y%m%d")
+                start_date_history = start_date_history.replace(year=start_date_history.year-1).strftime("%Y-%m-%d")
+            
+            print("start_date",start_date)
+            print("end_date",end_date)     
+            print("start_date_history",start_date_history)
+            print("end_date_history",end_date_history)     
+                  
         elif condition['key'].strip('"') == "DATE" and '"FYC"' not in [x['key'] for x in filters]:
             # Calculating start and end dates
             start_date, end_date = condition['value'].split(",")
