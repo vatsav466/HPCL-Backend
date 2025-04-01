@@ -53,8 +53,18 @@ async def get_financial_year():
     financial_year = f"{start_year}-{end_year}"
     return financial_year
 
+# Tempory Commented
+# async def days_since_financial_year_start():
+#     today = date.today()
+#     fy_start_year = today.year if today >= date(today.year, 4, 1) else today.year - 1
+#     fy_start_date = date(fy_start_year, 4, 1)
+#     days_elapsed = (today - fy_start_date).days
+#     return days_elapsed
+
 async def days_since_financial_year_start():
     today = date.today()
+    if today.month == 4 and today.day < 10:
+        today = today.replace(month=3, day=31)
     fy_start_year = today.year if today >= date(today.year, 4, 1) else today.year - 1
     fy_start_date = date(fy_start_year, 4, 1)
     days_elapsed = (today - fy_start_date).days
@@ -3484,11 +3494,26 @@ class LPGCDCMSActions:
         days_in_fy_till_yesterday = await days_since_financial_year_start()
         pcc = pcc.with_columns(pl.lit("temp").alias("temp"))
         overall_num = pcc.group_by("temp").agg((pl.col("TotalRefillSales").sum()).alias("TotalRefillSales"), (pl.col("avg_consumer_count").sum()).alias("avg_consumer_count"))
-        overall_num = overall_num.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        # overall_num = overall_num.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        overall_num = overall_num.with_columns(
+                                            pl.when(pl.col("avg_consumer_count") > 0)
+                                            .then(pl.col("TotalRefillSales")/pl.col("avg_consumer_count"))
+                                            .otherwise(0)  # or some other default value
+                                            .alias("pcc")
+                                        )
+        
+        
         overall_num = overall_num.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
         overall_num = overall_num.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
                 
-        pcc = pcc.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        # pcc = pcc.with_columns((pl.col("TotalRefillSales")/pl.col("avg_consumer_count")).alias("pcc"))
+        pcc = pcc.with_columns(
+                                pl.when(pl.col("avg_consumer_count") > 0)
+                                .then(pl.col("TotalRefillSales")/pl.col("avg_consumer_count"))
+                                .otherwise(0)  # or some other default value
+                                .alias("pcc")
+                            )
+        
         pcc = pcc.with_columns((pl.col("pcc")* 365 / days_in_fy_till_yesterday).alias("pcc_prorated")).drop("pcc")
         pcc = pcc.with_columns(pl.col("pcc_prorated").round(2).alias("pcc_prorated"))
         return {"status": True, "message": "success", "overal_number": overall_num["pcc_prorated"][-1],"data": pcc.to_dicts()}
