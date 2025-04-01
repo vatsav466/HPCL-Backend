@@ -53,8 +53,18 @@ async def get_financial_year():
     financial_year = f"{start_year}-{end_year}"
     return financial_year
 
+# Tempory Commented
+# async def days_since_financial_year_start():
+#     today = date.today()
+#     fy_start_year = today.year if today >= date(today.year, 4, 1) else today.year - 1
+#     fy_start_date = date(fy_start_year, 4, 1)
+#     days_elapsed = (today - fy_start_date).days
+#     return days_elapsed
+
 async def days_since_financial_year_start():
     today = date.today()
+    if today.month == 4 and today.day < 10:
+        today = today.replace(month=3, day=31)
     fy_start_year = today.year if today >= date(today.year, 4, 1) else today.year - 1
     fy_start_date = date(fy_start_year, 4, 1)
     days_elapsed = (today - fy_start_date).days
