@@ -1192,37 +1192,37 @@ async def get_category_wise_cumulative_data(filters):
             total = sum(list(details[co].values()))
             if co == "MPSU":
                 tuned_data[co] = [
-                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2),
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2) if total != 0 else 0,
                      "subData": [{"category": c, "value": v,
-                                  "percentage": round((v / total) * 100, 2)}]} for c, v in
+                                  "percentage": round((v / total) * 100, 2) if total != 0 else 0}]} for c, v in
                     details[co].items()]
             elif co == "PSU":
-                mpsu = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2),
+                mpsu = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2) if total != 0 else 0,
                          "subData": [{"category": c, "value": v,
-                                      "percentage": round((v / total) * 100, 2)}]} for c, v in
+                                      "percentage": round((v / total) * 100, 2) if total != 0 else 0}]} for c, v in
                         details[co].items() if c in OMC['MPSU']]
                 other_psu = [
-                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2)} for
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2) if total != 0 else 0} for
                     c, v in details[co].items() if c in OMC['OtherPSU']]
                 mpsu.append({"category": "Other PSU", "value": sum([r['value'] for r in other_psu]),
-                             "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2),
+                             "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2) if total != 0 else 0,
                              "subData": other_psu})
                 tuned_data[co] = mpsu
             elif co == "PSU+PVT":
-                mpsu = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2),
+                mpsu = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2) if total != 0 else 0,
                          "subData": [{"category": c, "value": v,
-                                      "percentage": round((v / total) * 100, 2)}]} for c, v in
+                                      "percentage": round((v / total) * 100, 2) if total != 0 else 0}]} for c, v in
                         details[co].items() if c in OMC['MPSU']]
                 other_psu = [
-                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2)} for
+                    {"category": c, "value": v, "percentage": round((v / total) * 100, 2) if total != 0 else 0} for
                     c, v in details[co].items() if c in OMC['OtherPSU']]
-                pvt = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2)}
+                pvt = [{"category": c, "value": v, "percentage": round((v / total) * 100, 2) if total != 0 else 0}
                        for c, v in details[co].items() if c in OMC['PVT']]
                 mpsu.append({"category": "Other PSU", "value": sum([r['value'] for r in other_psu]),
-                             "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2),
+                             "percentage": round((sum([r['value'] for r in other_psu]) / total) * 100, 2) if total != 0 else 0,
                              "subData": other_psu})
                 mpsu.append({"category": "PVT", "value": sum([r['value'] for r in pvt]),
-                             "percentage": round((sum([r['value'] for r in pvt]) / total) * 100, 2), "subData": pvt})
+                             "percentage": round((sum([r['value'] for r in pvt]) / total) * 100, 2) if total != 0 else 0, "subData": pvt})
                 tuned_data[co] = mpsu
         result_dict[key] = tuned_data
     for cogroup, details in result_dict[fiscal_years[-1]].items():
