@@ -902,31 +902,6 @@ async def delete(id: str):
     return await HostBayReAssignment.delete(id)
 
 
-@router.post('/hostmanualbayassigned', response_model=HostManualBayAssigned, tags=['HostManualBayAssigned'])
-async def create(inputObj: HostManualBayAssignedCreate):
-    return await inputObj.create()
-
-
-@router.put('/hostmanualbayassigned', response_model=HostManualBayAssigned, tags=['HostManualBayAssigned'])
-async def update(inputObj: HostManualBayAssigned):
-    return await inputObj.modify()
-
-
-@router.get('/hostmanualbayassigned/{id}', response_model=HostManualBayAssigned, tags=['HostManualBayAssigned'])
-async def get(id: str):
-    return await HostManualBayAssigned.get(id, skip_secrets=True)
-
-
-@router.get('/hostmanualbayassigned', response_model=HostManualBayAssignedGetResp, tags=['HostManualBayAssigned'])
-async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
-    return await HostManualBayAssigned.get_all(params, skip_secrets=True)
-
-
-@router.delete('/hostmanualbayassigned/{id}', tags=['HostManualBayAssigned'])
-async def delete(id: str):
-    return await HostManualBayAssigned.delete(id)
-
-
 @router.post('/hostmanualfanprinted', response_model=HostManualFanPrinted, tags=['HostManualFanPrinted'])
 async def create(inputObj: HostManualFanPrintedCreate):
     return await inputObj.create()

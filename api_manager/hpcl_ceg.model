@@ -1692,6 +1692,7 @@ Model HostSickTts {
 
     Config=> {
         access_key_mapping=''
+        search_fields='load_number,truck_number,customer_name,product_name,sap_id,bcu_number,bay_number'
     }
 }
 
@@ -1717,6 +1718,7 @@ Model HostCancelledTts {
 
     Config=> {
         access_key_mapping=''
+        search_fields='load_number,truck_number,customer_name,product_name,sap_id'
     }
 }
 
@@ -1736,6 +1738,7 @@ Model HostKFactorChanges {
 
     Config=> {
         access_key_mapping=''
+        search_fields='bay_number,bcu_number,sap_id'
     }
 }
 
@@ -1760,6 +1763,7 @@ Model HostLocalLoadedTts {
 
     Config=> {
         access_key_mapping=''
+        search_fields='bay_number,bcu_number,recipe_name,truck_number,sap_id'
     }
 }
 
@@ -1787,21 +1791,7 @@ Model HostBayReAssignment {
 
     Config=> {
         access_key_mapping=''
-    }
-}
-
-Model HostManualBayAssigned {
-    sr_number optional int
-    user_name optional unique_field str
-    timestamp optional unique_field datetime
-    text optional str
-    sap_id optional unique_field str
-    location_name optional str
-    zone optional str
-    alert_created optional bool
-
-    Config=> {
-        access_key_mapping=''
+        search_fields='load_number,truck_number,customer_name,product_name,reassigned_bay,sap_id,assigned_bay'
     }
 }
 
@@ -1818,6 +1808,7 @@ Model HostManualFanPrinted {
 
     Config=> {
         access_key_mapping=''
+        search_fields='manual_fan_count,auto_fan_count,total_count,sap_id'
     }
 }
 
@@ -1839,6 +1830,7 @@ Model HostUnauthorisedFlow {
 
     Config=> {
         access_key_mapping=''
+        search_fields='bay_number,bcu_number,meter_number,sap_id'
     }
 }
 
@@ -1861,6 +1853,7 @@ Model HostOverLoadedTts{
 
     Config=> {
         access_key_mapping=''
+        search_fields='load_number,truck_number,product_name,sap_id,bcu_number,bay_number'
     }
 }
 
@@ -1881,6 +1874,7 @@ Model HostMFMFactor {
 
     Config=> {
         access_key_mapping=''
+        search_fields='mfm_number,bcu_number,sap_id'
     }
 }
 
@@ -1899,13 +1893,13 @@ Model MasterStatus {
 }
 
 Model TagsData {
-    sap_id optional str
-    name optional str
-    device_type optional str
-    count optional str
+    sap_id optional unique_field str
+    name optional unique_field str
+    device_type optional unique_field str
+    count optional unique_field str
     device_count optional str
-    zone optional str
-    system optional str
+    zone optional unique_field str
+    system optional unique_field str
     equipment_name optional str
     mf_count optional str
 

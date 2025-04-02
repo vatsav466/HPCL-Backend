@@ -3412,69 +3412,6 @@
             ]
         },
         {
-            "name": "hostmanualbayassigned",
-            "type": "all",
-            "ownerManagedAccess": false,
-            "displayName": "HostManualBayAssigned",
-            "attributes": {},
-            "uris": [
-                "/api/hostmanualbayassigned/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                }
-            ]
-        },
-        {
-            "name": "hostmanualbayassigned_readOnly",
-            "type": "readOnly",
-            "ownerManagedAccess": false,
-            "displayName": "HostManualBayAssigned_readOnly",
-            "attributes": {},
-            "uris": [
-                "/api/hostmanualbayassigned/*"
-            ],
-            "scopes": [
-                {
-                    "name": "read"
-                }
-            ]
-        },
-        {
-            "name": "hostmanualbayassigned_admin",
-            "type": "admin",
-            "ownerManagedAccess": false,
-            "displayName": "HostManualBayAssigned_admin",
-            "attributes": {},
-            "uris": [
-                "/api/hostmanualbayassigned/*"
-            ],
-            "scopes": [
-                {
-                    "name": "create"
-                },
-                {
-                    "name": "update"
-                },
-                {
-                    "name": "read"
-                },
-                {
-                    "name": "delete"
-                }
-            ]
-        },
-        {
             "name": "hostmanualfanprinted",
             "type": "all",
             "ownerManagedAccess": false,
