@@ -2091,3 +2091,17 @@ Model VendorApiAudit {
     api_ack optional str
     api_ack_datetime optional datetime
 }
+
+Model VtsTruckDetails {
+    truck_regno unique_field index_field primary_key str
+    sap_id index_field str
+    bu optional str
+    truck_status optional str
+    violation_type optional str
+    block_start_datetime optional datetime
+    block_end_datetime optional datetime
+    instance_1 optional int
+    instance_2 optional int
+    instance_3 optional int
+    alert_id optional str
+}

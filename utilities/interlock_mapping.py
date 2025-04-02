@@ -60,6 +60,13 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FifthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SixthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
 
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving FirstTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving SecondTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving ThirdTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving FourthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving FifthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving SixthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+
                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_FirstTime_7days"},
                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
 
@@ -359,6 +366,13 @@ lpg_interlock_mapping = [
     {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FourthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
     {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FifthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
     {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SixthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving FirstTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving SecondTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving ThirdTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving FourthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving FifthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving SixthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
 
     {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_FirstTime_7days"},
     {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
