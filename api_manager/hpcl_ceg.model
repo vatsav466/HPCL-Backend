@@ -1249,6 +1249,8 @@ Model VtsAlertHistory {
     location_type optional str
     tl_number str
     report_duration optional str
+    vts_start_datetime optional datetime
+    vts_end_datetime optional datetime
     total_trips optional int
     stoppage_violations_count optional int
     route_deviation_count optional int
