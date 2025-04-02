@@ -139,7 +139,7 @@ async def process_data(data):
         data.loc[mask, ["sap_id", "region"]] = '[]'
     for _role in ["Regional", "Region"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["sap_id"]] = '[]'
+        data.loc[mask, ["sap_id", "zone"]] = '[]'
     for _role in ["HQO"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
         data.loc[mask, ["sap_id", "zone", "region"]] = '[]'
