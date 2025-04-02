@@ -790,9 +790,9 @@ class SendNotification:
         alert_section = self.alert_data.get("alert_section","")
         if self.alert_data.get("alert_section","") in ["VTS"]:
             rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
-            print("rolemapping--------->",rolemapping)
+            #print("rolemapping--------->",rolemapping)
             if mailto and mailto in ["0","1","2"]:
-                print("mailto-------------->",rolemapping["rolemailto"].get(mailto,""))
+                #print("mailto-------------->",rolemapping["rolemailto"].get(mailto,""))
                 return rolemapping["rolemailto"].get(mailto,"")
             
         elif self.alert_data.get("alert_section","") in ["RO"]:
@@ -811,9 +811,9 @@ class SendNotification:
             interlock_name = self.alert_data.get("interlock_name","")
             alert_section = self.alert_data.get("alert_section","")
             rolemapping = role_configuration.role_Mapping[alert_section][self.alert_data.get("bu","")].get(interlock_name, {})
-            print("rolemapping--------->",rolemapping)
+            #print("rolemapping--------->",rolemapping)
             if mqof and mqof in ["0","1","2"]:
-                print("mqof----------->",rolemapping["mqof"].get(mqof,""))
+                #print("mqof----------->",rolemapping["mqof"].get(mqof,""))
                 return rolemapping["mqof"].get(mqof,"")
             
         elif self.alert_data.get("alert_section","") in ["VA"]:
