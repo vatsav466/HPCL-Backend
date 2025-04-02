@@ -38,10 +38,7 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
       if isinstance(data.data, list) and len(data.data) > 0:
           enriched_data = [
               {
-                  **entry.dict(),
-                  'vendor_id': data.vendor_id,
-                  'location_id': data.location_id,
-                  'location_type': 'TAS' if data.location_type == 'RO' else data.location_type.value if hasattr(data.location_type, 'value') else str(data.location_type),
+                  **entry.dict()
               }
               for entry in data.data
           ]
