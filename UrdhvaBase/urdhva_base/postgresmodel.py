@@ -191,7 +191,7 @@ class BasePostgresModel(pydantic.BaseModel):
         return resp
 
     @classmethod
-    async def count(cls, params: urdhva_base.queryparams.QueryParams = None, entity_id=None):
+    async def count(cls, params: urdhva_base.queryparams.QueryParams = None, entity_id=None, count_query=None):
         """
 
         :param params:
@@ -202,31 +202,34 @@ class BasePostgresModel(pydantic.BaseModel):
         # if not entity_id:
         #     raise "missing context information"
         query = [f"select count('*') from {cls.__tablename__}"]
-        query_params = [f"{cls.__tablename__}.entity_id = '{entity_id}'"] if entity_id else []
-        # todo:- need to implement this for all keys, both permitted and prohibited
-        if urdhva_base.ctx.exists() and urdhva_base.context.context.get('rpt', {}):
-            rpt = urdhva_base.context.context.get('rpt', {})
-            key = f"access_restrictions_{urdhva_base.ctx['entity_id']}"
-            redis_client = await urdhva_base.redispool.get_redis_connection()
-            if await redis_client.hexists(key, rpt['email']):
-                data = json.loads(await redis_client.hget(f"access_restrictions_{urdhva_base.ctx['entity_id']}",
-                                                          rpt['email']))
-                # todo:- Temporary fix for ACL'S
-                if data.get("organizations_permitted"):
-                    permitted_org = data['organizations_permitted'].split(",")
-                    if len(permitted_org) == 1:
-                        permitted_org = f"('{permitted_org[0]}')"
-                    if cls.__tablename__ == "organization":
-                        query_params.append(f"id in {permitted_org}")
-                    else:
-                        query_params.append(f"organization_id in {permitted_org}")
-        if hasattr(cls.Config, 'standard_query'):
-            query_params.append(cls.Config.standard_query)
-        query_params.extend(await cls.get_clause_conditions())
-        if params and params.q and len(params.q) > 0:
-            query_params.append(params.q)
-        if len(query_params):
-            query.append("where " + " AND ".join(query_params))
+        if not count_query or not isinstance(count_query, list):
+            query_params = [f"{cls.__tablename__}.entity_id = '{entity_id}'"] if entity_id else []
+            # todo:- need to implement this for all keys, both permitted and prohibited
+            if urdhva_base.ctx.exists() and urdhva_base.context.context.get('rpt', {}):
+                rpt = urdhva_base.context.context.get('rpt', {})
+                key = f"access_restrictions_{urdhva_base.ctx['entity_id']}"
+                redis_client = await urdhva_base.redispool.get_redis_connection()
+                if await redis_client.hexists(key, rpt['email']):
+                    data = json.loads(await redis_client.hget(f"access_restrictions_{urdhva_base.ctx['entity_id']}",
+                                                              rpt['email']))
+                    # todo:- Temporary fix for ACL'S
+                    if data.get("organizations_permitted"):
+                        permitted_org = data['organizations_permitted'].split(",")
+                        if len(permitted_org) == 1:
+                            permitted_org = f"('{permitted_org[0]}')"
+                        if cls.__tablename__ == "organization":
+                            query_params.append(f"id in {permitted_org}")
+                        else:
+                            query_params.append(f"organization_id in {permitted_org}")
+            if hasattr(cls.Config, 'standard_query'):
+                query_params.append(cls.Config.standard_query)
+            query_params.extend(await cls.get_clause_conditions())
+            if params and params.q and len(params.q) > 0:
+                query_params.append(params.q)
+            if len(query_params):
+                query.append("where " + " AND ".join(query_params))
+        else:
+            query.extend(count_query[1:])
         session = await manager.get_session()
         total = await session.scalar(text(" ".join(query)))
         await asyncio.shield(session.close())
@@ -366,6 +369,7 @@ class BasePostgresModel(pydantic.BaseModel):
         query_params.extend(await cls.get_clause_conditions())
         if len(query_params):
             query.append("where " + " AND ".join(query_params))
+        count_query = [rec for rec in query]
 
         # ******************** For Data Sorting Params Start ******************** #
         if params.sort:
@@ -390,7 +394,7 @@ class BasePostgresModel(pydantic.BaseModel):
             result = await session.scalars(select(cls.Config.schema_class).from_statement(text(" ".join(query))))
             resp = result.all()
             results = [{key: value for key, value in row.__dict__.items() if not key.startswith("_")} for row in resp]
-            total = await cls.count(params, entity_id) if len(results) > 0 else 0
+            total = await cls.count(params, entity_id, count_query) if len(results) > 0 else 0
             results_data = {"data": results, "count": len(results), "total": total}
             if resp_type == "encoded":
                 return JSONResponse(content=jsonable_encoder(results_data))
