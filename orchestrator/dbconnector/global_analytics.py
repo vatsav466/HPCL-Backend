@@ -5419,7 +5419,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
 
             # Apply date range filter
-            date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
+            date_condition = f"AND DATE(created_at) BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
             # Construct SQL Query
             query = f"""SELECT DATE(created_at) AS created_date,
                     sap_id,
