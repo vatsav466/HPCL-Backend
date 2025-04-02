@@ -5511,7 +5511,7 @@ class GlobalAnalytics:
                         pl.sum("alert_count").alias("total")
                     )
                 
-                grouped = grouped.sort("sort_key", descending=True)
+                grouped = grouped.sort("sort_key", descending=False)
 
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()
