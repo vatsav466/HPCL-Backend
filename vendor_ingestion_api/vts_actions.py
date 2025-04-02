@@ -51,7 +51,7 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
           entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
               lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
           await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()  
-          await alert_manager.create_alert({**entry, "alert_type": "VTS"})
+          # await alert_manager.create_alert({**entry, "alert_type": "VTS"})
       
       return True, "Success"
 
