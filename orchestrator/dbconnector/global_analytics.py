@@ -5449,18 +5449,9 @@ class GlobalAnalytics:
                 GROUP BY created_date, zone, interlock_name, sap_id, location_name, sop_id
                 ORDER BY created_date DESC, alert_count DESC
             """
-
-            # Execute query
-            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-
-            # try:
-            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-            #     resp = await function(query=query)
             try:
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
-                print("resp mf --> ", resp)
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -5473,16 +5464,8 @@ class GlobalAnalytics:
                 return {"status": True, "data": {}}
 
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
-            print("resp_df mf", resp_df['sop_id'])
-            print("resp_df mf", resp_df['interlock_name'])
-            print(list(maintenance_interlocks.keys()))
-            print(list(fault_interlocks.keys()))
             # Add alert_type and alert_category columns
-            matches = pl.col("interlock_name").is_in(
-                    list(maintenance_interlocks.keys()) + 
-                    list(fault_interlocks.keys()) 
-                    #+ list(normal_interlocks.keys())
-            )
+            matches = pl.col("interlock_name").is_in(list(maintenance_interlocks.keys()) + list(fault_interlocks.keys()))
 
             resp_df = resp_df.filter(matches)
             print("resp_df mf", resp_df['sop_id'])
@@ -5513,20 +5496,22 @@ class GlobalAnalytics:
 
             result = {}
             if not date:
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"))
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b-%Y").alias("month_year"),pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key"))
                 # Determine grouping level based on filters
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
-                    group_cols = ["sap_id", "zone", "location_name", "equipment_name", "month_year", "alert_category", "alert_type"]  # Use equipment_name instead of interlock_name
+                    group_cols = ["sap_id", "zone", "location_name", "equipment_name", "month_year", "alert_category", "alert_type", "sort_key"]  # Use equipment_name instead of interlock_name
 
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
                     )
                 else:
                     # Group by equipment level (default) without sap_id and location_name
-                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "equipment_name", "month_year", "alert_category", "alert_type"]).agg(  # Use equipment_name instead of interlock_name
+                    grouped = resp_df.group_by(["sap_id", "zone", "location_name", "equipment_name", "month_year", "alert_category", "alert_type", "sort_key"]).agg(  # Use equipment_name instead of interlock_name
                         pl.sum("alert_count").alias("total")
                     )
+                
+                grouped = grouped.sort("sort_key", descending=False)
 
                 for row in grouped.iter_rows(named=True):
                     category = row["alert_category"].lower()

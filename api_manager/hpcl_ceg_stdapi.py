@@ -1180,3 +1180,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/vendorapiaudit/{id}', tags=['VendorApiAudit'])
 async def delete(id: str):
     return await VendorApiAudit.delete(id)
+
+
+@router.post('/vtstruckdetails', response_model=VtsTruckDetails, tags=['VtsTruckDetails'])
+async def create(inputObj: VtsTruckDetailsCreate):
+    return await inputObj.create()
+
+
+@router.put('/vtstruckdetails', response_model=VtsTruckDetails, tags=['VtsTruckDetails'])
+async def update(inputObj: VtsTruckDetails):
+    return await inputObj.modify()
+
+
+@router.get('/vtstruckdetails/{id}', response_model=VtsTruckDetails, tags=['VtsTruckDetails'])
+async def get(id: str):
+    return await VtsTruckDetails.get(id, skip_secrets=True)
+
+
+@router.get('/vtstruckdetails', response_model=VtsTruckDetailsGetResp, tags=['VtsTruckDetails'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await VtsTruckDetails.get_all(params, skip_secrets=True)
+
+
+@router.delete('/vtstruckdetails/{id}', tags=['VtsTruckDetails'])
+async def delete(id: str):
+    return await VtsTruckDetails.delete(id)
