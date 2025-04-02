@@ -5,7 +5,8 @@ import fastapi
 import json
 import requests
 import traceback
-import hpcl_ceg_model 
+import hpcl_ceg_model
+import orchestrator.analytics.vts_analysis as vts_analysis
 import orchestrator.alerting.alert_manager as alert_manager
 
 router = fastapi.APIRouter(prefix='/vts')
@@ -48,6 +49,7 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
 
       for entry in enriched_data:
           entry['auto_unblock'] = True
+          entry['violation_type'] = await vts_analysis.get_vts_violation(entry)
           entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
               lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
           await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()  

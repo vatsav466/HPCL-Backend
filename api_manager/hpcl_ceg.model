@@ -1266,6 +1266,7 @@ Model VtsAlertHistory {
     alert_id optional str
     invoice_number optional str
     tt_type optional str
+    violation_type optional list str
 
     Config=> {
         crud_operations='read'
