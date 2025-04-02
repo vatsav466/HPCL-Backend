@@ -3044,6 +3044,8 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tl_number: Mapped[str] = mapped_column("tl_number", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
     report_duration: Mapped[typing.Optional[str]] = mapped_column("report_duration", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    vts_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vts_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    vts_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vts_end_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     total_trips: Mapped[typing.Optional[int]] = mapped_column("total_trips", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     stoppage_violations_count: Mapped[typing.Optional[int]] = mapped_column("stoppage_violations_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
     route_deviation_count: Mapped[typing.Optional[int]] = mapped_column("route_deviation_count", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
@@ -3068,6 +3070,8 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     location_type: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: str
     report_duration: typing.Optional[str] = pydantic.Field("", **{})
+    vts_start_datetime: typing.Optional[datetime.datetime] | None = None
+    vts_end_datetime: typing.Optional[datetime.datetime] | None = None
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
     stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
     route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})
@@ -3100,6 +3104,8 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     location_type: typing.Optional[str] = pydantic.Field("", **{})
     tl_number: typing.Optional[str] | None = None
     report_duration: typing.Optional[str] = pydantic.Field("", **{})
+    vts_start_datetime: typing.Optional[datetime.datetime] | None = None
+    vts_end_datetime: typing.Optional[datetime.datetime] | None = None
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
     stoppage_violations_count: typing.Optional[int] = pydantic.Field(0, **{})
     route_deviation_count: typing.Optional[int] = pydantic.Field(0, **{})

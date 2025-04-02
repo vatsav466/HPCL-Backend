@@ -30,7 +30,7 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
     - dict: Status message indicating the success of the data submission.
     """
     try:
-      logger.info(f"Received VTS data ingestion from vendor {data.location_id}({data.location_type}) {data.dict()}")
+      logger.info(f"Received VTS data ingestion from vendor {data.dict()}")
       # await alert_manager.create_alert({**data.dict(), "alert_type": "VTS"})
       # return True, "Success"
 
@@ -47,8 +47,9 @@ async def vts_ingest_data(data: Vts_Ingest_DataParams):
           return {"status": False, "message": "Invalid data", "data": []}
 
       for entry in enriched_data:
-          print("entry --> ", entry)
           entry['auto_unblock'] = True
+          entry['vts_start_datetime'], entry['vts_end_datetime'] = map(
+              lambda x: datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S"), entry['report_duration'].split(" to "))
           await hpcl_ceg_model.VtsAlertHistoryCreate(**entry).create()  
           await alert_manager.create_alert({**entry, "alert_type": "VTS"})
       
