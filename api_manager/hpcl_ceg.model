@@ -1260,6 +1260,7 @@ Model VtsAlertHistory {
     no_halt_zone_count optional int
     device_offline_count optional int
     device_tamper_count optional int
+    continuous_driving_count optional int
     approved_by optional str
     auto_unblock optional bool
     alert_id optional str
