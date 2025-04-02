@@ -5,7 +5,7 @@ zone_map = {
     "NZL": "NZ",
     "NCL": "NCZ",
     "SZL": "SZ",
-    "SCL": "SC",
+    "SCL": "SCZ",
     "SZ": "SZ",
     "EZ": "EZ",
     "SCZ": "SCZ",
