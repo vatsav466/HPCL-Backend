@@ -33,6 +33,7 @@ class vtsDataCreate(pydantic.BaseModel):
     device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class vtsDataUpdatedCreate(pydantic.BaseModel):

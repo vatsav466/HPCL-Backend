@@ -31,6 +31,7 @@ Model vtsData internal {
     device_tamper_count optional int
     approved_by optional str
     invoice_number optional str
+    tt_type optional str
 }
 
 Model vtsDataUpdated internal {

@@ -1262,6 +1262,7 @@ Model VtsAlertHistory {
     auto_unblock optional bool
     alert_id optional str
     invoice_number optional str
+    tt_type optional str
 
     Config=> {
         crud_operations='read'
