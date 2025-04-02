@@ -31,6 +31,7 @@ class vtsDataCreate(pydantic.BaseModel):
     no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
+    continuous_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
