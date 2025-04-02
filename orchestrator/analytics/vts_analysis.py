@@ -4,6 +4,7 @@ import typing
 import requests
 import hpcl_ceg_model
 from geopy.distance import geodesic
+import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
 
@@ -262,3 +263,35 @@ async def insert_violation_count(file_name):
     df = df.to_dict(orient="records")
     for record in df:
         ...
+
+async def get_vts_violation(entry):
+    vts_violation = []
+    violation_list = [
+        "stoppage_violations_count", "route_deviation_count", "speed_violation_count", "main_supply_removal_count",
+        "night_driving_count", "no_halt_zone_count", "device_offline_count", "device_tamper_count", "continuous_driving_count"
+    ]
+    for violation in violation_list:
+        if entry.get(violation, 0) > 0:
+            vts_violation.append(violation)
+    return vts_violation
+
+async def get_vts_instance(tt_number: str):
+    start_date, end_date = va_analysis.get_period_datetime(period='fortnight')
+    start_date = start_date.strftime("%Y-%m-%d")
+    end_date = end_date.strftime("%Y-%m-%d")
+    query = (f"select * from vts_alert_history where tl_number = '{tt_number}'"
+             f"and vts_end_datetime::date between '{start_date}' and '{end_date}'")
+    vts_alert_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(query, limit=0)
+    if not vts_alert_data:
+        return False
+    vts_alert_data = vts_alert_data.get("data", [])[0]
+
+
+# Priority
+
+# device_tamper_count
+# main_supply_removal_count
+# route_deviation_count
+# stoppage_violations_count
+# speed_violation_count
+# night_driving_count

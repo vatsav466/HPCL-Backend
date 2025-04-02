@@ -3061,6 +3061,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    violation_type: Mapped[typing.Optional[typing.List[str]]] = mapped_column("violation_type", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3088,6 +3089,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    violation_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -3123,6 +3125,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
     tt_type: typing.Optional[str] = pydantic.Field("", **{})
+    violation_type: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
