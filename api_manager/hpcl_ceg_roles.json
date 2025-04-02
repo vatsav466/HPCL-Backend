@@ -4283,6 +4283,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "vtstruckdetails",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "VtsTruckDetails",
+            "attributes": {},
+            "uris": [
+                "/api/vtstruckdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "vtstruckdetails_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "VtsTruckDetails_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/vtstruckdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "vtstruckdetails_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "VtsTruckDetails_admin",
+            "attributes": {},
+            "uris": [
+                "/api/vtstruckdetails/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

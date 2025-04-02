@@ -6014,3 +6014,73 @@ class VendorApiAuditGetResp(pydantic.BaseModel):
     data: typing.List[VendorApiAudit]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class VtsTruckDetailsSchema(UrdhvaPostgresBase):
+    __tablename__ = 'vts_truck_details'
+    
+    truck_regno: Mapped[str] = mapped_column("truck_regno", String, index=True, nullable=False, default=None, primary_key=True, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    bu: Mapped[typing.Optional[str]] = mapped_column("bu", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    truck_status: Mapped[typing.Optional[str]] = mapped_column("truck_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    block_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("block_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    block_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("block_end_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    instance_1: Mapped[typing.Optional[int]] = mapped_column("instance_1", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    instance_2: Mapped[typing.Optional[int]] = mapped_column("instance_2", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    instance_3: Mapped[typing.Optional[int]] = mapped_column("instance_3", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(truck_regno, name="vts_truck_details_truck_regno"),)
+
+
+class VtsTruckDetailsCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'vts_truck_details'
+    
+    truck_regno: str
+    sap_id: str
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    truck_status: typing.Optional[str] = pydantic.Field("", **{})
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    block_start_datetime: typing.Optional[datetime.datetime] | None = None
+    block_end_datetime: typing.Optional[datetime.datetime] | None = None
+    instance_1: typing.Optional[int] = pydantic.Field(0, **{})
+    instance_2: typing.Optional[int] = pydantic.Field(0, **{})
+    instance_3: typing.Optional[int] = pydantic.Field(0, **{})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VtsTruckDetailsSchema
+        upsert_keys = ['truck_regno']
+
+
+class VtsTruckDetails(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'vts_truck_details'
+    
+    truck_regno: typing.Optional[str] | None = None
+    sap_id: typing.Optional[str] | None = None
+    bu: typing.Optional[str] = pydantic.Field("", **{})
+    truck_status: typing.Optional[str] = pydantic.Field("", **{})
+    violation_type: typing.Optional[str] = pydantic.Field("", **{})
+    block_start_datetime: typing.Optional[datetime.datetime] | None = None
+    block_end_datetime: typing.Optional[datetime.datetime] | None = None
+    instance_1: typing.Optional[int] = pydantic.Field(0, **{})
+    instance_2: typing.Optional[int] = pydantic.Field(0, **{})
+    instance_3: typing.Optional[int] = pydantic.Field(0, **{})
+    alert_id: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = VtsTruckDetailsSchema
+        upsert_keys = ['truck_regno']
+
+
+class VtsTruckDetailsGetResp(pydantic.BaseModel):
+    data: typing.List[VtsTruckDetails]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
