@@ -11,6 +11,19 @@ import utilities.helpers as helpers
 class Tas_Analysis:
 
     async def delete_instances_by_business_keys(self,camunda_url,business_keys):
+        """
+        Deletes process instances from the Camunda engine based on provided business keys.
+
+        Args:
+            camunda_url (str): The base URL of the Camunda engine.
+            business_keys (list): A list of business keys for which process instances should be deleted.
+
+        Returns:
+            dict: A dictionary mapping each business key to the result of the deletion operation.
+                The result is "Deleted successfully" if instances were deleted, "No instances found"
+                if no instances exist for the key, or an error message if an exception occurred.
+        """
+
         results = {}
         for business_key in business_keys:
             try:
@@ -39,10 +52,32 @@ class Tas_Analysis:
         return results
 
     async def delete_running_instances(self,bu,sap_id,business_keys):
+        """
+        Deletes process instances from the Camunda engine based on provided business keys.
+
+        Args:
+            bu (str): The business unit for which process instances should be deleted.
+            sap_id (str): The SAP ID for which process instances should be deleted.
+            business_keys (list): A list of business keys for which process instances should be deleted.
+
+        Returns:
+            None
+        """
         camunda_url = await helpers.get_camunda_url(bu=bu, sap_id=sap_id,alert_section="TAS")
         await self.delete_instances_by_business_keys(camunda_url,business_keys)
 
     async def process_tas_resp(self,tas_resp):
+        """
+        Processes a Pandas DataFrame containing TAS records from the database.
+
+        Args:
+            tas_resp (pd.DataFrame): A Pandas DataFrame containing TAS records from the database.
+
+        This method iterates over the rows in the DataFrame and for each row, it
+        fetches the list of TAS alerts currently present in the database.
+        It then deletes the open instances in Camunda that do not exist in the database,
+        and marks the open instances in the database as deleted.
+        """
         for idx,record in tas_resp.iterrows():
             query = (f"sap_id='{record['sap_id']}' and bu='{record['bu']}' "
                      f"and external_id='{record['external_id']}' "
@@ -75,6 +110,15 @@ class Tas_Analysis:
                 await self.delete_running_instances(record["bu"],record["sap_id"],deleting_ids)
 
     async def duplicates_removal(self):
+        """
+        Removes duplicate alerts from the database.
+
+        This method fetches the list of duplicate alerts from the database,
+        and then calls `process_tas_resp` to delete the open instances in Camunda
+        that do not exist in the database, and marks the open instances in the
+        database as deleted.
+
+        """
         try:
             query = (f"""select bu,sap_id,external_id,device_name,COUNT(*) AS duplicate_count from alerts """
                     f"where bu = 'TAS' and "
