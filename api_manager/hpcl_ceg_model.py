@@ -3056,6 +3056,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     approved_by: Mapped[typing.Optional[str]] = mapped_column("approved_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     auto_unblock: Mapped[typing.Optional[bool]] = mapped_column("auto_unblock", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3078,6 +3079,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
     auto_unblock: typing.Optional[bool] = pydantic.Field(False, )
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
@@ -3108,6 +3110,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
     auto_unblock: typing.Optional[bool] = pydantic.Field(False, )
     alert_id: typing.Optional[str] = pydantic.Field("", **{})
+    invoice_number: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'

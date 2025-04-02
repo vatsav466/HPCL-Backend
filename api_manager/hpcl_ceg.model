@@ -1261,6 +1261,7 @@ Model VtsAlertHistory {
     approved_by optional str
     auto_unblock optional bool
     alert_id optional str
+    invoice_number optional str
 
     Config=> {
         crud_operations='read'
