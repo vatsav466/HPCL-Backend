@@ -17,6 +17,9 @@ from urdhva_base.postgresmodel import UrdhvaPostgresBase
 
 
 class vtsDataCreate(pydantic.BaseModel):
+    vendor_id: str
+    location_id: str
+    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     tl_number: str
     report_duration: str
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
@@ -28,8 +31,10 @@ class vtsDataCreate(pydantic.BaseModel):
     no_halt_zone_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_offline_count: typing.Optional[int] = pydantic.Field(0, **{})
     device_tamper_count: typing.Optional[int] = pydantic.Field(0, **{})
+    continuous_driving_count: typing.Optional[int] = pydantic.Field(0, **{})
     approved_by: typing.Optional[str] = pydantic.Field("", **{})
     invoice_number: typing.Optional[str] = pydantic.Field("", **{})
+    tt_type: typing.Optional[str] = pydantic.Field("", **{})
 
 
 class vtsDataUpdatedCreate(pydantic.BaseModel):
@@ -96,9 +101,6 @@ class vtsBlockedTruckCreate(pydantic.BaseModel):
 
 
 class Vts_Ingest_DataParams(pydantic.BaseModel):
-    vendor_id: str
-    location_id: str
-    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
     data: typing.List[vtsDataCreate]
 
     class Config:

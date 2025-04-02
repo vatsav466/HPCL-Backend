@@ -5386,9 +5386,14 @@ class GlobalAnalytics:
             print("date --> ", date)
 
             # Lookup dictionaries for interlock categories - modified to map to equipment_name instead of interlock_name
-            maintenance_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"])} for item in category_mapping.Maintenance}
-            fault_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"])} for item in category_mapping.Fault}
+            maintenance_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"]),
+        "sop_id": item.get("sop_id", None)} for item in category_mapping.Maintenance}
+            fault_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"]),
+        "sop_id": item.get("sop_id", None)} for item in category_mapping.Fault}
             # normal_interlocks = {item["interlock_name"]: {"alert_category": item["alert_category"], "equipment_name": item.get("equipment_name", item["interlock_name"])} for item in category_mapping.Normal}
+
+            # Collect all unique sop_id values from maintenance and fault interlocks
+            sop_ids = {item.get("sop_id") for item in maintenance_interlocks.values()} | {item.get("sop_id") for item in fault_interlocks.values()}
 
             # Default date range: last 1 year
             end_date = datetime.now()
@@ -5414,11 +5419,12 @@ class GlobalAnalytics:
                         date_filter_applied = True
 
             # Apply date range filter
-            date_condition = f"AND created_at BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
+            date_condition = f"AND DATE(created_at) BETWEEN '{start_date.date()}' AND '{end_date.date()}'" if date_filter_applied else ""
             # Construct SQL Query
             query = f"""SELECT DATE(created_at) AS created_date,
                     sap_id,
                     zone,
+                    sop_id,
                     interlock_name,
                     location_name,
                     COUNT(*) AS alert_count
@@ -5426,6 +5432,9 @@ class GlobalAnalytics:
                 WHERE bu = 'TAS' AND alert_section = 'TAS'
                 {date_condition}
             """
+
+            if sop_ids:
+                query += f" AND sop_id IN ({', '.join(f"'{s}'" for s in sop_ids)})"
 
             # Add zone filter if present
             if zone_filter:
@@ -5437,7 +5446,7 @@ class GlobalAnalytics:
 
             # Complete the query
             query += """
-                GROUP BY created_date, zone, interlock_name, sap_id, location_name
+                GROUP BY created_date, zone, interlock_name, sap_id, location_name, sop_id
                 ORDER BY created_date DESC, alert_count DESC
             """
 
@@ -5451,6 +5460,7 @@ class GlobalAnalytics:
             try:
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
+                print("resp mf --> ", resp)
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
@@ -5463,7 +5473,10 @@ class GlobalAnalytics:
                 return {"status": True, "data": {}}
 
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
-            print("resp_df", resp_df)
+            print("resp_df mf", resp_df['sop_id'])
+            print("resp_df mf", resp_df['interlock_name'])
+            print(list(maintenance_interlocks.keys()))
+            print(list(fault_interlocks.keys()))
             # Add alert_type and alert_category columns
             matches = pl.col("interlock_name").is_in(
                     list(maintenance_interlocks.keys()) + 
@@ -5472,6 +5485,7 @@ class GlobalAnalytics:
             )
 
             resp_df = resp_df.filter(matches)
+            print("resp_df mf", resp_df['sop_id'])
             
             # Modified to use equipment_name instead of interlock_name
             resp_df = resp_df.with_columns([
@@ -5504,16 +5518,7 @@ class GlobalAnalytics:
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
                     group_cols = ["sap_id", "zone", "location_name", "equipment_name", "month_year", "alert_category", "alert_type"]  # Use equipment_name instead of interlock_name
-                    
-                    # if zone_filter:
-                    #     group_cols.append("zone")
-                    
-                    # if plant_filter:
-                    #     group_cols.append("location_name")
-                    
-                    # if zone_filter or plant_filter:
-                    #     group_cols.extend(["sap_id"])
-                        
+
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
                     )
@@ -5571,16 +5576,7 @@ class GlobalAnalytics:
                 if zone_filter or plant_filter:
                     # Group by zone/plant level if those filters are present
                     group_cols = ["sap_id", "zone", "location_name", "equipment_name", "created_date", "alert_category", "alert_type"]  # Use equipment_name instead of interlock_name
-                    
-                    # if zone_filter:
-                    #     group_cols.append("zone")
-                    
-                    # if plant_filter:
-                    #     group_cols.append("location_name")
-                    
-                    # if zone_filter or plant_filter:
-                    #     group_cols.extend(["sap_id"])
-                        
+
                     grouped = resp_df.group_by(group_cols).agg(
                         pl.sum("alert_count").alias("total")
                     )
