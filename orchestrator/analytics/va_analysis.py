@@ -162,8 +162,6 @@ async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        print("Query: ", query)
-        print(resp)
         if resp:
             resp = resp[0]
             return resp.get("count", 0)
@@ -185,9 +183,7 @@ async def get_lpg_alerts_count(bu: str, violation_type: str, sap_id: str):
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            print("Query: ", query)
             resp = await function(query=query)            
-            print(resp)
             if not resp:
                 return count-1
             if count>3:
@@ -200,9 +196,7 @@ async def get_va_levels(bu: str, violation_type: str, sap_id: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
     if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
         va_mapping = va_mapping[bu][violation_type]
-        print("va_mapping: ", va_mapping)
         va_alert_count = await get_va_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
-        print("va_alert_count: ", va_alert_count)
         previous_count = 0
         for key, value in va_mapping['escalations'].items():
             if value['condition'] == "<":
@@ -222,7 +216,6 @@ async def get_lpg_levels(bu: str, violation_type: str, sap_id: str):
     if bu in lpg_mapping.keys() and violation_type in lpg_mapping[bu].keys():
         lpg_mapping = lpg_mapping[bu][violation_type]
         lpg_alert_count = await get_lpg_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
-        print("lpg_alert_count: ", lpg_alert_count)
         for key, value in lpg_mapping['escalations'].items():
             if lpg_alert_count == int(value['value']):
                 print("-"*10)
