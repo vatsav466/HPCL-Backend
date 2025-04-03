@@ -1329,14 +1329,14 @@ ORDER BY
                         "lpg_gd_rejections"
                 ''',
                     
-    'cdcms_current_year_sales':f''' SELECT 
+    'cdcms_current_year_sales':''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     FROM 
                                         "lpg_monthly_cdcms_sales_summary"
                                     WHERE 
                                         "Financial_Year"='{financial_year}' AND "ZOName" IS NOT NULL ''',
     
-    'cdcms_current_month_sales':f'''select
+    'cdcms_current_month_sales':'''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
