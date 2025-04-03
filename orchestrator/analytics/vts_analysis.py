@@ -307,7 +307,9 @@ async def get_instance(tt_number: str, get_raw_data=False):
 
 async def is_alert_exists(tl_number: str):
     query = f"select id from alerts where vehicle_number = '{tl_number}' and alert_status != 'Close' and alert_section = 'VTS'"
+    print("query: ", query)
     vts_alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    print("vts_alert_data: ", vts_alert_data)
     if vts_alert_data.get("data", []):
         return True
     return False
