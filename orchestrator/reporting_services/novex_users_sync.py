@@ -119,6 +119,8 @@ async def process_data(data):
                                 "Zone": "zone", "ROLE_NAME": "system_role"}, inplace=True)
     if "SALES_GRP" in data.columns:
         sales_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/lpg_sa_master.csv")
+        data['SALES_GRP'] = data['SALES_GRP'].astype(str)
+        sales_master['SALES_GRP'] = sales_master['SALES_GRP'].astype(str)
         data = pd.merge(data, sales_master, left_on='SALES_GRP', right_on='SACode', how='left')
         data.rename(columns={"SAName": "sales_area"})
     print("Before dropping empty username :", len(data))
