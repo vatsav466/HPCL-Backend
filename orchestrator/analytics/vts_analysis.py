@@ -319,7 +319,7 @@ async def get_vts_instance(tt_number: str):
     vts_alert_data = vts_alert_data.get("data", [])
     print("vts_alert_data: ", vts_alert_data)
     all_violations = [violation for d in vts_alert_data for violation in d["violation_type"]]
-    violations_ids = [violation for d in vts_alert_data for violation in d["id"]]
+    violations_ids = [str(d["id"]) for d in vts_alert_data]
     violation_counts = dict(Counter(all_violations))
     instance = {}
     violation_name = ""

@@ -88,6 +88,16 @@ class VTSAlertManager(alert_factory.AlertFactory):
             ascending=True,
             date_time_format=None).isoformat()
         vts_alert_data['mark_as_false'] = False
+        tl_number = alert_data['tl_number']
+        query = ""
+        if instance_data['instance'] == 'Instance - 1':
+            query = f"update vts_truck_details set instance_1 = 1 where truck_regno = '{tl_number}'"
+        if instance_data['instance'] == 'Instance - 2':
+            query = f"update vts_truck_details set instance_1 = 1 where truck_regno = '{tl_number}'"
+        if instance_data['instance'] == 'Instance - 3':
+            query = f"update vts_truck_details set instance_1 = 1 where truck_regno = '{tl_number}'"
+        if query:
+            await hpcl_ceg_model.VtsTruckDetails.update_by_query(query)
         camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['location_id'],
                                                     alert_section="VTS")
         await cls.create_alert(vts_alert_data, camunda_url)
