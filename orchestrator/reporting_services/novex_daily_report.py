@@ -160,9 +160,9 @@ async def fetch_sales_data():
 
     for sbu, details in sbu_level_zones.items():
         sales_data[f'top_performing_{sbu}_zones'] = [f"{details[0][0]}({details[0][1]}%)",
-                                                     f"{details[1][0]}({details[1][1]})%"]
+                                                     f"{details[1][0]}({details[1][1]}%)"]
         sales_data[f'bottom_performing_{sbu}_zones'] = [f"{details[-1][0]}({details[-1][1]}%)",
-                                                        f"{details[-2][0]}({details[-2][1]})%"]
+                                                        f"{details[-2][0]}({details[-2][1]}%)"]
     for sbu, details in sbu_level_regions.items():
         if len(details) > 3:
             sales_data[f'top_performing_{sbu}_regions'] = [f"{details[0][0]}({details[0][1]}%)",
