@@ -93,7 +93,6 @@ def insertToDB(data, table_name, indexing_col=()):
     cur = pg_conn.cursor()
     dtype_dict = {'String':str('text'),'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'), 'Float64': str('double precision'),'Float32': str('double precision'),
                   'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'), "Datetime(time_unit='us', time_zone=None)": str('timestamp'), "Datetime(time_unit='ns', time_zone=None)":str('timestamp'), "Decimal(precision=5, scale=2)": str('double precision')}
-    print('Data Types :',data.dtypes)
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
         dty = dtype_dict.get(str(dty))
@@ -104,11 +103,7 @@ def insertToDB(data, table_name, indexing_col=()):
     create_table_index = f"""CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ({columns_formatted})"""
     
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
-    
-    print("-"*50)
-    print("table_create_sql :", table_create_sql)
-    print("-"*50)
-    
+        
     cur.execute(table_create_sql)
     pg_conn.commit()
     cur.execute(create_table_index)
@@ -1178,7 +1173,6 @@ def get_subsidy_central_stats():
     trunc_query = """ TRUNCATE lpg_cdcms_subsidy_central; """
     fetch_data(cursor, trunc_query, getData=False, params=params)
     insertToDB(data, "lpg_cdcms_subsidy_central", indexing_col=("ZOName", "Financial_Year", "Month"))
-    print(data)
 
 
 def calculate_financial_year(df):
@@ -1256,7 +1250,6 @@ def get_subsidy_state_stats():
 
 
     data = fetch_data(cursor, query, getData=True)
-    print(data)
     data = data.with_columns(System_Idx=pl.lit(""))
     data = data.with_columns(pl.col('System_Idx').map_elements(lambda x: str(uuid.uuid4().hex)))
 
@@ -1643,7 +1636,6 @@ def get_new_connection_data():
     trunc_query = """ TRUNCATE lpg_cdcms_nc_data; """
     fetch_data(cursor, trunc_query, getData=False, params=params)
     insertToDB(data, "lpg_cdcms_nc_data", indexing_col=("ZOName", "MonthYear"))
-    print(data)
     
     
 def get_dbc_enrollment():
@@ -1771,7 +1763,6 @@ def get_dbc_enrollment():
     # trunc_query = """ TRUNCATE lpg_cdcms_dbc_enrollment_data; """
     # fetch_data(cursor, trunc_query, getData=False, params=params)
     insertToDB(data, "lpg_cdcms_dbc_enrollment_data", indexing_col=("ZOName", "MonthYear"))
-    print(data)
     
 
 def get_consumer_statistics():
@@ -1944,12 +1935,11 @@ def get_consumer_statistics():
     data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Datetime"))
     data = data.with_columns(pl.col("Execution_Datetime").dt.strftime('%Y-%m-%d').map_elements(lambda x: datetime.datetime.strptime(x,'%Y-%m-%d')).alias("Execution_Date"))
     insertToDB(data, "LPG_CONSUMERS_OVERALL_SUMMARY", indexing_col=("ZOName", "Execution_Date", "RelationshipSubStatus", "ConsumerCategory", "CylinderType"))
-    print(data)
                 
 if __name__=="__main__":
     get_pending_vs_delivered_data()
-    # get_consumer_statistics()
-    # get_new_connection_data()    
-    # get_subsidy_state_stats()
-    # get_subsidy_central_stats()
-    # get_subsidy_exception_failure_data()
+    get_consumer_statistics()
+    get_new_connection_data()    
+    get_subsidy_state_stats()
+    get_subsidy_central_stats()
+    get_subsidy_exception_failure_data()

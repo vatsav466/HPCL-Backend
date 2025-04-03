@@ -132,20 +132,32 @@ async def assign_values_to_dataframe(df, values):
         df = df.with_columns(pl.Series("camunda_listener", assigned_values))
         return df
 
-async def get_period_datetime(period: str):
+async def get_period_datetime(period: str, today=None):
     if period == "weekly":
-        today = datetime.datetime.now()
+        if not today:
+            today = datetime.datetime.now()
         start_of_week = today - datetime.timedelta(days=today.weekday())
         end_of_week = start_of_week + datetime.timedelta(days=6)
         start_datetime = datetime.datetime.combine(start_of_week, datetime.datetime.min.time())
         end_datetime = datetime.datetime.combine(end_of_week, datetime.datetime.max.time())
         return start_datetime, end_datetime
     if period == 'monthly':
-        today = datetime.datetime.now()
+        if not today:
+            today = datetime.datetime.now()
         start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_day = calendar.monthrange(today.year, today.month)[1]
         end_of_month = today.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
         return start_of_month, end_of_month
+    if period == 'fortnight':
+        if not today:
+            today = datetime.datetime.now()
+        year, month = today.year, today.month
+        first_half_start = datetime.datetime(year, month, 1, 0, 0, 0)
+        first_half_end = datetime.datetime(year, month, 14, 23, 59, 59)
+        last_day = (datetime.datetime(year, month, 28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1)
+        second_half_start = datetime.datetime(year, month, 15, 0, 0, 0)
+        second_half_end = datetime.datetime(year, month, last_day.day, 23, 59, 59)
+        return (first_half_start, first_half_end) if today.day <= 14 else (second_half_start, second_half_end)
 
 async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
@@ -162,8 +174,6 @@ async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
         dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
         resp = await function(query=query)
-        print("Query: ", query)
-        print(resp)
         if resp:
             resp = resp[0]
             return resp.get("count", 0)
@@ -185,9 +195,7 @@ async def get_lpg_alerts_count(bu: str, violation_type: str, sap_id: str):
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = 1
             dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
             function = await charts_actions.charts_connection_vault_routing(dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
-            print("Query: ", query)
             resp = await function(query=query)            
-            print(resp)
             if not resp:
                 return count-1
             if count>3:
@@ -200,9 +208,7 @@ async def get_va_levels(bu: str, violation_type: str, sap_id: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
     if bu in va_mapping.keys() and violation_type in va_mapping[bu].keys():
         va_mapping = va_mapping[bu][violation_type]
-        print("va_mapping: ", va_mapping)
         va_alert_count = await get_va_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
-        print("va_alert_count: ", va_alert_count)
         previous_count = 0
         for key, value in va_mapping['escalations'].items():
             if value['condition'] == "<":
@@ -222,7 +228,6 @@ async def get_lpg_levels(bu: str, violation_type: str, sap_id: str):
     if bu in lpg_mapping.keys() and violation_type in lpg_mapping[bu].keys():
         lpg_mapping = lpg_mapping[bu][violation_type]
         lpg_alert_count = await get_lpg_alerts_count(bu=bu, violation_type=violation_type, sap_id=sap_id)
-        print("lpg_alert_count: ", lpg_alert_count)
         for key, value in lpg_mapping['escalations'].items():
             if lpg_alert_count == int(value['value']):
                 print("-"*10)

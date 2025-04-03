@@ -315,10 +315,6 @@ class LPG_CONSOLIDATED():
         for car, b_data in bottlingData.items():
             car = str(car)
             for phase in phases:
-                print("--")
-                print("b_data :", b_data)
-                print("phase :", phase)
-                print("--")
                 total_production = b_data[phase]['prod_14_2'] + 1.25 * b_data[phase]['prod_19']
                 gap_hours = production_hours_data[car][f"total_{phase}_gap"]
                 if gap_hours == None:
@@ -423,31 +419,31 @@ class LPG_CONSOLIDATED():
         break_phase_string = " or ".join(break_phase_string_array)
 
         query_string = f"""
-        WITH phased_data as (
-            SELECT
-                *,
-                CASE
-                    WHEN {normal_phase_string} THEN 'normal'
-                    WHEN {break_phase_string} THEN 'break'
-                    ELSE 'overtime'
-                END as phase
-            FROM
-                lpg_operations_data
-            WHERE
-                process_date BETWEEN '{from_date} 00:00:00' AND '{to_date} 23:59:59.999'
-                AND process_id IN (2, 22)
-                AND process_status NOT IN (1296, 5392, 17424)
-                AND system_id = '{carousal}'
-                AND "Plant Name"='{self.plantShortName.capitalize()}'
-        )
-        SELECT
-            phase,
-            SUM(CASE WHEN cyl_type = 1 THEN 1 ELSE 0 END) AS prod_14_2,
-            SUM(CASE WHEN cyl_type = 2 THEN 1 ELSE 0 END) AS prod_19
-        FROM
-            phased_data
-        GROUP BY phase;
-        """
+                        WITH phased_data as (
+                            SELECT
+                                *,
+                                CASE
+                                    WHEN {normal_phase_string} THEN 'normal'
+                                    WHEN {break_phase_string} THEN 'break'
+                                    ELSE 'overtime'
+                                END as phase
+                            FROM
+                                lpg_operations_data
+                            WHERE
+                                process_date BETWEEN '{from_date} 00:00:00' AND '{to_date} 23:59:59.999'
+                                AND process_id IN (2, 22)
+                                AND process_status NOT IN (1296, 5392, 17424)
+                                AND system_id = '{carousal}'
+                                AND "Plant Name"='{self.plantShortName.capitalize()}'
+                        )
+                        SELECT
+                            phase,
+                            SUM(CASE WHEN cyl_type = 1 THEN 1 ELSE 0 END) AS prod_14_2,
+                            SUM(CASE WHEN cyl_type = 2 THEN 1 ELSE 0 END) AS prod_19
+                        FROM
+                            phased_data
+                        GROUP BY phase;
+                        """
         return query_string
 
 
@@ -680,7 +676,6 @@ class LPG_CONSOLIDATED():
 
         # self.get_data(gapBetweenTimesFunctionCreateString, runOnly=True)
         # self.get_data(endGapFunctionCreateString, runOnly=True)
-        print("queryString :", queryString)
         data = self.get_data(queryString, records=True)
         if data:
             data = data[0]
@@ -735,13 +730,10 @@ class LPG_CONSOLIDATED():
         data = {}
         if not carousals_array:
             return data
-        print("carousals_array :", carousals_array)
         for carousal in carousals_array:
             production_gaps = self.getProductionGaps(carousal, from_date, to_date)
             carousal = str(carousal)
-            print("carousal :", carousal)
             data[carousal] = production_gaps
-            print(data)
             data[carousal]['carousal'] = carousal
             data[carousal]['intervening_days'] = total_intervening_days
 
@@ -799,11 +791,8 @@ class LPG_CONSOLIDATED():
         # bottlingData = self.getBottlingSummary(from_datetime, to_datetime)
 
         otProductionTime = self.getOtProductionPeriodForAllCarousals(fromDate, toDate)
-        print("otProductionTime :", otProductionTime)
         bottlingData = self.getPhaseWiseProductionForAllCarousals(fromDate, toDate)
-        print("bottlingData :", bottlingData)
         productionHoursData = self.getProductionGapsForAllCarousals(fromDate, toDate)
-        print("productionHoursData :", productionHoursData)
 
         data = {
             "carousals" : self.getCarousals("full"),
@@ -893,11 +882,8 @@ class LPG_CONSOLIDATED():
         """
         rows = []
         # Loop through each data row (representing a plant).
-        print("data :", data)
         for d_row in data:
             # Loop through each carousal in the current plant data.
-            print("---")
-            print("d_row :", d_row)
             if not d_row['carousals']:
                 return rows
             for car_id, car in d_row['carousals'].items():
@@ -998,7 +984,6 @@ def insertToDB(data, table_name):
     cur = pg_conn.cursor()
     dtype_dict = {'String':str('text'),'Int64': str('text'), 'Int32': str('text'), 'Boolean': str('text'), 'Float64': str('double precision'),'Float32': str('double precision'),
                   'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'), "Datetime(time_unit='us', time_zone=None)": str('timestamp')}
-    print('Data Types :',data.dtypes)
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
         dty = dtype_dict.get(str(dty))
@@ -1007,7 +992,6 @@ def insertToDB(data, table_name):
 
     create_table_index = f'CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ("carousel", "short_name")'
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
-    print("table_create_sql :", table_create_sql)
     cur.execute(table_create_sql)
     pg_conn.commit()
     cur.execute(create_table_index)
@@ -1081,7 +1065,7 @@ def generate_summary():
             # Process each date for this location
             while current_date <= end_date:
                 print("-"*50)
-                print("DATE --->", current_date)
+                print("current_date --->", current_date)
                 print("-"*50)
                 fromDate = current_date.strftime("%Y-%m-%d")
                 toDate = current_date.strftime("%Y-%m-%d")            

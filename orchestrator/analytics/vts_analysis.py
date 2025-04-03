@@ -3,7 +3,10 @@ import urdhva_base
 import typing
 import requests
 import hpcl_ceg_model
+from collections import Counter
 from geopy.distance import geodesic
+import utilities.vts_mapping as vts_mapping
+import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_factory as alert_factory
 import orchestrator.dbconnector.credential_loader as credential_loader
 
@@ -262,3 +265,91 @@ async def insert_violation_count(file_name):
     df = df.to_dict(orient="records")
     for record in df:
         ...
+
+async def get_vts_violation(entry):
+    vts_violation = []
+    violation_list = [
+        "stoppage_violations_count", "route_deviation_count", "speed_violation_count", "main_supply_removal_count",
+        "night_driving_count", "no_halt_zone_count", "device_offline_count", "device_tamper_count", "continuous_driving_count"
+    ]
+    for violation in violation_list:
+        if entry.get(violation, 0) > 0:
+            vts_violation.append(violation)
+    return vts_violation
+
+async def insert_truck_details(data):
+    data = pd.DataFrame(data)
+    data.rename(columns={"LOCATION_CODE": "sap_id"}, inplace=True)
+    data.columns = data.columns.str.lower()
+    data['instance_1'] = data['instance_1'].fillna(0)
+    data['instance_2'] = data['instance_2'].fillna(0)
+    data['instance_3'] = data['instance_3'].fillna(0)
+    if not 'bu' in data.columns:
+        data['bu'] = ""
+    data = data.fillna("")
+    await hpcl_ceg_model.VtsTruckDetails.bulk_update(data.to_dict(orient="records"), upsert=True)
+
+
+async def get_instance(tt_number: str, get_raw_data=False):
+    query = f"select * from vts_truck_details where truck_regno = '{tt_number}'"
+    vts_truck_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(query, limit=0)
+    if get_raw_data:
+        return vts_truck_data.get("data", [])
+    if not vts_truck_data:
+        return "0"
+    vts_truck_data = vts_truck_data.get("data", [])[0]
+    if vts_truck_data['instance_1']:
+        return "0"
+    if vts_truck_data['instance_1']:
+        return "1"
+    return "2"
+
+
+async def get_vts_instance(tt_number: str):
+    vts_map = vts_mapping.vts_interlock_mapping
+    start_date, end_date = await va_analysis.get_period_datetime(period='fortnight')
+    start_date = start_date.strftime("%Y-%m-%d")
+    end_date = end_date.strftime("%Y-%m-%d")
+    query = (f"select violation_type from vts_alert_history where tl_number = '{tt_number}' "
+             f"and vts_end_datetime::date between '{start_date}' and '{end_date}'")
+    vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
+    if not vts_alert_data:
+        return False
+    vts_alert_data = vts_alert_data.get("data", [])
+    print("vts_alert_data: ", vts_alert_data)
+    all_violations = [violation for d in vts_alert_data for violation in d["violation_type"]]
+    violation_counts = dict(Counter(all_violations))
+    instance = {}
+    if "device_tamper_count" in violation_counts.keys() and violation_counts['device_tamper_count'] > 0:
+        instance = vts_map["device_tamper_count"]['alerting_rules'][await get_instance(tt_number)]
+
+    elif "main_supply_removal_count" in violation_counts.keys() and violation_counts['main_supply_removal_count'] > 0:
+        instance = vts_map["main_supply_removal_count"]['alerting_rules'][await get_instance(tt_number)]
+
+    elif "route_deviation_count" in violation_counts.keys() and violation_counts['route_deviation_count'] >= 5:
+        instance = vts_map["route_deviation_count"]['alerting_rules'][await get_instance(tt_number)]
+
+    elif "stoppage_violations_count" in violation_counts.keys() and violation_counts['stoppage_violations_count'] >= 5:
+        instance = vts_map["stoppage_violations_count"]['alerting_rules'][await get_instance(tt_number)]
+
+    elif "speed_violation_count" in violation_counts.keys() and violation_counts['speed_violation_count'] >= 3:
+        instance = vts_map["speed_violation_count"]['alerting_rules'][await get_instance(tt_number)]
+
+    elif "night_driving_count" in violation_counts.keys() and violation_counts['night_driving_count'] >= 3:
+        instance = vts_map["night_driving_count"]['alerting_rules'][await get_instance(tt_number)]
+
+    elif "continuous_driving_count" in violation_counts.keys() and violation_counts['continuous_driving_count'] >= 3:
+        instance = vts_map["continuous_driving_count"]['alerting_rules'][await get_instance(tt_number)]
+
+    return instance
+
+
+# Priority
+
+# device_tamper_count
+# main_supply_removal_count
+# route_deviation_count
+# stoppage_violations_count
+# speed_violation_count
+# night_driving_count
+# continuous_driving_count

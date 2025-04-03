@@ -356,7 +356,7 @@ vts_interlock_mapping = {
         "description": "Driver Panic",
         "alert_threshold": 0
     },
-    "continuous_driving": {
+    "continuous_driving_count": {
         "alerting_rules": {
             "0": {
                 "interlock_name": "Continuous Driving FirstTime",
@@ -372,26 +372,26 @@ vts_interlock_mapping = {
             },
             "2": {
                 "interlock_name": "Continuous Driving ThirdTime",
-                "block_duration": 7,
-                "block_msg": "7 days",
+                "block_duration": 365,
+                "block_msg": "1 year",
                 "clear_count": True
             },
             "3": {
                 "interlock_name": "Continuous Driving FourthTime",
-                "block_duration": 7,
-                "block_msg": "7 days",
+                "block_duration": 365,
+                "block_msg": "1 year",
                 "clear_count": True
             },
             "4": {
                 "interlock_name": "Continuous Driving FifthTime",
-                "block_duration": 7,
-                "block_msg": "7 days",
+                "block_duration": 365,
+                "block_msg": "1 year",
                 "clear_count": True
             },
             "5": {
                 "interlock_name": "Continuous Driving SixthTime",
-                "block_duration": 7,
-                "block_msg": "7 days",
+                "block_duration": 365,
+                "block_msg": "1 year",
                 "clear_count": True
             }
         },
@@ -593,7 +593,7 @@ vts_exception_interlock_mapping = {
         "description": "Driver Panic",
         "alert_threshold": 0
     },
-    "continuous_driving": {
+    "continuous_driving_count": {
         "alerting_rules": {
             "0": {
                 "interlock_name": "Continuous Driving FirstTime",
