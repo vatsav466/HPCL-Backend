@@ -1044,9 +1044,10 @@ Model LpgCsRejections {
     Execution_Date datetime
     max_date datetime
     sap_id str
+    region str
 
     Config=> {
-        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone,region:region'
     }
 }
 
@@ -1062,9 +1063,10 @@ Model LpgGdRejections {
     Execution_Date datetime
     max_date datetime
     sap_id str
+    region str
 
     Config=> {
-        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone,region:region'
     }
 }
 
@@ -1080,9 +1082,10 @@ Model LpgPtRejections {
     Execution_Date datetime
     max_date datetime
     sap_id str
+    region str
 
     Config=> {
-        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone'
+        access_key_mapping='sap_id:sap_id,plant:plant,zone:zone,region:region'
     }
 }
 
@@ -1165,7 +1168,7 @@ Model LpgSalesSummaryData {
     Month_Year str
 
     Config=> {
-        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone'
+        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone,ROName:region'
     }
 }
 
@@ -1204,7 +1207,7 @@ Model LpgConsumersSummary {
     ZoneNames str
 
     Config=> {
-        access_key_mapping='DistributorCode:sap_id,SAName:sales_area,ZOName:zone'
+        access_key_mapping='DistributorCode:sap_id,SAName:sales_area,ZOName:zone,ROName:region'
     }
 }
 
@@ -1544,7 +1547,7 @@ Model LpgSubsidyExceptionData {
     ZOName str
     
     Config=> {
-        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone'
+        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone,ROName:region'
     }
 }
 
@@ -1566,7 +1569,7 @@ Model LpgSubsidyFailureData {
     ZOName str
     
     Config=> {
-        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone'
+        access_key_mapping='JDEDistributorCode:sap_id,SAName:sales_area,ZOName:zone,ROName:region'
     }
 }
 

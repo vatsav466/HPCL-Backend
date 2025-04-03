@@ -2313,6 +2313,7 @@ class LpgCsRejectionsSchema(UrdhvaPostgresBase):
     execution__date: Mapped[datetime.datetime] = mapped_column("execution__date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     max_date: Mapped[datetime.datetime] = mapped_column("max_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
 
 class LpgCsRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -2331,6 +2332,7 @@ class LpgCsRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     execution__date: datetime.datetime
     max_date: datetime.datetime
     sap_id: str
+    region: str
 
     class Config:
         collection_name = 'data_flow'
@@ -2338,7 +2340,7 @@ class LpgCsRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgCsRejectionsSchema
         upsert_keys = []
-        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone', 'region:region']
 
 
 class LpgCsRejections(urdhva_base.postgresmodel.PostgresModel):
@@ -2357,6 +2359,7 @@ class LpgCsRejections(urdhva_base.postgresmodel.PostgresModel):
     execution__date: typing.Optional[datetime.datetime] | None = None
     max_date: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -2364,7 +2367,7 @@ class LpgCsRejections(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgCsRejectionsSchema
         upsert_keys = []
-        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone', 'region:region']
 
 
 class LpgCsRejectionsGetResp(pydantic.BaseModel):
@@ -2387,6 +2390,7 @@ class LpgGdRejectionsSchema(UrdhvaPostgresBase):
     execution__date: Mapped[datetime.datetime] = mapped_column("execution__date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     max_date: Mapped[datetime.datetime] = mapped_column("max_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
 
 class LpgGdRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -2403,6 +2407,7 @@ class LpgGdRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     execution__date: datetime.datetime
     max_date: datetime.datetime
     sap_id: str
+    region: str
 
     class Config:
         collection_name = 'data_flow'
@@ -2410,7 +2415,7 @@ class LpgGdRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgGdRejectionsSchema
         upsert_keys = []
-        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone', 'region:region']
 
 
 class LpgGdRejections(urdhva_base.postgresmodel.PostgresModel):
@@ -2427,6 +2432,7 @@ class LpgGdRejections(urdhva_base.postgresmodel.PostgresModel):
     execution__date: typing.Optional[datetime.datetime] | None = None
     max_date: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -2434,7 +2440,7 @@ class LpgGdRejections(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgGdRejectionsSchema
         upsert_keys = []
-        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone', 'region:region']
 
 
 class LpgGdRejectionsGetResp(pydantic.BaseModel):
@@ -2457,6 +2463,7 @@ class LpgPtRejectionsSchema(UrdhvaPostgresBase):
     execution__date: Mapped[datetime.datetime] = mapped_column("execution__date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     max_date: Mapped[datetime.datetime] = mapped_column("max_date", DateTime(timezone=True), index=False, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[str] = mapped_column("sap_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    region: Mapped[str] = mapped_column("region", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
 
 
 class LpgPtRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -2473,6 +2480,7 @@ class LpgPtRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     execution__date: datetime.datetime
     max_date: datetime.datetime
     sap_id: str
+    region: str
 
     class Config:
         collection_name = 'data_flow'
@@ -2480,7 +2488,7 @@ class LpgPtRejectionsCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgPtRejectionsSchema
         upsert_keys = []
-        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone', 'region:region']
 
 
 class LpgPtRejections(urdhva_base.postgresmodel.PostgresModel):
@@ -2497,6 +2505,7 @@ class LpgPtRejections(urdhva_base.postgresmodel.PostgresModel):
     execution__date: typing.Optional[datetime.datetime] | None = None
     max_date: typing.Optional[datetime.datetime] | None = None
     sap_id: typing.Optional[str] | None = None
+    region: typing.Optional[str] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -2504,7 +2513,7 @@ class LpgPtRejections(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgPtRejectionsSchema
         upsert_keys = []
-        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone']
+        access_key_mapping = ['sap_id:sap_id', 'plant:plant', 'zone:zone', 'region:region']
 
 
 class LpgPtRejectionsGetResp(pydantic.BaseModel):
@@ -2698,7 +2707,7 @@ class LpgSalesSummaryDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgSalesSummaryDataSchema
         upsert_keys = []
-        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone', 'ROName:region']
 
 
 class LpgSalesSummaryData(urdhva_base.postgresmodel.PostgresModel):
@@ -2756,7 +2765,7 @@ class LpgSalesSummaryData(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgSalesSummaryDataSchema
         upsert_keys = []
-        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone', 'ROName:region']
 
 
 class LpgSalesSummaryDataGetResp(pydantic.BaseModel):
@@ -2844,7 +2853,7 @@ class LpgConsumersSummaryCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgConsumersSummarySchema
         upsert_keys = []
-        access_key_mapping = ['DistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+        access_key_mapping = ['DistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone', 'ROName:region']
 
 
 class LpgConsumersSummary(urdhva_base.postgresmodel.PostgresModel):
@@ -2889,7 +2898,7 @@ class LpgConsumersSummary(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgConsumersSummarySchema
         upsert_keys = []
-        access_key_mapping = ['DistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+        access_key_mapping = ['DistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone', 'ROName:region']
 
 
 class LpgConsumersSummaryGetResp(pydantic.BaseModel):
@@ -4034,7 +4043,7 @@ class LpgSubsidyExceptionDataCreate(urdhva_base.postgresmodel.BasePostgresModel)
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgSubsidyExceptionDataSchema
         upsert_keys = []
-        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone', 'ROName:region']
 
 
 class LpgSubsidyExceptionData(urdhva_base.postgresmodel.PostgresModel):
@@ -4063,7 +4072,7 @@ class LpgSubsidyExceptionData(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgSubsidyExceptionDataSchema
         upsert_keys = []
-        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone', 'ROName:region']
 
 
 class LpgSubsidyExceptionDataGetResp(pydantic.BaseModel):
@@ -4117,7 +4126,7 @@ class LpgSubsidyFailureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgSubsidyFailureDataSchema
         upsert_keys = []
-        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone', 'ROName:region']
 
 
 class LpgSubsidyFailureData(urdhva_base.postgresmodel.PostgresModel):
@@ -4145,7 +4154,7 @@ class LpgSubsidyFailureData(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = LpgSubsidyFailureDataSchema
         upsert_keys = []
-        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone']
+        access_key_mapping = ['JDEDistributorCode:sap_id', 'SAName:sales_area', 'ZOName:zone', 'ROName:region']
 
 
 class LpgSubsidyFailureDataGetResp(pydantic.BaseModel):
