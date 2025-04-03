@@ -1,7 +1,7 @@
 import utilities.helpers as helpers
 from datetime import datetime
 
-# today = datetime.now()
+today = datetime.now()
 # current_month = datetime.now().strftime("%B") # format : January, February
 # if today.month < 4:
 #     start_year = today.year - 1
