@@ -301,7 +301,7 @@ async def get_instance(tt_number: str, get_raw_data=False):
     print(vts_truck_data)
     if not vts_truck_data['instance_1']:
         return "0"
-    if not vts_truck_data['instance_1']:
+    if not vts_truck_data['instance_2']:
         return "1"
     return "2"
 
