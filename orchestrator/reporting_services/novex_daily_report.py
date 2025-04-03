@@ -312,7 +312,7 @@ async def get_ro_alerts():
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     query = f""" SELECT count(interlock_name) as total_count, severity FROM alerts where bu='RO' and 
-    interlock_name != '"Dry Out Each Indent Wise MainFlow"' and 
+    interlock_name != 'Dry Out Each Indent Wise MainFlow' and alert_section='RO' and 
     created_at>='{today}' and alert_status='Open' GROUP BY severity; """
     alerts = await function(query=query)
     data = {}
