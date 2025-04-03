@@ -5,8 +5,6 @@ import requests
 import hpcl_ceg_model
 from collections import Counter
 from geopy.distance import geodesic
-from shapely.ops import orient
-
 import utilities.vts_mapping as vts_mapping
 import orchestrator.analytics.va_analysis as va_analysis
 import orchestrator.alerting.alert_factory as alert_factory
