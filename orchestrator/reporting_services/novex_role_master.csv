@@ -6,7 +6,7 @@ sl_no,novex_role,tibco_role,bu
 5,Zonal Head LPG,SD_LZONAL_HEAD,LPG
 6,Zonal Officer LPG,SD_LZONAL_OFFICER,LPG
 7,Regional Manager LPG,SD_LREGNL_MNGR,LPG
-8,Location In-charge LPG,IL_LPGPLNT_INCHARG,LPG
+8,Location In-Charge LPG,IL_LPGPLNT_INCHARG,LPG
 9,Planning Officer LPG,IL_LPG_PLNGOFCR,LPG
 10,Safety Officer LPG,PM_SAFETY_OFFICER,LPG
 11,Maintenance Officer LPG,PM_MAINT_OFFICER,LPG
@@ -17,7 +17,7 @@ sl_no,novex_role,tibco_role,bu
 16,Planning Officer SOD,IL_PLANING_OFFCER,TAS
 17,Maintenance Officer SOD,PM_MAINT_OFFICER,TAS
 18,Safety Officer SOD,PM_SAFETY_OFFICER,TAS
-19,Location In-charge SOD,PM_LOCN_INCHRG,TAS
+19,Location In-Charge SOD,PM_LOCN_INCHRG,TAS
 20,COLA HQO Officer SOD,IL_COLA_PLANNING,TAS
 21,HQO General Manager SOD,IL_GM_SOD,TAS
 22,Zonal SOD,IL_DGM_SODZONE,TAS
