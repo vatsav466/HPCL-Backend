@@ -53,6 +53,20 @@ async def get_financial_year():
     financial_year = f"{start_year}-{end_year}"
     return financial_year
 
+async def get_fy_list():
+    today = datetime.now()
+    financial_years = []
+    if today.month >= 4:
+        current_fy_start = today.year
+    else:
+        current_fy_start = today.year - 1
+    for i in range(4):
+        start_year = current_fy_start - i
+        end_year = start_year + 1
+        financial_year = f"{start_year}-{end_year}"
+        financial_years.append(financial_year)
+    return financial_years
+
 # Tempory Commented
 # async def days_since_financial_year_start():
 #     today = date.today()
@@ -95,7 +109,7 @@ class LPGCDCMSActions:
             for _filter in _filters:
                 for key, value in _filter.items():
                     key = key.replace('"','')
-                    if key in ["Month", "CylType", "ConsumerType"]:
+                    if key in ["Month", "CylType", "ConsumerType", "Financial_Year"]:
                         continue
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
@@ -106,7 +120,7 @@ class LPGCDCMSActions:
                 "ROName": df['ROName'].unique().to_list(), "SAName": df['SAName'].unique().to_list(),
                 "DistributorName": df["DistributorName"].unique().to_list(),
                 "StateCode": df["StateCode"].unique().to_list(), "StateName": df["StateName"].unique().to_list(),
-                "CylType": ['C142','C5'], "ConsumerType": ['PMUY', 'NPMUY'], "Financial_Year": ["2023-2024", "2024-2025"]}
+                "CylType": ['C142','C5'], "ConsumerType": ['PMUY', 'NPMUY'], "Financial_Year": await get_fy_list()}
         return data
     
     
