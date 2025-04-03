@@ -1312,7 +1312,7 @@ async def get_dryout_aging(conditions):
     query = f"""WITH distinct_alerts AS (
                 SELECT DISTINCT ON (sap_id) sap_id, created_at
                 FROM alerts
-                WHERE {conditions} AND progress_rate = '1'
+                WHERE {conditions} AND progress_rate = '1' AND alert_status != 'Close'
                 ORDER BY sap_id, created_at ASC
             )
             SELECT 
