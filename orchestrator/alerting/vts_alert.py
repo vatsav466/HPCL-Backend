@@ -135,6 +135,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             if not status:
                 logger.info(f"Error in finding location {alert_data['location_id']} "
                             f"for bu {alert_data['location_type']} - {location_details}")
+                location_details = {'name': ""}
                 return
             # Processing alert for each record
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)
