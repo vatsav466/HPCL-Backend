@@ -267,6 +267,7 @@ def get_cs_rejections(params):
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
     data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
+    data = data.with_columns(pl.lit(str(params["region"])).alias("region"))
     
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
@@ -338,6 +339,8 @@ def get_gd_rejections(params):
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
     data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
+    data = data.with_columns(pl.lit(str(params["region"])).alias("region"))
+    
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
@@ -407,6 +410,8 @@ def get_pt_rejections(params):
     data = data.with_columns(pl.lit(params["PlantName"]).alias("plant"))
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
     data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
+    data = data.with_columns(pl.lit(str(params["region"])).alias("region"))
+    
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
@@ -430,6 +435,7 @@ if __name__=="__main__":
         params={
         "PlantName": plant["PlantName"],
         "sap_id": plant["erp_id"],
+        "region": plant["SiteRegion"],
         "zone": plant["zone"],
         "host": plant["host_ip"],
         "database": plant["db_database"],

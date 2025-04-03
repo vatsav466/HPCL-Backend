@@ -132,20 +132,32 @@ async def assign_values_to_dataframe(df, values):
         df = df.with_columns(pl.Series("camunda_listener", assigned_values))
         return df
 
-async def get_period_datetime(period: str):
+async def get_period_datetime(period: str, today=None):
     if period == "weekly":
-        today = datetime.datetime.now()
+        if not today:
+            today = datetime.datetime.now()
         start_of_week = today - datetime.timedelta(days=today.weekday())
         end_of_week = start_of_week + datetime.timedelta(days=6)
         start_datetime = datetime.datetime.combine(start_of_week, datetime.datetime.min.time())
         end_datetime = datetime.datetime.combine(end_of_week, datetime.datetime.max.time())
         return start_datetime, end_datetime
     if period == 'monthly':
-        today = datetime.datetime.now()
+        if not today:
+            today = datetime.datetime.now()
         start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_day = calendar.monthrange(today.year, today.month)[1]
         end_of_month = today.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
         return start_of_month, end_of_month
+    if period == 'fortnight':
+        if not today:
+            today = datetime.datetime.now()
+        year, month = today.year, today.month
+        first_half_start = datetime.datetime(year, month, 1, 0, 0, 0)
+        first_half_end = datetime.datetime(year, month, 14, 23, 59, 59)
+        last_day = (datetime.datetime(year, month, 28) + datetime.timedelta(days=4)).replace(day=1) - datetime.timedelta(days=1)
+        second_half_start = datetime.datetime(year, month, 15, 0, 0, 0)
+        second_half_end = datetime.datetime(year, month, last_day.day, 23, 59, 59)
+        return (first_half_start, first_half_end) if today.day <= 14 else (second_half_start, second_half_end)
 
 async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
