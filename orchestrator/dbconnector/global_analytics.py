@@ -5803,9 +5803,9 @@ class GlobalAnalytics:
 
             equipment_categories = [
                 "VFT",
-                "RADAR",
-                "ESD",
-                "HCD",
+                "Radar",
+                "Esd",
+                "Hcd",
                 "Dyke",
                 "Plc",
                 "Tank Leakage",
