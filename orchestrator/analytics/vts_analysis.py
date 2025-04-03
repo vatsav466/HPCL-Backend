@@ -305,6 +305,13 @@ async def get_instance(tt_number: str, get_raw_data=False):
         return "1"
     return "2"
 
+async def is_alert_exists(tl_number: str):
+    query = f"select id from alerts where vehicle_number = '{tl_number}' and alert_status != 'Close' and alert_section = 'VTS'"
+    vts_alert_data = await hpcl_ceg_model.Alerts.get_aggr_data(query, limit=0)
+    if vts_alert_data.get("data", []):
+        return True
+    return False
+
 
 async def get_vts_instance(tt_number: str):
     vts_map = vts_mapping.vts_interlock_mapping
