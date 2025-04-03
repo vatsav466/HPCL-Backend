@@ -3395,21 +3395,21 @@ class GlobalAnalytics:
                 start_year = today.year
             end_year = start_year + 1
             financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
-
-            # Temporory. Need to remove
-            if "financial_year" in card_query.lower().split("where")[-1] and not "month" in card_query.lower().split("where")[-1] and not "financial_year" in drill_state:
-                card_query += f'\'2024-2025\' '
-            else:            
-                if not "," in drill_state:
-                    if "financial_year" in card_query.lower().split("where")[-1] and not "month" in card_query.lower().split("where")[-1]:
-                        card_query += f'\'{financial_year}\' '
-                    if "financial_year" in card_query.lower().split("where")[-1] and "month" in card_query.lower().split("where")[-1]:
-                        card_query += f'\'{current_month}\' '
-                else:
-                    if "financial_year" in drill_state or "month" in drill_state.lower():
-                        financial_year_or_month = drill_state.split(",")[-1].split("=")[-1].replace("'","")
-                        card_query += f'\'{financial_year_or_month}\' '
-            print("card_query ---->", card_query)            
+            print("card_query :", card_query)
+            if not "," in drill_state:
+                if "financial_year" in card_query.lower().split("where")[-1] and not "month" in card_query.lower().split("where")[-1]:
+                    card_query = card_query.format(financial_year=financial_year)
+                elif "financial_year" in card_query.lower().split("where")[-1] and "month" in card_query.lower().split("where")[-1]:
+                    card_query = card_query.format(financial_year=financial_year, current_month=current_month)
+            elif "," in drill_state and "financial_year" in drill_state.lower() and "month" in drill_state.lower():
+                financial_year = drill_state.split(",")[-2].split("=")[-1].replace("'","")
+                current_month = drill_state.split(",")[-1].split("=")[-1].replace("'","")
+                card_query = card_query.format(financial_year=financial_year, current_month=current_month)
+            elif "," in drill_state and "financial_year" in drill_state.lower() and not "month" in drill_state.lower():
+                financial_year = drill_state.split(",")[-1].split("=")[-1].replace("'","")
+                card_query = card_query.format(financial_year=financial_year)
+            print("-"*50)
+            print("card_query ---->", card_query)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             card_query =  await widget_actions.WidgetActions.apply_filter_drilldown(card_query, access_filters, drill_state)

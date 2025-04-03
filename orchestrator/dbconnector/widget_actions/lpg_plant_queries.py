@@ -1,14 +1,14 @@
 import utilities.helpers as helpers
 from datetime import datetime
 
-today = datetime.now()
-current_month = datetime.now().strftime("%B") # format : January, February
-if today.month < 4:
-    start_year = today.year - 1
-else:
-    start_year = today.year
-end_year = start_year + 1
-financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
+# today = datetime.now()
+# current_month = datetime.now().strftime("%B") # format : January, February
+# if today.month < 4:
+#     start_year = today.year - 1
+# else:
+#     start_year = today.year
+# end_year = start_year + 1
+# financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
 
 
 timezone_format = 'YYYY-MM-DD HH24:MI:SS.US'
@@ -1327,41 +1327,20 @@ ORDER BY
                         "lpg_gd_rejections"
                 ''',
                     
-    # 'cdcms_current_year_sales':f''' SELECT 
-    #                                     ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
-    #                                 FROM 
-    #                                     "lpg_monthly_cdcms_sales_summary"
-    #                                 WHERE 
-    #                                     "Financial_Year"='{financial_year}' AND "ZOName" IS NOT NULL ''',
-    
-    # 'cdcms_current_month_sales':f'''select
-    #                                     ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
-    #                                 from
-    #                                     "lpg_monthly_cdcms_sales_summary"
-    #                                 where
-    #                                     "Financial_Year"='{financial_year}' AND "Month"='{current_month}' AND "ZOName" IS NOT NULL ''',
-                                        
     'cdcms_current_year_sales':f''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     FROM 
                                         "lpg_monthly_cdcms_sales_summary"
                                     WHERE 
-                                        "ZOName" IS NOT NULL AND "Financial_Year"= ''',
-    
-    # 'cdcms_current_month_sales':f'''select
-    #                                     ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
-    #                                 from
-    #                                     "lpg_monthly_cdcms_sales_summary"
-    #                                 where
-    #                                     "ZOName" IS NOT NULL AND "Financial_Year"='{financial_year}' AND "Month"= ''',
+                                        "Financial_Year"='{financial_year}' AND "ZOName" IS NOT NULL ''',
     
     'cdcms_current_month_sales':f'''select
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     from
                                         "lpg_monthly_cdcms_sales_summary"
                                     where
-                                        "ZOName" IS NOT NULL AND "Financial_Year"='2024-2025' AND "Month"= ''',
-    
+                                        "Financial_Year"='{financial_year}' AND "Month"='{current_month}' AND "ZOName" IS NOT NULL ''',
+                                                
     'cdcms_current_week_sales': f''' SELECT 
                                         ROUND(CAST(SUM("sales_volume") / 1000000 AS NUMERIC), 2) AS "total_sales"
                                     FROM
