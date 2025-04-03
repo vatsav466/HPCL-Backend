@@ -10,6 +10,8 @@ from datetime import datetime
 # end_year = start_year + 1
 # financial_year = f"{start_year}-{end_year}" # Format : 2024-2025
 
+financial_year = 'financial_year'
+current_month = 'current_month'
 
 timezone_format = 'YYYY-MM-DD HH24:MI:SS.US'
 lpg_plant_query = {
