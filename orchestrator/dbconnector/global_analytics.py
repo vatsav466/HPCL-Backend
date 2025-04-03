@@ -5820,9 +5820,9 @@ class GlobalAnalytics:
             # Map interlock names to equipment categories based on your list
             category_to_interlocks = {
                 "VFT": ["HHH alarm from VFT", "Proof Test_VFT_Sucess"],
-                "RADAR": ["HHH alarm from Secondary Radar guage", "Proof Test_Secondary Radar Guage_Success"],
-                "ESD": ["Plant ESD activated"],
-                "HCD": ["HCD_20% LEL activated", "HCD_40% LEL activated"],
+                "Radar": ["HHH alarm from Secondary Radar guage", "Proof Test_Secondary Radar Guage_Success"],
+                "Esd": ["Plant ESD activated"],
+                "Hcd": ["HCD_20% LEL activated", "HCD_40% LEL activated"],
                 "Dyke": ["Dykevalve_Activated"],
                 "Plc": ["SafetyPLC_Communication fail", "ProcessPLC_Communication fail"],
                 "Tank Leakage": ["Tank leakage alarm"],
