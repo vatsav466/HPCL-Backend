@@ -96,12 +96,6 @@ class VAAlertManager(alert_factory.AlertFactory):
                     # This is because we store the alert_id in Redis with a 3-hour expiration time.
                     # If the same alert_type is received from the same device_id within the expiration period,
                     # it will be considered a duplicate, and processing will be skipped.
-
-                    # comment below line as alerts are not duplicated its old alert
-                    if await redis_ins.exists(alert_id):
-                        logger.info("Alert already exists")
-                        continue
-
                     # Retrieving Interlock_mapping details like sop_id, interlock_name for the alert_type 
                     # based on location_type and interlock_name.
                     interlock_details = utilities.interlock_mapping.get_interlock_name(
