@@ -101,7 +101,7 @@ class Postgresql:
         # Create alert if manual percentage exceeds 5%
         if manual_percentage > 5:
             print("manual_percentage --> ", manual_percentage)
-            return True, "Manual FAN printed more than 5% of total", f"Manual percentage: {manual_percentage:.2f}% exceeds threshold of 5%"
+            return True, "Manual FAN printed more than 5% of total TT loaded", f"Manual percentage: {manual_percentage:.2f}% exceeds threshold of 5%"
         else:
             return False, "No alert needed", f"Manual percentage: {manual_percentage:.2f}% is within threshold of 5%"
 
