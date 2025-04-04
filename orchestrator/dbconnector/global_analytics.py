@@ -7158,7 +7158,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
                         break
             
-            base_query = """WITH cancelled_tts AS (
+            query = """WITH cancelled_tts AS (
                 SELECT 
                     DATE(created_at) AS created_date,
                     zone,
