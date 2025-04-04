@@ -7958,7 +7958,7 @@ class GlobalAnalytics:
 
                 group_cols = ["month_year", "zone", "sap_id", "location_name", "sort_key", "manual_fan_percentage"]
                 grouped_df = resp_df.group_by(group_cols).agg(
-                    pl.sum("alert_count").alias("total_alerts")
+                    pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_manual_fan_count").alias("total_manual_fan_count"),
                     pl.sum("total_count").alias("total_count")
                 )
