@@ -3,6 +3,7 @@ import os
 import ast
 import json
 import jinja2
+import decimal
 import asyncio
 import datetime
 import hpcl_ceg_model
@@ -26,6 +27,22 @@ ytpm = {"key": "\"YTDPM\"", "cond": "equals", "value": "true"}
 cumulative = {"key": "\"C\"", "cond": "equals", "value": "true"}
 
 
+def round_off(value, input_type='growth'):
+    """Round off functionality with rules"""
+    # For growth it should be one decimal point
+    # For value if > 10 no decimal, < 10 one decimal and < 1 two decimals if round to one was 0
+    if (isinstance(value, decimal.Decimal) or isinstance(value, float) or isinstance(value, int) or
+            (isinstance(value, str) and value.isdigit())):
+        if input_type == 'growth':
+            return round(float(value), 1)
+        if float(value) > 10:
+            return round(float(value))
+        elif 1 > float(value) > 0:
+            return round(float(value), 2) if round(float(value), 1) == 0 else round(float(value), 1)
+        return round(float(value), 1)
+    return value
+
+
 def get_growth_percentage(current, hist):
     """
     Function to calculate growth percentage
@@ -34,13 +51,13 @@ def get_growth_percentage(current, hist):
     :return:
     """
     if current and hist:
-        return round(((current - hist) / hist) * 100, 1)
+        return round_off(((current - hist) / hist) * 100)
     elif current and not hist:
-        return 100
+        return round_off(100)
     elif not current and hist:
-        return -100
+        return round_off(-100)
     else:
-        return 0
+        return round_off(0)
 
 
 def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
@@ -56,7 +73,7 @@ def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
             if target_value == 0:
                 percentage_achieved[key] = 'N/A'  # Avoid division by zero
             else:
-                percentage_achieved[key] = (actual_value / target_value) * 100
+                percentage_achieved[key] = round(float((actual_value / target_value) * 100), 1)
         sorted_zones = sorted(percentage_achieved.items(), key=lambda x: x[1], reverse=True)
 
         return sorted_zones
@@ -88,7 +105,7 @@ def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
             if target_value == 0:
                 percentage_achieved[zone] = 'N/A'  # Avoid division by zero
             else:
-                percentage_achieved[zone] = round(float((actual_value / target_value) * 100), 2)
+                percentage_achieved[zone] = round(float((actual_value / target_value) * 100), 1)
         sorted_zones = sorted(percentage_achieved.items(), key=lambda x: x[1], reverse=True)
         sbu_level_data[sbu] = sorted_zones
     return sbu_level_data
@@ -143,9 +160,9 @@ async def fetch_sales_data():
     filters = {"filters": [actual, history, cumulative, ytd, target], "cross_filters": [],
                "drill_state": "", "time_grain": ""}
     resp = await m60_performance.m60_performance(**filters)
-    sales_data['current_sales'] = round(float(resp['data']['data']['ACTUAL_TMT_SALES'][0]), 1)
-    sales_data['history_sales'] = round(float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0]), 1)
-    sales_data['pro_rate_sales_target'] = round(float(resp['data']['data']['TARGET_TMT_SALES'][0]), 1)
+    sales_data['current_sales'] = round_off(resp['data']['data']['ACTUAL_TMT_SALES'][0], "")
+    sales_data['history_sales'] = round_off(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0], "")
+    sales_data['pro_rate_sales_target'] = round_off(resp['data']['data']['TARGET_TMT_SALES'][0], "")
 
     # Filter for yesterday's data
     yesterday_date = helpers.get_time_stamp_by_delta(datetime.datetime.now(datetime.timezone.utc), days=1,
@@ -158,19 +175,19 @@ async def fetch_sales_data():
     # sales_data['performing_zone'] = f"{sbu_level_zones[0][0]} ({round(sbu_level_zones[0][1], 1)})"
     # sales_data['least_performing_zone'] = f"{sbu_level_zones[-1][0]} ({round(sbu_level_zones[-1][1], 1)})"
 
-    for sbu, details in sbu_level_zones.items():
-        sales_data[f'top_performing_{sbu}_zones'] = [f"{details[0][0]}({details[0][1]}%)",
-                                                     f"{details[1][0]}({details[1][1]}%)"]
-        sales_data[f'bottom_performing_{sbu}_zones'] = [f"{details[-1][0]}({details[-1][1]}%)",
-                                                        f"{details[-2][0]}({details[-2][1]}%)"]
-    for sbu, details in sbu_level_regions.items():
-        if len(details) > 3:
-            sales_data[f'top_performing_{sbu}_regions'] = [f"{details[0][0]}({details[0][1]}%)",
-                                                           f"{details[1][0]}({details[1][1]}%)",
-                                                           f"{details[2][0]}({details[2][1]}%)"]
-            sales_data[f'bottom_performing_{sbu}_regions'] = [f"{details[-1][0]}({details[-1][1]}%)",
-                                                              f"{details[-2][0]}({details[-2][1]}%)",
-                                                              f"{details[-3][0]}({details[-3][1]}%)"]
+    for sbu, dat in sbu_level_zones.items():
+        sales_data[f'top_performing_{sbu}_zones'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
+                                                     f"{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)"]
+        sales_data[f'bottom_performing_{sbu}_zones'] = [f"{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)",
+                                                        f"{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)"]
+    for sbu, dat in sbu_level_regions.items():
+        if len(dat) > 3:
+            sales_data[f'top_performing_{sbu}_regions'] = [f"{round_off(dat[0][0], "")} ({round_off(dat[0][1])}%)",
+                                                           f"{round_off(dat[1][0], "")} ({round_off(dat[1][1])}%)",
+                                                           f"{round_off(dat[2][0], "")} ({round_off(dat[2][1])}%)"]
+            sales_data[f'bottom_performing_{sbu}_regions'] = [f"{round_off(dat[-1][0], "")} ({round_off(dat[-1][1])}%)",
+                                                              f"{round_off(dat[-2][0], "")} ({round_off(dat[-2][1])}%)",
+                                                              f"{round_off(dat[-3][0], "")} ({round_off(dat[-3][1])}%)"]
 
     filters = {"filters": [actual, history, cumulative,
                            {"key": "\"DATE\"", "cond": "equals", "value": f"{yesterday_date},{yesterday_date}"}],
@@ -206,8 +223,8 @@ async def fetch_sales_data():
         print(resp)
         current = float(resp['data']['data']['ACTUAL_TMT_SALES'][0])
         hist = float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0])
-        sbu_sales_data['yesterday_current'] = round(current, 1)
-        sbu_sales_data['yesterday_historical'] = round(hist, 1)
+        sbu_sales_data['yesterday_current'] = round_off(current, "")
+        sbu_sales_data['yesterday_historical'] = round_off(hist, "")
         sbu_sales_data['yesterday_growth'] = get_growth_percentage(current, hist)
 
         # For current month data
@@ -220,10 +237,10 @@ async def fetch_sales_data():
         resp = await m60_performance.m60_performance(**filters)
         present_month_act = float(resp['data']['data']['ACTUAL_TMT_SALES'][0])
         present_month_hist = float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0])
-        sbu_sales_data['present_month_historical'] = round(present_month_hist, 1)
-        sbu_sales_data['present_month_current'] = round(present_month_act, 1)
+        sbu_sales_data['present_month_historical'] = round_off(present_month_hist, "")
+        sbu_sales_data['present_month_current'] = round_off(present_month_act, "")
         sbu_sales_data['present_month_growth'] = get_growth_percentage(present_month_act, present_month_hist)
-        sbu_sales_data['ytpm_historical'] = sbu_sales_data['ytpm_current'] = sbu_sales_data['ytpm_growth'] = 0
+        sbu_sales_data['ytpm_historical'] = sbu_sales_data['ytpm_current'] = sbu_sales_data['ytpm_growth'] = 'NA'
         # For ytpm data
         if present_month != 4:
             filters = {"filters": [actual, history, ytpm, cumulative], "cross_filters": [], "drill_state": ""}
@@ -232,8 +249,8 @@ async def fetch_sales_data():
             resp = await m60_performance.m60_performance(**filters)
             ytpm_act = float(resp['data']['data']['ACTUAL_TMT_SALES'][0])
             ytpm_hist = float(resp['data']['data']['ACTUAL_HISTORY_TMT_SALES'][0])
-            sbu_sales_data['ytpm_historical'] = round(ytpm_hist, 1)
-            sbu_sales_data['ytpm_current'] = round(ytpm_act, 1)
+            sbu_sales_data['ytpm_historical'] = round_off(ytpm_hist, "")
+            sbu_sales_data['ytpm_current'] = round_off(ytpm_act, "")
             sbu_sales_data['ytpm_growth'] = get_growth_percentage(ytpm_act, ytpm_hist)
         if sbu_name:
             final_data[f"sales_data_{map_key}"] = sbu_sales_data
@@ -349,15 +366,11 @@ async def get_tas_alerts():
 
 
 async def get_alert_data(alert_section):
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-    Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-    query = f""" SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
-    alert_section='{alert_section}' and created_at>='{today}' GROUP BY bu, alert_section, severity; """
-    alerts = await function(query=query)
+    query = f"""SELECT count(alert_section), bu, alert_section, severity FROM alerts where alert_status='Open' and 
+    alert_section='{alert_section}' GROUP BY bu, alert_section, severity"""
+    alerts = await hpcl_ceg_model.Alerts.get_aggr_data(query)
     data = {}
-    for alert in alerts:
+    for alert in alerts['data']:
         if alert["severity"] == "Critical":
             data.update({f"{alert_section.lower()}_critical_{alert['bu'].lower()}": alert["count"]})
         if alert["severity"] == "High":
@@ -413,7 +426,7 @@ async def send_notification(notification_data):
     await ins.publish_message(
         subject="Novex Daily Report",
         recipients=["sanjayk@hpcl.in", "ajay.samudra@hpcl.in", "cvmallinath@hpcl.in", "debeshp@hpcl.in",
-                    "purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in", "rujutadoiphode@hpcl.in"],
+                    "purushm@hpcl.in", "sachinkwarghane@hpcl.in", "dinesh.kumar@hpcl.in"],
         html_content=True,
         body=final_data,
         force_send=True

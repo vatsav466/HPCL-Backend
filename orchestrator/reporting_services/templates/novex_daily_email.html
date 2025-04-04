@@ -103,7 +103,7 @@
             <td>YTPM</td>
             <td>{{sales_data['ytpm_current']}}</td>
             <td>{{sales_data['ytpm_historical']}}</td>
-            <td class="growth">{{sales_data['ytpm_growth']}}%</td>
+            <td class="growth">{{sales_data['ytpm_growth']}}{% if sales_data['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
 
@@ -140,14 +140,14 @@
             <td>{{dry_out['indent_raised']}}</td>
         </tr>
     </tbody></table>
-    <h5>3.1. Indent Not Raised Details By Sales(MS/HSD/E20):</h5>
+    <h5>3.1. Indent Not Raised - Details By Sales (MS/HSD/E20):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
             <th>Nozzle Sales Not Started</th>
             <th>Closed Outlets</th>
-            <th>Low Volume(>50KLPM)</th>
-            <th>Low Volume(<50KLPM)</th>
+            <th>Volume (> 50KLPM)</th>
+            <th>Low Volume (< 50KLPM)</th>
         </tr>
         <tr>
             <td>{{dry_out['indent_not_raised']}}</td>
@@ -157,14 +157,14 @@
             <td>{{dry_out_details['Low Volume(<50KLPM)']}}</td>
         </tr>
     </tbody></table>
-    <h5>3.2. Indent Not Raised Details By Dryout Days(MS/HSD/E20):</h5>
+    <h5>3.2. Indent Not Raised - Details By Dryout Days (MS/HSD/E20):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
             <th><2 Days</th>
             <th>3 to 7 Days</th>
             <th>8 to 15 Days</th>
-            <th>>15 Days/th>
+            <th>>15 Days</th>
         </tr>
         <tr>
             <td>{{dry_out['indent_not_raised']}}</td>
@@ -174,14 +174,14 @@
             <td>{{dry_out_details['> 15 Days']}}</td>
         </tr>
     </tbody></table>
-    <h5>3.3. TAR Analysis(MS/HSD/E20):</h5>
+    <h5>3.3. Indent Not Raised - TAR Analysis (MS/HSD/E20):</h5>
     <table>
         <tbody><tr>
             <th>Indent not raised</th>
-            <th><25 Rs Lakhs</th>
+            <th>< 25 Rs Lakhs</th>
             <th>25 to 50 Rs lakhs</th>
             <th>50 to 75 Rs Lakhs</th>
-            <th>>1 Rs Cr</th>
+            <th>> 1 Rs Cr</th>
         </tr>
         <tr>
             <td>{{dry_out['indent_not_raised']}}</td>
@@ -220,7 +220,7 @@
             <td>YTPM</td>
             <td>{{sales_data_retail['ytpm_current']}}</td>
             <td>{{sales_data_retail['ytpm_historical']}}</td>
-            <td class="growth">{{sales_data_retail['ytpm_growth']}}%</td>
+            <td class="growth">{{sales_data_retail['ytpm_growth']}}{% if sales_data_retail['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
     <table>
@@ -249,7 +249,7 @@
             <td>YTPM</td>
             <td>{{sales_data_lpg['ytpm_current']}}</td>
             <td>{{sales_data_lpg['ytpm_historical']}}</td>
-            <td class="growth">{{sales_data_lpg['ytpm_growth']}}%</td>
+            <td class="growth">{{sales_data_lpg['ytpm_growth']}}{% if sales_data_lpg['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
     <table>
@@ -278,7 +278,7 @@
             <td>YTPM</td>
             <td>{{sales_data_lpg['ytpm_current']}}</td>
             <td>{{sales_data_lpg['ytpm_historical']}}</td>
-            <td class="growth">{{sales_data_lpg['ytpm_growth']}}%</td>
+            <td class="growth">{{sales_data_lpg['ytpm_growth']}}{% if sales_data_lpg['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
     <table>
@@ -308,7 +308,7 @@
             <td>YTPM</td>
             <td>{{sales_data_lubes['ytpm_current']}}</td>
             <td>{{sales_data_lubes['ytpm_historical']}}</td>
-            <td class="growth">{{sales_data_lubes['ytpm_growth']}}%</td>
+            <td class="growth">{{sales_data_lubes['ytpm_growth']}}{% if sales_data_lubes['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
     <table>
@@ -337,7 +337,7 @@
             <td>YTPM</td>
             <td>{{sales_data_aviation['ytpm_current']}}</td>
             <td>{{sales_data_aviation['ytpm_historical']}}</td>
-            <td class="growth">{{sales_data_aviation['ytpm_growth']}}%</td>
+            <td class="growth">{{sales_data_aviation['ytpm_growth']}}{% if sales_data_aviation['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
     <table>
@@ -366,7 +366,7 @@
             <td>YTPM</td>
             <td>{{sales_data_petchem['ytpm_current']}}</td>
             <td>{{sales_data_petchem['ytpm_historical']}}</td>
-            <td class="growth">{{sales_data_petchem['ytpm_growth']}}%</td>
+            <td class="growth">{{sales_data_petchem['ytpm_growth']}}{% if sales_data_petchem['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
     <table>
@@ -395,23 +395,23 @@
             <td>YTPM</td>
             <td>{{sales_data_gas['ytpm_current']}}</td>
             <td>{{sales_data_gas['ytpm_historical']}}</td>
-            <td class="growth">{{sales_data_gas['ytpm_growth']}}%</td>
+            <td class="growth">{{sales_data_gas['ytpm_growth']}}{% if sales_data_gas['ytpm_growth'] != 'NA' %}%{% endif %}</td>
         </tr>
     </tbody></table>
     </div>
 
     <h4>5. Zone-wise Performance</h4>
-    <p>Retail Zones show mixed performance: {{sales_data['Retail_growing_zones']}} zones growing,while {{sales_data['Retail_declining_zones']}} zones are declining.</p>
-    <p>LPG Zones show mixed performance: {{sales_data['LPG_growing_zones']}} zones growing,while {{sales_data['LPG_declining_zones']}} zones are declining.</p>
-    <p>Lubes Zones show mixed performance: {{sales_data['Lubes_growing_zones']}} zones growing,while {{sales_data['Lubes_declining_zones']}} zones are declining.</p>
+    <p>Retail Zones show mixed performance: {{sales_data['Retail_growing_zones']}} Zones growing, while {{sales_data['Retail_declining_zones']}} Zones are declining.</p>
+    <p>LPG Zones show mixed performance: {{sales_data['LPG_growing_zones']}} Zones growing, while {{sales_data['LPG_declining_zones']}} Zones are declining.</p>
+<!--    <p>Lubes Zones show mixed performance: {{sales_data['Lubes_growing_zones']}} Zones growing,while {{sales_data['Lubes_declining_zones']}} Zones are declining.</p>-->
 
     <h4>6. Top Performing Zones and Regions (Growth %)</h4>
     <table>
         <tbody>
         <tr>
             <th>SBU</th>
-            <th>Zones(Top 2)</th>
-            <th>Regions(Top 3)</th>
+            <th>Zones (Top 2)</th>
+            <th>Regions (Top 3)</th>
         </tr>
         <tr>
             <td>Retail</td>
@@ -425,7 +425,7 @@
         </tr>
         <tr>
             <td>Lubes</td>
-            <td>{{sales_data['top_performing_Lubes_zones'][0:2]|join("<br>")}}</td>
+            <td>-</td>
             <td>{{sales_data['top_performing_Lubes_regions'][0:3]|join("<br>")}}</td>
         </tr>
         <tr>
@@ -435,13 +435,13 @@
         </tr>
         <tbody></table>
 
-    <h4>7. Bottom Performing Zone and Regions (Growth %)</h4>
+    <h4>7. Bottom Performing Zones and Regions (Growth %)</h4>
     <table>
         <tbody>
         <tr>
             <th>SBU</th>
-            <th>Zones(Bottom 2)</th>
-            <th>Regions(Bottom 3)</th>
+            <th>Zones (Bottom 2)</th>
+            <th>Regions (Bottom 3)</th>
         </tr>
         <tr>
             <td>Retail</td>
@@ -455,7 +455,7 @@
         </tr>
         <tr>
             <td>Lubes</td>
-            <td>{{sales_data['bottom_performing_Lubes_zones'][0:2]|join("<br>")}}</td>
+            <td>-</td>
             <td>{{sales_data['bottom_performing_Lubes_regions'][0:3]|join("<br>")}}</td>
         </tr>
         <tr>
