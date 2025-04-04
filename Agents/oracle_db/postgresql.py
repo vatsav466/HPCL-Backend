@@ -594,11 +594,11 @@ class Postgresql:
         if total_fan_count > 0:  # Avoid division by zero
             manual_percentage = (manual_fan_count / total_fan_count) * 100
         else:
-            return True, "Alert: Division by zero", "Total count is zero but manual count exists"
+            return False, "Division by zero", "Total count is zero but manual count exists"
         
         # Create alert if manual percentage exceeds 5%
         if manual_percentage > 5:
-            return True, "Alert: Manual FAN printed more than 5% of total", f"Manual percentage: {manual_percentage:.2f}% exceeds threshold of 5%"
+            return True, "Manual FAN printed more than 5% of total", f"Manual percentage: {manual_percentage:.2f}% exceeds threshold of 5%"
         else:
             return False, "No alert needed", f"Manual percentage: {manual_percentage:.2f}% is within threshold of 5%"
 
@@ -782,48 +782,50 @@ class Postgresql:
                 """
                 latest_record_resp = await urdhva_base.BasePostgresModel.get_aggr_data(check_query)
                 
-                # Step 3: Process the current data
-                filtered_data = []  # Use a different variable name here
+                # Get the latest manual count from DB (if exists)
+                latest_db_count = None
+                if latest_record_resp.get("data") and latest_record_resp.get("data")[0]:
+                    latest_db_count = latest_record_resp.get("data")[0].get("manual_fan_count")
                 
-                for record in sap_id_data:  # Use the original sap_id_data here
+                # Step 3: Process the current data
+                filtered_data = []
+                latest_processed_count = None
+                
+                # First, process non-zero records with count changes
+                for record in sap_id_data:
                     current_manual_count = record.get('manual_fan_count', 0)
                     
-                    # Determine if we should insert this record
-                    insert_record = False
-                    
-                    # Case 1: Record has non-zero manual count
+                    # Case 1: Record has non-zero manual count that differs from latest DB record
                     if current_manual_count > 0:
-                        # Check if manual count changed from the last record
-                        if not latest_record_resp.get("data") or current_manual_count != latest_record_resp.get("data")[0].get("manual_fan_count"):
-                            insert_record = True
+                        if current_manual_count != latest_db_count and current_manual_count != latest_processed_count:
+                            filtered_data.append(record)
+                            latest_processed_count = current_manual_count
+                
+                # Then handle EOD case only if needed
+                if is_eod and not filtered_data:  # No records inserted yet
+                    # Check if we have any non-zero records for today in DB
+                    zero_check_query = f"""SELECT COUNT(*) 
+                        FROM "{table_db_name}" 
+                        WHERE date::DATE = '{current_date}' 
+                        AND sap_id = '{sap_id}' 
+                        AND manual_fan_count > 0
+                    """
+                    zero_check_resp = await urdhva_base.BasePostgresModel.get_aggr_data(zero_check_query)
                     
-                    # Case 2: EOD record with zero manual count (only if no non-zero records exist for the day)
-                    elif is_eod:
-                        # Check if we have any non-zero records for today
-                        zero_check_query = f"""SELECT COUNT(*) 
-                            FROM "{table_db_name}" 
-                            WHERE date::DATE = '{current_date}' 
-                            AND sap_id = '{sap_id}' 
-                            AND manual_fan_count > 0
-                        """
-                        zero_check_resp = await urdhva_base.BasePostgresModel.get_aggr_data(zero_check_query)
-                        
-                        if zero_check_resp.get("data") and zero_check_resp.get("data")[0].get("count", 0) == 0:
-                            # No non-zero records for today, insert the last zero record
-                            # Find the latest zero record from original data
-                            zero_records = [x for x in sap_id_data if x.get('manual_fan_count', 0) == 0]
-                            if zero_records:
-                                # Sort by date_time and get the latest
-                                zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
-                                insert_record = True
-                                record = zero_records[0]  # Use the latest zero record
+                    record_count = 0
+                    if zero_check_resp.get("data") and len(zero_check_resp.get("data")) > 0:
+                        record_count = int(zero_check_resp.get("data")[0].get("count", 0))
                     
-                    if insert_record:
-                        filtered_data.append(record)
+                    # If no non-zero records exist for today, insert the latest zero record
+                    # But only if the latest DB record isn't already zero
+                    if record_count == 0 and latest_db_count != 0:
+                        zero_records = [x for x in sap_id_data if x.get('manual_fan_count', 0) == 0]
+                        if zero_records:
+                            zero_records.sort(key=lambda x: x.get('date_time', ''), reverse=True)
+                            filtered_data.append(zero_records[0])
                 
                 # After processing, update processed_data with our filtered results
                 processed_data = filtered_data
-
             # if table_db_name == 'host_manual_fan_printed':
             #     # Step 1: Check the current time
             #     current_time = urdhva_base.utilities.get_present_time()
