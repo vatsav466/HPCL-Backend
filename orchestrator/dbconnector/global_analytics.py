@@ -7964,7 +7964,7 @@ class GlobalAnalytics:
                 )
                 grouped_df = grouped_df.sort("sort_key", descending=False)
                 result = {}
-                for row in grouped.iter_rows(named=True):
+                for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
                     entry = {
                         "zone": row["zone"],
