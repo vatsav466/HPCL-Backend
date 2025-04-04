@@ -6621,7 +6621,7 @@ class GlobalAnalytics:
                         date_filter_applied = True
                         break
             
-            base_query = """WITH unauthorized AS (
+            query = """WITH unauthorized AS (
                 SELECT 
                     DATE(created_at) AS created_date,
                     zone,
@@ -6646,7 +6646,7 @@ class GlobalAnalytics:
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
-            query = base_query + """
+            query += f"""
                                     GROUP BY 
                                         DATE(created_at), zone, location_name, sap_id, bcu_number
                                 )
@@ -6938,31 +6938,31 @@ class GlobalAnalytics:
         #     print("date --> ", date)
             
         #     # Check if zone or plant filters are present
-        #     zone_filter = ''
-        #     plant_filter = ''
-        #     load_number = ''
-        #     if filters:
-        #         for filter in filters:
-        #             if "zone" in filter.key:
-        #                 zone_filter = filter.value
-        #             if "plant" in filter.key:
-        #                 plant_filter = filter.value
-        #             if "load_number" in filter.key:
-        #                 load_number = filter.value
+            # zone_filter = ''
+            # plant_filter = ''
+            # load_number = ''
+            # if filters:
+            #     for filter in filters:
+            #         if "zone" in filter.key:
+            #             zone_filter = filter.value
+            #         if "plant" in filter.key:
+            #             plant_filter = filter.value
+            #         if "load_number" in filter.key:
+            #             load_number = filter.value
             
-        #     # Initialize date filter variables
-        #     date_filter_applied = False
-        #     start_date = None
-        #     end_date = None
+            # # Initialize date filter variables
+            # date_filter_applied = False
+            # start_date = None
+            # end_date = None
             
-        #     # Process cross filters for date
-        #     if cross_filters:
-        #         for filter in cross_filters:
-        #             if "DATE" in filter.key:
-        #                 date_parts = filter.value.split(',')
-        #                 start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-        #                 end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-        #                 date_filter_applied = True
+            # # Process cross filters for date
+            # if cross_filters:
+            #     for filter in cross_filters:
+            #         if "DATE" in filter.key:
+            #             date_parts = filter.value.split(',')
+            #             start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+            #             end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+            #             date_filter_applied = True
             
         #     # Construct base SQL Query with WHERE clause
         #     query = """WITH cancelled_tts AS (SELECT 
@@ -6978,17 +6978,17 @@ class GlobalAnalytics:
         #             WHERE 1=1
         #     """
             
-        #     # Add zone filter if present
-        #     if zone_filter:
-        #         query += f" AND zone IN ('{zone_filter}')"
+            # # Add zone filter if present
+            # if zone_filter:
+            #     query += f" AND zone IN ('{zone_filter}')"
             
-        #     # Add plant/location filter if present
-        #     if plant_filter:
-        #         query += f" AND sap_id IN ('{plant_filter}')"
+            # # Add plant/location filter if present
+            # if plant_filter:
+            #     query += f" AND sap_id IN ('{plant_filter}')"
             
-        #     # Add date filter directly to SQL if applied
-        #     if date_filter_applied and start_date and end_date:
-        #         query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+            # # Add date filter directly to SQL if applied
+            # if date_filter_applied and start_date and end_date:
+            #     query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
         #     # Complete the query with proper GROUP BY
         #     query += """
@@ -7131,40 +7131,32 @@ class GlobalAnalytics:
             # Check date flag once
             date = "date" in drill_state
             # Extract filter values efficiently in a single pass
-            filter_values = {
-                "zone": None,
-                "plant": None,
-                "load_number": None
-            }
-            
+            zone_filter = ''
+            plant_filter = ''
+            load_number = ''
             if filters:
                 for filter in filters:
-                    key = filter.key.lower()
-                    if "zone" in key:
-                        filter_values["zone"] = filter.value
-                    elif "plant" in key:
-                        filter_values["plant"] = filter.value
-                    elif "load_number" in key:
-                        filter_values["load_number"] = filter.value
+                    if "zone" in filter.key:
+                        zone_filter = filter.value
+                    if "plant" in filter.key:
+                        plant_filter = filter.value
+                    if "load_number" in filter.key:
+                        load_number = filter.value
             
-            # Process date filter once
-            date_filter = {
-                "applied": False,
-                "start_date": None,
-                "end_date": None
-            }
+            # Initialize date filter variables
+            date_filter_applied = False
+            start_date = None
+            end_date = None
             
+            # Process cross filters for date
             if cross_filters:
                 for filter in cross_filters:
                     if "DATE" in filter.key:
                         date_parts = filter.value.split(',')
-                        date_filter["start_date"] = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-                        date_filter["end_date"] = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-                        date_filter["applied"] = True
-                        break  # Exit once date filter is found
-            
-            # Build query with parameters
-            query_params = []
+                        start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                        end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                        date_filter_applied = True
+                        break
             
             base_query = """WITH cancelled_tts AS (
                 SELECT 
@@ -7180,22 +7172,20 @@ class GlobalAnalytics:
                 WHERE 1=1
             """
             
-            # Add filters with parameterized queries
-            if filter_values["zone"]:
-                base_query += " AND zone = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["zone"])
+            # Add zone filter if present
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
             
-            if filter_values["plant"]:
-                base_query += " AND sap_id = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["plant"])
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND sap_id IN ('{plant_filter}')"
             
-            if date_filter["applied"]:
-                base_query += " AND DATE(created_at) BETWEEN $%s AND $%s" % (len(query_params) + 1, len(query_params) + 2)
-                query_params.append(date_filter["start_date"].strftime('%Y-%m-%d'))
-                query_params.append(date_filter["end_date"].strftime('%Y-%m-%d'))
+            # Add date filter directly to SQL if applied
+            if date_filter_applied and start_date and end_date:
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the query with JOIN instead of subquery for better performance
-            query = base_query + """
+            query += f"""
                             GROUP BY 
                                 DATE(created_at), zone, location_name, sap_id, truck_number, load_number
                         )
@@ -7238,8 +7228,8 @@ class GlobalAnalytics:
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
             
             # Apply load_number filter if needed
-            if filter_values["load_number"]:
-                resp_df = resp_df.filter(pl.col("load_number") == filter_values["load_number"])
+            if load_number:
+                resp_df = resp_df.filter(pl.col("load_number") == load_number)
             
             # Apply default date filter if needed
             if not date:
@@ -7347,32 +7337,32 @@ class GlobalAnalytics:
         #         date = True
         #     print("date --> ", date)
             
-        #     # Check if zone or plant filters are present
-        #     zone_filter = ''
-        #     plant_filter = ''
-        #     bcu_number = ''
-        #     if filters:
-        #         for filter in filters:
-        #             if "zone" in filter.key:
-        #                 zone_filter = filter.value
-        #             if "plant" in filter.key:
-        #                 plant_filter = filter.value
-        #             if "bcu_number" in filter.key:
-        #                 bcu_number = filter.value
+            # # Check if zone or plant filters are present
+            # zone_filter = ''
+            # plant_filter = ''
+            # bcu_number = ''
+            # if filters:
+            #     for filter in filters:
+            #         if "zone" in filter.key:
+            #             zone_filter = filter.value
+            #         if "plant" in filter.key:
+            #             plant_filter = filter.value
+            #         if "bcu_number" in filter.key:
+            #             bcu_number = filter.value
             
-        #     # Initialize date filter variables
-        #     date_filter_applied = False
-        #     start_date = None
-        #     end_date = None
+            # # Initialize date filter variables
+            # date_filter_applied = False
+            # start_date = None
+            # end_date = None
             
-        #     # Process cross filters for date
-        #     if cross_filters:
-        #         for filter in cross_filters:
-        #             if "DATE" in filter.key:
-        #                 date_parts = filter.value.split(',')
-        #                 start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-        #                 end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-        #                 date_filter_applied = True
+            # # Process cross filters for date
+            # if cross_filters:
+            #     for filter in cross_filters:
+            #         if "DATE" in filter.key:
+            #             date_parts = filter.value.split(',')
+            #             start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+            #             end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+            #             date_filter_applied = True
             
         #     # Construct base SQL Query with CTE for better performance
         #     query = """WITH k_factor_data AS (SELECT 
@@ -7387,16 +7377,16 @@ class GlobalAnalytics:
         #     """
             
         #     # Add zone filter if present
-        #     if zone_filter:
-        #         query += f" AND zone IN ('{zone_filter}')"
+            # if zone_filter:
+            #     query += f" AND zone IN ('{zone_filter}')"
             
-        #     # Add plant/location filter if present
-        #     if plant_filter:
-        #         query += f" AND sap_id IN ('{plant_filter}')"
+            # # Add plant/location filter if present
+            # if plant_filter:
+            #     query += f" AND sap_id IN ('{plant_filter}')"
             
-        #     # Add date filter directly to SQL if applied
-        #     if date_filter_applied and start_date and end_date:
-        #         query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+            # # Add date filter directly to SQL if applied
+            # if date_filter_applied and start_date and end_date:
+            #     query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
         #     # Complete the CTE and main query
         #     query += """
@@ -7502,43 +7492,36 @@ class GlobalAnalytics:
         try:
             # Check date flag once
             date = "date" in drill_state
-            # Extract filter values efficiently in a single pass
-            filter_values = {
-                "zone": None,
-                "plant": None,
-                "bcu_number": None
-            }
-            
+            # Check if zone or plant filters are present
+            zone_filter = ''
+            plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
-                    key = filter.key.lower()
-                    if "zone" in key:
-                        filter_values["zone"] = filter.value
-                    elif "plant" in key:
-                        filter_values["plant"] = filter.value
-                    elif "bcu_number" in key:
-                        filter_values["bcu_number"] = filter.value
+                    if "zone" in filter.key:
+                        zone_filter = filter.value
+                    if "plant" in filter.key:
+                        plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             
-            # Process date filter once
-            date_filter = {
-                "applied": False,
-                "start_date": None,
-                "end_date": None
-            }
+            # Initialize date filter variables
+            date_filter_applied = False
+            start_date = None
+            end_date = None
             
+            # Process cross filters for date
             if cross_filters:
                 for filter in cross_filters:
                     if "DATE" in filter.key:
                         date_parts = filter.value.split(',')
-                        date_filter["start_date"] = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-                        date_filter["end_date"] = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-                        date_filter["applied"] = True
-                        break  # Exit once date filter is found
-            # Build query with parameters
-            query_params = []
+                        start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                        end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                        date_filter_applied = True
+                        break
             
             # Construct base SQL Query with CTE for better performance
-            base_query = """WITH k_factor_data AS (SELECT 
+            query = """WITH k_factor_data AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -7549,21 +7532,19 @@ class GlobalAnalytics:
                     WHERE 1=1
             """
             
-            if filter_values["zone"]:
-                base_query += " AND zone = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["zone"])
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
             
-            if filter_values["plant"]:
-                base_query += " AND sap_id = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["plant"])
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND sap_id IN ('{plant_filter}')"
             
-            if date_filter["applied"]:
-                base_query += " AND DATE(created_at) BETWEEN $%s AND $%s" % (len(query_params) + 1, len(query_params) + 2)
-                query_params.append(date_filter["start_date"].strftime('%Y-%m-%d'))
-                query_params.append(date_filter["end_date"].strftime('%Y-%m-%d'))
+            # Add date filter directly to SQL if applied
+            if date_filter_applied and start_date and end_date:
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the CTE and main query
-            query = base_query + """
+            query += f"""
                     GROUP BY 
                         DATE(created_at), zone, location_name, sap_id, bcu_number
                 )
@@ -7607,8 +7588,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
-            if filter_values["bcu_number"]:
-                resp_df = resp_df.filter(pl.col("bcu_number") == filter_values["bcu_number"])
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
@@ -7789,37 +7770,31 @@ class GlobalAnalytics:
         try:
             # Check date flag once
             date = "date" in drill_state
-            filter_values = {
-                "zone": None,
-                "plant": None
-            }
-            
+            zone_filter = ''
+            plant_filter = ''
             if filters:
                 for filter in filters:
-                    key = filter.key.lower()
-                    if "zone" in key:
-                        filter_values["zone"] = filter.value
-                    elif "plant" in key:
-                        filter_values["plant"] = filter.value
-            # Process date filter once
-            date_filter = {
-                "applied": False,
-                "start_date": None,
-                "end_date": None
-            }
+                    if "zone" in filter.key:
+                        zone_filter = filter.value
+                    if "plant" in filter.key:
+                        plant_filter = filter.value
             
+            # Initialize date filter variables
+            date_filter_applied = False
+            start_date = None
+            end_date = None
+            
+            # Process cross filters for date
             if cross_filters:
                 for filter in cross_filters:
                     if "DATE" in filter.key:
                         date_parts = filter.value.split(',')
-                        date_filter["start_date"] = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-                        date_filter["end_date"] = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-                        date_filter["applied"] = True
-                        break  # Exit once date filter is found
-            # Build query with parameters
-            query_params = []
+                        start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                        end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                        date_filter_applied = True
+                        break
 
-            base_query = f"""WITH manual_fan_data AS (SELECT 
+            query = f"""WITH manual_fan_data AS (SELECT 
                     DATE(created_at) AS created_date,
                     zone,
                     location_name,
@@ -7830,21 +7805,19 @@ class GlobalAnalytics:
                 WHERE 1=1
             """
 
-            if filter_values["zone"]:
-                base_query += " AND zone = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["zone"])
-
-            if filter_values["plant"]:
-                base_query += " AND sap_id = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["plant"])
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
             
-            if date_filter["applied"]:
-                base_query += " AND DATE(created_at) BETWEEN $%s AND $%s" % (len(query_params) + 1, len(query_params) + 2)
-                query_params.append(date_filter["start_date"].strftime('%Y-%m-%d'))
-                query_params.append(date_filter["end_date"].strftime('%Y-%m-%d'))
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND sap_id IN ('{plant_filter}')"
+            
+            # Add date filter directly to SQL if applied
+            if date_filter_applied and start_date and end_date:
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the CTE and main query
-            query = base_query + """
+            query += f"""
                     GROUP BY created_date, zone, location_name, sap_id, manual_fan_count, total_count
                 )
                 SELECT 
@@ -7963,32 +7936,32 @@ class GlobalAnalytics:
         #         date = True
         #     print("date --> ", date)
             
-        #     # Check if zone or plant filters are present
-        #     zone_filter = ''
-        #     plant_filter = ''
-        #     bcu_number = ''
-        #     if filters:
-        #         for filter in filters:
-        #             if "zone" in filter.key:
-        #                 zone_filter = filter.value
-        #             if "plant" in filter.key:
-        #                 plant_filter = filter.value
-        #             if "bcu_number" in filter.key:
-        #                 bcu_number = filter.value
+            # # Check if zone or plant filters are present
+            # zone_filter = ''
+            # plant_filter = ''
+            # bcu_number = ''
+            # if filters:
+            #     for filter in filters:
+            #         if "zone" in filter.key:
+            #             zone_filter = filter.value
+            #         if "plant" in filter.key:
+            #             plant_filter = filter.value
+            #         if "bcu_number" in filter.key:
+            #             bcu_number = filter.value
             
-        #     # Initialize date filter variables
-        #     date_filter_applied = False
-        #     start_date = None
-        #     end_date = None
+            # # Initialize date filter variables
+            # date_filter_applied = False
+            # start_date = None
+            # end_date = None
             
-        #     # Process cross filters for date
-        #     if cross_filters:
-        #         for filter in cross_filters:
-        #             if "DATE" in filter.key:
-        #                 date_parts = filter.value.split(',')
-        #                 start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-        #                 end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-        #                 date_filter_applied = True
+            # # Process cross filters for date
+            # if cross_filters:
+            #     for filter in cross_filters:
+            #         if "DATE" in filter.key:
+            #             date_parts = filter.value.split(',')
+            #             start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+            #             end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+            #             date_filter_applied = True
             
         #     # Construct base SQL Query with Common Table Expression (CTE)
         #     query = """WITH host_data AS (SELECT 
@@ -8136,42 +8109,36 @@ class GlobalAnalytics:
         try:
             # Check date flag once
             date = "date" in drill_state
-            # Extract filter values efficiently in a single pass
-            filter_values = {
-                "zone": None,
-                "plant": None,
-                "load_number": None
-            }
-            
+            # Check if zone or plant filters are present
+            zone_filter = ''
+            plant_filter = ''
+            bcu_number = ''
             if filters:
                 for filter in filters:
-                    key = filter.key.lower()
-                    if "zone" in key:
-                        filter_values["zone"] = filter.value
-                    elif "plant" in key:
-                        filter_values["plant"] = filter.value
-                    elif "load_number" in key:
-                        filter_values["load_number"] = filter.value
+                    if "zone" in filter.key:
+                        zone_filter = filter.value
+                    if "plant" in filter.key:
+                        plant_filter = filter.value
+                    if "bcu_number" in filter.key:
+                        bcu_number = filter.value
             
-            # Process date filter once
-            date_filter = {
-                "applied": False,
-                "start_date": None,
-                "end_date": None
-            }
+            # Initialize date filter variables
+            date_filter_applied = False
+            start_date = None
+            end_date = None
             
+            # Process cross filters for date
             if cross_filters:
                 for filter in cross_filters:
                     if "DATE" in filter.key:
                         date_parts = filter.value.split(',')
-                        date_filter["start_date"] = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-                        date_filter["end_date"] = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-                        date_filter["applied"] = True
-
-            query_params = []            
+                        start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                        end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                        date_filter_applied = True
+                        break
             
             # Construct base SQL Query with Common Table Expression (CTE)
-            base_query = """WITH host_data AS (SELECT 
+            query = """WITH host_data AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -8185,22 +8152,19 @@ class GlobalAnalytics:
                     WHERE 1=1
             """
             
-            # Add filters with parameterized queries
-            if filter_values["zone"]:
-                base_query += " AND zone = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["zone"])
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
             
-            if filter_values["plant"]:
-                base_query += " AND sap_id = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["plant"])
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND sap_id IN ('{plant_filter}')"
             
-            if date_filter["applied"]:
-                base_query += " AND DATE(created_at) BETWEEN $%s AND $%s" % (len(query_params) + 1, len(query_params) + 2)
-                query_params.append(date_filter["start_date"].strftime('%Y-%m-%d'))
-                query_params.append(date_filter["end_date"].strftime('%Y-%m-%d'))
+            # Add date filter directly to SQL if applied
+            if date_filter_applied and start_date and end_date:
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the query with JOIN instead of subquery for better performance
-            query = base_query + """
+            query += f"""
                             GROUP BY 
                         DATE(created_at), zone, location_name, sap_id, bcu_number
                 )
@@ -8248,8 +8212,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
-            if filter_values["bcu_number"]:
-                resp_df = resp_df.filter(pl.col("bcu_number") == filter_values["bcu_number"])
+            if bcu_number:
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
@@ -8411,7 +8375,7 @@ class GlobalAnalytics:
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
 
             # Date filtering if not applied in SQL - default to last 30 days
-            if not date_filter_applied:
+            if not date:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
@@ -8475,32 +8439,32 @@ class GlobalAnalytics:
         #         date = True
         #     print("date --> ", date)
             
-        #     # Check if zone or plant filters are present
-        #     zone_filter = ''
-        #     plant_filter = ''
-        #     reassigned_bay = ''
-        #     if filters:
-        #         for filter in filters:
-        #             if "zone" in filter.key:
-        #                 zone_filter = filter.value
-        #             if "plant" in filter.key:
-        #                 plant_filter = filter.value
-        #             if "reassigned_bay" in filter.key:
-        #                 reassigned_bay = filter.value
+            # # Check if zone or plant filters are present
+            # zone_filter = ''
+            # plant_filter = ''
+            # reassigned_bay = ''
+            # if filters:
+            #     for filter in filters:
+            #         if "zone" in filter.key:
+            #             zone_filter = filter.value
+            #         if "plant" in filter.key:
+            #             plant_filter = filter.value
+            #         if "reassigned_bay" in filter.key:
+            #             reassigned_bay = filter.value
             
-        #     # Initialize date filter variables
-        #     date_filter_applied = False
-        #     start_date = None
-        #     end_date = None
+            # # Initialize date filter variables
+            # date_filter_applied = False
+            # start_date = None
+            # end_date = None
             
-        #     # Process cross filters for date
-        #     if cross_filters:
-        #         for filter in cross_filters:
-        #             if "DATE" in filter.key:
-        #                 date_parts = filter.value.split(',')
-        #                 start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-        #                 end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-        #                 date_filter_applied = True
+            # # Process cross filters for date
+            # if cross_filters:
+            #     for filter in cross_filters:
+            #         if "DATE" in filter.key:
+            #             date_parts = filter.value.split(',')
+            #             start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+            #             end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+            #             date_filter_applied = True
             
         #     # Construct base SQL Query with CTE for better performance
         #     query = """WITH bay_reassignment AS (SELECT 
@@ -8517,16 +8481,16 @@ class GlobalAnalytics:
         #     """
             
         #     # Add zone filter if present
-        #     if zone_filter:
-        #         query += f" AND zone IN ('{zone_filter}')"
+            # if zone_filter:
+            #     query += f" AND zone IN ('{zone_filter}')"
             
-        #     # Add plant/location filter if present
-        #     if plant_filter:
-        #         query += f" AND sap_id IN ('{plant_filter}')"
+            # # Add plant/location filter if present
+            # if plant_filter:
+            #     query += f" AND sap_id IN ('{plant_filter}')"
             
-        #     # Add date filter directly to SQL if applied
-        #     if date_filter_applied and start_date and end_date:
-        #         query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
+            # # Add date filter directly to SQL if applied
+            # if date_filter_applied and start_date and end_date:
+            #     query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
         #     # Complete the CTE and main query
         #     query += """
@@ -8640,40 +8604,36 @@ class GlobalAnalytics:
             # Check date flag once
             date = "date" in drill_state
             # Extract filter values efficiently in a single pass
-            filter_values = {
-                "zone": None,
-                "plant": None,
-                "reassigned_bay": None
-            }
-            
+            # Check if zone or plant filters are present
+            zone_filter = ''
+            plant_filter = ''
+            reassigned_bay = ''
             if filters:
                 for filter in filters:
-                    key = filter.key.lower()
-                    if "zone" in key:
-                        filter_values["zone"] = filter.value
-                    elif "plant" in key:
-                        filter_values["plant"] = filter.value
-                    elif "reassigned_bay" in key:
-                        filter_values["reassigned_bay"] = filter.value
+                    if "zone" in filter.key:
+                        zone_filter = filter.value
+                    if "plant" in filter.key:
+                        plant_filter = filter.value
+                    if "reassigned_bay" in filter.key:
+                        reassigned_bay = filter.value
             
-            # Process date filter once
-            date_filter = {
-                "applied": False,
-                "start_date": None,
-                "end_date": None
-            }
+            # Initialize date filter variables
+            date_filter_applied = False
+            start_date = None
+            end_date = None
             
+            # Process cross filters for date
             if cross_filters:
                 for filter in cross_filters:
                     if "DATE" in filter.key:
                         date_parts = filter.value.split(',')
-                        date_filter["start_date"] = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
-                        date_filter["end_date"] = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
-                        date_filter["applied"] = True
+                        start_date = datetime.strptime(date_parts[0].strip("'"), '%Y-%m-%d')
+                        end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
+                        date_filter_applied = True
+                        break
 
-            query_params = []
             # Construct base SQL Query with CTE for better performance
-            base_query = """WITH bay_reassignment AS (SELECT 
+            query = """WITH bay_reassignment AS (SELECT 
                         DATE(created_at) AS created_date,
                         zone,
                         location_name,
@@ -8686,22 +8646,19 @@ class GlobalAnalytics:
                     WHERE 1=1
             """
             
-            # Add filters with parameterized queries
-            if filter_values["zone"]:
-                base_query += " AND zone = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["zone"])
+            if zone_filter:
+                query += f" AND zone IN ('{zone_filter}')"
             
-            if filter_values["plant"]:
-                base_query += " AND sap_id = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["plant"])
+            # Add plant/location filter if present
+            if plant_filter:
+                query += f" AND sap_id IN ('{plant_filter}')"
             
-            if date_filter["applied"]:
-                base_query += " AND DATE(created_at) BETWEEN $%s AND $%s" % (len(query_params) + 1, len(query_params) + 2)
-                query_params.append(date_filter["start_date"].strftime('%Y-%m-%d'))
-                query_params.append(date_filter["end_date"].strftime('%Y-%m-%d'))
+            # Add date filter directly to SQL if applied
+            if date_filter_applied and start_date and end_date:
+                query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
             
             # Complete the CTE and main query
-            query = base_query + """
+            query += f"""
                 GROUP BY 
                         DATE(created_at), zone, location_name, sap_id, reassigned_bay, load_number, truck_number
                 )
@@ -8750,8 +8707,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
-            if filter_values["reassigned_bay"]:
-                resp_df = resp_df.filter(pl.col("reassigned_bay") == filter_values["reassigned_bay"])
+            if reassigned_bay:
+                resp_df = resp_df.filter(pl.col("reassigned_bay") == reassigned_bay)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
