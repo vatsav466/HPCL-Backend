@@ -3410,9 +3410,14 @@ class GlobalAnalytics:
                 card_query = card_query.format(financial_year=financial_year)
             print("-"*50)
             print("card_query ---->", card_query)
-            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
-            card_query =  await widget_actions.WidgetActions.apply_filter_drilldown(card_query, access_filters, drill_state)
+            if "cdcms" in drill_state.lower():
+                access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+                card_query =  await widget_actions.WidgetActions.apply_filter_drilldown(card_query, access_filters, drill_state)
+            else:
+                access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                        for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                card_query =  await widget_actions.WidgetActions.apply_filter_drilldown(card_query, access_filters, drill_state)
             
             resp = await function(query=card_query)
             resp = pd.DataFrame(resp)
