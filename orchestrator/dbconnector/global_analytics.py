@@ -8233,6 +8233,7 @@ class GlobalAnalytics:
                     h.location_name,
                     h.sap_id,
                     h.bcu_number,
+                    COALESCE(COUNT(a.id), 0) AS alert_count,
                     h.total_required_qty,
                     h.total_loaded_qty,
                     h.qty_difference
@@ -8734,7 +8735,8 @@ class GlobalAnalytics:
                     k.sap_id,
                     k.reassigned_bay,
                     k.load_number,
-                    k.truck_number
+                    k.truck_number,
+                    COALESCE(COUNT(a.id), 0) AS alert_count
                 FROM 
                     bay_reassignment k
                 LEFT JOIN
