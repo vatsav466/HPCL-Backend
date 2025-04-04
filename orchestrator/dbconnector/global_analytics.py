@@ -8192,7 +8192,7 @@ class GlobalAnalytics:
             
             print("query --> ", query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 data = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -8359,7 +8359,7 @@ class GlobalAnalytics:
             
             print("query --> ", query)
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
@@ -8687,7 +8687,7 @@ class GlobalAnalytics:
             print("query --> ", query)
             
             try:
-                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query)
+                resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 data = resp.get('data', '')
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
