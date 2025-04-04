@@ -6298,9 +6298,6 @@ class GlobalAnalytics:
                         date_filter["applied"] = True
                         break
             
-            # Build query with parameters
-            query_params = []
-            
             base_query = """WITH localloaded AS (
                 SELECT 
                     DATE(created_at) AS created_date,
@@ -6316,17 +6313,17 @@ class GlobalAnalytics:
             
             # Add filters with parameterized queries
             if filter_values["zone"]:
-                base_query += " AND zone = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["zone"])
-            
+                zone_values = ", ".join(f"'{z}'" for z in filter_values["zone"])
+                base_query += f" AND zone IN ({zone_values})"
+
             if filter_values["plant"]:
-                base_query += " AND sap_id = $%s" % (len(query_params) + 1)
-                query_params.append(filter_values["plant"])
+                plant_values = ", ".join(f"'{p}'" for p in filter_values["plant"])
+                base_query += f" AND plant IN ({plant_values})"
             
             if date_filter["applied"]:
-                base_query += " AND DATE(created_at) BETWEEN $%s AND $%s" % (len(query_params) + 1, len(query_params) + 2)
-                query_params.append(date_filter["start_date"].strftime('%Y-%m-%d'))
-                query_params.append(date_filter["end_date"].strftime('%Y-%m-%d'))
+                start_date = date_filter["start_date"].strftime('%Y-%m-%d')
+                end_date = date_filter["end_date"].strftime('%Y-%m-%d')
+                base_query += f" AND DATE(created_at) BETWEEN '{start_date}' AND '{end_date}'"
             
             # Complete the query with JOIN instead of subquery for better performance
             query = base_query + """
@@ -6369,11 +6366,10 @@ class GlobalAnalytics:
             
             # Apply type conversion and filters once
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
-            
-            # Apply BCU filter if needed
+    
             if filter_values["bcu_number"]:
-                resp_df = resp_df.filter(pl.col("bcu_number") == filter_values["bcu_number"])
-            
+                bcu_values = ", ".join(f"'{b}'" for b in filter_values["bcu_number"])
+                resp_df = resp_df.filter(pl.col("bcu_number") == bcu_values)
             # Apply default date filter if needed
             if not date:
                 last_30_days = datetime.now() - timedelta(days=30)
