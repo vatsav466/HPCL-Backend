@@ -8734,7 +8734,7 @@ class GlobalAnalytics:
                     k.sap_id,
                     k.reassigned_bay,
                     k.load_number,
-                    k.truck_number,
+                    k.truck_number
                 FROM 
                     bay_reassignment k
                 LEFT JOIN
@@ -8742,8 +8742,6 @@ class GlobalAnalytics:
                     AND a.vehicle_number = k.truck_number
                     AND a.tt_load_number = k.load_number::VARCHAR
                     AND DATE(a.created_at) = k.created_date
-                FROM 
-                    bay_reassignment k
                 GROUP BY
                     k.created_date, k.zone, k.location_name, k.sap_id, k.reassigned_bay, k.load_number, k.truck_number
                 ORDER BY 
