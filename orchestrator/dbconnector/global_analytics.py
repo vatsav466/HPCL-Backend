@@ -7880,7 +7880,7 @@ class GlobalAnalytics:
                     COALESCE(COUNT(a.id), 0) AS alert_count,
                     m.total_manual_fan_count,
                     m.total_count,
-                    a.device_message
+                     MAX(a.device_msg) AS device_message
                 FROM 
                     manual_fan_data m
                 LEFT JOIN
@@ -7888,9 +7888,9 @@ class GlobalAnalytics:
                     AND DATE(a.created_at) = m.created_date
                     AND a.location_name = m.location_name
                 WHERE 
-                    m.manual_fan_count != 0
+                    m.total_manual_fan_count != 0
                 GROUP BY 
-                    m.created_date, m.zone, m.location_name, m.sap_id
+                    m.created_date, m.zone, m.location_name, m.sap_id, m.total_manual_fan_count, m.total_count
                 ORDER BY 
                     m.created_date DESC, alert_count DESC;
             """
