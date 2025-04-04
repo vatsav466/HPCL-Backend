@@ -141,7 +141,10 @@ async def close_vts_alert(alert_data, input_data):
         }
     print("Un block tt params: ", params)
     # return True, "Success"
-    return await vts_analysis.post_unblocked_tt(params)
+    resp = await vts_analysis.post_unblocked_tt(params)
+    query = f"""update vts_truck_details set truck_status = 'UNBLOCKED' where truck_regno = '{alert_data["vehicle_number"]}'"""
+    await hpcl_ceg_model.VtsTruckDetails.update_by_query(query)
+    return resp
 
 async def close_emlock_alert(alert_data, input_data):
     """

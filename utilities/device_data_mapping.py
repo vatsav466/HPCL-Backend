@@ -215,7 +215,7 @@ device_mapping = [
                         "sensor_name":
                                  {
                                       "Fire Engine":"Safety",
-                                      "Jockey Pump":"Safety",
+                                      "Jockey Pump Run":"Safety",
                                       "Farthest Point Pt":"Safety",
                                       "Nearest Point PT":"Safety"
                                  }

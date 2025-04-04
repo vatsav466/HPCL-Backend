@@ -117,6 +117,12 @@ async def process_data(data):
     data.rename(columns={"EMPLOYEE_NUMBER": "username", "EMPLOYEE_NAME": "first_name",
                                 "EMP_EMAIL": "email", "PLANT_CODE": "sap_id", "PLANT_DESC": "region",
                                 "Zone": "zone", "ROLE_NAME": "system_role"}, inplace=True)
+    if "SALES_GRP" in data.columns:
+        sales_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/lpg_sa_master.csv")
+        data['SALES_GRP'] = data['SALES_GRP'].astype(str)
+        sales_master['SACode'] = sales_master['SACode'].astype(str)
+        data = pd.merge(data, sales_master, left_on='SALES_GRP', right_on='SACode', how='left')
+        data.rename(columns={"SAName": "sales_area"}, inplace=True)
     print("Before dropping empty username :", len(data))
     data = data[data["username"].fillna("") != ""]
     print("After dropping empty username :", len(data))
@@ -136,15 +142,18 @@ async def process_data(data):
     
     for _role in ["Zonal", "Zone"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["sap_id", "region"]] = '[]'
+        data.loc[mask, ["sap_id", "region", "sales_area"]] = '[]'
     for _role in ["Regional", "Region"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["sap_id"]] = '[]'
+        data.loc[mask, ["sap_id", "zone", "sales_area"]] = '[]'
+    for _role in ["Sales"]:
+        mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
+        data.loc[mask, ["sap_id", "region", "zone"]] = '[]'
     for _role in ["HQO"]:
         mask = data["novex_role"].astype(str).str.contains(_role, case=False, na=False)
-        data.loc[mask, ["sap_id", "zone", "region"]] = '[]'
-    data.loc[(data['sap_id'] != '[]'), 'zone'] = '[]'
-    data.loc[(data['sap_id'] != '[]'), 'region'] = '[]'
+        data.loc[mask, ["sap_id", "zone", "region", "sales_area"]] = '[]'
+    for col in ["zone", "region", "sales_area"]:
+        data.loc[(data['sap_id'] != '[]'), col] = '[]'
 
     for col in novex_model_col:
         if not col in data.columns:

@@ -11,6 +11,7 @@ import utilities.vts_mapping as vts_mapping
 import orchestrator.alerting.alert_helper as alert_helper
 import orchestrator.alerting.alert_manager as alert_manager
 import orchestrator.alerting.alert_factory as alert_factory
+import orchestrator.analytics.vts_analysis as vts_analysis
 import orchestrator.actions.check_violation_count as check_violation_count
 
 logger = urdhva_base.logger.Logger.getInstance('vts_alert_processing')
@@ -19,6 +20,92 @@ logger = urdhva_base.logger.Logger.getInstance('vts_alert_processing')
 class VTSAlertManager(alert_factory.AlertFactory):
     @classmethod
     async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
+        """
+        Create a business unit level alert
+
+        Parameters:
+            alert_data (dict): A dictionary containing the data to create the alert
+                - bu (str): Business unit
+                - sap_id (str): SAP ID
+                - sop_id (str): SOP ID
+                - staticalert_data (dict): Additional static data to be stored in the alert document
+                - deviceId (str): Device ID
+                - interlockName (str): Interlock name
+                - severity (str): Severity of the alert
+                - message (str): Alert message
+                - alertHistory (list): List of alert history messages
+            camunda_url:
+
+        Returns:
+            dict: A dictionary containing the status, message and the created alert document
+        """
+        status, location_details = await alert_helper.get_location_details(alert_data['location_type'],
+                                                                           alert_data['location_id'])
+        if not status:
+            logger.info(f"Error in finding location {alert_data['location_id']} "
+                        f"for bu {alert_data['location_type']} - {location_details}")
+            location_details = {'name': ""}
+
+        instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'])
+        if not instance_data:
+            logger.info(f"No Max Violation for TT {alert_data['tl_number']}")
+            return
+        vts_alert_data = {"bu": alert_data['location_type'],
+                          "sap_id": alert_data['location_id'],
+                          "location_name": location_details['name'],
+                          "vehicle_number": alert_data['tl_number'],
+                          "violation_type": violation_name}
+
+        interlock_details = utilities.interlock_mapping.get_interlock_name(
+            alert_data['location_type'], instance_data['interlock_name'])
+
+        alert_message = (
+            f"Vehicle Number: {alert_data['tl_number']} \n"
+            f"Violation Type: {violation_name} \n"
+            f"Reported at: {alert_data['vts_end_datetime']}"
+        )
+        alert_history = [
+            {
+                "action_msg": alert_message,
+                "action_type": "Created",
+                "alert_status": "Open",
+            }
+        ]
+
+        vts_alert_data.update(interlock_details)
+        vts_alert_data['alert_section'] = 'VTS'
+        vts_alert_data['alert_history'] = alert_history
+        vts_alert_data['severity'] = instance_data['severity']
+        vts_alert_data['vts_alert_history_ids'] = vts_alert_history_ids
+        vts_alert_data['alert_timestamp'] = alert_data['vts_end_datetime'].isoformat()
+        vts_alert_data['transporter_name'] = ''
+        vts_alert_data['transporter_code'] = alert_data['vendor_id']
+        vts_alert_data['device_id'] = instance_data['instance']
+        vts_alert_data['device_name'] = instance_data['instance']
+        vts_alert_data['vehicle_blocked_start_date'] = urdhva_base.utilities.get_present_time(True).isoformat()
+        vts_alert_data['vehicle_blocked_end_date'] = helpers.get_time_stamp_by_delta(
+            days=instance_data['block_duration'],
+            with_month_start_day=False,
+            ascending=True,
+            date_time_format=None).isoformat()
+        vts_alert_data['mark_as_false'] = False
+        tl_number = alert_data['tl_number']
+        query = ""
+        if instance_data['instance'] == 'Instance - 1':
+            query = f"update vts_truck_details set instance_1 = 1, truck_status = 'BLOCKED' where truck_regno = '{tl_number}'"
+        if instance_data['instance'] == 'Instance - 2':
+            query = f"update vts_truck_details set instance_2 = 1, truck_status = 'BLOCKED' where truck_regno = '{tl_number}'"
+        if instance_data['instance'] == 'Instance - 3':
+            query = f"update vts_truck_details set instance_3 = 1, truck_status = 'BLOCKED' where truck_regno = '{tl_number}'"
+        if query:
+            await hpcl_ceg_model.VtsTruckDetails.update_by_query(query)
+        camunda_url = await helpers.get_camunda_url(bu=alert_data['location_type'], sap_id=alert_data['location_id'],
+                                                    alert_section="VTS")
+        await cls.create_alert(vts_alert_data, camunda_url)
+
+
+    @classmethod
+    async def create_bu_alert_old(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
         """
         Create a business unit level alert
 
@@ -49,6 +136,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             if not status:
                 logger.info(f"Error in finding location {alert_data['location_id']} "
                             f"for bu {alert_data['location_type']} - {location_details}")
+                location_details = {'name': ""}
                 return
             # Processing alert for each record
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)

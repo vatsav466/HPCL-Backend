@@ -60,6 +60,13 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FifthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
                         {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SixthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
 
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving FirstTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving SecondTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving ThirdTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving FourthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving FifthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+                        {"sop_id": "SOP001", "interlock_name": "Continuous Driving SixthTime", "model": "VTS", "workflow_name": "TAS SOP001 7 DAYS 1st Instance"},
+
                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception FirstTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_FirstTime_7days"},
                         {"sop_id": "SOP001E", "interlock_name": "Route Deviation Exception SecondTime", "model": "VTS", "workflow_name": "Tas_Vts_Exception_ThirdTime_2years"},
 
@@ -105,8 +112,8 @@ tas_interlock_mapping = [
                         {"sop_id": "SOP02A", "interlock_name": "Barrier Gate opened", "workflow_name": "ESD FIRE EFFECTS"},
                         {"sop_id": "SOP003", "interlock_name": "Proof Test_VFT_Failed", "workflow_name": "HHH PROOF TEST"},
                         {"sop_id": "SOP003", "interlock_name": "Proof Test_Secondary Radar Guage_Failed", "workflow_name": "HHH PROOF TEST"},
-                        {"sop_id": "SOP003", "interlock_name": "Proof Test_VFT_Sucess", "workflow_name": "HHH PROOF TEST"},
-                        {"sop_id": "SOP003", "interlock_name": "Proof Test_Secondary Radar Guage_Sucess", "workflow_name": "HHH PROOF TEST"},
+                        {"sop_id": "SOP003", "interlock_name": "Proof Test_VFT_Success", "workflow_name": "HHH PROOF TEST"},
+                        {"sop_id": "SOP003", "interlock_name": "Proof Test_Secondary Radar Guage_Success", "workflow_name": "HHH PROOF TEST"},
                         {"sop_id": "SOP004", "interlock_name": "Rim Seal system_Fault activated", "workflow_name": "RIM SEAL"},
                         {"sop_id": "SOP005", "interlock_name": "HCD_20% LEL activated", "workflow_name": "TAS HCD ALARM SOP005"},
                         {"sop_id": "SOP005", "interlock_name": "HCD_40% LEL activated", "workflow_name": "TAS HCD ALARM SOP005"},
@@ -360,6 +367,13 @@ lpg_interlock_mapping = [
     {"sop_id": "SOP001", "interlock_name": "NoHalt Zone FifthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
     {"sop_id": "SOP001", "interlock_name": "NoHalt Zone SixthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
 
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving FirstTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving SecondTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving ThirdTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving FourthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving FifthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+    {"sop_id": "SOP001", "interlock_name": "Continuous Driving SixthTime", "model": "VTS", "workflow_name": "LPG SOP001 7 DAYS 1st Instance"},
+
     {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception FirstTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_FirstTime_7days"},
     {"sop_id": "SOP001E", "interlock_name": "Unauthorized Stoppage Exception SecondTime", "model": "VTS", "workflow_name": "Lpg_Vts_Exception_ThirdTime_2years"},
 
@@ -441,7 +455,7 @@ def get_interlock_name(bu, interlock_name=None, sop_id=None):
             filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), filtered_data))
     elif interlock_name:
         filtered_data = list(filter(lambda x: x['interlock_name'].lower() == interlock_name.lower(), mapping))
-    print("filtered_data--->", filtered_data)
+    #print("filtered_data--->", filtered_data)
     return filtered_data[0] if filtered_data else {}
 
 
