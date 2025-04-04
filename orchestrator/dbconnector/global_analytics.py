@@ -7573,7 +7573,7 @@ class GlobalAnalytics:
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
-            if not resp:
+            if not data:
                 return {"status": False, "message": "Data Not found", "data": {}}
 
             # Convert response to Polars DataFrame
@@ -7851,7 +7851,7 @@ class GlobalAnalytics:
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
-            if not resp_data:
+            if not data:
                 return {"status": False, "message": "Data Not found", "data": {}}
 
             # Convert response to Polars DataFrame
@@ -8197,7 +8197,7 @@ class GlobalAnalytics:
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
-            if not resp:
+            if not data:
                 return {"status": False, "message": "Data Not found", "data": {}}
 
             # Convert response to Polars DataFrame
@@ -8692,7 +8692,7 @@ class GlobalAnalytics:
             except Exception as e:
                 return {"status": False, "message": f"Query execution failed: {str(e)}", "data": {}}
 
-            if not resp:
+            if not data:
                 return {"status": False, "message": "Data Not found", "data": {}}
 
             # Convert response to Polars DataFrame
