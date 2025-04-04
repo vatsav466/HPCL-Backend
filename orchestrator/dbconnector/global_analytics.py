@@ -8249,7 +8249,7 @@ class GlobalAnalytics:
                     AND a.interlock_name = 'TT Overloaded'
                     AND DATE(a.created_at) = h.created_date
                 GROUP BY
-                    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number
+                    h.created_date, h.zone, h.location_name, h.sap_id, h.bcu_number,h.total_required_qty,h.total_loaded_qty,h.qty_difference
                 ORDER BY 
                     h.created_date DESC, alert_count DESC
             """
