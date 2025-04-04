@@ -19,7 +19,7 @@ from urdhva_base.postgresmodel import UrdhvaPostgresBase
 class vtsDataCreate(pydantic.BaseModel):
     vendor_id: str
     location_id: str
-    location_type: typing.Optional[ingestion_api_enum.BusinessUnit] | None = None
+    location_type: str
     tl_number: str
     report_duration: str
     total_trips: typing.Optional[int] = pydantic.Field(0, **{})
