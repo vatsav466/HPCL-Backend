@@ -13,20 +13,21 @@ sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
 
 def insertToDB(data, table_name):
-    print("Length of Data : ", len(data))
+    print(f"Inserting {len(data)} rows to {table_name}")
     creds = credential_loader.get_credentials('APP_DB')
     pg_conn = psycopg2.connect(
                 host=creds['host'],
                 database=creds['database'],
                 user=creds['user'],
                 password=creds['password'],
-                port=int(creds['port'])
+                port=int(creds['port']),
+                connect_timeout=10
             )    
     table_create_sql = ''
     cur = pg_conn.cursor()
     dtype_dict = {'String':str('text'),'Int64': str('bigint'), 'Int32': str('bigint'), 'Boolean': str('text'), 'Float64': str('double precision'),'Float32': str('double precision'),
                   'Object': str('text'), 'Datetime': str('timestamp'), 'Utf8': str('text'), "Datetime(time_unit='us', time_zone=None)": str('timestamp'), "Datetime(time_unit='ns', time_zone=None)": str('timestamp')}
-    print('Data Types :',data.dtypes)
+    
     col_dtype = {col: data[col].dtype for col in data.columns}
     for col, dty in col_dtype.items():
         dty = dtype_dict.get(str(dty))
@@ -35,10 +36,11 @@ def insertToDB(data, table_name):
     
     create_table_index = f'CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ("Date","Plant Name","system_id")'
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
-    print("table_create_sql :", table_create_sql)
+    print("Creating table if not exists...")
     cur.execute(table_create_sql)
     pg_conn.commit()
     cur.execute(create_table_index)
+    pg_conn.commit()
 
     sql = f"""SELECT * FROM "{table_name}" LIMIT 1"""
     cur.execute(sql)
@@ -56,24 +58,32 @@ def insertToDB(data, table_name):
         FROM STDIN
         CSV HEADER DELIMITER '~';
         '''
-        for g, split_df in data.group_by(len(data)// 10000000):
-            csv_file = f'/tmp/{table_name}.csv'
+        batch_size = 100000  # Process in smaller batches
+        for g, split_df in data.group_by(len(data)// batch_size):
+            csv_file = f'/tmp/{table_name}_{g}.csv'
             split_df.write_csv(csv_file, separator='~')
             with open(csv_file, 'r') as f:
                 cur.copy_expert(query, f)
                 pg_conn.commit()
+            # Remove the temporary file immediately after using it
+            if os.path.exists(csv_file):
+                os.remove(csv_file)
+                
         cur.close()
-        if os.path.exists(f'/tmp/{table_name}.csv'):
-            os.remove(f'/tmp/{table_name}.csv')
+        pg_conn.close()
         print(f"-- Data Inserted to {table_name} --")
     except Exception as e:
-        print("Error :", str(e))
+        print(f"Error inserting data: {str(e)}")
+        pg_conn.rollback()  # Rollback on error
+        cur.close()
+        pg_conn.close()
         raise Exception(e)
 
 
-def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30):
+def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, chunk_size=50000):
     """
-    Fetch data from database with both connection and query timeout handling
+    Fetch data from database with both connection and query timeout handling,
+    supporting chunked data retrieval for large datasets
     """    
     # Check connection with timeout
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -103,7 +113,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30):
         cursor = pg_conn.cursor()
         
         # Set statement timeout at the connection level (milliseconds)
-        cursor.execute(f"SET statement_timeout = {query_timeout * 300000};")        
+        cursor.execute(f"SET statement_timeout = {query_timeout * 1000};")        
         
     except Exception as e:
         print(f"Database connection error for {params.get('PlantName', 'unknown')}: {str(e)}")
@@ -114,32 +124,88 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30):
         print(f"Running Query with {query_timeout}s timeout...")
         print(query)
         
-        cursor.execute(query)
-        
-        if getData:
-            data = cursor.fetchall()
-            print('Total Records :', len(data))
-            print("-" * 50)
-            columns = [column[0] for column in cursor.description]
-            data = pd.DataFrame.from_records(data, columns=columns)
-            data = pl.from_pandas(data)
-            return data
-        else:
+        if not getData:
+            cursor.execute(query)
             resp = cursor.fetchone()
+            cursor.close()
+            pg_conn.close()
             return resp[0] if resp else None
+        else:
+            # For chunked data retrieval
+            if "LIMIT" not in query.upper():
+                base_query = query.rstrip(';')
+                base_query += f" LIMIT {chunk_size} OFFSET "
+            else:
+                print("Query already contains LIMIT - not using chunking")
+                cursor.execute(query)
+                data = cursor.fetchall()
+                columns = [column[0] for column in cursor.description]
+                data = pd.DataFrame.from_records(data, columns=columns)
+                data = pl.from_pandas(data)
+                cursor.close()
+                pg_conn.close()
+                return data
+                
+            # Chunked retrieval for large datasets
+            all_data = []
+            offset = 0
+            while True:
+                chunk_query = f"{base_query} {offset};"
+                print(f"Fetching chunk with offset {offset}, limit {chunk_size}...")
+                
+                cursor.execute(chunk_query)
+                chunk_data = cursor.fetchall()
+                
+                if not chunk_data:  # No more data
+                    break
+                    
+                print(f"Retrieved {len(chunk_data)} records in this chunk")
+                if not all_data:  # First chunk
+                    columns = [column[0] for column in cursor.description]
+                
+                all_data.extend(chunk_data)
+                offset += chunk_size
+                
+                # Break if we got fewer rows than the chunk size
+                if len(chunk_data) < chunk_size:
+                    break
+                    
+                # Safety limit to prevent infinite loops
+                if offset > 1000000:  # 1 million record limit
+                    print("Reached maximum record limit (1M)")
+                    break
+                    
+            print(f'Total Records: {len(all_data)}')
+            print("-" * 50)
+            
+            # Convert to DataFrame
+            if all_data:
+                data = pd.DataFrame.from_records(all_data, columns=columns)
+                data = pl.from_pandas(data)
+                cursor.close()
+                pg_conn.close()
+                return data
+            else:
+                cursor.close()
+                pg_conn.close()
+                return pl.DataFrame()
+                
     except psycopg2.errors.QueryCanceled:
         print(f"Query timed out after {query_timeout} seconds - skipping this plant")
+        cursor.close()
+        pg_conn.close()
         return pl.DataFrame() if getData else None
     except Exception as e:
         print(f"Query execution error: {str(e)}")
-        return pl.DataFrame() if getData else None
-    finally:
         cursor.close()
         pg_conn.close()
+        return pl.DataFrame() if getData else None
 
-    
-def get_data(params):
+
+def get_data_chunks(params):
+    """Process data retrieval in chunks with better error handling"""
     table_name = "lpg_operations_data"
+    plant_name = params['PlantName']
     
     try:
         first_insertion = False
@@ -157,62 +223,94 @@ def get_data(params):
         plant_check = fetch_data(query, getData=True, params=app_db_params)
         
         if plant_check is None or plant_check.is_empty():
-            print(f"No existing plants found in summary table for {params['PlantName']}")
+            print(f"No existing plants found in summary table for {plant_name}")
             first_insertion = True
-        elif params['PlantName'].lower() not in plant_check["short_name"]:
-            print(f"Plant {params['PlantName']} not found in existing records - first insertion")
+        elif plant_name.lower() not in plant_check["short_name"].to_list():
+            print(f"Plant {plant_name} not found in existing records - first insertion")
             first_insertion = True
         
         # Get max date or use default
         if first_insertion:
-            max_date = datetime.datetime.now().strftime("%Y-%m-%d")
-            print(f"First insertion for {params['PlantName']} using date {max_date}")
+            # For first insertion, get only recent data (last 30 days)
+            thirty_days_ago = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+            max_date = thirty_days_ago
+            print(f"First insertion for {plant_name} using date {max_date} (30 days ago)")
         else:
-            query = f""" SELECT MAX(process_date) FROM "lpg_operations_summary" WHERE "short_name"='{params['PlantName'].lower()}'; """    
+            query = f""" SELECT MAX(process_date) FROM "lpg_operations_summary" WHERE "short_name"='{plant_name.lower()}'; """    
             max_date = fetch_data(query, getData=False, params=app_db_params)
             if max_date is None:
-                max_date = datetime.datetime.now().strftime("%Y-%m-%d")
-                print(f"No max date found for {params['PlantName']}, using current date {max_date}")
+                # If no max date found, get only recent data (last 7 days)
+                seven_days_ago = (datetime.datetime.now() - datetime.timedelta(days=7)).strftime("%Y-%m-%d")
+                max_date = seven_days_ago
+                print(f"No max date found for {plant_name}, using date {max_date} (7 days ago)")
         
-        # For large tables, try to limit data or use chunking
+        # Query without LIMIT - the fetch_data function will handle chunking
         query = f""" 
             SELECT * FROM production_log 
             WHERE "process_date" > '{max_date}'
             ORDER BY "process_date" ASC
-            LIMIT 1000000;  -- Set a reasonable limit to prevent giant queries
         """
         
-        if first_insertion:
-            # For first insertion, we might want to get less historical data
-            # to ensure it completes in a reasonable time
-            query = f""" 
-                SELECT * FROM production_log 
-                WHERE "process_date" >= '{max_date}'
-                ORDER BY "process_date" ASC
-                LIMIT 500000;  -- More conservative limit for first run
-            """
-        
-        # Get data with query timeout (60 seconds)
-        print(f"Fetching data for plant {params['PlantName']} with timeout...")
-        data = fetch_data(query, getData=True, params=params, timeout=10, query_timeout=60)
+        # Get data with query timeout and chunking
+        print(f"Fetching data for plant {plant_name} with chunking...")
+        data = fetch_data(
+            query, 
+            getData=True, 
+            params=params, 
+            timeout=10, 
+            query_timeout=30,  # Shorter timeout per chunk
+            chunk_size=50000   # Smaller chunks
+        )
         
         if data is None or data.is_empty():
-            print(f"-- No data or query timed out for plant {params['PlantName']} --")
-            return
+            print(f"-- No data or query timed out for plant {plant_name} --")
+            return False
             
         data = data.with_columns(pl.lit(params["PlantName"]).alias("Plant Name"))
         Date = datetime.datetime.now()
         data = data.with_columns(pl.lit(Date).alias("Date"))
-        print(f"Length of data for {params['PlantName']}: {len(data)}")
+        print(f"Length of data for {plant_name}: {len(data)}")
         
         # Insert data
         insertToDB(data, table_name)
-        print(f"Successfully processed plant {params['PlantName']}")
+        print(f"Successfully processed plant {plant_name}")
+        return True
         
     except Exception as e:
-        print(f"Error in get_data for plant {params['PlantName']}: {str(e)}")
+        print(f"Error in get_data for plant {plant_name}: {str(e)}")
         print("Traceback:", traceback.format_exc())
-        raise
+        return False
+
+
+def process_plant(plant):
+    """Process a single plant - to be used with ThreadPoolExecutor"""
+    try:
+        print(f"Starting processing for plant: {plant['PlantName']}")
+        
+        params = {
+            "PlantName": plant["PlantName"],
+            "host": plant["host_ip"],
+            "database": plant["db_database"],
+            "user": plant["db_user"],
+            "password": plant["db_password"],
+            "port": 5432
+        }
+        
+        # Set timeout for this plant's processing
+        start_time = datetime.datetime.now()
+        max_processing_time = datetime.timedelta(minutes=5)
+        
+        success = get_data_chunks(params)
+        
+        processing_time = datetime.datetime.now() - start_time
+        print(f"Plant {plant['PlantName']} processed in {processing_time.total_seconds():.2f} seconds")
+        
+        return plant["PlantName"], success
+    except Exception as e:
+        print(f"Error processing plant {plant['PlantName']}: {str(e)}")
+        print("Traceback:", traceback.format_exc())
+        return plant["PlantName"], False
+    
     
 if __name__=="__main__":
     try:
@@ -220,52 +318,31 @@ if __name__=="__main__":
         successful_plants = []
         failed_plants = []
         
-        # Process plants sequentially but with timeouts
-        for plant in plants.iter_rows(named=True):
-            try:
-                print("-*"*40)
-                print(f"Processing plant: {plant['PlantName']}")
-                
-                params={
-                    "PlantName": plant["PlantName"],
-                    "host": plant["host_ip"],
-                    "database": plant["db_database"],
-                    "user": plant["db_user"],
-                    "password": plant["db_password"],
-                    "port": 5432
-                }
-                
-                # Process with timeout using signal handler (Unix-only solution)
-                def timeout_handler(signum, frame):
-                    raise TimeoutError(f"Processing timed out for {plant['PlantName']}")
-                
-                # Set 3-minute timeout for entire plant processing
-                signal.signal(signal.SIGALRM, timeout_handler)
-                signal.alarm(180)  # 3 minutes
-                
+        # Set up parallel processing
+        max_workers = min(10, len(plants))  # Use up to 10 workers but not more than the number of plants
+        print(f"Processing {len(plants)} plants using {max_workers} parallel workers")
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all plants for processing
+            future_to_plant = {
+                executor.submit(process_plant, plant): plant["PlantName"] 
+                for plant in plants.iter_rows(named=True)
+            }
+            
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_plant):
+                plant_name = future_to_plant[future]
                 try:
-                    get_data(params)
-                    successful_plants.append(plant["PlantName"])
-                    print(f"Successfully processed plant: {plant['PlantName']}")
-                except TimeoutError as te:
-                    print(f"TIMEOUT: {str(te)}")
-                    failed_plants.append(plant["PlantName"])
-                except Exception as e:
-                    if "psycopg2.OperationalError" in str(e):
-                        print(f"-- OperationalError while fetching data for {plant['PlantName']} --")
-                        print("Traceback:", traceback.format_exc())
-                        failed_plants.append(plant["PlantName"])
-                        continue
+                    name, success = future.result()
+                    if success:
+                        successful_plants.append(name)
+                        print(f"Successfully processed plant: {name}")
                     else:
-                        print(f"Error processing plant {plant['PlantName']}: {str(e)}")
-                        failed_plants.append(plant["PlantName"])
-                finally:
-                    signal.alarm(0)  # Reset the alarm
-                    
-            except Exception as e:
-                print(f"Outer exception processing plant {plant['PlantName']}: {str(e)}")
-                failed_plants.append(plant["PlantName"])
-                continue
+                        failed_plants.append(name)
+                        print(f"Failed to process plant: {name}")
+                except Exception as e:
+                    failed_plants.append(plant_name)
+                    print(f"Exception during processing plant {plant_name}: {str(e)}")
         
         print("*"*50)
         print(f"-- Data Insertion to lpg_operations_data completed --")
@@ -284,7 +361,7 @@ if __name__=="__main__":
         print("-- Exception in fetching the operations data -- ")
         print("Traceback:", traceback.format_exc())
         
-        # Clean up on error
+        # Clean up on error - but only if there's a catastrophic failure
         try:
             creds = credential_loader.get_credentials('APP_DB')
             pg_conn = psycopg2.connect(
