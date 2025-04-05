@@ -85,6 +85,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
     Fetch data from database with both connection and query timeout handling,
     supporting chunked data retrieval for large datasets
     """    
+    query  = query.replace(";","")
     # Check connection with timeout
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(timeout)  # Connection timeout
