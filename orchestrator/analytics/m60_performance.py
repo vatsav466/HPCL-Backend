@@ -194,16 +194,26 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
     
-    def get_fiscal_year(date_ui,todays_date,same_year = False):
+    def get_fiscal_year(date_ui,todays_date,same_year = False,key = 'YTDPM'):
+        
         end_date_ = fiscal_year.FiscalDate.today()
-        end_date = helpers.get_time_stamp_by_delta(end_date_, days=1, with_month_start_day=False,
+        if key == 'YTDPM':
+            end_date = helpers.get_time_stamp_by_delta(end_date_, years=0,days=1, with_month_start_day=True,
                                                     date_time_format="%Y-%m-%d")
+        else:
+            end_date = helpers.get_time_stamp_by_delta(end_date_,days=1, with_month_start_day=False,
+                                                    date_time_format="%Y-%m-%d")
+        
         start_date = fiscal_year.FiscalYear.current().fiscal_year_start_date
         # For History
         start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
             "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
-        end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=False,
-                                                            date_time_format=None)
+        if key =='YTDPM':
+            end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=True,
+                                                                date_time_format=None)
+        else:
+            end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=False,
+                                                                date_time_format=None)
         end_date_history = end_date_history.strftime(
             "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
         if same_year:
@@ -390,9 +400,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
 
                 todays_date == str(datetime.date.today())
                 if todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]:
-                    start_date,end_date,start_date_history,end_date_history = get_fiscal_year(fiscal_year_ui,todays_date,same_year=True)
+                    start_date,end_date,start_date_history,end_date_history = get_fiscal_year(fiscal_year_ui,todays_date,same_year=True,key ='YTD')
                 else:
-                    start_date,end_date,start_date_history,end_date_history = get_fiscal_year(fiscal_year_ui,todays_date,same_year = False)
+                    start_date,end_date,start_date_history,end_date_history = get_fiscal_year(fiscal_year_ui,todays_date,same_year = False,key = 'YTD')
                 
             
         elif condition['key'].strip('"') == "FYC":
@@ -410,10 +420,18 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             
             if "fiscal_year" in [x['key'].strip('"') for x in filters]:
                 fiscal_year_ui = [x['value'] for x in filters if x['key'].strip('"') == "fiscal_year"][0]
+                print("todays_date.split('-')[0]",todays_date.split('-')[0])
+                print("fiscal_year_ui.split('-')[0]",fiscal_year_ui.split('-')[0])
+                
+                if (todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4') and todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]:
+                    print("in this data loop")
+                    return  {"status": False, "message": "No Data Present for the current selection",
+                "data": {'data': {'ACTUAL_TMT_SALES':{},'ACTUAL_HISTORY_TMT_SALES':{},'cumulative':{},'SBU_Name':{}}, 'level': {}, 'sales_unit': 'TMT'}}
                 if todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]:
-                    start_date,end_date,start_date_history,end_date_history = get_fiscal_year(fiscal_year_ui,todays_date,same_year=True)
+                    start_date,end_date,start_date_history,end_date_history = get_fiscal_year(fiscal_year_ui,todays_date,same_year=True,key ='YTDPM')
                 else:
-                    start_date,end_date,start_date_history,end_date_history = get_fiscal_year(fiscal_year_ui,todays_date,same_year = False)
+                    start_date,end_date,start_date_history,end_date_history = get_fiscal_year(fiscal_year_ui,todays_date,same_year = False,key ='YTDPM')
+                
             '''
             # Calculating start and end dates for YTD for both actual and history
             end_date_ = fiscal_year.FiscalDate.today()
@@ -807,9 +825,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                  'month_name': month_keys, 'sales_unit': measure_unit}}
         
         print("final_resp",final_resp)
-        if all(not v for v in final_resp.values()):
-            return {"status": False, "message": "No Data Present for the current selection", "data": {'data': final_resp, 'level': sorted_level,
-                                                               'month_name': month_keys, 'sales_unit': measure_unit}}    
+        if isinstance(final_resp,dict):
+            if all(not v for v in final_resp.values()):
+                return {"status": False, "message": "No Data Present for the current selection", "data": {'data': final_resp, 'level': sorted_level,
+                                                                'month_name': month_keys, 'sales_unit': measure_unit}}    
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys, 'sales_unit': measure_unit}}
     else:
