@@ -183,6 +183,9 @@ def insertToDB(data, table_name, indexing_col=()):
     pg_conn.commit()
     try:
         
+         cur.execute(f"""
+                    DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2025-2026'
+                    """)
         cur.execute(f"""
                     DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2024-2025'
                     """)
@@ -288,6 +291,31 @@ def get_and_insert_data(cursor, query, params=None):
     #lubes_ps_data = lubes_ps_data.merge(lubes_data[['SUPPLY_LOC','SALES_DISTRICT']],left_on = 'PLANT_CD',right_on = 'SUPPLY_LOC')
     lubes_ps_data['Zone_Name'] = lubes_ps_data['ZZONE'].map(zone_map)
     lubes_ps_data.to_csv('/tmp/lubes_ps_data.csv',index = False)
+    """
+    cursor.execute(f"""
+                   select * FROM CONN_ENT.ZSDCV_SO_PARAM_STG
+                   
+                   """)
+    lubes_ro_data = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    lubes_ro_data = pd.DataFrame.from_records(lubes_ro_data, columns=columns)
+    ro_di = {}
+    sa_di={}
+    for idx,row_data in lubes_ro_data.iterrows():
+        if row_data['SALES_OFFICE'] not in ro_di:
+            ro_di[row_data['SALES_OFFICE']] = row_data['SALES_OFFICE_DESC']
+        if row_data['SALES_GROUP'] not in sa_di:
+            sa_di[row_data['SALES_GROUP']] = row_data['SALES_GROUP_DESC']
+    lubes_ps_data['SA_CD'] = lubes_ps_data['SA_CD'].fillna('0').astype(str).apply(lambda x:x.split('.')[0] if '.' in x else x)
+    for each_sa in lubes_ps_data['SA_CD'].unique().tolist():
+        if each_sa in sa_di:
+            lubes_ps_data.loc[lubes_ps_data['SA_CD'] == each_sa,'SalesArea_Name']= sa_di[each_sa]
+    
+    for each_ro in lubes_ps_data['ORDER_COMPANY'].unique().tolist():
+        if each_ro in ro_di:
+            lubes_ps_data.loc[lubes_ps_data['ORDER_COMPANY'] == each_ro,'Region_Name']= ro_di[each_ro]
+    lubes_ps_data.to_csv('/tmp/lubes_latest_data.csv',index = False)
+    """	
     data = pd.concat([lubes_ps_data,data])
 
     
@@ -1071,8 +1099,6 @@ FROM (
 ) OrigView
 
 ORDER BY ORGSBUCD, DAY_ID;
-
-    
     """
     connection = get_db_connection(params)
     
