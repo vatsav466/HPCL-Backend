@@ -313,6 +313,75 @@ def process_plant(plant):
         return plant["PlantName"], False
     
     
+# if __name__=="__main__":
+#     try:
+#         plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")        
+#         successful_plants = []
+#         failed_plants = []
+        
+#         # Set up parallel processing
+#         max_workers = min(10, len(plants))  # Use up to 10 workers but not more than the number of plants
+#         print(f"Processing {len(plants)} plants using {max_workers} parallel workers")
+        
+#         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+#             # Submit all plants for processing
+#             future_to_plant = {
+#                 executor.submit(process_plant, plant): plant["PlantName"] 
+#                 for plant in plants.iter_rows(named=True)
+#             }
+            
+#             # Process results as they complete
+#             for future in concurrent.futures.as_completed(future_to_plant):
+#                 plant_name = future_to_plant[future]
+#                 try:
+#                     name, success = future.result()
+#                     if success:
+#                         successful_plants.append(name)
+#                         print(f"Successfully processed plant: {name}")
+#                     else:
+#                         failed_plants.append(name)
+#                         print(f"Failed to process plant: {name}")
+#                 except Exception as e:
+#                     failed_plants.append(plant_name)
+#                     print(f"Exception during processing plant {plant_name}: {str(e)}")
+        
+#         print("*"*50)
+#         print(f"-- Data Insertion to lpg_operations_data completed --")
+#         print(f"-- Successfully processed {len(successful_plants)} plants: {', '.join(successful_plants)}")
+#         print(f"-- Failed to process {len(failed_plants)} plants: {', '.join(failed_plants)}")
+#         print("*"*50)
+        
+#         # Only run summary generation if at least one plant was processed
+#         if successful_plants:
+#             generate_lpg_operations_summary.generate_summary()
+#         else:
+#             print("No plants were successfully processed, skipping summary generation")
+        
+#     except Exception as e:
+#         print("*-"*25)
+#         print("-- Exception in fetching the operations data -- ")
+#         print("Traceback:", traceback.format_exc())
+        
+#         # Clean up on error - but only if there's a catastrophic failure
+#         try:
+#             creds = credential_loader.get_credentials('APP_DB')
+#             pg_conn = psycopg2.connect(
+#                         host=creds["host"],
+#                         database=creds["database"],
+#                         user=creds["user"],
+#                         password=creds["password"],
+#                         port=int(creds["port"])
+#                     )
+#             cursor = pg_conn.cursor()
+#             query = f""" TRUNCATE lpg_operations_data; """
+#             cursor.execute(query)
+#             pg_conn.commit()
+#             cursor.close()
+#             pg_conn.close()
+#             print('-- Removed the data from lpg_operations_data table --')
+#         except Exception as cleanup_error:
+#             print(f"Error during cleanup: {str(cleanup_error)}")
+
 if __name__=="__main__":
     try:
         plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")        
@@ -323,27 +392,45 @@ if __name__=="__main__":
         max_workers = min(10, len(plants))  # Use up to 10 workers but not more than the number of plants
         print(f"Processing {len(plants)} plants using {max_workers} parallel workers")
         
+        # Add a timeout for the entire process
+        overall_timeout = 600  # 10 minutes total timeout
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all plants for processing
-            future_to_plant = {
-                executor.submit(process_plant, plant): plant["PlantName"] 
-                for plant in plants.iter_rows(named=True)
-            }
+            futures = {}
+            for plant in plants.iter_rows(named=True):
+                future = executor.submit(process_plant, plant)
+                futures[future] = plant["PlantName"]
             
             # Process results as they complete
-            for future in concurrent.futures.as_completed(future_to_plant):
-                plant_name = future_to_plant[future]
-                try:
-                    name, success = future.result()
-                    if success:
-                        successful_plants.append(name)
-                        print(f"Successfully processed plant: {name}")
-                    else:
-                        failed_plants.append(name)
-                        print(f"Failed to process plant: {name}")
-                except Exception as e:
-                    failed_plants.append(plant_name)
-                    print(f"Exception during processing plant {plant_name}: {str(e)}")
+            completed_futures = []
+            try:
+                for future in concurrent.futures.as_completed(futures, timeout=overall_timeout):
+                    completed_futures.append(future)
+                    plant_name = futures[future]
+                    try:
+                        name, success = future.result(timeout=60)  # 60-second timeout per plant result
+                        if success:
+                            successful_plants.append(name)
+                            print(f"Successfully processed plant: {name}")
+                        else:
+                            failed_plants.append(name)
+                            print(f"Failed to process plant: {name}")
+                    except concurrent.futures.TimeoutError:
+                        failed_plants.append(plant_name)
+                        print(f"Timeout waiting for result from plant: {plant_name}")
+                    except Exception as e:
+                        failed_plants.append(plant_name)
+                        print(f"Exception during processing plant {plant_name}: {str(e)}")
+            except concurrent.futures.TimeoutError:
+                # Overall timeout reached
+                print(f"Overall timeout of {overall_timeout} seconds reached. Cancelling remaining tasks.")
+                # Add any unprocessed plants to failed list
+                for future, plant_name in futures.items():
+                    if future not in completed_futures:
+                        failed_plants.append(plant_name)
+                        print(f"Cancelled processing for plant: {plant_name}")
+                        future.cancel()
         
         print("*"*50)
         print(f"-- Data Insertion to lpg_operations_data completed --")
