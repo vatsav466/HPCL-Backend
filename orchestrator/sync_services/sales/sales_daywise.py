@@ -291,7 +291,7 @@ def get_and_insert_data(cursor, query, params=None):
     #lubes_ps_data = lubes_ps_data.merge(lubes_data[['SUPPLY_LOC','SALES_DISTRICT']],left_on = 'PLANT_CD',right_on = 'SUPPLY_LOC')
     lubes_ps_data['Zone_Name'] = lubes_ps_data['ZZONE'].map(zone_map)
     lubes_ps_data.to_csv('/tmp/lubes_ps_data.csv',index = False)
-    """
+    '''
     cursor.execute(f"""
                    select * FROM CONN_ENT.ZSDCV_SO_PARAM_STG
                    
@@ -315,7 +315,7 @@ def get_and_insert_data(cursor, query, params=None):
         if each_ro in ro_di:
             lubes_ps_data.loc[lubes_ps_data['ORDER_COMPANY'] == each_ro,'Region_Name']= ro_di[each_ro]
     lubes_ps_data.to_csv('/tmp/lubes_latest_data.csv',index = False)
-    """	
+    '''
     data = pd.concat([lubes_ps_data,data])
 
     
