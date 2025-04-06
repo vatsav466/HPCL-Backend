@@ -183,7 +183,7 @@ def insertToDB(data, table_name, indexing_col=()):
     pg_conn.commit()
     try:
         
-         cur.execute(f"""
+        cur.execute(f"""
                     DELETE FROM "MOM_DAY_LEVEL_DATA" where "fiscal_year" ='2025-2026'
                     """)
         cur.execute(f"""
