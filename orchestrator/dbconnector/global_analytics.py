@@ -6687,7 +6687,7 @@ class GlobalAnalytics:
             
             # Prepare common aggregation operations
             agg_ops = [
-                pl.sum("unauthorized_count").alias("log_count")
+                pl.sum("unauthorized_count").alias("log_count"),
                 pl.sum("total_net_totalizer").alias("total_nettotalizer")
             ]
             
