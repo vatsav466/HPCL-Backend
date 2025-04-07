@@ -505,7 +505,7 @@ class Postgresql:
                             'interlock_name': interlock_name,
                             'severity': config['severity'].get(table_name, "Medium"),
                             'alert_id': str(uuid.uuid1()),
-                            'device_name': ', '.join(bcu_numbers),  # Since we're dealing with multiple BCUs
+                            'device_name': bcu_number,  # Since we're dealing with multiple BCUs
                             'device_type': 'Gantry',
                             'vehicle_number': '',  # This might need to be populated appropriately
                             'message': device_msg,
