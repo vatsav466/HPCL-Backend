@@ -5074,7 +5074,7 @@ class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
     date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     nettotalizer: Mapped[typing.Optional[float]] = mapped_column("nettotalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, date, nettotalizer, name="host_unauthorised_flow_bcunu_meter_times_start_endto_netto_sap"),)
+    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, date, name="host_unauthorised_flow_bcunu_meter_times_start_endto_netto_sap"),)
 
 
 class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5100,7 +5100,7 @@ class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date', 'nettotalizer']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date']
         search_fields = ['bay_number', 'bcu_number', 'meter_number', 'sap_id']
 
 
@@ -5127,7 +5127,7 @@ class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date', 'nettotalizer']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date']
         search_fields = ['bay_number', 'bcu_number', 'meter_number', 'sap_id']
 
 
