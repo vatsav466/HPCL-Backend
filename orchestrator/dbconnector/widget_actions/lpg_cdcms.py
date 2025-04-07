@@ -172,6 +172,9 @@ class LPGCDCMSActions:
             if conditions:
                 lpg_cdcms_sales_comparision_query_ += ' WHERE '
                 lpg_cdcms_sales_comparision_query_ += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            lpg_cdcms_sales_comparision_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_sales_comparision_query_, access_filters, drill_state)
             if _fy:
                 start_year, end_year = _fy.split("-")
                 prev_financial_year = f"{int(start_year) - 1}-{start_year}"
@@ -1874,12 +1877,12 @@ class LPGCDCMSActions:
                 daywise_overall_ctc_statistics_query_ += ' WHERE '
                 daywise_overall_ctc_statistics_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             daywise_overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_overall_ctc_statistics_query_, access_filters, drill_state)
             daywise_overall_ctc_statistics_query_ += ' GROUP BY TO_CHAR("Execution_Datetime", \'Month\'), "ZoneNames", "ROName", "SAName", "SubCategory" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             daywise_overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_overall_ctc_statistics_query_, access_filters, drill_state)
             daywise_overall_ctc_statistics_query_ += ' GROUP BY TO_CHAR("Execution_Datetime", \'Month\'), "ZoneNames", "ROName", "SAName", "SubCategory" '
         try:
@@ -2165,7 +2168,7 @@ class LPGCDCMSActions:
                 daywise_failure_stats_query_ += ' WHERE '
                 daywise_failure_stats_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             daywise_failure_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_failure_stats_query_, access_filters, drill_state)
             if not daterange and not drill_state == "financial_year":
                 daywise_failure_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
@@ -2177,7 +2180,7 @@ class LPGCDCMSActions:
                 daywise_failure_stats_query_ += ' GROUP BY "Month", "ZOName", "ROName", "SAName", "DistributorName", "PaymentErrorName", "Financial_Year" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             daywise_failure_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_failure_stats_query_, access_filters, drill_state)
             if not "where" in daywise_failure_stats_query_.lower() and not daterange and not drill_state == "financial_year":
                 daywise_failure_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
@@ -2339,7 +2342,7 @@ class LPGCDCMSActions:
                 daywise_exception_stats_query_ += ' WHERE '
                 daywise_exception_stats_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
             if not daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += ' AND "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
@@ -2351,7 +2354,7 @@ class LPGCDCMSActions:
                 daywise_exception_stats_query_ += ' GROUP BY "Month", "ZOName", "ROName", "SAName", "DistributorName", "ExceptionName", "Financial_Year" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             daywise_exception_stats_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_exception_stats_query_, access_filters, drill_state)
             if not "where" in daywise_exception_stats_query_.lower() and not daterange and not drill_state == "financial_year":
                 daywise_exception_stats_query_ += ' WHERE "Delivery_Date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "Delivery_Date" <= NOW() '
@@ -2428,14 +2431,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_consumers_query_ += ' AND '.join(conditions)
                         
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_central_consumers_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_central_consumers_query_, access_filters, drill_state)
             if not _fy:
                 lpg_cdcms_subsidy_central_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_central_consumers_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_central_consumers_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_subsidy_central_consumers_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_central_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
@@ -2542,14 +2545,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_transaction_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_central_transaction_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_central_transaction_query_, access_filters, drill_state)
             if not _fy:
                 lpg_cdcms_subsidy_central_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '            
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_central_transaction_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_central_transaction_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_subsidy_central_transaction_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_central_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
@@ -2656,14 +2659,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_central_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_central_amount_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_central_amount_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_central_amount_query_, access_filters, drill_state)
             if not _fy:
                 lpg_cdcms_subsidy_central_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_central_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_central_amount_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_central_amount_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_subsidy_central_amount_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_central_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
@@ -2770,14 +2773,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_consumers_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_consumers_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_consumers_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_consumers_query_, access_filters, drill_state)            
             if not _fy:
                 lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_consumers_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_consumers_query_, access_filters, drill_state)            
             if "where" not in lpg_cdcms_subsidy_state_consumers_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
@@ -2884,14 +2887,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_consumers_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_consumers_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_consumers_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_consumers_query_, access_filters, drill_state)
             if not _fy:
                 lpg_cdcms_subsidy_state_consumers_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_consumers_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_consumers_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_consumers_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_subsidy_state_consumers_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_consumers_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'                
@@ -2972,14 +2975,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_transaction_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_transaction_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_transaction_query_, access_filters, drill_state)
             if not _fy:
                 lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_transaction_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_transaction_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_subsidy_state_transaction_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
@@ -3086,14 +3089,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_transaction_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_transaction_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_transaction_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_transaction_query_, access_filters, drill_state)
             if not _fy:
                 lpg_cdcms_subsidy_state_transaction_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_transaction_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_transaction_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_transaction_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_subsidy_state_transaction_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_transaction_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
@@ -3174,14 +3177,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_amount_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_amount_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_amount_query_, access_filters, drill_state)
             if not _fy:
                 lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_amount_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_amount_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_subsidy_state_amount_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'
@@ -3288,14 +3291,14 @@ class LPGCDCMSActions:
                 lpg_cdcms_subsidy_state_amount_query_ += ' WHERE ' 
                 lpg_cdcms_subsidy_state_amount_query_ += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_amount_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_amount_query_, access_filters, drill_state)
             if not _fy:
                 lpg_cdcms_subsidy_state_amount_query_ += f' AND "Financial_Year" IN (\'{financial_year}\')'
             lpg_cdcms_subsidy_state_amount_query_ += ' GROUP BY "Financial_Year", "ConsumerType", "Month", "month_number", "ZOName", "ROName", "SAName", "DistributorName", "StateCode" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             lpg_cdcms_subsidy_state_amount_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(lpg_cdcms_subsidy_state_amount_query_, access_filters, drill_state)
             if "where" not in lpg_cdcms_subsidy_state_amount_query_.lower() and not _fy:
                 lpg_cdcms_subsidy_state_amount_query_ += f' WHERE "Financial_Year" IN (\'{financial_year}\')'

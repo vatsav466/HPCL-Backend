@@ -559,11 +559,11 @@ class DataMonitor:
             changed_data = {}  # To store only changed records per table
 
             # Special handling for HOST_UNAUTHORIZEDFLOW to calculate nettotalizer
-            if "HOST_UNAUTHORIZEDFLOW" in current_data and current_data["HOST_UNAUTHORIZEDFLOW"]:
-                current_data["HOST_UNAUTHORIZEDFLOW"] = self._calculate_nettotalizer(
-                    current_data["HOST_UNAUTHORIZEDFLOW"],
-                    self.previous_data.get("HOST_UNAUTHORIZEDFLOW", [])
-                )
+            # if "HOST_UNAUTHORIZEDFLOW" in current_data and current_data["HOST_UNAUTHORIZEDFLOW"]:
+            #     current_data["HOST_UNAUTHORIZEDFLOW"] = self._calculate_nettotalizer(
+            #         current_data["HOST_UNAUTHORIZEDFLOW"],
+            #         self.previous_data.get("HOST_UNAUTHORIZEDFLOW", [])
+            #     )
 
             for table_name, records in current_data.items():
                 if not isinstance(records, list):  # Ensure records are lists
@@ -613,64 +613,64 @@ class DataMonitor:
             print(traceback.format_exc())
             print(f"Error in compare_and_send: {e}")
 
-    def _calculate_nettotalizer(self, current_records, previous_records):
-        """
-        Calculate end_totalizer for HOST_UNAUTHORIZEDFLOW records by comparing
-        current records with previous records.
-        """
-        try:
-            # Create a dictionary of previous records indexed by BCU_NUMBER
-            prev_bcu_data = {}
-            for record in previous_records:
-                bcu_number = f"{record.get('BCU_NUMBER', '')}_{record.get('METER_NUMBER', '')}"
-                if bcu_number:
-                    # Store the record with the highest END_TOTALIZER for each BCU_NUMBER
-                    if (bcu_number not in prev_bcu_data or 
-                        float(record.get("END_TOTALIZER", 0)) > float(prev_bcu_data[bcu_number].get("END_TOTALIZER", 0))):
-                        prev_bcu_data[bcu_number] = record
+    # def _calculate_nettotalizer(self, current_records, previous_records):
+    #     """
+    #     Calculate end_totalizer for HOST_UNAUTHORIZEDFLOW records by comparing
+    #     current records with previous records.
+    #     """
+    #     try:
+    #         # Create a dictionary of previous records indexed by BCU_NUMBER
+    #         prev_bcu_data = {}
+    #         for record in previous_records:
+    #             bcu_number = f"{record.get('BCU_NUMBER', '')}_{record.get('METER_NUMBER', '')}"
+    #             if bcu_number:
+    #                 # Store the record with the highest END_TOTALIZER for each BCU_NUMBER
+    #                 if (bcu_number not in prev_bcu_data or 
+    #                     float(record.get("END_TOTALIZER", 0)) > float(prev_bcu_data[bcu_number].get("END_TOTALIZER", 0))):
+    #                     prev_bcu_data[bcu_number] = record
 
-            # Group current records by BCU_NUMBER
-            bcu_groups = {}
-            for record in current_records:
-                bcu_number = f"{record.get('BCU_NUMBER', '')}_{record.get('METER_NUMBER', '')}"
-                if bcu_number:
-                    bcu_groups.setdefault(bcu_number, []).append(record)
+    #         # Group current records by BCU_NUMBER
+    #         bcu_groups = {}
+    #         for record in current_records:
+    #             bcu_number = f"{record.get('BCU_NUMBER', '')}_{record.get('METER_NUMBER', '')}"
+    #             if bcu_number:
+    #                 bcu_groups.setdefault(bcu_number, []).append(record)
 
-            # Sort each group by timestamp and calculate end_totalizer
-            for bcu_number, group in bcu_groups.items():
-                # Sort the group by TIMESTAMP
-                sorted_group = sorted(group, key=lambda x: x.get("TIMESTAMP", ""))
+    #         # Sort each group by timestamp and calculate end_totalizer
+    #         for bcu_number, group in bcu_groups.items():
+    #             # Sort the group by TIMESTAMP
+    #             sorted_group = sorted(group, key=lambda x: x.get("TIMESTAMP", ""))
 
-                # Get the previous END_TOTALIZER value for this BCU_NUMBER
-                prev_end_totalizer = float(prev_bcu_data.get(bcu_number, {}).get("END_TOTALIZER", 0))
+    #             # Get the previous END_TOTALIZER value for this BCU_NUMBER
+    #             prev_end_totalizer = float(prev_bcu_data.get(bcu_number, {}).get("END_TOTALIZER", 0))
 
-                # Calculate end_totalizer for each record
-                for record in sorted_group:
-                    curr_net_totalizer = float(record.get("NET_TOTALIZER", 0))
-                    curr_end_totalizer = float(record.get("END_TOTALIZER", 0))  # Ensure default value
+    #             # Calculate end_totalizer for each record
+    #             for record in sorted_group:
+    #                 curr_net_totalizer = float(record.get("NET_TOTALIZER", 0))
+    #                 curr_end_totalizer = float(record.get("END_TOTALIZER", 0))  # Ensure default value
                     
-                    if prev_end_totalizer is None:
-                        # No previous record found for this BCU_NUMBER
-                        record["nettotalizer"] = curr_net_totalizer
-                    else:
-                        print("*" * 100)
-                        print("into else")
-                        print("curr_end_totalizer --> ", curr_end_totalizer)
-                        print("prev_end_totalizer --> ", prev_end_totalizer)
-                        print("*" * 100)
-                        # Use the difference from previous END_TOTALIZER
-                        record["nettotalizer"] = max(0, curr_end_totalizer - prev_end_totalizer) if prev_end_totalizer else 0
+    #                 if prev_end_totalizer is None:
+    #                     # No previous record found for this BCU_NUMBER
+    #                     record["nettotalizer"] = curr_net_totalizer
+    #                 else:
+    #                     print("*" * 100)
+    #                     print("into else")
+    #                     print("curr_end_totalizer --> ", curr_end_totalizer)
+    #                     print("prev_end_totalizer --> ", prev_end_totalizer)
+    #                     print("*" * 100)
+    #                     # Use the difference from previous END_TOTALIZER
+    #                     record["nettotalizer"] = max(0, curr_end_totalizer - prev_end_totalizer) if prev_end_totalizer else 0
 
-                    # Update previous values for next iteration
-                    prev_end_totalizer = curr_end_totalizer
+    #                 # Update previous values for next iteration
+    #                 prev_end_totalizer = curr_end_totalizer
 
-            # Flatten the groups back to a single list
-            return [record for group in bcu_groups.values() for record in group]
+    #         # Flatten the groups back to a single list
+    #         return [record for group in bcu_groups.values() for record in group]
 
-        except Exception as e:
-            print(f"Error calculating end_totalizer: {e}")
-            print(traceback.format_exc())
-            return current_records
+    #     except Exception as e:
+    #         print(f"Error calculating end_totalizer: {e}")
+    #         print(traceback.format_exc())
+    #         return current_records
 
     async def fetch_data(self):
         """

@@ -567,6 +567,8 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                 req_data['Data'].append(month_data)
 
             list2.append(req_data)
+        if len(data) == 0:
+            return {'message':'Industry_Performance_SBU_Level_Graphs','status':False,'data':list2,'company':unique_companies}
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':list2,'company':unique_companies}
 
     if '"table_graph"' in [x['key'] for x in filters]:
@@ -597,6 +599,8 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
                 "tmt": int(total_history)  # Total actual share
             }
             output_list.append(entry)
+        if len(output_list) ==0:
+            return {'message':'Industry_Performance_SBU_Level_Graphs','status':False,'data':output_list,'company':unique_companies}
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':output_list,'company':unique_companies}
 
         companies = [col.replace("actual_", "").replace("_share", "") for col in df.columns if col.startswith("actual_")]
@@ -625,6 +629,8 @@ def calculate_market_share(df, group_by, fiscal_year_pre, fiscal_year_last, dril
             for company, share in company_totals.items()
         ]
         '''
+        if len(output) == 0:
+            return {'message':'Industry_Performance_SBU_Level_Graphs','status':False,'data':output,'company':unique_companies}    
         return {'message':'Industry_Performance_SBU_Level_Graphs','status':True,'data':output,'company':unique_companies}
 
     if '"table_month"' in [x['key'] for x in filters]:
@@ -1168,6 +1174,11 @@ async def get_category_wise_cumulative_data(filters):
     df = pd.DataFrame(resp_data)
     df["sales"] = df["sales"].astype(str).apply(float)
     fiscal_years = sorted(df["fiscal_year"].unique())
+    if len(fiscal_years) ==1:
+        if fiscal_years[0] =='2023-2024':
+            fiscal_years.extend('2024-2025')
+        else:
+            fiscal_years.extend('2023-2024')
     result_dict = {year: {} for year in fiscal_years}
     for year in fiscal_years:
         filtered_df = df[df["fiscal_year"] == year]
