@@ -474,7 +474,7 @@ class Postgresql:
                     start_totalizer = float(record.get("start_totalizer", 0))
                     end_totalizer = float(record.get("end_totalizer", 0))
                     bcu_number = record.get("bcu_number", "")
-                    net_totalizer = float(record.get("nettotalizer", 0))
+                    net_totalizer = float(record.get("net_totalizer", 0))
                     
                     # Check if unauthorized flow should be triggered based on the difference
                     is_close_alert, interlock_name = await self.cal_unauthorized_flow(net_totalizer)
