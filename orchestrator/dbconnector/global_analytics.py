@@ -7802,6 +7802,7 @@ class GlobalAnalytics:
                 LEFT JOIN
                     alerts a ON a.interlock_name = 'Manual FAN printed more than 5% of total TT loaded'
                     AND DATE(a.created_at) = m.created_date
+                    AND a.device_name = m.total_manual_fan_count::VARCHAR
                 WHERE 
                     m.total_manual_fan_count != 0
                 GROUP BY 
