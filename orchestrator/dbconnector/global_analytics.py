@@ -6618,8 +6618,7 @@ class GlobalAnalytics:
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
                         break
-            query = """WITH unauthorized AS (
-                            SELECT 
+            query = """WITH unauthorized AS (SELECT 
                                 DATE(created_at) AS created_date,
                                 zone,
                                 location_name,
@@ -6644,7 +6643,7 @@ class GlobalAnalytics:
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
 
-            query += f"""SELECT 
+            query += f""") SELECT 
                                     u.created_date,
                                     u.zone,
                                     u.location_name,
