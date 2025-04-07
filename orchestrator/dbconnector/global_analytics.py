@@ -6395,14 +6395,12 @@ class GlobalAnalytics:
             else:
                 # Monthly aggregation - create month_year column once
                 resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key")
-                )
+                    pl.col("created_date").dt.strftime("%b").alias("month_year"))
                 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "sort_key"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
 
-                grouped_df = grouped_df.sort("sort_key", descending=False)
+                grouped_df = grouped_df.sort("month_year", descending=False)
                 
                 # Create result dictionary efficiently
                 result = {}
@@ -6620,19 +6618,19 @@ class GlobalAnalytics:
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
                         break
-            
             query = """WITH unauthorized AS (
-                SELECT 
-                    DATE(created_at) AS created_date,
-                    zone,
-                    location_name,
-                    sap_id,
-                    bcu_number,
-                    CAST(SUM(net_totalizer) AS FLOAT) AS total_net_totalizer
-                FROM 
-                    host_unauthorised_flow
-                WHERE 1=1
-            """
+                            SELECT 
+                                DATE(created_at) AS created_date,
+                                zone,
+                                location_name,
+                                sap_id,
+                                bcu_number,
+                                CAST(net_totalizer AS FLOAT) AS total_net_totalizer,
+                                ROW_NUMBER() OVER (PARTITION BY bcu_number ORDER BY created_at DESC) AS rn
+                            FROM 
+                                host_unauthorised_flow
+                            WHERE 1=1
+                """
             
             # Add zone filter if present
             if zone_filter:
@@ -6645,30 +6643,22 @@ class GlobalAnalytics:
             # Add date filter directly to SQL if applied
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
-            
-            query += f"""
-                                    GROUP BY 
-                                        DATE(created_at), zone, location_name, sap_id, bcu_number
-                                )
-                                SELECT 
+
+            query += = f"""SELECT 
                                     u.created_date,
                                     u.zone,
                                     u.location_name,
                                     u.sap_id,
                                     u.bcu_number,
-                                    COALESCE(COUNT(a.id), 0) AS alert_count,
-                                    u.total_net_totalizer
+                                    COUNT(*) AS unauthorized_count,
+                                    MAX(CASE WHEN u.rn = 1 THEN u.total_net_totalizer ELSE NULL END) AS latest_net_totalizer
                                 FROM 
                                     unauthorized u
-                                LEFT JOIN 
-                                    alerts a ON a.device_name = u.bcu_number 
-                                    AND a.interlock_name = 'Unauthorized flow_BCU'
-                                    AND DATE(a.created_at) = u.created_date
                                 GROUP BY 
-                                    u.created_date, u.zone, u.location_name, u.sap_id, u.bcu_number, u.total_net_totalizer
+                                    u.created_date, u.zone, u.location_name, u.sap_id, u.bcu_number
                                 ORDER BY 
-                                    u.created_date DESC, alert_count DESC
-            """
+                                    u.created_date DESC, unauthorized_count DESC;
+                        """
             
             # Execute query with parameters
             try:
@@ -6692,12 +6682,13 @@ class GlobalAnalytics:
                 resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             
             # Apply default date filter if needed
-            if not date:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
             
             # Prepare common aggregation operations
             agg_ops = [
+                pl.sum("unauthorized_count").alias("log_count"),
                 pl.sum("alert_count").alias("total_alerts"),
                 pl.sum("total_net_totalizer").alias("total_nettotalizer")
             ]
@@ -6716,6 +6707,7 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "bcu_number": row["bcu_number"],
+                        "log_count": row["log_count"],
                         "total_alerts": row["total_alerts"],
                         "total_net_totalizer": row["total_nettotalizer"]
                     }
@@ -6724,16 +6716,13 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly aggregation - create month_year column once
-                resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key")
-                )
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
                 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "sort_key"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
                 
                 # Sort by sort_key
-                grouped_df = grouped_df.sort("sort_key", descending=False)
+                grouped_df = grouped_df.sort("month_year", descending=False)
                 
                 # Convert to result format efficiently
                 result = {}
@@ -6744,6 +6733,7 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "bcu_number": row["bcu_number"],
+                        "log_count": row["unauthorized_count"],
                         "total_alerts": row["total_alerts"],
                         "total_net_totalizer": row["total_nettotalizer"]
                     }
@@ -6841,14 +6831,6 @@ class GlobalAnalytics:
             """
             
             print("query --> ", query)
-            
-            # Execute query
-            # Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
-            # Charts_Connection_Vault_RoutingParams.action = 'execute_query'
-
-            # try:
-            #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-            #     resp = await function(query=query)
             try:
                 resp = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
                 resp = resp.get('data', '')
@@ -6866,7 +6848,7 @@ class GlobalAnalytics:
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
 
             # Date filtering if not applied in SQL - default to last 30 days
-            if not date_filter_applied:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
@@ -6898,19 +6880,18 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
-                )
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
                 group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
-                grouped = resp_df.group_by(group_cols).agg(
+                grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity"),
                     pl.sum("total_loaded_qty").alias("total_loaded_quantity")
                 )
+                grouped_df = grouped_df.sort("month_year", descending=False)
 
                 result = {}
-                for row in grouped.iter_rows(named=True):
+                for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
                     entry = {
                         "zone": row["zone"],
@@ -7232,7 +7213,7 @@ class GlobalAnalytics:
                 resp_df = resp_df.filter(pl.col("load_number") == load_number)
             
             # Apply default date filter if needed
-            if not date:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
             
@@ -7280,11 +7261,8 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result, "graph_data": graph_dict}
             else:
                 # Create month_year column once
-                resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key")
-                )
-                
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
+                resp_df = resp_df.sort("month_year", descending=False)
                 # Create graph data for monthly view
                 graph_data = resp_df.group_by("month_year").agg([
                     pl.sum("alert_count").alias("total_alerts"),
@@ -7307,7 +7285,7 @@ class GlobalAnalytics:
                     pl.sum("total_required_qty").alias("total_required_quantity")
                 ])
                 # Sort by sort_key
-                grouped_df = grouped_df.sort("sort_key", descending=False)
+                grouped_df = grouped_df.sort("month_year", descending=False)
                 # Create result dictionary efficiently
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
@@ -7584,7 +7562,7 @@ class GlobalAnalytics:
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
 
             # Date filtering if not applied in SQL - default to last 30 days
-            if not date:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
@@ -7612,16 +7590,13 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key")
-                )
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "sort_key"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
-                grouped_df = grouped_df.sort("sort_key", descending=False)
+                grouped_df = grouped_df.sort("sortmonth_year_key", descending=False)
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
@@ -7828,13 +7803,12 @@ class GlobalAnalytics:
                     COALESCE(COUNT(a.id), 0) AS alert_count,
                     m.total_manual_fan_count,
                     m.total_count,
-                     MAX(a.device_msg) AS device_message
+                    MAX(a.device_msg) AS device_message
                 FROM 
                     manual_fan_data m
                 LEFT JOIN
                     alerts a ON a.interlock_name = 'Manual FAN printed more than 5% of total TT loaded'
                     AND DATE(a.created_at) = m.created_date
-                    AND a.location_name = m.location_name
                 WHERE 
                     m.total_manual_fan_count != 0
                 GROUP BY 
@@ -7869,7 +7843,7 @@ class GlobalAnalytics:
             ])
 
             # Apply date filter if not already applied
-            if not date:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
@@ -7899,7 +7873,7 @@ class GlobalAnalytics:
             
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key"))
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
                 group_cols = ["month_year", "zone", "sap_id", "location_name", "sort_key", "manual_fan_percentage"]
                 grouped_df = resp_df.group_by(group_cols).agg(
@@ -7907,7 +7881,7 @@ class GlobalAnalytics:
                     pl.sum("total_manual_fan_count").alias("total_manual_fan_count"),
                     pl.sum("total_count").alias("total_count")
                 )
-                grouped_df = grouped_df.sort("sort_key", descending=False)
+                grouped_df = grouped_df.sort("month_year", descending=False)
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
@@ -8208,7 +8182,7 @@ class GlobalAnalytics:
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
 
             # Date filtering if not applied in SQL - default to last 30 days
-            if not date:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
@@ -8242,19 +8216,16 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key")
-                )
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "sort_key"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_required_qty").alias("total_required_quantity"),
                     pl.sum("total_loaded_qty").alias("total_loaded_quantity"),
                     pl.sum("qty_difference").alias("total_quantity_difference")
                 )
-                grouped_df = grouped_df.sort("sort_key", descending=False)
+                grouped_df = grouped_df.sort("month_year", descending=False)
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
@@ -8375,7 +8346,7 @@ class GlobalAnalytics:
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
 
             # Date filtering if not applied in SQL - default to last 30 days
-            if not date:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
@@ -8403,17 +8374,16 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year")
-                )
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
                 group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
-                grouped = resp_df.group_by(group_cols).agg(
+                grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
+                grouped_df = grouped_df.sort("month_year", descending=False)
 
                 result = {}
-                for row in grouped.iter_rows(named=True):
+                for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
                     entry = {
                         "zone": row["zone"],
@@ -8703,7 +8673,7 @@ class GlobalAnalytics:
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
 
             # Date filtering if not applied in SQL - default to last 30 days
-            if not date:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
@@ -8733,17 +8703,14 @@ class GlobalAnalytics:
                 return {"status": True, "message": "success", "daily_data": result}
             else:
                 # Monthly Data Aggregation
-                resp_df = resp_df.with_columns(
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),
-                    pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key"),
-                )
+                resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number", "sort_key"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
 
-                grouped_df = grouped_df.sort("sort_key", descending=False)
+                grouped_df = grouped_df.sort("month_year", descending=False)
 
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
