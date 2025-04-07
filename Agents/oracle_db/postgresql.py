@@ -106,12 +106,14 @@ class Postgresql:
             return False, "No alert needed", f"Manual percentage: {manual_percentage:.2f}% is within threshold of 5%"
 
 
-    async def cal_unauthorized_flow(self, total_net):
+    async def cal_unauthorized_flow(self, net_totalizer):
         """
-        Calculate if unauthorized flow alert should be created based on total net totalizer value.
+        Calculate if unauthorized flow alert should be created based on the difference
+        between end_totalizer and start_totalizer values.
 
         Parameters:
-        total_net (float): The total net totalizer value.
+        start_totalizer (float): The start totalizer value.
+        end_totalizer (float): The end totalizer value.
 
         Returns:
         tuple: A tuple containing a boolean indicating if an alert is needed, and a string
@@ -119,7 +121,7 @@ class Postgresql:
             of the tuple is True and the second element is the interlock name. If an alert
             is not needed, the first element is None and the second element is also None.
         """
-        if total_net > 5:
+        if net_totalizer > 5:
             return True, "Unauthorized flow_BCU"
         return None, None
 
@@ -326,8 +328,8 @@ class Postgresql:
             processed_data = sap_id_data
 
             # Specific processing for different table types
-            if table_db_name == 'host_unauthorised_flow':
-                processed_data = [x for x in processed_data if x['nettotalizer'] > 0]
+            # if table_db_name == 'host_unauthorised_flow':
+            #     processed_data = [x for x in processed_data if x['nettotalizer'] > 0]
             
             if table_db_name == 'host_manual_fan_printed':
                 # Step 1: Check if we need to process EOD record
@@ -465,52 +467,65 @@ class Postgresql:
                 else:
                     return {"status": "No non-zero records to process for alerts"}
 
-            # Alert processing for unauthorized flow
             if table_db_name == 'host_unauthorised_flow':
                 unauthorised_records = resp.get("data", [])
-                # Compute the total sum of all nettotalizer values
-                total_net = sum(float(record.get("nettotalizer", 0)) for record in unauthorised_records if float(record.get("nettotalizer", 0)) != 0)
-                # Extract unique BCU numbers
-                bcu_numbers = sorted(set(record.get("bcu_number", "") for record in unauthorised_records))
-
-                # Check if unauthorized flow should be triggered based on total_net
-                is_close_alert, interlock_name = await self.cal_unauthorized_flow(total_net)
-
-                # Construct device message
-                device_msg = f"BCU Numbers: {', '.join(bcu_numbers)}, Total Net Totalizer: {total_net}"
-
-                # Create and close the alert if needed
-                if unauthorised_records and is_close_alert:
-                    # Use the first record for necessary data
-                    first_record = unauthorised_records[0]
-                    alert_data = {
-                        'bu': 'TAS',
-                        'sop_id': config['sop_id'].get(table_name),
-                        'sap_id': first_record.get('sap_id'),
-                        'interlock_name': interlock_name,
-                        'severity': config['severity'].get(table_name, "Medium"),
-                        'alert_id': str(uuid.uuid1()),
-                        'device_name': ', '.join(bcu_numbers),  # Since we're dealing with multiple BCUs
-                        'device_type': 'Gantry',
-                        'vehicle_number': '',  # This might need to be populated appropriately
-                        'message': device_msg,
-                        'alert_section': 'TAS'
-                    }
+                # Check each record for unauthorized flow
+                for record in unauthorised_records:
+                    start_totalizer = float(record.get("start_totalizer", 0))
+                    end_totalizer = float(record.get("end_totalizer", 0))
+                    bcu_number = record.get("bcu_number", "")
+                    net_totalizer = float(record.get("nettotalizer", 0))
                     
-                    # Create Alert
-                    success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
-                    print("msg :", msg)
+                    # Check if unauthorized flow should be triggered based on the difference
+                    is_close_alert, interlock_name = await self.cal_unauthorized_flow(net_totalizer)
                     
-                    # Close alert if needed
-                    if success and is_close_alert:
-                        await self.close_created_alert(alert_data=alert_data)
+            # # Alert processing for unauthorized flow
+            # if table_db_name == 'host_unauthorised_flow':
+            #     unauthorised_records = resp.get("data", [])
+            #     # Compute the total sum of all nettotalizer values
+            #     total_net = sum(float(record.get("nettotalizer", 0)) for record in unauthorised_records if float(record.get("nettotalizer", 0)) != 0)
+            #     # Extract unique BCU numbers
+            #     bcu_numbers = sorted(set(record.get("bcu_number", "") for record in unauthorised_records))
+
+            #     # Check if unauthorized flow should be triggered based on total_net
+            #     is_close_alert, interlock_name = await self.cal_unauthorized_flow(total_net)
+
+                    # Construct device message
+                    # device_msg = f"BCU Numbers: {', '.join(bcu_numbers)}, Total Net Totalizer: {total_net}"
+                    device_msg = f"BCU Numbers: {bcu_number}, Total Net Totalizer: {net_totalizer}"
+
+                    # Create and close the alert if needed
+                    if unauthorised_records and is_close_alert:
+                        # Use the first record for necessary data
+                        first_record = unauthorised_records[0]
+                        alert_data = {
+                            'bu': 'TAS',
+                            'sop_id': config['sop_id'].get(table_name),
+                            'sap_id': first_record.get('sap_id'),
+                            'interlock_name': interlock_name,
+                            'severity': config['severity'].get(table_name, "Medium"),
+                            'alert_id': str(uuid.uuid1()),
+                            'device_name': ', '.join(bcu_numbers),  # Since we're dealing with multiple BCUs
+                            'device_type': 'Gantry',
+                            'vehicle_number': '',  # This might need to be populated appropriately
+                            'message': device_msg,
+                            'alert_section': 'TAS'
+                        }
                         
-                    # Update all records as alert_created = true
-                    for record in unauthorised_records:
-                        query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
-                        await model.update_by_query(query)
+                        # Create Alert
+                        success, msg = await alert_factory.AlertFactory.create_alert(alert_data)
+                        print("msg :", msg)
                         
-                    return {"status": "Unauthorized flow alerts processed"}
+                        # Close alert if needed
+                        if success and is_close_alert:
+                            await self.close_created_alert(alert_data=alert_data)
+                            
+                        # Update all records as alert_created = true
+                        for record in unauthorised_records:
+                            query = f"update {table_db_name} set alert_created = true where id = {record['id']}"
+                            await model.update_by_query(query)
+                            
+                        return {"status": "Unauthorized flow alerts processed"}
 
             # Existing alert processing for other table types
             if resp.get("data", []):
