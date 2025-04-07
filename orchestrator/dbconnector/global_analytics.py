@@ -6361,7 +6361,7 @@ class GlobalAnalytics:
             if bcu_number: 
                 resp_df = resp_df.filter(pl.col("bcu_number") == bcu_number)
             # Apply default date filter if needed
-            if not date:
+            if not date and date_filter_applied:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
             
@@ -6392,46 +6392,19 @@ class GlobalAnalytics:
                     result.setdefault(created_date, []).append(entry)
                 
                 return {"status": True, "message": "success", "daily_data": result}
-            # else:
-            #     # Monthly aggregation - create month_year column once
-            #     resp_df = resp_df.with_columns(
-            #         pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),
-            #         pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key")
-            #     )
-                
-            #     group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "sort_key"]
-            #     grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
-
-            #     grouped_df = grouped_df.sort("sort_key", descending=False)
-                
-            #     # Create result dictionary efficiently
-            #     result = {}
-            #     for row in grouped_df.iter_rows(named=True):
-            #         month = row["month_year"]
-            #         entry = {
-            #             "zone": row["zone"],
-            #             "sap_id": row["sap_id"],
-            #             "location_name": row["location_name"],
-            #             "bcu_number": row["bcu_number"],
-            #             "total_alerts": row["total_alerts"],
-            #             "total_loaded_qty": row["total_loaded"]
-            #         }
-            #         result.setdefault(month, []).append(entry)
-            
             else:
-                # Monthly Data Aggregation
+                # Monthly aggregation - create month_year column once
                 resp_df = resp_df.with_columns(
                     pl.col("created_date").dt.strftime("%Y-%m").alias("month_year"),
                     pl.col("created_date").dt.strftime("%Y-%m").alias("sort_key")
                 )
-
+                
                 group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "sort_key"]
-                grouped_df = resp_df.group_by(group_cols).agg(
-                    pl.sum("alert_count").alias("total_alerts"),
-                    pl.sum("total_loaded_qty").alias("total_loaded")
-                )
-                grouped_df = grouped_df.sort("sort_key", descending=False)
+                grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
 
+                grouped_df = grouped_df.sort("sort_key", descending=False)
+                
+                # Create result dictionary efficiently
                 result = {}
                 for row in grouped_df.iter_rows(named=True):
                     month = row["month_year"]
@@ -6444,8 +6417,7 @@ class GlobalAnalytics:
                         "total_loaded_qty": row["total_loaded"]
                     }
                     result.setdefault(month, []).append(entry)
-                return {"status": True, "message": "success", "monthly_data": result}
-                
+            
                 return {"status": True, "message": "success", "monthly_data": result}
 
         except Exception as e:
