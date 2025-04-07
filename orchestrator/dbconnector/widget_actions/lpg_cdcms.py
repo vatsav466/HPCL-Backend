@@ -1413,9 +1413,15 @@ class LPGCDCMSActions:
             if conditions:
                 total_consumers_query_  += ' WHERE '
                 total_consumers_query_  += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            total_consumers_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(total_consumers_query_, access_filters, drill_state)
             total_consumers_query_ +=  ' AND "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL '
             total_consumers_query_  += ' GROUP BY "ZOName" ,"ROName","SAName","Category","SubCategory" ,"JDEDistributorCode"'
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            total_consumers_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(total_consumers_query_, access_filters, drill_state)
             if not "where" in total_consumers_query_.lower():
                 total_consumers_query_ +=  ' WHERE "Category" NOT IN (\'Others\') AND "ZOName" IS NOT NULL'
             else:
@@ -1522,9 +1528,15 @@ class LPGCDCMSActions:
             if conditions:
                 ekyc_statistics_query_ += ' WHERE '
                 ekyc_statistics_query_ += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            ekyc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(ekyc_statistics_query_, access_filters, drill_state)
             ekyc_statistics_query_ += f'  AND "ZOName"  NOT IN ( \'Null\') '
             ekyc_statistics_query_ += ' GROUP BY   "ROName","SAName" ,"JDEDistributorCode","ZOName" '
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            ekyc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(ekyc_statistics_query_, access_filters, drill_state)
             if not "where" in ekyc_statistics_query_.lower():
                 ekyc_statistics_query_ += f' WHERE "ZOName"  NOT IN ( \'Null\')'
             else:
@@ -1627,9 +1639,15 @@ class LPGCDCMSActions:
             if conditions:
                 total_suvidha_query_  += ' WHERE '
                 total_suvidha_query_  += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            total_suvidha_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(total_suvidha_query_, access_filters, drill_state)
             total_suvidha_query_ +=  ' AND "Category" = \'Domestic\' AND "ZOCode" NOT IN (\'Null\') AND "SubCategory" IN (\'NPMUY\',\'PMUY\')'
             total_suvidha_query_  += ' GROUP BY "ZOName", "ROName", "SAName", "SubCategory", "Category", "JDEDistributorCode"'
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            total_suvidha_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(total_suvidha_query_, access_filters, drill_state)
             if "where" not in total_suvidha_query_.lower():
                 total_suvidha_query_ +=  ' WHERE "Category" = \'Domestic\''
             else:
@@ -1740,9 +1758,15 @@ class LPGCDCMSActions:
             if conditions:
                 overall_ctc_statistics_query_ += ' WHERE '
                 overall_ctc_statistics_query_ += ' AND '.join(conditions)
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(overall_ctc_statistics_query_, access_filters, drill_state)
             overall_ctc_statistics_query_  += f' AND "ZOName"  NOT IN ( \'Null\') AND "Category" NOT IN (\'Others\')'
             overall_ctc_statistics_query_ += ' GROUP BY "Category", "ZOName", "ROName", "SAName", "JDEDistributorCode"'
         else:
+            access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            overall_ctc_statistics_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(overall_ctc_statistics_query_, access_filters, drill_state)
             if not "where" in overall_ctc_statistics_query_.lower():
                 overall_ctc_statistics_query_  += f' WHERE "ZOName"  NOT IN ( \'Null\') AND "Category" NOT IN (\'Others\')'
             else:
