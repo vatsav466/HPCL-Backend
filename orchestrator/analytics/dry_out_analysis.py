@@ -1366,6 +1366,8 @@ async def get_ro_count_less_50(condition):
         query=query
     )
     resp = pd.DataFrame(resp)
+    if resp.empty:
+        resp = pd.DataFrame({"sap_id": [], "created_at": []})
     resp['sap_id'] = resp['sap_id'].astype(str)
 
     resp = pd.merge(

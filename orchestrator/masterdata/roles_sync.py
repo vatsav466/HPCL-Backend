@@ -685,7 +685,6 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
-                                    "LPG Analytics",
                                     "Video Analytics"
                                 ]
                             }
@@ -715,7 +714,6 @@ async def sync_user_roles():
                                 "allowed_sub_menus": [
                                     "LPG Operations",
                                     "LPG Plant",
-                                    "LPG Analytics",
                                     "Video Analytics"
                                 ]
                             }
