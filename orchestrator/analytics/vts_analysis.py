@@ -295,13 +295,13 @@ async def get_instance(tt_number: str, get_raw_data=False):
     vts_truck_data = await hpcl_ceg_model.VtsTruckDetails.get_aggr_data(query, limit=0)
     if get_raw_data:
         return vts_truck_data.get("data", [])
-    if not vts_truck_data:
+    if not vts_truck_data.get("data", []):
         return "0"
     vts_truck_data = vts_truck_data.get("data", [])[0]
     print(vts_truck_data)
     if not vts_truck_data['instance_1']:
         return "0"
-    if not vts_truck_data['instance_1']:
+    if not vts_truck_data['instance_2']:
         return "1"
     return "2"
 

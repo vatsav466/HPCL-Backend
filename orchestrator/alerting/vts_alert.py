@@ -44,6 +44,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
         if not status:
             logger.info(f"Error in finding location {alert_data['location_id']} "
                         f"for bu {alert_data['location_type']} - {location_details}")
+            location_details = {'name': ""}
 
         instance_data, violation_name, vts_alert_history_ids = await vts_analysis.get_vts_instance(alert_data['tl_number'])
         if not instance_data:
@@ -135,6 +136,7 @@ class VTSAlertManager(alert_factory.AlertFactory):
             if not status:
                 logger.info(f"Error in finding location {alert_data['location_id']} "
                             f"for bu {alert_data['location_type']} - {location_details}")
+                location_details = {'name': ""}
                 return
             # Processing alert for each record
             recv_time = datetime.datetime.now(tz=datetime.timezone.utc)

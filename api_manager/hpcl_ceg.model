@@ -1250,7 +1250,7 @@ Model VtsAlertHistory {
     vendor_id optional str
     location_id optional str
     location_type optional str
-    tl_number str
+    tl_number unique_field index_field str
     report_duration optional str
     vts_start_datetime optional datetime
     vts_end_datetime optional datetime
@@ -1267,7 +1267,7 @@ Model VtsAlertHistory {
     approved_by optional str
     auto_unblock optional bool
     alert_id optional str
-    invoice_number optional str
+    invoice_number optional unique_field index_field str
     tt_type optional str
     violation_type optional list str
 
@@ -1833,7 +1833,7 @@ Model HostUnauthorisedFlow {
     alert_created optional bool
     date optional unique_field date
     date_time optional datetime
-    nettotalizer optional unique_field float
+    nettotalizer optional float
 
     Config=> {
         access_key_mapping=''

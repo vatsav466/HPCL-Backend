@@ -17,7 +17,7 @@ Enum AlertStatus str {
 Model vtsData internal {
     vendor_id str
     location_id str
-    location_type optional BusinessUnit
+    location_type str
     tl_number str
     report_duration str
     total_trips optional int

@@ -3051,7 +3051,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     vendor_id: Mapped[typing.Optional[str]] = mapped_column("vendor_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_id: Mapped[typing.Optional[str]] = mapped_column("location_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     location_type: Mapped[typing.Optional[str]] = mapped_column("location_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    tl_number: Mapped[str] = mapped_column("tl_number", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
+    tl_number: Mapped[str] = mapped_column("tl_number", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     report_duration: Mapped[typing.Optional[str]] = mapped_column("report_duration", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     vts_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vts_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     vts_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("vts_end_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
@@ -3068,9 +3068,11 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     approved_by: Mapped[typing.Optional[str]] = mapped_column("approved_by", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     auto_unblock: Mapped[typing.Optional[bool]] = mapped_column("auto_unblock", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     alert_id: Mapped[typing.Optional[str]] = mapped_column("alert_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    invoice_number: Mapped[typing.Optional[str]] = mapped_column("invoice_number", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[typing.List[str]]] = mapped_column("violation_type", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(tl_number, invoice_number, name="vts_alert_history_tl_number_invoice_number"),)
 
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3105,7 +3107,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
-        upsert_keys = []
+        upsert_keys = ['tl_number', 'invoice_number']
         access_key_mapping = ['location_id:sap_id']
 
 
@@ -3141,7 +3143,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
-        upsert_keys = []
+        upsert_keys = ['tl_number', 'invoice_number']
         access_key_mapping = ['location_id:sap_id']
 
 
@@ -5072,7 +5074,7 @@ class HostUnauthorisedFlowSchema(UrdhvaPostgresBase):
     date_time: Mapped[typing.Optional[datetime.datetime]] = mapped_column("date_time", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     nettotalizer: Mapped[typing.Optional[float]] = mapped_column("nettotalizer", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, date, nettotalizer, name="host_unauthorised_flow_bcunu_meter_times_start_endto_netto_sap"),)
+    __table_args__ = (UniqueConstraint(bcu_number, meter_number, timestamp, start_totalizer, end_totalizer, net_totalizer, sap_id, date, name="host_unauthorised_flow_bcunu_meter_times_start_endto_netto_sap"),)
 
 
 class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5098,7 +5100,7 @@ class HostUnauthorisedFlowCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date', 'nettotalizer']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date']
         search_fields = ['bay_number', 'bcu_number', 'meter_number', 'sap_id']
 
 
@@ -5125,7 +5127,7 @@ class HostUnauthorisedFlow(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = HostUnauthorisedFlowSchema
-        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date', 'nettotalizer']
+        upsert_keys = ['bcu_number', 'meter_number', 'timestamp', 'start_totalizer', 'end_totalizer', 'net_totalizer', 'sap_id', 'date']
         search_fields = ['bay_number', 'bcu_number', 'meter_number', 'sap_id']
 
 
