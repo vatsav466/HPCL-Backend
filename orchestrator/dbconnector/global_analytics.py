@@ -3808,7 +3808,7 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         try:
             lpg_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary"
-            master_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_masters"
+            master_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_plant_operations_masters"
             df = await function(query=lpg_query)
             master_df = await function(query=master_query)
             df = pl.DataFrame(df)
@@ -5003,7 +5003,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        _query = ''' select * from lpg_operations_masters '''
+        _query = ''' select * from lpg_plant_operations_masters '''
         access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
         _query =  await widget_actions.WidgetActions.apply_filter_drilldown(_query, access_filters, drill_state)
