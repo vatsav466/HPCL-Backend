@@ -6727,7 +6727,7 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "bcu_number": row["bcu_number"],
-                        "log_count": row["unauthorized_count"],
+                        "log_count": row["log_count"],
                         "total_net_totalizer": row["latest_net_totalizer"]
                     }
                     result.setdefault(month, []).append(entry)
