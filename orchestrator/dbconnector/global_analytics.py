@@ -6644,7 +6644,7 @@ class GlobalAnalytics:
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
 
-            query += = f"""SELECT 
+            query += f"""SELECT 
                                     u.created_date,
                                     u.zone,
                                     u.location_name,
