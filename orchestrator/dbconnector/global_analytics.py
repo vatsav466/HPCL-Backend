@@ -6686,14 +6686,11 @@ class GlobalAnalytics:
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
             
             # Prepare common aggregation operations
-            agg_ops = [
-                pl.sum("unauthorized_count").alias("log_count"),
-                pl.sum("total_net_totalizer").alias("total_nettotalizer")
-            ]
+            agg_ops = [pl.sum("unauthorized_count").alias("log_count")]
             
             if date:
                 # Daily aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number", "latest_net_totalizer"]
                 grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
                 
                 # Convert to result format efficiently
@@ -6706,7 +6703,7 @@ class GlobalAnalytics:
                         "location_name": row["location_name"],
                         "bcu_number": row["bcu_number"],
                         "log_count": row["log_count"],
-                        "total_net_totalizer": row["total_nettotalizer"]
+                        "total_net_totalizer": row["latest_net_totalizer"]
                     }
                     result.setdefault(created_date, []).append(entry)
                 
@@ -6715,7 +6712,7 @@ class GlobalAnalytics:
                 # Monthly aggregation - create month_year column once
                 resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
                 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "latest_net_totalizer"]
                 grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
                 
                 # Sort by sort_key
@@ -6731,7 +6728,7 @@ class GlobalAnalytics:
                         "location_name": row["location_name"],
                         "bcu_number": row["bcu_number"],
                         "log_count": row["unauthorized_count"],
-                        "total_net_totalizer": row["total_nettotalizer"]
+                        "total_net_totalizer": row["latest_net_totalizer"]
                     }
                     result.setdefault(month, []).append(entry)
                 
