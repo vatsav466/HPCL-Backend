@@ -7875,7 +7875,7 @@ class GlobalAnalytics:
                 # Monthly Data Aggregation
                 resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "sort_key", "manual_fan_percentage"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "manual_fan_percentage"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts"),
                     pl.sum("total_manual_fan_count").alias("total_manual_fan_count"),
