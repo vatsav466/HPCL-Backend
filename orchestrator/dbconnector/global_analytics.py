@@ -5004,6 +5004,9 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         _query = ''' select * from lpg_operations_masters '''
+        access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+        _query =  await widget_actions.WidgetActions.apply_filter_drilldown(_query, access_filters, drill_state)
         resp = await function(query=_query)
         df = pl.from_pandas(pd.DataFrame(resp))
         _filters = []
