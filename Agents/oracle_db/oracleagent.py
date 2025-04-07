@@ -23,13 +23,15 @@ dtype_map = {
     'Datetime': 'DATE',
     'Utf8': 'NVARCHAR2(255)',
     "Datetime(time_unit='us', time_zone=None)": 'DATE'
-}
+   }
 
 with open("config.json", "r", encoding="utf-8") as config_file:
     config = json.load(config_file)
 
 # Extract configuration
 oracle_config = config["oracle"]
+oracle_config["opcdaipmapp"] = config.get("opcdaipmapp", {})
+oracle_config["opcdaservicepath"] = config.get("opcdaservicepath", "")
 table_names = config["oracle_tables"]
 sap_id = config.get("sap_id", "")  # Safely get sap_id with default
 
@@ -50,7 +52,53 @@ class Oracle(BaseAction):
     # [Oracle class code remains the same]
     def __init__(self, params: typing.Dict):
         super().__init__(params)
-
+        
+        # Only use OPC DA IP mapping from file
+        if 'opcdaipmapp' not in self.params or 'opcdaservicepath' not in self.params:
+            raise ValueError("OPC DA IP mapping configuration is required (opcdaipmapp and opcdaservicepath)")
+            
+        try:
+            # Get current OPC DA IP from service file
+            current_opcda_ip = self._get_current_opcda_ip()
+            if not current_opcda_ip:
+                raise ValueError("Could not determine OPC DA IP from service file")
+                
+            # Get mapped Oracle IP
+            oracle_ip = self.params['opcdaipmapp'].get(current_opcda_ip)
+            if not oracle_ip:
+                raise ValueError(f"No Oracle IP mapping found for OPC DA IP {current_opcda_ip}")
+                
+            self.params['host'] = oracle_ip
+            print(f"Using Oracle IP: {oracle_ip} (mapped from OPC DA IP {current_opcda_ip})")
+            
+        except Exception as e:
+            raise ValueError(f"OPC DA IP mapping failed: {str(e)}")
+    
+    def _get_current_opcda_ip(self):
+        """Read current OPC DA IP from service file"""
+        try:
+            opcda_path = self.params['opcdaservicepath']
+            # Normalize path for Windows
+            # opcda_path = opcda_path.replace('/', '\')
+            
+            print(f"Reading OPC DA IP from file: {opcda_path}")
+            
+            with open(opcda_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith("ip="):
+                        ip = line.split("=")[1].strip()
+                        if ip:
+                            print(f"Found OPC DA IP: {ip}")
+                            return ip
+                            
+            raise ValueError("No valid IP found in OPC DA service file (looking for line starting with 'ip=')")
+            
+        except FileNotFoundError:
+            raise ValueError(f"OPC DA service file not found at: {opcda_path}")
+        except Exception as e:
+            raise ValueError(f"Error reading OPC DA service file: {str(e)}")
+    
     async def get_connection(self):
         self.params['dns'] = f"{self.params['host']}:{self.params['port']}"
 
