@@ -404,7 +404,7 @@ class Postgresql:
                 query = f"""select * from "{table_db_name}" where date::DATE = '{to_date}' and manual_fan_count !=0 and sap_id = '{sap_id}' and alert_created = false order by date_time asc"""
             
             if table_db_name == 'host_unauthorised_flow':
-                query = f"""select * from "{table_db_name}" where alert_created = false and sap_id = '{sap_id}' and nettotalizer > 0"""
+                query = f"""select * from "{table_db_name}" where alert_created = false and sap_id = '{sap_id}' and net_totalizer > 0"""
 
             resp = await model.get_aggr_data(query)
 
