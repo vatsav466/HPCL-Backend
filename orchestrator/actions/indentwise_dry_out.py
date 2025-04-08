@@ -188,12 +188,24 @@ class IndentDryOut:
                     # else check with indent_no from ims
                     query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
                              f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
-                             f"indent_no='{each_indent["INDENT_NO"]}' and alert_status in ('Open', 'InProgress', 'Close') and "
+                             f"indent_no='{each_indent["INDENT_NO"]}' and alert_status in ('Close') and "
                              f"product_code='{self.params["product_code"]}'")
                     alerts_data = await hpcl_ceg_model.Alerts.get_aggr_data(query)
+
+                    query = (f"select id,dry_out_in_days from alerts where bu='RO' and "
+                             f"interlock_name='Dry Out Each Indent Wise MainFlow' and sap_id='{self.params["sap_id"]}' and "
+                             f"alert_status != 'Close' and "
+                             f"product_code='{self.params["product_code"]}'")
+                    alerts_data_1 = await hpcl_ceg_model.Alerts.get_aggr_data(query)
                     # checking with indent_no from ims
                     if alerts_data['data']:
                         for record in alerts_data['data']:
+                            # if record['dry_out_in_days'] != self.params['dry_out_in_days']:
+                            query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
+                                     f"where id='{record['id']}'")
+                            await hpcl_ceg_model.Alerts.update_by_query(query)
+                    elif alerts_data_1['data']:
+                        for record in alerts_data_1['data']:
                             # if record['dry_out_in_days'] != self.params['dry_out_in_days']:
                             query = (f"update alerts set dry_out_in_days='{self.params["dry_out_in_days"]}' "
                                      f"where id='{record['id']}'")
