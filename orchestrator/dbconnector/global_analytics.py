@@ -8569,15 +8569,15 @@ class GlobalAnalytics:
             # Check if zone or plant filters are present
             zone_filter = ''
             plant_filter = ''
-            reassigned_bay = ''
+            assigned_bay = ''
             if filters:
                 for filter in filters:
                     if "zone" in filter.key:
                         zone_filter = filter.value
                     if "plant" in filter.key:
                         plant_filter = filter.value
-                    if "reassigned_bay" in filter.key:
-                        reassigned_bay = filter.value
+                    if "assigned_bay" in filter.key:
+                        assigned_bay = filter.value
             
             # Initialize date filter variables
             date_filter_applied = False
@@ -8670,8 +8670,8 @@ class GlobalAnalytics:
                 last_30_days = datetime.now() - timedelta(days=30)
                 resp_df = resp_df.filter(pl.col("created_date") >= last_30_days.date())
 
-            if reassigned_bay:
-                resp_df = resp_df.filter(pl.col("reassigned_bay") == reassigned_bay)
+            if assigned_bay:
+                resp_df = resp_df.filter(pl.col("assigned_bay") == assigned_bay)
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
