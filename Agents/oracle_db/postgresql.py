@@ -445,7 +445,7 @@ class Postgresql:
                             'interlock_name': interlock_name,
                             'severity': severity,
                             'alert_id': str(uuid.uuid1()),
-                            'device_name': record.get('bcu_number'),
+                            'device_name': str(record.get('manual_fan_count', '')),
                             'device_type': 'Gantry',
                             'vehicle_number': record.get('truck_number', ''),
                             'message': device_msg,
