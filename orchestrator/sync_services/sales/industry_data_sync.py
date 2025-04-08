@@ -39,6 +39,7 @@ def get_industry_data():
         del res['SBU with district wise']
     if 'RO' in res.columns:
         del res['RO']
+    #res['zone_name'] = res['zone_name'].str.replace('CZ','Central Zone').str.replace('ECZ','East Central Zone').str.replace('EZ','East').str.replace('NCZ','North Central Zone').str.replace('NFZ','North Frontier Zone').str.replace('NWFZ','North West Frontier Zone').str.replace('NWZ','North Western Zone').str.replace('NZ','North').str.replace('SCZ','South Central Zone').str.replace('SWZ','South Western Zone').str.replace('SZ','South').str.replace('WZ','West')
     res = pl.from_pandas(res)
     res.write_csv('/tmp/res.csv')
     if len(res)>0:
@@ -97,8 +98,9 @@ def insert_industry_data(res):
     columns = []
     for i in column_names:
         columns.append(i)
-    print(res.columns)
-    print(columns)
+    
+    res = res.with_columns([pl.col("productname").alias("productname_org")])
+    res = res.with_columns([pl.col("prod1").alias("productname")])
     res = res.select(columns)
     pg_conn.commit()
     try:
