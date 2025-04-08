@@ -8647,7 +8647,7 @@ class GlobalAnalytics:
                     AND a.tt_load_number = k.load_number::VARCHAR
                     AND DATE(a.created_at) = k.created_date
                 GROUP BY
-                    k.created_date, k.zone, k.location_name, k.sap_id, k.reassigned_bay, k.load_number, k.truck_number
+                    k.created_date, k.zone, k.location_name, k.sap_id, k.reassigned_bay, k.load_number, k.truck_number, k.assigned_bay
                 ORDER BY 
                     k.created_date DESC, alert_count DESC
             """
