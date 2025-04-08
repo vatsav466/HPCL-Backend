@@ -7826,7 +7826,10 @@ class GlobalAnalytics:
             if resp_df.is_empty():
                 return {"status": True, "data": {}}
 
+            resp_df = resp_df.filter(pl.col("alert_count") != 0)
             resp_df = resp_df.with_columns(pl.col("created_date").cast(pl.Date))
+            if resp_df.is_empty():
+                return {"status": True, "message": "No data after alert_count filtering", "daily_data": {}}
             resp_df = resp_df.with_columns([
                 pl.col("device_message")
                 .str.extract(r"Manual percentage:\s*([\d.]+)%", 1)
