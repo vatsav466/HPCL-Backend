@@ -1311,7 +1311,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = AlertsSchema
         upsert_keys = []
-        search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'alert_status', 'interlock_name', 'vehicle_number', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
+        search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'alert_status', 'interlock_name', 'vehicle_number', 'device_name', 'device_id', 'device_msg', 'device_type', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id', 'terminal_plant_id:sap_id']
 
 
@@ -1399,7 +1399,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
             extra = "forbid"  # Disallow extra fields
         schema_class = AlertsSchema
         upsert_keys = []
-        search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'alert_status', 'interlock_name', 'vehicle_number', 'device_name', 'device_id', 'device_msg', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
+        search_fields = ['bu', 'sap_id', 'sop_id', 'location_name', 'alert_section', 'alert_status', 'interlock_name', 'vehicle_number', 'device_name', 'device_id', 'device_msg', 'device_type', 'violation_type', 'rca_type', 'assigned_to', 'region', 'zone', 'indent_status']
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id', 'terminal_plant_id:sap_id']
 
 

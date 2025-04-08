@@ -678,6 +678,18 @@ async def sync_user_roles():
                         "name": "LPG",
                         "status": True
                     },
+                    "ERP Assistant Manager LPG": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "LPG",
+                                "allowed_sub_menus": [
+                                    "LPG Inventory"                                    
+                                ]
+                            }
+                        ],
+                        "name": "LPG",
+                        "status": True
+                    },
                     "Zonal HSE LPG": {
                         "allowed_pages": [
                             {

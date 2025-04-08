@@ -51,10 +51,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 ("PT", "PT", "Nearest Point PT")
             ]
         }
-        # Initialize all counters
-        fire_engine_count = 0
-        pt_count = 0
-        jockey_pump_count = 0
+        
         # Build system mapping from device_mapping (case-insensitive)
         system_mapping = defaultdict(lambda: defaultdict(str))
         for device in device_mapping:
@@ -62,29 +59,6 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
             for sensor_name, system in device["sensor_name"].items():
                 normalized_sensor = sensor_name.strip().lower()
                 system_mapping[device_type][normalized_sensor] = system
-
-        # Create mapping from equipment_name to device_type from Maintenance and Fault
-        equipment_to_device_type = {}
-        
-        # Process Maintenance data
-        for item in Maintenance:
-            equipments = item["equipment_name"].split(',')
-            for equipment in equipments:
-                equipment = equipment.strip()
-                if equipment not in equipment_to_device_type:
-                    equipment_to_device_type[equipment] = []
-                if item["interlock_name"] not in equipment_to_device_type[equipment]:
-                    equipment_to_device_type[equipment].append(item["interlock_name"])
-        
-        # Process Fault data
-        for item in Fault:
-            equipments = item["equipment_name"].split(',')
-            for equipment in equipments:
-                equipment = equipment.strip()
-                if equipment not in equipment_to_device_type:
-                    equipment_to_device_type[equipment] = []
-                if item["interlock_name"] not in equipment_to_device_type[equipment]:
-                    equipment_to_device_type[equipment].append(item["interlock_name"])
 
         # Process each location
         for _, row in location_df.iterrows():
@@ -145,20 +119,20 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                                     system_key = lookup_key
                                     system = system_mapping["oi"].get(system_key, "Unknown")
                                     break
-                                 # Check for PT (endswith ' pt' or ' pt')
+                            # Check for PT (endswith ' pt' or ' pt')
                             elif keyword in ["Pt", "PT"] and normalized_sensor.endswith(keyword.lower()):
-                                 if normalized_sensor.endswith(keyword.lower()):
-                                     mapped_device_type = mapped
-                                     system_key = lookup_key
-                                     system = system_mapping["oi"].get(system_key, "Unknown")
-                                     break
-                                    # Check for Jockey Pump Run (exact match or contains)
+                                if normalized_sensor.endswith(keyword.lower()):
+                                    mapped_device_type = mapped
+                                    system_key = lookup_key
+                                    system = system_mapping["oi"].get(system_key, "Unknown")
+                                    break
+                            # Check for Jockey Pump Run (exact match or contains)
                             elif keyword == "Jockey Pump Run" and "jockey pump run" in normalized_sensor:
-                                 if "jockey pump run" in normalized_sensor:
-                                     mapped_device_type = mapped
-                                     system_key = lookup_key
-                                     system = system_mapping["oi"].get(system_key, "Unknown")
-                                     break                   
+                                if "jockey pump run" in normalized_sensor:
+                                    mapped_device_type = mapped
+                                    system_key = lookup_key
+                                    system = system_mapping["oi"].get(system_key, "Unknown")
+                                    break                   
 
                     # Handle other devices
                     else:
@@ -169,30 +143,42 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                     if mapped_device_type:
                         location_counts[mapped_device_type][system]['count'] += 1
 
-            # Calculate mf_count for each device type
-            for dev_type in location_counts:
-                if dev_type in equipment_to_device_type:
-                    interlock_names = equipment_to_device_type[dev_type]
-                    total_mf_count = 0
+            # Calculate mf_count for each device type based on alert_category and equipment_name
+            for dev_type, system_counts in location_counts.items():
+                for system, counts in system_counts.items():
+                    # Initialize mf_count
+                    mf_count = 0
                     
-                    for interlock_name in interlock_names:
-                        params = urdhva_base.queryparams.QueryParams(
-                            limit=10000,
-                            q=f"interlock_name='{interlock_name}' AND alert_status='Open' AND sap_id='{sap_id}'"
-                        )
-                        count = await Alerts.count(params)
-                        total_mf_count += count
+                    # Check Maintenance array
+                    for maintenance_item in Maintenance:
+                        if (maintenance_item["equipment_name"] == dev_type and 
+                            maintenance_item["alert_category"] == system):
+                            # Query open alerts for this specific interlock name
+                            params = urdhva_base.queryparams.QueryParams(
+                                limit=10000,
+                                q=f"interlock_name='{maintenance_item['interlock_name']}' AND alert_status='Open' AND sap_id='{sap_id}'"
+                            )
+                            alert_count = await Alerts.count(params)
+                            mf_count += alert_count
                     
-                    # Distribute the mf_count across all systems for this device type
-                    system_count = len(location_counts[dev_type])
-                    if system_count > 0:
-                        avg_mf_count = total_mf_count / system_count
-                        for system in location_counts[dev_type]:
-                            location_counts[dev_type][system]['mf_count'] = round(avg_mf_count)
+                    # Check Fault array
+                    for fault_item in Fault:
+                        if (fault_item["equipment_name"] == dev_type and 
+                            fault_item["alert_category"] == system):
+                            # Query open alerts for this specific interlock name
+                            params = urdhva_base.queryparams.QueryParams(
+                                limit=10000,
+                                q=f"interlock_name='{fault_item['interlock_name']}' AND alert_status='Open' AND sap_id='{sap_id}'"
+                            )
+                            alert_count = await Alerts.count(params)
+                            mf_count += alert_count
+                    
+                    # Update the mf_count for this specific device_type and system
+                    location_counts[dev_type][system]['mf_count'] = mf_count
 
             # Convert counts to final records
             for dev_type, system_counts in location_counts.items():
-                if dev_type in ["Tank Maintenance","Fire Pump"]:
+                if dev_type in ["Tank Maintenance", "Fire Pump"]:
                     continue
                 for sys, counts in system_counts.items():
                     final_records.append({
@@ -207,7 +193,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
 
         # Update database
         try:
-            await TagsData.bulk_update(final_records, upsert=False)
+            await TagsData.bulk_update(final_records, upsert=True)
             print(f"Updated {len(final_records)} records.")
             return {"status": True, "message": "Data updated successfully."}
         except Exception as e:
@@ -221,6 +207,11 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
 @router.post('/get_tags_data', tags=['TagsData'])
 async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
     try:
+        # First call the device data function to ensure we have latest data
+        device_data_result = await tagsdata_things_board_device_data(Tagsdata_Things_Board_Device_DataParams())
+        
+        if not device_data_result.get('status'):
+            return {"status": False, "message": "Failed to refresh device data"}
         limit = 10000
         skip = 0
         res = []
@@ -283,15 +274,3 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
 
     except Exception as e:
         return {"status": False, "message": f"Error: {str(e)}"}
-
-
-# Action things_board_device_data
-@router.post('/things_board_device_data', tags=['TagsData'])
-async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
-    ...
-
-
-# Action get_tags_data
-@router.post('/get_tags_data', tags=['TagsData'])
-async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
-    ...
