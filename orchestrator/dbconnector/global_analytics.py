@@ -6627,7 +6627,7 @@ class GlobalAnalytics:
                                 location_name,
                                 sap_id,
                                 bcu_number,
-                                SUM(net_totalizer) AS total_net_totalizer,
+                                CAST(SUM(net_totalizer) AS FLOAT) AS total_net_totalizer,
                                 COUNT(*) AS unauthorized_count
                             FROM host_unauthorised_flow 
                             where net_totalizer != 0
