@@ -6621,17 +6621,16 @@ class GlobalAnalytics:
                         end_date = datetime.strptime(date_parts[-1].strip("'"), '%Y-%m-%d')
                         date_filter_applied = True
                         break
-            query = """WITH unauthorized AS (SELECT 
-                                DATE(created_at) AS created_date,
+            query = """with unauthorized_with_totals AS (SELECT 
+                                DATE(created_at) as created_date,
                                 zone,
                                 location_name,
                                 sap_id,
                                 bcu_number,
-                                CAST(net_totalizer AS FLOAT) AS total_net_totalizer,
-                                ROW_NUMBER() OVER (PARTITION BY bcu_number ORDER BY created_at DESC) AS rn
-                            FROM 
-                                host_unauthorised_flow
-                            WHERE 1=1
+                                SUM(net_totalizer) AS total_net_totalizer,
+                                COUNT(*) AS unauthorized_count
+                            FROM host_unauthorised_flow 
+                            where net_totalizer != 0
                 """
             
             # Add zone filter if present
@@ -6646,20 +6645,16 @@ class GlobalAnalytics:
             if date_filter_applied and start_date and end_date:
                 query += f" AND DATE(created_at) BETWEEN '{start_date.strftime('%Y-%m-%d')}' AND '{end_date.strftime('%Y-%m-%d')}'"
 
-            query += f""") SELECT 
-                                    u.created_date,
-                                    u.zone,
-                                    u.location_name,
-                                    u.sap_id,
-                                    u.bcu_number,
-                                    COUNT(*) AS unauthorized_count,
-                                    MAX(CASE WHEN u.rn = 1 THEN u.total_net_totalizer ELSE NULL END) AS latest_net_totalizer
-                                FROM 
-                                    unauthorized u
-                                GROUP BY 
-                                    u.created_date, u.zone, u.location_name, u.sap_id, u.bcu_number
-                                ORDER BY 
-                                    u.created_date DESC, unauthorized_count DESC;
+            query += f"""GROUP BY created_date, zone, location_name, sap_id, bcu_number) SELECT 
+                                u.created_date,
+                                u.zone,
+                                u.location_name,
+                                u.sap_id,
+                                u.bcu_number,
+                                u.total_net_totalizer,
+                                u.unauthorized_count
+                            FROM unauthorized_with_totals u
+                            ORDER BY u.created_date DESC, u.unauthorized_count DESC;
                         """
             
             # Execute query with parameters
@@ -6693,7 +6688,7 @@ class GlobalAnalytics:
             
             if date:
                 # Daily aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number", "latest_net_totalizer"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "bcu_number", "total_net_totalizer"]
                 grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
                 
                 # Convert to result format efficiently
@@ -6706,7 +6701,7 @@ class GlobalAnalytics:
                         "location_name": row["location_name"],
                         "bcu_number": row["bcu_number"],
                         "log_count": row["log_count"],
-                        "total_net_totalizer": row["latest_net_totalizer"]
+                        "total_net_totalizer": row["total_net_totalizer"]
                     }
                     result.setdefault(created_date, []).append(entry)
                 
@@ -6715,7 +6710,7 @@ class GlobalAnalytics:
                 # Monthly aggregation - create month_year column once
                 resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
                 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "latest_net_totalizer"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "bcu_number", "total_net_totalizer"]
                 grouped_df = resp_df.group_by(group_cols).agg(agg_ops)
                 
                 # Sort by sort_key
@@ -6731,7 +6726,7 @@ class GlobalAnalytics:
                         "location_name": row["location_name"],
                         "bcu_number": row["bcu_number"],
                         "log_count": row["log_count"],
-                        "total_net_totalizer": row["latest_net_totalizer"]
+                        "total_net_totalizer": row["total_net_totalizer"]
                     }
                     result.setdefault(month, []).append(entry)
                 
