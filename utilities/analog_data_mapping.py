@@ -1,7 +1,6 @@
 Maintenance = [
     {"sop_id": "SOP007", "interlock_name": "ESD Push button_Under Maintenance", "alert_category": "Safety", "equipment_name": "Esd"},
     {"sop_id": "SOP008", "interlock_name": "Rim Seal system_Under Maintenance", "alert_category": "Safety", "equipment_name": "RIMSEAL"},
-    {"sop_id": "SOP009", "interlock_name": "Tank_Under Maintenance", "alert_category": "Safety", "equipment_name": "Primary Level"},
     {"sop_id": "SOP009", "interlock_name": "Tank_Under Maintenance", "alert_category": "Safety", "equipment_name": "VFT"},
     {"sop_id": "SOP009", "interlock_name": "Tank_Under Maintenance", "alert_category": "Safety", "equipment_name": "Radar"},
     {"sop_id": "SOP009", "interlock_name": "Tank_Under Maintenance", "alert_category": "Safety", "equipment_name": "ROSOV"},
