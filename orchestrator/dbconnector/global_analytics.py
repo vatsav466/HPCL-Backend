@@ -8606,6 +8606,7 @@ class GlobalAnalytics:
                         location_name,
                         sap_id,
                         reassigned_bay,
+                        assigned_bay,
                         load_number,
                         truck_number
                     FROM 
@@ -8627,7 +8628,7 @@ class GlobalAnalytics:
             # Complete the CTE and main query
             query += f"""
                 GROUP BY 
-                        DATE(created_at), zone, location_name, sap_id, reassigned_bay, load_number, truck_number
+                        DATE(created_at), zone, location_name, sap_id, reassigned_bay, load_number, truck_number, assigned_bay
                 )
                 SELECT 
                     k.created_date,
@@ -8635,6 +8636,7 @@ class GlobalAnalytics:
                     k.location_name,
                     k.sap_id,
                     k.reassigned_bay,
+                    k.assigned_bay,
                     k.load_number,
                     k.truck_number,
                     COALESCE(COUNT(a.id), 0) AS alert_count
@@ -8642,7 +8644,6 @@ class GlobalAnalytics:
                     bay_reassignment k
                 LEFT JOIN
                     alerts a ON a.interlock_name = 'Bay reassignment'
-                    AND a.vehicle_number = k.truck_number
                     AND a.tt_load_number = k.load_number::VARCHAR
                     AND DATE(a.created_at) = k.created_date
                 GROUP BY
@@ -8679,7 +8680,7 @@ class GlobalAnalytics:
             # Generate appropriate result format based on date flag
             if date:
                 # Daily Data Aggregation
-                group_cols = ["created_date", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number"]
+                group_cols = ["created_date", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number", "assigned_bay"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -8692,6 +8693,7 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "reassigned_bay": row["reassigned_bay"],
+                        "assigned_bay": row["assigned_bay"],
                         "load_number": row["load_number"],
                         "truck_number": row["truck_number"],
                         "total_alerts": row["total_alerts"]
@@ -8702,7 +8704,7 @@ class GlobalAnalytics:
                 # Monthly Data Aggregation
                 resp_df = resp_df.with_columns(pl.col("created_date").dt.strftime("%b").alias("month_year"))
 
-                group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number"]
+                group_cols = ["month_year", "zone", "sap_id", "location_name", "reassigned_bay", "load_number", "truck_number", "assigned_bay"]
                 grouped_df = resp_df.group_by(group_cols).agg(
                     pl.sum("alert_count").alias("total_alerts")
                 )
@@ -8717,6 +8719,7 @@ class GlobalAnalytics:
                         "sap_id": row["sap_id"],
                         "location_name": row["location_name"],
                         "reassigned_bay": row["reassigned_bay"],
+                        "assigned_bay": row["assigned_bay"],
                         "load_number": row["load_number"],
                         "truck_number": row["truck_number"],
                         "total_alerts": row["total_alerts"]
