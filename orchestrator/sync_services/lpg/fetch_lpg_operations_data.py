@@ -384,6 +384,21 @@ def process_plant(plant):
 
 if __name__=="__main__":
     try:
+        creds = credential_loader.get_credentials('APP_DB')
+        pg_conn = psycopg2.connect(
+                    host=creds["host"],
+                    database=creds["database"],
+                    user=creds["user"],
+                    password=creds["password"],
+                    port=int(creds["port"])
+                )
+        cursor = pg_conn.cursor()
+        query = f""" TRUNCATE lpg_operations_data; """
+        cursor.execute(query)
+        pg_conn.commit()
+        cursor.close()
+        pg_conn.close()
+        
         plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")        
         successful_plants = []
         failed_plants = []

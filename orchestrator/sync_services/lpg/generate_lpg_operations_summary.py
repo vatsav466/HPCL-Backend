@@ -1111,7 +1111,7 @@ def generate_summary():
     cursor.execute(query)
     conn.commit()
     cursor.close()
-    conn.close()
+    conn.close()    
     print("*"*50)
     print("*"*10, " Completed ", "*"*10)
     print("*"*50)

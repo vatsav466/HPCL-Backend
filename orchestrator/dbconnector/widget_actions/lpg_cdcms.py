@@ -157,8 +157,8 @@ class LPGCDCMSActions:
         if _fy:
             financial_year = _fy
         if filters:
-            filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
+            # filters += [dashboard_studio_model.WidgetFiltersCreate(**rec)
+            #                           for rec in await hpcl_ceg_model.LpgSalesSummaryData.get_clause_conditions(formated=True)]
             conditions = []
             for rec in filters:
                 rec.value = rec.value.split(",")
