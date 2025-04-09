@@ -3731,7 +3731,7 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
             if not daterange:
-                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
             production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
@@ -3740,11 +3740,11 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
             if not "where" in production_zone_query_.lower() and not daterange:
-                production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+                production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()' 
             elif not "where" in production_zone_query_.lower() and daterange:
                 production_zone_query_ +=  f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             elif not daterange:
-                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
+                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
