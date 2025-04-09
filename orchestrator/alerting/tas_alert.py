@@ -108,13 +108,13 @@ class TASAlertManager(alert_factory.AlertFactory):
                                                          f"cleared for device {device_data}",
                                            "action_type": "InterlockCleared"}
             
-            query = f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and sap_id='{alert_data['sap_id']}' and alert_status='Open'"
+            query = f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and sap_id='{alert_data['sap_id']}' and alert_status!='Close'"
             data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1), resp_type='plain')
             alert_id = ''
             if len(data['data']):
                 alert_id = data['data'][0]['id']
             else:
-                return await cls.close_alert(alert_data)   
+                await cls.close_alert(alert_data)   
             if alert_id:
                 tas_alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
                 if not isinstance(tas_alert_data, dict):

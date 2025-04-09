@@ -871,6 +871,12 @@ async def sync_user_roles():
                         ],
                         "status": True
                     },
+                    "Super Admin": {
+                        "allowed_pages": [
+                            
+                        ],
+                        "status": True
+                    },
                     "Sales Officer RO": {
                         "allowed_pages": [
                             {
