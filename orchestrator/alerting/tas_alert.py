@@ -113,9 +113,6 @@ class TASAlertManager(alert_factory.AlertFactory):
             alert_id = ''
             if len(data['data']):
                 alert_id = data['data'][0]['id']
-            else:
-                await cls.close_alert(alert_data)   
-            if alert_id:
                 tas_alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
                 if not isinstance(tas_alert_data, dict):
                     tas_alert_data = tas_alert_data.__dict__
@@ -135,5 +132,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                 else:
                     print("Message sent to camunda")
                     return "Successfully sent message to camunda"
+            else:
+                await cls.close_alert(alert_data)
         except Exception as e:
             raise Exception(status_code=500, detail="Error closing alert.") from e
