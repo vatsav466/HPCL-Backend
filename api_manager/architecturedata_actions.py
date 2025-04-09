@@ -10,11 +10,11 @@ import utilities.connection_mapping as connection_mapping
 from api_manager.charts_actions import charts_connection_vault_routing
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from utilities.analog_data_mapping import Maintenance, Fault
-import urdhva_base.queryparams
+# import urdhva_base.queryparams
 
 router = fastapi.APIRouter(prefix='/architecturedata')
 
-BASE_JSON_PATH = "/opt/ceg/algo/things_board/device_data/"
+BASE_JSON_PATH = "/Users/manohar/Documents/GitHub/dnc_backend_v2/things_board/device_data"
 
 @router.post('/architecture_details', tags=['ArchitectureData'])
 async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
@@ -28,9 +28,15 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
         location_query = "SELECT bu, zone, sap_id, name FROM location_master WHERE bu = 'TAS'"
         location_df = await execute_query(query=location_query)
         location_df = pd.DataFrame(location_df)
-
+        
         if location_df.empty:
             return {"status": False, "message": "No TAS locations found."}
+        
+      
+        mfm_query = "SELECT sap_id, COUNT(mfm_number) as mfm_count FROM host_mfm_factor GROUP BY sap_id"
+        mfm_df = await execute_query(query=mfm_query)
+        mfm_df = pd.DataFrame(mfm_df)
+        mfm_map = dict(zip(mfm_df['sap_id'],mfm_df['mfm_count']))
 
         final_records = []
 
@@ -115,7 +121,15 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                     "device_type": dev_type,
                     "count": str(count)
                 })
-
+            # Add MFM count if available
+            if sap_id in mfm_map:
+                final_records.append({
+                    "sap_id": sap_id,
+                    "name": location_name,
+                    "zone": zone,
+                    "device_type": "MFM",
+                    "count": str(mfm_map[sap_id])
+                })
         # Update database
         try:
             await ArchitectureData.bulk_update(final_records, upsert=False)
@@ -172,15 +186,3 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
 
 
   
-
-
-# Action architecture_details
-@router.post('/architecture_details', tags=['ArchitectureData'])
-async def architecturedata_architecture_details(data: Architecturedata_Architecture_DetailsParams):
-    ...
-
-
-# Action architecture_data
-@router.post('/architecture_data', tags=['ArchitectureData'])
-async def architecturedata_architecture_data(data: Architecturedata_Architecture_DataParams):
-    ...
