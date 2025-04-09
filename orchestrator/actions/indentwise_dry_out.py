@@ -176,7 +176,7 @@ class IndentDryOut:
                                  f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
                                  f"""servicing_plant_id='{each_indent["LOCN_CODE"]}' """
                                  f"""dry_out_in_days='{self.params["dry_out_in_days"]}'"""
-                                 f"""where id='{record["alert_id"]}'""")
+                                 f"""where id='{record["id"]}'""")
                         # f"""servicing_plant_name='{self.params['servicing_plant_name']}' """
                         await hpcl_ceg_model.Alerts.update_by_query(query)
                         await self.update_indent_no(
