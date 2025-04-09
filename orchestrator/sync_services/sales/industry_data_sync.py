@@ -98,7 +98,6 @@ def insert_industry_data(res):
     columns = []
     for i in column_names:
         columns.append(i)
-    
     res = res.with_columns([pl.col("productname").alias("productname_org")])
     res = res.with_columns([pl.col("prod1").alias("productname")])
     res = res.select(columns)
