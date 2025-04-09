@@ -1109,7 +1109,7 @@ LIMIT 10000;''',
                                                     SELECT 
                                                         ROUND(
                                                             (SUM(bottling_14_2kg) * 14.2 + SUM(bottling_19kg) * 19)::NUMERIC / 1000, 
-                                                            2
+                                                            0
                                                         ) AS current_month_production
                                                     FROM lpg_operations_summary
                                                     WHERE DATE_TRUNC('month', process_date) = DATE_TRUNC('month', CURRENT_DATE);   
@@ -1117,7 +1117,7 @@ LIMIT 10000;''',
                                                 
     'lpg_operations_current_month_productivity': f'''
                                                     SELECT
-                                                        ROUND(AVG("productivity_normal_productivity"::numeric), 2) AS "Total Productivity"
+                                                        ROUND(AVG("productivity_normal_productivity"::numeric), 0) AS "Total Productivity"
                                                     FROM
                                                         "lpg_operations_summary"
                                                     WHERE
