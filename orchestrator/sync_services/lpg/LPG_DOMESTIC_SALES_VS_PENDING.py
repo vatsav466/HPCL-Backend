@@ -825,17 +825,26 @@ def get_pending_vs_delivered_data():
                     """
     trunc_query = """ TRUNCATE lpg_monthly_cdcms_sales_summary; """
     fetch_data(cursor, trunc_query, getData=False, params=params)
-    monthly_data = fetch_data(cursor, monthly_query, getData=True, params=params)
-    
+    monthly_data = fetch_data(cursor, monthly_query, getData=True, params=params)        
     month_to_quarter = {
                     'April': 'Quarter-1', 'May': 'Quarter-1', 'June': 'Quarter-1',
                     'July': 'Quarter-2', 'August': 'Quarter-2', 'September': 'Quarter-2',
                     'October': 'Quarter-3', 'November': 'Quarter-3', 'December': 'Quarter-3',
                     'January': 'Quarter-4', 'February': 'Quarter-4', 'March': 'Quarter-4'
                 }
-    monthly_data = monthly_data.with_columns(pl.col("Month").replace(month_to_quarter).alias("Quarter"))
-    
+    monthly_data = monthly_data.with_columns(pl.col("Month").replace(month_to_quarter).alias("Quarter"))    
     insertToDB(monthly_data, "lpg_monthly_cdcms_sales_summary", indexing_col=["Month", "ZOName"])
+    
+    # Used for backlogs
+    trunc_query = """ DROP TABLE IF EXISTS lpg_cdcms_last_three_months_summary; """
+    fetch_data(cursor, trunc_query, getData=False, params=params)
+    create_table = """ CREATE TABLE lpg_cdcms_last_three_months_summary AS
+                        SELECT *
+                        FROM lpg_cdcms_sales_summary
+                        WHERE "Execution_Date" >= CURRENT_DATE - INTERVAL '91 days'; 
+                    """
+    fetch_data(cursor, create_table, getData=False, params=params)
+    
     return data
         
 

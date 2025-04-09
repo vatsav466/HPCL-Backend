@@ -928,6 +928,7 @@ LIMIT 10000;''',
                                                 FROM 
                                                     "LPG_CONSUMERS_SUMMARY"
                                                 ''',
+                                                
                  "lpg_cdcms_pcc_sales": f''' SELECT 
                                                 "DistributorName", "ConsumerType", "CylType", "ZOName",
                                                 "SAName", "ROName", 
