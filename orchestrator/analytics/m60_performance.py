@@ -13,6 +13,15 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
+
+productOrders = {
+  "Retail": ["MS", "HSD", "CNG", "SKO", "Compressed Bio Gas (CBG)", "LPG BLK"],
+  "Aviation": ["ATF"],
+  "I&C": ["HSD", "LDO", "LSHS", "FO", "Naptha", 'Bitumen Blk', "Bitumen Pkd", "Bitumen Modified", "Solvent 2445", "Solvent 1425", "JBO", "Sulphur", "Propylene"],
+  "LPG": ["LPG PKD - Domestic", "LPG PKD - Non Domestic", "LPG BLK", "BULK PROPANE", "BULK BUTANE"],
+  "PETCHEM": ["PETCHEM"],
+  "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils", "Industrial Greases", "Industrial Specialities", "Base Oil"]
+}
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 # Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
@@ -168,7 +177,8 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
         
         
         if ('Aviation' in [x['value'].strip('"') for x in cross_filters] or 'PETCHEM' in [x['value'].strip('"') for x in cross_filters] or 'GAS' in [x['value'].strip('"') for x in cross_filters]):
-            for key in [rec['key'] for rec in cross_filters]:          
+            for key in [rec['key'] for rec in cross_filters]:   
+                       
                 if key in APG_Filters and APG_Filters.index(key) > index:
                     index = APG_Filters.index(key)
             if index>len(APG_Filters):
@@ -266,7 +276,17 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         print("came till returb")
         
         return start_date,end_date,start_date_history,end_date_history      
+    '''
+    for the product drop-down present in the sbu wise pages we need the productname to be in payload.
+    when the page is loaded for the first time 
+    ''' 
+    if 'ProductName' in [x['key'].strip('"') for x in filters] :
+        product_name_values = [x['value'] for x in filters if x['key'].strip('"') == 'ProductName']
+        if product_name_values and product_name_values[0] == '':
         
+            cross_filters = [f for f in cross_filters if f.get("key", "").strip('"') != "ProductName"]
+        
+    
     '''
     if 'fiscal_year' in [x['key'].strip('"') for x in filters]:
         if 'YTD' in [x['key'].strip('"') for x in filters] or 'YTDPM' in [x['key'].strip('"') for x in filters]:
@@ -922,6 +942,24 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             if all(not v for v in final_resp.values()):
                 return {"status": False, "message": "No Data Present for the current selection", "data": {'data': final_resp, 'level': sorted_level,
                                                                 'month_name': month_keys, 'sales_unit': measure_unit}}    
+            else:
+                print("final_resp is not empty")
+                print("cross_filters",cross_filters)
+                if len(cross_filters) ==1 or len(cross_filters) >1:
+                    print("insied 1st if")
+                    if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name':
+                        print("insied 2nd if")
+                        condition = cross_filters[0]
+                        if condition['key'].strip('"') == 'SBU_Name':
+                            if condition['value'] in productOrders:
+                                sort_order = productOrders[condition['value']]    
+                                df = pd.DataFrame(final_resp)
+                                if 'ProductName' in df.columns.tolist():
+                                    df['sort_key'] = df['ProductName'].apply(lambda x: sort_order.index(x) if x in sort_order else float('inf'))
+                                    df_sorted = df.sort_values(by='sort_key').drop(columns='sort_key').reset_index(drop=True)
+                                    df_sorted = df_sorted.fillna('')
+                                    final_resp= {col: df_sorted[col].to_dict() for col in df_sorted.columns}
+                    
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys, 'sales_unit': measure_unit}}
     else:
