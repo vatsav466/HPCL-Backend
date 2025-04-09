@@ -4115,7 +4115,7 @@ class GlobalAnalytics:
             resp = pl.from_pandas(resp)
             resp = resp.with_columns((pl.col("14_kg").fill_null(0).cast(pl.Float64) + pl.col("19_kg").fill_null(0).cast(pl.Float64)).round(2).alias("sum_production"))
             resp = resp.group_by(["process_date"]).agg([
-                    pl.sum("sum_production").round(2).alias("sum_production"),
+                    (pl.sum("sum_production") / 1000).round(2).alias("sum_production"),
                 ])
             numerical_columns = ["sum_production"]
             for col in numerical_columns:
