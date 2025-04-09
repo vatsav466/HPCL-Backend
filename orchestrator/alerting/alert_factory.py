@@ -327,12 +327,15 @@ class AlertFactory:
                 print("Interlock and Alert updated successfully.")
 
             else:
-                il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
-                if not isinstance(il_data, dict):
-                    il_data = il_data.__dict__
-                il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-                data_obj = hpcl_ceg_model.Interlock(**il_data)
-                await data_obj.modify()
+                if alert_data.get("interlock_id", ""):
+                    il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
+                    if not isinstance(il_data, dict):
+                        il_data = il_data.__dict__
+                    il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+                    data_obj = hpcl_ceg_model.Interlock(**il_data)
+                    await data_obj.modify()
+                else:
+                    logger.info(f"Interlock ID not available {alert_data}")
             
                 al_data = await hpcl_ceg_model.Alerts.get(alert_data['alert_id'])
                 if not isinstance(al_data, dict):
