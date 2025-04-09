@@ -85,7 +85,7 @@ class AlertFactory:
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
             # Generate alert alert_data
-            query = f"interlock_name = '{interlock_name}' and alert_status = 'Open' and device_name = '{device_name}' and bu = '{bu}' and alert_section = '{alert_data.get("alert_section", bu)}'"
+            query = f"interlock_name = '{interlock_name}' and alert_status = 'Open' and device_name = '{device_name}' and bu = 'TAS' and alert_section = 'TAS'"
             params = urdhva_base.queryparams.QueryParams(q=query)
             resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
 
