@@ -58,6 +58,7 @@ class AlertFactory:
             sap_id = alert_data['sap_id']
             interlock_name = alert_data.get('interlock_name', '')
             location_data = alert_data.get("location_data", {})
+            device_name = alert_data.get("device_name", '')
             if not location_data:
                 if urdhva_base.ctx.exists():
                     _, location_data = await alert_helper.get_location_details(bu, sap_id)
@@ -84,7 +85,19 @@ class AlertFactory:
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
             # Generate alert alert_data
-            alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
+            query = f"interlock_name = '{interlock_name}' and alert_status = 'Open' and device_name = '{device_name}' and bu = '{bu}' and alert_section = '{alert_data.get("alert_section", bu)}'"
+            params = urdhva_base.queryparams.QueryParams(q=query)
+            resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+
+            # Check if alert already exists
+            if resp and resp.get("data") and len(resp.get("data")) > 0:
+                # Alert already exists, no need to create a new one
+                alert_resp = resp.get("data")[0]  # Use existing alert
+                alert_resp['interlock_name'] = interlock_name
+                alert_resp['device_name'] = device_name
+            else:
+            # Generate alert alert_data
+                alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
