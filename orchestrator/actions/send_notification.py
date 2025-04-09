@@ -23,7 +23,6 @@ from camunda.external_task.external_task import (
     ExternalTask,
     TaskResult
 )
-import orchestrator.alerting.alert_manager as alert_manager
 import cache_gateway.cache_api_actions as cache_api_actions
 import orchestrator.notification_manager.notification_factory as notification_factory
 
@@ -374,7 +373,6 @@ class SendNotification:
         """
         self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertState.Escalated.value
         self.base_alert_data["action_msg"] = self.params.get("msg_subject")
-        await alert_manager.AlertAction().update_alert_history(self.base_alert_data, self.alert_data)
 
     async def _process_active(self):
         """
@@ -390,7 +388,6 @@ class SendNotification:
         print("_process_active")
         self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertActionType.Active.value
         self.base_alert_data["action_msg"] = self.params.get("msg_subject")
-        await alert_manager.AlertAction().update_alert_history(self.base_alert_data, self.alert_data)
 
     async def _process_notify(self):
         """
@@ -404,8 +401,7 @@ class SendNotification:
             None
         """
         self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertState.Notified.value
-        self.base_alert_data["action_msg"] = self.params.get("msg_subject")        
-        await alert_manager.AlertAction().update_alert_history(self.base_alert_data, self.alert_data)
+        self.base_alert_data["action_msg"] = self.params.get("msg_subject")
 
     async def _process_reject(self):
         """
@@ -420,7 +416,6 @@ class SendNotification:
         """
         self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertActionType.Rejected.value
         self.base_alert_data["action_msg"] = self.params.get("msg_subject")
-        await alert_manager.AlertAction().update_alert_history(self.base_alert_data, self.alert_data)
 
     async def _process_justified(self):
         """
@@ -435,7 +430,6 @@ class SendNotification:
         """
         self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertActionType.Justification.value
         self.base_alert_data["action_msg"] = self.params.get("msg_subject")
-        await alert_manager.AlertAction().update_alert_history(self.base_alert_data, self.alert_data)
 
     async def _process_resolved(self):
         """
@@ -450,7 +444,6 @@ class SendNotification:
         """
         self.base_alert_data["action_type"] = hpcl_ceg_enum.AlertState.Resolved.value
         self.base_alert_data["action_msg"] = self.params.get("msg_subject")
-        await alert_manager.AlertAction().update_alert_history(self.base_alert_data, self.alert_data)
 
     async def _process_message_type(self):
         """
