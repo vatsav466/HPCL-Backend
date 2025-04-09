@@ -591,6 +591,7 @@ Model Alerts {
     violation_type optional str
     clear_count optional bool
     maintenance_time optional str
+    closed_at optional datetime
 
     //tas keys
     tt_load_number optional str

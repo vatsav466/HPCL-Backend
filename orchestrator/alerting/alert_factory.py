@@ -317,6 +317,7 @@ class AlertFactory:
                     alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                     alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                     alert['interlock_name'] = alert_data.get('interlock_name', '')
+                    alert['closed_at'] = datetime.datetime.now()
                     if il_data:
                         alert['interlock_id'] = str(il_data[0]['id'])
                     data_obj = hpcl_ceg_model.Alerts(**alert)
@@ -342,6 +343,7 @@ class AlertFactory:
                     al_data = al_data.__dict__
                 al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                 al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
+                al_data['closed_at'] = datetime.datetime.now()
                 redis_ins = await urdhva_base.redispool.get_redis_connection()
                 if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
                     await redis_ins.hdel("alert_mapping", al_data['external_id'])
