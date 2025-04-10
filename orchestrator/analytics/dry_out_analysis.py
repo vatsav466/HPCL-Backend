@@ -1664,10 +1664,10 @@ async def generate_dry_out_report(records):
     print(records)
     await hpcl_ceg_model.DryOutAlertReport.bulk_update(records.to_dict(orient='records'), upsert=True)
 
-    query = f"SELECT id, sap_id, product_code from dry_out_alert_report where status='Open'"
+    query = f"SELECT id, sap_id, product_code from dry_out_alert_report where alert_status='Open'"
     dry_out_history = await hpcl_ceg_model.DryOutAlertReport.get_aggr_data(query, limit=0)
     dry_out_hist_data = {f"{rec['sap_id']}_{rec['product_code']}": rec for rec in dry_out_history['data']}
-    dry_out_alert = {f"{rec['sap_id']}_{rec['product_code']}": rec for rec in records}
+    dry_out_alert = {f"{rec['sap_id']}_{rec['product_code']}": rec for rec in records.to_dict(orient='records')}
     closed_alerts = list(set(list(dry_out_hist_data.keys())) - set(list(dry_out_alert.keys())))
     closed_ids = list({dry_out_hist_data[key]['id'] for key in closed_alerts})
     for index in range(0, len(closed_ids), 1000):
