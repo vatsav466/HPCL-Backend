@@ -165,7 +165,7 @@ async def process_data(data):
 async def sync_users():
     connection = await get_db_connection()
     cursor = connection.cursor()
-    for bu in ["lpg", "tas"]:
+    for bu in ["lpg", "tas", "ro"]:
         role_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/novex_role_master.csv")
         role_master = role_master[role_master["bu"] == str(bu).upper()]
         role_master = role_master.drop_duplicates("tibco_role")

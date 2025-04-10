@@ -1627,3 +1627,38 @@ async def get_dryout_aging_data():
     }, inplace=True)
     del resp['created_at']
     return resp.to_dict(orient='records')
+
+async def generate_dry_out_report(records):
+    records = pd.DataFrame(records)
+    query = f"select * from location_master where bu = 'RO'"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    location_data = await function(
+        query=query
+    )
+    location_data = pd.DataFrame(location_data)
+    records['rosapcode'] = records['rosapcode'].astype(str)
+    location_data['sap_id'] = location_data['sap_id'].astype(str)
+
+    records = pd.merge(
+        records,
+        location_data.drop_duplicates(subset=['sap_id'])[['sap_id', 'zone', 'region', 'sales_area', 'name', 'terminal_plant_id', 'category']],
+        left_on='rosapcode', right_on='sap_id', how='left'
+    )
+    records.rename(
+        columns={"name": "location_name", "status": "dry_out_in_days", "product_no": "product_code"},
+        inplace=True)
+    records = records[[
+        'zone', 'region', 'sales_area', 'sap_id', 'location_name', 'terminal_plant_id',
+        'tank_no', 'capacity', 'product_code', 'dry_out_in_days', 'avgsales_7days',
+        'avgsales_daily', 'category'
+    ]]
+    records['dryout_start_datetime'] = datetime.datetime.now()
+    records['dryout_end_datetime'] = None
+    records['dryout_date'] = urdhva_base.utilities.get_present_time().replace(hour=0, minute=0, second=0, microsecond=0)
+    records['alert_status'] = 'Open'
+    print(records)
+    await hpcl_ceg_model.DryOutAlertReport.bulk_update(records.to_dict(orient='records'), upsert=True)
