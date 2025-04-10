@@ -151,11 +151,21 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
         group_by_filter = ['"SBU_Name"'] if not cumulative else []
         APG_Filters = ['"cumulative_level"', '"ProductName"','"month_name"']
         APG_Filters = ['"cumulative_level"', '"SBU_Name"','"ProductName"','"month_name"']
-        
-        print("APG_Liters at group by filter ",APG_Filters)
+        if time_grain == 'Monthly':
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"', '"month_name"']
+        else:
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
+            print("APG_Liters at group by filter ",APG_Filters)
     else:
         group_by_filter = ['"month_name"'] if not cumulative else []
         Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
+        print("len opf filters are ",cross_filters)
+        if len(cross_filters) == 1:
+            #if cross_filters[0]['key'].strip('"') = 'month_name' and cross_filters[0]['value'].strip('"') != '':
+            if cross_filters[0]['key'].strip('"') != 'month_name':
+                Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
+        else:
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
 
     # group_by_filter = ['"month_name"'] if not cumulative else []
     # group_by_filter = ['"SBU_Name"'] if cumulative else []
@@ -192,7 +202,8 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
         
         else:
             for key in [rec['key'] for rec in cross_filters]:
-                if key in Base_Filters and Base_Filters.index(key) > index:
+                if (key in Base_Filters or key in [x.strip('"') for x in Base_Filters]) and Base_Filters.index(key) > index:
+                    
                     index = Base_Filters.index(key)
             group_by_filter = [Base_Filters[index + 1]]
             #if index>len(Base_Filters):
