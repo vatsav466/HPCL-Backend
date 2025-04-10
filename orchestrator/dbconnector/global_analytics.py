@@ -8750,11 +8750,11 @@ class GlobalAnalytics:
         data = pd.DataFrame(data.get('data', []))
         if not data.empty:
             data['date'] = pd.to_datetime(data['date'])
-            data['date'] = data['date'].dt.strftime('%Y-%b-%d')
             full_range = pd.date_range(start=data['date'].min(), end=data['date'].max(), freq='D')
             data = data.set_index('date').reindex(full_range).fillna(0).rename_axis('date').reset_index()
             cols_to_int = ['cf_indents', 'dryout_count', 'intra_day_dry_count', 'category_a_count']
             data[cols_to_int] = data[cols_to_int].astype(int)
+            data['date'] = data['date'].dt.strftime('%Y-%b-%d')
             print(data)
             return data.to_dict(orient='records')
         return []
