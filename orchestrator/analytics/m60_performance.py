@@ -169,7 +169,10 @@ def get_group_by_filter_key(cross_filters, Base_Filters,resp_format_org,cumulati
             if cross_filters[0]['key'].strip('"') != 'month_name':
                 Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
         else:
-            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
+            if resp_format_org == 'summary':
+                Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"', '"month_name"']
+            else:
+                Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
 
     # group_by_filter = ['"month_name"'] if not cumulative else []
     # group_by_filter = ['"SBU_Name"'] if cumulative else []
