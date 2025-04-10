@@ -137,7 +137,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     return resp
 
 
-def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill_state='', time_grain=''):
+def get_group_by_filter_key(cross_filters, Base_Filters,resp_format_org,cumulative=False, drill_state='', time_grain=''):
     """
     Getting group by filter key based on cross filters
     :param time_grain:
@@ -154,7 +154,11 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
         if time_grain == 'Monthly':
             Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"', '"month_name"']
         else:
-            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
+            print("resp_format_org",resp_format_org)
+            if resp_format_org == 'summary':
+                Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"', '"month_name"']
+            else:
+                Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
             print("APG_Liters at group by filter ",APG_Filters)
     else:
         group_by_filter = ['"month_name"'] if not cumulative else []
@@ -220,7 +224,6 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
-    
     def get_fiscal_year(date_ui,todays_date,same_year = False,key = 'YTDPM'):
         
         end_date_ = fiscal_year.FiscalDate.today()
@@ -307,7 +310,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     resp_level = ''
     if resp_format == 'summary':
         resp_level = 'summary'
+        resp_format_org = 'summary'
         resp_format = ''
+    else:
+        resp_format_org = ''
     # Removing extra keys like all/_empty/* to mak sure all results appear in api response
     # Filtering cross filters
     org_cross_filters = cross_filters.copy()
@@ -371,7 +377,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if resp_level == "summary" or resp_format =='heat_map':
             Base_Filters = ['"month_name"', '"SBU_Name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"']
     # Fetching all group by filters, return should be a list always
-    group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters, cumulative, drill_state, time_grain)
+    group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters,resp_format_org,cumulative, drill_state, time_grain)
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     if "fiscal_year" in [x['key'].strip('"') for x in filters]:
