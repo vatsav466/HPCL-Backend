@@ -13,6 +13,7 @@ from datetime import datetime,timedelta
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
+from orchestrator.analytics import va_analysis
 import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
 from orchestrator.analytics import m60_performance
@@ -8729,3 +8730,30 @@ class GlobalAnalytics:
             print(traceback.format_exc())
             return {"status": False, "message": f"Error: {str(e)}", "data": {}}
     
+    @staticmethod
+    async def carry_forward_analysis(filters, cross_filters, drill_state):
+        start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
+        _filters = []
+        daterange = f""" '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        query = (f"SELECT DATE(created_at) AS date, COUNT(*) AS cf_indents, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_count, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_day_dry_count, "
+                 f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
+                 f"FROM public.carry_fwd_indent where created_at::date BETWEEN {daterange} "
+                 f"GROUP BY DATE(created_at) ORDER BY report_date")
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get('data', []))
+        if not data.empty:
+            data['date'] = pd.to_datetime(data['date'])
+            full_range = pd.date_range(start=data['date'].min(), end=data['date'].max(), freq='D')
+            data = data.set_index('date').reindex(full_range).fillna(0).rename_axis('date').reset_index()
+            cols_to_int = ['cf_indents', 'dryout_count', 'intra_day_dry_count', 'category_a_count']
+            data[cols_to_int] = data[cols_to_int].astype(int)
+            print(data)
+            return data.to_dict(orient='records')
+        return []
