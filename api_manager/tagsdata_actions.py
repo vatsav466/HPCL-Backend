@@ -156,12 +156,14 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                                   [fault_item['interlock_name'] for fault_item in Fault
                                    if fault_item["equipment_name"] == dev_type and
                                    fault_item["alert_category"] == system])
-                    q = (f"select COUNT(DISTINCT device_name) from alerts "
-                         f"where interlock_name in {tuple(interlocks)} AND alert_status='Open' "
-                         f"AND sap_id='{sap_id}'")
-                    resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(q)
-                    if resp['data']:
-                        mf_count += sum([rec['count'] for rec in resp['data']])
+                    if interlocks:
+                        in_clause = ", ".join(f"'{item}'" for item in interlocks)
+                        q = (f"select COUNT(DISTINCT device_name) from alerts "
+                             f"where interlock_name in ({in_clause}) AND alert_status='Open' "
+                             f"AND sap_id='{sap_id}'")
+                        resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(q)
+                        if resp['data']:
+                            mf_count += sum([rec['count'] for rec in resp['data']])
                     location_counts[dev_type][system]['mf_count'] = mf_count
                     # # Check Maintenance array
                     # interlocks = tuple([maintenance_item['interlock_name'] for maintenance_item in Maintenance
