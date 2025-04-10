@@ -8763,7 +8763,7 @@ class GlobalAnalytics:
     async def dry_out_analysis_count(filters, cross_filters, drill_state):
         resp_dict = {}
         query = (f"SELECT COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_total, "
-                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised,) "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised, "
                  f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate IN (2, 3)) AS dryout_pending_indent, "
                  f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate > 3) AS dryout_indent_wip, "
                  f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total, "
