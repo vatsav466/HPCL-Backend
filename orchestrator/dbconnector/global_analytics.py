@@ -8774,6 +8774,7 @@ class GlobalAnalytics:
                  f"alert_status != 'Close' and mark_as_false = true ")
 
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = data.get("data")[0] if data.get("data", {}) else {}
         resp_dict['dryoutData'] = {
             "Indent Not Raised": data.get("dryout_indent_not_raised", 0),
             "Pending Indent": data.get("dryout_pending_indent", 0),
