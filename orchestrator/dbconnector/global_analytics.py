@@ -8758,3 +8758,46 @@ class GlobalAnalytics:
             print(data)
             return data.to_dict(orient='records')
         return []
+
+    @staticmethod
+    async def dry_out_analysis_count(filters, cross_filters, drill_state):
+        resp_dict = {}
+        query = (f"SELECT COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_total, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised,) "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate IN (2, 3)) AS dryout_pending_indent, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate > 3) AS dryout_indent_wip, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2' AND progress_rate = 1) AS intra_indent_not_raised, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2' AND progress_rate IN (2, 3)) AS intra_pending_indent, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2' AND progress_rate > 3) AS intra_indent_wip "
+                 f"FROM public.alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
+                 f"alert_status != 'Close' and mark_as_false = true ")
+
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        resp_dict['dryoutData'] = {
+            "Indent Not Raised": data.get("dryout_indent_not_raised", 0),
+            "Pending Indent": data.get("dryout_pending_indent", 0),
+            "Indent WIP": data.get("dryout_indent_wip", 0),
+        }
+
+        resp_dict['intraDryoutData'] = {
+            "Indent Not Raised": data.get("intra_indent_not_raised", 0),
+            "Pending Indent": data.get("intra_pending_indent", 0),
+            "Indent WIP": data.get("intra_indent_wip", 0),
+        }
+        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        carry_fwd_data = pd.DataFrame(carry_fwd_data)
+        if carry_fwd_data.empty:
+            carry_fwd_data = pd.DataFrame({"dry_out_in_days": [], "category": []})
+        resp_dict['carryForwardData'] = {
+            "Carry Fwd DryOut": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
+            "Carry Fwd IntraDay DryOut": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
+            "Carry Fwd CATA": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
+        }
+
+        resp_dict['totalCount'] = {
+            "dryoutData": data.get("dryout_total", 0),
+            "intraDryoutData": data.get("intra_dryout_total", 0),
+            "carryForwardData": len(carry_fwd_data),
+        }
+        return resp_dict
