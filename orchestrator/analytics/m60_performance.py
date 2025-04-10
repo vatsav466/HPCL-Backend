@@ -945,21 +945,58 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             else:
                 print("final_resp is not empty")
                 print("cross_filters",cross_filters)
+                '''
+                if len(cross_filters) >= 1:
+                        if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name':
+                            condition = cross_filters[0]
+                            if condition['key'].strip('"') == 'SBU_Name':
+                                sbu_name = condition['value']
+                                if sbu_name in productOrders:
+                                    sort_order = productOrders[sbu_name]
+                                    
+                                    # Get the product name map
+                                    product_name_dict = final_resp.get("ProductName", {})
+                                    
+                                    # Build a list of indices sorted based on product order
+                                    sorted_items = sorted(
+                                        product_name_dict.items(),
+                                        key=lambda x: sort_order.index(x[1]) if x[1] in sort_order else float("inf")
+                                    )
+                                    sorted_indices = [idx for idx, _ in sorted_items]
+
+                                    # Reorder all columns in final_resp based on sorted indices
+                                    sorted_final_resp = {}
+                                    for col, col_data in final_resp.items():
+                                        if isinstance(col_data, dict):
+                                            sorted_final_resp[col] = {
+                                                new_idx: col_data[old_idx]
+                                                for new_idx, old_idx in enumerate(sorted_indices)
+                                                if old_idx in col_data
+                                            }
+                                        else:
+                                            sorted_final_resp[col] = col_data  # Keep as is if not a dict (e.g., string, list)
+
+                                    final_resp = sorted_final_resp
+
+                '''
+                
                 if len(cross_filters) ==1 or len(cross_filters) >1:
                     print("insied 1st if")
-                    if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name':
+                    print("cross_filters",cross_filters)
+                    if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name' and cross_filters[0]['value'] != '' and resp_format != 'stacked':
                         print("insied 2nd if")
                         condition = cross_filters[0]
                         if condition['key'].strip('"') == 'SBU_Name':
                             if condition['value'] in productOrders:
-                                sort_order = productOrders[condition['value']]    
+                                sort_order = productOrders[condition['value']] 
+                                print("final_resp",final_resp)   
                                 df = pd.DataFrame(final_resp)
                                 if 'ProductName' in df.columns.tolist():
                                     df['sort_key'] = df['ProductName'].apply(lambda x: sort_order.index(x) if x in sort_order else float('inf'))
                                     df_sorted = df.sort_values(by='sort_key').drop(columns='sort_key').reset_index(drop=True)
                                     df_sorted = df_sorted.fillna('')
                                     final_resp= {col: df_sorted[col].to_dict() for col in df_sorted.columns}
-                    
+                         
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys, 'sales_unit': measure_unit}}
     else:
