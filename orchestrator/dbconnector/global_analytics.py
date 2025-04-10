@@ -8745,7 +8745,7 @@ class GlobalAnalytics:
                  f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_day_dry_count, "
                  f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
                  f"FROM public.carry_fwd_indent where created_at::date BETWEEN {daterange} "
-                 f"GROUP BY DATE(created_at) ORDER BY report_date")
+                 f"GROUP BY DATE(created_at) ORDER BY date")
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get('data', []))
         if not data.empty:
