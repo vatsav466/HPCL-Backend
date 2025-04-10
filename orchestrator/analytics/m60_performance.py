@@ -137,7 +137,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     return resp
 
 
-def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill_state='', time_grain=''):
+def get_group_by_filter_key(cross_filters, Base_Filters,resp_format_org,cumulative=False, drill_state='', time_grain=''):
     """
     Getting group by filter key based on cross filters
     :param time_grain:
@@ -151,11 +151,25 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
         group_by_filter = ['"SBU_Name"'] if not cumulative else []
         APG_Filters = ['"cumulative_level"', '"ProductName"','"month_name"']
         APG_Filters = ['"cumulative_level"', '"SBU_Name"','"ProductName"','"month_name"']
-        
-        print("APG_Liters at group by filter ",APG_Filters)
+        if time_grain == 'Monthly':
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"', '"month_name"']
+        else:
+            print("resp_format_org",resp_format_org)
+            if resp_format_org == 'summary':
+                Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"', '"month_name"']
+            else:
+                Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
+            print("APG_Liters at group by filter ",APG_Filters)
     else:
         group_by_filter = ['"month_name"'] if not cumulative else []
         Lubes_Filters = ['"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"ProductName"', '"month_name"']
+        print("len opf filters are ",cross_filters)
+        if len(cross_filters) == 1:
+            #if cross_filters[0]['key'].strip('"') = 'month_name' and cross_filters[0]['value'].strip('"') != '':
+            if cross_filters[0]['key'].strip('"') != 'month_name':
+                Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
+        else:
+            Base_Filters = ['"cumulative_level"', '"SBU_Name"', '"ProductName"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"', '"month_name"']
 
     # group_by_filter = ['"month_name"'] if not cumulative else []
     # group_by_filter = ['"SBU_Name"'] if cumulative else []
@@ -192,7 +206,8 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
         
         else:
             for key in [rec['key'] for rec in cross_filters]:
-                if key in Base_Filters and Base_Filters.index(key) > index:
+                if (key in Base_Filters or key in [x.strip('"') for x in Base_Filters]) and Base_Filters.index(key) > index:
+                    
                     index = Base_Filters.index(key)
             group_by_filter = [Base_Filters[index + 1]]
             #if index>len(Base_Filters):
@@ -209,7 +224,6 @@ def get_group_by_filter_key(cross_filters, Base_Filters, cumulative=False, drill
 
 
 async def m60_performance(filters, cross_filters, drill_state="", time_grain="", resp_format=""):
-    
     def get_fiscal_year(date_ui,todays_date,same_year = False,key = 'YTDPM'):
         
         end_date_ = fiscal_year.FiscalDate.today()
@@ -296,7 +310,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     resp_level = ''
     if resp_format == 'summary':
         resp_level = 'summary'
+        resp_format_org = 'summary'
         resp_format = ''
+    else:
+        resp_format_org = ''
     # Removing extra keys like all/_empty/* to mak sure all results appear in api response
     # Filtering cross filters
     org_cross_filters = cross_filters.copy()
@@ -360,7 +377,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if resp_level == "summary" or resp_format =='heat_map':
             Base_Filters = ['"month_name"', '"SBU_Name"','"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"ProductName"']
     # Fetching all group by filters, return should be a list always
-    group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters, cumulative, drill_state, time_grain)
+    group_by_filter = get_group_by_filter_key(cross_filters, Base_Filters,resp_format_org,cumulative, drill_state, time_grain)
     # Assigning empty variables
     history = actual = target = start_date = end_date = start_date_history = end_date_history = ""
     if "fiscal_year" in [x['key'].strip('"') for x in filters]:
@@ -945,21 +962,58 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             else:
                 print("final_resp is not empty")
                 print("cross_filters",cross_filters)
+                '''
+                if len(cross_filters) >= 1:
+                        if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name':
+                            condition = cross_filters[0]
+                            if condition['key'].strip('"') == 'SBU_Name':
+                                sbu_name = condition['value']
+                                if sbu_name in productOrders:
+                                    sort_order = productOrders[sbu_name]
+                                    
+                                    # Get the product name map
+                                    product_name_dict = final_resp.get("ProductName", {})
+                                    
+                                    # Build a list of indices sorted based on product order
+                                    sorted_items = sorted(
+                                        product_name_dict.items(),
+                                        key=lambda x: sort_order.index(x[1]) if x[1] in sort_order else float("inf")
+                                    )
+                                    sorted_indices = [idx for idx, _ in sorted_items]
+
+                                    # Reorder all columns in final_resp based on sorted indices
+                                    sorted_final_resp = {}
+                                    for col, col_data in final_resp.items():
+                                        if isinstance(col_data, dict):
+                                            sorted_final_resp[col] = {
+                                                new_idx: col_data[old_idx]
+                                                for new_idx, old_idx in enumerate(sorted_indices)
+                                                if old_idx in col_data
+                                            }
+                                        else:
+                                            sorted_final_resp[col] = col_data  # Keep as is if not a dict (e.g., string, list)
+
+                                    final_resp = sorted_final_resp
+
+                '''
+                
                 if len(cross_filters) ==1 or len(cross_filters) >1:
                     print("insied 1st if")
-                    if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name':
+                    print("cross_filters",cross_filters)
+                    if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name' and cross_filters[0]['value'] != '' and resp_format != 'stacked':
                         print("insied 2nd if")
                         condition = cross_filters[0]
                         if condition['key'].strip('"') == 'SBU_Name':
                             if condition['value'] in productOrders:
-                                sort_order = productOrders[condition['value']]    
+                                sort_order = productOrders[condition['value']] 
+                                print("final_resp",final_resp)   
                                 df = pd.DataFrame(final_resp)
                                 if 'ProductName' in df.columns.tolist():
                                     df['sort_key'] = df['ProductName'].apply(lambda x: sort_order.index(x) if x in sort_order else float('inf'))
                                     df_sorted = df.sort_values(by='sort_key').drop(columns='sort_key').reset_index(drop=True)
                                     df_sorted = df_sorted.fillna('')
                                     final_resp= {col: df_sorted[col].to_dict() for col in df_sorted.columns}
-                    
+                         
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys, 'sales_unit': measure_unit}}
     else:
