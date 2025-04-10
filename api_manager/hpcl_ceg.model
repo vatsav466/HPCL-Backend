@@ -2064,6 +2064,7 @@ Model DryOutAlertReport {
     terminal_plant_id optional str
     tank_no optional str
     capacity optional int
+    tank_capacity optional str
     product_code unique_field index_field str
     dry_out_in_days optional str
     avgsales_7days optional float

@@ -5862,6 +5862,7 @@ class DryOutAlertReportSchema(UrdhvaPostgresBase):
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tank_no: Mapped[typing.Optional[str]] = mapped_column("tank_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     capacity: Mapped[typing.Optional[int]] = mapped_column("capacity", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    tank_capacity: Mapped[typing.Optional[str]] = mapped_column("tank_capacity", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     product_code: Mapped[str] = mapped_column("product_code", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     dry_out_in_days: Mapped[typing.Optional[str]] = mapped_column("dry_out_in_days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     avgsales_7days: Mapped[typing.Optional[float]] = mapped_column("avgsales_7days", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
@@ -5886,6 +5887,7 @@ class DryOutAlertReportCreate(urdhva_base.postgresmodel.BasePostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     tank_no: typing.Optional[str] = pydantic.Field("", **{})
     capacity: typing.Optional[int] = pydantic.Field(0, **{})
+    tank_capacity: typing.Optional[str] = pydantic.Field("", **{})
     product_code: str
     dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
     avgsales_7days: typing.Optional[float] = pydantic.Field(0.0, **{})
@@ -5915,6 +5917,7 @@ class DryOutAlertReport(urdhva_base.postgresmodel.PostgresModel):
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
     tank_no: typing.Optional[str] = pydantic.Field("", **{})
     capacity: typing.Optional[int] = pydantic.Field(0, **{})
+    tank_capacity: typing.Optional[str] = pydantic.Field("", **{})
     product_code: typing.Optional[str] | None = None
     dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
     avgsales_7days: typing.Optional[float] = pydantic.Field(0.0, **{})
