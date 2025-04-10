@@ -886,7 +886,14 @@ async def sync_user_roles():
                                     "Supply Chain",
                                     "Video Analytics"
                                 ]
+                            },
+                            {
+                                "menu_name": "Performance",
+                                "allowed_sub_menus": [
+                                    "Sales Performance"
+                                ]
                             }
+                            
                         ],
                         "name": "RO",
                         "status": True
@@ -899,6 +906,52 @@ async def sync_user_roles():
                                     "RO Home",
                                     "Supply Chain",
                                     "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "Performance",
+                                "allowed_sub_menus": [
+                                    "Sales Performance"
+                                ]
+                            }
+                        ],
+                        "name": "RO",
+                        "status": True
+                    },
+                    "HQO Officer RO": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "Retail Outlet",
+                                "allowed_sub_menus": [
+                                    "RO Home",
+                                    "Supply Chain",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "Performance",
+                                "allowed_sub_menus": [
+                                    "Sales Performance"
+                                ]
+                            }
+                        ],
+                        "name": "RO",
+                        "status": True
+                    },
+                    "HQO RO": {
+                        "allowed_pages": [
+                            {
+                                "menu_name": "Retail Outlet",
+                                "allowed_sub_menus": [
+                                    "RO Home",
+                                    "Supply Chain",
+                                    "Video Analytics"
+                                ]
+                            },
+                            {
+                                "menu_name": "Performance",
+                                "allowed_sub_menus": [
+                                    "Sales Performance"
                                 ]
                             }
                         ],
