@@ -122,9 +122,8 @@ async def sync_location_master():
         data = await fetch_data(cursor, config.get("query"))
         data_ro = await fetch_data(cursor, config.get("reporting_office_query"))
         for col in ["PLANT", "REPORTING_OFFICE"]:
-            data[col] = data[col].fillna(0).astype(str).str.replace('',0).astype(int).astype(str)
+            data[col] = data[col].fillna(0).astype(str).replace('',0).astype(int).astype(str)
         data_ro = await combine_roles(data_ro, _id="RO_CODE", role_name=["SALES_GROUP_DESC"])
-        data = data.loc[data['ZLOC_TYPE'].fillna("").astype(str) == config["location_type"]["plant"]]
         for col in ["RO_CODE", "SALES_OFFICE_DESC", "SALES_GROUP_DESC"]:
             if col in data.columns:
                 del data[col]
