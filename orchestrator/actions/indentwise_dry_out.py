@@ -174,9 +174,11 @@ class IndentDryOut:
                             continue
                         query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
                                  f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
-                                 f"""servicing_plant_id='{each_indent["LOCN_CODE"]}' """
+                                 f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
                                  f"""dry_out_in_days='{self.params["dry_out_in_days"]}'"""
                                  f"""where id='{record["id"]}'""")
+                        if 'alert_id' not in self.params.keys():
+                            self.params['alert_id'] = record["id"]
                         # f"""servicing_plant_name='{self.params['servicing_plant_name']}' """
                         await hpcl_ceg_model.Alerts.update_by_query(query)
                         await self.update_indent_no(
@@ -1536,12 +1538,17 @@ class IndentDryOut:
     async def update_indent_no(self, indent_no: str, loc_code: str, indent_raised_date):
         MAX_RETRIES = 5
         RETRY_DELAY = 5
+        print("self.params: ", self.params)
         alert_data = await Alerts.get(self.params["alert_id"])
 
         if not isinstance(alert_data, dict):
             alert_data = alert_data.__dict__
         # instance_id = alert_data.get("workflow_instance_id")
         business_key = alert_data.get("unique_id")
+        if not 'CAMUNDA_URL' in self.params.keys():
+            self.params['CAMUNDA_URL'] = await helpers.get_alert_camunda_url(self.params["alert_id"],
+                                                          f"{urdhva_base.settings.camunda_url}")
+        print("self.params: ", self.params)
         instance_id = await self.get_process_instance_id(business_key, self.params['CAMUNDA_URL'])
         if not instance_id:
             instance_id = alert_data.get("workflow_instance_id")
