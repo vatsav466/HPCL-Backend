@@ -1076,7 +1076,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         # print("insied 2nd if")
                         condition = cross_filters[0]
                         if condition['key'].strip('"') == 'SBU_Name':
-                            if condition['value'] in productOrders:
+                            if '"ProductName"' in group_by_filter and condition['value'] in productOrders:
                                 sort_order = productOrders[condition['value']]
                                 # if keys not exist in resp, creating empty dict
                                 if 'ProductName' not in final_resp:
