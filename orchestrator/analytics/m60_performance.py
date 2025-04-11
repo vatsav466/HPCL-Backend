@@ -349,14 +349,23 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                        filter_cond["value"].lower() in ['*', '_empty', 'all'])]
     sbuName_req = ''
     sbuWise = False
+    # Changing BG filter to GAS
+    for index, eachfilter in enumerate(cross_filters):
+        if eachfilter['key'] == '"SBU_Name"':
+            if eachfilter['value'] == 'NG':
+                cross_filters[index]['value'] = 'GAS'
+    # Changing BG filter to GAS
+    for index, each_filter in enumerate(filters):
+        if each_filter['key'] == '"SBU_Name"':
+            if each_filter['value'] == 'NG':
+                filters[index]['value'] = 'GAS'
     if '"sbu_wise"' in [x['key'] for x in cross_filters]:
         sbuWise = True
-        for eachfilter in cross_filters:
+        for index, eachfilter in enumerate(cross_filters):
             if eachfilter['key'] == '"sbu_wise"':
-                inx = cross_filters.index(eachfilter)
-                cross_filters.pop(inx)
+                cross_filters.pop(index)
     if '"SBU_Name"' in [x['key'] for x in filters]:
-        for each_filter in filters:
+        for index, each_filter in enumerate(filters):
             if each_filter['key'] == '"SBU_Name"':
                 sbuName_req = each_filter['value']
                 break
@@ -1060,15 +1069,39 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 '''
 
                 if len(cross_filters) == 1 or len(cross_filters) > 1:
-                    print("insied 1st if")
-                    print("cross_filters", cross_filters)
+                    # print("insied 1st if")
+                    # print("cross_filters", cross_filters)
                     if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name' and cross_filters[0][
                         'value'] != '' and resp_format != 'stacked':
-                        print("insied 2nd if")
+                        # print("insied 2nd if")
                         condition = cross_filters[0]
                         if condition['key'].strip('"') == 'SBU_Name':
                             if condition['value'] in productOrders:
                                 sort_order = productOrders[condition['value']]
+                                # if keys not exist in resp, creating empty dict
+                                if 'ProductName' not in final_resp:
+                                    final_resp['ProductName'] = {}
+                                    for key_ in ['ACTUAL_TMT_SALES', 'ACTUAL_HISTORY_TMT_SALES', 'cumulative']:
+                                        if key_ not in final_resp:
+                                            final_resp[key_] = {}
+                                # Removing unnecessary products
+                                cleanup_products = ['LPG CYLINDER ACCESSORIES']
+                                for order_num in list(final_resp['ProductName'].keys()):
+                                    if final_resp['ProductName'][order_num] in cleanup_products:
+                                        for key_ in final_resp:
+                                            if order_num in final_resp[key_]:
+                                                del final_resp[key_][order_num]
+                                for key in sort_order:
+                                    # Sorting data
+                                    if key not in list(final_resp.get('ProductName', {}).values()):
+                                        order_num = list(final_resp['ProductName'].keys())
+                                        order_num.sort()
+                                        order_num = order_num[-1] + 1
+                                        final_resp['ProductName'][order_num] = key
+                                        for key_ in final_resp:
+                                            if key_ != 'ProductName':
+                                                final_resp[key_][order_num] = 0
+
                                 print("final_resp", final_resp)
                                 df = pd.DataFrame(final_resp)
                                 if 'ProductName' in df.columns.tolist():
