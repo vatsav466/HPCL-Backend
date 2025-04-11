@@ -8830,7 +8830,7 @@ class GlobalAnalytics:
 
         # Final query
         query = (
-            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count"
+            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
             f"FROM alerts "
             f"WHERE {where_clause} "
             f"GROUP BY zone, sap_id, product_code "
@@ -8866,7 +8866,7 @@ class GlobalAnalytics:
     @staticmethod
     async def permanent_dry_out_trends(filters, cross_filters, drill_state):
         _filters = []
-        seven_days_ago = (urdhva_base.utilities.get_present_time() - timedelta(days=5)).strftime("%Y-%m-%d")
+        five_days_ago = (urdhva_base.utilities.get_present_time() - timedelta(days=5)).strftime("%Y-%m-%d")
         daterange = f""" created_at::date = '{urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")}' """
 
         if cross_filters:
@@ -8883,7 +8883,7 @@ class GlobalAnalytics:
         # Construct WHERE clause
         where_clauses = [
             "interlock_name = 'Dry Out Each Indent Wise MainFlow'",
-            f"created_at::date <= '{seven_days_ago}'",
+            f"created_at::date <= '{five_days_ago}'",
             "alert_status = 'Open'"
         ]
         if _filters:
@@ -8893,7 +8893,7 @@ class GlobalAnalytics:
 
         # Final query
         query = (
-            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count"
+            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
             f"FROM alerts "
             f"WHERE {where_clause} "
             f"GROUP BY zone, sap_id, product_code "
@@ -8910,21 +8910,18 @@ class GlobalAnalytics:
             return {"status": False, "message": "No Data Found", "counts": [], "data": []}
 
         data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
-
         full_months = pd.date_range(end=data['month'].max(), periods=3, freq='M')
-
-        sap_ids = data['sap_id'].unique()
         products = data['product_code'].unique()
-
         full_index = pd.MultiIndex.from_product(
-            [full_months, sap_ids, products],
-            names=['month', 'sap_id', 'product_code']
+            [full_months, products],
+            names=['month', 'product_code']
         )
 
-        df = data.set_index(['month', 'sap_id', 'product_code']).reindex(full_index, fill_value=0).reset_index()
-
+        df = data.groupby(['month', 'product_code'])['total_count'].sum().reset_index()
+        df = df.set_index(['month', 'product_code']).reindex(full_index, fill_value=0).reset_index()
         df = df.rename(columns={'total_count': 'permanent_dryout_count'})
         df['month'] = df['month'].dt.strftime('%Y-%b')
+        data['month'] = data['month'].dt.strftime('%Y-%b')
         return {
             "status": True, "message": "Success",
             "counts": df.to_dict(orient='records'),
