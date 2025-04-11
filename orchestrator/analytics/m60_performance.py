@@ -606,8 +606,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 # print("todays_date.split('-')[0]", todays_date.split('-')[0])
                 # print("fiscal_year_ui.split('-')[0]", fiscal_year_ui.split('-')[0])
 
-                if (todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4') and todays_date.split('-')[
-                    0] == fiscal_year_ui.split('-')[0]:
+                if ((todays_date.split('-')[1] == '04' or todays_date.split('-')[1] == '4') and
+                        todays_date.split('-')[0] == fiscal_year_ui.split('-')[0]):
                     # print("in this data loop")
                     return {"status": False, "message": "No Data Present for the current selection",
                             "data": {'data': {'ACTUAL_TMT_SALES': {}, 'ACTUAL_HISTORY_TMT_SALES': {}, 'cumulative': {},
@@ -757,6 +757,16 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             group_keys.append('month_name')
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
+        elif '"DATE"' in [x['key'] for x in filters]:
+            group_keys.append("month_name")
+            target_data = await collect_data([target], 'M60_LEVEL_METADATA',
+                                             where_conditions + Default_Filters, start_date, end_date, group_keys)
+        elif '"C"' in [x['key'] for x in filters] and '"YTD"' in [x['key'] for x in filters] and '"T"' in [x['key'] for
+                                                                                                           x in
+                                                                                                           filters]:
+            group_keys.append("month_name")
+            target_data = await collect_data([target], 'M60_LEVEL_METADATA',
+                                             where_conditions + Default_Filters, start_date, end_date, group_keys)
         else:
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
@@ -778,12 +788,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 if "TARGET_TMT_SALES" in target_data.columns.tolist():
                     sample_data = pd.DataFrame(columns=['TARGET_TMT_SALES'])
                     sample_data['TARGET_TMT_SALES'] = target_data['TARGET_TMT_SALES'].sum()
-                if not sample_data.empty:
-                    target_data = sample_data
+                    if not sample_data.empty:
+                        target_data = sample_data
             elif '"C"' not in [x['key'] for x in filters]:
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             elif '"C"' in [x['key'] for x in filters] and len(org_cross_filters) == 1 and org_cross_filters[0][
                 'key'] == '"sbu_wise"':
+                target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+            elif '"YTD"' in [x['key'] for x in filters] and 'month_name' in target_data[0]:
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
             else:
                 target_data = pd.DataFrame(target_data)
