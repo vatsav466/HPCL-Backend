@@ -25,6 +25,24 @@ productOrders = {
     "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils",
               "Industrial Greases", "Industrial Specialities", "Base Oil"]
 }
+
+AllProducts = {
+    "Lubes": ["Industrial Greases", "DEF/Diesel Exhaust Fluid", "Automotive Greases", "Automotive Specialities",
+              "Industrial oils", "Alprol", "Base Oil", "LUBES RETAIL", "Automotive Oils", "Industrial Specialities",
+              "Solvent 2445", "Miscellaneous/Minor", "Marine Lubes"],
+    "Aviation": ["ATF"],
+    "Retail": ["LPG BLK", "MS", "Industrial Greases", "DEF/Diesel Exhaust Fluid", "HSD", "Automotive Greases",
+               "Automotive Specialities", "Compressed Bio Gas ", "Industrial oils", "Automotive Oils",
+               "Industrial Specialities", "Miscellaneous/Minor", "CNG", "SKO", "Compressed Bio Gas (CBG)"],
+    "I&C": ["MS", "Sulphur", "Solvent 2445", "LDO", "CBFS", "Hexane", "Solvent 1425", "FO", "JBO", "PETCHEM",
+            "Propylene", "LSHS/HHS", "Naptha", "HSD", "Bitumen Pkd", "Bitumen Modified", "Bitumen Blk",
+            "Miscellaneous/Minor", "SKO"],
+    "LPG": ["LPG PKD - Non Domestic", "LPG BLK", "BULK BUTANE", "BULK PROPANE", "LPG CYLINDER REGULATOR",
+            "Miscellaneous/Minor", "LPG PKD - Domestic", "LPG CYLINDER ACCESSORIES"],
+    "GAS": ["CNG", "LNG", "Compressed Bio Gas (CBG)"],
+    "PETCHEM": ["Miscellaneous/Minor", "PETCHEM", "Solvent 2445", "CRUDE- Reporting only"]
+}
+
 HistoryKeyMapping = {'SBU_Name': '"ORGSBUNAME"', 'Zone_Name': '"ORGZONENAME"', 'Region_Name': '"ORGRONAME"',
                      'SalesArea_Name': '"ORGSANAME"'}
 # Base_Filters = ['"cumulative_level"','"SBU_Name"', '"Zone_Name"', '"Region_Name"', '"SalesArea_Name"','"month_name"','"ProductName"']
@@ -1078,21 +1096,16 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         if condition['key'].strip('"') == 'SBU_Name':
                             if '"ProductName"' in group_by_filter and condition['value'] in productOrders:
                                 sort_order = productOrders[condition['value']]
+                                all_products = AllProducts.get(condition['value'], sort_order)
                                 # if keys not exist in resp, creating empty dict
                                 if 'ProductName' not in final_resp:
                                     final_resp['ProductName'] = {}
                                     for key_ in ['ACTUAL_TMT_SALES', 'ACTUAL_HISTORY_TMT_SALES', 'cumulative']:
                                         if key_ not in final_resp:
                                             final_resp[key_] = {}
-                                # Removing unnecessary products
-                                cleanup_products = ['LPG CYLINDER ACCESSORIES']
-                                for order_num in list(final_resp['ProductName'].keys()):
-                                    if final_resp['ProductName'][order_num] in cleanup_products:
-                                        for key_ in final_resp:
-                                            if order_num in final_resp[key_]:
-                                                del final_resp[key_][order_num]
-                                for key in sort_order:
-                                    # Sorting data
+
+                                # Adding missing products
+                                for key in all_products:
                                     if key not in list(final_resp.get('ProductName', {}).values()):
                                         order_num = list(final_resp['ProductName'].keys())
                                         order_num.sort()
@@ -1102,6 +1115,15 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                             if key_ != 'ProductName':
                                                 final_resp[key_][order_num] = 0
 
+                                # Removing unnecessary products
+                                cleanup_products = ['LPG CYLINDER ACCESSORIES']
+                                for order_num in list(final_resp['ProductName'].keys()):
+                                    if final_resp['ProductName'][order_num] in cleanup_products:
+                                        for key_ in final_resp:
+                                            if order_num in final_resp[key_]:
+                                                del final_resp[key_][order_num]
+
+                                # Sorting data
                                 print("final_resp", final_resp)
                                 df = pd.DataFrame(final_resp)
                                 if 'ProductName' in df.columns.tolist():
