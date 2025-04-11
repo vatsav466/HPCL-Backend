@@ -4,15 +4,17 @@ import json
 import calendar
 import psycopg2
 import traceback
+import itertools
 import polars as pl
 import numpy as np
 import pandas as pd
 import hpcl_ceg_model
 import dashboard_studio_model
-from datetime import datetime,timedelta
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
+from datetime import datetime,timedelta
+from pandas.tseries.offsets import MonthEnd
 from orchestrator.analytics import va_analysis
 import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
@@ -8756,8 +8758,8 @@ class GlobalAnalytics:
             data[cols_to_int] = data[cols_to_int].astype(int)
             data['date'] = data['date'].dt.strftime('%Y-%b-%d')
             print(data)
-            return data.to_dict(orient='records')
-        return []
+            return {"status": True, "message": "Success", "data": data.to_dict(orient='records')}
+        return {"status": False, "message": "No Data Found", "data": []}
 
     @staticmethod
     async def dry_out_analysis_count(filters, cross_filters, drill_state):
@@ -8801,4 +8803,130 @@ class GlobalAnalytics:
             "intraDryoutData": data.get("intra_dryout_total", 0),
             "carryForwardData": len(carry_fwd_data),
         }
-        return resp_dict
+        return {"status": True, "message": "Success", "data": resp_dict}
+
+    @staticmethod
+    async def dry_out_trends(filters, cross_filters, drill_state):
+        _filters = []
+        daterange = f""" created_at::date = '{urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")}' """
+
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
+                    if start_date == end_date:
+                        daterange = f""" created_at::date = '{start_date}' """
+                    else:
+                        daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+                    continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        # Construct WHERE clause
+        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", daterange]
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND ".join(where_clauses)
+
+        # Final query
+        query = (
+            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count"
+            f"FROM alerts "
+            f"WHERE {where_clause} "
+            f"GROUP BY zone, sap_id, product_code "
+            f"ORDER BY zone, sap_id, product_code;"
+        )
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if not data.empty:
+            data['created_date'] = pd.to_datetime(data['created_at']).dt.date
+
+            daily_counts = data.groupby(['created_date', 'product_code'])['total_count'].sum().reset_index()
+
+            date_range = pd.date_range(start=daily_counts['created_date'].min(),
+                                       end=daily_counts['created_date'].max()).date
+
+            products = daily_counts['product_code'].unique()
+
+            full_index = pd.MultiIndex.from_tuples(itertools.product(date_range, products),
+                                                   names=['created_date', 'product_code'])
+
+            daily_counts = daily_counts.set_index(['created_date', 'product_code']).reindex(full_index,
+                                                                                            fill_value=0).reset_index()
+
+            daily_counts = daily_counts.rename(columns={'created_date': 'report_date', 'total_count': 'total_dryouts'})
+            return {
+                "status": True, "message": "Success",
+                "counts": daily_counts.to_dict(orient='records'),
+                "data": data.to_dict(orient='records')
+            }
+
+        return {"status": False, "message": "No Data Found", "counts": [], "data": []}
+
+    @staticmethod
+    async def permanent_dry_out_trends(filters, cross_filters, drill_state):
+        _filters = []
+        seven_days_ago = (urdhva_base.utilities.get_present_time() - timedelta(days=5)).strftime("%Y-%m-%d")
+        daterange = f""" created_at::date = '{urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")}' """
+
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
+                    if start_date == end_date:
+                        daterange = f""" created_at::date = '{start_date}' """
+                    else:
+                        daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+                    continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        # Construct WHERE clause
+        where_clauses = [
+            "interlock_name = 'Dry Out Each Indent Wise MainFlow'",
+            f"created_at::date <= '{seven_days_ago}'",
+            "alert_status = 'Open'"
+        ]
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND ".join(where_clauses)
+
+        # Final query
+        query = (
+            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count"
+            f"FROM alerts "
+            f"WHERE {where_clause} "
+            f"GROUP BY zone, sap_id, product_code "
+            f"ORDER BY zone, sap_id, product_code;"
+        )
+        query = (f"SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month, sap_id, product_code, "
+                 f"COUNT(*) AS total_count FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' "
+                 f"AND alert_status = 'Open' AND created_at <= NOW() - INTERVAL '5 days' AND "
+                 f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
+                 f"GROUP BY month, sap_id, product_code ORDER BY month, sap_id, product_code;")
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if data.empty:
+            return {"status": False, "message": "No Data Found", "counts": [], "data": []}
+
+        data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
+
+        full_months = pd.date_range(end=data['month'].max(), periods=3, freq='M')
+
+        sap_ids = data['sap_id'].unique()
+        products = data['product_code'].unique()
+
+        full_index = pd.MultiIndex.from_product(
+            [full_months, sap_ids, products],
+            names=['month', 'sap_id', 'product_code']
+        )
+
+        df = data.set_index(['month', 'sap_id', 'product_code']).reindex(full_index, fill_value=0).reset_index()
+
+        df = df.rename(columns={'total_count': 'permanent_dryout_count'})
+        df['month'] = df['month'].dt.strftime('%Y-%b')
+        return {
+            "status": True, "message": "Success",
+            "counts": df.to_dict(orient='records'),
+            "data": data.to_dict(orient='records')
+        }
