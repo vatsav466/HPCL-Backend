@@ -8834,7 +8834,7 @@ class GlobalAnalytics:
             f"FROM alerts "
             f"WHERE {where_clause} "
             f"GROUP BY zone, sap_id, product_code "
-            f"ORDER BY zone, sap_id, product_code;"
+            f"ORDER BY zone, sap_id, product_code"
         )
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
@@ -8897,13 +8897,13 @@ class GlobalAnalytics:
             f"FROM alerts "
             f"WHERE {where_clause} "
             f"GROUP BY zone, sap_id, product_code "
-            f"ORDER BY zone, sap_id, product_code;"
+            f"ORDER BY zone, sap_id, product_code"
         )
         query = (f"SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month, sap_id, product_code, "
                  f"COUNT(*) AS total_count FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' "
                  f"AND alert_status = 'Open' AND created_at <= NOW() - INTERVAL '5 days' AND "
                  f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
-                 f"GROUP BY month, sap_id, product_code ORDER BY month, sap_id, product_code;")
+                 f"GROUP BY month, sap_id, product_code ORDER BY month, sap_id, product_code")
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if data.empty:
@@ -8933,7 +8933,7 @@ class GlobalAnalytics:
         query = (f"SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, sap_id, product_code, COUNT(*) AS dryout_count "
                  f"FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
                  f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
-                 f"GROUP BY month, sap_id, product_code HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code;")
+                 f"GROUP BY month, sap_id, product_code HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code")
 
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
