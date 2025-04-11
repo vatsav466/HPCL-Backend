@@ -68,35 +68,37 @@ location_configs = [
     {
         "bu": "lpg",
         "query": """
-                SELECT * 
-                    FROM 
+                SELECT *
+                    FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
-                WHERE 
+                WHERE
                     ZLOC_TYPE IN ('33');
                 """,
-        "reporting_office_query":""" 
-                SELECT * 
-                    FROM 
-                    EDW_DC_PLANT PLT
-                    LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
-                WHERE 
-                    ZLOC_TYPE IN ('68');
+        "reporting_office_query":"""
+                    SELECT
+                        PLT.PLANT AS RO_CODE, ZN.SALES_OFFICE_DESC, ZN.SALES_GROUP_DESC
+                    FROM
+                        EDW_DC_PLANT PLT
+                        LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
+                    WHERE
+                        ZLOC_TYPE IN ('68');
                 """
     },
     {
         "bu": "tas",
         "query": """
-                SELECT * 
-                    FROM 
+                SELECT *
+                FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
                 WHERE 
                     PLT.SBU='RET' AND CODE2 IN ('O&D','QC') AND ZLOC_TYPE!='66' AND FACILITY!='13';
                 """,
         "reporting_office_query": """ 
-                SELECT * 
-                    FROM 
+                SELECT
+                    PLT.PLANT AS RO_CODE, ZN.SALES_OFFICE_DESC, ZN.SALES_GROUP_DESC
+                FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
                 WHERE
