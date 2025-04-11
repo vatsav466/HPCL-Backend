@@ -174,7 +174,7 @@ class IndentDryOut:
                             continue
                         query = (f"""update alerts set indent_no='{self.params["indent_no"]}', """
                                  f"""indent_raised_date='{each_indent["INDENT_DATE"].strftime("%Y-%m-%d %H:%M:%S")}', """
-                                 f"""servicing_plant_id='{each_indent["LOCN_CODE"]}' """
+                                 f"""servicing_plant_id='{each_indent["LOCN_CODE"]}', """
                                  f"""dry_out_in_days='{self.params["dry_out_in_days"]}'"""
                                  f"""where id='{record["id"]}'""")
                         # f"""servicing_plant_name='{self.params['servicing_plant_name']}' """
