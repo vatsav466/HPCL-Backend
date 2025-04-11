@@ -8775,7 +8775,7 @@ class GlobalAnalytics:
                  f"FROM public.alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
                  f"alert_status != 'Close' and mark_as_false = true ")
 
-        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = data.get("data")[0] if data.get("data", {}) else {}
         resp_dict['dryoutData'] = {
             "Indent Not Raised": data.get("dryout_indent_not_raised", 0),
@@ -8836,7 +8836,7 @@ class GlobalAnalytics:
             f"GROUP BY zone, sap_id, product_code "
             f"ORDER BY zone, sap_id, product_code"
         )
-        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if not data.empty:
             data['created_date'] = pd.to_datetime(data['created_at']).dt.date
@@ -8865,46 +8865,12 @@ class GlobalAnalytics:
 
     @staticmethod
     async def permanent_dry_out_trends(filters, cross_filters, drill_state):
-        _filters = []
-        five_days_ago = (urdhva_base.utilities.get_present_time() - timedelta(days=5)).strftime("%Y-%m-%d")
-        daterange = f""" created_at::date = '{urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")}' """
-
-        if cross_filters:
-            for filter in cross_filters:
-                if "DATE" in filter.key:
-                    start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
-                    if start_date == end_date:
-                        daterange = f""" created_at::date = '{start_date}' """
-                    else:
-                        daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
-                    continue
-                _filters.append(f"{filter.key} = '{filter.value}'")
-
-        # Construct WHERE clause
-        where_clauses = [
-            "interlock_name = 'Dry Out Each Indent Wise MainFlow'",
-            f"created_at::date <= '{five_days_ago}'",
-            "alert_status = 'Open'"
-        ]
-        if _filters:
-            where_clauses.extend(_filters)
-
-        where_clause = " AND ".join(where_clauses)
-
-        # Final query
-        query = (
-            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
-            f"FROM alerts "
-            f"WHERE {where_clause} "
-            f"GROUP BY zone, sap_id, product_code "
-            f"ORDER BY zone, sap_id, product_code"
-        )
         query = (f"SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month, sap_id, product_code, "
                  f"COUNT(*) AS total_count FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' "
                  f"AND alert_status = 'Open' AND created_at <= NOW() - INTERVAL '5 days' AND "
                  f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
                  f"GROUP BY month, sap_id, product_code ORDER BY month, sap_id, product_code")
-        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if data.empty:
             return {"status": False, "message": "No Data Found", "counts": [], "data": []}
@@ -8935,7 +8901,7 @@ class GlobalAnalytics:
                  f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
                  f"GROUP BY month, sap_id, product_code HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code")
 
-        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
 
         if data.empty:
