@@ -8927,3 +8927,50 @@ class GlobalAnalytics:
             "counts": df.to_dict(orient='records'),
             "data": data.to_dict(orient='records')
         }
+
+    @staticmethod
+    async def frequently_dry_out_trends(filters, cross_filters, drill_state):
+        query = (f"SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, sap_id, product_code, COUNT(*) AS dryout_count "
+                 f"FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
+                 f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
+                 f"GROUP BY month, sap_id, product_code HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code;")
+
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+
+        if data.empty:
+            return {
+                "status": False,
+                "message": "No data found",
+                "counts": [],
+                "data": []
+            }
+
+        # Convert month column to datetime for range filling
+        data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
+
+        # Get full month range (3 months) and product list
+        full_months = pd.date_range(end=data['month'].max(), periods=3, freq='M')
+        products = data['product_code'].unique()
+
+        # Create full index and reindex for missing combinations
+        full_index = pd.MultiIndex.from_product(
+            [full_months, products],
+            names=['month', 'product_code']
+        )
+
+        monthly_counts = data.groupby(['month', 'product_code'])['dryout_count'].sum().reset_index()
+        monthly_counts = monthly_counts.set_index(['month', 'product_code']).reindex(full_index,
+                                                                                     fill_value=0).reset_index()
+        monthly_counts['month'] = monthly_counts['month'].dt.strftime('%Y-%b')
+
+        # Format raw data month as well
+        data['month'] = data['month'].dt.strftime('%Y-%b')
+
+        return {
+            "status": True,
+            "message": "Success",
+            "counts": monthly_counts.rename(columns={'dryout_count': 'frequent_dryout_count'}).to_dict(
+                orient='records'),
+            "data": data.to_dict(orient='records')
+        }
