@@ -56,6 +56,17 @@ async def addFilterValue(rec):
         condition = f"{rec.key} = '{rec.value}'"
     return condition
 
+async def product_map():
+    alert_code_to_name = {
+        "2811000": "MS",
+        "2812000": "HSD",
+        "3912000": "TURBO",
+        "2822000": "E20",
+        "3672000": "POWER 95",
+        "2816000": "POWER 99",
+        "3373000": "POWER 100"
+    }
+    return alert_code_to_name
 
 class GlobalAnalytics:        
     @staticmethod
@@ -8839,6 +8850,7 @@ class GlobalAnalytics:
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if not data.empty:
+            data['product_code'] = data['product_code'].astype(str).map(await product_map())
             data['created_date'] = pd.to_datetime(data['created_at']).dt.date
 
             daily_counts = data.groupby(['created_date', 'product_code'])['total_count'].sum().reset_index()
@@ -8875,6 +8887,7 @@ class GlobalAnalytics:
         if data.empty:
             return {"status": False, "message": "No Data Found", "counts": [], "data": []}
 
+        data['product_code'] = data['product_code'].astype(str).map(await product_map())
         data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
         full_months = pd.date_range(end=data['month'].max(), periods=3, freq='M')
         products = data['product_code'].unique()
@@ -8903,7 +8916,6 @@ class GlobalAnalytics:
 
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
-
         if data.empty:
             return {
                 "status": False,
@@ -8911,7 +8923,7 @@ class GlobalAnalytics:
                 "counts": [],
                 "data": []
             }
-
+        data['product_code'] = data['product_code'].astype(str).map(await product_map())
         # Convert month column to datetime for range filling
         data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
 
@@ -8938,5 +8950,69 @@ class GlobalAnalytics:
             "message": "Success",
             "counts": monthly_counts.rename(columns={'dryout_count': 'frequent_dryout_count'}).to_dict(
                 orient='records'),
+            "data": data.to_dict(orient='records')
+        }
+
+    @staticmethod
+    async def dry_out_ro_loss(filters, cross_filters, drill_state):
+        query = f"""WITH product_mapping AS (
+                      SELECT * FROM (VALUES
+                        ('2811000', '1322000'),  -- MS
+                        ('2812000', '1683000'),  -- HSD
+                        ('3912000', '1683100'),  -- TURBO
+                        ('2816000', '2682000'),  -- POWER 99
+                        ('3672000', '3672000'),  -- POWER 95
+                        ('3373000', '3373000')   -- POWER 100
+                      ) AS pm(alert_product_code, sales_product_no)
+                    ),
+                    avg_sales AS (
+                      SELECT 
+                        ro_sap_code,
+                        product_no,
+                        AVG(total_sales) AS avg_daily_sales
+                      FROM "HPCL_HOS".ro_daily_sales
+                      WHERE transaction_date >= CURRENT_DATE - INTERVAL '7 days'
+                      GROUP BY ro_sap_code, product_no
+                    ),
+                    dryout_days AS (
+                      SELECT 
+                        a.sap_id,
+                        pm.sales_product_no,
+                        DATE(a.created_at) AS dryout_day
+                      FROM alerts a
+                      JOIN product_mapping pm
+                        ON a.product_code = pm.alert_product_code
+                      WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                        AND a.alert_status = 'Open'
+                    ),
+                    loss_estimate AS (
+                      SELECT 
+                        d.sap_id,
+                        d.sales_product_no AS product_no,
+                        COUNT(*) AS dryout_days,
+                        round(a.avg_daily_sales, 2) avg_daily_sales,
+                        round(COUNT(*) * a.avg_daily_sales, 2)AS estimated_loss
+                      FROM dryout_days d
+                      JOIN avg_sales a
+                        ON d.sap_id::bigint = a.ro_sap_code::bigint
+                       AND d.sales_product_no::bigint = a.product_no::bigint
+                      GROUP BY d.sap_id, d.sales_product_no, a.avg_daily_sales
+                    )
+                    SELECT * FROM loss_estimate
+                    ORDER BY estimated_loss DESC"""
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if data.empty:
+            return {
+                "status": False,
+                "message": "No data found",
+                "counts": [],
+                "data": []
+            }
+
+        data['product_code'] = data['product_code'].astype(str).map(await product_map())
+        return {
+            "status": True,
+            "message": "Success",
             "data": data.to_dict(orient='records')
         }
