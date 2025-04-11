@@ -106,12 +106,14 @@ async def combine_roles(data, _id, role_name):
 
 async def process_data(data):
     data.rename(columns=reporting_config._rename, inplace=True)    
+    if "sap_id" in data.columns:
+        data = data.drop_duplicates('sap_id', keep='first')
     data["adress"] = data["land_mark"].astype(str) + " " + data["location"].astype(str) + " " + data["pincode"].astype(str)
     for col in reporting_config.required_field:
         if not col in data.columns:
             data[col] = ""
     data = data[reporting_config.required_field]
-    data['zone'] = data['zone'].map(reporting_config.zone_map)
+    data['zone'] = data['zone'].map(reporting_config.zone_map)    
     return data
 
 
