@@ -1538,7 +1538,7 @@ class IndentDryOut:
                 instances = response.json()
                 if instances:
                     process_instance_id = instances[0]["id"]  # Get first instance ID
-                    return camunda_host, process_instance_id
+                    return camunda_url, process_instance_id
         print(f"Camunda flow not found {business_key}")
         return camunda_url, process_instance_id
 
@@ -1579,7 +1579,7 @@ class IndentDryOut:
         }
 
         for var_name, payload in variables.items():
-            url = f"{CAMUNDA_URL}/engine-rest/process-instance/{instance_id}/variables/{var_name}"
+            url = f"{camunda_url}/engine-rest/process-instance/{instance_id}/variables/{var_name}"
 
             for attempt in range(MAX_RETRIES):
                 try:
@@ -1773,7 +1773,7 @@ class IndentDryOut:
                 instance_id = alert_data.get("workflow_instance_id")
             if 'workflow_instance_id' in self.params.keys():
                 instance_id = self.params['workflow_instance_id']
-            url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
+            url = f"{camunda_host}/engine-rest/process-instance/{instance_id}"
             for attempt in range(MAX_RETRIES):
                 try:
                     response = requests.delete(url, headers=headers)
