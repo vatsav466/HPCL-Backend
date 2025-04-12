@@ -66,6 +66,7 @@ async def product_map():
         "2816000": "POWER 99",
         "3373000": "POWER 100"
     }
+    #
     return alert_code_to_name
 
 class GlobalAnalytics:        
@@ -8997,7 +8998,7 @@ class GlobalAnalytics:
                       JOIN avg_sales a
                         ON d.sap_id::bigint = a.ro_sap_code::bigint
                        AND d.sales_product_no::bigint = a.product_no::bigint
-                      GROUP BY d.sap_id, d.sales_product_no, a.avg_daily_sales
+                      GROUP BY d.sap_id, d.sales_product_no, a.avg_daily_sales, d.zone
                     )
                     SELECT * FROM loss_estimate
                     ORDER BY estimated_loss DESC"""
@@ -9010,8 +9011,11 @@ class GlobalAnalytics:
                 "counts": [],
                 "data": []
             }
-
-        # data['product_no'] = data['product_no'].astype(str).map(await product_map())
+        products_map = {'2811000': 'MS', '1322000': 'MS', '2812000': 'HSD', '1683000': 'HSD', '3912000': 'TURBO',
+                        '1683100': 'TURBO', '2816000': 'POWER 99', '2682000': 'POWER 99', '3672000': 'POWER 95',
+                        '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
+        data = data.fillna(0)
+        data['product_name'] = data['product_no'].astype(str).map(products_map)
         # data = data.fillna(0)
         return {
             "status": True,
