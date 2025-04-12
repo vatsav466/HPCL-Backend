@@ -8977,6 +8977,7 @@ class GlobalAnalytics:
                     dryout_days AS (
                       SELECT 
                         a.sap_id,
+                        a.zone,
                         pm.sales_product_no,
                         DATE(a.created_at) AS dryout_day
                       FROM alerts a
@@ -8990,7 +8991,7 @@ class GlobalAnalytics:
                         d.sap_id,
                         d.sales_product_no AS product_no,
                         COUNT(*) AS dryout_days,
-                        a.avg_daily_sales,
+                        a.avg_daily_sales, d.zone,
                         COUNT(*) * a.avg_daily_sales AS estimated_loss
                       FROM dryout_days d
                       JOIN avg_sales a
