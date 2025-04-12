@@ -9,10 +9,10 @@ import pandas as pd
 import polars as pl
 import numpy as np
 import mysql.connector
-import users_config
 sys.path.append("/opt/ceg/algo")
 import api_manager.hpcl_ceg_model as hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
+import orchestrator.reporting_services.reporting_config as reporting_config
 
 
 async def get_db_connection():
@@ -132,7 +132,7 @@ async def process_data(data):
     data["manual_user"] = False
     for col in ["username", "sap_id", "employee_id"]:
         data[col] = data[col].fillna(0).astype(np.int64).astype(str)
-    data['zone'] = data['zone'].map(users_config.zone_map)
+    data['zone'] = data['zone'].map(reporting_config.zone_map)
     data['last_name'] = data['first_name'].fillna("").apply(lambda x: x.split(" ")[-1] if " " in x else "")
     data['first_name'] = data['first_name'].fillna("").apply(lambda x: x.rstrip(x.split(" ")[-1]) if " " in x else x)
     for col in ["zone", "region", "sap_id", "bu", "sales_area"]:
@@ -165,11 +165,11 @@ async def process_data(data):
 async def sync_users():
     connection = await get_db_connection()
     cursor = connection.cursor()
-    for bu in ["lpg", "tas"]:
+    for bu in ["lpg", "tas", "ro"]:
         role_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/novex_role_master.csv")
         role_master = role_master[role_master["bu"] == str(bu).upper()]
         role_master = role_master.drop_duplicates("tibco_role")
-        query = getattr(users_config, f"{bu}_query", None)
+        query = getattr(reporting_config, f"{bu}_query", None)
         if not query:
             return
         roles = role_master['tibco_role'].unique().tolist()

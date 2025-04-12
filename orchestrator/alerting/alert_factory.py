@@ -58,6 +58,7 @@ class AlertFactory:
             sap_id = alert_data['sap_id']
             interlock_name = alert_data.get('interlock_name', '')
             location_data = alert_data.get("location_data", {})
+            device_name = alert_data.get("device_name", '')
             if not location_data:
                 if urdhva_base.ctx.exists():
                     _, location_data = await alert_helper.get_location_details(bu, sap_id)
@@ -84,7 +85,19 @@ class AlertFactory:
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
             # Generate alert alert_data
-            alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
+            query = f"interlock_name = '{interlock_name}' and alert_status = 'Open' and device_name = '{device_name}' and bu = 'TAS' and alert_section = 'TAS'"
+            params = urdhva_base.queryparams.QueryParams(q=query)
+            resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+
+            # Check if alert already exists
+            if resp and resp.get("data") and len(resp.get("data")) > 0:
+                # Alert already exists, no need to create a new one
+                alert_resp = resp.get("data")[0]  # Use existing alert
+                alert_resp['interlock_name'] = interlock_name
+                alert_resp['device_name'] = device_name
+            else:
+            # Generate alert alert_data
+                alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
@@ -304,6 +317,7 @@ class AlertFactory:
                     alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                     alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
                     alert['interlock_name'] = alert_data.get('interlock_name', '')
+                    alert['closed_at'] = datetime.datetime.now()
                     if il_data:
                         alert['interlock_id'] = str(il_data[0]['id'])
                     data_obj = hpcl_ceg_model.Alerts(**alert)
@@ -314,18 +328,22 @@ class AlertFactory:
                 print("Interlock and Alert updated successfully.")
 
             else:
-                il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
-                if not isinstance(il_data, dict):
-                    il_data = il_data.__dict__
-                il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-                data_obj = hpcl_ceg_model.Interlock(**il_data)
-                await data_obj.modify()
+                if alert_data.get("interlock_id", ""):
+                    il_data = await hpcl_ceg_model.Interlock.get(alert_data['interlock_id'])
+                    if not isinstance(il_data, dict):
+                        il_data = il_data.__dict__
+                    il_data['interlock_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+                    data_obj = hpcl_ceg_model.Interlock(**il_data)
+                    await data_obj.modify()
+                else:
+                    logger.info(f"Interlock ID not available {alert_data}")
             
                 al_data = await hpcl_ceg_model.Alerts.get(alert_data['alert_id'])
                 if not isinstance(al_data, dict):
                     al_data = al_data.__dict__
                 al_data['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
                 al_data['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
+                al_data['closed_at'] = datetime.datetime.now()
                 redis_ins = await urdhva_base.redispool.get_redis_connection()
                 if await redis_ins.hexists("alert_mapping", al_data.get('external_id', '')):
                     await redis_ins.hdel("alert_mapping", al_data['external_id'])

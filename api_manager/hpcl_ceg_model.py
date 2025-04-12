@@ -1176,6 +1176,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     violation_type: Mapped[typing.Optional[str]] = mapped_column("violation_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     clear_count: Mapped[typing.Optional[bool]] = mapped_column("clear_count", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     maintenance_time: Mapped[typing.Optional[str]] = mapped_column("maintenance_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
     tt_load_number: Mapped[typing.Optional[str]] = mapped_column("tt_load_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     is_flagged_false: Mapped[typing.Optional[bool]] = mapped_column("is_flagged_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     rca: Mapped[typing.Optional[str]] = mapped_column("rca", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1255,6 +1256,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
     clear_count: typing.Optional[bool] = pydantic.Field(False, )
     maintenance_time: typing.Optional[str] = pydantic.Field("", **{})
+    closed_at: typing.Optional[datetime.datetime] | None = None
     tt_load_number: typing.Optional[str] = pydantic.Field("", **{})
     is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
     rca: typing.Optional[str] = pydantic.Field("", **{})
@@ -1343,6 +1345,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     violation_type: typing.Optional[str] = pydantic.Field("", **{})
     clear_count: typing.Optional[bool] = pydantic.Field(False, )
     maintenance_time: typing.Optional[str] = pydantic.Field("", **{})
+    closed_at: typing.Optional[datetime.datetime] | None = None
     tt_load_number: typing.Optional[str] = pydantic.Field("", **{})
     is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
     rca: typing.Optional[str] = pydantic.Field("", **{})
@@ -5854,31 +5857,23 @@ class DryOutAlertReportSchema(UrdhvaPostgresBase):
     zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[str] = mapped_column("sap_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     terminal_plant_id: Mapped[typing.Optional[str]] = mapped_column("terminal_plant_id", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    indent_no: Mapped[typing.Optional[str]] = mapped_column("indent_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    product_code: Mapped[typing.Optional[str]] = mapped_column("product_code", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    indent_status: Mapped[typing.Optional[str]] = mapped_column("indent_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    tank_no: Mapped[typing.Optional[str]] = mapped_column("tank_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    capacity: Mapped[typing.Optional[int]] = mapped_column("capacity", Integer, index=False, nullable=True, default=0, primary_key=False, unique=False)
+    tank_capacity: Mapped[typing.Optional[str]] = mapped_column("tank_capacity", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    product_code: Mapped[str] = mapped_column("product_code", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
     dry_out_in_days: Mapped[typing.Optional[str]] = mapped_column("dry_out_in_days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    assigned_to_locn: Mapped[typing.Optional[str]] = mapped_column("assigned_to_locn", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    prod_reqd_dt: Mapped[typing.Optional[str]] = mapped_column("prod_reqd_dt", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    truck_regno: Mapped[typing.Optional[str]] = mapped_column("truck_regno", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    valid_indent: Mapped[typing.Optional[str]] = mapped_column("valid_indent", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    send_to_jde_time: Mapped[typing.Optional[str]] = mapped_column("send_to_jde_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    delivery_date: Mapped[typing.Optional[str]] = mapped_column("delivery_date", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    indent_hold_release_time: Mapped[typing.Optional[str]] = mapped_column("indent_hold_release_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    indent_executable_time: Mapped[typing.Optional[str]] = mapped_column("indent_executable_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    qty: Mapped[typing.Optional[str]] = mapped_column("qty", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    prod_allot_time: Mapped[typing.Optional[str]] = mapped_column("prod_allot_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    sales_orderno: Mapped[typing.Optional[str]] = mapped_column("sales_orderno", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    invoice_no: Mapped[typing.Optional[str]] = mapped_column("invoice_no", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    loaded_on: Mapped[typing.Optional[str]] = mapped_column("loaded_on", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    avgsales_7days: Mapped[typing.Optional[str]] = mapped_column("avgsales_7days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    alert_id: Mapped[str] = mapped_column("alert_id", String, index=False, nullable=False, default=None, primary_key=False, unique=False)
-    run_id: Mapped[str] = mapped_column("run_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    avgsales_7days: Mapped[typing.Optional[float]] = mapped_column("avgsales_7days", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    avgsales_daily: Mapped[typing.Optional[float]] = mapped_column("avgsales_daily", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    dryout_start_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("dryout_start_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    dryout_end_datetime: Mapped[typing.Optional[datetime.datetime]] = mapped_column("dryout_end_datetime", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    dryout_date: Mapped[datetime.datetime] = mapped_column("dryout_date", DateTime(timezone=True), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    alert_status: Mapped[typing.Optional[str]] = mapped_column("alert_status", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    category: Mapped[typing.Optional[str]] = mapped_column("category", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(alert_id, name="dry_out_alert_report_alert_id"),)
+    __table_args__ = (UniqueConstraint(sap_id, product_code, dryout_date, name="dry_out_alert_report_sap_id_product_code_dryout_date"),)
 
 
 class DryOutAlertReportCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -5887,36 +5882,28 @@ class DryOutAlertReportCreate(urdhva_base.postgresmodel.BasePostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
-    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: str
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
-    indent_no: typing.Optional[str] = pydantic.Field("", **{})
-    product_code: typing.Optional[str] = pydantic.Field("", **{})
-    indent_status: typing.Optional[str] = pydantic.Field("", **{})
+    tank_no: typing.Optional[str] = pydantic.Field("", **{})
+    capacity: typing.Optional[int] = pydantic.Field(0, **{})
+    tank_capacity: typing.Optional[str] = pydantic.Field("", **{})
+    product_code: str
     dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
-    assigned_to_locn: typing.Optional[str] = pydantic.Field("", **{})
-    prod_reqd_dt: typing.Optional[str] = pydantic.Field("", **{})
-    truck_regno: typing.Optional[str] = pydantic.Field("", **{})
-    valid_indent: typing.Optional[str] = pydantic.Field("", **{})
-    send_to_jde_time: typing.Optional[str] = pydantic.Field("", **{})
-    delivery_date: typing.Optional[str] = pydantic.Field("", **{})
-    indent_hold_release_time: typing.Optional[str] = pydantic.Field("", **{})
-    indent_executable_time: typing.Optional[str] = pydantic.Field("", **{})
-    qty: typing.Optional[str] = pydantic.Field("", **{})
-    prod_allot_time: typing.Optional[str] = pydantic.Field("", **{})
-    sales_orderno: typing.Optional[str] = pydantic.Field("", **{})
-    invoice_no: typing.Optional[str] = pydantic.Field("", **{})
-    loaded_on: typing.Optional[str] = pydantic.Field("", **{})
-    avgsales_7days: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: str
-    run_id: str
+    avgsales_7days: typing.Optional[float] = pydantic.Field(0.0, **{})
+    avgsales_daily: typing.Optional[float] = pydantic.Field(0.0, **{})
+    dryout_start_datetime: typing.Optional[datetime.datetime] | None = None
+    dryout_end_datetime: typing.Optional[datetime.datetime] | None = None
+    dryout_date: datetime.datetime
+    alert_status: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = DryOutAlertReportSchema
-        upsert_keys = ['alert_id']
+        upsert_keys = ['sap_id', 'product_code', 'dryout_date']
 
 
 class DryOutAlertReport(urdhva_base.postgresmodel.PostgresModel):
@@ -5925,36 +5912,28 @@ class DryOutAlertReport(urdhva_base.postgresmodel.PostgresModel):
     zone: typing.Optional[str] = pydantic.Field("", **{})
     region: typing.Optional[str] = pydantic.Field("", **{})
     sales_area: typing.Optional[str] = pydantic.Field("", **{})
-    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] | None = None
     location_name: typing.Optional[str] = pydantic.Field("", **{})
     terminal_plant_id: typing.Optional[str] = pydantic.Field("", **{})
-    indent_no: typing.Optional[str] = pydantic.Field("", **{})
-    product_code: typing.Optional[str] = pydantic.Field("", **{})
-    indent_status: typing.Optional[str] = pydantic.Field("", **{})
+    tank_no: typing.Optional[str] = pydantic.Field("", **{})
+    capacity: typing.Optional[int] = pydantic.Field(0, **{})
+    tank_capacity: typing.Optional[str] = pydantic.Field("", **{})
+    product_code: typing.Optional[str] | None = None
     dry_out_in_days: typing.Optional[str] = pydantic.Field("", **{})
-    assigned_to_locn: typing.Optional[str] = pydantic.Field("", **{})
-    prod_reqd_dt: typing.Optional[str] = pydantic.Field("", **{})
-    truck_regno: typing.Optional[str] = pydantic.Field("", **{})
-    valid_indent: typing.Optional[str] = pydantic.Field("", **{})
-    send_to_jde_time: typing.Optional[str] = pydantic.Field("", **{})
-    delivery_date: typing.Optional[str] = pydantic.Field("", **{})
-    indent_hold_release_time: typing.Optional[str] = pydantic.Field("", **{})
-    indent_executable_time: typing.Optional[str] = pydantic.Field("", **{})
-    qty: typing.Optional[str] = pydantic.Field("", **{})
-    prod_allot_time: typing.Optional[str] = pydantic.Field("", **{})
-    sales_orderno: typing.Optional[str] = pydantic.Field("", **{})
-    invoice_no: typing.Optional[str] = pydantic.Field("", **{})
-    loaded_on: typing.Optional[str] = pydantic.Field("", **{})
-    avgsales_7days: typing.Optional[str] = pydantic.Field("", **{})
-    alert_id: typing.Optional[str] | None = None
-    run_id: typing.Optional[str] | None = None
+    avgsales_7days: typing.Optional[float] = pydantic.Field(0.0, **{})
+    avgsales_daily: typing.Optional[float] = pydantic.Field(0.0, **{})
+    dryout_start_datetime: typing.Optional[datetime.datetime] | None = None
+    dryout_end_datetime: typing.Optional[datetime.datetime] | None = None
+    dryout_date: typing.Optional[datetime.datetime] | None = None
+    alert_status: typing.Optional[str] = pydantic.Field("", **{})
+    category: typing.Optional[str] = pydantic.Field("", **{})
 
     class Config:
         collection_name = 'data_flow'
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = DryOutAlertReportSchema
-        upsert_keys = ['alert_id']
+        upsert_keys = ['sap_id', 'product_code', 'dryout_date']
 
 
 class DryOutAlertReportGetResp(pydantic.BaseModel):

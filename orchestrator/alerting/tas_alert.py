@@ -60,7 +60,7 @@ class TASAlertManager(alert_factory.AlertFactory):
             alert_data["alert_history"] = [{"processed_time": processed_time.isoformat(),
                                            "allocated_time": processed_time.isoformat(),
                                             "action_msg": f"{alert_data['interlock_name']} Interlock "
-                                                          f"created for device {device_data}",
+                                                          f"created",
                                             "action_type": "InterlockCreated"}]
             camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
                                                         alert_section="TAS", location_data=loc_dt)
@@ -105,17 +105,14 @@ class TASAlertManager(alert_factory.AlertFactory):
             alert_data["alert_history"] = {"processed_time": processed_time.isoformat(),
                                            "allocated_time": processed_time.isoformat(),
                                            "action_msg": f"{alert_data['interlock_name']} Interlock "
-                                                         f"cleared for device {device_data}",
+                                                         f"cleared",
                                            "action_type": "InterlockCleared"}
             
-            query = f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and sap_id='{alert_data['sap_id']}' and alert_status='Open'"
+            query = f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and sap_id='{alert_data['sap_id']}' and alert_status!='Close'"
             data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1), resp_type='plain')
             alert_id = ''
             if len(data['data']):
                 alert_id = data['data'][0]['id']
-            else:
-                return await cls.close_alert(alert_data)   
-            if alert_id:
                 tas_alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
                 if not isinstance(tas_alert_data, dict):
                     tas_alert_data = tas_alert_data.__dict__
@@ -135,5 +132,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                 else:
                     print("Message sent to camunda")
                     return "Successfully sent message to camunda"
+            else:
+                await cls.close_alert(alert_data)
         except Exception as e:
             raise Exception(status_code=500, detail="Error closing alert.") from e

@@ -1,3 +1,4 @@
+import urdhva_base
 from hpcl_ceg_enum import *
 from hpcl_ceg_model import *
 import json
@@ -68,7 +69,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
 
             json_path = os.path.join(BASE_JSON_PATH, f"{sap_id}.json")
             if not os.path.exists(json_path):
-                print(f"Skipping {sap_id}: File not found.")
+                # print(f"Skipping {sap_id}: File not found.")
                 continue
 
             try:
@@ -148,33 +149,47 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                 for system, counts in system_counts.items():
                     # Initialize mf_count
                     mf_count = 0
-                    
-                    # Check Maintenance array
-                    for maintenance_item in Maintenance:
-                        if (maintenance_item["equipment_name"] == dev_type and 
-                            maintenance_item["alert_category"] == system):
-                            # Query open alerts for this specific interlock name
-                            params = urdhva_base.queryparams.QueryParams(
-                                limit=10000,
-                                q=f"interlock_name='{maintenance_item['interlock_name']}' AND alert_status='Open' AND sap_id='{sap_id}'"
-                            )
-                            alert_count = await Alerts.count(params)
-                            mf_count += alert_count
-                    
-                    # Check Fault array
-                    for fault_item in Fault:
-                        if (fault_item["equipment_name"] == dev_type and 
-                            fault_item["alert_category"] == system):
-                            # Query open alerts for this specific interlock name
-                            params = urdhva_base.queryparams.QueryParams(
-                                limit=10000,
-                                q=f"interlock_name='{fault_item['interlock_name']}' AND alert_status='Open' AND sap_id='{sap_id}'"
-                            )
-                            alert_count = await Alerts.count(params)
-                            mf_count += alert_count
-                    
-                    # Update the mf_count for this specific device_type and system
+                    # Getting all interlock names from Maintenance and Fault
+                    interlocks = ([maintenance_item['interlock_name'] for maintenance_item in Maintenance
+                                   if maintenance_item["equipment_name"] == dev_type and
+                                   maintenance_item["alert_category"] == system] +
+                                  [fault_item['interlock_name'] for fault_item in Fault
+                                   if fault_item["equipment_name"] == dev_type and
+                                   fault_item["alert_category"] == system])
+                    if interlocks:
+                        in_clause = ", ".join(f"'{item}'" for item in interlocks)
+                        q = (f"select COUNT(DISTINCT device_name) from alerts "
+                             f"where interlock_name in ({in_clause}) AND alert_status='Open' "
+                             f"AND sap_id='{sap_id}'")
+                        resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(q)
+                        if resp['data']:
+                            mf_count += sum([rec['count'] for rec in resp['data']])
                     location_counts[dev_type][system]['mf_count'] = mf_count
+                    # # Check Maintenance array
+                    # interlocks = tuple([maintenance_item['interlock_name'] for maintenance_item in Maintenance
+                    #                     if maintenance_item["equipment_name"] == dev_type and
+                    #                     maintenance_item["alert_category"] == system])
+                    # q = (f"select COUNT(DISTINCT device_name), interlock_name from alerts "
+                    #      f"where interlock_name in {interlocks} AND alert_status='Open' "
+                    #      f"AND sap_id='{sap_id}' GROUP BY interlock_name")
+                    #
+                    # resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(q, limit=1)
+                    # if resp['data']:
+                    #     mf_count += sum([rec['count'] for rec in resp['data']])
+                    #
+                    # # Check Fault array
+                    # interlocks = tuple([fault_item['interlock_name'] for fault_item in Fault
+                    #                     if fault_item["equipment_name"] == dev_type and
+                    #                     fault_item["alert_category"] == system])
+                    # q = (f"select COUNT(DISTINCT device_name), interlock_name from alerts "
+                    #      f"where interlock_name in {interlocks} AND alert_status='Open' "
+                    #      f"AND sap_id='{sap_id}' GROUP BY interlock_name")
+                    # resp = await urdhva_base.postgresmodel.BasePostgresModel.get_aggr_data(q, limit=1)
+                    # if resp['data']:
+                    #     mf_count += sum([rec['count'] for rec in resp['data']])
+                    #
+                    # # Update the mf_count for this specific device_type and system
+                    # location_counts[dev_type][system]['mf_count'] = mf_count
 
             # Convert counts to final records
             for dev_type, system_counts in location_counts.items():
@@ -203,6 +218,7 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
     except Exception as e:
         print(traceback.format_exc())
         return {"status": False, "message": f"Error: {str(e)}"}
+
 
 @router.post('/get_tags_data', tags=['TagsData'])
 async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
@@ -237,7 +253,7 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
         if res:
             df = pd.DataFrame(res)  # Convert list of dictionaries to DataFrame
 
-            print(df.columns)  # Debugging step to check column names
+            # print(df.columns)  # Debugging step to check column names
 
             # Convert 'count' to integer, handling errors
             df['count'] = pd.to_numeric(df['count'], errors='coerce').fillna(0).astype(int)

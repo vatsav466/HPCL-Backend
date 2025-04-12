@@ -1627,3 +1627,53 @@ async def get_dryout_aging_data():
     }, inplace=True)
     del resp['created_at']
     return resp.to_dict(orient='records')
+
+async def generate_dry_out_report(records):
+    records = pd.DataFrame(records)
+    query = f"select * from location_master where bu = 'RO'"
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
+        "hpcl_ceg", "1")
+    dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    function = await charts_actions.charts_connection_vault_routing(
+        dashboard_studio_model.Charts_Connection_Vault_RoutingParams)
+    location_data = await function(
+        query=query
+    )
+    location_data = pd.DataFrame(location_data)
+    records['rosapcode'] = records['rosapcode'].astype(str)
+    records['status'] = records['status'].astype(str)
+    location_data['sap_id'] = location_data['sap_id'].astype(str)
+
+    records = pd.merge(
+        records,
+        location_data.drop_duplicates(subset=['sap_id'])[['sap_id', 'zone', 'region', 'sales_area', 'name', 'terminal_plant_id', 'category']],
+        left_on='rosapcode', right_on='sap_id', how='left'
+    )
+    records.rename(
+        columns={"name": "location_name", "status": "dry_out_in_days", "product_no": "product_code"},
+        inplace=True)
+    records = records[[
+        'zone', 'region', 'sales_area', 'sap_id', 'location_name', 'terminal_plant_id',
+        'tank_no', 'capacity', 'product_code', 'dry_out_in_days', 'avgsales_7days',
+        'avgsales_daily', 'category', 'tank_capacity'
+    ]]
+    records['dryout_start_datetime'] = urdhva_base.utilities.get_present_time()
+    records['dryout_end_datetime'] = None
+    records['dryout_date'] = urdhva_base.utilities.get_present_time().replace(hour=0, minute=0, second=0, microsecond=0)
+    records['alert_status'] = 'Open'
+    print(records)
+    await hpcl_ceg_model.DryOutAlertReport.bulk_update(records.to_dict(orient='records'), upsert=True)
+
+    query = f"SELECT id, sap_id, product_code from dry_out_alert_report where alert_status='Open'"
+    dry_out_history = await hpcl_ceg_model.DryOutAlertReport.get_aggr_data(query, limit=0)
+    dry_out_hist_data = {f"{rec['sap_id']}_{rec['product_code']}": rec for rec in dry_out_history['data']}
+    dry_out_alert = {f"{rec['sap_id']}_{rec['product_code']}": rec for rec in records.to_dict(orient='records')}
+    closed_alerts = list(set(list(dry_out_hist_data.keys())) - set(list(dry_out_alert.keys())))
+    closed_ids = list({dry_out_hist_data[key]['id'] for key in closed_alerts})
+    for index in range(0, len(closed_ids), 1000):
+        ids = [f"{key}" for key in closed_ids[index:index + 1000]]
+        conditions = [f"id in {tuple(ids)}" if len(ids) > 1 else f"id={ids[0]}"]
+        query = (f"Update dry_out_alert_report set "
+                 f"alert_status='Close',dryout_end_datetime='{urdhva_base.utilities.get_present_time()}' "
+                 f"where {' AND '.join(conditions)}")
+        await hpcl_ceg_model.DryOutAlertReport.update_by_query(query)

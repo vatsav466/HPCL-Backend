@@ -591,6 +591,7 @@ Model Alerts {
     violation_type optional str
     clear_count optional bool
     maintenance_time optional str
+    closed_at optional datetime
 
     //tas keys
     tt_load_number optional str
@@ -2058,29 +2059,21 @@ Model DryOutAlertReport {
     zone optional str
     region optional str
     sales_area optional str
-    sap_id optional str
+    sap_id unique_field index_field str
     location_name optional str
     terminal_plant_id optional str
-    indent_no optional str
-    product_code optional str
-    indent_status optional str
+    tank_no optional str
+    capacity optional int
+    tank_capacity optional str
+    product_code unique_field index_field str
     dry_out_in_days optional str
-    assigned_to_locn optional str
-    prod_reqd_dt optional str
-    truck_regno optional str
-    valid_indent optional str
-    send_to_jde_time optional str
-    delivery_date optional str
-    indent_hold_release_time optional str
-    indent_executable_time optional str
-    qty optional str
-    prod_allot_time optional str
-    sales_orderno optional str
-    invoice_no optional str
-    loaded_on optional str
-    avgsales_7days optional str
-    alert_id unique_field str
-    run_id index_field str
+    avgsales_7days optional float
+    avgsales_daily optional float
+    dryout_start_datetime optional datetime
+    dryout_end_datetime optional datetime
+    dryout_date unique_field index_field datetime
+    alert_status optional str
+    category optional str
 }
 
 Model VendorApiAudit {
