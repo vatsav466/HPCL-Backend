@@ -72,7 +72,7 @@ class IndentDryOut:
             "alert_id", "bu", "interlock_name", "interlock_id",
             "dealer_id", "connection_name", "indent_no", "location_no",
             "product_code", "sap_id", "sop_id", "workflow_datetime", "terminal_plant_id",
-            "terminal_plant_name"
+            "terminal_plant_name", "business_key", "workflow_instance_id"
         ]
 
     async def send_alert_action(
@@ -1559,11 +1559,13 @@ class IndentDryOut:
         camunda_url, instance_id = await self.get_process_instance_id(business_key)
         if not 'CAMUNDA_URL' in self.params.keys():
             self.params['CAMUNDA_URL'] = camunda_url
-        print("self.params: ", self.params)
+        print("self.params update: ", self.params)
         if not instance_id:
             instance_id = alert_data.get("workflow_instance_id")
         # CAMUNDA_URL = await helpers.get_alert_camunda_url(self.params["alert_id"],
         #                                                   f"{urdhva_base.settings.camunda_url}")
+        if 'workflow_instance_id' in self.params.keys():
+            instance_id = self.params['workflow_instance_id']
         CAMUNDA_URL = self.params['CAMUNDA_URL']
 
         headers = {"Content-Type": "application/json"}
@@ -1766,8 +1768,11 @@ class IndentDryOut:
             business_key = alert_data.get("unique_id")
             camunda_host, instance_id = await self.get_process_instance_id(business_key)
             print("camunda_host: ", camunda_host)
+            print("self.params: ", self.params)
             if not instance_id:
                 instance_id = alert_data.get("workflow_instance_id")
+            if 'workflow_instance_id' in self.params.keys():
+                instance_id = self.params['workflow_instance_id']
             url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
             for attempt in range(MAX_RETRIES):
                 try:
