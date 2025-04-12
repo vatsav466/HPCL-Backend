@@ -24,6 +24,9 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
     """
     global CAMUNDA_URL
     variables = task.get_variables()
+    business_key = task.get_business_key()
+    workflow_instance_id = task.get_process_instance_id()
+    print(f"business_key {business_key} - workflow_instance_id {workflow_instance_id}")
     # print("variables --> ", variables)
     module_name = variables.pop('module_name', None)
     class_name = variables.pop('class_name', None)
@@ -37,6 +40,8 @@ async def algo_external_task(task: ExternalTask) -> TaskResult:
         # print("variables --> ", variables)
         params = {key: variables.get(key, None) for key in req_variables}
         params['CAMUNDA_URL'] = CAMUNDA_URL
+        params['business_key'] = business_key
+        params['workflow_instance_id'] = workflow_instance_id
         status, data = await function(**{"params": params})
         # print("status: ", status)
         # print("data: ", data)

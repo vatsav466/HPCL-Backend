@@ -4,15 +4,18 @@ import json
 import calendar
 import psycopg2
 import traceback
+import itertools
 import polars as pl
 import numpy as np
 import pandas as pd
 import hpcl_ceg_model
 import dashboard_studio_model
-from datetime import datetime,timedelta
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
+from datetime import datetime,timedelta
+from pandas.tseries.offsets import MonthEnd
+from orchestrator.analytics import va_analysis
 import utilities.drill_mapping as drill_mapping
 from dateutil.relativedelta import relativedelta
 from orchestrator.analytics import m60_performance
@@ -53,6 +56,17 @@ async def addFilterValue(rec):
         condition = f"{rec.key} = '{rec.value}'"
     return condition
 
+async def product_map():
+    alert_code_to_name = {
+        "2811000": "MS",
+        "2812000": "HSD",
+        "3912000": "TURBO",
+        "2822000": "E20",
+        "3672000": "POWER 95",
+        "2816000": "POWER 99",
+        "3373000": "POWER 100"
+    }
+    return alert_code_to_name
 
 class GlobalAnalytics:        
     @staticmethod
@@ -8729,3 +8743,276 @@ class GlobalAnalytics:
             print(traceback.format_exc())
             return {"status": False, "message": f"Error: {str(e)}", "data": {}}
     
+    @staticmethod
+    async def carry_forward_analysis(filters, cross_filters, drill_state):
+        start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
+        _filters = []
+        daterange = f""" '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+                _filters.append({f"{filter.key}": f"{filter.value}"})
+        query = (f"SELECT DATE(created_at) AS date, COUNT(*) AS cf_indents, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_count, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_day_dry_count, "
+                 f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
+                 f"FROM public.carry_fwd_indent where created_at::date BETWEEN {daterange} "
+                 f"GROUP BY DATE(created_at) ORDER BY date")
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get('data', []))
+        if not data.empty:
+            data['date'] = pd.to_datetime(data['date'])
+            full_range = pd.date_range(start=data['date'].min(), end=data['date'].max(), freq='D')
+            data = data.set_index('date').reindex(full_range).fillna(0).rename_axis('date').reset_index()
+            cols_to_int = ['cf_indents', 'dryout_count', 'intra_day_dry_count', 'category_a_count']
+            data[cols_to_int] = data[cols_to_int].astype(int)
+            data['date'] = data['date'].dt.strftime('%Y-%b-%d')
+            print(data)
+            return {"status": True, "message": "Success", "data": data.to_dict(orient='records')}
+        return {"status": False, "message": "No Data Found", "data": []}
+
+    @staticmethod
+    async def dry_out_analysis_count(filters, cross_filters, drill_state):
+        resp_dict = {}
+        query = (f"SELECT COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_total, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate = 1) AS dryout_indent_not_raised, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate IN (2, 3)) AS dryout_pending_indent, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '1' AND progress_rate > 3) AS dryout_indent_wip, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_dryout_total, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2' AND progress_rate = 1) AS intra_indent_not_raised, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2' AND progress_rate IN (2, 3)) AS intra_pending_indent, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days = '2' AND progress_rate > 3) AS intra_indent_wip "
+                 f"FROM public.alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and "
+                 f"alert_status != 'Close' and mark_as_false = true ")
+
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        data = data.get("data")[0] if data.get("data", {}) else {}
+        resp_dict['dryoutData'] = {
+            "Indent Not Raised": data.get("dryout_indent_not_raised", 0),
+            "Pending Indent": data.get("dryout_pending_indent", 0),
+            "Indent WIP": data.get("dryout_indent_wip", 0),
+        }
+
+        resp_dict['intraDryoutData'] = {
+            "Indent Not Raised": data.get("intra_indent_not_raised", 0),
+            "Pending Indent": data.get("intra_pending_indent", 0),
+            "Indent WIP": data.get("intra_indent_wip", 0),
+        }
+        carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
+        carry_fwd_data = pd.DataFrame(carry_fwd_data)
+        if carry_fwd_data.empty:
+            carry_fwd_data = pd.DataFrame({"dry_out_in_days": [], "category": []})
+        resp_dict['carryForwardData'] = {
+            "Carry Fwd DryOut": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
+            "Carry Fwd IntraDay DryOut": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") == '1']),
+            "Carry Fwd CATA": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
+        }
+
+        resp_dict['totalCount'] = {
+            "dryoutData": data.get("dryout_total", 0),
+            "intraDryoutData": data.get("intra_dryout_total", 0),
+            "carryForwardData": len(carry_fwd_data),
+        }
+        return {"status": True, "message": "Success", "data": resp_dict}
+
+    @staticmethod
+    async def dry_out_trends(filters, cross_filters, drill_state):
+        _filters = []
+        daterange = f""" created_at::date = '{urdhva_base.utilities.get_present_time().strftime("%Y-%m-%d")}' """
+
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
+                    if start_date == end_date:
+                        daterange = f""" created_at::date = '{start_date}' """
+                    else:
+                        daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+                    continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        # Construct WHERE clause
+        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", daterange]
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND ".join(where_clauses)
+
+        # Final query
+        query = (
+            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
+            f"FROM alerts "
+            f"WHERE {where_clause} "
+            f"GROUP BY zone, sap_id, product_code "
+            f"ORDER BY zone, sap_id, product_code"
+        )
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if not data.empty:
+            data['product_code'] = data['product_code'].astype(str).map(await product_map())
+            data['created_date'] = pd.to_datetime(data['created_at']).dt.date
+
+            daily_counts = data.groupby(['created_date', 'product_code'])['total_count'].sum().reset_index()
+
+            date_range = pd.date_range(start=daily_counts['created_date'].min(),
+                                       end=daily_counts['created_date'].max()).date
+
+            products = daily_counts['product_code'].unique()
+
+            full_index = pd.MultiIndex.from_tuples(itertools.product(date_range, products),
+                                                   names=['created_date', 'product_code'])
+
+            daily_counts = daily_counts.set_index(['created_date', 'product_code']).reindex(full_index,
+                                                                                            fill_value=0).reset_index()
+
+            daily_counts = daily_counts.rename(columns={'created_date': 'report_date', 'total_count': 'total_dryouts'})
+            return {
+                "status": True, "message": "Success",
+                "counts": daily_counts.to_dict(orient='records'),
+                "data": data.to_dict(orient='records')
+            }
+
+        return {"status": False, "message": "No Data Found", "counts": [], "data": []}
+
+    @staticmethod
+    async def permanent_dry_out_trends(filters, cross_filters, drill_state):
+        query = (f"SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'YYYY-MM') AS month, sap_id, product_code, "
+                 f"COUNT(*) AS total_count FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' "
+                 f"AND alert_status = 'Open' AND created_at <= NOW() - INTERVAL '5 days' AND "
+                 f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
+                 f"GROUP BY month, sap_id, product_code ORDER BY month, sap_id, product_code")
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if data.empty:
+            return {"status": False, "message": "No Data Found", "counts": [], "data": []}
+
+        data['product_code'] = data['product_code'].astype(str).map(await product_map())
+        data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
+        full_months = pd.date_range(end=data['month'].max(), periods=3, freq='M')
+        products = data['product_code'].unique()
+        full_index = pd.MultiIndex.from_product(
+            [full_months, products],
+            names=['month', 'product_code']
+        )
+
+        df = data.groupby(['month', 'product_code'])['total_count'].sum().reset_index()
+        df = df.set_index(['month', 'product_code']).reindex(full_index, fill_value=0).reset_index()
+        df = df.rename(columns={'total_count': 'permanent_dryout_count'})
+        df['month'] = df['month'].dt.strftime('%Y-%b')
+        data['month'] = data['month'].dt.strftime('%Y-%b')
+        return {
+            "status": True, "message": "Success",
+            "counts": df.to_dict(orient='records'),
+            "data": data.to_dict(orient='records')
+        }
+
+    @staticmethod
+    async def frequently_dry_out_trends(filters, cross_filters, drill_state):
+        query = (f"SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, sap_id, product_code, COUNT(*) AS dryout_count "
+                 f"FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
+                 f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
+                 f"GROUP BY month, sap_id, product_code HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code")
+
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if data.empty:
+            return {
+                "status": False,
+                "message": "No data found",
+                "counts": [],
+                "data": []
+            }
+        data['product_code'] = data['product_code'].astype(str).map(await product_map())
+        # Convert month column to datetime for range filling
+        data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
+
+        # Get full month range (3 months) and product list
+        full_months = pd.date_range(end=data['month'].max(), periods=3, freq='M')
+        products = data['product_code'].unique()
+
+        # Create full index and reindex for missing combinations
+        full_index = pd.MultiIndex.from_product(
+            [full_months, products],
+            names=['month', 'product_code']
+        )
+
+        monthly_counts = data.groupby(['month', 'product_code'])['dryout_count'].sum().reset_index()
+        monthly_counts = monthly_counts.set_index(['month', 'product_code']).reindex(full_index,
+                                                                                     fill_value=0).reset_index()
+        monthly_counts['month'] = monthly_counts['month'].dt.strftime('%Y-%b')
+
+        # Format raw data month as well
+        data['month'] = data['month'].dt.strftime('%Y-%b')
+
+        return {
+            "status": True,
+            "message": "Success",
+            "counts": monthly_counts.rename(columns={'dryout_count': 'frequent_dryout_count'}).to_dict(
+                orient='records'),
+            "data": data.to_dict(orient='records')
+        }
+
+    @staticmethod
+    async def dry_out_ro_loss(filters, cross_filters, drill_state):
+        query = f"""WITH product_mapping AS (
+                      SELECT * FROM (VALUES
+                        ('2811000', '1322000'),  -- MS
+                        ('2812000', '1683000'),  -- HSD
+                        ('3912000', '1683100'),  -- TURBO
+                        ('2816000', '2682000'),  -- POWER 99
+                        ('3672000', '3672000'),  -- POWER 95
+                        ('3373000', '3373000')   -- POWER 100
+                      ) AS pm(alert_product_code, sales_product_no)
+                    ),
+                    avg_sales AS (
+                      SELECT 
+                        ro_sap_code,
+                        product_no,
+                        AVG(total_sales) AS avg_daily_sales
+                      FROM "HPCL_HOS".ro_daily_sales
+                      WHERE transaction_date >= CURRENT_DATE - INTERVAL '7 days'
+                      GROUP BY ro_sap_code, product_no
+                    ),
+                    dryout_days AS (
+                      SELECT 
+                        a.sap_id,
+                        pm.sales_product_no,
+                        DATE(a.created_at) AS dryout_day
+                      FROM alerts a
+                      JOIN product_mapping pm
+                        ON a.product_code = pm.alert_product_code
+                      WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                        AND a.alert_status = 'Open'
+                    ),
+                    loss_estimate AS (
+                      SELECT 
+                        d.sap_id,
+                        d.sales_product_no AS product_no,
+                        COUNT(*) AS dryout_days,
+                        round(a.avg_daily_sales, 2) avg_daily_sales,
+                        round(COUNT(*) * a.avg_daily_sales, 2)AS estimated_loss
+                      FROM dryout_days d
+                      JOIN avg_sales a
+                        ON d.sap_id::bigint = a.ro_sap_code::bigint
+                       AND d.sales_product_no::bigint = a.product_no::bigint
+                      GROUP BY d.sap_id, d.sales_product_no, a.avg_daily_sales
+                    )
+                    SELECT * FROM loss_estimate
+                    ORDER BY estimated_loss DESC"""
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        data = pd.DataFrame(data.get("data", []))
+        if data.empty:
+            return {
+                "status": False,
+                "message": "No data found",
+                "counts": [],
+                "data": []
+            }
+
+        data['product_code'] = data['product_code'].astype(str).map(await product_map())
+        return {
+            "status": True,
+            "message": "Success",
+            "data": data.to_dict(orient='records')
+        }

@@ -50,7 +50,6 @@ ro_query = f""" SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLO
                 WHERE ZR.LOCATION like '7%' """
 # AND ZR.ROLE_NAME IN ('SD_RREGNL_MNGR','SD_RHQO_OFFICER','SD_RSALES_OFFICER','SD_RHQO_GMSALES')
 
-
 # Zonal
 # query = """ SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLOYEE_NAME as EMPLOYEE_NAME,  ZE.EMP_EMAIL as EMP_EMAIL,
 #                 ZE.EMP_BU_CODE,ZE.PLANT_CODE,ZE.PLANT_DESC,ZE.SALES_GRP, ZSA.SALES_GROUP_DESC,ZR.ROLE_NAME as ROLE_NAME, ZR.LOCATION as LOCATION, EPL.ZZONE as Zone
@@ -58,3 +57,56 @@ ro_query = f""" SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLO
 #                 LEFT JOIN ZMMCV_PLANT_STG EPL on ZE.PLANT_CODE = EPL.PLANT
 #                 LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
 #             WHERE ZR.ROLE_NAME IN ('SD_LZONAL_HEAD') """
+
+required_field = ["bu", "sap_id", "name", "city", "district", "region", "sales_area", "state", "zone", "adress"]
+
+_rename = {"PLANT": "sap_id", "PLANT_DESC": "name", "ZZONE": "zone", "STATE_NAME": "state", 
+           "SALES_OFFICE_DESC": "region", "SALES_GROUP_DESC": "sales_area", "CITY1": "city", 
+           "POST_CODE1": "pincode", "STREET": "land_mark", "STR_SUPPL1": "location"}
+
+location_configs = [
+    {
+        "bu": "lpg",
+        "query": """
+                SELECT 
+                    PLT.PLANT, PLT.PLANT_DESC, PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1,PLT.STREET,
+                    PLT.STR_SUPPL1, PLT.REPORTING_OFFICE, PLT.STATE_NAME
+                FROM
+                    EDW_DC_PLANT PLT
+                    LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
+                WHERE
+                    ZLOC_TYPE IN ('33');
+                """,
+        "reporting_office_query":"""
+                    SELECT
+                        PLT.PLANT AS RO_CODE, ZN.SALES_OFFICE_DESC, ZN.SALES_GROUP_DESC
+                    FROM
+                        EDW_DC_PLANT PLT
+                        LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
+                    WHERE
+                        ZLOC_TYPE IN ('68');
+                """
+    },
+    {
+        "bu": "tas",
+        "query": """
+                SELECT
+                    PLT.PLANT, PLT.PLANT_DESC, PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1,PLT.STREET,
+                    PLT.STR_SUPPL1, PLT.REPORTING_OFFICE, PLT.STATE_NAME
+                FROM
+                    EDW_DC_PLANT PLT
+                    LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
+                WHERE 
+                    PLT.SBU='RET' AND CODE2 IN ('O&D','QC') AND ZLOC_TYPE!='66' AND FACILITY!='13';
+                """,
+        "reporting_office_query": """ 
+                SELECT
+                    PLT.PLANT AS RO_CODE, ZN.SALES_OFFICE_DESC, ZN.SALES_GROUP_DESC
+                FROM
+                    EDW_DC_PLANT PLT
+                    LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
+                WHERE
+                    ZLOC_TYPE IN ('38');
+                """
+    }   
+]
