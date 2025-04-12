@@ -8990,8 +8990,8 @@ class GlobalAnalytics:
                         d.sap_id,
                         d.sales_product_no AS product_no,
                         COUNT(*) AS dryout_days,
-                        round(a.avg_daily_sales, 2) avg_daily_sales,
-                        round(COUNT(*) * a.avg_daily_sales, 2)AS estimated_loss
+                        a.avg_daily_sales,
+                        COUNT(*) * a.avg_daily_sales AS estimated_loss
                       FROM dryout_days d
                       JOIN avg_sales a
                         ON d.sap_id::bigint = a.ro_sap_code::bigint
@@ -9010,7 +9010,8 @@ class GlobalAnalytics:
                 "data": []
             }
 
-        data['product_code'] = data['product_code'].astype(str).map(await product_map())
+        # data['product_no'] = data['product_no'].astype(str).map(await product_map())
+        # data = data.fillna(0)
         return {
             "status": True,
             "message": "Success",
