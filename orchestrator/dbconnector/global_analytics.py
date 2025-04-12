@@ -8983,7 +8983,7 @@ class GlobalAnalytics:
                       JOIN product_mapping pm
                         ON a.product_code = pm.alert_product_code
                       WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                        AND a.alert_status = 'Open'
+                        AND a.alert_status = 'Open' AND a.dry_out_in_days = '1'
                     ),
                     loss_estimate AS (
                       SELECT 
