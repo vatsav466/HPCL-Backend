@@ -1523,17 +1523,24 @@ class IndentDryOut:
         alert_data['product_code'] = _reverse_mapping.get(prod_key, alert_data['product_code'])
         return
 
-    async def get_process_instance_id(self, business_key, camunda_url):
-        camunda_url = f"{camunda_url}/engine-rest/process-instance"
-        params = {"businessKey": business_key}
-        response = requests.get(camunda_url, params=params)
+    async def get_process_instance_id(self, business_key):
+        camunda_listener_mapping = list(connection_mapping.camunda_listener_mapping.values())
         process_instance_id = ""
-        if response.status_code == 200:
-            instances = response.json()
-            if instances:
-                process_instance_id = instances[0]["id"]  # Get first instance ID
-                return process_instance_id
-        return process_instance_id
+        params = {"businessKey": business_key}
+        camunda_url = await helpers.get_alert_camunda_url(self.params["alert_id"],
+                                                          f"{urdhva_base.settings.camunda_url}")
+        for camunda_map in camunda_listener_mapping:
+            camunda_host = f"http://{camunda_map['host']}:{camunda_map['port']}"
+            url = f"{camunda_url}/engine-rest/process-instance"
+            response = requests.get(url, params=params)
+
+            if response.status_code == 200:
+                instances = response.json()
+                if instances:
+                    process_instance_id = instances[0]["id"]  # Get first instance ID
+                    return camunda_host, process_instance_id
+        print(f"Camunda flow not found {business_key}")
+        return camunda_url, process_instance_id
 
     async def update_indent_no(self, indent_no: str, loc_code: str, indent_raised_date):
         MAX_RETRIES = 5
@@ -1545,11 +1552,14 @@ class IndentDryOut:
             alert_data = alert_data.__dict__
         # instance_id = alert_data.get("workflow_instance_id")
         business_key = alert_data.get("unique_id")
+        # if not 'CAMUNDA_URL' in self.params.keys():
+        #     self.params['CAMUNDA_URL'] = await helpers.get_alert_camunda_url(self.params["alert_id"],
+        #                                                   f"{urdhva_base.settings.camunda_url}")
+
+        camunda_url, instance_id = await self.get_process_instance_id(business_key)
         if not 'CAMUNDA_URL' in self.params.keys():
-            self.params['CAMUNDA_URL'] = await helpers.get_alert_camunda_url(self.params["alert_id"],
-                                                          f"{urdhva_base.settings.camunda_url}")
+            self.params['CAMUNDA_URL'] = camunda_url
         print("self.params: ", self.params)
-        instance_id = await self.get_process_instance_id(business_key, self.params['CAMUNDA_URL'])
         if not instance_id:
             instance_id = alert_data.get("workflow_instance_id")
         # CAMUNDA_URL = await helpers.get_alert_camunda_url(self.params["alert_id"],
@@ -1754,7 +1764,8 @@ class IndentDryOut:
                 alert_data = alert_data.__dict__
             # instance_id = alert_data.get("workflow_instance_id")
             business_key = alert_data.get("unique_id")
-            instance_id = await self.get_process_instance_id(business_key, self.params['CAMUNDA_URL'])
+            camunda_host, instance_id = await self.get_process_instance_id(business_key)
+            print("camunda_host: ", camunda_host)
             if not instance_id:
                 instance_id = alert_data.get("workflow_instance_id")
             url = f"{camunda_url}/engine-rest/process-instance/{instance_id}"
@@ -1768,13 +1779,13 @@ class IndentDryOut:
                         break
                     else:
                         print(
-                            f"Error Deleting {instance_id} {camunda_url} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+                            f"Error Deleting {self.params['alert_id']} {instance_id} {camunda_url} (attempt {attempt + 1}): {response.status_code} - {response.text}")
                         logger.info(
-                            f"Error Deleting {camunda_url} {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}")
+                            f"Error Deleting {self.params['alert_id']} {camunda_url} {instance_id} (attempt {attempt + 1}): {response.status_code} - {response.text}")
 
                 except requests.RequestException as e:
-                    print(f"Request error for {camunda_url} {instance_id} (attempt {attempt + 1}): {e}")
-                    logger.info(f"Request error for {camunda_url} {instance_id} (attempt {attempt + 1}): {e}")
+                    print(f"Request error for {camunda_url} {instance_id} {self.params['alert_id']} (attempt {attempt + 1}): {e}")
+                    logger.info(f"Request error for {camunda_url} {instance_id} {self.params['alert_id']} (attempt {attempt + 1}): {e}")
 
                 # Retry logic with exponential backoff
                 if attempt < MAX_RETRIES - 1:
