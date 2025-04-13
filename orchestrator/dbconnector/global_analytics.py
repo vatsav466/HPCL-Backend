@@ -9027,7 +9027,7 @@ class GlobalAnalytics:
                       JOIN avg_sales a
                         ON d.sap_id::bigint = a.ro_sap_code::bigint
                        AND d.sales_product_no::bigint = a.product_no::bigint
-                       AND d.tank_no = a.tank_no
+                       AND d.tank_no::bigint = a.tank_no::bigint
                       GROUP BY d.sap_id, d.sales_product_no, d.tank_no, a.avg_daily_sales, d.zone
                     )
                     SELECT * FROM loss_estimate
