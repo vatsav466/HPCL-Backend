@@ -8972,7 +8972,10 @@ class GlobalAnalytics:
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
-        where_clauses = [f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'", "a.dry_out_in_days = '1'", daterange]
+        where_clauses = [
+            f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'", "a.dry_out_in_days = '1'",
+            "a.alert_status != 'Close'", daterange
+        ]
         if _filters:
             where_clauses.extend(_filters)
 
@@ -9017,14 +9020,14 @@ class GlobalAnalytics:
                         d.sales_product_no AS product_no,
                         d.tank_no,
                         COUNT(*) AS dryout_days,
-                        ROUND(a.avg_daily_sales, 2) AS avg_daily_sales,
-                        ROUND(COUNT(*) * a.avg_daily_sales, 2) AS estimated_loss,
+                        a.avg_daily_sales AS avg_daily_sales,
+                        COUNT(*) * a.avg_daily_sales AS estimated_loss,
                         d.zone
                       FROM dryout_days d
                       JOIN avg_sales a
                         ON d.sap_id::bigint = a.ro_sap_code::bigint
                        AND d.sales_product_no::bigint = a.product_no::bigint
-                       AND d.tank_no = a.tank_no
+                       AND d.tank_no::bigint = a.tank_no::bigint
                       GROUP BY d.sap_id, d.sales_product_no, d.tank_no, a.avg_daily_sales, d.zone
                     )
                     SELECT * FROM loss_estimate
