@@ -9103,7 +9103,7 @@ class GlobalAnalytics:
         for col in ['start_date', 'end_date']:
             if col in data.columns:
                 del data[col]
-        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'avg_daily_sales'])[
+        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'avg_daily_sales'])[
             ['estimated_loss', 'dryout_days']].sum().reset_index()
         data["avg_daily_sales"] = data["avg_daily_sales"].astype(np.float64)
         data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone'])[
