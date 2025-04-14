@@ -123,7 +123,7 @@ async def process_data(data, bu):
         sales_master['SACode'] = sales_master['SACode'].astype(str)
         data = pd.merge(data, sales_master, left_on='SALES_GRP', right_on='SACode', how='left')
         data.rename(columns={"SAName": "sales_area"}, inplace=True)
-    else:
+    elif "SALES_GROUP_DESC" in data.columns and bu!='LPG':
         data["sales_area"] = data["SALES_GROUP_DESC"]
     print("Before dropping empty username :", len(data))
     data = data[data["username"].fillna("") != ""]
