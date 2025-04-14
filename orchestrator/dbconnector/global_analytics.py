@@ -3842,16 +3842,15 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_filled_cylinder")
         _filters = []
         daterange = None
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
                     daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
-                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        production_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_production_zone")
         if filters:
             conditions = []
             for rec in filters:
@@ -3865,70 +3864,170 @@ class GlobalAnalytics:
                         condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
             if conditions:
-                handled_cylinder_query_ += ' WHERE '
-                handled_cylinder_query_ += ' AND '.join(conditions)
-            if not daterange:
-                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\') '
-            elif daterange:
-                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-            handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
+                production_zone_query_  += ' WHERE '
+                production_zone_query_  += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
-            handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
+            if not daterange:
+                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
+            elif daterange:
+                production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
+            production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
-            handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
-            if not "where" in handled_cylinder_query_.lower() and not daterange:
-                handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-            elif not "where" in handled_cylinder_query_.lower() and daterange:
-                handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
+            if not "where" in production_zone_query_.lower() and not daterange:
+                production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()' 
+            elif not "where" in production_zone_query_.lower() and daterange:
+                production_zone_query_ +=  f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             elif not daterange:
-                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
             elif daterange:
-                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-            handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
-            print("handled_cylinder_query_ :", handled_cylinder_query_)
-            resp = await function(query=handled_cylinder_query_)
+                production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
+            production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
+            
+            print("production_zone_query_ :", production_zone_query_)
+            resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
-                return {"status": True, "message": "success", "data": []}
+                return {"status": True, "message": "success", "data": []}            
             resp = resp.groupby(["zone"], as_index=False).agg({
-                    "Cylinder_Filled": "sum"
-                })
-            if resp.empty:
-                return {"status": True, "message": "success", "data": []}
+                        "14_kg": "sum",
+                        "19_kg": "sum"
+                    })
+            resp["Cylinder_Filled"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64))
+            
             for each_float_col in ["Cylinder_Filled"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)            
-            for each_str_col in ["zone", "plant"]:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
+            for each_str_col in ["zone", "name"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
-        # Execute the query
-        resp = await function(query=handled_cylinder_query_)
-        resp = pd.DataFrame(resp)
-        resp = await filter_data(resp, _filters)
-        if resp.empty:
-            return {"status": True, "message": "success", "data": []}
-        for each_float_col in ["Cylinder_Filled"]:
-            if each_float_col in resp.columns:
-                resp[each_float_col] = resp[each_float_col].fillna(0.0)
-        # Fill missing values for string columns
-        for each_str_col in ["zone", "plant"]:
-            if each_str_col in resp.columns:
-                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-        if filters:
-            grouped_resp = None
-            filter_keys = [rec.key.strip('"') for rec in filters]
-            if "zone" in filter_keys and "plant" not in filter_keys:
-                grouped_resp = resp.groupby(["zone", "plant"], as_index=False).agg({
-                    "Cylinder_Filled": "sum"
-                })
-            if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        resp = await function(query=production_zone_query_)
+        if resp:
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
+            for each_float_col in ["Cylinder_Filled"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
+            # Fill missing values for string columns
+            for each_str_col in ["zone", "name"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "zone" in filter_keys and "name" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","name"], as_index=False).agg({
+                        "14_kg": "sum",
+                        "19_kg": "sum"
+                    })
+                    grouped_resp["Cylinder_Filled"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64))
+                    grouped_resp["Cylinder_Filled"] = grouped_resp["Cylinder_Filled"].fillna(0.0).round(2)
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    # @staticmethod
+    # async def lpg_operations_filled_cylinder(filters, cross_filters, drill_state):
+    #     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    #     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    #     current_date = datetime.now().strftime("%Y-%m-%d")
+    #     handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_filled_cylinder")
+    #     _filters = []
+    #     daterange = None
+    #     if cross_filters:
+    #         for filter in cross_filters:
+    #             if "DATE" in filter.key:
+    #                 daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+    #                 continue
+    #             _filters.append({f"{filter.key}": f"{filter.value}"})
+    #     if filters:
+    #         conditions = []
+    #         for rec in filters:
+    #             rec.value = rec.value.split(",")
+    #             if isinstance(rec.value, str):
+    #                 condition = f"{rec.key} = '{rec.value}'"
+    #             else:
+    #                 if len(rec.value) == 1:
+    #                     condition = f"{rec.key} = '{rec.value[0]}'"
+    #                 else:
+    #                     condition = f"{rec.key} in {tuple(rec.value)}"
+    #             conditions.append(condition)
+    #         if conditions:
+    #             handled_cylinder_query_ += ' WHERE '
+    #             handled_cylinder_query_ += ' AND '.join(conditions)
+    #         if not daterange:
+    #             handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\') '
+    #         elif daterange:
+    #             handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
+    #         access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+    #                                   for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
+    #         handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
+    #     else:
+    #         access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+    #                                   for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
+    #         handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
+    #         if not "where" in handled_cylinder_query_.lower() and not daterange:
+    #             handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         elif not "where" in handled_cylinder_query_.lower() and daterange:
+    #             handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         elif not daterange:
+    #             handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         elif daterange:
+    #             handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
+    #         print("handled_cylinder_query_ :", handled_cylinder_query_)
+    #         resp = await function(query=handled_cylinder_query_)
+    #         resp = pd.DataFrame(resp)
+    #         resp = await filter_data(resp, _filters)
+    #         if resp.empty:
+    #             return {"status": True, "message": "success", "data": []}
+    #         resp = resp.groupby(["zone"], as_index=False).agg({
+    #                 "Cylinder_Filled": "sum"
+    #             })
+    #         if resp.empty:
+    #             return {"status": True, "message": "success", "data": []}
+    #         for each_float_col in ["Cylinder_Filled"]:
+    #             if each_float_col in resp.columns:
+    #                 resp[each_float_col] = resp[each_float_col].fillna(0.0)            
+    #         for each_str_col in ["zone", "plant"]:
+    #             if each_str_col in resp.columns:
+    #                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+    #         return {"status": True, "message": "success", "data": resp}
+    #     # Execute the query
+    #     resp = await function(query=handled_cylinder_query_)
+    #     resp = pd.DataFrame(resp)
+    #     resp = await filter_data(resp, _filters)
+    #     if resp.empty:
+    #         return {"status": True, "message": "success", "data": []}
+    #     for each_float_col in ["Cylinder_Filled"]:
+    #         if each_float_col in resp.columns:
+    #             resp[each_float_col] = resp[each_float_col].fillna(0.0)
+    #     # Fill missing values for string columns
+    #     for each_str_col in ["zone", "plant"]:
+    #         if each_str_col in resp.columns:
+    #             resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+    #     if filters:
+    #         grouped_resp = None
+    #         filter_keys = [rec.key.strip('"') for rec in filters]
+    #         if "zone" in filter_keys and "plant" not in filter_keys:
+    #             grouped_resp = resp.groupby(["zone", "plant"], as_index=False).agg({
+    #                 "Cylinder_Filled": "sum"
+    #             })
+    #         if grouped_resp is not None:
+    #             return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+    #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
     @staticmethod
