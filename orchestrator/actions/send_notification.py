@@ -702,6 +702,14 @@ class SendNotification:
         alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
         alert_data = alert_data.__dict__ if not isinstance(alert_data, dict) else alert_data
 
+        allocated_time = alert_data.get('updated_at', datetime.datetime.now(datetime.timezone.utc))
+        alert_history = alert_data.get('alert_history', []) if isinstance(alert_data, dict) else getattr(alert_data, 'alert_history', [])
+        if alert_history and alert_history[-1].get("processed_time"):
+            allocated_time = alert_history[-1]["processed_time"]
+            allocated_time = datetime.datetime.fromisoformat(allocated_time)
+        self.update_alert["allocated_time"] = allocated_time.isoformat()
+        processed_time = datetime.datetime.now(datetime.timezone.utc)
+        self.update_alert["processed_time"] = processed_time.isoformat()
         # Ensure alert_history is a list and append the new update
         alert_data.setdefault("alert_history", []).append(self.update_alert)
 
