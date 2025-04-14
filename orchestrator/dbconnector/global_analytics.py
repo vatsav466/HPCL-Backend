@@ -9178,7 +9178,7 @@ class GlobalAnalytics:
                      AND ap.sales_product_no::bigint = a.product_no::bigint
                      AND ap.tank_no::bigint = a.tank_no::bigint
                     ORDER BY ap.start_ts DESC"""
-        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=1000)
+        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if data.empty:
             return {
