@@ -9123,7 +9123,10 @@ class GlobalAnalytics:
             where_clauses.append(daterange)
 
         where_clause = " AND ".join(where_clauses)
-        query = f"""select * from dry_out_ro_loss where {where_clause}"""
+        query = "select * from dry_out_ro_loss"
+        if where_clause:
+            query = f"""select * from dry_out_ro_loss where {where_clause}"""
+
         data = await hpcl_ceg_model.DryOutRoLoss.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if data.empty:
