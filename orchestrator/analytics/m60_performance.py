@@ -338,7 +338,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         product_name_values = [x['value'] for x in filters if x['key'].strip('"') == 'ProductName']
         if product_name_values and product_name_values[0] == '':
             cross_filters = [f for f in cross_filters if f.get("key", "").strip('"') != "ProductName"]
-
     '''
     if 'fiscal_year' in [x['key'].strip('"') for x in filters]:
         if 'YTD' in [x['key'].strip('"') for x in filters] or 'YTDPM' in [x['key'].strip('"') for x in filters]:
@@ -639,7 +638,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 start_date = start_date.replace(year=start_date.year - 1).strftime("%Y-%m-%d")
                 end_date = end_date.replace(year=end_date.year).strftime("%Y-%m-%d")
             '''
-
             '''
             # For History
             start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
@@ -718,7 +716,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             return [rec.replace('"', '').strip() for rec in group_by_filter]
         else:
             return ""
-
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
@@ -734,7 +731,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     # Data Retrival for target data
     if target:
         group_keys = [key for key in group_by_filter]
-
         if '"month_name"' not in group_by_filter and '"C"' not in [x['key'] for x in filters]:
             group_keys.append("month_name")
         if '"C"' not in [x['key'] for x in filters]:
@@ -763,8 +759,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         elif '"C"' in [x['key'] for x in filters] and '"YTD"' in [x['key'] for x in filters] and '"T"' in [x['key'] for
                                                                                                            x in
-                                                                                                           filters]:
-            group_keys.append("month_name")
+                                                                                                         filters]:
+            # commenting the below line because month_name should not be present in the group_by_filter for cumulative mode
+            #group_keys.append("month_name")
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         else:
