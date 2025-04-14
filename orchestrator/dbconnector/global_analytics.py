@@ -8748,17 +8748,31 @@ class GlobalAnalytics:
     async def carry_forward_analysis(filters, cross_filters, drill_state):
         start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
         _filters = []
-        daterange = f""" '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
+        daterange = f""" created_at::date = '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
+        
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
-                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
-                _filters.append({f"{filter.key}": f"{filter.value}"})
+                    start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
+                    if start_date == end_date:
+                        daterange = f""" created_at::date = '{start_date}' """
+                    else:
+                        daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+                    continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        # Construct WHERE clause
+        where_clauses = [daterange]
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND ".join(where_clauses)
+
         query = (f"SELECT DATE(created_at) AS date, COUNT(*) AS cf_indents, "
                  f"COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_count, "
                  f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_day_dry_count, "
                  f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
-                 f"FROM public.carry_fwd_indent where created_at::date BETWEEN {daterange} "
+                 f"FROM public.carry_fwd_indent where {where_clause} "
                  f"GROUP BY DATE(created_at) ORDER BY date")
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get('data', []))
