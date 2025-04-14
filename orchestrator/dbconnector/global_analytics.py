@@ -9078,6 +9078,12 @@ class GlobalAnalytics:
                         '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
         data = data.fillna(0)
         data['product_name'] = data['product_no'].astype(str).map(products_map)
+        data['start_date'] = pd.to_datetime(data['start_date']).dt.tz_localize(None)
+        data['end_date'] = pd.to_datetime(data['end_date']).dt.tz_localize(None)
+        data['dryout_days'] = (data['end_date'] - data['start_date']).dt.total_seconds() / (60 * 60 * 24)
+        data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
+        data["estimated_loss"] = data["estimated_loss"].round(2)
+        data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
         if resp_level == 'count':
             data = data.groupby(['loss_month', 'product_name'] + group_by_col)[
                 'estimated_loss'].sum().reset_index()
@@ -9087,12 +9093,7 @@ class GlobalAnalytics:
                 "counts": data.to_dict(orient='records'),
                 "data": []
             }
-        data['start_date'] = pd.to_datetime(data['start_date']).dt.tz_localize(None)
-        data['end_date'] = pd.to_datetime(data['end_date']).dt.tz_localize(None)
-        data['dryout_days'] = (data['end_date'] - data['start_date']).dt.total_seconds() / (60 * 60 * 24)
-        data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
-        data["estimated_loss"] = data["estimated_loss"].round(2)
-        data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
+
         for col in ['start_date', 'end_date']:
             if col in data.columns:
                 del data[col]
