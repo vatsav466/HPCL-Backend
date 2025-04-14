@@ -130,7 +130,7 @@ async def sync_location_master():
             if col in data.columns:
                 data[col] = data[col].fillna(0).astype(str).replace('',0).astype(int).astype(str)
         for col in ["RO_CODE", "SALES_OFFICE_DESC", "SALES_GROUP_DESC"]:
-            if col in data.columns:
+            if config.get("reporting_office_query", None) and col in data.columns:
                 del data[col]
         if config.get("reporting_office_query", None):
             data_ro = await fetch_data(cursor, config.get("reporting_office_query"))        
