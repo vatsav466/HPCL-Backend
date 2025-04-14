@@ -8977,15 +8977,18 @@ class GlobalAnalytics:
         }
 
     @staticmethod
-    async def dry_out_ro_loss(filters, cross_filters, drill_state):
+    async def dry_out_ro_loss(filters, cross_filters, drill_state, resp_level='all'):
         _filters = []
         start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
         daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
-
+        group_by_col = []
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
                     start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
+                    if filter.val == 'monthly':
+                        _today = datetime.strptime(filter.value.split(",")[0], '%Y-%m-%d')
+                        start_date, end_date = await va_analysis.get_period_datetime(period='monthly', today=_today)
                     if start_date == end_date:
                         daterange = f""" a.created_at::date = '{start_date}' """
                     else:
@@ -8995,12 +8998,13 @@ class GlobalAnalytics:
 
         if filters:
             for filter in filters:
+                group_by_col.append(filter.key)
                 _filters.append(f"a.{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
         where_clauses = [
             f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'", "a.dry_out_in_days = '1'",
-            "a.alert_status != 'Close'", daterange
+            daterange
         ]
         if _filters:
             where_clauses.extend(_filters)
@@ -9045,8 +9049,7 @@ class GlobalAnalytics:
                         AND a.indent_status != 'Cancelled'
                     )
                     SELECT 
-                      DATE_TRUNC('month', ap.start_ts) AS loss_month,
-                      TO_CHAR(ap.start_ts, 'YYYY-MMM') AS loss_month,
+                      TO_CHAR(ap.start_ts, 'YYYY-Mon') AS loss_month,
                       ap.zone,
                       ap.sap_id,
                       ap.sales_product_no AS product_no,
@@ -9074,6 +9077,15 @@ class GlobalAnalytics:
                         '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
         data = data.fillna(0)
         data['product_name'] = data['product_no'].astype(str).map(products_map)
+        if resp_level == 'count':
+            data = data.groupby(['loss_month', 'product_name'] + group_by_col)[
+                'estimated_loss'].sum().reset_index()
+            return {
+                "status": True,
+                "message": "Success",
+                "counts": data.to_dict(orient='records'),
+                "data": []
+            }
         data['start_date'] = pd.to_datetime(data['start_date']).dt.tz_localize(None)
         data['end_date'] = pd.to_datetime(data['end_date']).dt.tz_localize(None)
         data['dryout_days'] = (data['end_date'] - data['start_date']).dt.total_seconds() / (60 * 60 * 24)
