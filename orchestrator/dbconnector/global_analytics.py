@@ -8984,7 +8984,7 @@ class GlobalAnalytics:
         # start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
         # daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
 
-        group_by_col = []
+        group_by_col = ["zone"]
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
@@ -9001,7 +9001,12 @@ class GlobalAnalytics:
 
         if filters:
             for filter in filters:
-                group_by_col.append(filter.key)
+                if filter.key == 'zone':
+                    group_by_col.append("region")
+                if filter.key == 'region':
+                    group_by_col.append("sales_area")
+                if filter.key == 'sales_area':
+                    group_by_col.append("location_name")
                 _filters.append(f"a.{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
@@ -9040,7 +9045,10 @@ class GlobalAnalytics:
                     alert_periods AS (
                       SELECT 
                         a.sap_id,
+                        a.location_name,
                         a.zone,
+                        a.region,
+                        a.sales_area,
                         pm.sales_product_no,
                         TRIM(tank_id) AS tank_no,
                         a.created_at AS start_ts,
@@ -9055,7 +9063,10 @@ class GlobalAnalytics:
                     )
                     SELECT 
                       TO_CHAR(ap.start_ts, 'YYYY-Mon') AS loss_month,
-                      ap.zone,
+                      a.location_name,
+                      a.zone,
+                      a.region,
+                      a.sales_area,
                       ap.sap_id,
                       ap.sales_product_no AS product_no,
                       ap.tank_no,
@@ -9088,11 +9099,13 @@ class GlobalAnalytics:
         data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
         data["estimated_loss"] = data["estimated_loss"].round(2)
         data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
+        if resp_level == 'pie-chart':
+            group_by_col = []
         data_count = data.groupby(['loss_month', 'product_name'] + group_by_col)[
             'estimated_loss'].sum().reset_index()
         data_count["estimated_loss"] = data_count["estimated_loss"].round(2)
 
-        if resp_level == 'count':
+        if resp_level in ['count', 'pie-chart']:
             return {
                 "status": True,
                 "message": "Success",
