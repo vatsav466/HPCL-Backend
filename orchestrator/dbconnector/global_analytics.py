@@ -9023,41 +9023,42 @@ class GlobalAnalytics:
                         tank_no,
                         AVG(total_sales) AS avg_daily_sales
                       FROM "HPCL_HOS".ro_daily_sales
-                      WHERE transaction_date >= CURRENT_DATE - INTERVAL '7 days'
+                      WHERE transaction_date >= CURRENT_DATE - INTERVAL '3 months'
                       GROUP BY ro_sap_code, product_no, tank_no
                     ),
-                    dryout_days AS (
+                    alert_periods AS (
                       SELECT 
                         a.sap_id,
                         a.zone,
                         pm.sales_product_no,
-                        DATE(a.created_at) AS dryout_day,
-                        TRIM(tank_id) AS tank_no
+                        TRIM(tank_id) AS tank_no,
+                        a.created_at AS start_ts,
+                        CASE 
+                          WHEN a.alert_status = 'Close' THEN a.updated_at
+                          ELSE NOW()
+                        END AS end_ts
                       FROM alerts a
-                      JOIN product_mapping pm
-                        ON a.product_code = pm.alert_product_code
-                      JOIN LATERAL unnest(string_to_array(a.device_id, ',')) AS tank_id
-                        ON TRUE
-                      WHERE {where_clause}
-                    ),
-                    loss_estimate AS (
-                      SELECT 
-                        d.sap_id,
-                        d.sales_product_no AS product_no,
-                        d.tank_no,
-                        COUNT(*) AS dryout_days,
-                        a.avg_daily_sales AS avg_daily_sales,
-                        COUNT(*) * a.avg_daily_sales AS estimated_loss,
-                        d.zone
-                      FROM dryout_days d
-                      JOIN avg_sales a
-                        ON d.sap_id::bigint = a.ro_sap_code::bigint
-                       AND d.sales_product_no::bigint = a.product_no::bigint
-                       AND d.tank_no::bigint = a.tank_no::bigint
-                      GROUP BY d.sap_id, d.sales_product_no, d.tank_no, a.avg_daily_sales, d.zone
+                      JOIN product_mapping pm ON a.product_code = pm.alert_product_code
+                      JOIN LATERAL unnest(string_to_array(a.device_id, ',')) AS tank_id ON TRUE
+                      WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
+                        AND a.dry_out_in_days = '1'
+                        AND a.indent_status != 'Cancelled'
                     )
-                    SELECT * FROM loss_estimate
-                    ORDER BY estimated_loss DESC;"""
+                    SELECT 
+                      DATE_TRUNC('month', ap.start_ts) AS loss_month,
+                      ap.zone,
+                      ap.sap_id,
+                      ap.sales_product_no AS product_no,
+                      ap.tank_no,
+                      ap.start_ts AS start_date,
+                      ap.end_ts AS end_date,
+                      a.avg_daily_sales
+                    FROM alert_periods ap
+                    JOIN avg_sales a 
+                      ON ap.sap_id::bigint = a.ro_sap_code::bigint
+                     AND ap.sales_product_no::bigint = a.product_no::bigint
+                     AND ap.tank_no::bigint = a.tank_no::bigint
+                    ORDER BY ap.start_ts DESC"""
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if data.empty:
@@ -9072,6 +9073,8 @@ class GlobalAnalytics:
                         '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
         data = data.fillna(0)
         data['product_name'] = data['product_no'].astype(str).map(products_map)
+        data["dryout_days"] = (data["end_date"] - data["start_date"]).dt.total_seconds() / 86400
+        data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
         data["estimated_loss"] = data["estimated_loss"].round(2)
         data["avg_daily_sales"] = data["avg_daily_sales"].round(2)
         # data = data.fillna(0)
