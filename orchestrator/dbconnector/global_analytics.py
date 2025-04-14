@@ -8978,6 +8978,7 @@ class GlobalAnalytics:
 
     @staticmethod
     async def dry_out_ro_loss(filters, cross_filters, drill_state, resp_level='all'):
+        print("resp_level: ", resp_level)
         _filters = []
         start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
         daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
@@ -9095,7 +9096,7 @@ class GlobalAnalytics:
         for col in ['start_date', 'end_date']:
             if col in data.columns:
                 del data[col]
-        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'avg_daily_sales'])['estimated_loss', 'dryout_days'].sum().reset_index()
+        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'avg_daily_sales'])[['estimated_loss', 'dryout_days']].sum().reset_index()
         data['dryout_days'] = pd.to_timedelta(data['dryout_days'], unit='D')
 
         data['dryout_days'] = data['dryout_days'].apply(
