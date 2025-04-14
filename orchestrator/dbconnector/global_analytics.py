@@ -9106,7 +9106,7 @@ class GlobalAnalytics:
         data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'avg_daily_sales'])[
             ['estimated_loss', 'dryout_days']].sum().reset_index()
         data["avg_daily_sales"] = data["avg_daily_sales"].astype(np.float64)
-        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone'])[
+        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone','tank_no'])[
             ['estimated_loss', 'dryout_days', 'avg_daily_sales']].sum().reset_index()
         data["estimated_loss"] = data["estimated_loss"].round(2)
         data["avg_daily_sales"] = data["avg_daily_sales"].round(2)
