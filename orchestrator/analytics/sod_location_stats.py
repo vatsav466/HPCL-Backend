@@ -154,7 +154,7 @@ async def get_alert_count_for_interlock(interlock):
     #              {"id": "air_compressor", "name": "Air Compressor", "total": 6, "faulty": 0, "maintanance": 1}]
     # return {"status": True, "data":  json_data}
 
-async def get_dist_loc_values(bu, sap_id, location_onboard=False):
+async def get_dist_loc_values(bu, location_onboard=False):
     """
     Get distinct location values for a given business unit and SAP ID.
 
