@@ -9129,6 +9129,9 @@ class GlobalAnalytics:
 
         data = await hpcl_ceg_model.DryOutRoLoss.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
+        for col in ['id', 'created_at', 'updated_at', 'entity_id']:
+            if col in data.columns:
+                del data[col]
         if data.empty:
             return {
                 "status": False,
