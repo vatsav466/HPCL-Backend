@@ -73,7 +73,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                     location_data=loc_dt
                 )
 
-                return await cls.create_alert(alert_data, camunda_url)
+                # return await cls.create_alert(alert_data, camunda_url)
 
             # Then handle Effect alerts that don't end with "_fail"
             elif alert_data['Cause_Effect'] == 'Effect' and not alert_data['interlock_name'].lower().endswith('_fail'):
@@ -140,7 +140,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                         location_data=loc_dt
                     )
 
-                    return await cls.create_alert(alert_data, camunda_url)
+                    # return await cls.create_alert(alert_data, camunda_url)
                 else:
                     logger.info(f"Interlock not found for {alert_data['cause_sop_id']} in {alert_data['sap_id']}")
                     # No Cause found, create a new Effect alert anyway
@@ -160,7 +160,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                     location_data=loc_dt
                 )
 
-                return await cls.create_alert(alert_data, camunda_url)
+            return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
             print(traceback.format_exc())
