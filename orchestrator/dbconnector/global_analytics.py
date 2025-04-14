@@ -9092,14 +9092,14 @@ class GlobalAnalytics:
                         _today = datetime.strptime(filter.value.split(",")[0], '%Y-%m-%d')
                         start_date, end_date = await va_analysis.get_period_datetime(period='monthly', today=_today)
                     if start_date == end_date:
-                        daterange = f""" loss_month::date = '{start_date.strftime("%Y-%b")}' """
+                        daterange = f""" loss_month = '{start_date.strftime("%Y-%b")}' """
                     else:
                         months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%Y-%b')
                         months_tuple = tuple(months)
                         if len(months_tuple) > 1:
-                            daterange = f""" loss_month::date IN {months_tuple} """
+                            daterange = f""" loss_month IN {months_tuple} """
                         else:
-                            daterange = f""" loss_month::date = '{months_tuple[0]}' """
+                            daterange = f""" loss_month = '{months_tuple[0]}' """
                     continue
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
