@@ -8851,6 +8851,10 @@ class GlobalAnalytics:
                     continue
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
+        if filters:
+            for filter in filters:
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
         # Construct WHERE clause
         where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", daterange]
         if _filters:
@@ -8988,6 +8992,10 @@ class GlobalAnalytics:
                         daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
                     continue
                 _filters.append(f"{filter.key} = '{filter.value}'")
+
+        if filters:
+            for filter in filters:
+                _filters.append(f"a.{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
         where_clauses = [
