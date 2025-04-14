@@ -448,7 +448,6 @@ Model assetDetails internal {
 }
 
 Model Alert_History internal {
-    effect_msg optional list str
     device_data optional str
     allocated_time optional str
     processed_time optional str

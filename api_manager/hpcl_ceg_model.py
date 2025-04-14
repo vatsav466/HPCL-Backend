@@ -880,7 +880,6 @@ class assetDetailsCreate(pydantic.BaseModel):
 
 
 class Alert_HistoryCreate(pydantic.BaseModel):
-    effect_msg: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     device_data: typing.Optional[str] = pydantic.Field("", **{})
     allocated_time: typing.Optional[str] = pydantic.Field("", **{})
     processed_time: typing.Optional[str] = pydantic.Field("", **{})
