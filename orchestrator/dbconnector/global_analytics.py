@@ -8980,8 +8980,10 @@ class GlobalAnalytics:
     async def dry_out_ro_loss(filters, cross_filters, drill_state, resp_level='all'):
         print("resp_level: ", resp_level)
         _filters = []
-        start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
-        daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+        daterange = ""
+        # start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
+        # daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+
         group_by_col = []
         if cross_filters:
             for filter in cross_filters:
@@ -9004,11 +9006,15 @@ class GlobalAnalytics:
 
         # Construct WHERE clause
         where_clauses = [
-            f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'", "a.dry_out_in_days = '1'",
-            "a.indent_status" != 'Cancelled', daterange
+            f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'",
+            "a.dry_out_in_days = '1'",
+            "a.indent_status != 'Cancelled'"
         ]
         if _filters:
             where_clauses.extend(_filters)
+
+        if daterange:
+            where_clauses.extend(daterange)
 
         where_clause = " AND ".join(where_clauses)
         query = f"""WITH product_mapping AS (
@@ -9082,10 +9088,11 @@ class GlobalAnalytics:
         data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
         data["estimated_loss"] = data["estimated_loss"].round(2)
         data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
+        data_count = data.groupby(['loss_month', 'product_name'] + group_by_col)[
+            'estimated_loss'].sum().reset_index()
+        data_count["estimated_loss"] = data_count["estimated_loss"].round(2)
+
         if resp_level == 'count':
-            data = data.groupby(['loss_month', 'product_name'] + group_by_col)[
-                'estimated_loss'].sum().reset_index()
-            data["estimated_loss"] = data["estimated_loss"].round(2)
             return {
                 "status": True,
                 "message": "Success",
@@ -9096,7 +9103,13 @@ class GlobalAnalytics:
         for col in ['start_date', 'end_date']:
             if col in data.columns:
                 del data[col]
-        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'avg_daily_sales'])[['estimated_loss', 'dryout_days']].sum().reset_index()
+        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'avg_daily_sales'])[
+            ['estimated_loss', 'dryout_days']].sum().reset_index()
+        data["avg_daily_sales"] = data["avg_daily_sales"].astype(np.float64)
+        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone'])[
+            ['estimated_loss', 'dryout_days', 'avg_daily_sales']].sum().reset_index()
+        data_count["estimated_loss"] = data_count["estimated_loss"].round(2)
+        data_count["avg_daily_sales"] = data_count["avg_daily_sales"].round(2)
         data['dryout_days'] = pd.to_timedelta(data['dryout_days'], unit='D')
 
         data['dryout_days'] = data['dryout_days'].apply(
@@ -9106,5 +9119,6 @@ class GlobalAnalytics:
         return {
             "status": True,
             "message": "Success",
+            "count": data_count.to_dict(orient='records'),
             "data": data.to_dict(orient='records')
         }
