@@ -171,7 +171,30 @@ async def get_dist_loc_values(bu, location_onboard=False):
     if not resp.get("data"):
         return {"status": False, "message": "No Data found", "data": []}
     
-    data = resp.get("data")
+    data = resp.get("data", '')
+    # Now create zone and sap_id lists
+    zone_list = []
+    sap_id_list = []
 
-    return {"status": True, "message": "Success", "data": data}
+    for item in data:
+        if zone := item.get("zone"):
+            zone_list.append({"id": zone, "name": zone})
+        
+        if sap_id := item.get("sap_id"):
+            name = item.get("name", "")
+            sap_id_list.append({"id": sap_id, "name": name})
+
+    # Remove duplicates (optional if needed)
+    zone_list = [dict(t) for t in {tuple(d.items()) for d in zone_list}]
+    sap_id_list = [dict(t) for t in {tuple(d.items()) for d in sap_id_list}]
+
+    return {
+        "status": True,
+        "message": "Success",
+        "data": {
+            "zone": zone_list,
+            "sap_id": sap_id_list
+        }
+    }
+    # return {"status": True, "message": "Success", "data": data}
     
