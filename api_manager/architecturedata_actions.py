@@ -147,7 +147,7 @@ async def architecturedata_architecture_details(data: Architecturedata_Architect
                 })
         # Update database
         try:
-            await ArchitectureData.bulk_update(final_records, upsert=False)
+            await ArchitectureData.bulk_update(final_records, upsert=True)
             print(f"Updated {len(final_records)} records.")
             return {"status": True, "message": "Data updated successfully."}
         except Exception as e:
@@ -202,6 +202,3 @@ async def architecturedata_architecture_data(data: Architecturedata_Architecture
 
     except Exception as e:
         return {"status": False, "message": f"Error: {str(e)}"}
-
-
-  

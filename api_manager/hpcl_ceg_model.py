@@ -5467,6 +5467,8 @@ class ArchitectureDataSchema(UrdhvaPostgresBase):
     system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(sap_id, name, device_type, count, system, equipment_name, name="architecture_data_sapid_name_devic_count_syste_equip"),)
+
 
 class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'architecture_data'
@@ -5484,7 +5486,7 @@ class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = ArchitectureDataSchema
-        upsert_keys = []
+        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'system', 'equipment_name']
 
 
 class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
@@ -5503,7 +5505,7 @@ class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = ArchitectureDataSchema
-        upsert_keys = []
+        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'system', 'equipment_name']
 
 
 class ArchitectureDataGetResp(pydantic.BaseModel):
