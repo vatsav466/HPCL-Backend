@@ -8761,6 +8761,10 @@ class GlobalAnalytics:
                     continue
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
+        if filters:
+            for filter in filters:
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
         # Construct WHERE clause
         where_clauses = [daterange]
         if _filters:
