@@ -172,4 +172,6 @@ async def get_dist_loc_values(bu, location_onboard=False):
         return {"status": False, "message": "No Data found", "data": []}
     
     data = resp.get("data")
+
+    return {"status": True, "message": "Success", "data": data}
     
