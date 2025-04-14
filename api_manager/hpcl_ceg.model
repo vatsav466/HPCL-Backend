@@ -306,6 +306,11 @@ Model LocationMaster {
         action str
     }
 
+    Action=> get_dist_loc_details {
+        bu str
+        location_onboard optional bool
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,region,sales_area,sap_id'

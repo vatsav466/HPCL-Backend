@@ -239,3 +239,9 @@ async def locationmaster_location_command_control(data: Locationmaster_Location_
     if data.sap_id not in ['1128']:
         return False, "Location not onboarded"
     return await tas_command_control.publish_command(data.sap_id, data.action, "1")
+
+
+# Action get_dist_loc_details
+@router.post('/get_dist_loc_details', tags=['LocationMaster'])
+async def locationmaster_get_dist_loc_details(data: Locationmaster_Get_Dist_Loc_DetailsParams):
+    return await sod_location_stats.get_dist_loc_values(bu=data.bu)

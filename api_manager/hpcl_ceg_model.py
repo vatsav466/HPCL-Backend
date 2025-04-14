@@ -476,6 +476,15 @@ class Locationmaster_Location_Command_ControlParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Locationmaster_Get_Dist_Loc_DetailsParams(pydantic.BaseModel):
+    bu: str
+    location_onboard: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
