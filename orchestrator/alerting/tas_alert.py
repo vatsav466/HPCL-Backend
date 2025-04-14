@@ -72,11 +72,17 @@ class TASAlertManager(alert_factory.AlertFactory):
                     alert_id = al_resp['data'][0]['id']
                     existing_alert_history = al_resp['data'][0].get('alert_history', [])
                     print("alert_id --> ", alert_id)
-                    
+        
+                    # Find the last entry with action_type "InterlockCreated"
+                    last_processed_time = processed_time
+                    for entry in reversed(existing_alert_history):
+                        if entry.get("action_type") == "InterlockCreated" and entry.get("processed_time"):
+                            last_processed_time = entry.get("processed_time")
+                            break
                     # Create new alert history entry
                     new_entry = {
-                        "processed_time": processed_time.isoformat(),
-                        "allocated_time": processed_time.isoformat(),
+                        "processed_time": last_processed_time,
+                        "allocated_time": last_processed_time,
                         "action_msg": f"{alert_data['interlock_name']}",
                         "action_type": alert_data['Cause_Effect']
                     }
@@ -94,16 +100,15 @@ class TASAlertManager(alert_factory.AlertFactory):
                 else:
                     logger.info(f"Interlock not found for {alert_data['cause_sop_id']} in {alert_data['sap_id']}")
 
-                return {"status": True, "message": "Effect Alert Updated to the Cause", "alert_data": alert_data}
-            else:
-                alert_data["alert_history"] = [{"processed_time": processed_time.isoformat(),
+                # return {"status": True, "message": "Effect Alert Updated to the Cause", "alert_data": alert_data}
+            alert_data["alert_history"] = [{"processed_time": processed_time.isoformat(),
                                            "allocated_time": processed_time.isoformat(),
                                             "action_msg": f"{alert_data['interlock_name']} Interlock "
                                                           f"created",
                                             "action_type": "InterlockCreated"}]
-                camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
-                                                            alert_section="TAS", location_data=loc_dt)
-                return await cls.create_alert(alert_data, camunda_url)
+            camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
+                                                        alert_section="TAS", location_data=loc_dt)
+            return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
             print(traceback.format_exc())
