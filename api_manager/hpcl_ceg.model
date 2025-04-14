@@ -88,6 +88,7 @@ Enum AlertActionType str {
     Request='Request'
     Interrupt='Interrupt'
     BayReAssigned='BayReAssigned'
+    Effect='Effect'
 }
 
 Enum IndentStatus str {
@@ -448,7 +449,6 @@ Model assetDetails internal {
 }
 
 Model Alert_History internal {
-    effect_msg optional list str
     device_data optional str
     allocated_time optional str
     processed_time optional str

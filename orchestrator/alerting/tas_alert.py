@@ -57,14 +57,53 @@ class TASAlertManager(alert_factory.AlertFactory):
                     break
             device_data = f"{alert_data['device_name']}"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
-            alert_data["alert_history"] = [{"processed_time": processed_time.isoformat(),
+            if alert_data['Cause_Effect'] == 'Effect' and not alert_data['interlock_name'].lower().endswith('_fail'):
+                query = f"bu = '{alert_data['bu']}' and sap_id = '{alert_data['sap_id']}' and sop_id = '{alert_data['cause_sop_id']}' and cause_effect = 'Cause'"
+                params = urdhva_base.queryparams.QueryParams()
+                params.q = query
+                params.sort = {"created_at": "desc"}
+
+                print("params --> ", params)
+
+                al_resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+                print("al_resp --> ", al_resp)
+                if al_resp['data'] and len(al_resp['data']) > 0:
+                    # Get the existing alert's ID and alert_history
+                    alert_id = al_resp['data'][0]['id']
+                    existing_alert_history = al_resp['data'][0].get('alert_history', [])
+                    print("alert_id --> ", alert_id)
+                    
+                    # Create new alert history entry
+                    new_entry = {
+                        "processed_time": processed_time.isoformat(),
+                        "allocated_time": processed_time.isoformat(),
+                        "action_msg": f"{alert_data['interlock_name']}",
+                        "action_type": alert_data['Cause_Effect']
+                    }
+                    
+                    # Append the new entry to the existing history
+                    updated_alert_history = existing_alert_history + [new_entry]
+                    print("updated_alert_history --> ", updated_alert_history)
+
+                    # Update with the combined alert_history
+                    data_obj = hpcl_ceg_model.Alerts(id=alert_id, 
+                        **{"alert_history": updated_alert_history})
+                    print("data_obj --> ", data_obj)
+                    await data_obj.modify()
+
+                else:
+                    logger.info(f"Interlock not found for {alert_data['cause_sop_id']} in {alert_data['sap_id']}")
+
+                return {"status": True, "message": "Effect Alert Updated to the Cause", "alert_data": alert_data}
+            else:
+                alert_data["alert_history"] = [{"processed_time": processed_time.isoformat(),
                                            "allocated_time": processed_time.isoformat(),
                                             "action_msg": f"{alert_data['interlock_name']} Interlock "
                                                           f"created",
                                             "action_type": "InterlockCreated"}]
-            camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
-                                                        alert_section="TAS", location_data=loc_dt)
-            return await cls.create_alert(alert_data, camunda_url)
+                camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
+                                                            alert_section="TAS", location_data=loc_dt)
+                return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
             print(traceback.format_exc())
