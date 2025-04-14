@@ -68,8 +68,10 @@ location_configs = [
     {
         "bu": "lpg",
         "query": """
-                SELECT *
-                    FROM
+                SELECT 
+                    PLT.PLANT, PLT.PLANT_DESC, PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1,PLT.STREET,
+                    PLT.STR_SUPPL1, PLT.REPORTING_OFFICE, PLT.STATE_NAME
+                FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
                 WHERE
@@ -88,7 +90,9 @@ location_configs = [
     {
         "bu": "tas",
         "query": """
-                SELECT *
+                SELECT
+                    PLT.PLANT, PLT.PLANT_DESC, PLT.ZZONE, PLT.CITY1, PLT.POST_CODE1,PLT.STREET,
+                    PLT.STR_SUPPL1, PLT.REPORTING_OFFICE, PLT.STATE_NAME
                 FROM
                     EDW_DC_PLANT PLT
                     LEFT JOIN ZSDCV_SO_PARAM_STG ZN ON PLT.PLANT = ZN.PLANT
