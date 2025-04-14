@@ -443,6 +443,7 @@ Model assetDetails internal {
 }
 
 Model Alert_History internal {
+    effect_msg optional list str
     device_data optional str
     allocated_time optional str
     processed_time optional str
@@ -592,6 +593,7 @@ Model Alerts {
     clear_count optional bool
     maintenance_time optional str
     closed_at optional datetime
+    cause_effect optional str
 
     //tas keys
     tt_load_number optional str

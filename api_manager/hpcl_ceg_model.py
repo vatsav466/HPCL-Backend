@@ -871,6 +871,7 @@ class assetDetailsCreate(pydantic.BaseModel):
 
 
 class Alert_HistoryCreate(pydantic.BaseModel):
+    effect_msg: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     device_data: typing.Optional[str] = pydantic.Field("", **{})
     allocated_time: typing.Optional[str] = pydantic.Field("", **{})
     processed_time: typing.Optional[str] = pydantic.Field("", **{})
@@ -1177,6 +1178,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     clear_count: Mapped[typing.Optional[bool]] = mapped_column("clear_count", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     maintenance_time: Mapped[typing.Optional[str]] = mapped_column("maintenance_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    cause_effect: Mapped[typing.Optional[str]] = mapped_column("cause_effect", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tt_load_number: Mapped[typing.Optional[str]] = mapped_column("tt_load_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     is_flagged_false: Mapped[typing.Optional[bool]] = mapped_column("is_flagged_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     rca: Mapped[typing.Optional[str]] = mapped_column("rca", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1257,6 +1259,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     clear_count: typing.Optional[bool] = pydantic.Field(False, )
     maintenance_time: typing.Optional[str] = pydantic.Field("", **{})
     closed_at: typing.Optional[datetime.datetime] | None = None
+    cause_effect: typing.Optional[str] = pydantic.Field("", **{})
     tt_load_number: typing.Optional[str] = pydantic.Field("", **{})
     is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
     rca: typing.Optional[str] = pydantic.Field("", **{})
@@ -1346,6 +1349,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     clear_count: typing.Optional[bool] = pydantic.Field(False, )
     maintenance_time: typing.Optional[str] = pydantic.Field("", **{})
     closed_at: typing.Optional[datetime.datetime] | None = None
+    cause_effect: typing.Optional[str] = pydantic.Field("", **{})
     tt_load_number: typing.Optional[str] = pydantic.Field("", **{})
     is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
     rca: typing.Optional[str] = pydantic.Field("", **{})
