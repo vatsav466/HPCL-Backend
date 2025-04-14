@@ -9096,7 +9096,10 @@ class GlobalAnalytics:
                     else:
                         months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%Y-%b')
                         months_tuple = tuple(months)
-                        daterange = f""" loss_month::date IN '{months_tuple}' """
+                        if len(months_tuple) > 1:
+                            daterange = f""" loss_month::date IN {months_tuple} """
+                        else:
+                            daterange = f""" loss_month::date = '{months_tuple[0]}' """
                     continue
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
@@ -9108,7 +9111,7 @@ class GlobalAnalytics:
                     group_by_col.append("sales_area")
                 if filter.key == 'sales_area':
                     group_by_col.append("location_name")
-                _filters.append(f"a.{filter.key} = '{filter.value}'")
+                _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
         where_clauses = [
