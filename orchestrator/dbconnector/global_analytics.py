@@ -8748,8 +8748,8 @@ class GlobalAnalytics:
     async def carry_forward_analysis(filters, cross_filters, drill_state):
         start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
         _filters = []
-        daterange = f""" created_at::date = '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
-        
+        daterange = f""" created_at::date BETWEEN '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
+
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
