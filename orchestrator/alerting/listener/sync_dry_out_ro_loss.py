@@ -82,10 +82,10 @@ async def sync_dry_out_ro_loss():
     data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
     data["estimated_loss"] = data["estimated_loss"].round(2)
     data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
-    data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'avg_daily_sales'])[
+    data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'avg_daily_sales', 'region', 'sales_area', 'location_name'])[
         ['estimated_loss', 'dryout_days']].sum().reset_index()
     data["avg_daily_sales"] = data["avg_daily_sales"].astype(np.float64)
-    data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no'])[
+    data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'region', 'sales_area', 'location_name'])[
         ['estimated_loss', 'dryout_days', 'avg_daily_sales']].sum().reset_index()
     data["estimated_loss"] = data["estimated_loss"].round(2)
     data["avg_daily_sales"] = data["avg_daily_sales"].round(2)
