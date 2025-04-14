@@ -9096,7 +9096,7 @@ class GlobalAnalytics:
             return {
                 "status": True,
                 "message": "Success",
-                "counts": data.to_dict(orient='records'),
+                "counts": data_count.to_dict(orient='records'),
                 "data": []
             }
 
