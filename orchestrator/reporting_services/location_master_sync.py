@@ -106,12 +106,13 @@ async def combine_roles(data, _id, role_name):
 
 async def process_data(data):
     data.rename(columns=reporting_config._rename, inplace=True)
-    if all(col in data.columns for col in ["ADDRESS1","ADDRESS2","ADDRESS3","ADDRESS4","ADDRESS5"]):        
+    if all(col in data.columns for col in ["ADDRESS1","ADDRESS2","ADDRESS3","ADDRESS4","ADDRESS5"]):
         data['adress'] = data[["ADDRESS1", "ADDRESS2", "ADDRESS3", "ADDRESS4", "ADDRESS5"]].fillna('').agg(' '.join, axis=1)
+    elif all(col in data.columns for col in ["land_mark","location","pincode"]):
+        data["adress"] = data["land_mark"].astype(str) + " " + data["location"].astype(str) + " " + data["pincode"].astype(str)
             
     if "sap_id" in data.columns:
-        data = data.drop_duplicates('sap_id', keep='first')
-    data["adress"] = data["land_mark"].astype(str) + " " + data["location"].astype(str) + " " + data["pincode"].astype(str)
+        data = data.drop_duplicates('sap_id', keep='first')    
     for col in reporting_config.required_field:
         if not col in data.columns:
             data[col] = ""
