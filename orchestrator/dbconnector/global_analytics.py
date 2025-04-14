@@ -9112,9 +9112,9 @@ class GlobalAnalytics:
 
         # Construct WHERE clause
         where_clauses = [
-            f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'",
-            "a.dry_out_in_days = '1'",
-            "a.indent_status != 'Cancelled'"
+            # f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'",
+            # "a.dry_out_in_days = '1'",
+            # "a.indent_status != 'Cancelled'"
         ]
         if _filters:
             where_clauses.extend(_filters)
