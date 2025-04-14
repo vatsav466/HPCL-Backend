@@ -9014,7 +9014,7 @@ class GlobalAnalytics:
             where_clauses.extend(_filters)
 
         if daterange:
-            where_clauses.extend(daterange)
+            where_clauses.append(daterange)
 
         where_clause = " AND ".join(where_clauses)
         query = f"""WITH product_mapping AS (
