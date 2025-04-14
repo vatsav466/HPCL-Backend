@@ -9162,10 +9162,10 @@ class GlobalAnalytics:
                     )
                     SELECT 
                       TO_CHAR(ap.start_ts, 'YYYY-Mon') AS loss_month,
-                      a.location_name,
-                      a.zone,
-                      a.region,
-                      a.sales_area,
+                      ap.location_name,
+                      ap.zone,
+                      ap.region,
+                      ap.sales_area,
                       ap.sap_id,
                       ap.sales_product_no AS product_no,
                       ap.tank_no,
