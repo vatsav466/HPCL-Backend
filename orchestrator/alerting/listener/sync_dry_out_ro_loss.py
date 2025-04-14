@@ -97,6 +97,7 @@ async def sync_dry_out_ro_loss():
     print(data)
     print(data.columns)
     print(data.dtypes)
+    await hpcl_ceg_model.DryOutRoLoss.bulk_update(data.to_dict(orient='records'), upsert=True)
 
 if __name__ == "__main__":
     asyncio.run(sync_dry_out_ro_loss())
