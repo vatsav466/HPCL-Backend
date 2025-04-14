@@ -9108,8 +9108,8 @@ class GlobalAnalytics:
         data["avg_daily_sales"] = data["avg_daily_sales"].astype(np.float64)
         data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone'])[
             ['estimated_loss', 'dryout_days', 'avg_daily_sales']].sum().reset_index()
-        data_count["estimated_loss"] = data_count["estimated_loss"].round(2)
-        data_count["avg_daily_sales"] = data_count["avg_daily_sales"].round(2)
+        data["estimated_loss"] = data["estimated_loss"].round(2)
+        data["avg_daily_sales"] = data["avg_daily_sales"].round(2)
         data['dryout_days'] = pd.to_timedelta(data['dryout_days'], unit='D')
 
         data['dryout_days'] = data['dryout_days'].apply(
