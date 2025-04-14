@@ -4355,6 +4355,69 @@
                     "name": "delete"
                 }
             ]
+        },
+        {
+            "name": "dryoutroloss",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutRoLoss",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutroloss/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
+        },
+        {
+            "name": "dryoutroloss_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutRoLoss_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutroloss/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "dryoutroloss_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "DryOutRoLoss_admin",
+            "attributes": {},
+            "uris": [
+                "/api/dryoutroloss/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                }
+            ]
         }
     ],
     "policies": [

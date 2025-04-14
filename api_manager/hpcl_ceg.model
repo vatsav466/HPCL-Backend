@@ -2109,3 +2109,17 @@ Model VtsTruckDetails {
     instance_3 optional int
     alert_id optional str
 }
+
+Model DryOutRoLoss {
+    zone unique_field index_field optional str
+    tank_no unique_field index_field optional str
+    sap_id unique_field index_field optional str
+    product_name unique_field index_field optional str
+    loss_month unique_field index_field optional str
+    estimated_loss optional float
+    dryout_days optional str
+    avg_daily_sales optional float
+    region optional str
+    sales_area optional str
+    location_name optional str
+}

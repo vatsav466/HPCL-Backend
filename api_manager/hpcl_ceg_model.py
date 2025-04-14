@@ -6091,3 +6091,73 @@ class VtsTruckDetailsGetResp(pydantic.BaseModel):
     data: typing.List[VtsTruckDetails]
     total: int = pydantic.Field(0)
     count: int = pydantic.Field(0)
+
+
+class DryOutRoLossSchema(UrdhvaPostgresBase):
+    __tablename__ = 'dry_out_ro_loss'
+    
+    zone: Mapped[typing.Optional[str]] = mapped_column("zone", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    tank_no: Mapped[typing.Optional[str]] = mapped_column("tank_no", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    sap_id: Mapped[typing.Optional[str]] = mapped_column("sap_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    product_name: Mapped[typing.Optional[str]] = mapped_column("product_name", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    loss_month: Mapped[typing.Optional[str]] = mapped_column("loss_month", String, index=True, nullable=True, default="", primary_key=False, unique=False)
+    estimated_loss: Mapped[typing.Optional[float]] = mapped_column("estimated_loss", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    dryout_days: Mapped[typing.Optional[str]] = mapped_column("dryout_days", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    avg_daily_sales: Mapped[typing.Optional[float]] = mapped_column("avg_daily_sales", Numeric, index=False, nullable=True, default=0.0, primary_key=False, unique=False)
+    region: Mapped[typing.Optional[str]] = mapped_column("region", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    sales_area: Mapped[typing.Optional[str]] = mapped_column("sales_area", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    location_name: Mapped[typing.Optional[str]] = mapped_column("location_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+
+    __table_args__ = (UniqueConstraint(zone, tank_no, sap_id, product_name, loss_month, name="dry_out_ro_loss_zone_tank_no_sap_id_product_name_loss_month"),)
+
+
+class DryOutRoLossCreate(urdhva_base.postgresmodel.BasePostgresModel):
+    __tablename__ = 'dry_out_ro_loss'
+    
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    tank_no: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    loss_month: typing.Optional[str] = pydantic.Field("", **{})
+    estimated_loss: typing.Optional[float] = pydantic.Field(0.0, **{})
+    dryout_days: typing.Optional[str] = pydantic.Field("", **{})
+    avg_daily_sales: typing.Optional[float] = pydantic.Field(0.0, **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DryOutRoLossSchema
+        upsert_keys = ['zone', 'tank_no', 'sap_id', 'product_name', 'loss_month']
+
+
+class DryOutRoLoss(urdhva_base.postgresmodel.PostgresModel):
+    __tablename__ = 'dry_out_ro_loss'
+    
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    tank_no: typing.Optional[str] = pydantic.Field("", **{})
+    sap_id: typing.Optional[str] = pydantic.Field("", **{})
+    product_name: typing.Optional[str] = pydantic.Field("", **{})
+    loss_month: typing.Optional[str] = pydantic.Field("", **{})
+    estimated_loss: typing.Optional[float] = pydantic.Field(0.0, **{})
+    dryout_days: typing.Optional[str] = pydantic.Field("", **{})
+    avg_daily_sales: typing.Optional[float] = pydantic.Field(0.0, **{})
+    region: typing.Optional[str] = pydantic.Field("", **{})
+    sales_area: typing.Optional[str] = pydantic.Field("", **{})
+    location_name: typing.Optional[str] = pydantic.Field("", **{})
+
+    class Config:
+        collection_name = 'data_flow'
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+        schema_class = DryOutRoLossSchema
+        upsert_keys = ['zone', 'tank_no', 'sap_id', 'product_name', 'loss_month']
+
+
+class DryOutRoLossGetResp(pydantic.BaseModel):
+    data: typing.List[DryOutRoLoss]
+    total: int = pydantic.Field(0)
+    count: int = pydantic.Field(0)
