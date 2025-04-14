@@ -9005,7 +9005,7 @@ class GlobalAnalytics:
         # Construct WHERE clause
         where_clauses = [
             f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'", "a.dry_out_in_days = '1'",
-            daterange
+            "a.indent_status" != 'Cancelled', daterange
         ]
         if _filters:
             where_clauses.extend(_filters)
@@ -9045,9 +9045,7 @@ class GlobalAnalytics:
                       FROM alerts a
                       JOIN product_mapping pm ON a.product_code = pm.alert_product_code
                       JOIN LATERAL unnest(string_to_array(a.device_id, ',')) AS tank_id ON TRUE
-                      WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                        AND a.dry_out_in_days = '1'
-                        AND a.indent_status != 'Cancelled'
+                      WHERE {where_clause}
                     )
                     SELECT 
                       TO_CHAR(ap.start_ts, 'YYYY-Mon') AS loss_month,
@@ -9087,6 +9085,7 @@ class GlobalAnalytics:
         if resp_level == 'count':
             data = data.groupby(['loss_month', 'product_name'] + group_by_col)[
                 'estimated_loss'].sum().reset_index()
+            data["estimated_loss"] = data["estimated_loss"].round(2)
             return {
                 "status": True,
                 "message": "Success",
