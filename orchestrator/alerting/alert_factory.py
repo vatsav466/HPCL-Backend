@@ -84,20 +84,20 @@ class AlertFactory:
                 alert_data['alert_id'] = alert_id
             unique_id = await alert_helper.get_alert_unique_id(bu, sap_id, sop_id)
 
-            # Generate alert alert_data
-            query = f"interlock_name = '{interlock_name}' and alert_status = 'Open' and device_name = '{device_name}' and bu = 'TAS' and alert_section = 'TAS'"
-            params = urdhva_base.queryparams.QueryParams(q=query)
-            resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
+            # # Generate alert alert_data
+            # query = f"interlock_name = '{interlock_name}' and alert_status = 'Open' and device_name = '{device_name}' and bu = 'TAS' and alert_section = 'TAS'"
+            # params = urdhva_base.queryparams.QueryParams(q=query)
+            # resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
 
-            # Check if alert already exists
-            if resp and resp.get("data") and len(resp.get("data")) > 0:
-                # Alert already exists, no need to create a new one
-                alert_resp = resp.get("data")[0]  # Use existing alert
-                alert_resp['interlock_name'] = interlock_name
-                alert_resp['device_name'] = device_name
-            else:
-            # Generate alert alert_data
-                alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
+            # # Check if alert already exists
+            # if resp and resp.get("data") and len(resp.get("data")) > 0:
+            #     # Alert already exists, no need to create a new one
+            #     alert_resp = resp.get("data")[0]  # Use existing alert
+            #     alert_resp['interlock_name'] = interlock_name
+            #     alert_resp['device_name'] = device_name
+            # else:
+            # # Generate alert alert_data
+            alert_resp = await hpcl_ceg_model.AlertsCreate(**{**base_data,
                                                         'severity': alert_data.get('severity').capitalize() if alert_data.get('severity') else "Medium",
                                                         'alert_category': alert_data.get('alert_category'),
                                                         'alert_status': hpcl_ceg_enum.AlertStatus.Open,
@@ -143,6 +143,7 @@ class AlertFactory:
                                                         'mark_as_false': alert_data.get('mark_as_false', False),
                                                         'external_timestamp': alert_data.get('alert_timestamp', datetime.datetime.now(datetime.UTC).isoformat()),
                                                         'tt_load_number': str(alert_data.get('tt_load_number', '')),
+                                                        'cause_effect': alert_data.get('Cause_Effect', ''),
                                                         'raw_data': {}}).create()
 
             redis_ins = await urdhva_base.redispool.get_redis_connection()

@@ -476,6 +476,15 @@ class Locationmaster_Location_Command_ControlParams(pydantic.BaseModel):
             extra = "forbid"  # Disallow extra fields
 
 
+class Locationmaster_Get_Dist_Loc_DetailsParams(pydantic.BaseModel):
+    bu: str
+    location_onboard: typing.Optional[bool] = pydantic.Field(False, )
+
+    class Config:
+        if urdhva_base.settings.disable_api_extra_inputs:
+            extra = "forbid"  # Disallow extra fields
+
+
 class RoleMasterSchema(UrdhvaPostgresBase):
     __tablename__ = 'role_master'
     
@@ -871,6 +880,7 @@ class assetDetailsCreate(pydantic.BaseModel):
 
 
 class Alert_HistoryCreate(pydantic.BaseModel):
+    effect_msg: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     device_data: typing.Optional[str] = pydantic.Field("", **{})
     allocated_time: typing.Optional[str] = pydantic.Field("", **{})
     processed_time: typing.Optional[str] = pydantic.Field("", **{})
@@ -1177,6 +1187,7 @@ class AlertsSchema(UrdhvaPostgresBase):
     clear_count: Mapped[typing.Optional[bool]] = mapped_column("clear_count", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     maintenance_time: Mapped[typing.Optional[str]] = mapped_column("maintenance_time", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     closed_at: Mapped[typing.Optional[datetime.datetime]] = mapped_column("closed_at", DateTime(timezone=True), index=False, nullable=True, default=None, primary_key=False, unique=False)
+    cause_effect: Mapped[typing.Optional[str]] = mapped_column("cause_effect", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     tt_load_number: Mapped[typing.Optional[str]] = mapped_column("tt_load_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     is_flagged_false: Mapped[typing.Optional[bool]] = mapped_column("is_flagged_false", Boolean, index=False, nullable=True, default=False, primary_key=False, unique=False)
     rca: Mapped[typing.Optional[str]] = mapped_column("rca", String, index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -1257,6 +1268,7 @@ class AlertsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     clear_count: typing.Optional[bool] = pydantic.Field(False, )
     maintenance_time: typing.Optional[str] = pydantic.Field("", **{})
     closed_at: typing.Optional[datetime.datetime] | None = None
+    cause_effect: typing.Optional[str] = pydantic.Field("", **{})
     tt_load_number: typing.Optional[str] = pydantic.Field("", **{})
     is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
     rca: typing.Optional[str] = pydantic.Field("", **{})
@@ -1346,6 +1358,7 @@ class Alerts(urdhva_base.postgresmodel.PostgresModel):
     clear_count: typing.Optional[bool] = pydantic.Field(False, )
     maintenance_time: typing.Optional[str] = pydantic.Field("", **{})
     closed_at: typing.Optional[datetime.datetime] | None = None
+    cause_effect: typing.Optional[str] = pydantic.Field("", **{})
     tt_load_number: typing.Optional[str] = pydantic.Field("", **{})
     is_flagged_false: typing.Optional[bool] = pydantic.Field(False, )
     rca: typing.Optional[str] = pydantic.Field("", **{})
@@ -5454,6 +5467,8 @@ class ArchitectureDataSchema(UrdhvaPostgresBase):
     system: Mapped[typing.Optional[str]] = mapped_column("system", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     equipment_name: Mapped[typing.Optional[str]] = mapped_column("equipment_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
 
+    __table_args__ = (UniqueConstraint(sap_id, name, device_type, count, system, equipment_name, name="architecture_data_sapid_name_devic_count_syste_equip"),)
+
 
 class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'architecture_data'
@@ -5471,7 +5486,7 @@ class ArchitectureDataCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = ArchitectureDataSchema
-        upsert_keys = []
+        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'system', 'equipment_name']
 
 
 class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
@@ -5490,7 +5505,7 @@ class ArchitectureData(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = ArchitectureDataSchema
-        upsert_keys = []
+        upsert_keys = ['sap_id', 'name', 'device_type', 'count', 'system', 'equipment_name']
 
 
 class ArchitectureDataGetResp(pydantic.BaseModel):

@@ -8748,17 +8748,35 @@ class GlobalAnalytics:
     async def carry_forward_analysis(filters, cross_filters, drill_state):
         start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
         _filters = []
-        daterange = f""" '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
+        daterange = f""" created_at::date BETWEEN '{start_date.strftime("%Y-%m-%d")}' AND '{end_date.strftime("%Y-%m-%d")}' """
+
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
-                    daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
-                _filters.append({f"{filter.key}": f"{filter.value}"})
+                    start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
+                    if start_date == end_date:
+                        daterange = f""" created_at::date = '{start_date}' """
+                    else:
+                        daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+                    continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        if filters:
+            for filter in filters:
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        # Construct WHERE clause
+        where_clauses = [daterange]
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND ".join(where_clauses)
+
         query = (f"SELECT DATE(created_at) AS date, COUNT(*) AS cf_indents, "
                  f"COUNT(*) FILTER (WHERE dry_out_in_days = '1') AS dryout_count, "
                  f"COUNT(*) FILTER (WHERE dry_out_in_days = '2') AS intra_day_dry_count, "
                  f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
-                 f"FROM public.carry_fwd_indent where created_at::date BETWEEN {daterange} "
+                 f"FROM public.carry_fwd_indent where {where_clause} "
                  f"GROUP BY DATE(created_at) ORDER BY date")
         data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get('data', []))
@@ -8831,6 +8849,10 @@ class GlobalAnalytics:
                     else:
                         daterange = f""" created_at::date BETWEEN '{start_date}' AND '{end_date}' """
                     continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        if filters:
+            for filter in filters:
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
@@ -8955,7 +8977,40 @@ class GlobalAnalytics:
         }
 
     @staticmethod
-    async def dry_out_ro_loss(filters, cross_filters, drill_state):
+    async def dry_out_ro_loss(filters, cross_filters, drill_state, resp_level='all'):
+        print("resp_level: ", resp_level)
+        _filters = []
+        start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
+        daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+        group_by_col = []
+        if cross_filters:
+            for filter in cross_filters:
+                if "DATE" in filter.key:
+                    start_date, end_date = filter.value.split(",")[0], filter.value.split(",")[-1]
+                    if filter.val == 'monthly':
+                        _today = datetime.strptime(filter.value.split(",")[0], '%Y-%m-%d')
+                        start_date, end_date = await va_analysis.get_period_datetime(period='monthly', today=_today)
+                    if start_date == end_date:
+                        daterange = f""" a.created_at::date = '{start_date}' """
+                    else:
+                        daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+                    continue
+                _filters.append(f"{filter.key} = '{filter.value}'")
+
+        if filters:
+            for filter in filters:
+                group_by_col.append(filter.key)
+                _filters.append(f"a.{filter.key} = '{filter.value}'")
+
+        # Construct WHERE clause
+        where_clauses = [
+            f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'", "a.dry_out_in_days = '1'",
+            daterange
+        ]
+        if _filters:
+            where_clauses.extend(_filters)
+
+        where_clause = " AND ".join(where_clauses)
         query = f"""WITH product_mapping AS (
                       SELECT * FROM (VALUES
                         ('2811000', '1322000'),  -- MS
@@ -8970,38 +9025,45 @@ class GlobalAnalytics:
                       SELECT 
                         ro_sap_code,
                         product_no,
+                        tank_no,
                         AVG(total_sales) AS avg_daily_sales
                       FROM "HPCL_HOS".ro_daily_sales
-                      WHERE transaction_date >= CURRENT_DATE - INTERVAL '7 days'
-                      GROUP BY ro_sap_code, product_no
+                      WHERE transaction_date >= CURRENT_DATE - INTERVAL '3 months'
+                      GROUP BY ro_sap_code, product_no, tank_no
                     ),
-                    dryout_days AS (
+                    alert_periods AS (
                       SELECT 
                         a.sap_id,
                         a.zone,
                         pm.sales_product_no,
-                        DATE(a.created_at) AS dryout_day
+                        TRIM(tank_id) AS tank_no,
+                        a.created_at AS start_ts,
+                        CASE 
+                          WHEN a.alert_status = 'Close' THEN a.updated_at
+                          ELSE NOW()
+                        END AS end_ts
                       FROM alerts a
-                      JOIN product_mapping pm
-                        ON a.product_code = pm.alert_product_code
+                      JOIN product_mapping pm ON a.product_code = pm.alert_product_code
+                      JOIN LATERAL unnest(string_to_array(a.device_id, ',')) AS tank_id ON TRUE
                       WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                        AND a.alert_status = 'Open' AND a.dry_out_in_days = '1'
-                    ),
-                    loss_estimate AS (
-                      SELECT 
-                        d.sap_id,
-                        d.sales_product_no AS product_no,
-                        COUNT(*) AS dryout_days,
-                        a.avg_daily_sales, d.zone,
-                        COUNT(*) * a.avg_daily_sales AS estimated_loss
-                      FROM dryout_days d
-                      JOIN avg_sales a
-                        ON d.sap_id::bigint = a.ro_sap_code::bigint
-                       AND d.sales_product_no::bigint = a.product_no::bigint
-                      GROUP BY d.sap_id, d.sales_product_no, a.avg_daily_sales, d.zone
+                        AND a.dry_out_in_days = '1'
+                        AND a.indent_status != 'Cancelled'
                     )
-                    SELECT * FROM loss_estimate
-                    ORDER BY estimated_loss DESC"""
+                    SELECT 
+                      TO_CHAR(ap.start_ts, 'YYYY-Mon') AS loss_month,
+                      ap.zone,
+                      ap.sap_id,
+                      ap.sales_product_no AS product_no,
+                      ap.tank_no,
+                      ap.start_ts AS start_date,
+                      ap.end_ts AS end_date,
+                      a.avg_daily_sales
+                    FROM alert_periods ap
+                    JOIN avg_sales a 
+                      ON ap.sap_id::bigint = a.ro_sap_code::bigint
+                     AND ap.sales_product_no::bigint = a.product_no::bigint
+                     AND ap.tank_no::bigint = a.tank_no::bigint
+                    ORDER BY ap.start_ts DESC"""
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
         if data.empty:
@@ -9016,6 +9078,31 @@ class GlobalAnalytics:
                         '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
         data = data.fillna(0)
         data['product_name'] = data['product_no'].astype(str).map(products_map)
+        data['start_date'] = pd.to_datetime(data['start_date']).dt.tz_localize(None)
+        data['end_date'] = pd.to_datetime(data['end_date']).dt.tz_localize(None)
+        data['dryout_days'] = (data['end_date'] - data['start_date']).dt.total_seconds() / (60 * 60 * 24)
+        data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
+        data["estimated_loss"] = data["estimated_loss"].round(2)
+        data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
+        if resp_level == 'count':
+            data = data.groupby(['loss_month', 'product_name'] + group_by_col)[
+                'estimated_loss'].sum().reset_index()
+            return {
+                "status": True,
+                "message": "Success",
+                "counts": data.to_dict(orient='records'),
+                "data": []
+            }
+
+        for col in ['start_date', 'end_date']:
+            if col in data.columns:
+                del data[col]
+        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'avg_daily_sales'])[['estimated_loss', 'dryout_days']].sum().reset_index()
+        data['dryout_days'] = pd.to_timedelta(data['dryout_days'], unit='D')
+
+        data['dryout_days'] = data['dryout_days'].apply(
+            lambda td: f"{td.days} days {td.components.hours} hours"
+        )
         # data = data.fillna(0)
         return {
             "status": True,
