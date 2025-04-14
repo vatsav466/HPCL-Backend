@@ -14,7 +14,7 @@ zone_map = {
     "NCZ": "NCZ",
     "WZ": "WZ",
     "NFZ": "NZ",
-    "NWF": "NW",
+    "NWF": "NWZ",
     "NCR": "NCZ",
     "SCR": "SCZ",
     "NWR": "NWZ",
@@ -58,7 +58,7 @@ ro_query = f""" SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLO
 #                 LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
 #             WHERE ZR.ROLE_NAME IN ('SD_LZONAL_HEAD') """
 
-required_field = ["bu", "sap_id", "name", "city", "district", "region", "sales_area", "state", "zone", "adress","terminal_plant_id","dealer_phone","dealer_email"]
+required_field = ["bu", "sap_id", "name", "city", "district", "region", "sales_area", "state", "zone", "adress", "pincode", "terminal_plant_id", "dealer_phone","dealer_email"]
 
 _rename = {"PLANT": "sap_id", "PLANT_DESC": "name", "ZZONE": "zone", "STATE_NAME": "state", 
            "SALES_OFFICE_DESC": "region", "SALES_GROUP_DESC": "sales_area", "CITY1": "city", 
@@ -115,7 +115,7 @@ location_configs = [
                 SELECT
                     zca.customer AS PLANT, zcs.name1 AS PLANT_DESC, zca.sales_district, zso.sales_district_desc, zca.deliv_plant AS terminal_plant_id,
                     zso.SALES_OFFICE_DESC, zso.SALES_GROUP_DESC, plt.ZZONE, zcs.CITY AS CITY1, zcs.POSTAL_CODE, zcs.ADDRESS1, zcs.ADDRESS2, zcs.ADDRESS3, zcs.ADDRESS4,
-                    zcs.ADDRESS5, plt.PLANT_DESC AS terminal_plant_name, zcs.first_telephone_number AS dealer_phone,
+                    zcs.ADDRESS5, plt.PLANT_DESC AS terminal_plant_name, plt.STATE_NAME, zcs.first_telephone_number AS dealer_phone,
                     zcs.second_tel_no, zcs.email_id AS dealer_email, zca.inactive, zcs.OUTLET_TYPE, zcs.gstin, zcs.mrn, zcs.OUTLET_TYPE, zcs.gstin,
                     zcs.mrn, zcs.permanent_Account_number
                 FROM ZSDCV_CUST_SA_STG zca 
