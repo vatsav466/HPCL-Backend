@@ -80,7 +80,8 @@ async def generate_sod_engineering_location_stats(sap_id):
             "ESD Effect": "ESD Effect",
             "Barrier Gate": "Barrier Gate",
             "Power ESD": "Power ESD",
-            "Gantry BCU": "Gantry BCU"
+            "Gantry BCU": "Gantry BCU",
+            "MFM": "MFM"
         } 
 
         result = []
@@ -152,3 +153,48 @@ async def get_alert_count_for_interlock(interlock):
     #              {"id": "jockey_pump", "name": "Jockey Pump", "total": 4, "faulty": 1, "maintanance": 1},
     #              {"id": "air_compressor", "name": "Air Compressor", "total": 6, "faulty": 0, "maintanance": 1}]
     # return {"status": True, "data":  json_data}
+
+async def get_dist_loc_values(bu, location_onboard=False):
+    """
+    Get distinct location values for a given business unit and SAP ID.
+
+    Args:
+    bu (str): Business unit.
+    sap_id (str): SAP ID.
+
+    Returns:
+    dict: A dictionary with a status flag, message, and list of distinct location values.
+    """
+    query = f"bu = '{bu}' and location_onboard = '{location_onboard}'"
+    params = urdhva_base.queryparams.QueryParams(q=query)
+    resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+    if not resp.get("data"):
+        return {"status": False, "message": "No Data found", "data": []}
+    
+    data = resp.get("data", '')
+    # Now create zone and sap_id lists
+    zone_list = []
+    sap_id_list = []
+
+    for item in data:
+        if zone := item.get("zone"):
+            zone_list.append({"id": zone, "name": zone})
+        
+        if sap_id := item.get("sap_id"):
+            name = item.get("name", "")
+            sap_id_list.append({"id": sap_id, "name": name})
+
+    # Remove duplicates (optional if needed)
+    zone_list = [dict(t) for t in {tuple(d.items()) for d in zone_list}]
+    sap_id_list = [dict(t) for t in {tuple(d.items()) for d in sap_id_list}]
+
+    return {
+        "status": True,
+        "message": "Success",
+        "data": {
+            "zone": zone_list,
+            "sap_id": sap_id_list
+        }
+    }
+    # return {"status": True, "message": "Success", "data": data}
+    

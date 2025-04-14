@@ -110,19 +110,21 @@ async def combine_roles(data, _id, role_name):
     return data
 
 
-async def process_data(data):
+async def process_data(data, bu):
     novex_model_col = ["username", "email", "first_name", "last_name", "password", "employee_id",
                        "employee_number", "bu", "sap_id", "system_role", "novex_role", "region",
                        "state", "zone", "sales_area", "is_ad_user", "status","manual_user"]
     data.rename(columns={"EMPLOYEE_NUMBER": "username", "EMPLOYEE_NAME": "first_name",
                                 "EMP_EMAIL": "email", "PLANT_CODE": "sap_id", "PLANT_DESC": "region",
                                 "Zone": "zone", "ROLE_NAME": "system_role"}, inplace=True)
-    if "SALES_GRP" in data.columns:
+    if "SALES_GRP" in data.columns and bu.upper()=='LPG':
         sales_master = pd.read_csv("/opt/ceg/algo/orchestrator/reporting_services/lpg_sa_master.csv")
         data['SALES_GRP'] = data['SALES_GRP'].astype(str)
         sales_master['SACode'] = sales_master['SACode'].astype(str)
         data = pd.merge(data, sales_master, left_on='SALES_GRP', right_on='SACode', how='left')
         data.rename(columns={"SAName": "sales_area"}, inplace=True)
+    elif "SALES_GROUP_DESC" in data.columns and bu!='LPG':
+        data["sales_area"] = data["SALES_GROUP_DESC"]
     print("Before dropping empty username :", len(data))
     data = data[data["username"].fillna("") != ""]
     print("After dropping empty username :", len(data))
@@ -182,7 +184,7 @@ async def sync_users():
         print("Length of Data After Merge:", len(data))
         data = await combine_roles(data, _id="EMPLOYEE_NUMBER", role_name=["ROLE_NAME", "novex_role"])
         data["bu"] = bu.upper()
-        data = await process_data(data)
+        data = await process_data(data, bu)
         await clear_existing_user(bu)
         await insert_users(data.to_dict(orient="records"))
 

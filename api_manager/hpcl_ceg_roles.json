@@ -225,6 +225,9 @@
                 },
                 {
                     "name": "location_command_control"
+                },
+                {
+                    "name": "get_dist_loc_details"
                 }
             ]
         },
@@ -243,6 +246,9 @@
                 },
                 {
                     "name": "get_sod_engineering_stats"
+                },
+                {
+                    "name": "get_dist_loc_details"
                 }
             ]
         },
@@ -291,6 +297,9 @@
                 },
                 {
                     "name": "location_command_control"
+                },
+                {
+                    "name": "get_dist_loc_details"
                 }
             ]
         },
@@ -4487,6 +4496,10 @@
         {
             "name": "location_command_control",
             "displayName": "location_command_control"
+        },
+        {
+            "name": "get_dist_loc_details",
+            "displayName": "get_dist_loc_details"
         },
         {
             "name": "upload_role_master",

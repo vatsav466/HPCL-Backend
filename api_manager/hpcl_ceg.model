@@ -306,6 +306,11 @@ Model LocationMaster {
         action str
     }
 
+    Action=> get_dist_loc_details {
+        bu str
+        location_onboard optional bool
+    }
+
     Config=> {
         crud_operations='read'
         access_key_mapping='bu,zone,region,sales_area,sap_id'
@@ -443,6 +448,7 @@ Model assetDetails internal {
 }
 
 Model Alert_History internal {
+    effect_msg optional list str
     device_data optional str
     allocated_time optional str
     processed_time optional str
@@ -592,6 +598,7 @@ Model Alerts {
     clear_count optional bool
     maintenance_time optional str
     closed_at optional datetime
+    cause_effect optional str
 
     //tas keys
     tt_load_number optional str
@@ -1928,13 +1935,13 @@ Model TagsData {
 }
 
 Model ArchitectureData{
-    sap_id optional str
-    name optional str
-    device_type optional str
-    count optional str
+    sap_id optional unique_field str
+    name optional unique_field str
+    device_type optional unique_field str
+    count optional unique_field str
     zone optional str
-    system optional str
-    equipment_name optional str
+    system optional unique_field str
+    equipment_name optional unique_field str
 
     Action=> architecture_details {
 
