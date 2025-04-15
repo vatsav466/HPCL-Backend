@@ -9083,7 +9083,7 @@ class GlobalAnalytics:
         # start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
         # daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
 
-        group_by_col = ["zone"]
+        group_by_col = []
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
@@ -9105,6 +9105,9 @@ class GlobalAnalytics:
 
         if filters:
             for filter in filters:
+                if filter.key == 'month':
+                    group_by_col.append("zone")
+                    continue
                 if filter.key == 'zone':
                     group_by_col.append("region")
                 if filter.key == 'region':
