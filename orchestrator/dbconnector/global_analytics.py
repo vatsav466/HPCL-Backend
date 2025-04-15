@@ -8963,10 +8963,10 @@ class GlobalAnalytics:
 
         # Final query
         query = (
-            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
+            f"SELECT zone, sap_id, location_name, terminal_plant_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
             f"FROM alerts "
             f"WHERE {where_clause} "
-            f"GROUP BY zone, sap_id, product_code "
+            f"GROUP BY zone, sap_id, product_code, location_name, terminal_plant_id "
             f"ORDER BY zone, sap_id, product_code"
         )
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
@@ -8974,6 +8974,7 @@ class GlobalAnalytics:
         if not data.empty:
             data['product_code'] = data['product_code'].astype(str).map(await product_map())
             data['created_date'] = pd.to_datetime(data['created_at']).dt.date
+            data['created_at'] = pd.to_datetime(data['created_at']).dt.strftime('%Y-%b-%d %H:%M:%S')
 
             daily_counts = data.groupby(['created_date', 'product_code'])['total_count'].sum().reset_index()
 
@@ -8989,6 +8990,7 @@ class GlobalAnalytics:
                                                                                             fill_value=0).reset_index()
 
             daily_counts = daily_counts.rename(columns={'created_date': 'report_date', 'total_count': 'total_dryouts'})
+            data = data.rename(columns={'created_date': 'report_date', 'total_count': 'total_dryouts'})
             return {
                 "status": True, "message": "Success",
                 "counts": daily_counts.to_dict(orient='records'),
@@ -9031,10 +9033,10 @@ class GlobalAnalytics:
 
     @staticmethod
     async def frequently_dry_out_trends(filters, cross_filters, drill_state):
-        query = (f"SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, sap_id, product_code, COUNT(*) AS dryout_count "
+        query = (f"SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, sap_id, product_code, location_name, COUNT(*) AS dryout_count "
                  f"FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
                  f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
-                 f"GROUP BY month, sap_id, product_code HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code")
+                 f"GROUP BY month, sap_id, product_code, location_name HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code")
 
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
@@ -9183,6 +9185,10 @@ class GlobalAnalytics:
         #     lambda td: f"{td.days} days {td.components.hours} hours"
         # )
         # # data = data.fillna(0)
+        data = data[
+            ["loss_month", "zone", "sales_area", "region", "location_name",
+             "sap_id", "tank_no", "avg_daily_sales", "estimated_loss", "dryout_days"]
+        ]
         return {
             "status": True,
             "message": "Success",
