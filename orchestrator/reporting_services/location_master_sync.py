@@ -1,9 +1,11 @@
 import sys
 import ast
+import time
 import asyncio
 import psycopg2
 import pandas as pd
 import mysql.connector
+import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 sys.path.append("/opt/ceg/algo")
@@ -86,34 +88,79 @@ async def clear_existing_location_master(bu):
 #         count += 1
 
 
-async def process_and_insert_item(item, model_class):
-    # Process the item
-    for key in ['sales_area_1']:
-        if key in item.keys():
-            if item[key] is None or item[key] == "":
-                item[key] = []
-            elif isinstance(item[key], str):
-                item[key] = ast.literal_eval(item[key])
-    await model_class.LocationMasterCreate(**item).create()
+def preprocess_chunk(chunk):
+    for item in chunk:
+        for key in ['sales_area_1']:
+            if key in item.keys():
+                if item[key] is None or item[key] == "":
+                    item[key] = []
+                elif isinstance(item[key], str):
+                    item[key] = ast.literal_eval(item[key])
+    return chunk
+
+# Worker process function that inserts data
+async def worker_insert(chunk, progress_queue):
+    for item in chunk:
+        await hpcl_ceg_model.LocationMasterCreate(**item).create()
+        # Signal that one record was processed
+        progress_queue.put(1)
     return True
 
 
-async def insert_users(data, max_workers=8, batch_size=100):
-    total_record = len(data)
-    processed = 0    
-    sem = asyncio.Semaphore(max_workers * 2)
-    async def process_with_semaphore(item):
-        async with sem:
-            return await process_and_insert_item(item, hpcl_ceg_model)
-    for i in range(0, total_record, batch_size):
-        batch = data[i:i+batch_size]
-        tasks = [process_with_semaphore(item) for item in batch]
-        results = await asyncio.gather(*tasks)                
-        processed += len(batch)
-        sys.stdout.write(f"\rInserted {processed} / {total_record} records ({(processed/total_record)*100:.1f}%)   ")
-        sys.stdout.flush()
-    print("\nAll records processed successfully!")
-    return processed
+async def insert_users(data, num_workers=None):
+    if num_workers is None:
+        num_workers = multiprocessing.cpu_count()
+    
+    total_records = len(data)
+    print(f"Starting parallel insertion of {total_records} records using {num_workers} workers")
+    
+    # Create chunks of roughly equal size
+    chunk_size = (total_records + num_workers - 1) // num_workers
+    chunks = [data[i:i+chunk_size] for i in range(0, total_records, chunk_size)]
+    
+    # Create a queue for tracking progress
+    manager = multiprocessing.Manager()
+    progress_queue = manager.Queue()
+    
+    # First preprocess all data in parallel using ProcessPoolExecutor
+    print("Preprocessing data...")
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        processed_chunks = list(executor.map(preprocess_chunk, chunks))
+    # Now create tasks for database insertion
+    tasks = []
+    for chunk in processed_chunks:
+        task = asyncio.create_task(worker_insert(chunk, progress_queue))
+        tasks.append(task)
+    processed_count = 0
+    start_time = time.time()
+    async def display_progress():
+        nonlocal processed_count
+        while processed_count < total_records:
+            try:
+                while not progress_queue.empty():
+                    progress_queue.get()
+                    processed_count += 1
+                elapsed = time.time() - start_time
+                records_per_second = processed_count / elapsed if elapsed > 0 else 0
+                eta = (total_records - processed_count) / records_per_second if records_per_second > 0 else 0
+                sys.stdout.write(f"\rInserted {processed_count}/{total_records} " + 
+                                f"({processed_count/total_records*100:.1f}%) " + 
+                                f"[{records_per_second:.1f} records/sec | ETA: {eta:.1f}s]   ")
+                sys.stdout.flush()
+                await asyncio.sleep(0.5)
+                if all(task.done() for task in tasks):
+                    break
+                    
+            except Exception as e:
+                print(f"Error in progress tracking: {e}")
+    
+    progress_task = asyncio.create_task(display_progress())
+    await asyncio.gather(*tasks)
+    await progress_task
+    total_time = time.time() - start_time
+    print(f"\nCompleted inserting {total_records} records in {total_time:.2f} seconds")
+    print(f"Average rate: {total_records/total_time:.1f} records/second")    
+    return processed_count
 
 
 async def combine_roles(data, _id, role_name):
