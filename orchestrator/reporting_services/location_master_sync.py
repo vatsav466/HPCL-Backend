@@ -71,7 +71,7 @@ async def insert_users(data):
     total_record = len(data)
     for item in data:
         for key in ['sales_area_1']:
-            if key in item.key():
+            if key in item.keys():
                 if item[key] == None or item[key] == "":
                     item[key] = []
                 elif isinstance(item[key], str):
@@ -112,7 +112,8 @@ async def process_data(data):
     elif all(col in data.columns for col in ["land_mark","location","pincode"]):
         data["adress"] = data["land_mark"].astype(str) + " " + data["location"].astype(str) + " " + data["pincode"].astype(str)
     
-    data['health_status'] = None
+    data['health_status'] = "Normal"
+    data['is_active'] = True
     if "sap_id" in data.columns:
         data = data.drop_duplicates('sap_id', keep='first')
     for col, _type in reporting_config.location_master_schema.items():
