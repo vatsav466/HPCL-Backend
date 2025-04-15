@@ -285,7 +285,7 @@ class AlertFactory:
                 params = urdhva_base.queryparams.QueryParams()
                 params.limit = 1
                 params.q = query
-                alert_resp = await hpcl_ceg_model.Alerts.get_all(params )
+                alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
                 alert_data_list = []
                 if alert_resp and hasattr(alert_resp, '__dict__') and alert_resp.__dict__.get('body'):
                     # Decode and parse Alert response
@@ -307,24 +307,23 @@ class AlertFactory:
 
                 # Modify Alert if found
                 if alert_data_list:
-                    alert = alert_data_list[0]
-                    if alert_data.get("alert_history"):
-                        if not alert.get("alert_history"):
-                            alert["alert_history"] = alert_data["alert_history"]
-                        else:
-                            alert_data["alert_history"]["allocated_time"] = alert["alert_history"][-1].get("processed_time")
-                            alert["alert_history"].append(alert_data["alert_history"])
-                    alert['severity'] = alert_data.get('severity', "Medium").capitalize()
-                    alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-                    alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
-                    alert['interlock_name'] = alert_data.get('interlock_name', '')
-                    alert['closed_at'] = datetime.datetime.now()
-                    if il_data:
-                        alert['interlock_id'] = str(il_data[0]['id'])
-                    data_obj = hpcl_ceg_model.Alerts(**alert)
-                    await data_obj.modify()
-                    redis_ins = await urdhva_base.redispool.get_redis_connection()
-                    await redis_ins.hdel("alert_camunda_url", str(alert['id']))
+                    for alert in alert_data_list:
+                        if alert_data.get("alert_history"):
+                            if not alert.get("alert_history"):
+                                alert["alert_history"] = alert_data["alert_history"]
+                            else:
+                                alert_data["alert_history"]["allocated_time"] = alert["alert_history"][-1].get("processed_time")
+                                alert["alert_history"].append(alert_data["alert_history"])
+                        alert['severity'] = alert_data.get('severity', "Medium").capitalize()
+                        alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+                        alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
+                        alert['interlock_name'] = alert_data.get('interlock_name', '')
+                        if il_data:
+                            alert['interlock_id'] = str(il_data[0]['id'])
+                        data_obj = hpcl_ceg_model.Alerts(**alert)
+                        await data_obj.modify()
+                        redis_ins = await urdhva_base.redispool.get_redis_connection()
+                        await redis_ins.hdel("alert_camunda_url", str(alert['id']))
 
                 print("Interlock and Alert updated successfully.")
 
