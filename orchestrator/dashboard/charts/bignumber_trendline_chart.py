@@ -74,9 +74,9 @@ class BignumberTrendlineChart:
             # query execution
             query_ = resp['query']
             print("query--> ", query_)
-            start_time = datetime.datetime.now()
+            start_time = datetime.datetime.now(datetime.timezone.utc)
             query_results = await session.execute(text(query_))
-            print("duration: ", datetime.datetime.now() - start_time)
+            print("duration: ", datetime.datetime.now(datetime.timezone.utc) - start_time)
             # final data preparation
             column_names = query_results.keys()
             final_list = [dict(zip(column_names, row))  for row in query_results.fetchall()]

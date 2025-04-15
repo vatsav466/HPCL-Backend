@@ -4,7 +4,7 @@ import random
 import pathlib
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 df = pd.read_csv(f'{pathlib.Path(__file__).parent.resolve()}/oil_gas_industry_500_queries.csv')
 
@@ -152,7 +152,7 @@ class SimpleQueryGenerator:
             'embedding_dim': self.embedding_matrix.shape[1],
             'categories': self.categories,
             'num_templates': sum(len(templates) for templates in self.category_templates.values()),
-            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            'created_at': datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         }
 
 

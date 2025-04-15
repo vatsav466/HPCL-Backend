@@ -113,7 +113,7 @@ def get_zones_by_performance(actual, target, by_sbu=False, req_key='Zone_Name'):
 
 async def get_m60_sales_data():
     current = fiscal_year.FiscalYear.current()
-    if int(datetime.datetime.now().month) == 4:
+    if int(datetime.datetime.now(datetime.timezone.utc).month) == 4:
         current = current.prev_fiscal_year
     pres_year = f"FY {current.start.strftime('%Y')}-{current.end.strftime('%Y')}"
 
@@ -154,7 +154,7 @@ async def get_m60_sales_data():
 
 
 async def fetch_sales_data():
-    present_month = int(datetime.datetime.now().strftime("%m"))
+    present_month = int(datetime.datetime.now(datetime.timezone.utc).strftime("%m"))
     sales_data = {}
     # Filter for YTD
     filters = {"filters": [actual, history, cumulative, ytd, target], "cross_filters": [],
@@ -312,7 +312,7 @@ async def fetch_dryout_data():
 
 
 async def get_lpg_rejection():
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -324,7 +324,7 @@ async def get_lpg_rejection():
 
 
 async def get_ro_alerts():
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
@@ -346,7 +346,7 @@ async def get_ro_alerts():
 
 
 async def get_tas_alerts():
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    today = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)

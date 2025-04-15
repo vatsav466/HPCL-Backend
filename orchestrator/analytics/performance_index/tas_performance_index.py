@@ -63,7 +63,7 @@ class TASPerformanceIndex(performance_index_factory.PerformanceIndex):
 
     async def generate_performance_index_va(self, location_id=None, zone=None):
         resp = await va_analysis.get_ro_terminal_scores({'LocationType': 'TAS',
-                                                   'StartDate': datetime.datetime.now().strftime("%Y-%m-%d")})
+                                                   'StartDate': datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")})
         if resp['status']:
             va_score = sum([float(rec['OVERALL_SCORE'])
                             if rec.get('OVERALL_SCORE') and
