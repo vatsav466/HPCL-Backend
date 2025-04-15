@@ -60,6 +60,16 @@ ro_query = f""" SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLO
 
 required_field = ["bu", "sap_id", "name", "city", "district", "region", "sales_area", "state", "zone", "adress", "pincode", "terminal_plant_id", "dealer_phone","dealer_email"]
 
+location_master_schema = {
+    "bu": "VARCHAR", "sap_id": "VARCHAR", "bu_id": "VARCHAR", "name": "VARCHAR", "is_active": "BOOLEAN", "activation_date": "TIMESTAMP",
+    "activation_notes": "VARCHAR","activated_by": "VARCHAR","deactivated_by": "VARCHAR","deactivation_notes": "VARCHAR","health_status": "VARCHAR",
+    "health_notes": "VARCHAR", "scada_vendor": "VARCHAR", "scada_version": "VARCHAR", "scada_conn_status": "BOOLEAN", "scada_conn_notes": "VARCHAR",
+    "city": "VARCHAR", "district": "VARCHAR", "region": "VARCHAR", "state": "VARCHAR", "zone": "VARCHAR", "address": "VARCHAR", "pincode": "VARCHAR",
+    "local_automation_vendor": "VARCHAR", "latitude": "VARCHAR", "longitude": "VARCHAR", "entity_id": "VARCHAR", "ro_id": "VARCHAR", "dealer_name": "VARCHAR",
+    "dealer_phone": "VARCHAR", "dealer_email": "VARCHAR", "sales_area": "VARCHAR", "terminal_plant_id": "VARCHAR","terminal_plant_name": "VARCHAR",
+    "category": "VARCHAR", "distributor_code": "VARCHAR", "distributor_name": "VARCHAR","round_trip_distance": "INTEGER","location_onboard": "BOOLEAN"
+    }
+
 _rename = {"PLANT": "sap_id", "PLANT_DESC": "name", "ZZONE": "zone", "STATE_NAME": "state", 
            "SALES_OFFICE_DESC": "region", "SALES_GROUP_DESC": "sales_area", "CITY1": "city", 
            "POST_CODE1": "pincode", "STREET": "land_mark", "STR_SUPPL1": "location"}
