@@ -186,20 +186,18 @@ async def get_filtered_location_data(bu, location_onboard, specific_zone=None, s
         
         # If specific_zone is provided, only collect sap_ids for that zone
         if specific_zone and zone == specific_zone:
-            if sap_id:
-                sap_id_list.append({"id": sap_id, "name": name})
+            zone_list.append({"id": zone, "name": zone})
+            sap_id_list.append({"id": sap_id, "name": name})
         
         # If specific_sap_id is provided, only collect zones for that sap_id
         elif specific_sap_id and sap_id == specific_sap_id:
-            if zone:
-                zone_list.append({"id": zone, "name": zone})
+            zone_list.append({"id": zone, "name": zone})
+            sap_id_list.append({"id": sap_id, "name": name})
         
         # If no specific filters, collect all data
         elif not specific_zone and not specific_sap_id:
-            if zone:
-                zone_list.append({"id": zone, "name": zone})
-            if sap_id:
-                sap_id_list.append({"id": sap_id, "name": name})
+            zone_list.append({"id": zone, "name": zone})
+            sap_id_list.append({"id": sap_id, "name": name})
 
     # Remove duplicates
     zone_list = [dict(t) for t in {tuple(d.items()) for d in zone_list}]
