@@ -9184,6 +9184,9 @@ class GlobalAnalytics:
         data_count = data.groupby(['loss_month', 'product_name'] + group_by_col)[
             'estimated_loss'].sum().reset_index()
         data_count["estimated_loss"] = data_count["estimated_loss"].round(2)
+        data_count['loss_month_dt'] = pd.to_datetime(data_count['loss_month'], format='%Y-%b')
+        data_count = data_count.sort_values('loss_month_dt')
+        data_count = data_count.drop(columns='loss_month_dt')
 
         if resp_level in ['count', 'pie-chart']:
             return {
