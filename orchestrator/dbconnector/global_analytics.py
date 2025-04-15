@@ -9067,7 +9067,7 @@ class GlobalAnalytics:
             }
         data['product_code'] = data['product_code'].astype(str).map(await product_map())
         # Convert month column to datetime for range filling
-        data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
+        data['month'] = pd.to_datetime(data['month'], format="%Y-%b") + MonthEnd(0)
 
         # Get full month range (3 months) and product list
         full_months = pd.date_range(end=data['month'].max(), periods=3, freq='M')
@@ -9205,10 +9205,12 @@ class GlobalAnalytics:
         # # data = data.fillna(0)
         data = data[
             ["loss_month", "zone", "sales_area", "region", "location_name",
-             "sap_id", "tank_no", "avg_daily_sales", "estimated_loss", "dryout_days"]
+             "sap_id", "product_name", "tank_no", "avg_daily_sales", "estimated_loss", "dryout_days"]
         ]
         data['loss_month_dt'] = pd.to_datetime(data['loss_month'], format='%Y-%b')
+        print(data)
         data = data.sort_values('loss_month_dt')
+        print(data)
         data = data.drop(columns='loss_month_dt')
         return {
             "status": True,
