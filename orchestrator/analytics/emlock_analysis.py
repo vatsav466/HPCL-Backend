@@ -58,7 +58,7 @@ async def close_alerts_by_schedule():
     time_stamp = datetime.datetime.now(datetime.timezone.utc)
     to_day = time_stamp.astimezone(pytz.timezone('Asia/Kolkata')) - datetime.timedelta(1)
 
-    query = f"select id from alerts where alert_status != 'Close' and created_at::date = '{to_day}' and alert_section = 'EMLock'"
+    query = f"select id from alerts where alert_status != 'Close' and external_timestamp::date = '{to_day}' and alert_section = 'EMLock'"
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.get(
         "hpcl_ceg", "1")
     dashboard_studio_model.Charts_Connection_Vault_RoutingParams.action = 'execute_query'
