@@ -23,7 +23,9 @@ productOrders = {
     "LPG": ["LPG PKD - Domestic", "LPG PKD - Non Domestic", "LPG BLK", "BULK PROPANE", "BULK BUTANE"],
     "PETCHEM": ["PETCHEM"],
     "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils",
-              "Industrial Greases", "Industrial Specialities", "Base Oil"]
+              "Industrial Greases", "Industrial Specialities", "Base Oil"],
+    "GAS":['CNG','LNG','CBG']
+    
 }
 
 AllProducts = {
@@ -750,11 +752,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                                                                filters] and (
                 len(org_cross_filters) == 0 or (
                 len(org_cross_filters) == 1 and org_cross_filters[0]['key'] == '"sbu_wise"')):
-            group_keys.append('month_name')
+            if "month_name" not in [x.strip('"') for x in group_keys]:
+                group_keys.append('month_name')
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         elif '"DATE"' in [x['key'] for x in filters]:
-            group_keys.append("month_name")
+            
+            if "month_name" not in [x.strip('"') for x in group_keys]:
+                group_keys.append("month_name")
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         elif '"C"' in [x['key'] for x in filters] and '"YTD"' in [x['key'] for x in filters] and '"T"' in [x['key'] for
@@ -781,7 +786,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 '''
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
                 if "month_name" in target_data.columns.tolist():
-                    del target_data['month_name']
+                    #here we are trying to drill from SA to month_name  where we are getting issue. month_name is getting deleted . thats the reason we are not deleting 
+                    #month_name in  YR mode
+                    
+                    if "C" not in [x['key'].strip('"') for x in filters] and "DATE" not in [x['key'].strip('"') for x in filters]:
+                        del target_data['month_name']
                 if "TARGET_TMT_SALES" in target_data.columns.tolist():
                     sample_data = pd.DataFrame(columns=['TARGET_TMT_SALES'])
                     sample_data['TARGET_TMT_SALES'] = target_data['TARGET_TMT_SALES'].sum()
@@ -1144,7 +1153,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                         drop=True)
                                     df_sorted = df_sorted.fillna('')
                                     final_resp = {col: df_sorted[col].to_dict() for col in df_sorted.columns}
-
+        if isinstance(final_resp,list):
+            return {"status": False, "message": "Data Not Present for the current selection", "data": {'data': final_resp, 'level': sorted_level,
+                                                               'month_name': month_keys, 'sales_unit': measure_unit}}    
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys, 'sales_unit': measure_unit}}
     else:
@@ -1177,7 +1188,12 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if all(not v for v in final_resp.values()):
             return {"status": False, "message": "No Data Present for the current selection",
                     "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
-
+        
+        if isinstance(final_resp, dict):
+            if len(final_resp) == 0:
+                return {"status": False, "message": "No Data Present for the current selection",
+                "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
+                
         return {"status": True, "message": "Success",
                 "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
 

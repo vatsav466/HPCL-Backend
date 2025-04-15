@@ -249,12 +249,34 @@ async def charts_get_product_values(data: Charts_Get_Distinct_ValuesParams):
     Output:
         {"jobStatus":["Success","Failed","Running","RolledBack"]}
     """
+    productOrders = {
+            "Retail": ["MS", "HSD", "CNG", "SKO", "Compressed Bio Gas (CBG)", "LPG BLK"],
+            "Aviation": ["ATF"],
+            "I&C": ["HSD", "LDO", "LSHS", "FO", "Naptha", 'Bitumen Blk', "Bitumen Pkd", "Bitumen Modified", "Solvent 2445",
+                    "Solvent 1425", "JBO", "Sulphur", "Propylene"],
+            "LPG": ["LPG PKD - Domestic", "LPG PKD - Non Domestic", "LPG BLK", "BULK PROPANE", "BULK BUTANE"],
+            "PETCHEM": ["PETCHEM"],
+            "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils",
+                    "Industrial Greases", "Industrial Specialities", "Base Oil"]
+        }
     Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
     Charts_Connection_Vault_RoutingParams.action = 'get_product_values'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
     res_data  = await function(
-        schema_name=data.schema, table_name=data.table, column_name=data.column, where_clause=data.where_cond
+        schema_name=data.schema, table_name=data.table, column_name=data.column, where_clause=[cond.dict() for cond in data.where_cond]
     )
+  
+    if 'SBU_Name' in [x.key for x in data.where_cond]:
+        #if 'Retail' in [x.value for x in data.where_cond]:
+            sbu_name = [x.value for x in data.where_cond if x.key == 'SBU_Name' and x.value not in ['0','']][0]
+            
+            retail_order = productOrders[sbu_name]
+            if 'data' in res_data:
+                result_data = res_data['data']['ProductName']
+                sorted_products = sorted(result_data, key=lambda x: (retail_order.index(x) if x in retail_order else float('inf')))
+                res_data["data"]["ProductName"] = sorted_products
+            
+            
     return res_data
 
 
@@ -855,8 +877,3 @@ async def charts_previous_present_month_amount_litres(data: Charts_Previous_Pres
 
     return {"status": True, "message": "success", "data": final_result}
 
-
-# Action get_product_values
-@router.post('/get_product_values', tags=['Charts'])
-async def charts_get_product_values(data: Charts_Get_Product_ValuesParams):
-    ...
