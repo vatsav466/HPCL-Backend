@@ -76,7 +76,7 @@ class TASAlertManager(alert_factory.AlertFactory):
                 return   await cls.create_alert(alert_data, camunda_url)
 
             # Then handle Effect alerts that don't end with "_fail"
-            if alert_data.get('Cause_Effect') == 'Effect' and not alert_data['interlock_name'].lower().endswith('_fail'):
+            elif alert_data.get('Cause_Effect') == 'Effect' and not alert_data['interlock_name'].lower().endswith('_fail'):
                 time.sleep(10)
                 print("after 10 sec started effect")
                 query = f"bu = '{alert_data['bu']}' and sap_id = '{alert_data['sap_id']}' and sop_id = '{alert_data['cause_sop_id']}' and cause_effect = 'Cause'"
