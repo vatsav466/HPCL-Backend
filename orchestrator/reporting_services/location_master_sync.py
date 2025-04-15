@@ -4,6 +4,8 @@ import asyncio
 import psycopg2
 import pandas as pd
 import mysql.connector
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 sys.path.append("/opt/ceg/algo")
 import api_manager.hpcl_ceg_model as hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -67,21 +69,51 @@ async def clear_existing_location_master(bu):
     pg_conn.close()
     
 
-async def insert_users(data):
+# async def insert_users(data):
+#     total_record = len(data)
+#     for item in data:
+#         for key in ['sales_area_1']:
+#             if key in item.keys():
+#                 if item[key] == None or item[key] == "":
+#                     item[key] = []
+#                 elif isinstance(item[key], str):
+#                     item[key] = ast.literal_eval(item[key])
+#     count = 1
+#     for location_master in data:
+#         sys.stdout.write(f"\rInserting {count} / {total_record}   ")
+#         sys.stdout.flush()
+#         await hpcl_ceg_model.LocationMasterCreate(**location_master).create()
+#         count += 1
+
+
+async def process_and_insert_item(item, model_class):
+    # Process the item
+    for key in ['sales_area_1']:
+        if key in item.keys():
+            if item[key] is None or item[key] == "":
+                item[key] = []
+            elif isinstance(item[key], str):
+                item[key] = ast.literal_eval(item[key])
+    await model_class.LocationMasterCreate(**item).create()
+    return True
+
+
+async def insert_users(data, max_workers=8, batch_size=100):
     total_record = len(data)
-    for item in data:
-        for key in ['sales_area_1']:
-            if key in item.keys():
-                if item[key] == None or item[key] == "":
-                    item[key] = []
-                elif isinstance(item[key], str):
-                    item[key] = ast.literal_eval(item[key])
-    count = 1
-    for location_master in data:
-        sys.stdout.write(f"\rInserting {count} / {total_record}   ")
+    processed = 0    
+    sem = asyncio.Semaphore(max_workers * 2)
+    async def process_with_semaphore(item):
+        async with sem:
+            return await process_and_insert_item(item, hpcl_ceg_model)
+    for i in range(0, total_record, batch_size):
+        batch = data[i:i+batch_size]
+        tasks = [process_with_semaphore(item) for item in batch]
+        results = await asyncio.gather(*tasks)                
+        processed += len(batch)
+        sys.stdout.write(f"\rInserted {processed} / {total_record} records ({(processed/total_record)*100:.1f}%)   ")
         sys.stdout.flush()
-        await hpcl_ceg_model.LocationMasterCreate(**location_master).create()
-        count += 1
+    print("\nAll records processed successfully!")
+    return processed
 
 
 async def combine_roles(data, _id, role_name):
