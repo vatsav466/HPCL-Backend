@@ -283,10 +283,19 @@ class Charts_Get_Distinct_ValuesParams(pydantic.BaseModel):
     table: str
     column: typing.List[str]
     where_cond: typing.Optional[typing.List[WidgetFiltersCreate]] | None = None
-
+    
     class Config:
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
+
+
+
+class Charts_Get_Product_ValuesParams(pydantic.BaseModel):
+    connection_id: typing.Optional[int] = pydantic.Field(0, **{'le': 1000000})
+    schema: str
+    table: str
+    column: typing.List[str]
+    where_cond: typing.Optional[typing.List[dict]] = pydantic.Field(pydantic.Field(default_factory=dict), )
 
 
 class Charts_Generate_Dynamic_Chart_QueryParams(pydantic.BaseModel):

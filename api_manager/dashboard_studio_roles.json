@@ -47,6 +47,9 @@
                     "name": "get_distinct_values"
                 },
                 {
+                    "name": "get_product_values"
+                },
+                {
                     "name": "generate_dynamic_chart_query"
                 },
                 {
@@ -119,6 +122,9 @@
                     "name": "get_distinct_values"
                 },
                 {
+                    "name": "get_product_values"
+                },
+                {
                     "name": "get_time_range"
                 },
                 {
@@ -174,6 +180,9 @@
                 },
                 {
                     "name": "get_distinct_values"
+                },
+                {
+                    "name": "get_product_values"
                 },
                 {
                     "name": "generate_dynamic_chart_query"
@@ -620,6 +629,10 @@
         {
             "name": "get_distinct_values",
             "displayName": "get_distinct_values"
+        },
+        {
+            "name": "get_product_values",
+            "displayName": "get_product_values"
         },
         {
             "name": "generate_dynamic_chart_query",
