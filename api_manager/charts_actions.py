@@ -232,6 +232,30 @@ async def charts_get_distinct_values(data: Charts_Get_Distinct_ValuesParams):
         schema_name=data.schema, table_name=data.table, column_name=data.column,
         where_clause=[cond.dict() for cond in data.where_cond]
     )
+@router.post('/get_product_values', tags=['Charts'])
+async def charts_get_product_values(data: Charts_Get_Distinct_ValuesParams):
+    """
+    Description:
+        Retrives unique values of the given column names
+    Input:
+        {
+            "database": "hpcl_ceg",
+            "schema": "public",
+            "table": "recommendations",
+            "column": ["resource_type"]
+        }
+    Returns:
+        Dictionary: A dictionary of column as a key and its respective unique values as value
+    Output:
+        {"jobStatus":["Success","Failed","Running","RolledBack"]}
+    """
+    Charts_Connection_Vault_RoutingParams.connection_id = data.connection_id
+    Charts_Connection_Vault_RoutingParams.action = 'get_product_values'
+    function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    res_data  = await function(
+        schema_name=data.schema, table_name=data.table, column_name=data.column, where_clause=data.where_cond
+    )
+    return res_data
 
 
 # Action drill_down_data
@@ -830,3 +854,9 @@ async def charts_previous_present_month_amount_litres(data: Charts_Previous_Pres
             res[litres].setdefault(p_, 0)
 
     return {"status": True, "message": "success", "data": final_result}
+
+
+# Action get_product_values
+@router.post('/get_product_values', tags=['Charts'])
+async def charts_get_product_values(data: Charts_Get_Product_ValuesParams):
+    ...
