@@ -13,7 +13,7 @@ import dashboard_studio_model
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta, timezone
 from pandas.tseries.offsets import MonthEnd
 from orchestrator.analytics import va_analysis
 import utilities.drill_mapping as drill_mapping

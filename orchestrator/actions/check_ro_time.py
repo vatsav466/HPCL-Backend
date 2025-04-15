@@ -43,7 +43,7 @@ class CheckRoTime:
             days = int(alert_data.get('days', 0))
             if days==0:
                 days = 10
-            currentTime = int(datetime.datetime.now().timestamp())
+            currentTime = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
             timeDiff = int((currentTime - createdTime) / 60)
             waitTime = 1
             if timeDiff < (days * 24 * 60):
