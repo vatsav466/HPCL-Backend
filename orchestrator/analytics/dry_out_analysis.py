@@ -477,7 +477,8 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     SELECT DISTINCT 
                         SUBSTR("DEALER_CODE", 3, 8) AS sap_id, 
                         "PROD_REQD_DT" AS prod_reqd_dt,
-                        "INDENT_NO" AS indent_no
+                        "INDENT_NO" AS indent_no,
+                        "LOCN_CODE" AS locn_code
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST"
                     WHERE 
@@ -505,7 +506,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                 COMBINED_DATA AS (
                     SELECT 
                         i.sap_id, 
-                        a.terminal_plant_id, 
+                        i.locn_code as terminal_plant_id, 
                         i.indent_no, 
                         i.prod_reqd_dt,
                         NOW() AT TIME ZONE 'Asia/Kolkata' AS reported_date,
