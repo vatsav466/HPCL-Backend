@@ -125,6 +125,10 @@ async def process_data(data):
                 data[col] = None
             elif _type.lower() == 'integer':
                 data[col] = 0
+    for col, _type in reporting_config.location_master_schema.items():
+        if _type.lower() == 'varchar':
+            data[col] = data[col].fillna("")
+    
     data = data[list(reporting_config.location_master_schema.keys())]
     data['zone'] = data['zone'].map(reporting_config.zone_map)
     return data
