@@ -121,6 +121,8 @@ async def process_data(data):
                 data[col] = False
             elif _type.lower() == 'timestamp':
                 data[col] = None
+            elif _type.lower() == 'integer':
+                data[col] = 0
     data = data[list(reporting_config.location_master_schema.keys())]
     data['zone'] = data['zone'].map(reporting_config.zone_map)
     return data
