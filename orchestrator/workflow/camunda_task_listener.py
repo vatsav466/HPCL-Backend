@@ -40,7 +40,11 @@ async def algo_external_task_listener(task: ExternalTask) -> TaskResult:
         function = getattr(class_instance, function_name)
         print("req_variables --> ", req_variables)
         print("variables --> ", variables)
-        status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
+        params = {k: v if k != "effect_sop_id" else (v if isinstance(v, list) else [v]) 
+          for k, v in variables.items() if k in req_variables}
+
+        status, data = await function(params=params) or (False, {"error": "Function returned None"})
+        # status, data = await function(**{"params": {key: variables.get(key, None) for key in req_variables}})
         print("status: ", status)
         print("data: ", data)
         if status:

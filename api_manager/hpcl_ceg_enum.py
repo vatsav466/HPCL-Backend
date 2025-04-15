@@ -129,6 +129,7 @@ class AlertActionType(str, enum.Enum):
     Interrupt = 'Interrupt'
     BayReAssigned = 'BayReAssigned'
     Effect = 'Effect'
+    Cause = 'Cause'
 
 
 

@@ -58,110 +58,21 @@ class TASAlertManager(alert_factory.AlertFactory):
                     break
             device_data = f"{alert_data['device_name']}"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
+            alert_data["alert_history"] = [{
+                "processed_time": processed_time.isoformat(),
+                "allocated_time": processed_time.isoformat(),
+                "action_msg": f"{alert_data['interlock_name']} Interlock created",
+                "action_type": "InterlockCreated"
+            }]
 
-            if alert_data.get('Cause_Effect') == 'Cause':
-                alert_data["alert_history"] = [{
-                    "processed_time": processed_time.isoformat(),
-                    "allocated_time": processed_time.isoformat(),
-                    "action_msg": f"{alert_data['interlock_name']} Interlock created",
-                    "action_type": "InterlockCreated"
-                }]
+            camunda_url = await helpers.get_camunda_url(
+                bu=alert_data['bu'], 
+                sap_id=alert_data['sap_id'],
+                alert_section="TAS", 
+                location_data=loc_dt
+            )
 
-                camunda_url = await helpers.get_camunda_url(
-                    bu=alert_data['bu'], 
-                    sap_id=alert_data['sap_id'],
-                    alert_section="TAS", 
-                    location_data=loc_dt
-                )
-
-                return   await cls.create_alert(alert_data, camunda_url)
-
-            # Then handle Effect alerts that don't end with "_fail"
-            elif alert_data.get('Cause_Effect') == 'Effect' and not alert_data['interlock_name'].lower().endswith('_fail'):
-                time.sleep(10)
-                print("after 10 sec started effect")
-                query = f"bu = '{alert_data['bu']}' and sap_id = '{alert_data['sap_id']}' and sop_id = '{alert_data['cause_sop_id']}' and cause_effect = 'Cause'"
-                params = urdhva_base.queryparams.QueryParams()
-                params.q = query
-                params.sort = {"created_at": "desc"}
-
-                print("params --> ", params)
-
-                al_resp = await hpcl_ceg_model.Alerts.get_all(params, resp_type='plain')
-                print("al_resp --> ", al_resp)
-                
-                if al_resp['data'] and len(al_resp['data']) > 0:
-                    # Get the existing alert's ID and alert_history
-                    alert_id = al_resp['data'][0]['id']
-                    existing_alert_history = al_resp['data'][0].get('alert_history', [])
-                    print("alert_id --> ", alert_id)
-                    # --- Important: Check if Cause exists ---
-                    if not al_resp['data'] or len(al_resp['data']) == 0:
-                        print("No Cause alert found. Skipping Effect alert creation.")
-                        return  # Exit early, do not process this Effect alert
-
-                    else:
-                        # Find the last entry with action_type "InterlockCreated"
-                        last_processed_time = processed_time
-                        for entry in reversed(existing_alert_history):
-                            if entry.get("action_type") == "InterlockCreated" and entry.get("processed_time"):
-                                last_processed_time = entry.get("processed_time")
-                                break
-                                
-                        # Create new alert history entry
-                        new_entry = {
-                            "processed_time": last_processed_time,
-                            "allocated_time": last_processed_time,
-                            "action_msg": f"{alert_data['interlock_name']}",
-                            "action_type": alert_data['Cause_Effect']
-                        }
-                        
-                        # Append the new entry to the existing history
-                        updated_alert_history = existing_alert_history + [new_entry]
-                        print("updated_alert_history --> ", updated_alert_history)
-
-                        # Update with the combined alert_history
-                        data_obj = hpcl_ceg_model.Alerts(id=alert_id, 
-                            **{"alert_history": updated_alert_history})
-                        print("data_obj --> ", data_obj)
-                        await data_obj.modify()
-                    
-                    # Handle other cases (Effect alerts that end with "_fail" or couldn't find a Cause to update)
-                    alert_data["alert_history"] = [{
-                        "processed_time": processed_time.isoformat(),
-                        "allocated_time": processed_time.isoformat(),
-                        "action_msg": f"{alert_data['interlock_name']} Interlock created",
-                        "action_type": "InterlockCreated"
-                    }]
-
-                    camunda_url = await helpers.get_camunda_url(
-                        bu=alert_data['bu'], 
-                        sap_id=alert_data['sap_id'],
-                        alert_section="TAS", 
-                        location_data=loc_dt
-                    )
-
-                    return await cls.create_alert(alert_data, camunda_url)
-                else:
-                    logger.info(f"Interlock not found for {alert_data['cause_sop_id']} in {alert_data['sap_id']}")
-                    # No Cause found, create a new Effect alert anyway
-            
-            else:
-                alert_data["alert_history"] = [{
-                    "processed_time": processed_time.isoformat(),
-                    "allocated_time": processed_time.isoformat(),
-                    "action_msg": f"{alert_data['interlock_name']} Interlock created",
-                    "action_type": "InterlockCreated"
-                }]
-
-                camunda_url = await helpers.get_camunda_url(
-                    bu=alert_data['bu'], 
-                    sap_id=alert_data['sap_id'],
-                    alert_section="TAS", 
-                    location_data=loc_dt
-                )
-
-                return await cls.create_alert(alert_data, camunda_url)
+            return await cls.create_alert(alert_data, camunda_url)
 
         except Exception as e:
             print(traceback.format_exc())
