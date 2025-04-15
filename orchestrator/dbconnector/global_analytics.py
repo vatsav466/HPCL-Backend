@@ -9165,6 +9165,9 @@ class GlobalAnalytics:
                 "counts": [],
                 "data": []
             }
+        data['loss_month_dt'] = pd.to_datetime(data['loss_month'], format='%Y-%b')
+        data = data.sort_values('loss_month_dt')
+        data = data.drop(columns='loss_month_dt')
         # products_map = {'2811000': 'MS', '1322000': 'MS', '2812000': 'HSD', '1683000': 'HSD', '3912000': 'TURBO',
         #                 '1683100': 'TURBO', '2816000': 'POWER 99', '2682000': 'POWER 99', '3672000': 'POWER 95',
         #                 '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
@@ -9207,11 +9210,6 @@ class GlobalAnalytics:
             ["loss_month", "zone", "sales_area", "region", "location_name",
              "sap_id", "product_name", "tank_no", "avg_daily_sales", "estimated_loss", "dryout_days"]
         ]
-        data['loss_month_dt'] = pd.to_datetime(data['loss_month'], format='%Y-%b')
-        print(data)
-        data = data.sort_values('loss_month_dt')
-        print(data)
-        data = data.drop(columns='loss_month_dt')
         return {
             "status": True,
             "message": "Success",
