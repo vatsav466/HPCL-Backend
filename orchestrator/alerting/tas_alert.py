@@ -14,6 +14,7 @@ logger = urdhva_base.logger.Logger.getInstance("tas_alert_processing")
 
 class TASAlertManager(alert_factory.AlertFactory):
     @classmethod
+
     async def create_bu_alert(cls, alert_data, camunda_url=urdhva_base.settings.camunda_url):
         """
         Create a business unit level alert
@@ -204,31 +205,36 @@ class TASAlertManager(alert_factory.AlertFactory):
                                                          f"cleared",
                                            "action_type": "InterlockCleared"}
             
-            query = f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and sap_id='{alert_data['sap_id']}' and alert_status!='Close'"
-            data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=1), resp_type='plain')
-            alert_id = ''
-            if len(data['data']):
-                alert_id = data['data'][0]['id']
-                tas_alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
-                if not isinstance(tas_alert_data, dict):
-                    tas_alert_data = tas_alert_data.__dict__
-                data = {
-                    "messageName": "interLockOk",
-                    "businessKey": tas_alert_data['unique_id'],
-                    "processVariables": {"alert_id": {"value": alert_id, "type": "String"},
-                                  "closed": {"value": True, "type": "Boolean"}}}
-                
-                url = urdhva_base.settings.camunda_url + "/engine-rest/message"
-                url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
-                                                    alert_section="TAS")
-                url += "/engine-rest/message"
-                r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
-                if int(r.status_code / 100) != 2:
-                    print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
-                else:
-                    print("Message sent to camunda")
-                    return "Successfully sent message to camunda"
+            query = (f"external_id='{alert_data['alert_id']}' and bu='{alert_data['bu']}' and "
+                     f"sap_id='{alert_data['sap_id']}' and alert_status!='Close'")
+            resp_data = await hpcl_ceg_model.Alerts.get_all(urdhva_base.queryparams.QueryParams(q=query, limit=100),
+                                                            resp_type='plain')
+            if len(resp_data['data']):
+                for alert in resp_data['data']:
+                    alert_id = alert['id']
+                    tas_alert_data = await hpcl_ceg_model.Alerts.get(alert_id)
+                    if not isinstance(tas_alert_data, dict):
+                        tas_alert_data = tas_alert_data.__dict__
+                    data = {
+                        "messageName": "interLockOk",
+                        "businessKey": tas_alert_data['unique_id'],
+                        "processVariables": {"alert_id": {"value": alert_id, "type": "String"},
+                                             "closed": {"value": True, "type": "Boolean"}}}
+
+                    url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
+                                                        alert_section="TAS")
+                    url += "/engine-rest/message"
+                    try:
+                        r = httpx.post(url, headers={'Content-Type': 'application/json'}, json=data, verify=False)
+                        if int(r.status_code / 100) != 2:
+                            print(f"Error while sending message to camunda: {r.status_code} - {r.text}")
+                        else:
+                            print("Message sent to camunda")
+                    except Exception as e:
+                        logger.error(f"Exception in closing camunda flow {e} for alert_id {alert_id}, "
+                                     f"business_key {tas_alert_data['unique_id']}")
             else:
                 await cls.close_alert(alert_data)
+            return "Successfully sent message to camunda"
         except Exception as e:
-            raise Exception(status_code=500, detail="Error closing alert.") from e
+            raise Exception(f"Error closing alert {e}")
