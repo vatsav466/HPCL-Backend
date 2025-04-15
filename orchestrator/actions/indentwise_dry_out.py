@@ -1552,11 +1552,13 @@ class IndentDryOut:
             alert_data = alert_data.__dict__
         # instance_id = alert_data.get("workflow_instance_id")
         business_key = alert_data.get("unique_id")
-        # if not 'CAMUNDA_URL' in self.params.keys():
-        #     self.params['CAMUNDA_URL'] = await helpers.get_alert_camunda_url(self.params["alert_id"],
-        #                                                   f"{urdhva_base.settings.camunda_url}")
+        if not 'CAMUNDA_URL' in self.params.keys():
+            self.params['CAMUNDA_URL'] = await helpers.get_alert_camunda_url(self.params["alert_id"],
+                                                          f"{urdhva_base.settings.camunda_url}")
 
         camunda_url, instance_id = await self.get_process_instance_id(business_key)
+        # if 'camunda_host' in self.params.keys():
+        #     self.params['CAMUNDA_URL'] = f"http://{self.params['camunda_host']}:{self.params['camunda_port']}"
         if not 'CAMUNDA_URL' in self.params.keys():
             self.params['CAMUNDA_URL'] = camunda_url
         print("self.params update: ", self.params)
