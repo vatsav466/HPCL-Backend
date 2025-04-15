@@ -70,11 +70,12 @@ async def clear_existing_location_master(bu):
 async def insert_users(data):
     total_record = len(data)
     for item in data:
-        for key in ['sales_area']:
-            if item[key] == None or item[key] == "":
-                item[key] = []
-            if isinstance(item[key], str):
-                item[key] = ast.literal_eval(item[key])
+        for key in ['sales_area_1']:
+            if key in item.key():
+                if item[key] == None or item[key] == "":
+                    item[key] = []
+                elif isinstance(item[key], str):
+                    item[key] = ast.literal_eval(item[key])
     count = 1
     for location_master in data:
         sys.stdout.write(f"\rInserting {count} / {total_record}   ")
@@ -110,9 +111,10 @@ async def process_data(data):
         data['adress'] = data[["ADDRESS1", "ADDRESS2", "ADDRESS3", "ADDRESS4", "ADDRESS5"]].fillna('').agg(' '.join, axis=1)
     elif all(col in data.columns for col in ["land_mark","location","pincode"]):
         data["adress"] = data["land_mark"].astype(str) + " " + data["location"].astype(str) + " " + data["pincode"].astype(str)
-            
+    
+    data['health_status'] = None
     if "sap_id" in data.columns:
-        data = data.drop_duplicates('sap_id', keep='first')    
+        data = data.drop_duplicates('sap_id', keep='first')
     for col, _type in reporting_config.location_master_schema.items():
         if not col in data.columns:
             if _type.lower() == 'varchar':
