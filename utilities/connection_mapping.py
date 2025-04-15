@@ -376,12 +376,12 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
                 }
             },
             "category": {
@@ -542,12 +542,12 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
                 }
             },
             "category": {
@@ -679,12 +679,12 @@ alert_action = {
                 "Approve": {
                     "name": "Approved",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
                 },
                 "Reject": {
                     "name": "Rejected",
                     "close_alert": True,
-                    "roles": ["Admin", "Location In-Charge SOD", "Location In-Charge LPG"]
+                    "roles": ["Admin", "Location In-Charge SOD", "Planning Officer SOD"]
                 }
             },
             "category": {
