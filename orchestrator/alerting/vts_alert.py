@@ -64,11 +64,15 @@ class VTSAlertManager(alert_factory.AlertFactory):
             f"Violation Type: {violation_name} \n"
             f"Reported at: {alert_data['vts_end_datetime']}"
         )
+        allocated_time = datetime.datetime.now(datetime.timezone.utc)
+        processed_time = datetime.datetime.now(datetime.timezone.utc)
         alert_history = [
             {
                 "action_msg": alert_message,
                 "action_type": "Created",
                 "alert_status": "Open",
+                "allocated_time": allocated_time.isoformat(),
+                "processed_time": processed_time.isoformat()
             }
         ]
 
