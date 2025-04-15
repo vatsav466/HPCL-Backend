@@ -8955,7 +8955,7 @@ class GlobalAnalytics:
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
-        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", daterange]
+        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status != 'Cancelled'", daterange]
         if _filters:
             where_clauses.extend(_filters)
 
@@ -9033,10 +9033,28 @@ class GlobalAnalytics:
 
     @staticmethod
     async def frequently_dry_out_trends(filters, cross_filters, drill_state):
-        query = (f"SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, sap_id, product_code, location_name, COUNT(*) AS dryout_count "
-                 f"FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
-                 f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
-                 f"GROUP BY month, sap_id, product_code, location_name HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code")
+        query = """WITH product_level_dryouts AS (
+                      SELECT DISTINCT
+                        sap_id,
+                        product_code,
+                        location_name,
+                        DATE(indent_raised_date) AS dryout_day,
+                        TO_CHAR(created_at, 'YYYY-Mon') AS month
+                      FROM alerts
+                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and indent_status != 'Cancelled'
+                        AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months'
+                    )
+                    
+                    SELECT
+                      month,
+                      sap_id,
+                      product_code,
+                      location_name,
+                      COUNT(*) AS dryout_count
+                    FROM product_level_dryouts
+                    GROUP BY month, sap_id, product_code, location_name
+                    HAVING COUNT(*) > 3
+                    ORDER BY month, sap_id, product_code, dryout_count DESC"""
 
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
@@ -9189,6 +9207,9 @@ class GlobalAnalytics:
             ["loss_month", "zone", "sales_area", "region", "location_name",
              "sap_id", "tank_no", "avg_daily_sales", "estimated_loss", "dryout_days"]
         ]
+        data['loss_month_dt'] = pd.to_datetime(data['loss_month'], format='%Y-%b')
+        data = data.sort_values('loss_month_dt')
+        data = data.drop(columns='loss_month_dt')
         return {
             "status": True,
             "message": "Success",
