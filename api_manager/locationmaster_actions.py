@@ -244,4 +244,5 @@ async def locationmaster_location_command_control(data: Locationmaster_Location_
 # Action get_dist_loc_details
 @router.post('/get_dist_loc_details', tags=['LocationMaster'])
 async def locationmaster_get_dist_loc_details(data: Locationmaster_Get_Dist_Loc_DetailsParams):
-    return await sod_location_stats.get_filtered_location_data(bu=data.bu, location_onboard=data.location_onboard)
+    return await sod_location_stats.get_filtered_location_data(bu=data.bu, location_onboard=data.location_onboard, 
+                                                                specific_zone=data.zone, specific_sap_id=data.plant)

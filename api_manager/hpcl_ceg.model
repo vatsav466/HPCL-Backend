@@ -309,6 +309,8 @@ Model LocationMaster {
 
     Action=> get_dist_loc_details {
         bu str
+        zone optional str
+        plant optional str
         location_onboard optional bool
     }
 

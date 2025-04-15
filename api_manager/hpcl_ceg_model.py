@@ -478,6 +478,8 @@ class Locationmaster_Location_Command_ControlParams(pydantic.BaseModel):
 
 class Locationmaster_Get_Dist_Loc_DetailsParams(pydantic.BaseModel):
     bu: str
+    zone: typing.Optional[str] = pydantic.Field("", **{})
+    plant: typing.Optional[str] = pydantic.Field("", **{})
     location_onboard: typing.Optional[bool] = pydantic.Field(False, )
 
     class Config:
