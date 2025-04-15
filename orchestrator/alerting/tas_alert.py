@@ -58,7 +58,7 @@ class TASAlertManager(alert_factory.AlertFactory):
             device_data = f"{alert_data['device_name']}"
             processed_time = datetime.datetime.now(datetime.timezone.utc)
 
-            if alert_data['Cause_Effect'] == 'Cause':
+            if alert_data.get('Cause_Effect') == 'Cause':
                 alert_data["alert_history"] = [{
                     "processed_time": processed_time.isoformat(),
                     "allocated_time": processed_time.isoformat(),
@@ -73,10 +73,10 @@ class TASAlertManager(alert_factory.AlertFactory):
                     location_data=loc_dt
                 )
 
-                return await cls.create_alert(alert_data, camunda_url)
+                return   await cls.create_alert(alert_data, camunda_url)
 
             # Then handle Effect alerts that don't end with "_fail"
-            elif alert_data['Cause_Effect'] == 'Effect' and not alert_data['interlock_name'].lower().endswith('_fail'):
+            if alert_data.get('Cause_Effect') == 'Effect' and not alert_data['interlock_name'].lower().endswith('_fail'):
                 time.sleep(10)
                 print("after 10 sec started effect")
                 query = f"bu = '{alert_data['bu']}' and sap_id = '{alert_data['sap_id']}' and sop_id = '{alert_data['cause_sop_id']}' and cause_effect = 'Cause'"
