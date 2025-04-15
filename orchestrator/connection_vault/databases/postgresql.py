@@ -542,6 +542,120 @@ class Postgresql(BaseAction):
                 "status": False, "message": "Unable to connect to PostgresSQL",
                 "data": []
             }
+    async def get_product_values(self, schema_name, table_name, column_name, where_clause=None, debug=False, **kwargs):
+        """
+        @description:
+        :param schema_name:
+        :param table_name:
+        :param column_name:
+        :param where_clause:
+        :param debug:
+        :return:
+        """
+        # try:
+        #     columns_mapping = dict()
+        #     connection = await self.get_connection()
+        #     for column in column_name:
+        #         query = f'''SELECT DISTINCT "{column}" FROM "{schema_name}"."{table_name}"'''
+        #         if where_clause:
+        #             where_query = ''
+        #             for key, value in where_clause.items():
+        #                 where_query += f'"{key}" = \'{value}\' AND '
+        #             where_query = where_query[:-5]
+        #             if where_query:
+        #                 query = f"""SELECT DISTINCT "{column}" FROM {schema_name}."{table_name}" WHERE {where_query};"""
+        #         stmt = await connection.prepare(
+        #             query
+        #         )
+        #         data = await stmt.fetch()
+        #         # data = pd.DataFrame(data)
+        #         # columns_mapping[column] = data[column].unique().tolist()
+        #         columns_mapping[column] = [record[column] for record in data]
+        #     # await connection.close()
+        #     await self.close_connection(connection)
+        #     return {
+        #         "status": True, "message": "Connected to PostgresSQL",
+        #         "data": columns_mapping
+        #     }
+        # except Exception as err:
+        #     print(err, traceback.format_exc())
+        #     # traceback.print_exc(file=sys.stdout)
+        #     return {
+        #         "status": False, "message": "Unable to connect to PostgresSQL",
+        #         "data": []
+        #     }
+        try:
+            columns_mapping = dict()
+            connection = await self.get_connection()
+
+            # Iterate over column names
+            for column in column_name:
+                # Base query
+                query = f'''SELECT DISTINCT "{column}" FROM "{schema_name}"."{table_name}"'''
+                
+                # Handle where_clause
+                if where_clause:
+                    where_query = ''
+                    
+                    # Check if `where_clause` is a list
+                    if isinstance(where_clause, list):
+                        for condition in where_clause:
+                            if isinstance(condition, dict):  # Ensure the condition is a dictionary
+                                key = condition.get("key")
+                                cond = condition.get("cond")  # Default to '=' if not provided
+                                value = condition.get("value")
+                                # This was to remove empty or * values from the query
+                                if cond in ['=', 'equals'] and value is not None and value.lower() in ['*', '_empty', 'all', '']:
+                                    continue
+                                
+                                if key is not None and value is not None:  # Ensure required fields are present
+                                    if cond in [' ', 'one-off', 'in']:
+                                        value = "', '".join(map(str, value))
+                                        where_query += f'''"{key}" {cond} ('{value}') AND '''
+                                    else:
+                                        where_query += f'''"{key}" {cond} '{value}' AND '''
+                            elif isinstance(condition, str):  # Handle shorthand single condition (string format)
+                                for key, value in condition.items():
+                                    where_query += f'''"{key}" = '{value}' AND '''
+                    
+                    # Check if `where_clause` is a dictionary
+                    elif isinstance(where_clause, dict):
+                        for key, value in where_clause.items():
+                            where_query += f'''"{key}" = '{value}' AND '''
+                    
+                    # Remove the trailing ' AND '
+                    if where_query.endswith(" AND "):
+                        where_query = where_query[:-5]
+                    
+                    # Append WHERE clause to the query
+                    if where_query:
+                        query = f'''{query} WHERE {where_query};'''
+                
+                # Prepare and execute the query
+                stmt = await connection.prepare(query)
+                data = await stmt.fetch()
+                
+                # Collect data
+                columns_mapping[column] = [record[column] for record in data if record.get(column)]
+
+            # Close the connection
+            await self.close_connection(connection)
+
+            # Return results
+            return {
+                "status": True,
+                "message": "Connected to PostgreSQL",
+                "data": columns_mapping
+            }
+
+        except Exception as err:
+            print(err, traceback.format_exc())
+            # traceback.print_exc(file=sys.stdout)
+            return {
+                "status": False, "message": "Unable to connect to PostgresSQL",
+                "data": []
+            }
+
 
     async def execute_query(self, query, debug=False, **kwargs):
         """
