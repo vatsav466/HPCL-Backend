@@ -318,7 +318,7 @@ class CauseEffect:
                 return await self.handle_effect_alert(params)
             else:
                 logger.warning(f"Unknown Cause_Effect value: {params.get('Cause_Effect')}")
-                return None
+                return True, {"message": "Moving to Next Block"}
         except Exception as e:
             logger.error(f"Error processing alert: {traceback.format_exc()}")
             return None
