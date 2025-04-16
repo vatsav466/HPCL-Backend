@@ -165,25 +165,33 @@ class AlertFactory:
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
-                       "variables": {"alert_id": {"value": alert_resp['id'], "type": "String"},
-                                     "interlock_name": {"value": interlock_name, "type": "String"},
-                                     "interlock_id": {"value": "", "type": "String"},
-                                     "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
-                                     "location_type": {"value": bu, "type": "String"},
-                                     "sap_id": {"value": sap_id, "type": "String"},
-                                     "sop_id": {"value": sop_id, "type": "String"},
-                                     "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
-                                     "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
-                                     "workflow_datetime": {"value": alert_data.get(
-                                         'workflow_datetime',
-                                         datetime.datetime.now(datetime.UTC)
-                                         .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
-                                     "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
-                                     "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
-                                     "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
-                                     "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
-                                     "va_level": {"value": alert_level, "type": "String"},
-                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}}
+                        "variables": {"alert_id": {"value": alert_resp['id'], "type": "String"},
+                                    "interlock_name": {"value": interlock_name, "type": "String"},
+                                    "interlock_id": {"value": "", "type": "String"},
+                                    "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
+                                    "location_type": {"value": bu, "type": "String"},
+                                    "sap_id": {"value": sap_id, "type": "String"},
+                                    "sop_id": {"value": sop_id, "type": "String"},
+                                    "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
+                                    "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
+                                    "workflow_datetime": {"value": alert_data.get(
+                                        'workflow_datetime',
+                                        datetime.datetime.now(datetime.UTC)
+                                        .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
+                                    "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
+                                    "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
+                                    "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
+                                    "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
+                                    "va_level": {"value": alert_level, "type": "String"},
+                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"},
+                                    "cause_effect": {"value": alert_data.get('Cause_Effect', ''), "type": "String"}, # Added for TAS use
+                                    "alert_section": {"value": alert_data.get('alert_section', ''), "type": "String"}, # Added for TAS use
+                                    "cause_sop_id": {"value": alert_data.get('cause_sop_id', ''), "type": "String"}, # Added for TAS use
+                                    "effect_sop_id": {"value": alert_data.get('effect_sop_id', ''), "type": "String"}, # Added for TAS use
+                                    "device_id": {"value": alert_data.get('device_id', ''), "type": "String"}, # Added for TAS use
+                                    "device_name": {"value": alert_data.get('device_name', ''), "type": "String"}, # Added for TAS use
+                                    "device_type": {"value": alert_data.get('device_type', ''), "type": "String"} # Added for TAS use
+                                    }}
 
             # Create Interlock
             # Start workflow after creating the interlock

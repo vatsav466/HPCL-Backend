@@ -1,9 +1,13 @@
 import sys
 import ast
+import time
 import asyncio
 import psycopg2
 import pandas as pd
 import mysql.connector
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
 sys.path.append("/opt/ceg/algo")
 import api_manager.hpcl_ceg_model as hpcl_ceg_model
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -76,13 +80,13 @@ async def insert_users(data):
                     item[key] = []
                 elif isinstance(item[key], str):
                     item[key] = ast.literal_eval(item[key])
+    # await hpcl_ceg_model.LocationMaster.bulk_update(data, upsert=True)
     count = 1
     for location_master in data:
         sys.stdout.write(f"\rInserting {count} / {total_record}   ")
         sys.stdout.flush()
         await hpcl_ceg_model.LocationMasterCreate(**location_master).create()
         count += 1
-
 
 async def combine_roles(data, _id, role_name):
     """
@@ -155,7 +159,8 @@ async def sync_location_master():
         data = await process_data(data)
         data.to_csv(f"/tmp/location_master_{config.get('bu', '')}.csv", index=False)
         await clear_existing_location_master(config.get("bu", ""))
-        await insert_users(data.to_dict(orient="records"))        
+        await insert_users(data.to_dict(orient="records"))
+        exit()
 
 
 if __name__=="__main__":

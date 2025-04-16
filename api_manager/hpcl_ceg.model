@@ -89,6 +89,7 @@ Enum AlertActionType str {
     Interrupt='Interrupt'
     BayReAssigned='BayReAssigned'
     Effect='Effect'
+    Cause='Cause'
 }
 
 Enum IndentStatus str {
