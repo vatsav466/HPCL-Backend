@@ -9181,8 +9181,8 @@ class GlobalAnalytics:
         # data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
         if resp_level == 'pie-chart':
             group_by_col = []
-        data_count = data.groupby(['loss_month', 'product_name'] + group_by_col)[
-            'estimated_loss', 'estimated_loss_amount'].sum().reset_index()
+        data_count = data.groupby(['loss_month', 'product_name'] + group_by_col)[[
+            'estimated_loss', 'estimated_loss_amount']].sum().reset_index()
         data_count["estimated_loss"] = data_count["estimated_loss"].round(2)
         data_count["estimated_loss_amount"] = data_count["estimated_loss_amount"].round(2)
         data_count['loss_month_dt'] = pd.to_datetime(data_count['loss_month'], format='%Y-%b')
