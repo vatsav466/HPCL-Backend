@@ -9184,6 +9184,7 @@ class GlobalAnalytics:
         data_count = data.groupby(['loss_month', 'product_name'] + group_by_col)[
             'estimated_loss'].sum().reset_index()
         data_count["estimated_loss"] = data_count["estimated_loss"].round(2)
+        data_count["estimated_loss_amount"] = data_count["estimated_loss_amount"].round(2)
         data_count['loss_month_dt'] = pd.to_datetime(data_count['loss_month'], format='%Y-%b')
         data_count = data_count.sort_values('loss_month_dt')
         data_count = data_count.drop(columns='loss_month_dt')
@@ -9211,7 +9212,8 @@ class GlobalAnalytics:
         # # data = data.fillna(0)
         data = data[
             ["loss_month", "zone", "sales_area", "region", "location_name",
-             "sap_id", "product_name", "tank_no", "avg_daily_sales", "estimated_loss", "dryout_days"]
+             "sap_id", "product_name", "tank_no", "avg_daily_sales", "estimated_loss",
+             "avg_daily_sales_amount", "estimated_loss_amount", "dryout_days"]
         ]
         return {
             "status": True,
