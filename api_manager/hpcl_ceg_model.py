@@ -3089,7 +3089,7 @@ class VtsAlertHistorySchema(UrdhvaPostgresBase):
     tt_type: Mapped[typing.Optional[str]] = mapped_column("tt_type", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     violation_type: Mapped[typing.Optional[typing.List[str]]] = mapped_column("violation_type", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
 
-    __table_args__ = (UniqueConstraint(tl_number, invoice_number, name="vts_alert_history_tl_number_invoice_number"),)
+    __table_args__ = (UniqueConstraint(tl_number, report_duration, invoice_number, name="vts_alert_history_tl_number_report_duration_invoice_number"),)
 
 
 class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
@@ -3124,7 +3124,7 @@ class VtsAlertHistoryCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
-        upsert_keys = ['tl_number', 'invoice_number']
+        upsert_keys = ['tl_number', 'report_duration', 'invoice_number']
         access_key_mapping = ['location_id:sap_id']
 
 
@@ -3160,7 +3160,7 @@ class VtsAlertHistory(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = VtsAlertHistorySchema
-        upsert_keys = ['tl_number', 'invoice_number']
+        upsert_keys = ['tl_number', 'report_duration', 'invoice_number']
         access_key_mapping = ['location_id:sap_id']
 
 
