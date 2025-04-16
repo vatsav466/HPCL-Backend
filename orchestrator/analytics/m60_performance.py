@@ -37,9 +37,11 @@ AllProducts = {
     "Retail": ["LPG BLK", "MS", "Industrial Greases", "DEF/Diesel Exhaust Fluid", "HSD", "Automotive Greases",
                "Automotive Specialities", "Compressed Bio Gas ", "Industrial oils", "Automotive Oils",
                "Industrial Specialities", "Miscellaneous/Minor", "CNG", "SKO", "Compressed Bio Gas (CBG)"],
-    "I&C": ["MS", "Sulphur", "Solvent 2445", "LDO", "CBFS", "Hexane", "Solvent 1425", "FO", "JBO", "PETCHEM",
+   
+    "I&C": ["MS", "Sulphur", "Solvent 2445", "LDO", "CBFS", "Hexane", "Solvent 1425", "FO", "JBO",
             "Propylene", "LSHS/HHS", "Naptha", "HSD", "Bitumen Pkd", "Bitumen Modified", "Bitumen Blk",
-            "Miscellaneous/Minor", "SKO"],
+             "SKO"],
+    
     "LPG": ["LPG PKD - Non Domestic", "LPG BLK", "BULK BUTANE", "BULK PROPANE", "LPG CYLINDER REGULATOR",
             "Miscellaneous/Minor", "LPG PKD - Domestic", "LPG CYLINDER ACCESSORIES"],
     "GAS": ["CNG", "LNG", "Compressed Bio Gas (CBG)"],
@@ -269,8 +271,21 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
 
         end_date_ = fiscal_year.FiscalDate.fromtimestamp(int(urdhva_base.utilities.get_present_time().strftime('%s')))
         if key == 'YTDPM':
-            end_date = helpers.get_time_stamp_by_delta(end_date_, years=0, days=1, with_month_start_day=True,
-                                                       date_time_format="%Y-%m-%d")
+            if same_year:
+                end_date = helpers.get_time_stamp_by_delta(end_date_, years=0, days=1, with_month_start_day=True,
+                                                        date_time_format="%Y-%m-%d")
+                
+            else:
+                end_date = helpers.get_time_stamp_by_delta(end_date_, years=0, days=1, with_month_start_day=True,
+                                                        date_time_format="%Y-%m-%d")
+                #end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+                #end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+                if isinstance(end_date,str):
+                    end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+                print("end_date type",type(end_date))
+                first_day_of_current_month = end_date.replace(day=1)
+                last_day_of_prev_month = first_day_of_current_month - datetime.timedelta(days=1)
+                end_date = last_day_of_prev_month.date()
         else:
             if same_year:
                 end_date = helpers.get_time_stamp_by_delta(end_date_, days=1, with_month_start_day=False,
@@ -295,8 +310,24 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
             "%Y%m%d" if DefaultTable == "Day" else "%Y%m")
         if key == 'YTDPM':
-            end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=True,
-                                                               date_time_format=None)
+            if same_year:
+                end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=True,
+                                                                date_time_format=None)
+            else:
+                end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1, with_month_start_day=True,
+                                                                date_time_format=None)
+                
+                
+                if isinstance(end_date_history,str):
+                    end_date_history = datetime.datetime.strptime(end_date_history, "%Y-%m-%d")
+                print("end_date_history type",type(end_date_history))
+                first_day_of_current_month_his = end_date_history.replace(day=1)
+                last_day_of_prev_month_his = first_day_of_current_month_his - datetime.timedelta(days=1)
+                print("last_day_of_prev_month_his",last_day_of_prev_month_his)
+                end_date_history = datetime.date(last_day_of_prev_month_his.year, last_day_of_prev_month_his.month, last_day_of_prev_month_his.day)
+
+                #end_date = last_day_of_prev_month_his.date()
+                
         else:
             if same_year:
                 end_date_history = helpers.get_time_stamp_by_delta(end_date_, years=1, days=1,
@@ -322,16 +353,17 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             return start_date, end_date, start_date_history, end_date_history
 
         start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")
-        end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
+        if isinstance(end_date,str):
+            end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d")
         start_date = start_date.replace(year=start_date.year - 1).strftime("%Y-%m-%d")
         end_date = end_date.replace(year=end_date.year).strftime("%Y-%m-%d")
-        end_date_history = datetime.datetime.strptime(end_date_history, "%Y%m%d")
+        if isinstance(end_date_history,str):
+            end_date_history = datetime.datetime.strptime(end_date_history, "%Y%m%d")
         end_date_history = end_date_history.replace(year=end_date_history.year).strftime("%Y-%m-%d")
 
         start_date_history = datetime.datetime.strptime(start_date_history, "%Y%m%d")
         start_date_history = start_date_history.replace(year=start_date_history.year - 1).strftime("%Y-%m-%d")
         # print("came till returb")
-
         return start_date, end_date, start_date_history, end_date_history
 
     '''
@@ -1177,7 +1209,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                     final_resp = sorted_final_resp
 
                 '''
-
                 if len(cross_filters) == 1 or len(cross_filters) > 1:
                     # print("insied 1st if")
                     # print("cross_filters", cross_filters)
@@ -1186,6 +1217,29 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                         # print("insied 2nd if")
                         condition = cross_filters[0]
                         if condition['key'].strip('"') == 'SBU_Name':
+                            '''
+                            removing the PETCHEM and Misc from LPG
+                            '''
+                            if condition['value'] == 'I&C':
+                                if final_resp.get('ProductName',{}):
+                                    # Define values to exclude
+                                    
+                                    exclude_values = ['PETCHEM', 'Miscellaneous/Minor']
+
+                                    # Find indices to keep
+                                    indices_to_keep = [k for k, v in final_resp['ProductName'].items() if v not in exclude_values]
+
+                                    # Filter the dictionary
+                                    final_resp = {
+                                        key: {i: val for i, val in value.items() if i in indices_to_keep}
+                                        for key, value in final_resp.items()
+                                    }
+
+                                    print(final_resp)
+
+                                
+                                    #if 'PETCHEM' or 'Miscellaneous/Minor' in final_resp['ProductName'].values():
+                                                                            
                             if '"ProductName"' in group_by_filter and condition['value'] in productOrders:
                                 sort_order = productOrders[condition['value']]
                                 all_products = AllProducts.get(condition['value'], sort_order)
@@ -1195,7 +1249,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                     for key_ in ['ACTUAL_TMT_SALES', 'ACTUAL_HISTORY_TMT_SALES', 'cumulative']:
                                         if key_ not in final_resp:
                                             final_resp[key_] = {}
-
                                 # Adding missing products
                                 for key in all_products:
                                     if key not in list(final_resp.get('ProductName', {}).values()):
@@ -1206,9 +1259,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                         for key_ in final_resp:
                                             if key_ != 'ProductName':
                                                 final_resp[key_][order_num] = 0
-
                                 # Removing unnecessary products
-                                cleanup_products = ['LPG CYLINDER ACCESSORIES']
+                                cleanup_products = ['LPG CYLINDER ACCESSORIES','LPG CYLINDER REGULATOR','Miscellaneous/Minor']
                                 for order_num in list(final_resp['ProductName'].keys()):
                                     if final_resp['ProductName'][order_num] in cleanup_products:
                                         for key_ in final_resp:
@@ -1219,6 +1271,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                 # print("final_resp", final_resp)
                                 df = pd.DataFrame(final_resp)
                                 if 'ProductName' in df.columns.tolist():
+                                    
+                                    #remove empty products if any are present in the product list
+                                    df = df[df['ProductName'].fillna('0') != '0']
+                                    '''
+                                    finsihed_lubes = ['Industrial Greases','Automotive Greases','Automotive Specialities','Compressed Bio Gas','Industrial oils',
+                                    'Automotive Oils','Industrial Specialities']
+                                    
+                                    '''
                                     df['sort_key'] = df['ProductName'].apply(
                                         lambda x: sort_order.index(x) if x in sort_order else float('inf'))
                                     df_sorted = df.sort_values(by='sort_key').drop(columns='sort_key').reset_index(
