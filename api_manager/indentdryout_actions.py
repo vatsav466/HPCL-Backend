@@ -585,7 +585,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     where_clause_conditions = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     where_clause_conditions.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
         extra_key_mapping={"sap_id": "terminal_plant_id"}))
-    _date = datetime.datetime.now().strftime("%Y-%m-%d")
+    _date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     delivered_query = f"""SELECT SUM(distinct_count) AS total_count
                         FROM (
                             SELECT COUNT(DISTINCT sap_id) AS distinct_count

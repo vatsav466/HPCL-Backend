@@ -154,20 +154,23 @@ async def get_alert_count_for_interlock(interlock):
     #              {"id": "air_compressor", "name": "Air Compressor", "total": 6, "faulty": 0, "maintanance": 1}]
     # return {"status": True, "data":  json_data}
 
-async def get_dist_loc_values(bu, location_onboard=False):
+async def get_filtered_location_data(bu, location_onboard, specific_zone=None, specific_sap_id=None):
     """
-    Get distinct location values for a given business unit and SAP ID.
-
-    Args:
-    bu (str): Business unit.
-    sap_id (str): SAP ID.
-
+    This function is used to get the filtered location data based on the location onboard flag, specific zone and specific sap_id.
+    
+    Parameters:
+    bu (str): The business unit identifier.
+    location_onboard (bool): The location onboard flag.
+    specific_zone (str): The specific zone to filter by.
+    specific_sap_id (str): The specific sap_id to filter by.
+    
     Returns:
-    dict: A dictionary with a status flag, message, and list of distinct location values.
+    dict: A dictionary containing the filtered zone and sap_id lists.
     """
     query = f"bu = '{bu}' and location_onboard = '{location_onboard}'"
     params = urdhva_base.queryparams.QueryParams(q=query)
     resp = await hpcl_ceg_model.LocationMaster.get_all(params, resp_type='plain')
+    
     if not resp.get("data"):
         return {"status": False, "message": "No Data found", "data": []}
     
@@ -177,14 +180,26 @@ async def get_dist_loc_values(bu, location_onboard=False):
     sap_id_list = []
 
     for item in data:
-        if zone := item.get("zone"):
-            zone_list.append({"id": zone, "name": zone})
+        zone = item.get("zone")
+        sap_id = item.get("sap_id")
+        name = item.get("name", "")
         
-        if sap_id := item.get("sap_id"):
-            name = item.get("name", "")
+        # If specific_zone is provided, only collect sap_ids for that zone
+        if specific_zone and zone == specific_zone:
+            zone_list.append({"id": zone, "name": zone})
+            sap_id_list.append({"id": sap_id, "name": name})
+        
+        # If specific_sap_id is provided, only collect zones for that sap_id
+        elif specific_sap_id and sap_id == specific_sap_id:
+            zone_list.append({"id": zone, "name": zone})
+            sap_id_list.append({"id": sap_id, "name": name})
+        
+        # If no specific filters, collect all data
+        elif not specific_zone and not specific_sap_id:
+            zone_list.append({"id": zone, "name": zone})
             sap_id_list.append({"id": sap_id, "name": name})
 
-    # Remove duplicates (optional if needed)
+    # Remove duplicates
     zone_list = [dict(t) for t in {tuple(d.items()) for d in zone_list}]
     sap_id_list = [dict(t) for t in {tuple(d.items()) for d in sap_id_list}]
 
@@ -196,5 +211,3 @@ async def get_dist_loc_values(bu, location_onboard=False):
             "sap_id": sap_id_list
         }
     }
-    # return {"status": True, "message": "Success", "data": data}
-    

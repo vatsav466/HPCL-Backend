@@ -15,7 +15,7 @@ def get_performance_score_instance(bu):
 
 async def fetch_va_score(bu):
     resp = await va_analysis.get_ro_terminal_scores({'LocationType': 'TAS',
-                                                     'StartDate': datetime.datetime.now().strftime("%Y-%m-%d")})
+                                                     'StartDate': datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")})
     if resp['status']:
         va_score = {rec['LOCATION_ID']: rec for rec in resp['data']}
     return {}

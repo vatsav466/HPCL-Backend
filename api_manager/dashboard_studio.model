@@ -185,6 +185,13 @@ Model Charts {
         column list str
         where_cond optional list WidgetFilters
     }
+    Action=> get_product_values {
+        connection_id optional int max=1000000
+        schema str
+        table str
+        column list str
+        where_cond optional list dict
+    }
 
     Action=> generate_dynamic_chart_query {
         query_context str

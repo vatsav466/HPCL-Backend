@@ -27,15 +27,15 @@ async def emlock_create(data):
             "ExceptionType" : data['data'][0]['exception_type'],
             "TerminalCode": data['data'][0]['TerminalCode'],
             "count": 1,
-            "dateoffirstviolation": datetime.datetime.now(),
+            "dateoffirstviolation": datetime.datetime.now(datetime.timezone.utc),
             "violationHistory": [violation_msg],
             "DealerCode": data['data'][0]['Dealer_Code']
         }
         return await hpcl_ceg_model.EMLock.create(createdoc)
     else:
         existingdoc = existingdoc['data'][0]
-        if (datetime.datetime.now() - dateutil.parser.parse(existingdoc["dateoffirstviolation"])).days > 15:
-            existingdoc["dateoffirstviolation"] = datetime.datetime.now()
+        if (datetime.datetime.now(datetime.timezone.utc) - dateutil.parser.parse(existingdoc["dateoffirstviolation"])).days > 15:
+            existingdoc["dateoffirstviolation"] = datetime.datetime.now(datetime.timezone.utc)
             existingdoc["count"] = data["data"][0]["count"]
         else:
             existingdoc["count"] += data["data"][0]["count"]
@@ -58,7 +58,7 @@ async def emlock_create(data):
 
                 tb_alertprocessor.CreateAlert().create({'details': {'additionalInfo': alertdoc},
                                                         'id': {'id': eventuniqid}})
-                existingdoc["dateoffirstviolation"] = datetime.datetime.now()
+                existingdoc["dateoffirstviolation"] = datetime.datetime.now(datetime.timezone.utc)
                 existingdoc["count"] = 0
                 existingdoc["violationHistory"] = []
 
@@ -88,12 +88,12 @@ async def emlock_create(data):
         if not status or not existingdoc['data']:
             createdoc = {"VehicleNumber": doc['Vechical_Number'].upper(), "TerminalCode": doc['TerminalCode'],
                          "ExceptionType": doc['exception_type'], "count": 1, "DealerCode": doc['Dealer_Code'],
-                         "dateoffirstviolation": datetime.datetime.now(), "violationHistory": [violation_msg]}
+                         "dateoffirstviolation": datetime.datetime.now(datetime.timezone.utc), "violationHistory": [violation_msg]}
             return super(LorryCount, self).create(createdoc)
         else:
             existingdoc = existingdoc['data'][0]
-            if (datetime.datetime.now() - dateutil.parser.parse(existingdoc["dateoffirstviolation"])).days > 15:
-                existingdoc["dateoffirstviolation"] = datetime.datetime.now()
+            if (datetime.datetime.now(datetime.timezone.utc) - dateutil.parser.parse(existingdoc["dateoffirstviolation"])).days > 15:
+                existingdoc["dateoffirstviolation"] = datetime.datetime.now(datetime.timezone.utc)
                 existingdoc["count"] = doc["count"]
             else:
                 existingdoc["count"] += doc["count"]
@@ -116,7 +116,7 @@ async def emlock_create(data):
 
                 tb_alertprocessor.CreateAlert().create({'details': {'additionalInfo': alertdoc},
                                                         'id': {'id': eventuniqid}})
-                existingdoc["dateoffirstviolation"] = datetime.datetime.now()
+                existingdoc["dateoffirstviolation"] = datetime.datetime.now(datetime.timezone.utc)
                 existingdoc["count"] = 0
                 existingdoc["violationHistory"] = []
 

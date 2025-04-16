@@ -14,7 +14,8 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
-
+from decimal import Decimal
+from collections import defaultdict
 productOrders = {
     "Retail": ["MS", "HSD", "CNG", "SKO", "Compressed Bio Gas (CBG)", "LPG BLK"],
     "Aviation": ["ATF"],
@@ -23,7 +24,9 @@ productOrders = {
     "LPG": ["LPG PKD - Domestic", "LPG PKD - Non Domestic", "LPG BLK", "BULK PROPANE", "BULK BUTANE"],
     "PETCHEM": ["PETCHEM"],
     "Lubes": ["LUBES RETAIL", "Automotive Oils", "Automotive Greases", "Automotive Specialities", "Industrial oils",
-              "Industrial Greases", "Industrial Specialities", "Base Oil"]
+              "Industrial Greases", "Industrial Specialities", "Base Oil"],
+    "GAS":['CNG','LNG','CBG']
+    
 }
 
 AllProducts = {
@@ -154,6 +157,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    print("query",query)
     resp = await function(query=query)
     return resp
 
@@ -338,7 +342,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         product_name_values = [x['value'] for x in filters if x['key'].strip('"') == 'ProductName']
         if product_name_values and product_name_values[0] == '':
             cross_filters = [f for f in cross_filters if f.get("key", "").strip('"') != "ProductName"]
-
     '''
     if 'fiscal_year' in [x['key'].strip('"') for x in filters]:
         if 'YTD' in [x['key'].strip('"') for x in filters] or 'YTDPM' in [x['key'].strip('"') for x in filters]:
@@ -639,7 +642,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 start_date = start_date.replace(year=start_date.year - 1).strftime("%Y-%m-%d")
                 end_date = end_date.replace(year=end_date.year).strftime("%Y-%m-%d")
             '''
-
             '''
             # For History
             start_date_history = fiscal_year.FiscalYear.current().prev_fiscal_year.start.strftime(
@@ -718,7 +720,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             return [rec.replace('"', '').strip() for rec in group_by_filter]
         else:
             return ""
-
     where_conditions = []
     clause = await widget_actions.WidgetActions.generate_filter_clause(cross_filters.copy())
     if clause:
@@ -734,7 +735,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     # Data Retrival for target data
     if target:
         group_keys = [key for key in group_by_filter]
-
         if '"month_name"' not in group_by_filter and '"C"' not in [x['key'] for x in filters]:
             group_keys.append("month_name")
         if '"C"' not in [x['key'] for x in filters]:
@@ -754,17 +754,21 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                                                                                                filters] and (
                 len(org_cross_filters) == 0 or (
                 len(org_cross_filters) == 1 and org_cross_filters[0]['key'] == '"sbu_wise"')):
-            group_keys.append('month_name')
+            if "month_name" not in [x.strip('"') for x in group_keys]:
+                group_keys.append('month_name')
             target_data = await collect_data([target, 'month_name'], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         elif '"DATE"' in [x['key'] for x in filters]:
-            group_keys.append("month_name")
+            
+            if "month_name" not in [x.strip('"') for x in group_keys]:
+                group_keys.append("month_name")
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         elif '"C"' in [x['key'] for x in filters] and '"YTD"' in [x['key'] for x in filters] and '"T"' in [x['key'] for
                                                                                                            x in
-                                                                                                           filters]:
-            group_keys.append("month_name")
+                                                                                                         filters]:
+            # commenting the below line because month_name should not be present in the group_by_filter for cumulative mode
+            #group_keys.append("month_name")
             target_data = await collect_data([target], 'M60_LEVEL_METADATA',
                                              where_conditions + Default_Filters, start_date, end_date, group_keys)
         else:
@@ -783,8 +787,14 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
                 '''
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+                #if "C"  in [x['key'].strip('"') for x in filters]:
+                #    del target_data['month_name']
                 if "month_name" in target_data.columns.tolist():
-                    del target_data['month_name']
+                    #here we are trying to drill from SA to month_name  where we are getting issue. month_name is getting deleted . thats the reason we are not deleting 
+                    #month_name in  YR mode
+                    
+                    if "C" not in [x['key'].strip('"') for x in filters] and "DATE" not in [x['key'].strip('"') for x in filters]:
+                        del target_data['month_name']
                 if "TARGET_TMT_SALES" in target_data.columns.tolist():
                     sample_data = pd.DataFrame(columns=['TARGET_TMT_SALES'])
                     sample_data['TARGET_TMT_SALES'] = target_data['TARGET_TMT_SALES'].sum()
@@ -872,8 +882,63 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 hist_data = pd.DataFrame([{'ACTUAL_HISTORY_TMT_SALES': hist_data.sum()['ACTUAL_HISTORY_TMT_SALES']}])
             hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
             hist_data = hist_data.to_dict(orient='records')
+    print("actual_data",actual_data)
+    print("target_data",target_data)
+    print("his_data",hist_data)
+    drill_list = ['ProductName','Zone_Name','Region_Name','SalesArea_Name','month_name']
+    summed_data = defaultdict(Decimal)
+    tgt_result = []
+    '''
+    if target_data:
+        #if 'productName' in target_data[0] or 'ProductName' in target_data[0]:
+        for each_level in drill_list:
+            print("each_lvel",each_level)
+            if each_level in target_data[0]:
+                print("each level present",each_level)
+                for entry in target_data:
+                
+                    product = entry[each_level]
+                    value = Decimal(entry['TARGET_TMT_SALES'])  # Ensure consistent Decimal
+                    summed_data[product] += value
+                #tgt_result = [{'ProductName': k, 'TARGET_TMT_SALES': round(v, 2)} for k, v in summed_data.items()]
+                tgt_result = [{f"{each_level}": k, 'TARGET_TMT_SALES': round(v, 2)} for k, v in summed_data.items()]
+                if resp_format != 'heat_map':
+                    break
+        if len(tgt_result)  == 0:
+            tgt_result = target_data
+        #df_ = [pd.DataFrame(d) for d in [actual_data, tgt_result, hist_data] if d]
+        print("tgt_result",tgt_result)
+    '''
+    '''
+    Copying target data into tgt_result and summing up as the merge with actual or hist data is giving error. Becaus on target_data we will calculate pro-rate
+    '''
+    summed_data = defaultdict(Decimal)
+    tgt_result = []
+    matched_level = None
 
-    df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
+    if target_data:
+        for each_level in drill_list:
+            if each_level in target_data[0]:
+                if not tgt_result:
+                    matched_level = each_level
+                    for entry in target_data:
+                        key = entry[each_level]
+                        value = Decimal(entry['TARGET_TMT_SALES'])
+                        summed_data[key] += value
+                    tgt_result = [{f"{matched_level}": k, 'TARGET_TMT_SALES': round(v, 2)} for k, v in summed_data.items()]
+                    if resp_format != 'heat_map':
+                        continue  # Continue to check for month_name
+                elif each_level == 'month_name' and matched_level:
+                    # Add month_name to existing tgt_result items
+                    for row in tgt_result:
+                        match_key = row[matched_level]
+                        for entry in target_data:
+                            if entry[matched_level] == match_key:
+                                row['month_name'] = entry.get('month_name')
+                                break
+                    break
+        #df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
+    df_ = [pd.DataFrame(d) for d in [actual_data, tgt_result, hist_data] if d]
     merged_df = df_[0] if len(df_) else pd.DataFrame([])
     if len(df_) > 1:
         for df in df_[1:]:
@@ -1147,7 +1212,9 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                         drop=True)
                                     df_sorted = df_sorted.fillna('')
                                     final_resp = {col: df_sorted[col].to_dict() for col in df_sorted.columns}
-
+        if isinstance(final_resp,list):
+            return {"status": False, "message": "Data Not Present for the current selection", "data": {'data': final_resp, 'level': sorted_level,
+                                                               'month_name': month_keys, 'sales_unit': measure_unit}}    
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys, 'sales_unit': measure_unit}}
     else:
@@ -1180,7 +1247,11 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if all(not v for v in final_resp.values()):
             return {"status": False, "message": "No Data Present for the current selection",
                     "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
-
+        if isinstance(final_resp, dict):
+            if len(final_resp) == 0:
+                return {"status": False, "message": "No Data Present for the current selection",
+                "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
+                
         return {"status": True, "message": "Success",
                 "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
 

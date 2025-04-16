@@ -165,25 +165,33 @@ class AlertFactory:
             else:
                 await redis_ins.hset("alert_mapping", alert_data['alert_id'], alert_resp['id'])
             payload = {"businessKey": unique_id,
-                       "variables": {"alert_id": {"value": alert_resp['id'], "type": "String"},
-                                     "interlock_name": {"value": interlock_name, "type": "String"},
-                                     "interlock_id": {"value": "", "type": "String"},
-                                     "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
-                                     "location_type": {"value": bu, "type": "String"},
-                                     "sap_id": {"value": sap_id, "type": "String"},
-                                     "sop_id": {"value": sop_id, "type": "String"},
-                                     "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
-                                     "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
-                                     "workflow_datetime": {"value": alert_data.get(
-                                         'workflow_datetime',
-                                         datetime.datetime.now(datetime.UTC)
-                                         .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
-                                     "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
-                                     "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
-                                     "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
-                                     "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
-                                     "va_level": {"value": alert_level, "type": "String"},
-                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"}}}
+                        "variables": {"alert_id": {"value": alert_resp['id'], "type": "String"},
+                                    "interlock_name": {"value": interlock_name, "type": "String"},
+                                    "interlock_id": {"value": "", "type": "String"},
+                                    "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
+                                    "location_type": {"value": bu, "type": "String"},
+                                    "sap_id": {"value": sap_id, "type": "String"},
+                                    "sop_id": {"value": sop_id, "type": "String"},
+                                    "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
+                                    "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
+                                    "workflow_datetime": {"value": alert_data.get(
+                                        'workflow_datetime',
+                                        datetime.datetime.now(datetime.UTC)
+                                        .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z"), "type": "String"},
+                                    "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
+                                    "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''), "type": "String"},
+                                    "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''), "type": "String"},
+                                    "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
+                                    "va_level": {"value": alert_level, "type": "String"},
+                                    "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"},
+                                    "cause_effect": {"value": alert_data.get('Cause_Effect', ''), "type": "String"}, # Added for TAS use
+                                    "alert_section": {"value": alert_data.get('alert_section', ''), "type": "String"}, # Added for TAS use
+                                    "cause_sop_id": {"value": alert_data.get('cause_sop_id', ''), "type": "String"}, # Added for TAS use
+                                    "effect_sop_id": {"value": alert_data.get('effect_sop_id', ''), "type": "String"}, # Added for TAS use
+                                    "device_id": {"value": alert_data.get('device_id', ''), "type": "String"}, # Added for TAS use
+                                    "device_name": {"value": alert_data.get('device_name', ''), "type": "String"}, # Added for TAS use
+                                    "device_type": {"value": alert_data.get('device_type', ''), "type": "String"} # Added for TAS use
+                                    }}
 
             # Create Interlock
             # Start workflow after creating the interlock
@@ -285,7 +293,7 @@ class AlertFactory:
                 params = urdhva_base.queryparams.QueryParams()
                 params.limit = 1
                 params.q = query
-                alert_resp = await hpcl_ceg_model.Alerts.get_all(params )
+                alert_resp = await hpcl_ceg_model.Alerts.get_all(params)
                 alert_data_list = []
                 if alert_resp and hasattr(alert_resp, '__dict__') and alert_resp.__dict__.get('body'):
                     # Decode and parse Alert response
@@ -307,24 +315,23 @@ class AlertFactory:
 
                 # Modify Alert if found
                 if alert_data_list:
-                    alert = alert_data_list[0]
-                    if alert_data.get("alert_history"):
-                        if not alert.get("alert_history"):
-                            alert["alert_history"] = alert_data["alert_history"]
-                        else:
-                            alert_data["alert_history"]["allocated_time"] = alert["alert_history"][-1].get("processed_time")
-                            alert["alert_history"].append(alert_data["alert_history"])
-                    alert['severity'] = alert_data.get('severity', "Medium").capitalize()
-                    alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
-                    alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
-                    alert['interlock_name'] = alert_data.get('interlock_name', '')
-                    alert['closed_at'] = datetime.datetime.now()
-                    if il_data:
-                        alert['interlock_id'] = str(il_data[0]['id'])
-                    data_obj = hpcl_ceg_model.Alerts(**alert)
-                    await data_obj.modify()
-                    redis_ins = await urdhva_base.redispool.get_redis_connection()
-                    await redis_ins.hdel("alert_camunda_url", str(alert['id']))
+                    for alert in alert_data_list:
+                        if alert_data.get("alert_history"):
+                            if not alert.get("alert_history"):
+                                alert["alert_history"] = alert_data["alert_history"]
+                            else:
+                                alert_data["alert_history"]["allocated_time"] = alert["alert_history"][-1].get("processed_time")
+                                alert["alert_history"].append(alert_data["alert_history"])
+                        alert['severity'] = alert_data.get('severity', "Medium").capitalize()
+                        alert['alert_status'] = hpcl_ceg_enum.AlertStatus.Close.value
+                        alert['alert_state'] = hpcl_ceg_enum.AlertState.Resolved.value
+                        alert['interlock_name'] = alert_data.get('interlock_name', '')
+                        if il_data:
+                            alert['interlock_id'] = str(il_data[0]['id'])
+                        data_obj = hpcl_ceg_model.Alerts(**alert)
+                        await data_obj.modify()
+                        redis_ins = await urdhva_base.redispool.get_redis_connection()
+                        await redis_ins.hdel("alert_camunda_url", str(alert['id']))
 
                 print("Interlock and Alert updated successfully.")
 

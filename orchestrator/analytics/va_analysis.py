@@ -40,7 +40,7 @@ async def close_va_alerts(params: dict):
     """
     creds = await get_va_headers("VA_ALERT")
     creds['url'] = f"https://{creds['host']}/api/v1/Violation/capa"
-    ack_datetime = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    ack_datetime = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H%M%S")
     headers = {
         "Content-Type": "application/json",
         "CustId": creds['cust_id'],
@@ -89,7 +89,7 @@ async def get_ro_terminal_scores(params: dict):
     """
     creds = await get_va_headers("VA_ALERT_SCORE")
     creds['url'] = f"https://{creds['host']}/api/Platform/v1/HPCLVendor/Scores"
-    ack_datetime = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    ack_datetime = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d%H%M%S")
     headers = {
         "Content-Type": "application/json",
         "CustId": creds['cust_id'],
@@ -135,7 +135,7 @@ async def assign_values_to_dataframe(df, values):
 async def get_period_datetime(period: str, today=None):
     if period == "weekly":
         if not today:
-            today = datetime.datetime.now()
+            today = datetime.datetime.now(datetime.timezone.utc)
         start_of_week = today - datetime.timedelta(days=today.weekday())
         end_of_week = start_of_week + datetime.timedelta(days=6)
         start_datetime = datetime.datetime.combine(start_of_week, datetime.datetime.min.time())
@@ -143,14 +143,14 @@ async def get_period_datetime(period: str, today=None):
         return start_datetime, end_datetime
     if period == 'monthly':
         if not today:
-            today = datetime.datetime.now()
+            today = datetime.datetime.now(datetime.timezone.utc)
         start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         last_day = calendar.monthrange(today.year, today.month)[1]
         end_of_month = today.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
         return start_of_month, end_of_month
     if period == 'fortnight':
         if not today:
-            today = datetime.datetime.now()
+            today = datetime.datetime.now(datetime.timezone.utc)
         year, month = today.year, today.month
         first_half_start = datetime.datetime(year, month, 1, 0, 0, 0)
         first_half_end = datetime.datetime(year, month, 14, 23, 59, 59)

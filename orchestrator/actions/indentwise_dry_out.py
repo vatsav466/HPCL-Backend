@@ -530,7 +530,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -585,7 +585,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -649,7 +649,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -707,7 +707,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -770,7 +770,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -811,7 +811,7 @@ class IndentDryOut:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
-        today_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        today_date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         # Todo:- Need to check whether LOADED_ON was required or not in this
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                     FROM 
@@ -867,8 +867,8 @@ class IndentDryOut:
             if resp:
                 prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d")
             else:
-                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d")
-        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+                prod_reqd_dt = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+        today_date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                             FROM 
                                 "IMS_SAP"."INDENT_REQUEST" a, 
@@ -962,7 +962,7 @@ class IndentDryOut:
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
         locn_code = self.params.get("terminal_plant_id")
-        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        today_date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
         if 'prod_reqd_dt' in self.params.keys():
             prod_reqd_dt = self.params['prod_reqd_dt'].split("T")[0]
         else:
@@ -976,7 +976,7 @@ class IndentDryOut:
             if resp:
                 prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d")
             else:
-                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d")
+                prod_reqd_dt = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
 
         Charts_Connection_Vault_RoutingParams.connection_id = self.params['connection_name']
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
@@ -1053,7 +1053,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -1263,7 +1263,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -1320,7 +1320,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -1413,7 +1413,7 @@ class IndentDryOut:
         start_time = datetime.time(6, 0)  # 6:00 AM
         end_time = datetime.time(16, 0)  # 4:00 PM
 
-        current_time = datetime.datetime.now().time()
+        current_time = datetime.datetime.now(datetime.timezone.utc).time()
 
         if start_time <= current_time <= end_time:
             return await self.send_alert_action(is_approved=True)
@@ -1472,7 +1472,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")
@@ -1552,11 +1552,13 @@ class IndentDryOut:
             alert_data = alert_data.__dict__
         # instance_id = alert_data.get("workflow_instance_id")
         business_key = alert_data.get("unique_id")
-        # if not 'CAMUNDA_URL' in self.params.keys():
-        #     self.params['CAMUNDA_URL'] = await helpers.get_alert_camunda_url(self.params["alert_id"],
-        #                                                   f"{urdhva_base.settings.camunda_url}")
+        if not 'CAMUNDA_URL' in self.params.keys():
+            self.params['CAMUNDA_URL'] = await helpers.get_alert_camunda_url(self.params["alert_id"],
+                                                          f"{urdhva_base.settings.camunda_url}")
 
         camunda_url, instance_id = await self.get_process_instance_id(business_key)
+        # if 'camunda_host' in self.params.keys():
+        #     self.params['CAMUNDA_URL'] = f"http://{self.params['camunda_host']}:{self.params['camunda_port']}"
         if not 'CAMUNDA_URL' in self.params.keys():
             self.params['CAMUNDA_URL'] = camunda_url
         print("self.params update: ", self.params)
@@ -1617,7 +1619,7 @@ class IndentDryOut:
         dealer_code = str(self.params.get("dealer_id")).zfill(10)
         indent_no = self.params.get("indent_no")
         locn_code = self.params.get("terminal_plant_id")
-        today_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        today_date = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
         if 'prod_reqd_dt' in self.params.keys():
             prod_reqd_dt = self.params['prod_reqd_dt'].split("T")[0]
         else:
@@ -1630,7 +1632,7 @@ class IndentDryOut:
             if resp:
                 prod_reqd_dt = resp[0].get("PROD_REQD_DT").strftime("%Y-%m-%d")
             else:
-                prod_reqd_dt = datetime.datetime.now().strftime("%Y-%m-%d")
+                prod_reqd_dt = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
         query = f"""SELECT COUNT(*) AS "count", a."INDENT_NO", a."LOCN_CODE", a."TRUCK_REGNO", b."CARD_STATUS", b."LOADED_ON" 
                                     FROM 
                                         "IMS_SAP"."INDENT_REQUEST" a, 
@@ -1732,7 +1734,7 @@ class IndentDryOut:
         #         datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ") -
         #         datetime.timedelta(days=0)
         # ).strftime("%Y-%m-%d")
-        # next_date = (datetime.datetime.now() + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+        # next_date = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=2)).strftime("%Y-%m-%d")
         now = (pytz.timezone('UTC').localize(
             datetime.datetime.strptime(self.params.get("workflow_datetime"), "%Y-%m-%dT%H:%M:%S.%fZ")).astimezone(
             pytz.timezone('Asia/Kolkata'))).strftime("%Y-%m-%d")

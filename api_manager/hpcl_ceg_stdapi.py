@@ -1205,3 +1205,28 @@ async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base
 @router.delete('/vtstruckdetails/{id}', tags=['VtsTruckDetails'])
 async def delete(id: str):
     return await VtsTruckDetails.delete(id)
+
+
+@router.post('/dryoutroloss', response_model=DryOutRoLoss, tags=['DryOutRoLoss'])
+async def create(inputObj: DryOutRoLossCreate):
+    return await inputObj.create()
+
+
+@router.put('/dryoutroloss', response_model=DryOutRoLoss, tags=['DryOutRoLoss'])
+async def update(inputObj: DryOutRoLoss):
+    return await inputObj.modify()
+
+
+@router.get('/dryoutroloss/{id}', response_model=DryOutRoLoss, tags=['DryOutRoLoss'])
+async def get(id: str):
+    return await DryOutRoLoss.get(id, skip_secrets=True)
+
+
+@router.get('/dryoutroloss', response_model=DryOutRoLossGetResp, tags=['DryOutRoLoss'])
+async def get_all(response: fastapi.Response, params=fastapi.Depends(urdhva_base.queryparams.QueryParams)):
+    return await DryOutRoLoss.get_all(params, skip_secrets=True)
+
+
+@router.delete('/dryoutroloss/{id}', tags=['DryOutRoLoss'])
+async def delete(id: str):
+    return await DryOutRoLoss.delete(id)

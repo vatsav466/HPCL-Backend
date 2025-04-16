@@ -477,7 +477,8 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                     SELECT DISTINCT 
                         SUBSTR("DEALER_CODE", 3, 8) AS sap_id, 
                         "PROD_REQD_DT" AS prod_reqd_dt,
-                        "INDENT_NO" AS indent_no
+                        "INDENT_NO" AS indent_no,
+                        "LOCN_CODE" AS locn_code
                     FROM 
                         "IMS_SAP"."INDENT_REQUEST"
                     WHERE 
@@ -505,7 +506,7 @@ async def sync_carry_fwd_indent(insert_to_db: bool):
                 COMBINED_DATA AS (
                     SELECT 
                         i.sap_id, 
-                        a.terminal_plant_id, 
+                        i.locn_code as terminal_plant_id, 
                         i.indent_no, 
                         i.prod_reqd_dt,
                         NOW() AT TIME ZONE 'Asia/Kolkata' AS reported_date,
@@ -684,7 +685,7 @@ async def _get_ims_day_wise_report(report_date: str):
     return stats_resp.to_dict(orient='records')
 
 async def get_custom_timestamp():
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone.utc)
     # If minutes are less than 10, take the previous hour
     if now.minute < 10:
         adjusted_time = now - datetime.timedelta(hours=1)
@@ -876,7 +877,7 @@ async def _get_pending_indents(dry_out_in_days='1'):
     }
 
 async def constant_dryout_ros(days=7):
-    now = datetime.datetime.now()
+    now = datetime.datetime.now(datetime.timezone.utc)
     run_id = [
         (now - datetime.timedelta(days=i)).strftime('%y%m%d-2300') for i in range(1, days+1)
     ]
@@ -1023,7 +1024,7 @@ async def current_month_frequent_drout_terminals(data):
     return dryout_resp
 
 async def get_atg_ack(sap_id: str, product_code: str):
-    to_day = datetime.datetime.now().strftime("%Y-%m-%d")
+    to_day = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     query = f"""select Site_id, (select erp_code from "HPCL_HOS".ms_site ms where ms.site_id = trd.site_id) as "sap_ro_code", Tank_no, Product_no, Recptentrydate """ \
             f"""from "HPCL_HOS".tr_delivery_data trd where enable = true and net_volume > 0 """ \
             f"""and sap_ro_code = '{sap_id}' and "Product_no" = '{product_code}' """ \

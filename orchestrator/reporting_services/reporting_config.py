@@ -14,7 +14,7 @@ zone_map = {
     "NCZ": "NCZ",
     "WZ": "WZ",
     "NFZ": "NZ",
-    "NWF": "NW",
+    "NWF": "NWZ",
     "NCR": "NCZ",
     "SCR": "SCZ",
     "NWR": "NWZ",
@@ -58,7 +58,17 @@ ro_query = f""" SELECT distinct(ZE.EMPLOYEE_NUMBER) as EMPLOYEE_NUMBER, ZE.EMPLO
 #                 LEFT JOIN ZSDCV_SO_PARAM_STG ZSA on ZSA.SALES_GROUP = ZE.SALES_GRP
 #             WHERE ZR.ROLE_NAME IN ('SD_LZONAL_HEAD') """
 
-required_field = ["bu", "sap_id", "name", "city", "district", "region", "sales_area", "state", "zone", "adress"]
+required_field = ["bu", "sap_id", "name", "city", "district", "region", "sales_area", "state", "zone", "adress", "pincode", "terminal_plant_id", "dealer_phone","dealer_email"]
+
+location_master_schema = {
+    "bu": "VARCHAR", "sap_id": "VARCHAR", "bu_id": "VARCHAR", "name": "VARCHAR", "is_active": "BOOLEAN", "activation_date": "TIMESTAMP",
+    "activation_notes": "VARCHAR","activated_by": "VARCHAR","deactivated_by": "VARCHAR","deactivation_notes": "VARCHAR","health_status": "VARCHAR",
+    "health_notes": "VARCHAR", "scada_vendor": "VARCHAR", "scada_version": "VARCHAR", "scada_conn_status": "BOOLEAN", "scada_conn_notes": "VARCHAR",
+    "city": "VARCHAR", "district": "VARCHAR", "region": "VARCHAR", "state": "VARCHAR", "zone": "VARCHAR", "address": "VARCHAR", "pincode": "VARCHAR",
+    "local_automation_vendor": "VARCHAR", "latitude": "VARCHAR", "longitude": "VARCHAR", "entity_id": "VARCHAR", "ro_id": "VARCHAR", "dealer_name": "VARCHAR",
+    "dealer_phone": "VARCHAR", "dealer_email": "VARCHAR", "sales_area": "VARCHAR", "terminal_plant_id": "VARCHAR","terminal_plant_name": "VARCHAR",
+    "category": "VARCHAR", "distributor_code": "VARCHAR", "distributor_name": "VARCHAR","round_trip_distance": "INTEGER","location_onboard": "BOOLEAN"
+    }
 
 _rename = {"PLANT": "sap_id", "PLANT_DESC": "name", "ZZONE": "zone", "STATE_NAME": "state", 
            "SALES_OFFICE_DESC": "region", "SALES_GROUP_DESC": "sales_area", "CITY1": "city", 
@@ -108,5 +118,25 @@ location_configs = [
                 WHERE
                     ZLOC_TYPE IN ('38');
                 """
-    }   
+    },
+    {
+        "bu": "ro",
+        "query": """
+                SELECT
+                    zca.customer AS PLANT, zcs.name1 AS PLANT_DESC, zca.sales_district, zso.sales_district_desc, zca.deliv_plant AS terminal_plant_id,
+                    zso.SALES_OFFICE_DESC, zso.SALES_GROUP_DESC, plt.ZZONE, zcs.CITY AS CITY1, zcs.POSTAL_CODE AS POST_CODE1, zcs.ADDRESS1, zcs.ADDRESS2, zcs.ADDRESS3, zcs.ADDRESS4,
+                    zcs.ADDRESS5, plt.PLANT_DESC AS terminal_plant_name, plt.STATE_NAME, zcs.first_telephone_number AS dealer_phone,
+                    zcs.second_tel_no, zcs.email_id AS dealer_email, zca.inactive, zcs.OUTLET_TYPE, zcs.gstin, zcs.mrn, zcs.OUTLET_TYPE, zcs.gstin,
+                    zcs.mrn, zcs.permanent_Account_number
+                FROM ZSDCV_CUST_SA_STG zca 
+                    INNER join ZSDCV_CUSTOMER_STG zcs on zcs.customer_number = zca.customer 
+                    INNER join ZSDCV_SO_PARAM_STG zso on zso.sales_district = zca.sales_district AND
+                    zso.sales_org=zca.sales_org AND zso.sales_office=zca.sales_off AND zso.sales_group=zca.sales_grp
+                    INNER join EDW_DC_PLANT plt on zso.PLANT=plt.PLANT
+                WHERE 
+                    zca.deliv_plant <> '' AND zca.sales_org='7000' AND zca.DIST_CHANNEL=11 AND zca.division in (11,12) AND
+                    zca.customer BETWEEN 4000000 AND 49999999 AND zca.INACTIVE=''
+                ORDER BY zca.deliv_plant,zso.plant_desc,zca.sales_off,zso.sales_office_desc,zca.sales_grp,zso.sales_group_desc
+                 """
+    }
 ]

@@ -13,7 +13,7 @@ import dashboard_studio_model
 from psycopg2 import sql, errors
 from collections import defaultdict
 import utilities.helpers as helpers
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta, timezone
 from pandas.tseries.offsets import MonthEnd
 from orchestrator.analytics import va_analysis
 import utilities.drill_mapping as drill_mapping
@@ -3842,16 +3842,15 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_filled_cylinder")
         _filters = []
         daterange = None
         if cross_filters:
             for filter in cross_filters:
                 if "DATE" in filter.key:
                     daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
-                    continue
                 _filters.append({f"{filter.key}": f"{filter.value}"})
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        production_zone_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_production_zone")
         if filters:
             conditions = []
             for rec in filters:
@@ -3865,70 +3864,170 @@ class GlobalAnalytics:
                         condition = f"{rec.key} in {tuple(rec.value)}"
                 conditions.append(condition)
             if conditions:
-                handled_cylinder_query_ += ' WHERE '
-                handled_cylinder_query_ += ' AND '.join(conditions)
-            if not daterange:
-                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\') '
-            elif daterange:
-                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-            handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
+                production_zone_query_  += ' WHERE '
+                production_zone_query_  += ' AND '.join(conditions)
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
-            handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
+            if not daterange:
+                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
+            elif daterange:
+                production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
+            production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
-                                      for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
-            handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
-            if not "where" in handled_cylinder_query_.lower() and not daterange:
-                handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-            elif not "where" in handled_cylinder_query_.lower() and daterange:
-                handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+                                      for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
+            production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
+            if not "where" in production_zone_query_.lower() and not daterange:
+                production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()' 
+            elif not "where" in production_zone_query_.lower() and daterange:
+                production_zone_query_ +=  f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             elif not daterange:
-                handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
             elif daterange:
-                handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
-            handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
-            print("handled_cylinder_query_ :", handled_cylinder_query_)
-            resp = await function(query=handled_cylinder_query_)
+                production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
+            production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
+            
+            print("production_zone_query_ :", production_zone_query_)
+            resp = await function(query=production_zone_query_)
             resp = pd.DataFrame(resp)
             resp = await filter_data(resp, _filters)
             if resp.empty:
-                return {"status": True, "message": "success", "data": []}
+                return {"status": True, "message": "success", "data": []}            
             resp = resp.groupby(["zone"], as_index=False).agg({
-                    "Cylinder_Filled": "sum"
-                })
-            if resp.empty:
-                return {"status": True, "message": "success", "data": []}
+                        "14_kg": "sum",
+                        "19_kg": "sum"
+                    })
+            resp["Cylinder_Filled"] = (resp["14_kg"].fillna(0).astype(np.float64) + resp["19_kg"].fillna(0).astype(np.float64))
+            
             for each_float_col in ["Cylinder_Filled"]:
                 if each_float_col in resp.columns:
-                    resp[each_float_col] = resp[each_float_col].fillna(0.0)            
-            for each_str_col in ["zone", "plant"]:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
+            for each_str_col in ["zone", "name"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
-        # Execute the query
-        resp = await function(query=handled_cylinder_query_)
-        resp = pd.DataFrame(resp)
-        resp = await filter_data(resp, _filters)
-        if resp.empty:
-            return {"status": True, "message": "success", "data": []}
-        for each_float_col in ["Cylinder_Filled"]:
-            if each_float_col in resp.columns:
-                resp[each_float_col] = resp[each_float_col].fillna(0.0)
-        # Fill missing values for string columns
-        for each_str_col in ["zone", "plant"]:
-            if each_str_col in resp.columns:
-                resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
-        if filters:
-            grouped_resp = None
-            filter_keys = [rec.key.strip('"') for rec in filters]
-            if "zone" in filter_keys and "plant" not in filter_keys:
-                grouped_resp = resp.groupby(["zone", "plant"], as_index=False).agg({
-                    "Cylinder_Filled": "sum"
-                })
-            if grouped_resp is not None:
-                return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        resp = await function(query=production_zone_query_)
+        if resp:
+            # Convert the response to a DataFrame for further processing
+            resp = pd.DataFrame(resp)
+            resp = await filter_data(resp, _filters)
+            for each_float_col in ["Cylinder_Filled"]:
+                if each_float_col in resp.columns:
+                    resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
+            # Fill missing values for string columns
+            for each_str_col in ["zone", "name"]:
+                if each_str_col in resp.columns:
+                    resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+            if filters:
+                grouped_resp = None
+                filter_keys = [rec.key.strip('"') for rec in filters]
+                if "zone" in filter_keys and "name" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","name"], as_index=False).agg({
+                        "14_kg": "sum",
+                        "19_kg": "sum"
+                    })
+                    grouped_resp["Cylinder_Filled"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64))
+                    grouped_resp["Cylinder_Filled"] = grouped_resp["Cylinder_Filled"].fillna(0.0).round(2)
+                if grouped_resp is not None:
+                    return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+        else:
+            return {"status": True, "message":"success", "data":[]}
         return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
+    
+    
+    # @staticmethod
+    # async def lpg_operations_filled_cylinder(filters, cross_filters, drill_state):
+    #     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
+    #     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
+    #     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    #     current_date = datetime.now().strftime("%Y-%m-%d")
+    #     handled_cylinder_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_filled_cylinder")
+    #     _filters = []
+    #     daterange = None
+    #     if cross_filters:
+    #         for filter in cross_filters:
+    #             if "DATE" in filter.key:
+    #                 daterange = f" '{filter.value.split(",")[0]}' AND '{filter.value.split(",")[-1]}' "
+    #                 continue
+    #             _filters.append({f"{filter.key}": f"{filter.value}"})
+    #     if filters:
+    #         conditions = []
+    #         for rec in filters:
+    #             rec.value = rec.value.split(",")
+    #             if isinstance(rec.value, str):
+    #                 condition = f"{rec.key} = '{rec.value}'"
+    #             else:
+    #                 if len(rec.value) == 1:
+    #                     condition = f"{rec.key} = '{rec.value[0]}'"
+    #                 else:
+    #                     condition = f"{rec.key} in {tuple(rec.value)}"
+    #             conditions.append(condition)
+    #         if conditions:
+    #             handled_cylinder_query_ += ' WHERE '
+    #             handled_cylinder_query_ += ' AND '.join(conditions)
+    #         if not daterange:
+    #             handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\') '
+    #         elif daterange:
+    #             handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         handled_cylinder_query_ += ' GROUP BY  "zone" ,"plant" '
+    #         access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+    #                                   for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
+    #         handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
+    #     else:
+    #         access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
+    #                                   for rec in await hpcl_ceg_model.LpgCsRejections.get_clause_conditions(formated=True)]
+    #         handled_cylinder_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(handled_cylinder_query_, access_filters, drill_state)
+    #         if not "where" in handled_cylinder_query_.lower() and not daterange:
+    #             handled_cylinder_query_ += f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         elif not "where" in handled_cylinder_query_.lower() and daterange:
+    #             handled_cylinder_query_ += f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         elif not daterange:
+    #             handled_cylinder_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         elif daterange:
+    #             handled_cylinder_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL AND cyl_type in (\'14.2 KG\',\'19 KG\')'
+    #         handled_cylinder_query_ += ' GROUP BY "zone", "plant" '
+    #         print("handled_cylinder_query_ :", handled_cylinder_query_)
+    #         resp = await function(query=handled_cylinder_query_)
+    #         resp = pd.DataFrame(resp)
+    #         resp = await filter_data(resp, _filters)
+    #         if resp.empty:
+    #             return {"status": True, "message": "success", "data": []}
+    #         resp = resp.groupby(["zone"], as_index=False).agg({
+    #                 "Cylinder_Filled": "sum"
+    #             })
+    #         if resp.empty:
+    #             return {"status": True, "message": "success", "data": []}
+    #         for each_float_col in ["Cylinder_Filled"]:
+    #             if each_float_col in resp.columns:
+    #                 resp[each_float_col] = resp[each_float_col].fillna(0.0)            
+    #         for each_str_col in ["zone", "plant"]:
+    #             if each_str_col in resp.columns:
+    #                 resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+    #         return {"status": True, "message": "success", "data": resp}
+    #     # Execute the query
+    #     resp = await function(query=handled_cylinder_query_)
+    #     resp = pd.DataFrame(resp)
+    #     resp = await filter_data(resp, _filters)
+    #     if resp.empty:
+    #         return {"status": True, "message": "success", "data": []}
+    #     for each_float_col in ["Cylinder_Filled"]:
+    #         if each_float_col in resp.columns:
+    #             resp[each_float_col] = resp[each_float_col].fillna(0.0)
+    #     # Fill missing values for string columns
+    #     for each_str_col in ["zone", "plant"]:
+    #         if each_str_col in resp.columns:
+    #             resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
+    #     if filters:
+    #         grouped_resp = None
+    #         filter_keys = [rec.key.strip('"') for rec in filters]
+    #         if "zone" in filter_keys and "plant" not in filter_keys:
+    #             grouped_resp = resp.groupby(["zone", "plant"], as_index=False).agg({
+    #                 "Cylinder_Filled": "sum"
+    #             })
+    #         if grouped_resp is not None:
+    #             return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
+    #     return {"status": True, "message": "success", "data": resp.to_dict(orient='records')}
     
     
     @staticmethod
@@ -8856,7 +8955,7 @@ class GlobalAnalytics:
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
-        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", daterange]
+        where_clauses = [f"interlock_name = 'Dry Out Each Indent Wise MainFlow'", "indent_status != 'Cancelled'", daterange]
         if _filters:
             where_clauses.extend(_filters)
 
@@ -8864,10 +8963,10 @@ class GlobalAnalytics:
 
         # Final query
         query = (
-            f"SELECT zone, sap_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
+            f"SELECT zone, sap_id, location_name, terminal_plant_id, product_code, MAX(created_at) AS created_at, count(sap_id) total_count "
             f"FROM alerts "
             f"WHERE {where_clause} "
-            f"GROUP BY zone, sap_id, product_code "
+            f"GROUP BY zone, sap_id, product_code, location_name, terminal_plant_id "
             f"ORDER BY zone, sap_id, product_code"
         )
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
@@ -8875,6 +8974,7 @@ class GlobalAnalytics:
         if not data.empty:
             data['product_code'] = data['product_code'].astype(str).map(await product_map())
             data['created_date'] = pd.to_datetime(data['created_at']).dt.date
+            data['created_at'] = pd.to_datetime(data['created_at']).dt.strftime('%Y-%b-%d %H:%M:%S')
 
             daily_counts = data.groupby(['created_date', 'product_code'])['total_count'].sum().reset_index()
 
@@ -8890,6 +8990,7 @@ class GlobalAnalytics:
                                                                                             fill_value=0).reset_index()
 
             daily_counts = daily_counts.rename(columns={'created_date': 'report_date', 'total_count': 'total_dryouts'})
+            data = data.rename(columns={'created_date': 'report_date', 'total_count': 'total_dryouts'})
             return {
                 "status": True, "message": "Success",
                 "counts": daily_counts.to_dict(orient='records'),
@@ -8932,10 +9033,28 @@ class GlobalAnalytics:
 
     @staticmethod
     async def frequently_dry_out_trends(filters, cross_filters, drill_state):
-        query = (f"SELECT TO_CHAR(created_at, 'YYYY-MM') AS month, sap_id, product_code, COUNT(*) AS dryout_count "
-                 f"FROM alerts WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' AND "
-                 f"created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' "
-                 f"GROUP BY month, sap_id, product_code HAVING COUNT(*) > 3 ORDER BY month, sap_id, product_code")
+        query = """WITH product_level_dryouts AS (
+                      SELECT DISTINCT
+                        sap_id,
+                        product_code,
+                        location_name,
+                        DATE(indent_raised_date) AS dryout_day,
+                        TO_CHAR(created_at, 'YYYY-Mon') AS month
+                      FROM alerts
+                      WHERE interlock_name = 'Dry Out Each Indent Wise MainFlow' and indent_status != 'Cancelled'
+                        AND created_at >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months'
+                    )
+                    
+                    SELECT
+                      month,
+                      sap_id,
+                      product_code,
+                      location_name,
+                      COUNT(*) AS dryout_count
+                    FROM product_level_dryouts
+                    GROUP BY month, sap_id, product_code, location_name
+                    HAVING COUNT(*) > 3
+                    ORDER BY month, sap_id, product_code, dryout_count DESC"""
 
         data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
@@ -8948,7 +9067,7 @@ class GlobalAnalytics:
             }
         data['product_code'] = data['product_code'].astype(str).map(await product_map())
         # Convert month column to datetime for range filling
-        data['month'] = pd.to_datetime(data['month'], format="%Y-%m") + MonthEnd(0)
+        data['month'] = pd.to_datetime(data['month'], format="%Y-%b") + MonthEnd(0)
 
         # Get full month range (3 months) and product list
         full_months = pd.date_range(end=data['month'].max(), periods=3, freq='M')
@@ -8980,8 +9099,10 @@ class GlobalAnalytics:
     async def dry_out_ro_loss(filters, cross_filters, drill_state, resp_level='all'):
         print("resp_level: ", resp_level)
         _filters = []
-        start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
-        daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+        daterange = ""
+        # start_date, end_date = await va_analysis.get_period_datetime(period='monthly')
+        # daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+
         group_by_col = []
         if cross_filters:
             for filter in cross_filters:
@@ -8991,81 +9112,52 @@ class GlobalAnalytics:
                         _today = datetime.strptime(filter.value.split(",")[0], '%Y-%m-%d')
                         start_date, end_date = await va_analysis.get_period_datetime(period='monthly', today=_today)
                     if start_date == end_date:
-                        daterange = f""" a.created_at::date = '{start_date}' """
+                        daterange = f""" loss_month = '{start_date.strftime("%Y-%b")}' """
                     else:
-                        daterange = f""" a.created_at::date BETWEEN '{start_date}' AND '{end_date}' """
+                        months = pd.date_range(start=start_date, end=end_date, freq='MS').strftime('%Y-%b')
+                        months_tuple = tuple(months)
+                        if len(months_tuple) > 1:
+                            daterange = f""" loss_month IN {months_tuple} """
+                        else:
+                            daterange = f""" loss_month = '{months_tuple[0]}' """
                     continue
                 _filters.append(f"{filter.key} = '{filter.value}'")
 
         if filters:
             for filter in filters:
-                group_by_col.append(filter.key)
-                _filters.append(f"a.{filter.key} = '{filter.value}'")
+                if filter.key == 'month':
+                    group_by_col.append("zone")
+                    continue
+                if filter.key == 'zone':
+                    group_by_col.append("region")
+                if filter.key == 'region':
+                    group_by_col.append("sales_area")
+                if filter.key == 'sales_area':
+                    group_by_col.append("location_name")
+                _filters.append(f"{filter.key} = '{filter.value}'")
 
         # Construct WHERE clause
         where_clauses = [
-            f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'", "a.dry_out_in_days = '1'",
-            daterange
+            # f"a.interlock_name = 'Dry Out Each Indent Wise MainFlow'",
+            # "a.dry_out_in_days = '1'",
+            # "a.indent_status != 'Cancelled'"
         ]
         if _filters:
             where_clauses.extend(_filters)
 
+        if daterange:
+            where_clauses.append(daterange)
+
         where_clause = " AND ".join(where_clauses)
-        query = f"""WITH product_mapping AS (
-                      SELECT * FROM (VALUES
-                        ('2811000', '1322000'),  -- MS
-                        ('2812000', '1683000'),  -- HSD
-                        ('3912000', '1683100'),  -- TURBO
-                        ('2816000', '2682000'),  -- POWER 99
-                        ('3672000', '3672000'),  -- POWER 95
-                        ('3373000', '3373000')   -- POWER 100
-                      ) AS pm(alert_product_code, sales_product_no)
-                    ),
-                    avg_sales AS (
-                      SELECT 
-                        ro_sap_code,
-                        product_no,
-                        tank_no,
-                        AVG(total_sales) AS avg_daily_sales
-                      FROM "HPCL_HOS".ro_daily_sales
-                      WHERE transaction_date >= CURRENT_DATE - INTERVAL '3 months'
-                      GROUP BY ro_sap_code, product_no, tank_no
-                    ),
-                    alert_periods AS (
-                      SELECT 
-                        a.sap_id,
-                        a.zone,
-                        pm.sales_product_no,
-                        TRIM(tank_id) AS tank_no,
-                        a.created_at AS start_ts,
-                        CASE 
-                          WHEN a.alert_status = 'Close' THEN a.updated_at
-                          ELSE NOW()
-                        END AS end_ts
-                      FROM alerts a
-                      JOIN product_mapping pm ON a.product_code = pm.alert_product_code
-                      JOIN LATERAL unnest(string_to_array(a.device_id, ',')) AS tank_id ON TRUE
-                      WHERE a.interlock_name = 'Dry Out Each Indent Wise MainFlow'
-                        AND a.dry_out_in_days = '1'
-                        AND a.indent_status != 'Cancelled'
-                    )
-                    SELECT 
-                      TO_CHAR(ap.start_ts, 'YYYY-Mon') AS loss_month,
-                      ap.zone,
-                      ap.sap_id,
-                      ap.sales_product_no AS product_no,
-                      ap.tank_no,
-                      ap.start_ts AS start_date,
-                      ap.end_ts AS end_date,
-                      a.avg_daily_sales
-                    FROM alert_periods ap
-                    JOIN avg_sales a 
-                      ON ap.sap_id::bigint = a.ro_sap_code::bigint
-                     AND ap.sales_product_no::bigint = a.product_no::bigint
-                     AND ap.tank_no::bigint = a.tank_no::bigint
-                    ORDER BY ap.start_ts DESC"""
-        data = await hpcl_ceg_model.Alerts.get_aggr_data(query=query, limit=0)
+        query = "select * from dry_out_ro_loss"
+        if where_clause:
+            query = f"""select * from dry_out_ro_loss where {where_clause}"""
+
+        data = await hpcl_ceg_model.DryOutRoLoss.get_aggr_data(query=query, limit=0)
         data = pd.DataFrame(data.get("data", []))
+        for col in ['id', 'created_at', 'updated_at', 'entity_id']:
+            if col in data.columns:
+                del data[col]
         if data.empty:
             return {
                 "status": False,
@@ -9073,39 +9165,57 @@ class GlobalAnalytics:
                 "counts": [],
                 "data": []
             }
-        products_map = {'2811000': 'MS', '1322000': 'MS', '2812000': 'HSD', '1683000': 'HSD', '3912000': 'TURBO',
-                        '1683100': 'TURBO', '2816000': 'POWER 99', '2682000': 'POWER 99', '3672000': 'POWER 95',
-                        '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
-        data = data.fillna(0)
-        data['product_name'] = data['product_no'].astype(str).map(products_map)
-        data['start_date'] = pd.to_datetime(data['start_date']).dt.tz_localize(None)
-        data['end_date'] = pd.to_datetime(data['end_date']).dt.tz_localize(None)
-        data['dryout_days'] = (data['end_date'] - data['start_date']).dt.total_seconds() / (60 * 60 * 24)
-        data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
-        data["estimated_loss"] = data["estimated_loss"].round(2)
-        data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
-        if resp_level == 'count':
-            data = data.groupby(['loss_month', 'product_name'] + group_by_col)[
-                'estimated_loss'].sum().reset_index()
+        data['loss_month_dt'] = pd.to_datetime(data['loss_month'], format='%Y-%b')
+        data = data.sort_values('loss_month_dt')
+        data = data.drop(columns='loss_month_dt')
+        # products_map = {'2811000': 'MS', '1322000': 'MS', '2812000': 'HSD', '1683000': 'HSD', '3912000': 'TURBO',
+        #                 '1683100': 'TURBO', '2816000': 'POWER 99', '2682000': 'POWER 99', '3672000': 'POWER 95',
+        #                 '3672000': 'POWER 95', '3373000': 'POWER 100', '3373000': 'POWER 100'}
+        # data = data.fillna(0)
+        # data['product_name'] = data['product_no'].astype(str).map(products_map)
+        # data['start_date'] = pd.to_datetime(data['start_date']).dt.tz_localize(None)
+        # data['end_date'] = pd.to_datetime(data['end_date']).dt.tz_localize(None)
+        # data['dryout_days'] = (data['end_date'] - data['start_date']).dt.total_seconds() / (60 * 60 * 24)
+        # data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
+        # data["estimated_loss"] = data["estimated_loss"].round(2)
+        # data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
+        if resp_level == 'pie-chart':
+            group_by_col = []
+        data_count = data.groupby(['loss_month', 'product_name'] + group_by_col)[
+            'estimated_loss'].sum().reset_index()
+        data_count["estimated_loss"] = data_count["estimated_loss"].round(2)
+        data_count['loss_month_dt'] = pd.to_datetime(data_count['loss_month'], format='%Y-%b')
+        data_count = data_count.sort_values('loss_month_dt')
+        data_count = data_count.drop(columns='loss_month_dt')
+
+        if resp_level in ['count', 'pie-chart']:
             return {
                 "status": True,
                 "message": "Success",
-                "counts": data.to_dict(orient='records'),
+                "counts": data_count.to_dict(orient='records'),
                 "data": []
             }
 
-        for col in ['start_date', 'end_date']:
-            if col in data.columns:
-                del data[col]
-        data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'avg_daily_sales'])[['estimated_loss', 'dryout_days']].sum().reset_index()
-        data['dryout_days'] = pd.to_timedelta(data['dryout_days'], unit='D')
-
-        data['dryout_days'] = data['dryout_days'].apply(
-            lambda td: f"{td.days} days {td.components.hours} hours"
-        )
-        # data = data.fillna(0)
+        # data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'avg_daily_sales'])[
+        #     ['estimated_loss', 'dryout_days']].sum().reset_index()
+        # data["avg_daily_sales"] = data["avg_daily_sales"].astype(np.float64)
+        # data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone','tank_no'])[
+        #     ['estimated_loss', 'dryout_days', 'avg_daily_sales']].sum().reset_index()
+        # data["estimated_loss"] = data["estimated_loss"].round(2)
+        # data["avg_daily_sales"] = data["avg_daily_sales"].round(2)
+        # data['dryout_days'] = pd.to_timedelta(data['dryout_days'], unit='D')
+        #
+        # data['dryout_days'] = data['dryout_days'].apply(
+        #     lambda td: f"{td.days} days {td.components.hours} hours"
+        # )
+        # # data = data.fillna(0)
+        data = data[
+            ["loss_month", "zone", "sales_area", "region", "location_name",
+             "sap_id", "product_name", "tank_no", "avg_daily_sales", "estimated_loss", "dryout_days"]
+        ]
         return {
             "status": True,
             "message": "Success",
+            "count": data_count.to_dict(orient='records'),
             "data": data.to_dict(orient='records')
         }

@@ -67,13 +67,15 @@ class VAAlertManager(alert_factory.AlertFactory):
                         f"device_id - {record['device_id']},",
                         f"video_url - {record['video_url']}"
                         ])
-
+                    allocated_time = datetime.datetime.now(datetime.timezone.utc)
+                    processed_time = datetime.datetime.now(datetime.timezone.utc)
                     alert_history = [{
                         "action_msg": exception_msg,
                         "action_type": "Created",
-                        "alert_status": "Open"
+                        "alert_status": "Open",
+                        "allocated_time": allocated_time.isoformat(),
+                        "processed_time": processed_time.isoformat()
                         }]
-                    
                     # here record['alert_section'] will be alert_type of VA
                     # Retrieving the alert_mapping details for alert_type based on location_type and alert_type.
                     va_alert_data = va_alert_mapping.VA_Alert_Mapping[record['location_type']].get(
