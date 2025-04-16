@@ -447,7 +447,7 @@ async def indentdryout_get_dry_out_count(data: Indentdryout_Get_Dry_Out_CountPar
     condition_3 = ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"] + where_clause) if dry_out_in_days == '3' else ' AND '.join(basic_condtion + ["dry_out_in_days = '3'"])
 
     condition = "interlock_name = 'Dry Out Each Indent Wise MainFlow' AND indent_status NOT IN ('Cancelled', 'Completed')"
-    ext_cond = await hpcl_ceg_model.Alerts.get_clause_conditions(extra_key_mapping={"sap_id": "terminal_plant_id"})
+    ext_cond = await hpcl_ceg_model.Alerts.get_clause_conditions(extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"})
     if ext_cond:
         condition += " AND " + " AND ".join(ext_cond)
     dry_out, intraday_dry_out, potential_dry_out = 0, 0, 0
@@ -560,7 +560,7 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     top_x_axis = connection_mapping.dry_out_top_x_axis
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'", "mark_as_false = true"]
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
-        extra_key_mapping={"sap_id": "terminal_plant_id"}))
+        extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"}))
     dry_out_in_days_query = '1'
     for record in data.filters:
         if record.key == "progress_rate":
@@ -790,7 +790,7 @@ async def indentdryout_get_dried_out_ro_data(data: Indentdryout_Get_Dried_Out_Ro
 
     where_clause = ["interlock_name = 'Dry Out Each Indent Wise MainFlow'"]
     where_clause.extend(await hpcl_ceg_model.Alerts.get_clause_conditions(
-        extra_key_mapping={"sap_id": "terminal_plant_id"}))
+        extra_key_mapping={"sap_id": "terminal_plant_id"}, default_mapping={"bu": "RO"}))
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     ist = pytz.timezone('Asia/Kolkata')
