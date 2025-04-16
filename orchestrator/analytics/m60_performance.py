@@ -14,7 +14,8 @@ from api_manager.charts_actions import charts_connection_vault_routing
 from api_manager.charts_actions import charts_get_distinct_values
 from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
-
+from decimal import Decimal
+from collections import defaultdict
 productOrders = {
     "Retail": ["MS", "HSD", "CNG", "SKO", "Compressed Bio Gas (CBG)", "LPG BLK"],
     "Aviation": ["ATF"],
@@ -156,6 +157,7 @@ async def collect_data(req_keys, table_name, where_conditions, start_date, end_d
     Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
     Charts_Connection_Vault_RoutingParams.action = 'execute_query'
     function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
+    print("query",query)
     resp = await function(query=query)
     return resp
 
@@ -785,6 +787,8 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     target_data = [x.update({'month_name': end_month}) or x for x in target_data]  
                 '''
                 target_data = pd.DataFrame(calculate_pro_rate(target_data, "TARGET_TMT_SALES", start_date, end_date))
+                #if "C"  in [x['key'].strip('"') for x in filters]:
+                #    del target_data['month_name']
                 if "month_name" in target_data.columns.tolist():
                     #here we are trying to drill from SA to month_name  where we are getting issue. month_name is getting deleted . thats the reason we are not deleting 
                     #month_name in  YR mode
@@ -878,8 +882,63 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 hist_data = pd.DataFrame([{'ACTUAL_HISTORY_TMT_SALES': hist_data.sum()['ACTUAL_HISTORY_TMT_SALES']}])
             hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
             hist_data = hist_data.to_dict(orient='records')
+    print("actual_data",actual_data)
+    print("target_data",target_data)
+    print("his_data",hist_data)
+    drill_list = ['ProductName','Zone_Name','Region_Name','SalesArea_Name','month_name']
+    summed_data = defaultdict(Decimal)
+    tgt_result = []
+    '''
+    if target_data:
+        #if 'productName' in target_data[0] or 'ProductName' in target_data[0]:
+        for each_level in drill_list:
+            print("each_lvel",each_level)
+            if each_level in target_data[0]:
+                print("each level present",each_level)
+                for entry in target_data:
+                
+                    product = entry[each_level]
+                    value = Decimal(entry['TARGET_TMT_SALES'])  # Ensure consistent Decimal
+                    summed_data[product] += value
+                #tgt_result = [{'ProductName': k, 'TARGET_TMT_SALES': round(v, 2)} for k, v in summed_data.items()]
+                tgt_result = [{f"{each_level}": k, 'TARGET_TMT_SALES': round(v, 2)} for k, v in summed_data.items()]
+                if resp_format != 'heat_map':
+                    break
+        if len(tgt_result)  == 0:
+            tgt_result = target_data
+        #df_ = [pd.DataFrame(d) for d in [actual_data, tgt_result, hist_data] if d]
+        print("tgt_result",tgt_result)
+    '''
+    '''
+    Copying target data into tgt_result and summing up as the merge with actual or hist data is giving error. Becaus on target_data we will calculate pro-rate
+    '''
+    summed_data = defaultdict(Decimal)
+    tgt_result = []
+    matched_level = None
 
-    df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
+    if target_data:
+        for each_level in drill_list:
+            if each_level in target_data[0]:
+                if not tgt_result:
+                    matched_level = each_level
+                    for entry in target_data:
+                        key = entry[each_level]
+                        value = Decimal(entry['TARGET_TMT_SALES'])
+                        summed_data[key] += value
+                    tgt_result = [{f"{matched_level}": k, 'TARGET_TMT_SALES': round(v, 2)} for k, v in summed_data.items()]
+                    if resp_format != 'heat_map':
+                        continue  # Continue to check for month_name
+                elif each_level == 'month_name' and matched_level:
+                    # Add month_name to existing tgt_result items
+                    for row in tgt_result:
+                        match_key = row[matched_level]
+                        for entry in target_data:
+                            if entry[matched_level] == match_key:
+                                row['month_name'] = entry.get('month_name')
+                                break
+                    break
+        #df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
+    df_ = [pd.DataFrame(d) for d in [actual_data, tgt_result, hist_data] if d]
     merged_df = df_[0] if len(df_) else pd.DataFrame([])
     if len(df_) > 1:
         for df in df_[1:]:
@@ -1188,7 +1247,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
         if all(not v for v in final_resp.values()):
             return {"status": False, "message": "No Data Present for the current selection",
                     "data": {'data': final_resp, 'level': {}, 'sales_unit': measure_unit}}
-        
         if isinstance(final_resp, dict):
             if len(final_resp) == 0:
                 return {"status": False, "message": "No Data Present for the current selection",
