@@ -595,6 +595,7 @@ Model Alerts {
     equipment_type optional str
     device_name optional str
     equipment_name optional str
+    tas_device_name optional str
     device_msg optional str                 // Message received from the device
     vehicle_number optional str
     violation_type optional str

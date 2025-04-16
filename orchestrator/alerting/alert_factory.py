@@ -114,6 +114,7 @@ class AlertFactory:
                                                         'equipment_type': alert_data.get('equipment_type',''),
                                                         'equipment_name': alert_data.get('equipment_name',''),
                                                         'sensor_id': alert_data.get('sensor_id', ''),
+                                                        'tas_device_name': alert_data.get('tas_device_name', ''),
                                                         'alert_message': alert_data.get('alert_message',''),
                                                         'last_sms_to': [], 'last_mailed_to': [],
                                                         'last_escalated_to': [],
