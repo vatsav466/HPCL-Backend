@@ -107,7 +107,7 @@ class BasePostgresModel(pydantic.BaseModel):
         ...
 
     @classmethod
-    async def get_clause_conditions(cls, formated=False, extra_key_mapping={}):
+    async def get_clause_conditions(cls, formated=False, extra_key_mapping=None, default_mapping=None):
         where_clause = []
         if urdhva_base.ctx.exists() and hasattr(cls.Config, "access_key_mapping"):
             key_mapping = cls.Config.access_key_mapping
@@ -136,8 +136,11 @@ class BasePostgresModel(pydantic.BaseModel):
                     del mapped_data['bu']
             # Generating query Conditions
             for key, value in mapped_data.items():
-                if key in extra_key_mapping:
+                if extra_key_mapping and key in extra_key_mapping:
                     key = extra_key_mapping[key]
+                # Incase if we need to map extra details like bu for supply chain
+                if default_mapping and key in default_mapping:
+                    value = default_mapping[key]
                 if value in rpt and rpt.get(value):
                     if isinstance(rpt[value], list):
                         if len(rpt[value]) == 1:
