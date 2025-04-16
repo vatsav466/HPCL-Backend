@@ -44,7 +44,7 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
     cond = await hpcl_ceg_model.Alerts.get_clause_conditions(formated=True)
     dry_out_plants = []
     dry_out_customers = []
-    for rec in cond:
+    for rec in cond:        
         if rec['key'] == 'zone':
             if not zone:
                 zone = []
@@ -105,7 +105,9 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
     # Filtering zone
     for rec in bu_data.to_dict(orient='records'):
         if rec["zone"]:
-            if cond and plant and rec['sap_id'] not in plant:
+            # Shrihari commented
+            # if cond and plant and rec['sap_id'] not in plant:
+            if cond and zone and rec['zone'] not in zone:
                 continue
             final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
     if dry_out_dealers:
