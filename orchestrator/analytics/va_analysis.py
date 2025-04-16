@@ -158,6 +158,13 @@ async def get_period_datetime(period: str, today=None):
         second_half_start = datetime.datetime(year, month, 15, 0, 0, 0)
         second_half_end = datetime.datetime(year, month, last_day.day, 23, 59, 59)
         return (first_half_start, first_half_end) if today.day <= 14 else (second_half_start, second_half_end)
+    if period == 'oneweek':
+        if not today:
+            today = datetime.datetime.now(datetime.timezone.utc)
+        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date = today - datetime.timedelta(days=7)
+        return start_date, end_date
+
 
 async def get_va_alerts_count(bu: str, violation_type: str, sap_id: str):
     va_mapping = va_alert_mapping.VA_Alert_Mapping
