@@ -161,8 +161,8 @@ async def get_period_datetime(period: str, today=None):
     if period == 'oneweek':
         if not today:
             today = datetime.datetime.now(datetime.timezone.utc)
-        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = today - datetime.timedelta(days=7)
+        end_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_date = today - datetime.timedelta(days=7)
         return start_date, end_date
 
 
