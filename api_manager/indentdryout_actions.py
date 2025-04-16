@@ -707,12 +707,13 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
         # list_of_carry_fwd_indents = await dry_out_analysis.get_carry_fwd_indent(get_only_dry_out_ro=False)
         carry_fwd_data = await dry_out_analysis.sync_carry_fwd_indent(insert_to_db=False)
         carry_fwd_data = pd.DataFrame(carry_fwd_data)
+        pending_carry_fwd_data = await dry_out_analysis.get_previous_day_carry_fwd_indent()
         stats.extend([{
-            "section": "Carry Fwd Indent",
+            "section": "CarryFwd Indent",
             "value": len(carry_fwd_data),
             "serial": 15, "condition": "=", "group": "carry_fwd_indent"
         }, {
-            "section": "DryOut Carry Fwd Indent",
+            "section": "DryOut CarryFwd Indent",
             "value": len(carry_fwd_data[carry_fwd_data['dry_out_in_days'].fillna("") != ''])
             if len(carry_fwd_data) else 0,
             "serial": 16, "condition": "=", "group": "carry_fwd_indent"
@@ -720,6 +721,18 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "CATA Carry Fwd Indent",
             "value": len(carry_fwd_data[carry_fwd_data['category'].fillna("") != '']) if len(carry_fwd_data) else 0,
             "serial": 17, "condition": "=", "group": "carry_fwd_indent"
+        },{
+            "section": "Pending CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("cf_indents", 0),
+            "serial": 15, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending DryOut CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("dryout_count", 0),
+            "serial": 16, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending CATA CarryFwd Indent",
+            "value": pending_carry_fwd_data.get("category_a_count", 0),
+            "serial": 17, "condition": "=", "group": "pending_carry_fwd_indent"
         }])
     else:
         stats.extend([{
@@ -734,6 +747,18 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
             "section": "CATA Carry Fwd Indent",
             "value": 0,
             "serial": 17, "condition": "=", "group": "carry_fwd_indent"
+        },{
+            "section": "Pending CarryFwd Indent",
+            "value": 0,
+            "serial": 15, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending DryOut CarryFwd Indent",
+            "value": 0,
+            "serial": 16, "condition": "=", "group": "pending_carry_fwd_indent"
+        }, {
+            "section": "Pending CATA CarryFwd Indent",
+            "value": 0,
+            "serial": 17, "condition": "=", "group": "pending_carry_fwd_indent"
         }])
     # ro_not_in_ims_count = await dry_out_analysis.ro_not_in_ims()
     # atg_ack = await dry_out_analysis.get_atg_ack(sap_id="", product_code="")
