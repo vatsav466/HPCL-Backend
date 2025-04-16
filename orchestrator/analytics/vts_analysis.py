@@ -320,7 +320,7 @@ async def get_vts_instance(tt_number: str):
     start_date, end_date = await va_analysis.get_period_datetime(period='fortnight')
     start_date = start_date.strftime("%Y-%m-%d")
     end_date = end_date.strftime("%Y-%m-%d")
-    query = (f"select violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
+    query = (f"select DISTINCT ON (tl_number, invoice_number) violation_type, id from vts_alert_history where tl_number = '{tt_number}' "
              f"and vts_end_datetime::date between '{start_date}' and '{end_date}'")
     vts_alert_data = await hpcl_ceg_model.VtsAlertHistory.get_aggr_data(query, limit=0)
     if not vts_alert_data:
