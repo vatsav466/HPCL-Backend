@@ -902,4 +902,7 @@ async def indentdryout_generate_dryout_group_data(data: Indentdryout_Generate_Dr
     if data.action == 'dryout_analysis':
         return await dry_out_analysis.get_dryout_aging_data()
 
+    if data.action == 'pending_carry_fwd_indent':
+        return await dry_out_analysis.get_previous_day_carry_fwd_indent(data="data")
+
     return {}

@@ -1681,12 +1681,17 @@ async def generate_dry_out_report(records):
                  f"where {' AND '.join(conditions)}")
         await hpcl_ceg_model.DryOutAlertReport.update_by_query(query)
 
-async def get_previous_day_carry_fwd_indent(today=None):
+async def get_previous_day_carry_fwd_indent(today=None, data='count'):
     if not today:
         today = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    query = (f"SELECT COUNT(*) AS cf_indents, "
-             f"COUNT(*) FILTER (WHERE dry_out_in_days != '') AS dryout_count, "
-             f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
-             f"FROM public.carry_fwd_indent where created_at::DATE = '{today}' ")
+    if data == 'count':
+        query = (f"SELECT COUNT(*) AS cf_indents, "
+                 f"COUNT(*) FILTER (WHERE dry_out_in_days != '') AS dryout_count, "
+                 f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
+                 f"FROM public.carry_fwd_indent where created_at::DATE = '{today}' ")
+    else:
+        query = (f"""select sap_id as "SAP ID", terminal_plant_id as "Terminal Plant Id", indent_no as "Indent No", """
+                 f"""prod_reqd_dt as "Prod Req Date", dry_out_in_days as "DryOut Days", category as "Category" """ 
+                 f"""from carry_fwd_indent where created_at::DATE = '{today}' """)
     data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
     return data.get('data', [])[0] if data.get('data', []) else {}
