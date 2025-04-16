@@ -885,7 +885,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     print("actual_data",actual_data)
     print("target_data",target_data)
     print("his_data",hist_data)
-    drill_list = ['ProductName','Zone_Name','Region_Name','SalesArea_Name','month_name']
+    drill_list = ['SBU_Name','ProductName','Zone_Name','Region_Name','SalesArea_Name','month_name']
     summed_data = defaultdict(Decimal)
     tgt_result = []
     '''
@@ -912,8 +912,7 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     '''
     Copying target data into tgt_result and summing up as the merge with actual or hist data is giving error. Becaus on target_data we will calculate pro-rate
     '''
-    summed_data = defaultdict(Decimal)
-    tgt_result = []
+    
     matched_level = None
 
     if target_data:
@@ -937,6 +936,20 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                 row['month_name'] = entry.get('month_name')
                                 break
                     break
+        print("tgt_result",tgt_result)
+        non_month_keys = [k for k in drill_list if k != 'month_name']
+
+        if (
+            all(k not in target_data[0] for k in non_month_keys) and
+            'month_name' in target_data[0] and
+            len(tgt_result) == 0
+        ):
+            tgt_result = target_data
+
+        #if any(drill_list) not in target_data[0] and len(tgt_result) == 0:
+        #    tgt_result = target_data
+            #if len(tgt_result) ==0:
+            #    tgt_result = target_data
         #df_ = [pd.DataFrame(d) for d in [actual_data, target_data, hist_data] if d]
     df_ = [pd.DataFrame(d) for d in [actual_data, tgt_result, hist_data] if d]
     merged_df = df_[0] if len(df_) else pd.DataFrame([])
