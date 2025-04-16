@@ -27,7 +27,8 @@ async def sync_dry_out_ro_loss():
                     ro_sap_code,
                     product_no,
                     tank_no,
-                    AVG(total_sales) AS avg_daily_sales
+                    AVG(total_sales) AS avg_daily_sales,
+                    AVG(txn_amount) AS avg_daily_sales_amount
                   FROM "HPCL_HOS".ro_daily_sales
                   WHERE transaction_date >= CURRENT_DATE - INTERVAL '3 months'
                   GROUP BY ro_sap_code, product_no, tank_no
@@ -62,7 +63,8 @@ async def sync_dry_out_ro_loss():
                   ap.tank_no,
                   ap.start_ts AS start_date,
                   ap.end_ts AS end_date,
-                  a.avg_daily_sales
+                  a.avg_daily_sales,
+                  a.avg_daily_sales_amount
                 FROM alert_periods ap
                 JOIN avg_sales a 
                   ON ap.sap_id::bigint = a.ro_sap_code::bigint
@@ -80,15 +82,21 @@ async def sync_dry_out_ro_loss():
     data['end_date'] = pd.to_datetime(data['end_date']).dt.tz_localize(None)
     data['dryout_days'] = (data['end_date'] - data['start_date']).dt.total_seconds() / (60 * 60 * 24)
     data["estimated_loss"] = data["dryout_days"] * data["avg_daily_sales"]
+    data["estimated_loss_amount"] = data["dryout_days"] * data["avg_daily_sales_amount"]
     data["estimated_loss"] = data["estimated_loss"].round(2)
+    data["estimated_loss_amount"] = data["estimated_loss_amount"].round(2)
     data["avg_daily_sales"] = data["avg_daily_sales"].round(2).astype(str)
-    data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'avg_daily_sales', 'region', 'sales_area', 'location_name'])[
-        ['estimated_loss', 'dryout_days']].sum().reset_index()
+    data["avg_daily_sales_amount"] = data["avg_daily_sales_amount"].round(2).astype(str)
+    data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'avg_daily_sales', 'avg_daily_sales_amount', 'region', 'sales_area', 'location_name'])[
+        ['estimated_loss', 'estimated_loss_amount', 'dryout_days']].sum().reset_index()
     data["avg_daily_sales"] = data["avg_daily_sales"].astype(np.float64)
+    data["avg_daily_sales_amount"] = data["avg_daily_sales_amount"].astype(np.float64)
     data = data.groupby(['loss_month', 'sap_id', 'product_name', 'zone', 'tank_no', 'region', 'sales_area', 'location_name'])[
-        ['estimated_loss', 'dryout_days', 'avg_daily_sales']].sum().reset_index()
+        ['estimated_loss', 'estimated_loss_amount', 'dryout_days', 'avg_daily_sales', 'avg_daily_sales_amount']].sum().reset_index()
     data["estimated_loss"] = data["estimated_loss"].round(2)
     data["avg_daily_sales"] = data["avg_daily_sales"].round(2)
+    data["estimated_loss_amount"] = data["estimated_loss_amount"].round(2)
+    data["avg_daily_sales_amount"] = data["avg_daily_sales_amount"].round(2)
     data['dryout_days'] = pd.to_timedelta(data['dryout_days'], unit='D')
 
     data['dryout_days'] = data['dryout_days'].apply(

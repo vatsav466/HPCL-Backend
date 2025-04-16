@@ -2120,8 +2120,10 @@ Model DryOutRoLoss {
     product_name unique_field index_field optional str
     loss_month unique_field index_field optional str
     estimated_loss optional float
+    estimated_loss_amount optional float
     dryout_days optional str
     avg_daily_sales optional float
+    avg_daily_sales_amount optional float
     region optional str
     sales_area optional str
     location_name optional str
