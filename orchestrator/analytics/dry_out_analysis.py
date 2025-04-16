@@ -1678,3 +1678,13 @@ async def generate_dry_out_report(records):
                  f"alert_status='Close',dryout_end_datetime='{urdhva_base.utilities.get_present_time()}' "
                  f"where {' AND '.join(conditions)}")
         await hpcl_ceg_model.DryOutAlertReport.update_by_query(query)
+
+async def get_previous_day_carry_fwd_indent(today=None):
+    if not today:
+        today = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    query = (f"SELECT COUNT(*) AS cf_indents, "
+             f"COUNT(*) FILTER (WHERE dry_out_in_days != '') AS dryout_count, "
+             f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
+             f"FROM public.carry_fwd_indent where created_at::DATE = '{today}' ")
+    data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+    return data.get('data', [])[0] if data.get('data', []) else {}
