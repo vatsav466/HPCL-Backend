@@ -1262,7 +1262,7 @@ Model VtsAlertHistory {
     location_id optional str
     location_type optional str
     tl_number unique_field index_field str
-    report_duration optional str
+    report_duration unique_field optional str
     vts_start_datetime optional datetime
     vts_end_datetime optional datetime
     total_trips optional int
