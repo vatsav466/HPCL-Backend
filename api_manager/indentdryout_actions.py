@@ -604,15 +604,15 @@ async def indentdryout_get_dried_out_ro(data: Indentdryout_Get_Dried_Out_RoParam
     dealer_tt = pl.read_csv("/opt/ceg/algo/utilities/DealerOwnedTrucks.csv", infer_schema_length=0)['DEALERID'].to_list()
 
     stats = {i + 1: 0 for i, _ in enumerate(top_x_axis)}
-    # dealer_tt_count = {x: 0 for x in connection_mapping.truck_details}
-    # for rec in stats_resp['data']:
-    #     if rec['present_stage'] == 0:
-    #         rec['present_stage'] = 1
-    #     if rec['present_stage'] not in stats:
-    #         stats[rec['present_stage']] = 0
-    #     stats[rec['present_stage']] += 1
-    #     if str(rec['sap_id']) in dealer_tt:
-    #         dealer_tt_count['Dealer TT'] += 1
+    dealer_tt_count = {x: 0 for x in connection_mapping.truck_details}
+    for rec in stats_resp['data']:
+        if rec['present_stage'] == 0:
+            rec['present_stage'] = 1
+        if rec['present_stage'] not in stats:
+            stats[rec['present_stage']] = 0
+        stats[rec['present_stage']] += 1
+        if str(rec['sap_id']) in dealer_tt:
+            dealer_tt_count['Dealer TT'] += 1
     dry_out_aging = await dry_out_analysis.get_dryout_aging(conditions)
     less_than_2_days = dry_out_aging.get("less_than_2_days", 0)
     from_3_to_7_days = dry_out_aging.get("from_3_to_7_days", 0)
