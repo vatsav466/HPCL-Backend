@@ -112,9 +112,9 @@ async def combine_roles(data, _id, role_name):
 async def process_data(data):
     data.rename(columns=reporting_config._rename, inplace=True)
     if all(col in data.columns for col in ["ADDRESS1","ADDRESS2","ADDRESS3","ADDRESS4","ADDRESS5"]):
-        data['adress'] = data[["ADDRESS1", "ADDRESS2", "ADDRESS3", "ADDRESS4", "ADDRESS5"]].fillna('').agg(' '.join, axis=1)
+        data['address'] = data[["ADDRESS1", "ADDRESS2", "ADDRESS3", "ADDRESS4", "ADDRESS5"]].fillna('').agg(' '.join, axis=1)
     elif all(col in data.columns for col in ["land_mark","location","pincode"]):
-        data["adress"] = data["land_mark"].astype(str) + " " + data["location"].astype(str) + " " + data["pincode"].astype(str)
+        data["address"] = data["land_mark"].astype(str) + " " + data["location"].astype(str) + " " + data["pincode"].astype(str)
     
     data['health_status'] = "Normal"
     data['is_active'] = True
@@ -136,6 +136,9 @@ async def process_data(data):
     
     data = data[list(reporting_config.location_master_schema.keys())]
     data['zone'] = data['zone'].map(reporting_config.zone_map)
+    print("Before dropping blank Zone :", len(data))
+    data = data[data["zone"].fillna("") != ""]
+    print("After dropping blank Zone :", len(data))
     return data
 
 
@@ -160,7 +163,6 @@ async def sync_location_master():
         data.to_csv(f"/tmp/location_master_{config.get('bu', '')}.csv", index=False)
         await clear_existing_location_master(config.get("bu", ""))
         await insert_users(data.to_dict(orient="records"))
-        exit()
 
 
 if __name__=="__main__":
