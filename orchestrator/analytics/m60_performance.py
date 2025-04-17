@@ -16,6 +16,12 @@ from dashboard_studio_model import Charts_Connection_Vault_RoutingParams
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 from decimal import Decimal
 from collections import defaultdict
+
+Finished_Lubes_Retail = ['Industrial Greases','Automotive Greases','Automotive Specialities','Compressed Bio Gas ','Compressed Bio Gas','Compressed Bio Gas (CBG)','Industrial Specialities']
+Finished_Lubes_Distributor = ['Industrial oils','Automotive Oils']
+Finished_Lubes = ['Industrial Specialities','Industrial Greases','Automotive Oils','Automotive Specialities','Industrial oils','Automotive Greases']
+Finished_Lubes_Consumer = ['Automotive Specialities','Automotive Greases','Automotive Oils']
+
 productOrders = {
     "Retail": ["MS", "HSD", "CNG", "SKO", "Compressed Bio Gas (CBG)", "LPG BLK"],
     "Aviation": ["ATF"],
@@ -556,8 +562,16 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
     actual_data = []
     hist_data = []
     target_data = []
-    actual_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
-    history_d = """ ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
+    #if "SBU_Name" in [x['key'].strip('"') for x in filters] or "SBU_Name" in [x['key'].strip('"') for x in cross_filters]:
+        
+    #    actual_d = f""" ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES", "DISTRIBUTION_CHANNEL_CD" """
+    #    history_d = f""" ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES","DISTRIBUTION_CHANNEL_CD" """
+    #    group_by_filter.append('DISTRIBUTION_CHANNEL_CD')
+    #    print("group_by_filter at query gen",group_by_filter)
+        
+    #else:
+    actual_d = f""" ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_TMT_SALES" """
+    history_d = f""" ROUND(SUM("MOM_DAY_LEVEL_DATA"."NETWEIGHT_TMT")::numeric,2) AS "ACTUAL_HISTORY_TMT_SALES" """
     filters_req = [condition['key'].strip('"') for condition in filters if
                    condition['key'].strip('"') in ["A", "H", "T"]]
     if len(filters_req) == 0:
@@ -1215,7 +1229,10 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                     if list(set([x['key'] for x in cross_filters]))[0].strip('"') == 'SBU_Name' and cross_filters[0][
                         'value'] != '' and resp_format != 'stacked':
                         # print("insied 2nd if")
-                        condition = cross_filters[0]
+                        if len(cross_filters) ==1 and cross_filters[0]['key'].strip('"') != 'month_name':
+                            condition = cross_filters[0]
+                        if len(cross_filters)>1 and cross_filters[1]['key'].strip('"') != 'month_name':
+                            condition = cross_filters[1]
                         if condition['key'].strip('"') == 'SBU_Name':
                             '''
                             removing the PETCHEM and Misc from LPG
@@ -1270,6 +1287,40 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                 # Sorting data
                                 # print("final_resp", final_resp)
                                 df = pd.DataFrame(final_resp)
+                                
+                                sbu_name = next((x['value'].strip('"') for x in filters if x['key'].strip('"') == 'SBU_Name'), None)
+
+                                if sbu_name == "Retail":
+                                    
+                                    
+
+                                        df['ProductName'] = df['ProductName'].str.strip()
+
+                                        df.loc[df['ProductName'].isin(Finished_Lubes_Retail), 'ProductName'] = 'Finished_Lubes_Retail'
+                                        df.loc[df['ProductName'].isin(Finished_Lubes_Distributor), 'ProductName'] = 'Finished_Lubes_Distributor'
+
+                                elif sbu_name == "Lubes":
+                                        
+
+                                        df['ProductName'] = df['ProductName'].str.strip()
+
+                                        df.loc[df['ProductName'].isin(Finished_Lubes_Consumer), 'ProductName'] = 'Finished_Lubes_Consumer'
+                                        df.loc[df['ProductName'].isin(Finished_Lubes), 'ProductName'] = 'Finished_Lubes'
+
+                                        # Ensure numeric conversion
+                                df['ACTUAL_TMT_SALES'] = df['ACTUAL_TMT_SALES'].fillna(0).astype(float)
+                                df['ACTUAL_HISTORY_TMT_SALES'] = df['ACTUAL_HISTORY_TMT_SALES'].fillna(0).astype(float)
+
+                                # Group and aggregate
+                                grouped_df = df.groupby('ProductName', as_index=False).agg({
+                                    'ACTUAL_TMT_SALES': 'sum',
+                                    'ACTUAL_HISTORY_TMT_SALES': 'sum',
+                                    'cumulative': lambda x: ''  # customize if needed
+                                })
+
+                                df = grouped_df
+                                        
+                                        
                                 if 'ProductName' in df.columns.tolist():
                                     
                                     #remove empty products if any are present in the product list
@@ -1285,6 +1336,16 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                         drop=True)
                                     df_sorted = df_sorted.fillna('')
                                     final_resp = {col: df_sorted[col].to_dict() for col in df_sorted.columns}
+                                    print("type pf final_resp to check",final_resp)
+                                    print("filters",filters)
+                                    print("cross_filters",cross_filters)
+                                    #if 'SBU_Name' in [x['key'].strip('"') for x in filters] and "Retail" in [x['value'].strip('"') for x in filters if x['key'.strip('"') == 'SBU_Name']]:
+                                    
+
+                                    
+
+                                    
+                                        
         if isinstance(final_resp,list):
             return {"status": False, "message": "Data Not Present for the current selection", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys, 'sales_unit': measure_unit}}    

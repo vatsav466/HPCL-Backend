@@ -33,15 +33,21 @@ import utilities.analog_data_mapping as category_mapping
 
 
 async def filter_data(df, _filters):
-    try:
+    try:        
         if _filters:
+            print("-"*30)
+            print("_filters :", _filters)
+            print("data columns :", df.columns)
+            print("length of data :", len(df))
             mask = pd.Series(True, index=df.index)
             for _filter in _filters:
                 for key, value in _filter.items():
                     key = key.replace('"','')
                     mask = mask & (df[key].fillna('') == value)
             df = df[mask]
-            return df
+            print("length of filtered data :", len(df))
+            print("-"*30)
+        return df
     except Exception as e:
         print("Exception in filtering data :", str(e))
     return df
@@ -3657,7 +3663,7 @@ class GlobalAnalytics:
                 productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "site_area" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "short_name" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -3670,7 +3676,7 @@ class GlobalAnalytics:
                 productivity_zone_query_ += f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 productivity_zone_query_ += f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "site_area" '
+            productivity_zone_query_ += ' GROUP BY "zone", "name", "process_date", "filling_heads", "short_name" '
             
             print("productivity_zone_query_ :", productivity_zone_query_)
             resp = await function(query=productivity_zone_query_)
@@ -3746,23 +3752,23 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
             if not daterange:
-                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
+                production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
-            production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "short_name" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
             if not "where" in production_zone_query_.lower() and not daterange:
-                production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()' 
+                production_zone_query_ +=  f' WHERE DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL' 
             elif not "where" in production_zone_query_.lower() and daterange:
                 production_zone_query_ +=  f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             elif not daterange:
-                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
+                production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "short_name" '
             
             print("production_zone_query_ :", production_zone_query_)
             resp = await function(query=production_zone_query_)
@@ -3821,9 +3827,9 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        try:
-            lpg_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary"
-            master_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_plant_operations_masters"
+        try:            
+            lpg_query = f"SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary where DATE(process_date)='{datetime.now().strftime('%Y-%m-%d')}'"
+            master_query = "SELECT DISTINCT(plant) as plant_name FROM lpg_plant_operations_masters"
             df = await function(query=lpg_query)
             master_df = await function(query=master_query)
             df = pl.DataFrame(df)
@@ -3870,23 +3876,23 @@ class GlobalAnalytics:
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
             if not daterange:
-                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
+                production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
-            production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "short_name" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             production_zone_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(production_zone_query_, access_filters, drill_state)
             if not "where" in production_zone_query_.lower() and not daterange:
-                production_zone_query_ +=  f' WHERE CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()' 
+                production_zone_query_ +=  f' WHERE DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL' 
             elif not "where" in production_zone_query_.lower() and daterange:
                 production_zone_query_ +=  f' WHERE "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
             elif not daterange:
-                production_zone_query_ +=  f' AND CAST("process_date" AS DATE) = \'{current_date}\' AND "zone" IS NOT NULL AND "process_date" <= NOW()'
+                production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "site_area" '
+            production_zone_query_  += ' GROUP BY "zone", "name", "short_name" '
             
             print("production_zone_query_ :", production_zone_query_)
             resp = await function(query=production_zone_query_)
@@ -4128,7 +4134,8 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         daywise_productivity_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_productivity")
-        _filters = []
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        _filters = []        
         if cross_filters:
             for filter in cross_filters:
                 _filters.append({f"{filter.key}": f"{filter.value}"})
@@ -4150,17 +4157,17 @@ class GlobalAnalytics:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_productivity_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_productivity_query_, access_filters, drill_state)
-            daywise_productivity_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "process_date" <= NOW() '
-            daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "site_area" '
+            daywise_productivity_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
+            daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "short_name" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_productivity_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_productivity_query_, access_filters, drill_state)
             if not "where" in daywise_productivity_query_.lower():
-                daywise_productivity_query_ += ' WHERE "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "process_date" <= NOW() '
+                daywise_productivity_query_ += f' WHERE "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
             else:
-                daywise_productivity_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "process_date" <= NOW() '
-            daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "site_area" '
+                daywise_productivity_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
+            daywise_productivity_query_ += ' GROUP BY DATE("process_date"), "zone", "short_name" '
         try:
             query_resp = await function(query=daywise_productivity_query_)
             resp = pl.DataFrame(query_resp)
@@ -4189,6 +4196,7 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         daywise_production_query_ = lpg_plant_queries.lpg_plant_query.get("lpg_operations_daywise_production")        
+        current_date = datetime.now().strftime("%Y-%m-%d")
         _filters = []
         if cross_filters:
             for filter in cross_filters:
@@ -4211,17 +4219,17 @@ class GlobalAnalytics:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_production_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_production_query_, access_filters, drill_state)
-            daywise_production_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "process_date" <= NOW() '
-            daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "site_area" '
+            daywise_production_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
+            daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "short_name" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
             daywise_production_query_ =  await widget_actions.WidgetActions.apply_filter_drilldown(daywise_production_query_, access_filters, drill_state)
             if not "where" in daywise_production_query_.lower():
-                daywise_production_query_ += ' WHERE "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "process_date" <= NOW() '
+                daywise_production_query_ += f' WHERE "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
             else:
-                daywise_production_query_ += ' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND "process_date" <= NOW() '
-            daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "site_area" '
+                daywise_production_query_ += f' AND "process_date" >= CURRENT_DATE - INTERVAL \'30 day\' AND DATE("process_date") <= \'{current_date}\' '
+            daywise_production_query_ += ' GROUP BY DATE("process_date"), "zone", "short_name" '
         try:
             query_resp = await function(query=daywise_production_query_)
             resp = pl.DataFrame(query_resp)
@@ -4553,6 +4561,13 @@ class GlobalAnalytics:
         cs_df = pd.DataFrame(cs_resp)
         pt_df = pd.DataFrame(pt_resp)
         gd_df = pd.DataFrame(gd_resp)
+        for col in ['plant']:
+            if col in cs_df.columns:
+                cs_df[col] = cs_df[col].str.lower()
+            if col in pt_df.columns:
+                pt_df[col] = pt_df[col].str.lower()
+            if col in gd_df.columns:
+                gd_df[col] = gd_df[col].str.lower()
         cs_df = await filter_data(cs_df, _filters)
         pt_df = await filter_data(pt_df, _filters)
         gd_df = await filter_data(gd_df, _filters)
@@ -5138,7 +5153,7 @@ class GlobalAnalytics:
                     filter_expr = filter_expr & (pl.col(key).fill_null("") == value)
             df = df.filter(filter_expr)
         months = [month for month in calendar.month_name if month]
-        data = {"zone": df["zone"].unique().to_list(), "plant": df["SiteArea"].unique().to_list(),
+        data = {"zone": df["zone"].unique().to_list(), "plant": df["plant"].unique().to_list(),
                 "carousel_type": ["12H", "24H", "48H", "72H"]}
         return data
 
