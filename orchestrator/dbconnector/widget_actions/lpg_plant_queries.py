@@ -996,7 +996,7 @@ LIMIT 10000;''',
                         select 
                             "zone",
                             "name",
-                            "site_area" AS "plant",
+                            "short_name" AS "plant",
                             "filling_heads" as "carousel_type",
                             avg("productivity_normal_productivity") as "productivity"
                         from 
@@ -1007,7 +1007,7 @@ LIMIT 10000;''',
                         select 
                             "zone",
                             "name",
-                            "site_area" AS "plant",
+                            "short_name" AS "plant",
                             sum("productivity_normal_production")/1000 as "Productions",
                             SUM(bottling_14_2kg) AS "14_kg",
                             SUM(bottling_19kg) AS "19_kg"
@@ -1035,7 +1035,7 @@ LIMIT 10000;''',
     'lpg_operations_daywise_productivity': f'''  
                                 SELECT 
                                 "zone",
-                                "site_area" AS "plant",
+                                "short_name" AS "plant",
                                 AVG("productivity_normal_productivity") AS "avg_productivity", 
                                 DATE("process_date") AS "process_date"
                                 FROM "lpg_operations_summary" ''',
@@ -1043,7 +1043,7 @@ LIMIT 10000;''',
     'lpg_operations_daywise_production': f'''  
                             SELECT 
                                 "zone",
-                                "site_area" AS "plant",
+                                "short_name" AS "plant",
                                 SUM(bottling_14_2kg) AS "14_kg",
                                 SUM(bottling_19kg) AS "19_kg",
                                 DATE("process_date") AS "process_date"
