@@ -3827,8 +3827,8 @@ class GlobalAnalytics:
         Charts_Connection_Vault_RoutingParams.connection_id = connection_mapping.connection_mapping.get("hpcl_ceg", "1")
         Charts_Connection_Vault_RoutingParams.action = 'execute_query'
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
-        try:
-            lpg_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary"
+        try:            
+            lpg_query = f"SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary where DATE(process_date)='{datetime.now().strftime('%Y-%m-%d')}'"
             master_query = "SELECT DISTINCT(plant) as plant_name FROM lpg_plant_operations_masters"
             df = await function(query=lpg_query)
             master_df = await function(query=master_query)
