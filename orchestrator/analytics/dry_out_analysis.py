@@ -1689,9 +1689,11 @@ async def get_previous_day_carry_fwd_indent(today=None, data='count'):
                  f"COUNT(*) FILTER (WHERE dry_out_in_days != '') AS dryout_count, "
                  f"COUNT(*) FILTER (WHERE category = 'R01') AS category_a_count "
                  f"FROM public.carry_fwd_indent where created_at::DATE = '{today}' ")
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        return data.get('data', [])[0] if data.get('data', []) else {}
     else:
         query = (f"""select sap_id as "SAP ID", terminal_plant_id as "Terminal Plant Id", indent_no as "Indent No", """
                  f"""prod_reqd_dt as "Prod Req Date", dry_out_in_days as "DryOut Days", category as "Category" """ 
                  f"""from carry_fwd_indent where created_at::DATE = '{today}' """)
-    data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
-    return data.get('data', [])[0] if data.get('data', []) else {}
+        data = await urdhva_base.BasePostgresModel.get_aggr_data(query=query, limit=0)
+        return data.get('data', [])
