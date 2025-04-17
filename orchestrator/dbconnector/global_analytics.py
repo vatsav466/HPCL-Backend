@@ -3828,7 +3828,7 @@ class GlobalAnalytics:
         function = await charts_connection_vault_routing(Charts_Connection_Vault_RoutingParams)
         try:
             lpg_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_operations_summary"
-            master_query = "SELECT DISTINCT(short_name) as plant_name FROM lpg_plant_operations_masters"
+            master_query = "SELECT DISTINCT(plant) as plant_name FROM lpg_plant_operations_masters"
             df = await function(query=lpg_query)
             master_df = await function(query=master_query)
             df = pl.DataFrame(df)
