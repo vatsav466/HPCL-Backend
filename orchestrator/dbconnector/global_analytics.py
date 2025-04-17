@@ -4560,11 +4560,11 @@ class GlobalAnalytics:
         gd_df = pd.DataFrame(gd_resp)
         for col in ['plant']:
             if col in cs_df.columns:
-                cs_df[col] = cs_df[col].lower()
+                cs_df[col] = cs_df[col].str.lower()
             if col in pt_df.columns:
-                pt_df[col] = pt_df[col].lower()
+                pt_df[col] = pt_df[col].str.lower()
             if col in gd_df.columns:
-                gd_df[col] = gd_df[col].lower()                
+                gd_df[col] = gd_df[col].str.lower()
         cs_df = await filter_data(cs_df, _filters)
         pt_df = await filter_data(pt_df, _filters)
         gd_df = await filter_data(gd_df, _filters)
