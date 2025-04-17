@@ -206,7 +206,7 @@ def get_cs_rejections(params):
     max_date = fetch_data(query, getData=False, params=params)
     
     if not last_date:
-        last_date = (datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
+        last_date = (datetime.datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
         
     query = f""" WITH base_data AS (
                     SELECT
@@ -298,7 +298,7 @@ def get_gd_rejections(params):
     query = """ SELECT MAX(process_date) from event_log; """
     max_date = fetch_data(query, getData=False, params=params)
     if not last_date:
-        last_date = (datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
+        last_date = (datetime.datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
     
     query = f""" WITH base_stats AS (
                     SELECT
@@ -369,7 +369,7 @@ def get_pt_rejections(params):
     query = f""" SELECT MAX(max_date) from lpg_pt_rejections WHERE "plant"='{params['PlantName']}'; """
     last_date = fetch_data(query, getData=False, params=params, internal=True)
     if not last_date:
-        last_date = (datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
+        last_date = (datetime.datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
     query = """ SELECT MAX(process_date) from event_log; """
     max_date = fetch_data(query, getData=False, params=params)
     
