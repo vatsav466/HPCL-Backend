@@ -220,7 +220,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
     query  = query.replace(";","")
     # Check connection with timeout
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(timeout)  # Connection timeout
+    sock.settimeout(timeout)
     try:
         result = sock.connect_ex((params["host"], int(params["port"])))
         if not result == 0:
@@ -230,7 +230,7 @@ def fetch_data(query, getData=False, params=None, timeout=10, query_timeout=30, 
         print(f"Socket connection error: {str(e)}")
         return pl.DataFrame() if getData else None
     finally:
-        sock.close()  # Properly close the socket
+        sock.close()
         
     # Database connection with timeout
     try:

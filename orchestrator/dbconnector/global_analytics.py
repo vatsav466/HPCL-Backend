@@ -3837,6 +3837,7 @@ class GlobalAnalytics:
             master_df = master_df.with_columns(
                 pl.when(pl.col("plant_name").is_in(df["plant_name"])
                 ).then(pl.lit("Connected")).otherwise(pl.lit("Not Connected")).alias("status"))
+            master_df = master_df.sort("status")
             return {"status": True, "message": "success", "data": master_df.to_dicts()}
         except Exception as e:
             print(traceback.format_exc())
