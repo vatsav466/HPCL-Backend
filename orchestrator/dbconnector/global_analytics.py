@@ -4553,6 +4553,9 @@ class GlobalAnalytics:
         cs_df = pd.DataFrame(cs_resp)
         pt_df = pd.DataFrame(pt_resp)
         gd_df = pd.DataFrame(gd_resp)
+        cs_df = await filter_data(cs_df, _filters)
+        pt_df = await filter_data(pt_df, _filters)
+        gd_df = await filter_data(gd_df, _filters)
 
         # Combine DataFrames
         combined_df = pd.concat([cs_df, pt_df, gd_df], ignore_index=True)
