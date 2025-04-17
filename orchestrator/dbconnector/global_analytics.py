@@ -33,15 +33,20 @@ import utilities.analog_data_mapping as category_mapping
 
 
 async def filter_data(df, _filters):
-    try:
+    try:        
         if _filters:
+            print("-"*30)
+            print("data columns :", df.columns)
+            print("length of data :", len(df))
             mask = pd.Series(True, index=df.index)
             for _filter in _filters:
                 for key, value in _filter.items():
                     key = key.replace('"','')
                     mask = mask & (df[key].fillna('') == value)
             df = df[mask]
-            return df
+            print("length of filtered data :", len(df))
+            print("-"*30)
+        return df
     except Exception as e:
         print("Exception in filtering data :", str(e))
     return df
