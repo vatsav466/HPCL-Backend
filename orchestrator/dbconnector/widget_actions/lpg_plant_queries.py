@@ -1123,8 +1123,6 @@ LIMIT 10000;''',
                                                     WHERE
                                                         DATE_TRUNC('month', "process_date") = DATE_TRUNC('month', CURRENT_DATE);    
                                                 ''',
-                                                
-    'lpg_operations_connected_plants': f''' SELECT DISTINCT("short_name") FROM "lpg_operations_summary" order by "short_name"; ''',
     
     'lpg_operations_notconnected_plants': ''' SELECT DISTINCT m."short_name"
                                             FROM 
@@ -2549,11 +2547,11 @@ ORDER BY
     avg_total_sales ''',
 
     'lpg_operations_connected_plants': f''' SELECT 
-                                        COUNT(DISTINCT "short_name") AS short_name_count
-                                    FROM 
-                                        "lpg_operations_summary"
-                                    HAVING 
-                                        COUNT(DISTINCT "short_name") > 0 ''',
+                                                COUNT(DISTINCT "short_name") AS short_name_count
+                                            FROM 
+                                                "lpg_operations_summary"
+                                            HAVING 
+                                                COUNT(DISTINCT "short_name") > 0 ''',
                                     
     'lpg_operations_total_plants': f''' SELECT 
                                     COUNT(DISTINCT "short_name") AS short_name_count
