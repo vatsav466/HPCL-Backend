@@ -1,3 +1,4 @@
+import re
 import json
 import time
 import typing
@@ -368,8 +369,19 @@ class BasePostgresModel(pydantic.BaseModel):
 
             if search_conditions:
                 print("search_conditions --> ", search_conditions)
-                query_params.append(f"({' OR '.join(search_conditions)})")
-        query_params.extend(await cls.get_clause_conditions())
+                query_params.append(f"({' OR '.join(search_conditions)})")        
+        
+        # Commented by Shrihari
+        # query_params.extend(await cls.get_clause_conditions())
+        # Added to remove the duplicate condition of bu
+        _extra_condition = await cls.get_clause_conditions()
+        pattern = r"\s*bu\s*=\s*'[^']+'\s*(\s*)?"
+        cleaned_conditions = []
+        for cond in _extra_condition:
+            new_cond = re.sub(pattern, '', cond).strip()
+            if new_cond:
+                cleaned_conditions.append(new_cond.rstrip("AND").rstrip("and"))
+        query_params.extend(cleaned_conditions)
         if len(query_params):
             query.append("where " + " AND ".join(query_params))
         count_query = [rec for rec in query]
