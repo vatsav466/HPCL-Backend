@@ -928,9 +928,12 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                 hist_data = pd.DataFrame([{'ACTUAL_HISTORY_TMT_SALES': hist_data.sum()['ACTUAL_HISTORY_TMT_SALES']}])
             hist_data['ACTUAL_HISTORY_TMT_SALES'] = hist_data['ACTUAL_HISTORY_TMT_SALES'].fillna(0)
             hist_data = hist_data.to_dict(orient='records')
+    '''
     print("actual_data",actual_data)
     print("target_data",target_data)
     print("his_data",hist_data)
+    '''
+    
     drill_list = ['SBU_Name','ProductName','Zone_Name','Region_Name','SalesArea_Name','month_name']
     summed_data = defaultdict(Decimal)
     tgt_result = []
@@ -1152,18 +1155,30 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
             if len(hist_xaxis) > 1:
                 di = final_resp[0]
                 li = merged_df['month_name'].unique().tolist()
-                req_index = li.index(hist_xaxis[1].split('_')[0])
-                li_req = li[:req_index]
-                req_str = '(' + li_req[0] + '-' + li_req[-1] + ')'
-                hist_xaxis[0] = hist_xaxis[0] + req_str
+                if len(hist_xaxis)!= 2:
+                    req_index = li.index(hist_xaxis[1].split('_')[0])
+                    li_req = li[:req_index]
+                else:
+                    req_index = li.index(hist_xaxis[0].split('_')[0])
+                    li_req = li[0]
+                if len(hist_xaxis)!= 2:
+                    req_str = '(' + li_req[0] + '-' + li_req[-1] + ')'
+                    hist_xaxis[0] = hist_xaxis[0] + req_str
+                
+                    
             if '"T"' in [x['key'] for x in filters]:
                 tgt_xaxis.extend(
                     ['_'.join(x['title'].split('_')[:2]) for x in tgt_growth_details if 'tgt' in x['title'].lower()])
                 if li:
-                    req_index = li.index(tgt_xaxis[1].split('_')[0])
-                    li = li[:req_index]
-                    req_str = '(' + li[0] + '-' + li[-1] + ')'
-                    tgt_xaxis[0] = tgt_xaxis[0] + req_str
+                    if len(tgt_xaxis)!= 2:
+                        req_index = li.index(tgt_xaxis[1].split('_')[0])
+                        li = li[:req_index]
+                    else:
+                        req_index = li.index(tgt_xaxis[0].split('_')[0])
+                        li_req = li[0]
+                    if len(tgt_xaxis)!= 2:
+                        req_str = '(' + li[0] + '-' + li[-1] + ')'
+                        tgt_xaxis[0] = tgt_xaxis[0] + req_str
                 # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower() else x['title'].split()[0] if 'tgt' in x['title'].lower()
                 #               else x for x in growth_details if isinstance(x, dict) and 'title' in x])
                 # tgt_xaxis.extend(['_'.join(x['title'].split('_')[:2]) if '_' in x['title'] and 'tgt' in x['title'].lower() else x['title'].split()[0] if 'tgt' in x['title'].lower() for x in growth_details if isinstance(x, dict) and 'title' in x])
@@ -1252,7 +1267,6 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                         for key, value in final_resp.items()
                                     }
 
-                                    print(final_resp)
 
                                 
                                     #if 'PETCHEM' or 'Miscellaneous/Minor' in final_resp['ProductName'].values():
@@ -1339,16 +1353,15 @@ async def m60_performance(filters, cross_filters, drill_state="", time_grain="",
                                     print("type pf final_resp to check",final_resp)
                                     print("filters",filters)
                                     print("cross_filters",cross_filters)
-                                    #if 'SBU_Name' in [x['key'].strip('"') for x in filters] and "Retail" in [x['value'].strip('"') for x in filters if x['key'.strip('"') == 'SBU_Name']]:
-                                    
-
-                                    
-
-                                    
+                                    #if 'SBU_Name' in [x['key'].strip('"') for x in filters] and "Retail" in [x['value'].strip('"') for x in filters if x['key'.strip('"') == 'SBU_Name']]:            
                                         
         if isinstance(final_resp,list):
-            return {"status": False, "message": "Data Not Present for the current selection", "data": {'data': final_resp, 'level': sorted_level,
-                                                               'month_name': month_keys, 'sales_unit': measure_unit}}    
+            if len(final_resp) == 0:
+                return {"status": False, "message": "Data Not Present for the current selection", "data": {'data': final_resp, 'level': sorted_level,
+                                                                'month_name': month_keys, 'sales_unit': measure_unit}}    
+            else:
+                return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
+                                                                'month_name': month_keys, 'sales_unit': measure_unit}}    
         return {"status": True, "message": "Success", "data": {'data': final_resp, 'level': sorted_level,
                                                                'month_name': month_keys, 'sales_unit': measure_unit}}
     else:
@@ -1452,11 +1465,14 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
             # making Cumulative sum of data for n-3
             present_month = datetime.datetime.now().strftime('%b')
             if present_month.lower() == 'apr':
-                present_month = 'Mar'
+                present_month = 'Apr'
+            
             # Filtering cumulative_months
             cumulative_months = []
             if months.index(present_month) > 2:
                 cumulative_months = months[0:months.index(present_month) - 1]
+            else:
+                cumulative_months = ['Apr']
             # Summing data for cumulative data
             sum_cols = []
             for col in df.columns.tolist():
@@ -1466,6 +1482,7 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                     sum_cols.append(col)
 
             cumulative_data = {}
+            non_cumulative_data = pd.DataFrame()
             if drill_state.strip('"') == 'SBU_Name':
                 # cumulative_data = df[df['month_name'].isin(cumulative_months)].groupby('Zone_Name', as_index=False)[sum_cols].sum()
                 if resp_format == "heat_map":
@@ -1481,10 +1498,12 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
             if drill_state.strip('"') == 'Region_Name':
                 cumulative_data = \
                 df[df['month_name'].isin(cumulative_months)].groupby('SalesArea_Name', as_index=False)[sum_cols].sum()
-            cumulative_data['month_name'] = 'Cum'
-            non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
+            if len(cumulative_months) ==1 and cumulative_months[0] != 'Apr':
+                cumulative_data['month_name'] = 'Cum'
+                non_cumulative_data = df[~df['month_name'].isin(cumulative_months)]
+            else:
+                cumulative_data['month_name'] = 'Apr'
             df = pd.concat([cumulative_data, non_cumulative_data])
-            # df.to_csv('/tmp/dfcum.csv', index=False)
             # making zonal summary above the exisiting heatmap
             if "month_name" in df.columns.tolist():
                 # df['YTD_TMT_SALES'] =  df['ACTUAL_TMT_SALES'] +df['ACTUAL_HISTORY_TMT_SALES']
@@ -1500,8 +1519,12 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                         df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
                     # df_prev = df[df['month_name'] == df['month_name'].unique().tolist()[1]]
                     # df_pres = df[df['month_name'] == df['month_name'].unique().tolist()[-1]]
+                if len(df['month_name'].unique().tolist()) ==1 and df['month_name'].unique().tolist()[0] =='Apr':
+                    df_pres = df
                 if not df_cum.empty and not df_prev.empty and not df_pres.empty:
                     df_list = [df_cum, df_prev, df_pres]
+                if df_cum.empty and df_prev.empty and not df_pres.empty:
+                    df_list = [df_pres]
                 for idx, df_month in enumerate(df_list):
                     if 'ACTUAL_TMT_SALES' in df_month.columns.tolist():
                         df_month['ACTUAL_TMT_SALES'] = df_month['ACTUAL_TMT_SALES'].fillna(0).astype(float)
@@ -1513,7 +1536,6 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                     if 'TARGET_TMT_SALES' in df_month.columns.tolist():
                         df_month['TARGET_TMT_SALES'] = df_month['TARGET_TMT_SALES'].fillna(0).astype(float)
                         tgt_value = df_month['TARGET_TMT_SALES'].sum()
-
                     if curr_value or prev_value:
                         if prev_value != 0:
                             cum_growth = ((curr_value - prev_value) / prev_value) * 100
@@ -1526,9 +1548,15 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                                 tgt_growth = 100
 
                         if idx == 0:
-                            hist_growth_details.append({"title": "Cum_Hist_Growth", "value": cum_growth})
-                            if 'TARGET_TMT_SALES' in df_month.columns.tolist():
-                                tgt_growth_details.append({"title": "Cum_Tgt_Growth", "value": tgt_growth})
+                            if len(df_list) !=1 :
+                                hist_growth_details.append({"title": "Cum_Hist_Growth", "value": cum_growth})
+                                if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                                    tgt_growth_details.append({"title": "Cum_Tgt_Growth", "value": tgt_growth}) 
+                            if len(df_list) ==1:
+                                hist_growth_details.append({"title": "Apr_Hist_Growth", "value": cum_growth})
+                                if 'TARGET_TMT_SALES' in df_month.columns.tolist():
+                                    tgt_growth_details.append({"title": "Apr_Tgt_Growth", "value": tgt_growth}) 
+                                
                         if idx == 1:
                             hist_growth_details.append(
                                 {"title": f"{df['month_name'].unique().tolist()[1]}_Hist_Growth", "value": cum_growth})
@@ -1583,7 +1611,6 @@ def generate_stacked_data(drill_state, df, resp_format='', month_column=''):
                 hist_growth_details.append({"title": "YTD_Hist_Growth", "value": ytd_hist_growth})
                 if 'YTD_target' in df_pivot.columns.tolist():
                     tgt_growth_details.append({"title": "YTD_Tgt_Growth", "value": ytd_tgt_growth})
-
                     # Convert to Dictionary Format
             return df_pivot.to_dict(orient="records"), hist_growth_details, tgt_growth_details
         elif resp_format == 'cummulative' and month_column:
