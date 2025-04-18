@@ -8,6 +8,7 @@ import datetime
 import socket
 import pandas as pd
 import polars as pl
+import concurrent.futures
 from dateutil.relativedelta import relativedelta
 sys.path.append("/opt/ceg/algo")
 import orchestrator.dbconnector.credential_loader as credential_loader
@@ -45,11 +46,11 @@ def insertToDB(data, table_name, indexing_col=[]):
         indexing_col = [indexing_col]
     columns_formatted = ", ".join(f'"{col}"' for col in indexing_col)
     create_table_index = f"""CREATE INDEX IF NOT EXISTS "{table_name}_index" ON "{table_name}" ({columns_formatted})"""
-
+    
     table_create_sql = f'CREATE TABLE IF NOT EXISTS "{table_name}" ({table_create_sql})'
     print("-"*50)
     print("table_create_sql :", table_create_sql)
-    print("-"*50)
+    print("-"*50)    
     cur.execute(table_create_sql)
     pg_conn.commit()
     cur.execute(create_table_index)
@@ -90,7 +91,7 @@ def fetch_data(query, getData=False, params=None, internal=False):
         query (str): SQL query to execute
     Returns:
         pandas DataFrame
-    """
+    """    
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(5)
     result = sock.connect_ex((params["host"], params["port"]))
@@ -145,7 +146,7 @@ def fetch_data(query, getData=False, params=None, internal=False):
         resp = cursor.fetchone()[0]
         return resp
 
-
+    
 def get_cs_rejections(params):
     table_name = "lpg_cs_rejections"
     # query = """ WITH base_data AS (
@@ -164,46 +165,49 @@ def get_cs_rejections(params):
     #                     process_date,
     #                     SUM(count) as total,
     #                     -- Calculate cylFilled (total - sortout)
-    #                     SUM(count) - SUM(CASE
+    #                     SUM(count) - SUM(CASE 
     #                         WHEN process_status IN (1040, 2064, 1296, 17424, 1048, 4120, 5392,  -- sortout statuses
     #                                             1041, 1042, 2192, 4112, 4113, 5136, 6160)     -- other error statuses
-    #                         THEN count
-    #                         ELSE 0
+    #                         THEN count 
+    #                         ELSE 0 
     #                     END) as cylFilled,
     #                     -- Calculate totalSortout
-    #                     SUM(CASE
+    #                     SUM(CASE 
     #                         WHEN process_status IN (1040, 2064, 1296, 17424, 1048, 4120, 5392,  -- sortout statuses
     #                                             1041, 1042, 2192, 4112, 4113, 5136, 6160)     -- other error statuses
-    #                         THEN count
-    #                         ELSE 0
+    #                         THEN count 
+    #                         ELSE 0 
     #                     END) as totalSortout,
     #                     -- Calculate commErrorSortout
-    #                     SUM(CASE
-    #                         WHEN process_status < 0 OR process_status = 4096
-    #                         THEN count
-    #                         ELSE 0
+    #                     SUM(CASE 
+    #                         WHEN process_status < 0 OR process_status = 4096 
+    #                         THEN count 
+    #                         ELSE 0 
     #                     END) as commErrorSortout
     #                 FROM base_data
     #                 GROUP BY process_date
     #             )
-    #             SELECT
+    #             SELECT 
     #                 process_date,
     #                 total,
     #                 cylFilled,
     #                 totalSortout,
     #                 commErrorSortout,
-    #                 CASE
+    #                 CASE 
     #                     WHEN total > 0 THEN ROUND(CAST(totalSortout AS DECIMAL) / total, 4)
-    #                     ELSE 0
+    #                     ELSE 0 
     #                 END as sortOutPercentage
     #             FROM aggregated_stats
-    #             ORDER BY process_date; """
-
+    #             ORDER BY process_date; """    
+        
     query = f""" SELECT MAX(max_date) from lpg_cs_rejections WHERE "plant"='{params['PlantName']}'; """
     last_date = fetch_data(query, getData=False, params=params, internal=True)
     query = """ SELECT MAX(process_date) from production_log; """
     max_date = fetch_data(query, getData=False, params=params)
-
+    
+    if not last_date:
+        last_date = (datetime.datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
+        
     query = f""" WITH base_data AS (
                     SELECT
                         system_id,
@@ -224,29 +228,29 @@ def get_cs_rejections(params):
                         cyl_type,
                         SUM(count) as total,
                         -- Calculate cylFilled (total - sortout)
-                        SUM(count) - SUM(CASE
+                        SUM(count) - SUM(CASE 
                             WHEN process_status IN (1040, 2064, 1296, 17424, 1048, 4120, 5392,  -- sortout statuses
                                                 1041, 1042, 2192, 4112, 4113, 5136, 6160)     -- other error statuses
-                            THEN count
-                            ELSE 0
+                            THEN count 
+                            ELSE 0 
                         END) as cylFilled,
                         -- Calculate totalSortout
-                        SUM(CASE
+                        SUM(CASE 
                             WHEN process_status IN (1040, 2064, 1296, 17424, 1048, 4120, 5392,  -- sortout statuses
                                                 1041, 1042, 2192, 4112, 4113, 5136, 6160)     -- other error statuses
-                            THEN count
-                            ELSE 0
+                            THEN count 
+                            ELSE 0 
                         END) as totalSortout,
                         -- Calculate commErrorSortout
-                        SUM(CASE
-                            WHEN process_status < 0 OR process_status = 4096
-                            THEN count
-                            ELSE 0
+                        SUM(CASE 
+                            WHEN process_status < 0 OR process_status = 4096 
+                            THEN count 
+                            ELSE 0 
                         END) as commErrorSortout
                     FROM base_data
                     GROUP BY process_date, system_id, cyl_type
                 )
-                SELECT
+                SELECT 
                     process_date,
                     system_id,
                     cyl_type,
@@ -254,13 +258,13 @@ def get_cs_rejections(params):
                     cylFilled,
                     totalSortout,
                     commErrorSortout,
-                    CASE
+                    CASE 
                         WHEN total > 0 THEN ROUND(CAST(totalSortout AS DECIMAL) / total, 4)
-                        ELSE 0
+                        ELSE 0 
                     END as sortOutPercentage
                 FROM aggregated_stats
-                ORDER BY process_date, system_id, cyl_type; """
-
+                ORDER BY process_date, system_id, cyl_type; """            
+            
     data = fetch_data(query, getData=True, params=params)
     if data.is_empty():
         return
@@ -268,19 +272,19 @@ def get_cs_rejections(params):
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
     data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
     data = data.with_columns(pl.lit(str(params["region"])).alias("region"))
-
+    
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
                ).when(pl.col("cyl_type").fill_null(0).cast(pl.Int64)==2
                       ).then(pl.lit("19 KG")).when(pl.col("cyl_type").fill_null(0).cast(pl.Int64)==0).then(pl.lit("5KG")).otherwise(pl.col("cyl_type").cast(pl.Utf8)).alias("cyl_type"))
-
-    data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
+    
+    data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))    
     data = data.with_columns(pl.lit(max_date).alias("max_date"))
     data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
-
+        
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
 
@@ -293,7 +297,9 @@ def get_gd_rejections(params):
     last_date = fetch_data(query, getData=False, params=params, internal=True)
     query = """ SELECT MAX(process_date) from event_log; """
     max_date = fetch_data(query, getData=False, params=params)
-
+    if not last_date:
+        last_date = (datetime.datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
+    
     query = f""" WITH base_stats AS (
                     SELECT
                         system_id,
@@ -309,25 +315,25 @@ def get_gd_rejections(params):
                     GROUP BY system_id, cyl_type, process_id, process_status, DATE_TRUNC('day', process_date)
                 ),
                 daily_stats AS (
-                    SELECT
+                    SELECT 
                         process_date,
                         system_id,
                         cyl_type,
                         SUM(count) as total,
-                        SUM(CASE
-                            WHEN process_status != 0 THEN count
-                            ELSE 0
+                        SUM(CASE 
+                            WHEN process_status != 0 THEN count 
+                            ELSE 0 
                         END) as sortout
                     FROM base_stats
                     GROUP BY process_date, system_id, cyl_type
                 )
-                SELECT
+                SELECT 
                     process_date,
                     system_id,
                     cyl_type,
                     total,
                     sortout,
-                    CASE
+                    CASE 
                         WHEN total > 0 THEN ROUND(CAST(sortout AS DECIMAL) / total, 4)
                         ELSE 0
                     END as sortOutPercentage
@@ -340,18 +346,18 @@ def get_gd_rejections(params):
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
     data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
     data = data.with_columns(pl.lit(str(params["region"])).alias("region"))
-
+    
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
                ).when(pl.col("cyl_type").fill_null(0).cast(pl.Int64)==2
                       ).then(pl.lit("19 KG")).otherwise(pl.lit("5 KG")).alias("cyl_type"))
-    data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))
+    data = data.with_columns(pl.lit(datetime.datetime.now()).alias("Execution_Date"))    
     data = data.with_columns(pl.lit(max_date).alias("max_date"))
     data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
-
+        
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
 
@@ -359,12 +365,14 @@ def get_gd_rejections(params):
 def get_pt_rejections(params):
     table_name = "lpg_pt_rejections"
     #if params['PlantName'].lower()=='hoshiarpur':
-    #    return
+    #    return    
     query = f""" SELECT MAX(max_date) from lpg_pt_rejections WHERE "plant"='{params['PlantName']}'; """
     last_date = fetch_data(query, getData=False, params=params, internal=True)
+    if not last_date:
+        last_date = (datetime.datetime.now() - relativedelta(days=5)).strftime("%Y-%m-%d")
     query = """ SELECT MAX(process_date) from event_log; """
     max_date = fetch_data(query, getData=False, params=params)
-
+    
     query = f""" WITH base_stats AS (
                     SELECT
                         system_id,
@@ -380,25 +388,25 @@ def get_pt_rejections(params):
                     GROUP BY system_id, cyl_type, process_id, process_status, DATE_TRUNC('day', process_date)
                 ),
                 daily_stats AS (
-                    SELECT
+                    SELECT 
                         process_date,
                         system_id,
                         cyl_type,
                         SUM(count) as total,
-                        SUM(CASE
-                            WHEN process_status != 0 THEN count
-                            ELSE 0
+                        SUM(CASE 
+                            WHEN process_status != 0 THEN count 
+                            ELSE 0 
                         END) as sortout
                     FROM base_stats
                     GROUP BY process_date, system_id, cyl_type
                 )
-                SELECT
+                SELECT 
                     process_date,
                     system_id,
                     cyl_type,
                     total,
                     sortout,
-                    CASE
+                    CASE 
                         WHEN total > 0 THEN ROUND(CAST(sortout AS DECIMAL) / total, 4)
                         ELSE 0
                     END as sortOutPercentage
@@ -411,7 +419,7 @@ def get_pt_rejections(params):
     data = data.with_columns(pl.lit(params["zone"]).alias("zone"))
     data = data.with_columns(pl.lit(str(params["sap_id"])).alias("sap_id"))
     data = data.with_columns(pl.lit(str(params["region"])).alias("region"))
-
+    
     data = data.with_columns(pl.when(
         pl.col("cyl_type").fill_null(0).cast(pl.Int64)==1
         ).then(pl.lit("14.2 KG")
@@ -422,27 +430,99 @@ def get_pt_rejections(params):
     data = data.with_columns(pl.col("Execution_Date").alias('updated_at'))
     data = data.with_columns(pl.col('updated_at').alias('created_at'))
     data = data.with_columns(pl.col('sap_id').alias('entity_id'))
-
+    
     indexing_col = ["process_date", "zone", "plant"]
     insertToDB(data, table_name, indexing_col)
+    
 
-
-if __name__=="__main__":
-    plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
-    for plant in plants.iter_rows(named=True):
+def process_plant_rejections(plant):
+    """Process all rejection types for a single plant"""
+    try:
         print("-"*50)
         print(f"Fetching for {plant['PlantName']}")
-        params={
-        "PlantName": plant["PlantName"],
-        "sap_id": plant["erp_id"],
-        "region": plant["SiteRegion"],
-        "zone": plant["zone"],
-        "host": plant["host_ip"],
-        "database": plant["db_database"],
-        "user": plant["db_user"],
-        "password": plant["db_password"],
-        "port": 5432
+        params = {
+            "PlantName": plant["PlantName"],
+            "sap_id": plant["erp_id"],
+            "region": plant["SiteRegion"],
+            "zone": plant["zone"],
+            "host": plant["host_ip"],
+            "database": plant["db_database"],
+            "user": plant["db_user"],
+            "password": plant["db_password"],
+            "port": 5432
         }
-        get_cs_rejections(params)
-        get_gd_rejections(params)
-        get_pt_rejections(params)
+        
+        start_time = datetime.datetime.now()
+        
+        # Process all rejection types for this plant
+        cs_result = get_cs_rejections(params)
+        gd_result = get_gd_rejections(params)
+        pt_result = get_pt_rejections(params)
+        
+        processing_time = datetime.datetime.now() - start_time
+        print(f"Plant {plant['PlantName']} processed in {processing_time.total_seconds():.2f} seconds")
+        
+        return plant["PlantName"], True
+    except Exception as e:
+        print(f"Error processing plant {plant['PlantName']}: {str(e)}")
+        print("Traceback:", traceback.format_exc())
+        return plant["PlantName"], False    
+
+            
+if __name__=="__main__":
+    # Read plant information
+    plants = pl.read_csv("/opt/ceg/algo/orchestrator/sync_services/lpg/LPG_PLANTS_CREDENTIALS.csv")
+    
+    # Set the maximum number of plants to process in parallel
+    max_workers = min(10, len(plants))  # Use up to 10 workers but not more than plants
+    print(f"Processing {len(plants)} plants using {max_workers} parallel workers")
+    
+    successful_plants = []
+    failed_plants = []
+    
+    # Set up timeout for the entire process (in seconds)
+    overall_timeout = 1200  # 20 minutes
+    
+    # Process plants in parallel
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all plants for processing
+        futures = {}
+        for plant in plants.iter_rows(named=True):
+            future = executor.submit(process_plant_rejections, plant)
+            futures[future] = plant["PlantName"]
+        
+        # Process results as they complete
+        completed_futures = []
+        try:
+            for future in concurrent.futures.as_completed(futures, timeout=overall_timeout):
+                completed_futures.append(future)
+                plant_name = futures[future]
+                try:
+                    name, success = future.result(timeout=300)  # 5-minute timeout per plant result
+                    if success:
+                        successful_plants.append(name)
+                        print(f"Successfully processed plant: {name}")
+                    else:
+                        failed_plants.append(name)
+                        print(f"Failed to process plant: {name}")
+                except concurrent.futures.TimeoutError:
+                    failed_plants.append(plant_name)
+                    print(f"Timeout waiting for result from plant: {plant_name}")
+                except Exception as e:
+                    failed_plants.append(plant_name)
+                    print(f"Exception during processing plant {plant_name}: {str(e)}")
+        except concurrent.futures.TimeoutError:
+            # Overall timeout reached
+            print(f"Overall timeout of {overall_timeout} seconds reached. Cancelling remaining tasks.")
+            # Add any unprocessed plants to failed list
+            for future, plant_name in futures.items():
+                if future not in completed_futures:
+                    failed_plants.append(plant_name)
+                    print(f"Cancelled processing for plant: {plant_name}")
+                    future.cancel()
+    
+    print("*"*50)
+    print(f"-- Processing completed --")
+    print(f"-- Successfully processed {len(successful_plants)} plants: {', '.join(successful_plants)}")
+    print(f"-- Failed to process {len(failed_plants)} plants: {', '.join(failed_plants)}")
+    print("*"*50)
