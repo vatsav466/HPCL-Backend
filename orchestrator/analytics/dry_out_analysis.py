@@ -109,6 +109,8 @@ async def get_locations(bu, zone=[], region=[], sales_area=[], plant=[], cat_a_d
             # if cond and plant and rec['sap_id'] not in plant:
             if cond and zone and rec['zone'] not in zone:
                 continue
+            elif cond and plant and rec['sap_id'] not in plant:
+                continue
             final_data["zone"][rec["zone"]] = {"name": rec["zone"], "id": rec["zone"]}
     if dry_out_dealers:
         query = """select dealer_id, terminal_plant_id
