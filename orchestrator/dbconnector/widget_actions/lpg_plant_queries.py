@@ -1008,6 +1008,7 @@ LIMIT 10000;''',
                             "zone",
                             "name",
                             "short_name" AS "plant",
+                            "filling_heads" as "carousel_type",
                             sum("productivity_normal_production")/1000 as "Productions",
                             SUM(bottling_14_2kg) AS "14_kg",
                             SUM(bottling_19kg) AS "19_kg"
@@ -1036,6 +1037,7 @@ LIMIT 10000;''',
                                 SELECT 
                                 "zone",
                                 "short_name" AS "plant",
+                                "filling_heads" as "carousel_type",
                                 AVG("productivity_normal_productivity") AS "avg_productivity", 
                                 DATE("process_date") AS "process_date"
                                 FROM "lpg_operations_summary" ''',
@@ -1044,6 +1046,7 @@ LIMIT 10000;''',
                             SELECT 
                                 "zone",
                                 "short_name" AS "plant",
+                                "filling_heads" as "carousel_type",
                                 SUM(bottling_14_2kg) AS "14_kg",
                                 SUM(bottling_19kg) AS "19_kg",
                                 DATE("process_date") AS "process_date"
