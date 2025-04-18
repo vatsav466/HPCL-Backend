@@ -995,7 +995,6 @@ LIMIT 10000;''',
     "lpg_operations_productivity_zone": f'''   
                         select 
                             "zone",
-                            "name",
                             "short_name" AS "plant",
                             "filling_heads" as "carousel_type",
                             avg("productivity_normal_productivity") as "productivity"
@@ -1006,7 +1005,6 @@ LIMIT 10000;''',
     "lpg_operations_production_zone": f''' 
                         select 
                             "zone",
-                            "name",
                             "short_name" AS "plant",
                             "filling_heads" as "carousel_type",
                             sum("productivity_normal_production")/1000 as "Productions",

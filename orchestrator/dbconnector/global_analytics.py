@@ -3759,7 +3759,7 @@ class GlobalAnalytics:
                 production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
-            production_zone_query_  += ' GROUP BY "zone", "name", "short_name", "filling_heads" '
+            production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -3772,7 +3772,7 @@ class GlobalAnalytics:
                 production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "short_name", "filling_heads" '
+            production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
             
             print("production_zone_query_ :", production_zone_query_)
             resp = await function(query=production_zone_query_)
@@ -3887,7 +3887,7 @@ class GlobalAnalytics:
                 production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL '
-            production_zone_query_  += ' GROUP BY "zone", "name", "short_name", "filling_heads" '
+            production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
         else:
             access_filters = [dashboard_studio_model.WidgetFiltersCreate(**rec)
                                       for rec in await hpcl_ceg_model.LpgOperationsSummary.get_clause_conditions(formated=True)]
@@ -3900,7 +3900,7 @@ class GlobalAnalytics:
                 production_zone_query_ +=  f' AND DATE("process_date") = \'{current_date}\' AND "zone" IS NOT NULL'
             elif daterange:
                 production_zone_query_ +=  f' AND "process_date" BETWEEN {daterange} AND "zone" IS NOT NULL'
-            production_zone_query_  += ' GROUP BY "zone", "name", "short_name", "filling_heads" '
+            production_zone_query_  += ' GROUP BY "zone", "short_name", "filling_heads" '
             
             print("production_zone_query_ :", production_zone_query_)
             resp = await function(query=production_zone_query_)
