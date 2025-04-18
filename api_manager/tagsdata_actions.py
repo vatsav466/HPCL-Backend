@@ -151,10 +151,10 @@ async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_D
                     mf_count = 0
                     # Getting all interlock names from Maintenance and Fault
                     interlocks = ([maintenance_item['interlock_name'] for maintenance_item in Maintenance
-                                   if maintenance_item["equipment_name"] == dev_type and
+                                   if dev_type in maintenance_item["equipment_name"] and
                                    maintenance_item["alert_category"] == system] +
                                   [fault_item['interlock_name'] for fault_item in Fault
-                                   if fault_item["equipment_name"] == dev_type and
+                                   if dev_type in fault_item["equipment_name"] and
                                    fault_item["alert_category"] == system])
                     if interlocks:
                         in_clause = ", ".join(f"'{item}'" for item in interlocks)
@@ -290,3 +290,15 @@ async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
 
     except Exception as e:
         return {"status": False, "message": f"Error: {str(e)}"}
+
+
+# Action things_board_device_data
+@router.post('/things_board_device_data', tags=['TagsData'])
+async def tagsdata_things_board_device_data(data: Tagsdata_Things_Board_Device_DataParams):
+    ...
+
+
+# Action get_tags_data
+@router.post('/get_tags_data', tags=['TagsData'])
+async def tagsdata_get_tags_data(data: Tagsdata_Get_Tags_DataParams):
+    ...
