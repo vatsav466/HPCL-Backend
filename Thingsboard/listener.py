@@ -20,7 +20,13 @@ class TelemetryService:
     @staticmethod
     async def load_site_data(site_id):
         """Load site data from a local JSON file."""
-        filename = f"/opt/ceg/algo/things_board/device_data/{site_id}.json"
+
+        if urdhva_base.settings.environment:
+            base_path = "/opt/ceg/algo/uat/"
+        else:
+            base_path = "/opt/ceg/algo/things_board/device_data/"
+
+        filename = f"{base_path}/{site_id}.json"
         if not os.path.exists(filename):
             print(f"Site data file not found: {filename}")
             return None

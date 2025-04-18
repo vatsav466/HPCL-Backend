@@ -50,7 +50,7 @@ class Settings(pydantic_settings.BaseSettings):
     max_redis_connections: int = 10
     origin_check_enabled: bool = False
     disable_api_extra_inputs: bool = False
-
+    environment: str = None
     # Header based authentication Enabled or Not
     enable_header_auth: bool = False
 
@@ -169,6 +169,7 @@ class Settings(pydantic_settings.BaseSettings):
     rabbitmq_vhost: str = "hpcl_ceg"
     rabbitmq_queue: str = "tagsdata"
     rabbitmq_auto_ack: bool = True
+
 
     # ThingsBoard
     things_board_url: str = "http://localhost:8080"
