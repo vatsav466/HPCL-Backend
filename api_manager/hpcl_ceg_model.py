@@ -262,6 +262,7 @@ class TasActionLogsSchema(UrdhvaPostgresBase):
     employee_number: Mapped[typing.Optional[str]] = mapped_column("employee_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    location_name: Mapped[typing.List[str]] = mapped_column("location_name", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     system_role: Mapped[typing.List[str]] = mapped_column("system_role", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     novex_role: Mapped[typing.List[str]] = mapped_column("novex_role", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     region: Mapped[typing.Optional[typing.List[str]]] = mapped_column("region", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
@@ -285,6 +286,7 @@ class TasActionLogsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     employee_number: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.List[hpcl_ceg_enum.BusinessUnit]
     sap_id: typing.List[str]
+    location_name: typing.List[str]
     system_role: typing.List[str]
     novex_role: typing.List[str]
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
@@ -316,6 +318,7 @@ class TasActionLogs(urdhva_base.postgresmodel.PostgresModel):
     employee_number: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
     sap_id: typing.Optional[typing.List[str]] | None = None
+    location_name: typing.Optional[typing.List[str]] | None = None
     system_role: typing.Optional[typing.List[str]] | None = None
     novex_role: typing.Optional[typing.List[str]] | None = None
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})

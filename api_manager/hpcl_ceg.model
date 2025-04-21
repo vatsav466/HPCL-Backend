@@ -246,6 +246,7 @@ Model TasActionLogs {
     employee_number optional str
     bu index_field list BusinessUnit
     sap_id index_field list str
+    location_name index_field list str
     system_role index_field list str
     novex_role index_field list str
     region optional list str
