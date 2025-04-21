@@ -181,6 +181,75 @@
             ]
         },
         {
+            "name": "tasactionlogs",
+            "type": "all",
+            "ownerManagedAccess": false,
+            "displayName": "TasActionLogs",
+            "attributes": {},
+            "uris": [
+                "/api/tasactionlogs/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "capture_logs"
+                }
+            ]
+        },
+        {
+            "name": "tasactionlogs_readOnly",
+            "type": "readOnly",
+            "ownerManagedAccess": false,
+            "displayName": "TasActionLogs_readOnly",
+            "attributes": {},
+            "uris": [
+                "/api/tasactionlogs/*"
+            ],
+            "scopes": [
+                {
+                    "name": "read"
+                }
+            ]
+        },
+        {
+            "name": "tasactionlogs_admin",
+            "type": "admin",
+            "ownerManagedAccess": false,
+            "displayName": "TasActionLogs_admin",
+            "attributes": {},
+            "uris": [
+                "/api/tasactionlogs/*"
+            ],
+            "scopes": [
+                {
+                    "name": "create"
+                },
+                {
+                    "name": "update"
+                },
+                {
+                    "name": "read"
+                },
+                {
+                    "name": "delete"
+                },
+                {
+                    "name": "capture_logs"
+                }
+            ]
+        },
+        {
             "name": "locationmaster",
             "type": "all",
             "ownerManagedAccess": false,
@@ -4527,6 +4596,10 @@
         {
             "name": "logout",
             "displayName": "logout"
+        },
+        {
+            "name": "capture_logs",
+            "displayName": "capture_logs"
         },
         {
             "name": "upload_location_master",

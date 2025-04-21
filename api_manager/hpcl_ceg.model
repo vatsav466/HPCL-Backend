@@ -227,6 +227,38 @@ Model DataFilters internal {
     value str
 }
 
+Model TasActionLogs {
+    username index_field unique_field str
+    email index_field str
+    first_name optional str
+    last_name optional str
+    employee_id index_field unique_field str
+    employee_number optional str
+    bu index_field list BusinessUnit
+    sap_id index_field list str
+    system_role index_field list str
+    novex_role index_field list str
+    region optional list str
+    state index_field list str
+    zone index_field list str
+    sales_area index_field list str
+    description optional str
+    comments optional str
+    action optional str
+    section optional str
+
+    Action=> capture_logs {
+        sap_id str
+        action str
+        description optional str
+        comments optional str
+        section optional str
+    }
+    Config=> {
+        access_key_mapping='bu,zone,region,sales_area,sap_id'
+    }
+}
+
 Model LocationMaster {
     bu index_field BusinessUnit
     sap_id index_field str
