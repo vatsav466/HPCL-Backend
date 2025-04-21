@@ -1,4 +1,5 @@
 import urdhva_base
+import traceback
 import hpcl_ceg_model
 import pandas as pd
 import utilities.helpers as helpers
@@ -31,12 +32,19 @@ async def generate_sod_engineering_location_stats(sap_id):
         fault_map = {}
 
         for entry in Maintenance:
-            for equip in entry["equipment_name"].split(","):
+            equipment_names = entry["equipment_name"]
+            if isinstance(equipment_names, str):
+                equipment_names = equipment_names.split(",")
+            for equip in equipment_names:
                 maintenance_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])
 
         for entry in Fault:
-            for equip in entry["equipment_name"].split(","):
+            equipment_names = entry["equipment_name"]
+            if isinstance(equipment_names, str):
+                equipment_names = equipment_names.split(",")
+            for equip in equipment_names:
                 fault_map.setdefault(equip.strip(), set()).add(entry["interlock_name"])
+
 
         df = pd.DataFrame(resp)
         required_columns = ['device_type', 'count']
@@ -113,7 +121,8 @@ async def generate_sod_engineering_location_stats(sap_id):
         return {"status": True, "message": "Success", "data": result}
 
     except Exception as e:
-        return {"status": False, "message": f"Error: {str(e)}"}
+        print(traceback.format_exc())
+        return {"status": False, "message": f"Error: {str(e)}", "data": []}
 
 async def get_alert_count_for_interlock(interlock):
     """
