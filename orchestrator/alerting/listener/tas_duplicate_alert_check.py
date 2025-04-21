@@ -9,7 +9,7 @@ async def duplicate_check(alertdata):
         f"""alert_section = 'TAS' and """
         f"""device_id = '{alertdata.get('device_id', '')}' and """
         f"""device_name = '{alertdata.get('device_name', '')}' and """
-        f"""interlock_name = '{alertdata.get('interlock_name', '')}'"""
+        f"""interlock_name = '{alertdata.get('interlock_name', '')}' and """
         f"""alert_status != 'Close'"""
     )
     params = urdhva_base.queryparams.QueryParams(q=query)
