@@ -227,6 +227,16 @@ Model DataFilters internal {
     value str
 }
 
+Enum TasLogAction str {
+    Shutdown='Shutdown'
+    SignalClearOff='SignalClearOff'
+}
+
+Enum TasLogSection str {
+    Gantry='Gantry'
+    ESD='ESD'
+}
+
 Model TasActionLogs {
     username index_field unique_field str
     email index_field str
@@ -244,8 +254,8 @@ Model TasActionLogs {
     sales_area index_field list str
     description optional str
     comments optional str
-    action optional str
-    section optional str
+    action optional TasLogAction
+    section optional TasLogSection
 
     Action=> capture_logs {
         sap_id str

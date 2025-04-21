@@ -270,8 +270,8 @@ class TasActionLogsSchema(UrdhvaPostgresBase):
     sales_area: Mapped[typing.List[str]] = mapped_column("sales_area", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     description: Mapped[typing.Optional[str]] = mapped_column("description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     comments: Mapped[typing.Optional[str]] = mapped_column("comments", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    action: Mapped[typing.Optional[str]] = mapped_column("action", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    section: Mapped[typing.Optional[str]] = mapped_column("section", String, index=False, nullable=True, default="", primary_key=False, unique=False)
+    action: Mapped[typing.Optional[typing.Any]] = mapped_column("action", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
+    section: Mapped[typing.Optional[typing.Any]] = mapped_column("section", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
 
     __table_args__ = (UniqueConstraint(username, employee_id, name="tas_action_logs_username_employee_id"),)
 
@@ -295,8 +295,8 @@ class TasActionLogsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     sales_area: typing.List[str]
     description: typing.Optional[str] = pydantic.Field("", **{})
     comments: typing.Optional[str] = pydantic.Field("", **{})
-    action: typing.Optional[str] = pydantic.Field("", **{})
-    section: typing.Optional[str] = pydantic.Field("", **{})
+    action: typing.Optional[hpcl_ceg_enum.TasLogAction] | None = None
+    section: typing.Optional[hpcl_ceg_enum.TasLogSection] | None = None
 
     class Config:
         collection_name = 'data_flow'
@@ -326,8 +326,8 @@ class TasActionLogs(urdhva_base.postgresmodel.PostgresModel):
     sales_area: typing.Optional[typing.List[str]] | None = None
     description: typing.Optional[str] = pydantic.Field("", **{})
     comments: typing.Optional[str] = pydantic.Field("", **{})
-    action: typing.Optional[str] = pydantic.Field("", **{})
-    section: typing.Optional[str] = pydantic.Field("", **{})
+    action: typing.Optional[hpcl_ceg_enum.TasLogAction] | None = None
+    section: typing.Optional[hpcl_ceg_enum.TasLogSection] | None = None
 
     class Config:
         collection_name = 'data_flow'
