@@ -255,44 +255,42 @@ class TasActionLogsSchema(UrdhvaPostgresBase):
     __tablename__ = 'tas_action_logs'
     
     username: Mapped[str] = mapped_column("username", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
-    email: Mapped[str] = mapped_column("email", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    email: Mapped[typing.Optional[str]] = mapped_column("email", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     first_name: Mapped[typing.Optional[str]] = mapped_column("first_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     last_name: Mapped[typing.Optional[str]] = mapped_column("last_name", String, index=False, nullable=True, default="", primary_key=False, unique=False)
-    employee_id: Mapped[str] = mapped_column("employee_id", String, index=True, nullable=False, default=None, primary_key=False, unique=False)
+    employee_id: Mapped[typing.Optional[str]] = mapped_column("employee_id", String, index=True, nullable=True, default="", primary_key=False, unique=False)
     employee_number: Mapped[typing.Optional[str]] = mapped_column("employee_number", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     bu: Mapped[typing.List[typing.Any]] = mapped_column("bu", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     sap_id: Mapped[typing.List[str]] = mapped_column("sap_id", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     system_role: Mapped[typing.List[str]] = mapped_column("system_role", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     novex_role: Mapped[typing.List[str]] = mapped_column("novex_role", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
     region: Mapped[typing.Optional[typing.List[str]]] = mapped_column("region", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
-    state: Mapped[typing.List[str]] = mapped_column("state", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
-    zone: Mapped[typing.List[str]] = mapped_column("zone", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
-    sales_area: Mapped[typing.List[str]] = mapped_column("sales_area", ARRAY(String), index=True, nullable=False, default=None, primary_key=False, unique=False)
+    state: Mapped[typing.Optional[typing.List[str]]] = mapped_column("state", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    zone: Mapped[typing.Optional[typing.List[str]]] = mapped_column("zone", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
+    sales_area: Mapped[typing.Optional[typing.List[str]]] = mapped_column("sales_area", ARRAY(String), index=False, nullable=True, default="", primary_key=False, unique=False)
     description: Mapped[typing.Optional[str]] = mapped_column("description", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     comments: Mapped[typing.Optional[str]] = mapped_column("comments", String, index=False, nullable=True, default="", primary_key=False, unique=False)
     action: Mapped[typing.Optional[typing.Any]] = mapped_column("action", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
     section: Mapped[typing.Optional[typing.Any]] = mapped_column("section", String, index=False, nullable=True, default=None, primary_key=False, unique=False)
-
-    __table_args__ = (UniqueConstraint(username, employee_id, name="tas_action_logs_username_employee_id"),)
 
 
 class TasActionLogsCreate(urdhva_base.postgresmodel.BasePostgresModel):
     __tablename__ = 'tas_action_logs'
     
     username: str
-    email: str
+    email: typing.Optional[str] = pydantic.Field("", **{})
     first_name: typing.Optional[str] = pydantic.Field("", **{})
     last_name: typing.Optional[str] = pydantic.Field("", **{})
-    employee_id: str
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
     employee_number: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.List[hpcl_ceg_enum.BusinessUnit]
     sap_id: typing.List[str]
     system_role: typing.List[str]
     novex_role: typing.List[str]
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    state: typing.List[str]
-    zone: typing.List[str]
-    sales_area: typing.List[str]
+    state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     description: typing.Optional[str] = pydantic.Field("", **{})
     comments: typing.Optional[str] = pydantic.Field("", **{})
     action: typing.Optional[hpcl_ceg_enum.TasLogAction] | None = None
@@ -303,7 +301,7 @@ class TasActionLogsCreate(urdhva_base.postgresmodel.BasePostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TasActionLogsSchema
-        upsert_keys = ['username', 'employee_id']
+        upsert_keys = []
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 
@@ -311,19 +309,19 @@ class TasActionLogs(urdhva_base.postgresmodel.PostgresModel):
     __tablename__ = 'tas_action_logs'
     
     username: typing.Optional[str] | None = None
-    email: typing.Optional[str] | None = None
+    email: typing.Optional[str] = pydantic.Field("", **{})
     first_name: typing.Optional[str] = pydantic.Field("", **{})
     last_name: typing.Optional[str] = pydantic.Field("", **{})
-    employee_id: typing.Optional[str] | None = None
+    employee_id: typing.Optional[str] = pydantic.Field("", **{})
     employee_number: typing.Optional[str] = pydantic.Field("", **{})
     bu: typing.Optional[typing.List[hpcl_ceg_enum.BusinessUnit]] | None = None
     sap_id: typing.Optional[typing.List[str]] | None = None
     system_role: typing.Optional[typing.List[str]] | None = None
     novex_role: typing.Optional[typing.List[str]] | None = None
     region: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
-    state: typing.Optional[typing.List[str]] | None = None
-    zone: typing.Optional[typing.List[str]] | None = None
-    sales_area: typing.Optional[typing.List[str]] | None = None
+    state: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    zone: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
+    sales_area: typing.Optional[typing.List[str]] = pydantic.Field("", **{})
     description: typing.Optional[str] = pydantic.Field("", **{})
     comments: typing.Optional[str] = pydantic.Field("", **{})
     action: typing.Optional[hpcl_ceg_enum.TasLogAction] | None = None
@@ -334,7 +332,7 @@ class TasActionLogs(urdhva_base.postgresmodel.PostgresModel):
         if urdhva_base.settings.disable_api_extra_inputs:
             extra = "forbid"  # Disallow extra fields
         schema_class = TasActionLogsSchema
-        upsert_keys = ['username', 'employee_id']
+        upsert_keys = []
         access_key_mapping = ['bu', 'zone', 'region', 'sales_area', 'sap_id']
 
 

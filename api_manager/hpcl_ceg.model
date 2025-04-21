@@ -238,20 +238,20 @@ Enum TasLogSection str {
 }
 
 Model TasActionLogs {
-    username index_field unique_field str
-    email index_field str
+    username index_field str
+    email optional index_field str
     first_name optional str
     last_name optional str
-    employee_id index_field unique_field str
+    employee_id optional index_field str
     employee_number optional str
     bu index_field list BusinessUnit
     sap_id index_field list str
     system_role index_field list str
     novex_role index_field list str
     region optional list str
-    state index_field list str
-    zone index_field list str
-    sales_area index_field list str
+    state optional list str
+    zone optional list str
+    sales_area optional list str
     description optional str
     comments optional str
     action optional TasLogAction
