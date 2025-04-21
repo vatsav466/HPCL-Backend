@@ -13,7 +13,8 @@ async def maintenance_alert_check(alert_data):
     Returns:
         bool: True if alert should be skipped (don't create), False if alert should be created
     """
-    print("alert_data ---> ", alert_data)
+    try
+        print("alert_data ---> ", alert_data)
         related_equipment_names = ["VFT", "RADAR", "ROSOV", "MOV", "RIMSEAL"]
         current_equipment_name = alert_data.get('equipment_name', '')
         original_device_name = alert_data.get('device_name', '')
