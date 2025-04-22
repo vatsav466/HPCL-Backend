@@ -11,6 +11,9 @@ import mysql.connector
 import urdhva_base.redispool
 import dashboard_studio_model
 import utilities.helpers as helpers
+import utilities.interlock_mapping as interlock_mapping
+import orchestrator.analytics.ro_analysis as ro_analysis
+from orchestrator.workflow.workflow_process import Camunda
 from dashboard_studio_model import Charts_Get_Distinct_ValuesParams
 from orchestrator.dbconnector.widget_actions import widget_actions
 from api_manager.charts_actions import charts_connection_vault_routing
@@ -1723,3 +1726,53 @@ async def get_closed_outlet(dry_out_in_days='1'):
         how='inner'
     )
     return len(close_outlet)
+
+async def trigger_camunda_workflow(alert_data):
+    camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
+                                                alert_section="RO")
+    alert_level = await ro_analysis.get_ro_levels(
+        bu=alert_data['bu'], violation_type=alert_data.get('violation_type', ''),
+        sap_id=str(alert_data['sap_id'])
+    )
+    payload = {"businessKey": alert_data['unique_id'],
+               "variables": {"alert_id": {"value": alert_data['id'], "type": "String"},
+                             "interlock_name": {"value": alert_data['interlock_name'], "type": "String"},
+                             "interlock_id": {"value": "", "type": "String"},
+                             "location_device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
+                             "location_type": {"value": alert_data['bu'], "type": "String"},
+                             "sap_id": {"value": alert_data['sap_id'], "type": "String"},
+                             "sop_id": {"value": alert_data['sop_id'], "type": "String"},
+                             "dealer_id": {"value": alert_data.get('dealer_id', ''), "type": "String"},
+                             "product_code": {"value": str(alert_data.get('product_code', '')), "type": "String"},
+                             "workflow_datetime": {"value": datetime.datetime.now(datetime.UTC)
+                                                            .strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + "Z", "type": "String"},
+                             "indent_no": {"value": alert_data.get('indent_no', ''), "type": "String"},
+                             "indent_raised_date": {"value": alert_data.get('indent_raised_date', ''),
+                                                    "type": "String"},
+                             "terminal_plant_name": {"value": alert_data.get('terminal_plant_name', ''),
+                                                     "type": "String"},
+                             "prod_reqd_dt": {"value": alert_data.get('prod_reqd_dt', ''), "type": "String"},
+                             "va_level": {"value": alert_level, "type": "String"},
+                             "terminal_plant_id": {"value": alert_data.get('terminal_plant_id', ''), "type": "String"},
+                             "cause_effect": {"value": alert_data.get('Cause_Effect', ''), "type": "String"},
+                             # Added for TAS use
+                             "alert_section": {"value": alert_data.get('alert_section', ''), "type": "String"},
+                             # Added for TAS use
+                             "cause_sop_id": {"value": alert_data.get('cause_sop_id', ''), "type": "String"},
+                             # Added for TAS use
+                             "effect_sop_id": {"value": alert_data.get('effect_sop_id', ''), "type": "String"},
+                             # Added for TAS use
+                             "device_id": {"value": alert_data.get('device_id', ''), "type": "String"},
+                             # Added for TAS use
+                             "device_name": {"value": alert_data.get('device_name', ''), "type": "String"},
+                             # Added for TAS use
+                             "device_type": {"value": alert_data.get('device_type', ''), "type": "String"}
+                             # Added for TAS use
+                             }}
+    interlock_name = interlock_mapping.get_interlock_name(
+        bu=alert_data['bu'], interlock_name=alert_data['interlock_name'], sop_id=alert_data['sop_id'])
+    workflowid = interlock_name.get("workflow_name") or interlock_name.get("interlock_name") or None
+    workflow_id = interlock_mapping.fmt_il_name(workflowid)
+    await Camunda().start_workflow(payload=payload, workflowId=workflow_id, camunda_url=camunda_url)
+    redis_ins = await urdhva_base.redispool.get_redis_connection()
+    await redis_ins.hset("alert_camunda_url", str(alert_data['id']), camunda_url)
