@@ -17,6 +17,7 @@ import orchestrator.alerting.emlock_alert as emlock_alert
 import orchestrator.analytics.vts_analysis as vts_analysis
 from orchestrator.notification_manager.notify_email import *
 import orchestrator.analytics.emlock_analysis as emlock_analysis
+import orchestrator.analytics.dry_out_analysis as dry_out_analysis
 
 
 async def create_alert(alert_data, camunda_url=urdhva_base.settings.camunda_url):
@@ -315,6 +316,9 @@ async def emlock_alert_closer(alert_data, input_data):
     print("close_resp: ", close_resp)
     resp = await close_emlock_alert(alert_data, input_data)
 
+async def execute_workflow_ro(alert_data):
+    await dry_out_analysis.trigger_camunda_workflow(alert_data)
+
 async def _is_close_alert(input_data):
     """
 
@@ -328,6 +332,21 @@ async def _is_close_alert(input_data):
     for key, values in action_data['actions'].items():
         if values['name'] == input_data['action_type']:
             return values['close_alert'], action_data['close_alert_func']
+    return False, ""
+
+async def _is_create_workflow(input_data):
+    """
+
+    Args:
+        input_data:
+
+    Returns:
+
+    """
+    action_data = connection_mapping.alert_action.get(input_data['bu'])[input_data['alert_section']]
+    for key, values in action_data['actions'].items():
+        if values['name'] == input_data['action_type']:
+            return values.get('create_workflow', False), action_data.get('create_workflow_func', '')
     return False, ""
 
 
@@ -386,6 +405,11 @@ class AlertAction:
             if status and func:
                 print("func: ", func)
                 await eval(func)(alert_data=alert_data, input_data=input_data)
+
+            status, func = await _is_create_workflow(input_data)
+            if status and func:
+                print("func: ", func)
+                await eval(func)(alert_data=alert_data)
             # if input_data.get("alert_section", "") == 'VA' and input_data.get("action_type", "") in ["Approved"]:
             # if input_data.get("alert_section", "") == 'VA':
             #     if await _is_close_alert(input_data):
