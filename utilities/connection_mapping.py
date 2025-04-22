@@ -563,6 +563,11 @@ alert_action = {
             "alert_section": "RO",
             "close_alert_func": "",
             "actions": {
+                "Raise Request": {
+                    "name": "Raise Request",
+                    "close_alert": False,
+                    "roles": ["Admin", "RO Dealer"]
+                },
                 "Approve": {
                     "name": "Approved",
                     "close_alert": False,
