@@ -25,7 +25,7 @@ async def users_create_user(data: Users_Create_UserParams):
 # Action login
 @router.post('/login', tags=['Users'])
 async def users_login(request: fastapi.Request, data: Users_LoginParams):
-    status, resp = await auth_manager.AuthenticationManager.login(data.username, data.password)
+    status, resp = await auth_manager.AuthenticationManager.login(data.username, data.password, data.login_type)
     if not status:
         response = fastapi.responses.JSONResponse({"status": False, "msg": resp}, 401)
     else:
