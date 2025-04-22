@@ -1728,6 +1728,8 @@ async def get_closed_outlet(dry_out_in_days='1'):
     return len(close_outlet)
 
 async def trigger_camunda_workflow(alert_data):
+    if not isinstance(alert_data, dict):
+        alert_data = alert_data.__dict__
     camunda_url = await helpers.get_camunda_url(bu=alert_data['bu'], sap_id=alert_data['sap_id'],
                                                 alert_section="RO")
     alert_level = await ro_analysis.get_ro_levels(
