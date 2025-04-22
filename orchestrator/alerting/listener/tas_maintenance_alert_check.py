@@ -117,7 +117,7 @@ async def close_tas_workflow(alert_data):
 
 async def create_under_maintenance_alert(alert_data):
     print(f"Under maintenance alert - creating alert for {alert_data['tas_device_name']}")
-    if alert_data['interlock_name'] == 'Tank_UnderMaintenance':
+    if alert_data['interlock_name'] == 'Tank_Under Maintenance':
         print(f"maintenance alert - creating alert for {alert_data['tas_device_name']}")
         maintenance_query = (
                 f"""bu = 'TAS' and """
@@ -145,7 +145,7 @@ async def create_under_maintenance_alert(alert_data):
             
             await create_alert(alert_data=alert_data)
     
-    if alert_data['interlock_name'] != 'Tank_UnderMaintenance':
+    if alert_data['interlock_name'] != 'Tank_Under Maintenance':
         print(f"not tank maintenance alert - creating alert for {alert_data['tas_device_name']}")
         maintenance_query = (
                 f"""bu = 'TAS' and """
