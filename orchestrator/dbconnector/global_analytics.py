@@ -3692,7 +3692,7 @@ class GlobalAnalytics:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0).round()
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name", "carousel_type"]:
+            for each_str_col in ["zone", "plant", "carousel_type"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3703,14 +3703,14 @@ class GlobalAnalytics:
             for each_float_col in ["productivity"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0).round()
-            for each_str_col in ["zone","name","carousel_type"]:
+            for each_str_col in ["zone","plant","carousel_type"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
-                if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name","carousel_type"], as_index=False).agg({
+                if "zone" in filter_keys and "plant" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","plant","carousel_type"], as_index=False).agg({
                         "productivity": "mean"
                     })
                 if grouped_resp is not None:
@@ -3791,7 +3791,7 @@ class GlobalAnalytics:
             for each_float_col in ["Productions"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
-            for each_str_col in ["zone", "name"]:
+            for each_str_col in ["zone", "plant"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3804,14 +3804,14 @@ class GlobalAnalytics:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name"]:
+            for each_str_col in ["zone", "plant"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
-                if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name"], as_index=False).agg({
+                if "zone" in filter_keys and "plant" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","plant"], as_index=False).agg({
                         "14_kg": "sum",
                         "19_kg": "sum"
                     })
@@ -3917,7 +3917,7 @@ class GlobalAnalytics:
             for each_float_col in ["Cylinder_Filled"]:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
-            for each_str_col in ["zone", "name"]:
+            for each_str_col in ["zone", "plant"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             return {"status": True, "message": "success", "data": resp}
@@ -3930,14 +3930,14 @@ class GlobalAnalytics:
                 if each_float_col in resp.columns:
                     resp[each_float_col] = resp[each_float_col].fillna(0.0).round(2)
             # Fill missing values for string columns
-            for each_str_col in ["zone", "name"]:
+            for each_str_col in ["zone", "plant"]:
                 if each_str_col in resp.columns:
                     resp[each_str_col] = resp[each_str_col].fillna('').astype(str)
             if filters:
                 grouped_resp = None
                 filter_keys = [rec.key.strip('"') for rec in filters]
-                if "zone" in filter_keys and "name" not in filter_keys:
-                    grouped_resp = resp.groupby(["zone","name"], as_index=False).agg({
+                if "zone" in filter_keys and "plant" not in filter_keys:
+                    grouped_resp = resp.groupby(["zone","plant"], as_index=False).agg({
                         "14_kg": "sum",
                         "19_kg": "sum"
                     })
