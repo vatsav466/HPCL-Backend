@@ -94,6 +94,7 @@ async def maintenance_alert_check(alert_data):
         return False
 
 async def close_tas_workflow(alert_data):
+    print(f"Closing camunda workflow for alert_id: {alert_data['id']}")
     data = {
         "messageName": "Message",
         "businessKey": alert_data['unique_id'],
@@ -115,7 +116,9 @@ async def close_tas_workflow(alert_data):
     await close_alert(alert_data=alert_data)
 
 async def create_under_maintenance_alert(alert_data):
+    print(f"Under maintenance alert - creating alert for {alert_data['tas_device_name']}")
     if alert_data['interlock_name'] == 'Tank_UnderMaintenance':
+        print(f"maintenance alert - creating alert for {alert_data['tas_device_name']}")
         maintenance_query = (
                 f"""bu = 'TAS' and """
                 f"""sap_id = '{alert_data.get('sap_id', '')}' and """
@@ -128,15 +131,22 @@ async def create_under_maintenance_alert(alert_data):
                 f"""alert_status != 'Close'"""
             )
         maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
+        print("maintenance_query --> ", maintenance_query)
+
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
+        print("maintenance_resp --> ", maintenance_resp)
 
         if maintenance_resp["data"]:
+            print(f"Under maintenance alert - creating alert for {maintenance_resp["data"]}")
             for data in maintenance_resp["data"]:
+                print(f"Under maintenance alert - creating alert for {data}")
+                print("into close_tas_workflow")
                 await close_tas_workflow(data)
             
-            create_alert(alert_data=alert_data)
+            await create_alert(alert_data=alert_data)
     
     if alert_data['interlock_name'] != 'Tank_UnderMaintenance':
+        print(f"not tank maintenance alert - creating alert for {alert_data['tas_device_name']}")
         maintenance_query = (
                 f"""bu = 'TAS' and """
                 f"""sap_id = '{alert_data.get('sap_id', '')}' and """
@@ -150,6 +160,7 @@ async def create_under_maintenance_alert(alert_data):
         maintenance_params = urdhva_base.queryparams.QueryParams(q=maintenance_query)
         maintenance_resp = await hpcl_ceg_model.Alerts.get_all(maintenance_params, resp_type='plain')
         if maintenance_resp['data']:
+            print(f"not tank Under maintenance alert - creating alert for {maintenance_resp['data']}")
             print(f"Tank Under Maintenance {alert_data}")
         else:
-            create_alert(alert_data=alert_data)
+            await create_alert(alert_data=alert_data)
