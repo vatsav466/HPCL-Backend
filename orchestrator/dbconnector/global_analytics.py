@@ -3712,7 +3712,7 @@ class GlobalAnalytics:
                 if "zone" in filter_keys and "plant" not in filter_keys:
                     grouped_resp = resp.groupby(["zone","plant","carousel_type"], as_index=False).agg({
                         "productivity": "mean"
-                    })
+                    }).rename(columns={"plant": "name"})
                 if grouped_resp is not None:
                     return {"status": True, "message": "success", "data": grouped_resp.to_dict(orient='records')}
         else:
@@ -3814,7 +3814,7 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["zone","plant"], as_index=False).agg({
                         "14_kg": "sum",
                         "19_kg": "sum"
-                    })
+                    }).rename(columns={"plant": "name"})
                     grouped_resp["14_kg"] = grouped_resp["14_kg"] * 14.2
                     grouped_resp["19_kg"] = grouped_resp["19_kg"] * 19
                     grouped_resp["Productions"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64)) / 1000
@@ -3940,7 +3940,7 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["zone","plant"], as_index=False).agg({
                         "14_kg": "sum",
                         "19_kg": "sum"
-                    })
+                    }).rename(columns={"plant": "name"})
                     grouped_resp["Cylinder_Filled"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64))
                     grouped_resp["Cylinder_Filled"] = grouped_resp["Cylinder_Filled"].fillna(0.0).round(2)
                 if grouped_resp is not None:
