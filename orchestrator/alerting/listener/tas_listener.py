@@ -256,7 +256,7 @@ def fix_additional_info(additional_info):
     :param additional_info: A dictionary containing the additional info for the alert
     :return: A dictionary containing the fixed additional info
     """
-    for key, value in {"interlockName": "interlock_name", "BU": "bu", "sopid": "sop_id",
+    for key, value in {"interlockName": "interlock_name", "BU": "bu", "sopid": "sop_id", "SAPID": "sap_id",
                        "plantlocationid": "sap_id", "deviceId": "device_id", "deviceType": "device_type",
                        "deviceName": "device_name", "Sensor_Type":"equipment_type", "Sensor_Name":"equipment_name"}.items():
         if key in additional_info:
