@@ -3940,7 +3940,7 @@ class GlobalAnalytics:
                     grouped_resp = resp.groupby(["zone","plant"], as_index=False).agg({
                         "14_kg": "sum",
                         "19_kg": "sum"
-                    }).rename(columns={"plant": "name"})
+                    })
                     grouped_resp["Cylinder_Filled"] = (grouped_resp["14_kg"].fillna(0).astype(np.float64) + grouped_resp["19_kg"].fillna(0).astype(np.float64))
                     grouped_resp["Cylinder_Filled"] = grouped_resp["Cylinder_Filled"].fillna(0.0).round(2)
                 if grouped_resp is not None:
